@@ -1,0 +1,6 @@
+# Rider project files
+/.idea/
+
+# C# generated folders
+bin/
+obj/
