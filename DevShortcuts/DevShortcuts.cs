@@ -6,13 +6,15 @@ namespace DevShortcuts;
 [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
 public class DevShortcuts : BaseUnityPlugin
 {
+    private new static readonly BepInEx.Logging.ManualLogSource Logger = BepInEx.Logging.Logger.CreateLogSource(PluginInfo.PLUGIN_NAME);
+
+    private bool _cfgEnabled = true;
+
     private void Awake()
     {
+        _cfgEnabled = Config.Bind("General", "Enabled", _cfgEnabled, "enable/disable this plugin").Value;
+        if (!_cfgEnabled) return;
         Logger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
-    }
-
-    private void Start()
-    {
         Harmony.CreateAndPatchAll(typeof(DevShortcuts));
     }
 
