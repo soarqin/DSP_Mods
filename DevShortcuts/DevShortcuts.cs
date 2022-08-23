@@ -14,7 +14,6 @@ public class DevShortcuts : BaseUnityPlugin
     {
         _cfgEnabled = Config.Bind("General", "Enabled", _cfgEnabled, "enable/disable this plugin").Value;
         if (!_cfgEnabled) return;
-        Logger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
         Harmony.CreateAndPatchAll(typeof(DevShortcuts));
     }
 

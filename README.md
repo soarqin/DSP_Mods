@@ -28,6 +28,3 @@
 * The same speed as normal Mining Machine for normal ores and 100/s for water.
 * Energy costs: 200kJ for each vein or oil, 50kJ for each water. `Veins Utilization` upgrades does not increase power consumption.
 * `Veins Utilization` upgrades affects mining speed and ore consume as normal.
-### TODO
-* Make Oil mining logic the same as normal (reduce speed periodically)
-* Support mining scale in config
