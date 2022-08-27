@@ -19,7 +19,7 @@ public class DevShortcuts : BaseUnityPlugin
 
     [HarmonyPostfix]
     [HarmonyPatch(typeof(PlayerController), "Init")]
-    static void PlayerControllerInit(ref PlayerAction[] ___actions, Player ___player)
+    private static void PlayerControllerInit(ref PlayerAction[] ___actions, Player ___player)
     {
         var cnt = ___actions.Length;
         var newActions = new PlayerAction[cnt + 1];
@@ -35,7 +35,7 @@ public class DevShortcuts : BaseUnityPlugin
 
     [HarmonyPostfix]
     [HarmonyPatch(typeof(PlayerAction_Test), "GameTick")]
-    static void PlayerAction_TestGameTick(PlayerAction_Test __instance, long timei)
+    private static void PlayerAction_TestGameTick(PlayerAction_Test __instance, long timei)
     {
         __instance.Update();
     }

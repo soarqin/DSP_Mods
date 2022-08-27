@@ -27,4 +27,9 @@
 ### Logistic Storages can mine all ores/water on current planet
 * The same speed as normal Mining Machine for normal ores and 100/s for water.
 * Energy costs: 200kJ for each vein or oil, 50kJ for each water. `Veins Utilization` upgrades does not increase power consumption.
-* `Veins Utilization` upgrades affects mining speed and ore consume as normal.
+* `Veins Utilization` upgrades affects mining speed and ore consumption as normal.
+
+## [HideTips](HideTips)
+### Hide/Disable various in-game tips
+* Tips that can be hidden: random-reminder, tutorial, achievement/milestone card
+* Each type of tips can be configurable individually
