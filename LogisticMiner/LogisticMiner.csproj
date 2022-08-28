@@ -5,7 +5,7 @@
     <AssemblyName>LogisticMiner</AssemblyName>
     <BepInExPluginGuid>org.soardev.logisticminer</BepInExPluginGuid>
     <Description>DSP MOD - LogisticMiner</Description>
-    <Version>1.0.0</Version>
+    <Version>0.1.0</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
@@ -17,7 +17,7 @@
     <PackageReference Include="DysonSphereProgram.GameLibs" Version="0.9.26.13026-r.0" />
     <PackageReference Include="UnityEngine.Modules" Version="2018.4.12" IncludeAssets="compile" />
   </ItemGroup>
-  
+
   <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all" />
   </ItemGroup>

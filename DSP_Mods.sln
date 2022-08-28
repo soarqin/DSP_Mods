@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DevShortcuts", "DevShortcuts\DevShortcuts.csproj", "{F9F16B62-D1D3-466B-BE22-E64B9EA957C2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CheatEnabler", "CheatEnabler\CheatEnabler.csproj", "{F9F16B62-D1D3-466B-BE22-E64B9EA957C2}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LogisticMiner", "LogisticMiner\LogisticMiner.csproj", "{7149D717-C913-4153-9425-38CB9D087F83}"
 EndProject
