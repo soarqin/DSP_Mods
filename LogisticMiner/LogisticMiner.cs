@@ -40,7 +40,7 @@ public class LogisticMiner : BaseUnityPlugin
         _waterSpeed = Config.Bind("General", "WaterMiningSpeed", _waterSpeed,
             "Water mining speed (count per second)").Value;
         _miningScale = Config.Bind("General", "MiningScale", _miningScale,
-                "Must not be less than 100. Mining scale(in percents) for slots nearly empty, and the scale reduces to 1 smoothly till reach half of slot limits. Please note that the power consumption increases by the square of the scale which is the same as Advanced Mining Machine")
+                "Must not be less than 100. Mining scale(in percents) for slots below half of slot limits, and the scale reduces to 100% smoothly till reach full. Please note that the power consumption increases by the square of the scale which is the same as Advanced Mining Machine")
             .Value;
         if (_miningScale < 100)
         {
@@ -179,9 +179,9 @@ public class LogisticMiner : BaseUnityPlugin
                     var miningScale = _miningScale;
                     if (miningScale > 100)
                     {
-                        if (stationStore.count * 2 < stationStore.max)
+                        if (stationStore.count * 2 > stationStore.max)
                             miningScale = 100 +
-                                          ((miningScale - 100) * (stationStore.max - stationStore.count * 2) +
+                                          ((miningScale - 100) * (stationStore.max - stationStore.count / 2) +
                                               stationStore.max - 1) / stationStore.max;
                         else
                             miningScale = 100;
@@ -233,7 +233,7 @@ public class LogisticMiner : BaseUnityPlugin
 
             vcd.FrameNext += miningFrames;
         } while (vcd.FrameNext <= _frame);
-
+    
         PerformanceMonitor.EndSample(ECpuWorkEntry.Miner);
     }
 
