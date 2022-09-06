@@ -16,10 +16,14 @@ public class LogisticMiner : BaseUnityPlugin
     private static long _oilEnergyConsume = 3600000;
     private static long _waterEnergyConsume = 20000000;
     private static int _waterSpeed = 100;
-    private static int _miningScale = 100;
+    private static int _miningScale;
 
     private static float _frame;
-    private static float _miningCostRate;
+    private static float _miningCostRateByTech;
+    private static float _miningSpeedScaleByTech;
+    private static float _miningFrames;
+    private static long _miningSpeedScaleLong;
+    private static bool _advancedMiningMachineUnlocked;
     private static uint _miningCostBarrier;
     private static uint _miningCostBarrierOil;
 
@@ -40,7 +44,7 @@ public class LogisticMiner : BaseUnityPlugin
         _waterSpeed = Config.Bind("General", "WaterMiningSpeed", _waterSpeed,
             "Water mining speed (count per second)").Value;
         _miningScale = Config.Bind("General", "MiningScale", _miningScale,
-                "Must not be less than 100. Mining scale(in percents) for slots below half of slot limits, and the scale reduces to 100% smoothly till reach full. Please note that the power consumption increases by the square of the scale which is the same as Advanced Mining Machine")
+                "0 for Auto(which means having researched makes mining scale 300, otherwise 100). Mining scale(in percents) for slots below half of slot limits, and the scale reduces to 100% smoothly till reach full. Please note that the power consumption increases by the square of the scale which is the same as Advanced Mining Machine")
             .Value;
         if (_miningScale < 100)
         {
@@ -51,6 +55,27 @@ public class LogisticMiner : BaseUnityPlugin
         Harmony.CreateAndPatchAll(typeof(LogisticMiner));
     }
 
+    private static void CheckRecipes()
+    {
+        _advancedMiningMachineUnlocked = GameMain.history.recipeUnlocked.Contains(119);
+    }
+    
+    private static void UpdateMiningCostRate()
+    {
+        _miningCostRateByTech = GameMain.history.miningCostRate;
+        _miningCostBarrier = (uint)(int)Math.Ceiling(2147483646.0 * _miningCostRateByTech);
+        _miningCostBarrierOil =
+            (uint)(int)Math.Ceiling(2147483646.0 * _miningCostRateByTech * 0.401116669f /
+                                    GameMain.gameScenario.gameData.gameDesc.resourceMultiplier);
+    }
+
+    private static void UpdateSpeedScale()
+    {
+        _miningSpeedScaleByTech = GameMain.history.miningSpeedScale;
+        _miningSpeedScaleLong = (long)(_miningSpeedScaleByTech * 100);
+        _miningFrames = 120f / _miningSpeedScaleByTech;
+    }
+
     [HarmonyPostfix]
     [HarmonyPatch(typeof(DSPGame), "StartGame", typeof(GameDesc))]
     [HarmonyPatch(typeof(DSPGame), "StartGame", typeof(string))]
@@ -58,11 +83,36 @@ public class LogisticMiner : BaseUnityPlugin
     {
         Logger.LogInfo("Game Start");
         PlanetVeinCacheData.Clear();
-        _frame = 0f;
-        /* codes reserved for future use: storage max may affect mining scale
+        /* Thinking: storage max may affect mining scale?
         _localStationMax = LDB.items.Select(2103).prefabDesc.stationMaxItemCount;
         _remoteStationMax = LDB.items.Select(2104).prefabDesc.stationMaxItemCount;
         */
+    }
+
+    [HarmonyPostfix]
+    [HarmonyPatch(typeof(GameMain), "Start")]
+    private static void OnGameLoaded()
+    {
+        _frame = 0f;
+
+        UpdateMiningCostRate();
+        UpdateSpeedScale();
+        CheckRecipes();
+    }
+
+    [HarmonyPostfix]
+    [HarmonyPatch(typeof(GameHistoryData), "UnlockTechFunction")]
+    private static void OnUnlockTech(int func)
+    {
+        switch (func)
+        {
+            case 20:
+                UpdateMiningCostRate();
+                break;
+            case 21:
+                UpdateSpeedScale();
+                break;
+        }
     }
 
     [HarmonyPostfix]
@@ -82,6 +132,16 @@ public class LogisticMiner : BaseUnityPlugin
         foreach (var pair in PlanetVeinCacheData)
         {
             pair.Value.FrameNext -= 1000000f;
+        }
+    }
+
+    [HarmonyPostfix]
+    [HarmonyPatch(typeof(GameHistoryData), "UnlockRecipe")]
+    private static void OnUnlockRecipe(int recipeId)
+    {
+        if (recipeId == 119)
+        {
+            CheckRecipes();
         }
     }
 
@@ -106,7 +166,7 @@ public class LogisticMiner : BaseUnityPlugin
         {
             vcd = new VeinCacheData();
             vcd.GenVeins(factory);
-            vcd.FrameNext = _frame + 120f / GameMain.history.miningSpeedScale;
+            vcd.FrameNext = _frame + _miningFrames;
             PlanetVeinCacheData.Add(planetId, vcd);
         }
     }
@@ -115,10 +175,7 @@ public class LogisticMiner : BaseUnityPlugin
     [HarmonyPatch(typeof(FactorySystem), "CheckBeforeGameTick")]
     private static void Miner(FactorySystem __instance)
     {
-        var history = GameMain.history;
-        var miningSpeedScalef = history.miningSpeedScale;
-        var miningSpeedScale = (long)(miningSpeedScalef * 100);
-        if (miningSpeedScale <= 0)
+        if (_miningSpeedScaleLong <= 0)
             return;
         var factory = __instance.factory;
         var planetId = factory.planetId;
@@ -131,20 +188,9 @@ public class LogisticMiner : BaseUnityPlugin
         {
             PlanetVeinCacheData[planetId] = new VeinCacheData
             {
-                FrameNext = _frame + 120f / miningSpeedScalef
+                FrameNext = _frame + _miningFrames
             };
             return;
-        }
-
-        var miningFrames = 120f / miningSpeedScalef;
-        var miningCostRate = history.miningCostRate;
-        if (!miningCostRate.Equals(_miningCostRate))
-        {
-            _miningCostRate = miningCostRate;
-            _miningCostBarrier = (uint)(int)Math.Ceiling(2147483646.0 * miningCostRate);
-            _miningCostBarrierOil =
-                (uint)(int)Math.Ceiling(2147483646.0 * miningCostRate * 0.401116669f /
-                                        factory.gameData.gameDesc.resourceMultiplier);
         }
 
         var planetTransport = __instance.planet.factory.transport;
@@ -177,19 +223,20 @@ public class LogisticMiner : BaseUnityPlugin
                     long energyConsume;
                     isCollecting = true;
                     var miningScale = _miningScale;
-                    if (miningScale > 100)
+                    if (miningScale == 0)
                     {
-                        if (stationStore.count * 2 > stationStore.max)
-                            miningScale = 100 +
-                                          ((miningScale - 100) * (stationStore.max - stationStore.count / 2) +
-                                              stationStore.max - 1) / stationStore.max;
-                        else
-                            miningScale = 100;
+                        miningScale = _advancedMiningMachineUnlocked ? 300 : 100;
+                    }
+                    if (miningScale > 100 && stationStore.count * 2 > stationStore.max)
+                    {
+                        miningScale = 100 +
+                                      ((miningScale - 100) * (stationStore.max - stationStore.count) * 2 +
+                                          stationStore.max - 1) / stationStore.max;
                     }
 
                     if (isVein)
                     {
-                        (amount, energyConsume) = vcd.Mine(factory, stationStore.itemId, miningScale, miningSpeedScale,
+                        (amount, energyConsume) = vcd.Mine(factory, stationStore.itemId, miningScale, _miningSpeedScaleLong,
                             stationComponent.energy);
                         if (amount < 0)
                         {
@@ -200,7 +247,7 @@ public class LogisticMiner : BaseUnityPlugin
                     else
                     {
                         energyConsume = (_waterEnergyConsume * miningScale * miningScale + 9999L) / 100L /
-                                        miningSpeedScale;
+                                        _miningSpeedScaleLong;
                         if (stationComponent.energy < energyConsume)
                         {
                             k = int.MaxValue - 1;
@@ -231,7 +278,7 @@ public class LogisticMiner : BaseUnityPlugin
                 stationComponent.energy += count * heatValue;
             }
 
-            vcd.FrameNext += miningFrames;
+            vcd.FrameNext += _miningFrames;
         } while (vcd.FrameNext <= _frame);
     
         PerformanceMonitor.EndSample(ECpuWorkEntry.Miner);
