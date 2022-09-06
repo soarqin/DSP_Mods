@@ -1,0 +1,9 @@
+﻿{
+  "name": "LogisticMiner",
+  "version_number": "0.1.0",
+  "website_url": "https://github.com/soarqin/DSP_Mods/tree/master/LogisticMiner",
+  "description": "Mine directly from ILS/PLS, inspired by PlanetMiner",
+  "dependencies": [
+    "xiaoye97-BepInEx-5.4.17"
+  ]
+}

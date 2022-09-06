@@ -61,5 +61,6 @@
 ### Hide/Disable various in-game tips/messages
 
 * Tips/messages that can be hidden: random-reminder, tutorial, achievement/milestone card.
-* Each type of tips/messages can be configurable individually.
+* Skip prologue for new game.
+* Each type of tips/messages is configurable individually.
 * For sanity check warning messages, please check [CheatEnabler](CheatEnabler)

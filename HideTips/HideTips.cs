@@ -14,6 +14,7 @@ public class HideTips : BaseUnityPlugin
     private static bool _noTutorialTips = true;
     private static bool _noAchievementCardPopups = false;
     private static bool _noMilestoneCardPopups = true;
+    private static bool _skipPrologue = true;
 
     private void Awake()
     {
@@ -22,6 +23,7 @@ public class HideTips : BaseUnityPlugin
         _noTutorialTips = Config.Bind("General", "NoTutorialTips", _noTutorialTips, "Disable Tutorial Tips").Value;
         _noAchievementCardPopups = Config.Bind("General", "NoAchievementCardPopups", _noAchievementCardPopups, "Disable Achievement Card Popups").Value;
         _noMilestoneCardPopups = Config.Bind("General", "NoMilestoneCardPopups", _noMilestoneCardPopups, "Disable Milestone Card Popups").Value;
+        _skipPrologue = Config.Bind("General", "SkipPrologue", _skipPrologue, "Skip prologue for new game").Value;
         if (!_cfgEnabled) return;
         Harmony.CreateAndPatchAll(typeof(HideTips));
     }
@@ -55,9 +57,19 @@ public class HideTips : BaseUnityPlugin
         return !_noAchievementCardPopups;
     }
 
-    [HarmonyPrefix] [HarmonyPatch(typeof(UIVariousPopupGroup), "CreateMilestonePopupCard")]
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(UIVariousPopupGroup), "CreateMilestonePopupCard")]
     private static bool SkipMilestoneCardPopups()
     {
         return !_noMilestoneCardPopups;
+    }
+
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(DSPGame), "StartGame", typeof(GameDesc))]
+    private static bool OnStartGame(GameDesc _gameDesc)
+    {
+        if (!_skipPrologue) return true;
+        DSPGame.StartGameSkipPrologue(_gameDesc);
+        return false;
     }
 }
