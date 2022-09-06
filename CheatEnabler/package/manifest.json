@@ -2,7 +2,7 @@
   "name": "CheatEnabler",
   "version_number": "1.0.0",
   "website_url": "https://github.com/soarqin/DSP_Mods/tree/master/CheatEnabler",
-  "description": "Add various cheat functions with abnormal determinants disabled",
+  "description": "Add various cheat functions while disabling abnormal determinants",
   "dependencies": [
     "xiaoye97-BepInEx-5.4.17"
   ]

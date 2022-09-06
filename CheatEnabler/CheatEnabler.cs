@@ -60,7 +60,12 @@ public class CheatEnabler : BaseUnityPlugin
         [HarmonyPatch(typeof(PlayerAction_Test), "GameTick")]
         private static void PlayerAction_TestGameTick(PlayerAction_Test __instance)
         {
+            var lastActive = __instance.active;
             __instance.Update();
+            if (lastActive != __instance.active)
+            {
+                UIRealtimeTip.PopupAhead((lastActive ? "Developer Mode Shortcuts Disabled" : "Developer Mode Shortcuts Enabled").Translate(), false);
+            }
         }
     }
 

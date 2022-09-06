@@ -1,4 +1,4 @@
-## [HideTips](HideTips)
+## HideTips
 
 ### Hide/Disable various in-game tips/messages
 

@@ -4,8 +4,8 @@
 
 ### Enable cheat functions as below
 
-* Disable abnormal determinants (Disable all sanity checks, and can get achievements on using Console and DevShortcuts).
-* Shift+F4 to switch Developer Mode on/off (no message, tip or sounds on switch).
+* Disable abnormal determinants (Disable all sanity checks, and can get achievements on using Console and Developer Mode shortcuts).
+* Shift+F4 to switch Developer Mode on/off.
     * Numpad 1: Gets all items and extends bag.
     * Numpad 2: Boosts walk speed, gathering speed and mecha energy restoration.
     * Numpad 3: Fills planet with foundations and bury all veins.
