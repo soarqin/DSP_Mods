@@ -43,6 +43,15 @@ public class HideTips : BaseUnityPlugin
         __instance.randRemindTips = Array.Empty<UIRandomTip>();
     }
 
+    [HarmonyPostfix]
+    [HarmonyPatch(typeof(UIGameMenu), "_OnCreate")]
+    private static void ClearGameMenuRandTips(UIGameMenu __instance)
+    {
+        __instance.randTipButton0.pop = __instance.randTipButton0.popCount;
+        __instance.randTipButton1.pop = __instance.randTipButton1.popCount;
+        __instance.randTipButton2.pop = __instance.randTipButton2.popCount;
+    }
+
     [HarmonyPrefix]
     [HarmonyPatch(typeof(UITutorialTip), "PopupTutorialTip")]
     private static bool SkipTutorialTips()
