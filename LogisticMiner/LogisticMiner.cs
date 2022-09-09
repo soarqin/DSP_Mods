@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using BepInEx;
+using BepInEx.Configuration;
 using HarmonyLib;
 using Random = UnityEngine.Random;
 
@@ -17,6 +18,8 @@ public class LogisticMiner : BaseUnityPlugin
     private static long _waterEnergyConsume = 20000000;
     private static int _waterSpeed = 100;
     private static int _miningScale;
+    private static int _fuelIlsSlot = 3;
+    private static int _fuelPlsSlot = 2;
 
     private static float _frame;
     private static float _miningCostRateByTech;
@@ -29,6 +32,7 @@ public class LogisticMiner : BaseUnityPlugin
 
     private static uint _seed = (uint)Random.Range(int.MinValue, int.MaxValue);
     private static readonly Dictionary<int, VeinCacheData> PlanetVeinCacheData = new();
+    private static readonly Dictionary<int, (long, bool)> Fuels = new();
 
     private bool _cfgEnabled = true;
 
@@ -46,27 +50,46 @@ public class LogisticMiner : BaseUnityPlugin
         _miningScale = Config.Bind("General", "MiningScale", _miningScale,
                 "0 for Auto(which means having researched makes mining scale 300, otherwise 100). Mining scale(in percents) for slots below half of slot limits, and the scale reduces to 100% smoothly till reach full. Please note that the power consumption increases by the square of the scale which is the same as Advanced Mining Machine")
             .Value;
+        _fuelIlsSlot = Config.Bind("General", "ILSFuelSlot", _fuelIlsSlot + 1,
+                new ConfigDescription("Fuel slot for ILS, set to 0 to disable",
+                    new AcceptableValueRange<int>(0, 5), Array.Empty<object>()))
+            .Value - 1;
+        _fuelPlsSlot = Config.Bind("General", "PLSFuelSlot", _fuelPlsSlot + 1,
+                new ConfigDescription("Fuel slot for PLS, set to 0 to disable",
+                    new AcceptableValueRange<int>(0, 3), Array.Empty<object>()))
+            .Value - 1;
+        if (!_cfgEnabled) return;
+
         if (_miningScale < 100)
         {
             _miningScale = 100;
         }
 
-        if (!_cfgEnabled) return;
         Harmony.CreateAndPatchAll(typeof(LogisticMiner));
+    }
+
+    private static int SplitIncLevel(ref int n, ref int m, int p)
+    {
+        var level = m / n;
+        var left = m - level * n;
+        n -= p;
+        left -= n;
+        m -= left > 0 ? level * p + left : level * p;
+        return level;
     }
 
     private static void CheckRecipes()
     {
         _advancedMiningMachineUnlocked = GameMain.history.recipeUnlocked.Contains(119);
     }
-    
+
     private static void UpdateMiningCostRate()
     {
         _miningCostRateByTech = GameMain.history.miningCostRate;
         _miningCostBarrier = (uint)(int)Math.Ceiling(2147483646.0 * _miningCostRateByTech);
         _miningCostBarrierOil =
             (uint)(int)Math.Ceiling(2147483646.0 * _miningCostRateByTech * 0.401116669f /
-                                    GameMain.gameScenario.gameData.gameDesc.resourceMultiplier);
+                                    DSPGame.GameDesc.resourceMultiplier);
     }
 
     private static void UpdateSpeedScale()
@@ -83,6 +106,14 @@ public class LogisticMiner : BaseUnityPlugin
     {
         Logger.LogInfo("Game Start");
         PlanetVeinCacheData.Clear();
+        Fuels.Clear();
+        foreach (var data in LDB.items.dataArray)
+        {
+            if (data.HeatValue > 0)
+            {
+                Fuels.Add(data.ID, (data.HeatValue, data.Productive));
+            }
+        }
         /* Thinking: storage max may affect mining scale?
         _localStationMax = LDB.items.Select(2103).prefabDesc.stationMaxItemCount;
         _remoteStationMax = LDB.items.Select(2104).prefabDesc.stationMaxItemCount;
@@ -157,136 +188,162 @@ public class LogisticMiner : BaseUnityPlugin
     private static void RecalcVeins(PlanetFactory factory)
     {
         var planetId = factory.planetId;
-        /* remove planet veins from dict */
-        if (PlanetVeinCacheData.TryGetValue(planetId, out var vcd))
+        lock (PlanetVeinCacheData)
         {
-            vcd.GenVeins(factory);
-        }
-        else
-        {
-            vcd = new VeinCacheData();
-            vcd.GenVeins(factory);
-            vcd.FrameNext = _frame + _miningFrames;
-            PlanetVeinCacheData.Add(planetId, vcd);
+            /* remove planet veins from dict */
+            if (PlanetVeinCacheData.TryGetValue(planetId, out var vcd))
+            {
+                vcd.GenVeins(factory);
+            }
+            else
+            {
+                vcd = new VeinCacheData();
+                vcd.GenVeins(factory);
+                vcd.FrameNext = _frame + _miningFrames;
+                PlanetVeinCacheData.Add(planetId, vcd);
+            }
         }
     }
 
     [HarmonyPostfix]
     [HarmonyPatch(typeof(FactorySystem), "CheckBeforeGameTick")]
-    private static void Miner(FactorySystem __instance)
+    private static void FactorySystemLogisticMiner(FactorySystem __instance)
     {
         if (_miningSpeedScaleLong <= 0)
             return;
         var factory = __instance.factory;
         var planetId = factory.planetId;
-        if (PlanetVeinCacheData.TryGetValue(planetId, out var vcd))
+        lock (PlanetVeinCacheData)
         {
-            if (vcd.FrameNext > _frame)
-                return;
-        }
-        else
-        {
-            PlanetVeinCacheData[planetId] = new VeinCacheData
+            if (PlanetVeinCacheData.TryGetValue(planetId, out var vcd))
             {
-                FrameNext = _frame + _miningFrames
-            };
-            return;
-        }
-
-        var planetTransport = __instance.planet.factory.transport;
-        var factoryProductionStat =
-            GameMain.statistics.production.factoryStatPool[__instance.factory.index];
-        var productRegister = factoryProductionStat?.productRegister;
-        PerformanceMonitor.BeginSample(ECpuWorkEntry.Miner);
-        do
-        {
-            for (var j = 1; j < planetTransport.stationCursor; j++)
+                if (vcd.FrameNext > _frame)
+                    return;
+            }
+            else
             {
-                var stationComponent = planetTransport.stationPool[j];
-                if (stationComponent == null) continue;
-                /* skip Orbital Collectors and Advanced Mining Machines */
-                if (stationComponent.isCollector || stationComponent.isVeinCollector) continue;
-                var storage = stationComponent.storage;
-                if (storage == null) continue;
-                var isCollecting = false;
-                for (var k = 0; k < stationComponent.storage.Length; k++)
+                PlanetVeinCacheData[planetId] = new VeinCacheData
                 {
-                    ref var stationStore = ref storage[k];
-                    if (stationStore.localLogic != ELogisticStorage.Demand ||
-                        stationStore.max <= stationStore.count)
-                        continue;
+                    FrameNext = _frame + _miningFrames
+                };
+                return;
+            }
 
-                    var isVein = vcd.HasVein(stationStore.itemId);
-                    var isVeinOrWater = isVein || stationStore.itemId == __instance.planet.waterItemId;
-                    if (!isVeinOrWater) continue;
-                    int amount;
-                    long energyConsume;
-                    isCollecting = true;
-                    var miningScale = _miningScale;
-                    if (miningScale == 0)
+            var planetTransport = __instance.planet.factory.transport;
+            var factoryProductionStat =
+                GameMain.statistics.production.factoryStatPool[__instance.factory.index];
+            var productRegister = factoryProductionStat?.productRegister;
+            PerformanceMonitor.BeginSample(ECpuWorkEntry.Miner);
+            do
+            {
+                for (var j = 1; j < planetTransport.stationCursor; j++)
+                {
+                    var stationComponent = planetTransport.stationPool[j];
+                    if (stationComponent == null) continue;
+                    /* skip Orbital Collectors and Advanced Mining Machines */
+                    if (stationComponent.isCollector || stationComponent.isVeinCollector) continue;
+                    var storage = stationComponent.storage;
+                    if (storage == null) continue;
+                    var isCollecting = false;
+                    for (var k = 0; k < stationComponent.storage.Length; k++)
                     {
-                        miningScale = _advancedMiningMachineUnlocked ? 300 : 100;
-                    }
-                    if (miningScale > 100 && stationStore.count * 2 > stationStore.max)
-                    {
-                        miningScale = 100 +
-                                      ((miningScale - 100) * (stationStore.max - stationStore.count) * 2 +
-                                          stationStore.max - 1) / stationStore.max;
-                    }
-
-                    if (isVein)
-                    {
-                        (amount, energyConsume) = vcd.Mine(factory, stationStore.itemId, miningScale, _miningSpeedScaleLong,
-                            stationComponent.energy);
-                        if (amount < 0)
-                        {
-                            k = int.MaxValue - 1;
+                        ref var stationStore = ref storage[k];
+                        if (stationStore.localLogic != ELogisticStorage.Demand ||
+                            stationStore.max <= stationStore.count)
                             continue;
+
+                        var isVein = vcd.HasVein(stationStore.itemId);
+                        var isVeinOrWater = isVein || stationStore.itemId == __instance.planet.waterItemId;
+                        if (!isVeinOrWater) continue;
+                        int amount;
+                        long energyConsume;
+                        isCollecting = true;
+                        var miningScale = _miningScale;
+                        if (miningScale == 0)
+                        {
+                            miningScale = _advancedMiningMachineUnlocked ? 300 : 100;
                         }
+
+                        if (miningScale > 100 && stationStore.count * 2 > stationStore.max)
+                        {
+                            miningScale = 100 +
+                                          ((miningScale - 100) * (stationStore.max - stationStore.count) * 2 +
+                                              stationStore.max - 1) / stationStore.max;
+                        }
+
+                        if (isVein)
+                        {
+                            (amount, energyConsume) = vcd.Mine(factory, stationStore.itemId, miningScale,
+                                _miningSpeedScaleLong,
+                                stationComponent.energy);
+                            if (amount < 0)
+                            {
+                                k = int.MaxValue - 1;
+                                continue;
+                            }
+                        }
+                        else
+                        {
+                            energyConsume = (_waterEnergyConsume * miningScale * miningScale + 9999L) / 100L /
+                                            _miningSpeedScaleLong;
+                            if (stationComponent.energy < energyConsume)
+                            {
+                                k = int.MaxValue - 1;
+                                continue;
+                            }
+
+                            amount = _waterSpeed * miningScale / 100;
+                        }
+
+                        if (amount <= 0) continue;
+                        stationStore.count += amount;
+                        if (factoryProductionStat != null)
+                            productRegister[stationStore.itemId] += amount;
+                        stationComponent.energy -= energyConsume;
+                    }
+
+                    if (!isCollecting || stationComponent.energy * 2 >= stationComponent.energyMax) continue;
+                    var index = stationComponent.isStellar ? _fuelIlsSlot : _fuelPlsSlot;
+                    if (index < 0 || index >= storage.Length)
+                        continue;
+                    var fuelCount = storage[index].count;
+                    if (fuelCount == 0) continue;
+                    if (!Fuels.TryGetValue(storage[index].itemId, out var val) || val.Item1 <= 0)
+                        continue;
+                    /* Sprayed fuels */
+                    int pretendIncLevel;
+                    if (val.Item2 && (pretendIncLevel = storage[index].inc / storage[index].count) > 0)
+                    {
+                        var count = (int)((stationComponent.energyMax - stationComponent.energy) * 1000L /
+                                          Cargo.incTable[pretendIncLevel] / 7L);
+                        if (count > fuelCount)
+                            count = fuelCount;
+                        var incLevel = SplitIncLevel(ref storage[index].count, ref storage[index].inc, count);
+                        if (incLevel > 10)
+                            incLevel = 10;
+                        stationComponent.energy += val.Item1 * count * (1000L + Cargo.incTable[incLevel]) / 1000L;
                     }
                     else
                     {
-                        energyConsume = (_waterEnergyConsume * miningScale * miningScale + 9999L) / 100L /
-                                        _miningSpeedScaleLong;
-                        if (stationComponent.energy < energyConsume)
-                        {
-                            k = int.MaxValue - 1;
-                            continue;
-                        }
-
-                        amount = _waterSpeed * miningScale / 100;
+                        var count = (int)((stationComponent.energyMax - stationComponent.energy) / val.Item1);
+                        if (count > fuelCount)
+                            count = fuelCount;
+                        SplitIncLevel(ref storage[index].count, ref storage[index].inc, count);
+                        stationComponent.energy += val.Item1 * count;
                     }
-
-                    if (amount <= 0) continue;
-                    stationStore.count += amount;
-                    if (factoryProductionStat != null)
-                        productRegister[stationStore.itemId] += amount;
-                    stationComponent.energy -= energyConsume;
                 }
 
-                if (!isCollecting || stationComponent.energy * 2 >= stationComponent.energyMax) continue;
-                var index = stationComponent.isStellar ? storage.Length - 2 : storage.Length - 1;
-                var fuelCount = storage[index].count;
-                if (fuelCount == 0) continue;
-                var heatValue = LDB.items.Select(storage[index].itemId).HeatValue;
-                if (heatValue <= 0) continue;
-                var count = (int)((stationComponent.energyMax - stationComponent.energy) /
-                                  heatValue);
-                if (count > fuelCount)
-                    count = fuelCount;
-                storage[index].count -= count;
-                stationComponent.energy += count * heatValue;
-            }
+                vcd.FrameNext += _miningFrames;
+            } while (vcd.FrameNext <= _frame);
 
-            vcd.FrameNext += _miningFrames;
-        } while (vcd.FrameNext <= _frame);
-    
-        PerformanceMonitor.EndSample(ECpuWorkEntry.Miner);
+            PerformanceMonitor.EndSample(ECpuWorkEntry.Miner);
+        }
     }
 
     private class VeinCacheData
     {
         public float FrameNext;
+
         /* stores list of indices to veinData, with an extra INT which indicates cout of veinGroups at last */
         private Dictionary<int, List<int>> _veins = new();
         private int _mineIndex = -1;
