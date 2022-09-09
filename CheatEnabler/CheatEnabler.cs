@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Reflection;
 using System.Reflection.Emit;
 using BepInEx;
 using HarmonyLib;
@@ -94,8 +93,6 @@ public class CheatEnabler : BaseUnityPlugin
 
     private class AlwaysInfiniteResource
     {
-        private static FieldInfo _rmulField = AccessTools.Field(typeof(GameDesc), nameof(GameDesc.resourceMultiplier));
-
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(GameDesc), "isInfiniteResource", MethodType.Getter)]
         private static IEnumerable<CodeInstruction> ForceInfiniteResource(IEnumerable<CodeInstruction> instructions)
