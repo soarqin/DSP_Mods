@@ -4,3 +4,6 @@
 # C# generated folders
 bin/
 obj/
+
+# packaged zips
+/*/package/*.zip

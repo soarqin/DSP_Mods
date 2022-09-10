@@ -5,7 +5,7 @@
     <AssemblyName>HideTips</AssemblyName>
     <BepInExPluginGuid>org.soardev.hidetips</BepInExPluginGuid>
     <Description>DSP MOD - HideTips</Description>
-    <Version>1.0.0</Version>
+    <Version>1.0.1</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
@@ -21,4 +21,8 @@
   <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all" />
   </ItemGroup>
+  
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="del package\$(ProjectName)-$(Version).zip&#xA;zip -9 -j package/$(ProjectName)-$(Version).zip $(TargetPath) package/icon.png package/manifest.json package/README.md" />
+  </Target>
 </Project>
