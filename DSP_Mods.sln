@@ -6,6 +6,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LogisticMiner", "LogisticMi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HideTips", "HideTips\HideTips.csproj", "{4EABD71D-477F-448B-801B-48F8745A3FA7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dustbin", "Dustbin\Dustbin.csproj", "{931F0230-5941-4E49-AB19-66921AF14096}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{4EABD71D-477F-448B-801B-48F8745A3FA7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4EABD71D-477F-448B-801B-48F8745A3FA7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4EABD71D-477F-448B-801B-48F8745A3FA7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{931F0230-5941-4E49-AB19-66921AF14096}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{931F0230-5941-4E49-AB19-66921AF14096}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{931F0230-5941-4E49-AB19-66921AF14096}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{931F0230-5941-4E49-AB19-66921AF14096}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
