@@ -2,7 +2,7 @@
   "name": "Dustbin",
   "version_number": "1.0.0",
   "website_url": "https://github.com/soarqin/DSP_Mods/tree/master/Dustbin",
-  "description": "Storages with capacity limited to zero act like dustbins(abandon incoming items)",
+  "description": "Storages can destroy incoming items while capacity limited to zero",
   "dependencies": [
     "xiaoye97-BepInEx-5.4.17"
   ]

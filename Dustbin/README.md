@@ -1,10 +1,10 @@
 ## Dustbin
 
-### Storages can abandon incoming items while capacity limited to zero
+### Storages can destroy incoming items while capacity limited to zero
 
 * Conditions to be dustbin: Storages with capacity limited to zero at top of stacks, and empty in 1st cell.
 * Items sent into dustbins are removed immediately.
-* Can get sands from abandoned items (with factors configurable):
+* Can get sands from destroyed items (with factors configurable):
     * Get 10/100 sands from each silicon/fractal silicon ore
     * Get 1 sand from any other normal item but fluid
 * Known bugs
