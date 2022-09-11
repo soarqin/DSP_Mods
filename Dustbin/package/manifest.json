@@ -1,6 +1,6 @@
 ﻿{
   "name": "Dustbin",
-  "version_number": "1.0.0",
+  "version_number": "1.0.1",
   "website_url": "https://github.com/soarqin/DSP_Mods/tree/master/Dustbin",
   "description": "Storages can destroy incoming items while capacity limited to zero",
   "dependencies": [

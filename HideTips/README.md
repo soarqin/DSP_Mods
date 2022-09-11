@@ -7,5 +7,6 @@
 * Each type of tips/messages is configurable individually.
 
 #### Updates
+
 * 1.0.1
-  * Hide 3 more random tutorial tips popup from bottom-right panel
+    * Hide 3 more random tutorial tips popup from bottom-right panel

@@ -13,3 +13,8 @@
 
       This is caused by a logic bug in original code where faulty set `lastFullItem` field of `StorageComponent` for
       empty storages.
+
+#### Updates
+
+* 1.0.1
+    * Remove a debug log

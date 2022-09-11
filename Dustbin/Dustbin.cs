@@ -49,7 +49,6 @@ public class Dustbin : BaseUnityPlugin
         out int remainInc, bool useBan = false)
     {
         remainInc = inc;
-        Logger.LogInfo($"${__instance.id} ${__instance.top}");
         if (!useBan || count == 0 || __instance.id != __instance.top) return true;
         var size = __instance.size;
         if (size == 0 || size != __instance.bans || __instance.grids[0].count > 0) return true;
