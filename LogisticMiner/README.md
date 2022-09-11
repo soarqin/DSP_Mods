@@ -8,7 +8,7 @@
 
   But it is heavily optimized to resolve performance, accuracy and other issues in PlanetMiner.
 * Only recalculate count of veins when vein chunks are changed (added/removed by foundations/Sandbox-Mode, or
-  exhausted), this removes Dictionary allocation on each planet for every frame which may impact performance.
+  exhausted), so this removes Dictionary allocation on each planet for every frame.
 * More accurate frame counting by use float number.
 * Does not increase power consumptions on `Veins Utilization` upgrades.
 * Separate power consumptions for veins, oil seeps and water.

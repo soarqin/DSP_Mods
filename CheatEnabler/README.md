@@ -1,8 +1,9 @@
 ## CheatEnabler
 
-### Enable cheat functions as below
+### Add various cheat functions while disabling abnormal determinants
 
-* Disable abnormal determinants (Disable all sanity checks, and can get achievements on using Console and Developer Mode shortcuts).
+* Disable abnormal determinants (Disable all sanity checks, and can get achievements on using Console and Developer Mode
+  shortcuts).
 * Shift+F4 to switch Developer Mode on/off.
     * Numpad 1: Gets all items and extends bag.
     * Numpad 2: Boosts walk speed, gathering speed and mecha energy restoration.

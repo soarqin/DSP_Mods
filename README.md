@@ -2,9 +2,10 @@
 
 ## [CheatEnabler](CheatEnabler)
 
-### Enable cheat functions as below
+### Add various cheat functions while disabling abnormal determinants
 
-* Disable abnormal determinants (Disable all sanity checks, and can get achievements on using Console and Developer Mode shortcuts).
+* Disable abnormal determinants (Disable all sanity checks, and can get achievements on using Console and Developer Mode
+  shortcuts).
 * Shift+F4 to switch Developer Mode on/off.
     * Numpad 1: Gets all items and extends bag.
     * Numpad 2: Boosts walk speed, gathering speed and mecha energy restoration.
@@ -43,7 +44,7 @@
 * Separate power consumptions for veins, oil seeps and water.
 * Power consumptions are counted by groups of veins and count of oil seeps, which is more sensible.
 * Can burn fuels in certain slot when energy below half of max.
-  * Sprayed fuels generates extra energy as normal.
+    * Sprayed fuels generates extra energy as normal.
 * All used parameters are configurable:
     * ILS has the same speed as normal Mining Machine for normal ores by default.
 
@@ -71,13 +72,16 @@
 
 ## [Dustbin](Dustbin)
 
-### Storages with capacity limited to zero act like dustbins(abandon incoming items)
+### Storages can abandon incoming items while capacity limited to zero
 
-* Conditions to become dustbin: Storages with capacity limited to zero at top of storage stacks with nothing in 1st cell.
-* Items sent into dustbin are removed immediately.
+* Conditions to be dustbin: Storages with capacity limited to zero at top of stacks, and empty in 1st cell.
+* Items sent into dustbins are removed immediately.
 * Can get sands from abandoned items (with factors configurable):
-    * Get 100 sands from each fractal silicon ore
-    * Get 10 sands from each silicon ore
-    * Get nothing from fluids
-    * Get 1 sand from any other normal item
-* Known bug: stack 1 more storage up on a zero limited one and remove it will cause dustbin stop working. Just put somethings in and take them out to make the dustbin working again.
+    * Get 10/100 sands from each silicon/fractal silicon ore
+    * Get 1 sand from any other normal item but fluid
+* Known bugs
+    * Stack 1 more storage up on a zero limited one and remove it will cause dustbin stop working. Just put somethings
+      in and take them out to make the dustbin working again.
+
+      This is caused by a logic bug in original code where faulty set `lastFullItem` field of `StorageComponent` for
+      empty storages.
