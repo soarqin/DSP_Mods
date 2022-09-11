@@ -1,6 +1,6 @@
 ## HideTips
 
-### Hide/Disable various in-game tips/messages
+### Hide/Disable various tutorial tips/messages
 
 * Tips/messages that can be hidden: random-reminder, tutorial, achievement/milestone card.
 * Skip prologue for new game.
