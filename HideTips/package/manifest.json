@@ -2,7 +2,7 @@
   "name": "HideTips",
   "version_number": "1.0.1",
   "website_url": "https://github.com/soarqin/DSP_Mods/tree/master/HideTips",
-  "description": "Hide various types of tutorial tips/messages",
+  "description": "Hide/Disable various tutorial tips/messages / 隐藏/屏蔽各种引导提示/消息",
   "dependencies": [
     "xiaoye97-BepInEx-5.4.17"
   ]

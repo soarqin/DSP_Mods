@@ -2,7 +2,7 @@
   "name": "LogisticMiner",
   "version_number": "0.1.0",
   "website_url": "https://github.com/soarqin/DSP_Mods/tree/master/LogisticMiner",
-  "description": "Mine directly from ILS/PLS, inspired by PlanetMiner",
+  "description": "Logistic Storages can mine all ores/water on current planet / 物流塔可以采集当前星球的全部矿产(以及水)",
   "dependencies": [
     "xiaoye97-BepInEx-5.4.17"
   ]

@@ -2,7 +2,7 @@
   "name": "Dustbin",
   "version_number": "1.0.1",
   "website_url": "https://github.com/soarqin/DSP_Mods/tree/master/Dustbin",
-  "description": "Storages can destroy incoming items while capacity limited to zero",
+  "description": "Storages can destroy incoming items while capacity limited to zero / 空间限制为0的储物仓可以销毁送进来的物品",
   "dependencies": [
     "xiaoye97-BepInEx-5.4.17"
   ]
