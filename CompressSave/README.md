@@ -1,5 +1,10 @@
 # CompressSave
 
+#### Compress game saves to reduce space use and boost save speed
+#### Original by [@bluedoom](https://github.com/bluedoom/DSP_Mod)(till 1.1.11) and [@starfi5h](https://github.com/starfi5h/DSP_CompressSave)(1.1.12), I just update it to supported latest game version.
+#### 压缩游戏存档以降低空间使用并提升保存速度
+#### 原作者 [@bluedoom](https://github.com/bluedoom/DSP_Mod)(直到1.1.11) 和 [@starfi5h](https://github.com/starfi5h/DSP_CompressSave)(1.1.12)，本人继续更新以支持最新游戏版本。
+
 ## Updates
 
 ### 1.1.13
@@ -8,13 +13,13 @@
 * Move "Sandbox Mode" checkbox on Save Panel to avoid overlap.
 * Avoid warning message on "Continue" button of main menu.
 
-### 1.1.12 (by [@starfi5h](https://github.com/starfi5h/DSP_CompressSave))
+### 1.1.12
 
 * Match game version 0.9.25.12007.
 
-### 1.1.11 (by [@bluedoom](https://github.com/bluedoom/DSP_Mod) till this version)
+### 1.1.11
 
-* fix 1.1.10 package issue.
+* Fix 1.1.10 package issue.
 
 ### 1.1.10
 
@@ -88,7 +93,7 @@
 
 ## 介绍
 
-* 减少存档容量30% / 存档用时75% (测试环境：机械硬盘 + i7-4790K@4.4G + DDR3 2400MHz)
+* 减少存档容量30% / 存档用时75% (测试环境：机械硬盘 + i7-4790K@4.4G + DDR3 2400MHz)  
 
   | 原存档 | 压缩后 |
   | - | - |

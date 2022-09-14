@@ -1,6 +1,7 @@
 # CheatEnabler
 
 #### Add various cheat functions while disabling abnormal determinants
+#### 添加一些作弊功能，同时屏蔽异常检测
 
 ## Usage
 

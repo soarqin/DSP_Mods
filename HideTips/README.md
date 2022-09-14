@@ -1,6 +1,7 @@
 # HideTips
 
 #### Hide/Disable various tutorial tips/messages
+#### 隐藏/屏蔽各种引导提示/消息
 
 ## Updates
 
