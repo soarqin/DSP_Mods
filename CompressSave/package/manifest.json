@@ -1,0 +1,7 @@
+{
+    "name": "CompressSave",
+    "version_number": "1.1.11",
+    "website_url": "https://github.com/bluedoom/DSP_Mod",
+    "description": "压缩存档，优化写入速度|Compress Save File and Optimize the write Speed.",
+    "dependencies": ["xiaoye97-BepInEx-5.4.17"]
+}
