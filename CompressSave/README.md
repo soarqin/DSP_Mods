@@ -5,7 +5,7 @@
 ### 1.1.13
 
 * Match game version 0.9.26.13026.
-* Move "Sandbox Mode" button on Save Panel to avoid overlap.
+* Move "Sandbox Mode" checkbox on Save Panel to avoid overlap.
 * Avoid warning message on "Continue" button of main menu.
 
 ### 1.1.12 (by [@starfi5h](https://github.com/starfi5h/DSP_CompressSave))
