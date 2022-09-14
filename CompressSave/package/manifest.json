@@ -1,7 +1,7 @@
 {
     "name": "CompressSave",
-    "version_number": "1.1.11",
-    "website_url": "https://github.com/bluedoom/DSP_Mod",
+    "version_number": "1.1.13",
+    "website_url": "https://github.com/soarqin/DSP_Mods/tree/master/CompressSave",
     "description": "Compress game saves to reduce space use and boost save speed / 压缩游戏存档以降低空间使用并提升保存速度",
     "dependencies": ["xiaoye97-BepInEx-5.4.17"]
 }
