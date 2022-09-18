@@ -142,6 +142,7 @@ class PatchSave
     [HarmonyPatch(typeof(GameSave), "LoadGameDesc")]
     [HarmonyPatch(typeof(GameSave), "ReadHeader")]
     [HarmonyPatch(typeof(GameSave), "ReadHeaderAndDescAndProperty")]
+    [HarmonyPatch(typeof(GameSave), "ReadModes")]
     static IEnumerable<CodeInstruction> LoadCurrentGame_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator iLGenerator)
     {
         /* using (BinaryReader binaryReader = new BinaryReader(fileStream)) => Create lzstream and replace binaryReader.

@@ -1,11 +1,15 @@
 # CompressSave
 
 #### Compress game saves to reduce space use and boost save speed
-#### Original by [@bluedoom](https://github.com/bluedoom/DSP_Mod)(till 1.1.11) and [@starfi5h](https://github.com/starfi5h/DSP_CompressSave)(1.1.12), I just update it to supported latest game version.
+#### Original by [@bluedoom](https://github.com/bluedoom/DSP_Mod)(till 1.1.11) and [@starfi5h](https://github.com/starfi5h/DSP_CompressSave)(1.1.12), I just update it to support latest game version.
 #### 压缩游戏存档以降低空间使用并提升保存速度
 #### 原作者 [@bluedoom](https://github.com/bluedoom/DSP_Mod)(直到1.1.11) 和 [@starfi5h](https://github.com/starfi5h/DSP_CompressSave)(1.1.12)，本人继续更新以支持最新游戏版本。
 
 ## Updates
+
+### 1.1.14
+* Fix Sandbox info on Save/Load Panel.
+* Fix DLL version info.
 
 ### 1.1.13
 
