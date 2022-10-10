@@ -24,3 +24,8 @@ Hide/Disable various tutorial tips/messages
 
 Storages can destroy incoming items while capacity limited to zero  
 空间限制为0的储物仓可以销毁送进来的物品
+
+# [OrbitalCollectorBatchBuild](OCBatchBuild)
+
+Batch build Orbital Collectors
+轨道采集器快速批量建造
