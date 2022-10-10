@@ -56,7 +56,7 @@ public class LogisticMiner : BaseUnityPlugin
             .Value - 1;
         _fuelPlsSlot = Config.Bind("General", "PLSFuelSlot", _fuelPlsSlot + 1,
                 new ConfigDescription("Fuel slot for PLS, set to 0 to disable",
-                    new AcceptableValueRange<int>(0, 3), Array.Empty<object>()))
+                    new AcceptableValueRange<int>(0, 4), Array.Empty<object>()))
             .Value - 1;
         if (!_cfgEnabled) return;
 
