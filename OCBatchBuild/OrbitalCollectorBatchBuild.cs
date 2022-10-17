@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using BepInEx;
 using BepInEx.Configuration;
 using HarmonyLib;
@@ -14,6 +15,7 @@ public class OrbitalCollectorBatchBuild : BaseUnityPlugin
 
     private bool _cfgEnabled = true;
     private static int _maxBuildCount;
+    private static bool _instantBuild = false;
 
     private void Awake()
     {
@@ -22,6 +24,7 @@ public class OrbitalCollectorBatchBuild : BaseUnityPlugin
                 new ConfigDescription("Maximum Orbital Collectors to build once, set to 0 to build as many as possible",
                     new AcceptableValueRange<int>(0, 40), new {}))
             .Value;
+        _instantBuild = Config.Bind("General", "InstantBuild", _instantBuild, "Enable to make Orbital Collectors built instantly. This is thought to be game logic breaking.").Value;
         Harmony.CreateAndPatchAll(typeof(OrbitalCollectorBatchBuild));
     }
 
@@ -45,6 +48,8 @@ public class OrbitalCollectorBatchBuild : BaseUnityPlugin
         var pos2 = buildPreview.lpos2;
         var itemId = buildPreview.item.ID;
         var countToBuild = _maxBuildCount - 1;
+        var prebuilds = new List<int> {-buildPreview.objId};
+        var player = __instance.player;
         for (var i = 0; i < 39 && countToBuild != 0; i++)
         {
             /* rotate for 1/40 on sphere */
@@ -62,7 +67,6 @@ public class OrbitalCollectorBatchBuild : BaseUnityPlugin
             }
             if (collide) continue;
 
-            var player = __instance.player;
             if (player.inhandItemId == itemId && player.inhandItemCount > 0)
             {
                 player.UseHandItems(1, out var _);
@@ -92,8 +96,14 @@ public class OrbitalCollectorBatchBuild : BaseUnityPlugin
             {
                 prebuild.parameters[j] = buildPreview.parameters[j];
             }
-            factory.AddPrebuildDataWithComponents(prebuild);
+            prebuilds.Add(factory.AddPrebuildDataWithComponents(prebuild));
             countToBuild--;
+        }
+
+        if (!_instantBuild) return;
+        foreach (var id in prebuilds)
+        {
+            factory.BuildFinally(player, id);
         }
     }
 }
