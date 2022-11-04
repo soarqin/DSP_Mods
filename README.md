@@ -27,5 +27,10 @@ Storages can destroy incoming items while capacity limited to zero
 
 # [OrbitalCollectorBatchBuild](OCBatchBuild)
 
-Batch build Orbital Collectors
+Batch build Orbital Collectors  
 轨道采集器快速批量建造
+
+# [UniverseGenTweaks](UniverseGenTweaks)
+
+Universe Generator Tweak  
+宇宙生成参数调节

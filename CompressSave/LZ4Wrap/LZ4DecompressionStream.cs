@@ -99,12 +99,12 @@ class LZ4DecompressionStream : Stream
             if (buffSize <= 0) return readlen;
 
             var rt = LZ4API.DecompressUpdateEx(dctx, dcmpBuffer, 0, dcmpBuffer.Capacity, srcBuffer, srcBuffer.Position,buffSize, null);
-            if (rt.expect < 0) throw new Exception(rt.expect.ToString());
-            if (rt.expect == 0) decompressFinish = true;
+            if (rt.Expect < 0) throw new Exception(rt.Expect.ToString());
+            if (rt.Expect == 0) decompressFinish = true;
 
-            srcBuffer.Position += (int)rt.readLen;
+            srcBuffer.Position += (int)rt.ReadLen;
             dcmpBuffer.Position = 0;
-            dcmpBuffer.Length = (int)rt.writeLen;
+            dcmpBuffer.Length = (int)rt.WriteLen;
         }
         readPos += readlen;
         return readlen;
@@ -118,12 +118,12 @@ class LZ4DecompressionStream : Stream
             if (buffSize <= 0) return -1;
 
             var rt = LZ4API.DecompressUpdateEx(dctx, dcmpBuffer, 0, dcmpBuffer.Capacity, srcBuffer, srcBuffer.Position, buffSize, null);
-            if (rt.expect < 0) throw new Exception(rt.expect.ToString());
-            if (rt.expect == 0) decompressFinish = true;
+            if (rt.Expect < 0) throw new Exception(rt.Expect.ToString());
+            if (rt.Expect == 0) decompressFinish = true;
 
-            srcBuffer.Position += (int)rt.readLen;
+            srcBuffer.Position += (int)rt.ReadLen;
             dcmpBuffer.Position = 0;
-            dcmpBuffer.Length = (int)rt.writeLen;
+            dcmpBuffer.Length = (int)rt.WriteLen;
         }
         return dcmpBuffer.Buffer[dcmpBuffer.Position];
     }
