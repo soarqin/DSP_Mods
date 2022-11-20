@@ -1,4 +1,4 @@
-﻿namespace CompressSave.LZ4Wrap;
+﻿namespace CompressSave.Wrapper;
 
 //public class BufferedFileStream : FileStream
 //{

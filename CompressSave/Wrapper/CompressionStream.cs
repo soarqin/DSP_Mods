@@ -2,10 +2,12 @@ using System;
 using System.IO;
 using System.Threading;
 
-namespace CompressSave.LZ4Wrap;
+namespace CompressSave.Wrapper;
 
-public class LZ4CompressionStream : Stream, IDisposable
+public class CompressionStream : Stream
 {
+    public WrapperDefines wrapper;
+
     public const int MB = 1024 * 1024;
     public override bool CanRead => false;
 
@@ -40,7 +42,7 @@ public class LZ4CompressionStream : Stream, IDisposable
     {
         if (errorCode < 0)
         {
-            LZ4API.FreeCompressContext(cctx);
+            wrapper.CompressContextFree(cctx);
             cctx = IntPtr.Zero;
             lastError = errorCode;
             throw new Exception(errorCode.ToString());
@@ -54,13 +56,13 @@ public class LZ4CompressionStream : Stream, IDisposable
         public byte[] outBuffer;
     }
 
-    public static CompressBuffer CreateBuffer(int ExBufferSize = 4 * MB)
+    public static CompressBuffer CreateBuffer(WrapperDefines wrapper, int ExBufferSize = 4 * MB)
     {
         try
         {
             return new CompressBuffer
             {
-                outBuffer = new byte[LZ4API.CalCompressOutBufferSize(ExBufferSize) + 1],
+                outBuffer = new byte[wrapper.CompressBufferBound(ExBufferSize) + 1],
                 readBuffer = new byte[ExBufferSize],
                 writeBuffer = new byte[ExBufferSize],
             };
@@ -75,11 +77,12 @@ public class LZ4CompressionStream : Stream, IDisposable
     public BufferWriter BufferWriter => bfferWriter;
     BufferWriter bfferWriter;
 
-    public LZ4CompressionStream(Stream outStream, CompressBuffer compressBuffer,bool useMultiThread)
+    public CompressionStream(WrapperDefines wrap, int compressionLevel, Stream outStream, CompressBuffer compressBuffer, bool useMultiThread)
     {
+        this.wrapper = wrap;
         this.outStream = outStream;
         InitBuffer(compressBuffer.readBuffer, compressBuffer.writeBuffer, compressBuffer.outBuffer);
-        long writeSize = LZ4API.CompressBegin(out cctx, outBuffer, outBuffer.Length);
+        long writeSize = wrapper.CompressBegin(out cctx, compressionLevel, outBuffer, outBuffer.Length);
         HandleError(writeSize);
         outStream.Write(outBuffer, 0, (int)writeSize);
         this.useMultiThread = useMultiThread;
@@ -89,13 +92,12 @@ public class LZ4CompressionStream : Stream, IDisposable
             compressThread = new Thread(() => CompressAsync());
             compressThread.Start();
         }
-
     }
 
     void InitBuffer(byte[] readBuffer, byte[] writeBuffer, byte[] outBuffer)
     {
         doubleBuffer = new DoubleBuffer(readBuffer ?? new byte[4 * MB], writeBuffer ?? new byte[4 * MB], Compress);
-        this.outBuffer = outBuffer ?? new byte[LZ4API.CalCompressOutBufferSize(writeBuffer.Length)];
+        this.outBuffer = outBuffer ?? new byte[wrapper.CompressBufferBound(writeBuffer.Length)];
         bfferWriter = new BufferWriter(doubleBuffer,this);
     }
 
@@ -130,7 +132,7 @@ public class LZ4CompressionStream : Stream, IDisposable
                 long writeSize = 0;
                 try
                 {
-                    writeSize = LZ4API.CompressUpdateEx(cctx, outBuffer, 0, consumeBuffer.Buffer, 0, consumeBuffer.Length);
+                    writeSize = wrapper.CompressUpdateEx(cctx, outBuffer, 0, consumeBuffer.Buffer, 0, consumeBuffer.Length);
                     HandleError(writeSize);
                 }
                 finally
@@ -188,7 +190,7 @@ public class LZ4CompressionStream : Stream, IDisposable
 
     protected void FreeContext()
     {
-        LZ4API.FreeCompressContext(cctx);
+        wrapper.CompressContextFree(cctx);
         cctx = IntPtr.Zero;
     }
 
@@ -207,7 +209,7 @@ public class LZ4CompressionStream : Stream, IDisposable
             stopWorker = true;
             doubleBuffer.SwapBuffer();
 
-            long size = LZ4API.CompressEnd(cctx, outBuffer, outBuffer.Length);
+            long size = wrapper.CompressEnd(cctx, outBuffer, outBuffer.Length);
             //Debug.Log($"End");
             outStream.Write(outBuffer, 0, (int)size);
             base.Close();

@@ -2,7 +2,7 @@
   "name": "UniverseGenTweaks",
   "version_number": "1.0.0",
   "website_url": "https://github.com/soarqin/DSP_Mods/tree/master/UniverseGenTweaks",
-  "description": "#### Universe Generator Tweaks / 宇宙生成参数调节",
+  "description": "Universe Generator Tweaks / 宇宙生成参数调节",
   "dependencies": [
     "xiaoye97-BepInEx-5.4.17"
   ]

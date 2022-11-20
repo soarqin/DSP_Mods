@@ -1,11 +1,11 @@
 using System;
 using System.IO;
 using BepInEx.Logging;
-using CompressSave.LZ4Wrap;
+using CompressSave.Wrapper;
 
 namespace CompressSave;
 
-class SaveUtil
+public static class SaveUtil
 {
     public static ManualLogSource logger;
         
@@ -14,10 +14,10 @@ class SaveUtil
     {
         Major = 0,
         Minor = 9,
-        Release = 26,
+        Release = 27,
     };
 
-    public static string UnzipToFile(LZ4DecompressionStream lzStream, string fullPath)
+    public static string UnzipToFile(DecompressionStream lzStream, string fullPath)
     {
         lzStream.ResetStream();
         string dir = Path.GetDirectoryName(fullPath);
@@ -51,13 +51,22 @@ class SaveUtil
         {
             using (FileStream fileStream = new FileStream(path, FileMode.Open, FileAccess.Read))
             {
-                if (!IsCompressedSave(fileStream)) return false;
-                using (var lzstream = new LZ4DecompressionStream(fileStream))
+                var compressType = SaveGetCompressType(fileStream);
+                switch (compressType)
                 {
-                    newSaveName = UnzipToFile(lzstream, path);
+                    case CompressionType.LZ4:
+                    case CompressionType.Zstd:
+                        using (var lzstream = new DecompressionStream(compressType == CompressionType.LZ4 ? PatchSave.lz4Wrapper : PatchSave.zstdWrapper, fileStream))
+                        {
+                            newSaveName = UnzipToFile(lzstream, path);
+                        }
+                        return true;
+                    case CompressionType.None:
+                        return false;
+                    default:
+                        throw new ArgumentOutOfRangeException();
                 }
             }
-            return true;
         }
         catch (Exception e)
         {
@@ -65,28 +74,34 @@ class SaveUtil
             return false;
         }
     }
-    public static bool IsCompressedSave(FileStream fs)
+    public static CompressionType SaveGetCompressType(FileStream fs)
     {
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i < 3; i++)
         {
             if (0xCC != fs.ReadByte())
-                return false;
+                return CompressionType.None;
         }
-        return true;
+
+        return fs.ReadByte() switch
+        {
+            0xCC => CompressionType.LZ4,
+            0xCD => CompressionType.Zstd,
+            _ => CompressionType.None
+        };
     }
 
-    internal static bool IsCompressedSave(string saveName)
+    internal static CompressionType SaveGetCompressType(string saveName)
     {
-        if (string.IsNullOrEmpty(saveName)) return false;
+        if (string.IsNullOrEmpty(saveName)) return CompressionType.None;
         try
         {
             using (FileStream fileStream = new FileStream(GetFullSavePath(saveName), FileMode.Open))
-                return IsCompressedSave(fileStream);
+                return SaveGetCompressType(fileStream);
         }
         catch (Exception e)
         {
             logger.LogWarning(e);
-            return false;
+            return CompressionType.None;
         }
     }
 

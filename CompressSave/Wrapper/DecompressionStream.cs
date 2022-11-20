@@ -1,10 +1,12 @@
 ﻿using System;
 using System.IO;
 
-namespace CompressSave.LZ4Wrap;
+namespace CompressSave.Wrapper;
 
-class LZ4DecompressionStream : Stream
+public class DecompressionStream : Stream
 {
+    public WrapperDefines wrapper;
+
     public override bool CanRead => true;
 
     public override bool CanSeek => false;
@@ -39,13 +41,14 @@ class LZ4DecompressionStream : Stream
     readonly long startPos = 0;
     long readPos = 0; //sum of readlen
 
-    public LZ4DecompressionStream(Stream inStream,int extraBufferSize = 512*1024)
+    public DecompressionStream(WrapperDefines wrap, Stream inStream,int extraBufferSize = 512*1024)
     {
+        this.wrapper = wrap;
         this.inStream = inStream;
         startPos = inStream.Position;
         srcBuffer = new ByteSpan(new byte[extraBufferSize]);
         int len = Fill();
-        long expect = LZ4API.DecompressBegin(ref dctx, srcBuffer.Buffer, ref len, out var blockSize);
+        long expect = wrapper.DecompressBegin(ref dctx, srcBuffer.Buffer, ref len, out var blockSize);
         srcBuffer.Position += len;
         if (expect < 0) throw new Exception(expect.ToString());
         dcmpBuffer = new ByteSpan(new byte[blockSize]);
@@ -57,7 +60,7 @@ class LZ4DecompressionStream : Stream
         decompressFinish = false;
         srcBuffer.Clear();
         dcmpBuffer.Clear();
-        LZ4API.ResetDecompresssCTX(dctx);
+        wrapper.DecompressContextReset(dctx);
         readPos = 0;
     }
 
@@ -85,7 +88,7 @@ class LZ4DecompressionStream : Stream
 
     protected override void Dispose(bool disposing)
     {
-        LZ4API.DecompressEnd(dctx);
+        wrapper.DecompressEnd(dctx);
         dctx = IntPtr.Zero;
         base.Dispose(disposing);
     }
@@ -98,7 +101,7 @@ class LZ4DecompressionStream : Stream
             var buffSize = Fill();
             if (buffSize <= 0) return readlen;
 
-            var rt = LZ4API.DecompressUpdateEx(dctx, dcmpBuffer, 0, dcmpBuffer.Capacity, srcBuffer, srcBuffer.Position,buffSize, null);
+            var rt = wrapper.DecompressUpdateEx(dctx, dcmpBuffer, 0, dcmpBuffer.Capacity, srcBuffer, srcBuffer.Position,buffSize);
             if (rt.Expect < 0) throw new Exception(rt.Expect.ToString());
             if (rt.Expect == 0) decompressFinish = true;
 
@@ -117,7 +120,7 @@ class LZ4DecompressionStream : Stream
             var buffSize = Fill();
             if (buffSize <= 0) return -1;
 
-            var rt = LZ4API.DecompressUpdateEx(dctx, dcmpBuffer, 0, dcmpBuffer.Capacity, srcBuffer, srcBuffer.Position, buffSize, null);
+            var rt = wrapper.DecompressUpdateEx(dctx, dcmpBuffer, 0, dcmpBuffer.Capacity, srcBuffer, srcBuffer.Position, buffSize);
             if (rt.Expect < 0) throw new Exception(rt.Expect.ToString());
             if (rt.Expect == 0) decompressFinish = true;
 

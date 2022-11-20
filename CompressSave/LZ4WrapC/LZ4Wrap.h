@@ -20,20 +20,27 @@ typedef struct
     LZ4F_CDict* dict;
 } CContext;
 
-LZ4API void FreeCompressContext(CContext* ctx);
+typedef struct
+{
+    LZ4F_dctx* dctx;
+    void* dict;
+    size_t dictSize;
+} DContext;
 
-LZ4API size_t CalCompressOutBufferSize(size_t inBufferSize);
+LZ4API void __stdcall CompressContextFree(CContext* ctx);
 
-LZ4API size_t CompressBegin(CContext** ctx, void* outBuff, size_t outCapacity, void* dictBuffer, size_t dictSize);
+LZ4API size_t __stdcall CompressBufferBound(size_t inBufferSize);
 
-LZ4API size_t CompressUpdate(CContext* ctx, void* dstBuffer, size_t dstCapacity, const void* srcBuffer, size_t srcSize);
+LZ4API size_t __stdcall CompressBegin(CContext** ctx, int compressionLevel, void* outBuff, size_t outCapacity, void* dict, size_t dictSize);
 
-LZ4API size_t CompressEnd(CContext* ctx, void* dstBuffer, size_t dstCapacity);
+LZ4API size_t __stdcall CompressUpdate(CContext* ctx, void* dstBuffer, size_t dstCapacity, const void* srcBuffer, size_t srcSize);
 
-LZ4API size_t DecompressBegin(LZ4F_dctx** pdctx, void* inBuffer, size_t* inBufferSize, size_t* blockSize);
+LZ4API size_t __stdcall CompressEnd(CContext* ctx, void* dstBuffer, size_t dstCapacity);
 
-LZ4API void ResetDecompresssCTX(LZ4F_dctx* dctx);
+LZ4API size_t __stdcall DecompressBegin(DContext** pdctx, void* inBuffer, size_t* inBufferSize, size_t* blockSize, void* dict, size_t dictSize);
 
-LZ4API size_t DecompressUpdate(LZ4F_dctx* dctx, void* outBuffer, size_t* outBufferSize, void* inBuffer, size_t* inBufferSize, void* dict, size_t dictSize);
+LZ4API void __stdcall DecompressContextReset(DContext* dctx);
 
-LZ4API size_t DecompressEnd(LZ4F_dctx* dctx);
+LZ4API size_t __stdcall DecompressUpdate(DContext* dctx, void* outBuffer, size_t* outBufferSize, void* inBuffer, size_t* inBufferSize);
+
+LZ4API size_t __stdcall DecompressEnd(DContext* dctx);

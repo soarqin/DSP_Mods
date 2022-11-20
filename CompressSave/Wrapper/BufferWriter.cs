@@ -3,7 +3,7 @@ using System.IO;
 using System.Text;
 using System.Runtime.CompilerServices;
 
-namespace CompressSave.LZ4Wrap;
+namespace CompressSave.Wrapper;
 
 public unsafe class BufferWriter : BinaryWriter
 {
@@ -40,13 +40,13 @@ public unsafe class BufferWriter : BinaryWriter
     byte* startPos;
     private Stream _baseStream;
 
-    public BufferWriter(DoubleBuffer doubleBuffer, LZ4CompressionStream outStream)
+    public BufferWriter(DoubleBuffer doubleBuffer, CompressionStream outStream)
         : this(doubleBuffer, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true), outStream)
     {
 
     }
 
-    BufferWriter(DoubleBuffer buffer , UTF8Encoding encoding, LZ4CompressionStream outStream) : base(Stream.Null, encoding)
+    BufferWriter(DoubleBuffer buffer , UTF8Encoding encoding, CompressionStream outStream) : base(Stream.Null, encoding)
     {
         _baseStream = outStream;
         swapedBytes = 0;

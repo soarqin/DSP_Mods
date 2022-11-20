@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace CompressSave.LZ4Wrap;
+namespace CompressSave.Wrapper;
 
 class BlackHoleStream : Stream
 {

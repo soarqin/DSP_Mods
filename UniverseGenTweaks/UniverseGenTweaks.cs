@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Reflection.Emit;
 using BepInEx;
 using BepInEx.Configuration;
@@ -15,19 +16,23 @@ public class UniverseGenTweaks : BaseUnityPlugin
         BepInEx.Logging.Logger.CreateLogSource(PluginInfo.PLUGIN_NAME);
 
     private bool _cfgEnabled = true;
-    private static int _maxStarCount = 64;
+    private static int _maxStarCount = 128;
     private static float _minDist = 2f;
-    private static float _maxDist = 3.2f;
+    private static float _minStep = 2f;
+    private static float _maxStep = 3.2f;
     private static float _flatten = 0.18f;
 
     private static Text _minDistTitle;
-    private static Text _maxDistTitle;
+    private static Text _minStepTitle;
+    private static Text _maxStepTitle;
     private static Text _flattenTitle;
     private static Slider _minDistSlider;
-    private static Slider _maxDistSlider;
+    private static Slider _minStepSlider;
+    private static Slider _maxStepSlider;
     private static Slider _flattenSlider;
     private static Text _minDistText;
-    private static Text _maxDistText;
+    private static Text _minStepText;
+    private static Text _maxStepText;
     private static Text _flattenText;
 
     private void Awake()
@@ -62,18 +67,24 @@ public class UniverseGenTweaks : BaseUnityPlugin
         __instance.starCountSlider.maxValue = _maxStarCount;
 
         createSliderWithText(__instance.starCountSlider, out _minDistTitle, out _minDistSlider, out _minDistText);
-        createSliderWithText(__instance.starCountSlider, out _maxDistTitle, out _maxDistSlider, out _maxDistText);
+        createSliderWithText(__instance.starCountSlider, out _minStepTitle, out _minStepSlider, out _minStepText);
+        createSliderWithText(__instance.starCountSlider, out _maxStepTitle, out _maxStepSlider, out _maxStepText);
         createSliderWithText(__instance.starCountSlider, out _flattenTitle, out _flattenSlider, out _flattenText);
 
         _minDistTitle.name = "min-dist";
         _minDistSlider.minValue = 10f;
-        _minDistSlider.maxValue = _maxDist * 10f;
+        _minDistSlider.maxValue = 50f;
         _minDistSlider.value = _minDist * 10f;
 
-        _maxDistTitle.name = "max-dist";
-        _maxDistSlider.minValue = _minDist * 10f;
-        _maxDistSlider.maxValue = 100f;
-        _maxDistSlider.value = _maxDist * 10f;
+        _minStepTitle.name = "min-step";
+        _minStepSlider.minValue = 10f;
+        _minStepSlider.maxValue = _maxStep * 10f - 1f;
+        _minStepSlider.value = _minStep * 10f;
+
+        _maxStepTitle.name = "max-step";
+        _maxStepSlider.minValue = _minStep * 10f + 1f;
+        _maxStepSlider.maxValue = 100f;
+        _maxStepSlider.value = _maxStep * 10f;
 
         _flattenTitle.name = "flatten";
         _flattenSlider.minValue = 1f;
@@ -81,12 +92,13 @@ public class UniverseGenTweaks : BaseUnityPlugin
         _flattenSlider.value = _flatten * 50f;
 
         transformDeltaY(_minDistTitle.transform, -0.3573f);
-        transformDeltaY(_maxDistTitle.transform, -0.3573f * 2);
-        transformDeltaY(_flattenTitle.transform, -0.3573f * 3);
-        transformDeltaY(__instance.resourceMultiplierSlider.transform.parent, -0.3573f * 3);
-        transformDeltaY(__instance.sandboxToggle.transform.parent, -0.3573f * 3);
-        transformDeltaY(__instance.propertyMultiplierText.transform, -0.3573f * 3);
-        transformDeltaY(__instance.addrText.transform.parent, -0.3573f * 3);
+        transformDeltaY(_minStepTitle.transform, -0.3573f * 2);
+        transformDeltaY(_maxStepTitle.transform, -0.3573f * 3);
+        transformDeltaY(_flattenTitle.transform, -0.3573f * 4);
+        transformDeltaY(__instance.resourceMultiplierSlider.transform.parent, -0.3573f * 4);
+        transformDeltaY(__instance.sandboxToggle.transform.parent, -0.3573f * 4);
+        transformDeltaY(__instance.propertyMultiplierText.transform, -0.3573f * 4);
+        transformDeltaY(__instance.addrText.transform.parent, -0.3573f * 4);
     }
 
     [HarmonyPrefix]
@@ -95,18 +107,21 @@ public class UniverseGenTweaks : BaseUnityPlugin
     {
         if (Localization.language == Language.zhCN)
         {
-            _minDistTitle.text = "恒星/步进距离";
-            _maxDistTitle.text = "步进最大距离";
+            _minDistTitle.text = "恒星最小距离";
+            _minStepTitle.text = "步进最小距离";
+            _maxStepTitle.text = "步进最大距离";
             _flattenTitle.text = "扁平度";
         }
         else
         {
-            _minDistTitle.text = "Star/Step Distance";
-            _maxDistTitle.text = "Step Distance Max";
+            _minDistTitle.text = "Star Distance Min";
+            _minStepTitle.text = "Step Distance Min";
+            _maxStepTitle.text = "Step Distance Max";
             _flattenTitle.text = "Flatten";
         }
         _minDistText.text = _minDist.ToString();
-        _maxDistText.text = _maxDist.ToString();
+        _minStepText.text = _minStep.ToString();
+        _maxStepText.text = _maxStep.ToString();
         _flattenText.text = _flatten.ToString();
     }
 
@@ -117,32 +132,58 @@ public class UniverseGenTweaks : BaseUnityPlugin
         _minDistSlider.onValueChanged.RemoveAllListeners();
         _minDistSlider.onValueChanged.AddListener(val =>
         {
-            var newVal = val / 10f;
+            var newVal = Mathf.Round(val) / 10f;
             if (newVal.Equals(_minDist)) return;
             _minDist = newVal;
-            _maxDistSlider.minValue = newVal * 10f;
             _minDistText.text = _minDist.ToString();
             __instance.SetStarmapGalaxy();
         });
-        _maxDistSlider.onValueChanged.RemoveAllListeners();
-        _maxDistSlider.onValueChanged.AddListener(val =>
+        _minStepSlider.onValueChanged.RemoveAllListeners();
+        _minStepSlider.onValueChanged.AddListener(val =>
         {
-            var newVal = val / 10f;
-            if (newVal.Equals(_maxDist)) return;
-            _maxDist = newVal;
-            _minDistSlider.maxValue = newVal * 10f;
-            _maxDistText.text = _maxDist.ToString();
+            var newVal = Mathf.Round(val) / 10f;
+            if (newVal.Equals(_minStep)) return;
+            _minStep = newVal;
+            _maxStepSlider.minValue = newVal * 10f;
+            _minStepText.text = _minStep.ToString();
+            __instance.SetStarmapGalaxy();
+        });
+        _maxStepSlider.onValueChanged.RemoveAllListeners();
+        _maxStepSlider.onValueChanged.AddListener(val =>
+        {
+            var newVal = Mathf.Round(val) / 10f;
+            if (newVal.Equals(_maxStep)) return;
+            _maxStep = newVal;
+            _minStepSlider.maxValue = newVal * 10f;
+            _maxStepText.text = _maxStep.ToString();
             __instance.SetStarmapGalaxy();
         });
         _flattenSlider.onValueChanged.RemoveAllListeners();
         _flattenSlider.onValueChanged.AddListener(val =>
         {
-            var newVal = val / 50f;
-            if (newVal.Equals(_maxDist)) return;
+            var newVal = Mathf.Round(val) / 50f;
+            if (newVal.Equals(_flatten)) return;
             _flatten = newVal;
             _flattenText.text = _flatten.ToString();
             __instance.SetStarmapGalaxy();
         });
+    }
+
+    [HarmonyTranspiler]
+    [HarmonyPatch(typeof(UIGalaxySelect), "OnStarCountSliderValueChange")]
+    static IEnumerable<CodeInstruction> PatchStarCountOnValueChange(IEnumerable<CodeInstruction> instructions)
+    {
+        foreach (var instruction in instructions)
+        {
+            if (instruction.opcode == OpCodes.Ldc_I4_S && instruction.OperandIs(80))
+            {
+                yield return new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(UniverseGenTweaks), "_maxStarCount"));
+            }
+            else
+            {
+                yield return instruction;
+            }
+        }
     }
 
     [HarmonyPrefix]
@@ -168,28 +209,31 @@ public class UniverseGenTweaks : BaseUnityPlugin
                 yield return pop;
                 yield return pop;
                 yield return new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(UniverseGenTweaks), "_minDist"));
-                yield return new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(UniverseGenTweaks), "_minDist"));
-                yield return new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(UniverseGenTweaks), "_maxDist"));
+                yield return new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(UniverseGenTweaks), "_minStep"));
+                yield return new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(UniverseGenTweaks), "_maxStep"));
                 yield return new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(UniverseGenTweaks), "_flatten"));
             }
             yield return instruction;
         }
     }
 
+    /* Patch `rand() * (maxStepLen - minStepLen) + minDist` to `rand() * (maxStepLen - minStepLen) + minStepLen`,
+       this should be a bugged line in original game code. */
     [HarmonyTranspiler]
-    [HarmonyPatch(typeof(UIGalaxySelect), "OnStarCountSliderValueChange")]
-    static IEnumerable<CodeInstruction> PatchStarCountOnValueChange(IEnumerable<CodeInstruction> instructions)
+    [HarmonyPatch(typeof(UniverseGen), "RandomPoses")]
+    static IEnumerable<CodeInstruction> PatchUniverGenRandomPoses(IEnumerable<CodeInstruction> instructions)
     {
+        var lastIsMul = false;
         foreach (var instruction in instructions)
         {
-            if (instruction.opcode == OpCodes.Ldc_I4_S && instruction.OperandIs(80))
+            if (lastIsMul && instruction.opcode == OpCodes.Ldarg_2)
             {
-                yield return new CodeInstruction(OpCodes.Ldc_I4, _maxStarCount);
+                lastIsMul = false;
+                yield return new CodeInstruction(OpCodes.Ldarg_3);
+                continue;
             }
-            else
-            {
-                yield return instruction;
-            }
+            lastIsMul = instruction.opcode == OpCodes.Mul;
+            yield return instruction;
         }
     }
 }

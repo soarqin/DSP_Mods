@@ -1,32 +1,28 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net472</TargetFramework>
     <AssemblyName>CompressSave</AssemblyName>
     <BepInExPluginGuid>org.soardev.compresssave</BepInExPluginGuid>
     <Description>DSP MOD - CompressSave</Description>
-    <Version>1.1.14</Version>
+    <Version>1.2.0</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
+    <TargetFramework>net472</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="BepInEx.Core" Version="5.*" />
     <PackageReference Include="BepInEx.PluginInfoProps" Version="1.*" />
     <PackageReference Include="DysonSphereProgram.GameLibs" Version="*-r.*" />
-    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.0.0" />
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.*" />
     <PackageReference Include="UnityEngine.Modules" Version="2018.4.12" IncludeAssets="compile" />
   </ItemGroup>
-  
+
   <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all" />
   </ItemGroup>
-  
-  <ItemGroup>
-    <Folder Include="LZ4Wrap" />
-  </ItemGroup>
-  
+
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="del /F /Q package\$(ProjectName)-$(Version).zip&#xA;zip -9 -j package/$(ProjectName)-$(Version).zip $(TargetPath) $(TargetDir)/System.Runtime.CompilerServices.Unsafe.dll package/LZ4.dll package/icon.png package/manifest.json README.md" />
+    <Exec Command="del /F /Q package\$(ProjectName)-$(Version).zip&#xA;zip -9 -j package/$(ProjectName)-$(Version).zip $(TargetPath) $(TargetDir)/System.Runtime.CompilerServices.Unsafe.dll package/lz4wrap.dll package/zstdwrap.dll package/icon.png package/manifest.json README.md" />
   </Target>
 </Project>

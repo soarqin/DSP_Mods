@@ -1,7 +1,13 @@
-﻿namespace CompressSave
+﻿namespace CompressSave;
+
+public enum CompressionType
 {
-    internal class CompressionGameSaveHeader: GameSaveHeader
-    {
-        public bool IsCompressed = false;
-    }
+    None = 0,
+    LZ4 = 1,
+    Zstd = 2,
+}
+
+internal class CompressionGameSaveHeader: GameSaveHeader
+{
+    public CompressionType CompressionType = CompressionType.None;
 }

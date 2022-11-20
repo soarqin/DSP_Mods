@@ -26,15 +26,23 @@ class PatchUILoadGame
             if (code.opcode == OpCodes.Ldstr && code.OperandIs("#,##0"))
             {
                 var iffalse = generator.DefineLabel();
+                var ifzstd = generator.DefineLabel();
                 var callLabel = generator.DefineLabel();
                 code.WithLabels(iffalse)
                     .operand = "(N)#,##0";
                 codes[i + 1].WithLabels(callLabel);
                 var IL = new List<CodeInstruction> {
                     new CodeInstruction(OpCodes.Ldloc_0),
-                    new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(CompressionGameSaveHeader),"IsCompressed")),
-                    new CodeInstruction(OpCodes.Brfalse_S,iffalse),
+                    new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(CompressionGameSaveHeader),"CompressionType")),
+                    new CodeInstruction(OpCodes.Ldc_I4_S, 0),
+                    new CodeInstruction(OpCodes.Beq_S, iffalse),
+                    new CodeInstruction(OpCodes.Ldloc_0),
+                    new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(CompressionGameSaveHeader),"CompressionType")),
+                    new CodeInstruction(OpCodes.Ldc_I4_S, 2),
+                    new CodeInstruction(OpCodes.Beq_S, ifzstd),
                     new CodeInstruction(OpCodes.Ldstr,"(LZ4)#,##0"),
+                    new CodeInstruction(OpCodes.Br_S,callLabel),
+                    new CodeInstruction(OpCodes.Ldstr,"(ZSTD)#,##0").WithLabels(ifzstd),
                     new CodeInstruction(OpCodes.Br_S,callLabel),
                 };
                 codes.InsertRange(i, IL);
@@ -48,7 +56,7 @@ class PatchUILoadGame
     [HarmonyPatch(typeof(UILoadGameWindow), "OnSelectedChange"), HarmonyPostfix]
     static void OnSelectedChange(UILoadGameWindow __instance, UIButton ___loadButton, Text ___prop3Text)
     {
-        bool compressedSave = (___prop3Text != null &&___prop3Text.text.Contains("LZ4")) || (___loadButton.button.interactable == false && SaveUtil.IsCompressedSave(__instance.selected?.saveName));
+        bool compressedSave = (___prop3Text != null && (___prop3Text.text.Contains("(LZ4)") || ___prop3Text.text.Contains("(ZSTD)"))) || (___loadButton.button.interactable == false && SaveUtil.SaveGetCompressType(__instance.selected?.saveName) != CompressionType.None);
         if (decompressButton)
             decompressButton.button.interactable = compressedSave;
     }

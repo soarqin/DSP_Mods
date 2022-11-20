@@ -1,16 +1,16 @@
 cmake_minimum_required(VERSION 3.2)
 
-project(LZ4Wrap)
+project(lz4wrap)
 
-add_library(LZ4 SHARED
+add_library(lz4wrap SHARED
   lz4/lz4.c lz4/lz4.h
   lz4/lz4frame.c lz4/lz4frame.h lz4/lz4frame_static.h
   lz4/lz4hc.c lz4/lz4hc.h
   lz4/xxhash.c lz4/xxhash.h
-  dllmain.c LZ4Wrap.c LZ4Wrap.h)
+  dllmain.c lz4wrap.c lz4wrap.h)
 
-target_compile_definitions(LZ4 PRIVATE LZ4WRAP_EXPORTS)
-target_include_directories(LZ4 PRIVATE lz4)
+target_compile_definitions(lz4wrap PRIVATE LZ4WRAP_EXPORTS)
+target_include_directories(lz4wrap PRIVATE lz4)
 if(WIN32)
-  set_target_properties(LZ4 PROPERTIES PREFIX "")
+  set_target_properties(lz4wrap PROPERTIES PREFIX "")
 endif()

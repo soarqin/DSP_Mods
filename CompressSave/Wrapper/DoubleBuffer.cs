@@ -1,7 +1,7 @@
 using System;
 using System.Threading;
 
-namespace CompressSave.LZ4Wrap;
+namespace CompressSave.Wrapper;
 
 public class ByteSpan
 {
