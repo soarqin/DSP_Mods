@@ -11,6 +11,7 @@
 * Match game version 0.9.27.15033.
 * Add new compression type: zstd (a bit slower but get better compression ratio than lz4).
 * Add config to set compression type and level(Don't use high compression levels for zstd as they are very slow).
+* Hide decompress button for normal save files.
 * Optimize native dlls for other compression library support:
   * Unified naming rules for filenames and export functions.
   * Add compression level support.

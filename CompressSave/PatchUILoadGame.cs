@@ -58,7 +58,10 @@ class PatchUILoadGame
     {
         bool compressedSave = (___prop3Text != null && (___prop3Text.text.Contains("(LZ4)") || ___prop3Text.text.Contains("(ZSTD)"))) || (___loadButton.button.interactable == false && SaveUtil.SaveGetCompressType(__instance.selected?.saveName) != CompressionType.None);
         if (decompressButton)
+        {
             decompressButton.button.interactable = compressedSave;
+            decompressButton.gameObject.SetActive(compressedSave);
+        }
     }
 
     [HarmonyPatch(typeof(UILoadGameWindow), "_OnOpen"), HarmonyPostfix]
@@ -79,7 +82,7 @@ class PatchUILoadGame
 
             if (localizer)
             {
-                localizer.stringKey = "Decompress".Translate();
+                localizer.stringKey = "Decompress";
                 localizer.translation = "Decompress".Translate();
             }
             if (text)
@@ -93,6 +96,7 @@ class PatchUILoadGame
                 }
             };
             decompressButton.button.interactable = false;
+            decompressButton.gameObject.SetActive(false);
         }
     }
         
