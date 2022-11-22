@@ -9,6 +9,13 @@ using CompressSave.Wrapper;
 
 namespace CompressSave;
 
+public enum CompressionType
+{
+    None = 0,
+    LZ4 = 1,
+    Zstd = 2,
+}
+
 [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
 public class CompressSave : BaseUnityPlugin
 {
@@ -43,8 +50,7 @@ public class CompressSave : BaseUnityPlugin
                         new AcceptableValueList<string>("lz4", "zstd", "none"), new {}))
                 .Value);
             PatchSave.CompressionLevelForSaves = Config.Bind("Compression", "Level", PatchSave.CompressionLevelForSaves,
-                    new ConfigDescription("Set default compression level. -1 for fastest level, 0 for default level. And positive levels for lz4: 3-12, for zstd: 1-22.",
-                        new AcceptableValueRange<int>(-1, 22), new {}))
+                    "Set default compression level.\n0 for default level.\n3 ~ 12 for lz4, -5 ~ 22 for zstd.\nSmaller level leads to faster speed and less compression ratio.")
                 .Value;
             PatchSave.CreateCompressBuffer();
             if (GameConfig.gameVersion != SaveUtil.VerifiedVersion)
@@ -217,10 +223,6 @@ class PatchSave
                 .MatchBack(false, new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(System.IO.Stream), "Seek")));
             if (matcher.IsValid)
                 matcher.Set(OpCodes.Call, AccessTools.Method(typeof(PatchSave), "ReadSeek"));
-            matcher.Start()
-                .MatchForward(false, new CodeMatch(OpCodes.Newobj, AccessTools.Constructor(typeof(GameSaveHeader))));
-            if (matcher.IsValid)
-                matcher.Set(OpCodes.Newobj, AccessTools.Constructor(typeof(CompressionGameSaveHeader))); //ReadHeader
 
             EnableDecompress = true;
             return matcher.InstructionEnumeration();
@@ -231,15 +233,6 @@ class PatchSave
             SaveUtil.logger.LogError(ex);
         }
         return instructions;
-    }
-
-    [HarmonyPostfix]
-    [HarmonyPatch(typeof(GameSave), "ReadHeader")]
-    [HarmonyPatch(typeof(GameSave), "ReadHeaderAndDescAndProperty")]
-    static void ReadHeader_Postfix(ref GameSaveHeader header)
-    {
-        if (header != null)
-            ((CompressionGameSaveHeader)header).CompressionType = CompressedType;
     }
 
     public static BinaryReader CreateBinaryReader(FileStream fileStream)

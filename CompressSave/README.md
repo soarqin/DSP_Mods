@@ -7,6 +7,14 @@
 
 ## Updates
 
+### 1.2.1
+* Simplified codes to display compression type and `Decompress` button on save/load UI, making CompressSave compatible with other MODs(like GalacticScale) which override `UILoadGameWindow::OnSelectedChange()`.
+* Add compression level -5 to -1 for zstd, which makes it working better than lz4(which is actually lz4hc used by lz4frame) now:
+  * -5 gets faster compression speed than lz4 with still a little better compression ratio.
+  * -1 has almost the same speed against lz4 with greater compression ratio.
+  * Due to bug of r2modman UI which does not support negative integer, the config value of compression level is not limited any more. 
+* move native wrapper DLLs into `x64` folder to avoid warning logs on loading BepInEx plugins.
+
 ### 1.2.0
 * Match game version 0.9.27.15033.
 * Add new compression type: zstd (a bit slower but get better compression ratio than lz4).

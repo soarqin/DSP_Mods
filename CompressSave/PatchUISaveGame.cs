@@ -6,35 +6,31 @@ namespace CompressSave;
 
 static class PatchUISaveGame
 {
+    [HarmonyPatch(typeof(UISaveGameWindow), "OnSelectedChange"), HarmonyPostfix]
+    static void OnSelectedChange(UISaveGameWindow __instance, Text ___prop3Text)
+    {
+        var compressedType = SaveUtil.SaveGetCompressType(__instance.selected?.saveName);
+        switch (compressedType)
+        {
+            case CompressionType.LZ4:
+                ___prop3Text.text = "(LZ4)" + ___prop3Text.text;
+                break;
+            case CompressionType.Zstd:
+                ___prop3Text.text = "(ZSTD)" + ___prop3Text.text;
+                break;
+            default:
+                ___prop3Text.text = "(N)" + ___prop3Text.text;
+                break;
+        }
+    }
+
     [HarmonyPatch(typeof(UISaveGameWindow), "_OnDestroy"), HarmonyPostfix]
     static void _OnDestroy()
     {
         //Console.WriteLine("OnCreate");
         context = new UIContext();
     }
-    //[HarmonyPatch(typeof(UISaveGameWindow), "_OnRegEvent"), HarmonyPostfix]
-    //static void _OnRegEvent()
-    //{
-    //    Console.WriteLine("OnRegEvent");
-    //}
-    //[HarmonyPatch(typeof(UISaveGameWindow), "_OnUnregEvent"), HarmonyPostfix]
-    //static void _OnUnregEvent()
-    //{
-    //    Console.WriteLine("OnUnregEvent");
-    //}
-
-    static void Test()
-    {
-        GameSave.ReadHeaderAndDescAndProperty("aa", true, out var header, out var desc, out var property);
-        if (header != null)
-            if (header is CompressionGameSaveHeader)
-                "b".Translate();
-            else
-                "a".Translate();
-        "d.A".Translate();
-        return;
-    }
-
+ 
     [HarmonyPatch(typeof(UISaveGameWindow), "OnSaveClick"), HarmonyReversePatch]
     static void OSaveGameAs(this UISaveGameWindow ui, int data) { }
 
