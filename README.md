@@ -22,8 +22,8 @@ Hide/Disable various tutorial tips/messages
 
 # [Dustbin](Dustbin)
 
-Storages can destroy incoming items while capacity limited to zero  
-空间限制为0的储物仓可以销毁送进来的物品
+Can turn Storages and Tanks into Dustbin(Destroy incoming items)  
+储物仓和储液罐可以转变为垃圾桶(销毁送进的物品)
 
 # [OrbitalCollectorBatchBuild](OCBatchBuild)
 
