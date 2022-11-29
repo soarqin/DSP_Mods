@@ -25,6 +25,11 @@ Hide/Disable various tutorial tips/messages
 Can turn Storages and Tanks into Dustbin(Destroy incoming items)  
 储物仓和储液罐可以转变为垃圾桶(销毁送进的物品)
 
+# [OverclockEverything](OverclockEverything)
+
+Boost nearly all structures
+加速几乎所有建筑功能
+
 # [OrbitalCollectorBatchBuild](OCBatchBuild)
 
 Batch build Orbital Collectors  

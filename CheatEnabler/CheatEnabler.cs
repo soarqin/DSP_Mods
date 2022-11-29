@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection.Emit;
 using BepInEx;
 using HarmonyLib;
@@ -14,6 +16,11 @@ public class CheatEnabler : BaseUnityPlugin
     private bool _devShortcuts = true;
     private bool _disableAbnormalChecks = true;
     private bool _alwaysInfiniteResource = true;
+    private bool _waterPumpAnywhere = true;
+    private static bool _rareVeinsOnBirthPlanet = true;
+    private static bool _flatBirthPlanet = true;
+    private static string _unlockTechToMaximumLevel = "";
+    private static readonly List<int> TechToUnlock = new();
 
     private void Awake()
     {
@@ -22,6 +29,14 @@ public class CheatEnabler : BaseUnityPlugin
             "disable all abnormal checks").Value;
         _alwaysInfiniteResource = Config.Bind("General", "AlwaysInfiniteResource", _alwaysInfiniteResource,
             "always infinite resource").Value;
+        _unlockTechToMaximumLevel = Config.Bind("General", "UnlockTechToMaxLevel", _unlockTechToMaximumLevel,
+            "Unlock listed tech to MaxLevel").Value;
+        _waterPumpAnywhere = Config.Bind("General", "WaterPumpAnywhere", _waterPumpAnywhere,
+            "Can pump water anywhere (while water type is not None)").Value;
+        _rareVeinsOnBirthPlanet = Config.Bind("General", "RareVeinsOnBirthPlanet", _rareVeinsOnBirthPlanet,
+            "Has rare veins on birth planet (except unipolar magnet)").Value;
+        _flatBirthPlanet = Config.Bind("General", "FlatBirthPlanet", _flatBirthPlanet,
+            "Birth planet is solid flat (no water)").Value;
         if (_devShortcuts)
         {
             Harmony.CreateAndPatchAll(typeof(DevShortcuts));
@@ -33,6 +48,26 @@ public class CheatEnabler : BaseUnityPlugin
         if (_alwaysInfiniteResource)
         {
             Harmony.CreateAndPatchAll(typeof(AlwaysInfiniteResource));
+        }
+
+        foreach (var idstr in _unlockTechToMaximumLevel.Split(','))
+        {
+            if (int.TryParse(idstr, out var id))
+            {
+                TechToUnlock.Add(id);
+            }
+        }
+        if (TechToUnlock.Count > 0)
+        {
+            Harmony.CreateAndPatchAll(typeof(UnlockTechOnGameStart));
+        }
+        if (_waterPumpAnywhere)
+        {
+            Harmony.CreateAndPatchAll(typeof(WaterPumperCheat));
+        }
+        if (_rareVeinsOnBirthPlanet || _flatBirthPlanet)
+        {
+            Harmony.CreateAndPatchAll(typeof(BirthPlanetCheat));
         }
     }
 
@@ -111,7 +146,7 @@ public class CheatEnabler : BaseUnityPlugin
         {
             foreach (var instruction in instructions)
             {
-                if (instruction.opcode == OpCodes.Ldc_R4 && instruction.operand.Equals(99.5f))
+                if (instruction.opcode == OpCodes.Ldc_R4 && instruction.OperandIs(99.5f))
                 {
                     yield return new CodeInstruction(OpCodes.Ldc_R4, 0f);
                 }
@@ -119,6 +154,144 @@ public class CheatEnabler : BaseUnityPlugin
                 {
                     yield return instruction;
                 }
+            }
+        }
+    }
+
+    private class UnlockTechOnGameStart
+    {
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(GameScenarioLogic), "NotifyOnGameBegin")]
+        private static void UnlockTechPatch()
+        {
+            var history = GameMain.history;
+            if (GameMain.mainPlayer == null || GameMain.mainPlayer.mecha == null)
+            {
+                return;
+            }
+            foreach (var currentTech in TechToUnlock)
+            {
+                UnlockTechRecursive(history, currentTech, 5000);
+            }
+            var techQueue = history.techQueue;
+            if (techQueue == null || techQueue.Length == 0)
+            {
+                return;
+            }
+            history.VarifyTechQueue();
+            if (history.currentTech > 0 && history.currentTech != techQueue[0])
+            {
+                history.AlterCurrentTech(techQueue[0]);
+            }
+        }
+
+        private static void UnlockTechRecursive(GameHistoryData history, int currentTech, int maxLevel = 10000)
+        {
+            var techStates = history.techStates;
+            if (techStates == null || !techStates.ContainsKey(currentTech))
+            {
+                return;
+            }
+            var techProto = LDB.techs.Select(currentTech);
+            if (techProto == null)
+            {
+                return;
+            }
+            var value = techStates[currentTech];
+            var maxLvl = Math.Min(maxLevel, value.maxLevel);
+            if (value.unlocked && value.curLevel >= maxLvl && value.hashUploaded >= value.hashNeeded)
+            {
+                return;
+            }
+            foreach (var preid in techProto.PreTechs)
+            {
+                UnlockTechRecursive(history, preid, maxLevel);
+            }
+
+            var techQueue = history.techQueue;
+            if (techQueue != null)
+            {
+                for (var i = 0; i < techQueue.Length; i++)
+                {
+                    if (techQueue[i] == currentTech)
+                    {
+                        techQueue[i] = 0;
+                    }
+                }
+            }
+
+            while (value.curLevel <= maxLvl)
+            {
+                for (var j = 0; j < techProto.UnlockFunctions.Length; j++)
+                {
+                    history.UnlockTechFunction(techProto.UnlockFunctions[j], techProto.UnlockValues[j], value.curLevel);
+                }
+                value.curLevel++;
+            }
+            value.curLevel = maxLvl;
+            value.unlocked = maxLvl >= value.maxLevel;
+            value.hashNeeded = techProto.GetHashNeeded(value.curLevel);
+            value.hashUploaded = maxLvl >= value.maxLevel ? value.hashNeeded : 0;
+            techStates[currentTech] = value;
+        }
+    }
+
+    private class BirthPlanetCheat
+    {
+        [HarmonyPostfix, HarmonyPatch(typeof(VFPreload), "InvokeOnLoadWorkEnded")]
+        private static void VFPreload_InvokeOnLoadWorkEnded_Postfix()
+        {
+            var theme = LDB.themes.Select(1);
+            if (_flatBirthPlanet)
+            {
+                theme.Algos[0] = 2;
+            }
+
+            if (_rareVeinsOnBirthPlanet)
+            {
+                theme.VeinSpot[2] = 2;
+                theme.VeinSpot[3] = 2;
+                theme.VeinCount[2] = 0.5f;
+                theme.VeinCount[3] = 0.5f;
+                theme.VeinOpacity[2] = 0.5f;
+                theme.VeinOpacity[3] = 0.5f;
+                theme.RareVeins = theme.RareVeins.Append(8).ToArray();
+                theme.RareSettings = theme.RareSettings.Concat(new float[]
+                {
+                    0.3f, 0.5f, 0.7f, 0.5f,
+                    0.3f, 0.5f, 0.7f, 0.5f,
+                    0.3f, 0.5f, 0.7f, 0.5f,
+                    0.3f, 0.5f, 0.7f, 0.5f,
+                    0.3f, 0.5f, 0.7f, 0.5f,
+                    0.3f, 0.5f, 0.7f, 0.5f,
+                }).ToArray();
+            }
+        }
+    }
+
+    private class WaterPumperCheat
+    {
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(BuildTool_BlueprintPaste), "CheckBuildConditions")]
+        [HarmonyPatch(typeof(BuildTool_Click), "CheckBuildConditions")]
+        private static IEnumerable<CodeInstruction> BuildTool_CheckBuildConditions_Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var isFirst = true;
+            foreach (var instr in instructions)
+            {
+                if (instr.opcode == OpCodes.Ldc_I4_S && instr.OperandIs(22))
+                {
+                    if (isFirst)
+                    {
+                        isFirst = false;
+                    }
+                    else
+                    {
+                        yield return new CodeInstruction(OpCodes.Ldc_I4_S, 0);
+                        continue;
+                    }
+                }
+                yield return instr;
             }
         }
     }
