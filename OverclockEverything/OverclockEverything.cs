@@ -14,7 +14,7 @@ public class Patch : BaseUnityPlugin
     public static uint[] beltSpeed = {
         2, 5, 10
     };
-    private static int inserterSpeedMultiplier = 2;
+    private static int sorterSpeedMultiplier = 2;
     private static int assembleSpeedMultiplier = 2;
     private static int powerConsumptionMultiplier = 2;
     private static long powerGenerationMultiplier = 4;
@@ -30,8 +30,8 @@ public class Patch : BaseUnityPlugin
             new ConfigDescription("Speed for Belt Mk.II", new AcceptableValueRange<uint>(1, 10))).Value;
         beltSpeed[2] = Config.Bind("Belt", "MkIII_Speed", beltSpeed[2],
             new ConfigDescription("Speed for Belt Mk.III", new AcceptableValueRange<uint>(1, 10))).Value;
-        inserterSpeedMultiplier = Config.Bind("Inserter", "SpeedMultiplier", inserterSpeedMultiplier,
-            new ConfigDescription("Speed multiplier for Inserters", new AcceptableValueRange<int>(1, 5))).Value;
+        sorterSpeedMultiplier = Config.Bind("Sorter", "SpeedMultiplier", sorterSpeedMultiplier,
+            new ConfigDescription("Speed multiplier for Sorters", new AcceptableValueRange<int>(1, 5))).Value;
         assembleSpeedMultiplier = Config.Bind("Assemble", "SpeedMultiplier", assembleSpeedMultiplier,
             new ConfigDescription("Speed multiplier for Smelters and Assembling Machines", new AcceptableValueRange<int>(1, 10))).Value;
         powerConsumptionMultiplier = Config.Bind("Assemble", "PowerConsumptionMultiplier", powerConsumptionMultiplier,
@@ -67,10 +67,10 @@ public class Patch : BaseUnityPlugin
         LDB.items.Select(2002).prefabDesc.beltSpeed = (int)beltSpeed[1];
         LDB.items.Select(2003).prefabDesc.beltSpeed = (int)beltSpeed[2];
 
-        // Inserters
-        LDB.items.Select(2011).prefabDesc.inserterSTT /= inserterSpeedMultiplier;
-        LDB.items.Select(2012).prefabDesc.inserterSTT /= inserterSpeedMultiplier;
-        LDB.items.Select(2013).prefabDesc.inserterSTT /= inserterSpeedMultiplier;
+        // Sorters
+        LDB.items.Select(2011).prefabDesc.inserterSTT /= sorterSpeedMultiplier;
+        LDB.items.Select(2012).prefabDesc.inserterSTT /= sorterSpeedMultiplier;
+        LDB.items.Select(2013).prefabDesc.inserterSTT /= sorterSpeedMultiplier;
 
         // Smelters
         BoostAssembler(2302);
