@@ -251,20 +251,20 @@ public class CheatEnabler : BaseUnityPlugin
             {
                 theme.VeinSpot[2] = 2;
                 theme.VeinSpot[3] = 2;
-                theme.VeinCount[2] = 0.5f;
-                theme.VeinCount[3] = 0.5f;
-                theme.VeinOpacity[2] = 0.5f;
-                theme.VeinOpacity[3] = 0.5f;
-                theme.RareVeins = theme.RareVeins.Append(8).ToArray();
-                theme.RareSettings = theme.RareSettings.Concat(new float[]
+                theme.VeinCount[2] = 0.7f;
+                theme.VeinCount[3] = 0.7f;
+                theme.VeinOpacity[2] = 1f;
+                theme.VeinOpacity[3] = 1f;
+                theme.RareVeins = new[] { 8, 9, 10, 11, 12, 13 };
+                theme.RareSettings = new[]
                 {
-                    0.3f, 0.5f, 0.7f, 0.5f,
-                    0.3f, 0.5f, 0.7f, 0.5f,
-                    0.3f, 0.5f, 0.7f, 0.5f,
-                    0.3f, 0.5f, 0.7f, 0.5f,
-                    0.3f, 0.5f, 0.7f, 0.5f,
-                    0.3f, 0.5f, 0.7f, 0.5f,
-                }).ToArray();
+                    1f, 1f, 0.5f, 1f,
+                    1f, 1f, 0.5f, 1f,
+                    1f, 1f, 0.5f, 1f,
+                    1f, 1f, 0.5f, 1f,
+                    1f, 1f, 0.5f, 1f,
+                    1f, 1f, 0.5f, 1f,
+                };
             }
         }
     }
