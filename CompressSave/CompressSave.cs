@@ -63,7 +63,7 @@ public class CompressSave : BaseUnityPlugin
             Harmony.CreateAndPatchAll(typeof(PatchUILoadGame));
         }
         else
-            SaveUtil.logger.LogWarning("LZ4.dll is not avaliable.");
+            SaveUtil.logger.LogWarning("Either lz4warp.dll or zstdwrap.dll is not avaliable.");
     }
 
     public void OnDestroy()
@@ -76,20 +76,19 @@ public class CompressSave : BaseUnityPlugin
 
 class PatchSave
 {
-    public static WrapperDefines lz4Wrapper = new LZ4API(), zstdWrapper = new ZstdAPI();
-    const long MB = 1024 * 1024;
-    private static CompressionStream.CompressBuffer compressBuffer;
-    public static bool UseCompressSave = false;
-    public static CompressionType CompressedType = CompressionType.None;
+    public static readonly WrapperDefines LZ4Wrapper = new LZ4API(), ZstdWrapper = new ZstdAPI();
+    private const long SizeInMBytes = 1024 * 1024;
+    private static CompressionStream.CompressBuffer _compressBuffer;
+    public static bool UseCompressSave;
+    private static CompressionType _compressedType = CompressionType.None;
     public static CompressionType CompressionTypeForSaves = CompressionType.LZ4;
-    public static int CompressionLevelForSaves = 0;
-    static Stream compressionStream = null;
+    public static int CompressionLevelForSaves;
+    private static Stream _compressionStream;
     public static bool EnableCompress;
-    public static bool EnableDecompress;
 
     public static void CreateCompressBuffer()
     {
-        compressBuffer = CompressionStream.CreateBuffer(CompressionTypeForSaves == CompressionType.LZ4 ? lz4Wrapper : zstdWrapper, (int)MB); //Bigger buffer for GS2 compatible
+        _compressBuffer = CompressionStream.CreateBuffer(CompressionTypeForSaves == CompressionType.LZ4 ? LZ4Wrapper : ZstdWrapper, (int)SizeInMBytes); //Bigger buffer for GS2 compatible
     }
 
     private static void WriteHeader(FileStream fileStream)
@@ -152,7 +151,7 @@ class PatchSave
 
     public static void MonitorStream(Stream fileStream)
     {
-        PerformanceMonitor.BeginStream(UseCompressSave ? compressionStream : fileStream);
+        PerformanceMonitor.BeginStream(UseCompressSave ? _compressionStream : fileStream);
     }
 
     public static BinaryWriter CreateBinaryWriter(FileStream fileStream)
@@ -161,8 +160,8 @@ class PatchSave
         {
             SaveUtil.logger.LogDebug("Begin compress save");
             WriteHeader(fileStream);
-                compressionStream = new CompressionStream(CompressionTypeForSaves == CompressionType.LZ4 ? lz4Wrapper : zstdWrapper, CompressionLevelForSaves, fileStream, compressBuffer, true); //need to dispose after use
-                return ((CompressionStream)compressionStream).BufferWriter;
+                _compressionStream = new CompressionStream(CompressionTypeForSaves == CompressionType.LZ4 ? LZ4Wrapper : ZstdWrapper, CompressionLevelForSaves, fileStream, _compressBuffer, true); //need to dispose after use
+                return ((CompressionStream)_compressionStream).BufferWriter;
         }
         SaveUtil.logger.LogDebug("Begin normal save");
         return new BinaryWriter(fileStream);
@@ -184,9 +183,9 @@ class PatchSave
     public static void DisposecompressionStream()
     {
         if (!UseCompressSave) return;
-        var writeflag = compressionStream.CanWrite;
-        compressionStream?.Dispose(); //Dispose need to be done before fstream closed.
-        compressionStream = null;
+        var writeflag = _compressionStream.CanWrite;
+        _compressionStream?.Dispose(); //Dispose need to be done before fstream closed.
+        _compressionStream = null;
         if (writeflag) //Reset UseCompressSave after writing to file
             UseCompressSave = false;
     }
@@ -224,7 +223,6 @@ class PatchSave
             if (matcher.IsValid)
                 matcher.Set(OpCodes.Call, AccessTools.Method(typeof(PatchSave), "ReadSeek"));
 
-            EnableDecompress = true;
             return matcher.InstructionEnumeration();
         }
         catch (Exception ex)
@@ -237,13 +235,13 @@ class PatchSave
 
     public static BinaryReader CreateBinaryReader(FileStream fileStream)
     {
-        switch (CompressedType = SaveUtil.SaveGetCompressType(fileStream))
+        switch (_compressedType = SaveUtil.SaveGetCompressType(fileStream))
         {
             case CompressionType.LZ4:
             case CompressionType.Zstd:
                 UseCompressSave = true;
-                compressionStream = new DecompressionStream(CompressedType == CompressionType.LZ4 ? lz4Wrapper : zstdWrapper, fileStream);
-                return new PeekableReader((DecompressionStream)compressionStream);
+                _compressionStream = new DecompressionStream(_compressedType == CompressionType.LZ4 ? LZ4Wrapper : ZstdWrapper, fileStream);
+                return new PeekableReader((DecompressionStream)_compressionStream);
             case CompressionType.None:
                 UseCompressSave = false;
                 fileStream.Seek(0, SeekOrigin.Begin);
@@ -255,12 +253,12 @@ class PatchSave
 
     public static long FileLengthRead(BinaryReader binaryReader)
     {
-        switch (CompressedType)
+        switch (_compressedType)
         {
             case CompressionType.LZ4:
             case CompressionType.Zstd:
                 binaryReader.ReadInt64();
-                return compressionStream.Length;
+                return _compressionStream.Length;
             case CompressionType.None:
             default:
                 return binaryReader.ReadInt64();
@@ -269,13 +267,13 @@ class PatchSave
 
     public static long ReadSeek(FileStream fileStream, long offset, SeekOrigin origin)
     {
-        switch (CompressedType)
+        switch (_compressedType)
         {
             case CompressionType.LZ4:
             case CompressionType.Zstd:
                 while (offset > 0)
-                    offset -= compressionStream.Read(compressBuffer.outBuffer, 0, (int)offset);
-                return compressionStream.Position;
+                    offset -= _compressionStream.Read(_compressBuffer.outBuffer, 0, (int)offset);
+                return _compressionStream.Position;
             case CompressionType.None:
             default:
                 return fileStream.Seek(offset, origin);

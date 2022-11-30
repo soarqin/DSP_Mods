@@ -8,7 +8,6 @@ namespace CompressSave;
 public static class SaveUtil
 {
     public static ManualLogSource logger;
-        
 
     public static readonly Version VerifiedVersion = new Version
     {
@@ -17,7 +16,7 @@ public static class SaveUtil
         Release = 27,
     };
 
-    public static string UnzipToFile(DecompressionStream lzStream, string fullPath)
+    private static string UnzipToFile(DecompressionStream lzStream, string fullPath)
     {
         lzStream.ResetStream();
         string dir = Path.GetDirectoryName(fullPath);
@@ -56,7 +55,7 @@ public static class SaveUtil
                 {
                     case CompressionType.LZ4:
                     case CompressionType.Zstd:
-                        using (var lzstream = new DecompressionStream(compressType == CompressionType.LZ4 ? PatchSave.lz4Wrapper : PatchSave.zstdWrapper, fileStream))
+                        using (var lzstream = new DecompressionStream(compressType == CompressionType.LZ4 ? PatchSave.LZ4Wrapper : PatchSave.ZstdWrapper, fileStream))
                         {
                             newSaveName = UnzipToFile(lzstream, path);
                         }
@@ -105,10 +104,5 @@ public static class SaveUtil
         }
     }
 
-    public static string GetFullSavePath(string saveName) => GameConfig.gameSaveFolder + saveName + GameSave.saveExt;
-
-    public static bool VerifyVersion(int majorVersion, int minorVersion, int releaseVersion)
-    {
-        return new Version(majorVersion, minorVersion, releaseVersion) == VerifiedVersion;
-    }
+    private static string GetFullSavePath(string saveName) => GameConfig.gameSaveFolder + saveName + GameSave.saveExt;
 }
