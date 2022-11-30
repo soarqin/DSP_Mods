@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection.Emit;
 using BepInEx;
 using HarmonyLib;
@@ -18,7 +17,9 @@ public class CheatEnabler : BaseUnityPlugin
     private bool _alwaysInfiniteResource = true;
     private bool _waterPumpAnywhere = true;
     private static bool _rareVeinsOnBirthPlanet = true;
+    private static bool _unipolarOnBirthPlanet = true;
     private static bool _flatBirthPlanet = true;
+    private static bool _highLuminosityBirthStar = true;
     private static string _unlockTechToMaximumLevel = "";
     private static readonly List<int> TechToUnlock = new();
 
@@ -33,10 +34,14 @@ public class CheatEnabler : BaseUnityPlugin
             "Unlock listed tech to MaxLevel").Value;
         _waterPumpAnywhere = Config.Bind("General", "WaterPumpAnywhere", _waterPumpAnywhere,
             "Can pump water anywhere (while water type is not None)").Value;
-        _rareVeinsOnBirthPlanet = Config.Bind("General", "RareVeinsOnBirthPlanet", _rareVeinsOnBirthPlanet,
+        _rareVeinsOnBirthPlanet = Config.Bind("Birth", "RareVeinsOnBirthPlanet", _rareVeinsOnBirthPlanet,
             "Has rare veins on birth planet (except unipolar magnet)").Value;
-        _flatBirthPlanet = Config.Bind("General", "FlatBirthPlanet", _flatBirthPlanet,
+        _unipolarOnBirthPlanet = Config.Bind("Birth", "UnipolarOnBirthPlanet", _unipolarOnBirthPlanet,
+            "Unipolar magnet on birth planet (You should enable Rare Veins first)").Value;
+        _flatBirthPlanet = Config.Bind("Birth", "FlatBirthPlanet", _flatBirthPlanet,
             "Birth planet is solid flat (no water)").Value;
+        _highLuminosityBirthStar = Config.Bind("Birth", "HighLuminosityBirthStar", _highLuminosityBirthStar,
+            "Birth star has high luminosity").Value;
         if (_devShortcuts)
         {
             Harmony.CreateAndPatchAll(typeof(DevShortcuts));
@@ -65,7 +70,7 @@ public class CheatEnabler : BaseUnityPlugin
         {
             Harmony.CreateAndPatchAll(typeof(WaterPumperCheat));
         }
-        if (_rareVeinsOnBirthPlanet || _flatBirthPlanet)
+        if (_rareVeinsOnBirthPlanet || _flatBirthPlanet || _highLuminosityBirthStar)
         {
             Harmony.CreateAndPatchAll(typeof(BirthPlanetCheat));
         }
@@ -255,16 +260,38 @@ public class CheatEnabler : BaseUnityPlugin
                 theme.VeinCount[3] = 0.7f;
                 theme.VeinOpacity[2] = 1f;
                 theme.VeinOpacity[3] = 1f;
-                theme.RareVeins = new[] { 8, 9, 10, 11, 12, 13 };
-                theme.RareSettings = new[]
+                if (_unipolarOnBirthPlanet)
                 {
-                    1f, 1f, 0.5f, 1f,
-                    1f, 1f, 0.5f, 1f,
-                    1f, 1f, 0.5f, 1f,
-                    1f, 1f, 0.5f, 1f,
-                    1f, 1f, 0.5f, 1f,
-                    1f, 1f, 0.5f, 1f,
-                };
+                    theme.RareVeins = new[] { 8, 9, 10, 11, 12, 13, 14 };
+                    theme.RareSettings = new[]
+                    {
+                        1f, 1f, 0.5f, 1f,
+                        1f, 1f, 0.5f, 1f,
+                        1f, 1f, 0.5f, 1f,
+                        1f, 1f, 0.5f, 1f,
+                        1f, 1f, 0.5f, 1f,
+                        1f, 1f, 0.5f, 1f,
+                        1f, 1f, 0.4f, 1f,
+                    };
+                }
+                else
+                {
+                    theme.RareVeins = new[] { 8, 9, 10, 11, 12, 13 };
+                    theme.RareSettings = new[]
+                    {
+                        1f, 1f, 0.5f, 1f,
+                        1f, 1f, 0.5f, 1f,
+                        1f, 1f, 0.5f, 1f,
+                        1f, 1f, 0.5f, 1f,
+                        1f, 1f, 0.5f, 1f,
+                        1f, 1f, 0.5f, 1f,
+                    };
+                }
+            }
+
+            if (_highLuminosityBirthStar)
+            {
+                StarGen.specifyBirthStarMass = 100f;
             }
         }
     }
