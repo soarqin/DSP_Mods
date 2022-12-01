@@ -176,7 +176,7 @@ public class CheatEnabler : BaseUnityPlugin
             }
             foreach (var currentTech in TechToUnlock)
             {
-                UnlockTechRecursive(history, currentTech, 5000);
+                UnlockTechRecursive(history, currentTech);
             }
             var techQueue = history.techQueue;
             if (techQueue == null || techQueue.Length == 0)
@@ -190,7 +190,7 @@ public class CheatEnabler : BaseUnityPlugin
             }
         }
 
-        private static void UnlockTechRecursive(GameHistoryData history, int currentTech, int maxLevel = 10000)
+        private static void UnlockTechRecursive(GameHistoryData history, int currentTech, int maxLevel = 10001)
         {
             var techStates = history.techStates;
             if (techStates == null || !techStates.ContainsKey(currentTech))
@@ -203,7 +203,7 @@ public class CheatEnabler : BaseUnityPlugin
                 return;
             }
             var value = techStates[currentTech];
-            var maxLvl = Math.Min(maxLevel, value.maxLevel);
+            var maxLvl = Math.Min(maxLevel, value.maxLevel) + 1;
             if (value.unlocked && value.curLevel >= maxLvl && value.hashUploaded >= value.hashNeeded)
             {
                 return;
@@ -225,7 +225,7 @@ public class CheatEnabler : BaseUnityPlugin
                 }
             }
 
-            while (value.curLevel <= maxLvl)
+            while (value.curLevel < maxLvl)
             {
                 for (var j = 0; j < techProto.UnlockFunctions.Length; j++)
                 {
@@ -233,8 +233,8 @@ public class CheatEnabler : BaseUnityPlugin
                 }
                 value.curLevel++;
             }
-            value.curLevel = maxLvl;
-            value.unlocked = maxLvl >= value.maxLevel;
+            value.curLevel = maxLvl - 1;
+            value.unlocked = maxLvl > value.maxLevel;
             value.hashNeeded = techProto.GetHashNeeded(value.curLevel);
             value.hashUploaded = maxLvl >= value.maxLevel ? value.hashNeeded : 0;
             techStates[currentTech] = value;
