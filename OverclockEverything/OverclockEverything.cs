@@ -15,8 +15,11 @@ public class Patch : BaseUnityPlugin
         2, 5, 10
     };
     private static int sorterSpeedMultiplier = 2;
+    private static int sorterPowerConsumptionMultiplier = 2;
     private static int assembleSpeedMultiplier = 2;
-    private static int powerConsumptionMultiplier = 2;
+    private static int assemblePowerConsumptionMultiplier = 2;
+    private static int minerSpeedMultiplier = 2;
+    private static int minerPowerConsumptionMultiplier = 2;
     private static long powerGenerationMultiplier = 4;
     private static long powerFuelConsumptionMultiplier = 1;
 
@@ -32,9 +35,15 @@ public class Patch : BaseUnityPlugin
             new ConfigDescription("Speed for Belt Mk.III", new AcceptableValueRange<uint>(1, 10))).Value;
         sorterSpeedMultiplier = Config.Bind("Sorter", "SpeedMultiplier", sorterSpeedMultiplier,
             new ConfigDescription("Speed multiplier for Sorters", new AcceptableValueRange<int>(1, 5))).Value;
+        sorterPowerConsumptionMultiplier = Config.Bind("Sorter", "PowerConsumptionMultiplier", sorterPowerConsumptionMultiplier,
+            new ConfigDescription("Power consumption multiplier for Smelters and Assembling Machines", new AcceptableValueRange<int>(1, 100))).Value;
         assembleSpeedMultiplier = Config.Bind("Assemble", "SpeedMultiplier", assembleSpeedMultiplier,
             new ConfigDescription("Speed multiplier for Smelters and Assembling Machines", new AcceptableValueRange<int>(1, 10))).Value;
-        powerConsumptionMultiplier = Config.Bind("Assemble", "PowerConsumptionMultiplier", powerConsumptionMultiplier,
+        assemblePowerConsumptionMultiplier = Config.Bind("Assemble", "PowerConsumptionMultiplier", assemblePowerConsumptionMultiplier,
+            new ConfigDescription("Power consumption multiplier for Smelters and Assembling Machines", new AcceptableValueRange<int>(1, 100))).Value;
+        minerSpeedMultiplier = Config.Bind("Miner", "SpeedMultiplier", minerSpeedMultiplier,
+            new ConfigDescription("Speed multiplier for Smelters and Assembling Machines", new AcceptableValueRange<int>(1, 10))).Value;
+        minerPowerConsumptionMultiplier = Config.Bind("Miner", "PowerConsumptionMultiplier", minerPowerConsumptionMultiplier,
             new ConfigDescription("Power consumption multiplier for Smelters and Assembling Machines", new AcceptableValueRange<int>(1, 100))).Value;
         powerGenerationMultiplier = Config.Bind("Power", "GenerationMultiplier", powerGenerationMultiplier,
             new ConfigDescription("Power generation multiplier for all power providers", new AcceptableValueRange<long>(1, 10))).Value;
@@ -44,12 +53,28 @@ public class Patch : BaseUnityPlugin
         Harmony.CreateAndPatchAll(typeof(BeltFix));
     }
 
+    private static void BoostSorter(int id)
+    {
+        var prefabDesc = LDB.items.Select(id).prefabDesc;
+        prefabDesc.inserterSTT *= sorterSpeedMultiplier;
+        prefabDesc.idleEnergyPerTick *= sorterPowerConsumptionMultiplier;
+        prefabDesc.workEnergyPerTick *= sorterPowerConsumptionMultiplier;
+    }
+
     private static void BoostAssembler(int id)
     {
         var prefabDesc = LDB.items.Select(id).prefabDesc;
         prefabDesc.assemblerSpeed *= assembleSpeedMultiplier;
-        prefabDesc.idleEnergyPerTick *= powerConsumptionMultiplier;
-        prefabDesc.workEnergyPerTick *= powerConsumptionMultiplier;
+        prefabDesc.idleEnergyPerTick *= assemblePowerConsumptionMultiplier;
+        prefabDesc.workEnergyPerTick *= assemblePowerConsumptionMultiplier;
+    }
+
+    private static void BoostMiner(int id)
+    {
+        var prefabDesc = LDB.items.Select(id).prefabDesc;
+        prefabDesc.minerPeriod /= minerSpeedMultiplier;
+        prefabDesc.idleEnergyPerTick *= minerPowerConsumptionMultiplier;
+        prefabDesc.workEnergyPerTick *= minerPowerConsumptionMultiplier;
     }
 
     private static void BoostPower(int id)
@@ -57,6 +82,13 @@ public class Patch : BaseUnityPlugin
         var prefabDesc = LDB.items.Select(id).prefabDesc;
         prefabDesc.genEnergyPerTick *= powerGenerationMultiplier;
         prefabDesc.useFuelPerTick *= powerFuelConsumptionMultiplier;
+        if (prefabDesc.isPowerExchanger) prefabDesc.exchangeEnergyPerTick *= powerFuelConsumptionMultiplier;
+        if (prefabDesc.isAccumulator)
+        {
+            prefabDesc.maxAcuEnergy *= powerGenerationMultiplier;
+            prefabDesc.inputEnergyPerTick *= powerGenerationMultiplier;
+            prefabDesc.outputEnergyPerTick *= powerGenerationMultiplier;
+        }
     }
 
     [HarmonyPostfix, HarmonyPatch(typeof(VFPreload), "InvokeOnLoadWorkEnded")]
@@ -68,9 +100,9 @@ public class Patch : BaseUnityPlugin
         LDB.items.Select(2003).prefabDesc.beltSpeed = (int)beltSpeed[2];
 
         // Sorters
-        LDB.items.Select(2011).prefabDesc.inserterSTT /= sorterSpeedMultiplier;
-        LDB.items.Select(2012).prefabDesc.inserterSTT /= sorterSpeedMultiplier;
-        LDB.items.Select(2013).prefabDesc.inserterSTT /= sorterSpeedMultiplier;
+        BoostSorter(2011);
+        BoostSorter(2012);
+        BoostSorter(2013);
 
         // Smelters
         BoostAssembler(2302);
@@ -86,6 +118,15 @@ public class Patch : BaseUnityPlugin
         BoostAssembler(2308);
         // Collider
         BoostAssembler(2310);
+        
+        // Mining Machine
+        BoostMiner(2301);
+        // Advanced Mining Machine
+        BoostMiner(2316);
+        // Water Pump
+        BoostMiner(2306);
+        // Oil Extractor
+        BoostMiner(2307);
 
         // Thermal
         BoostPower(2204);
@@ -99,5 +140,9 @@ public class Patch : BaseUnityPlugin
         BoostPower(2205);
         // Geothermal
         BoostPower(2213);
+        // Energy Exchanger
+        BoostPower(2209);
+        // Ray Receiver
+        BoostPower(2208);
     }
 }
