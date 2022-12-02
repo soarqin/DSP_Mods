@@ -1,5 +1,4 @@
-﻿using System;
-using BepInEx;
+﻿using BepInEx;
 using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine;
@@ -58,71 +57,6 @@ public class Patch : BaseUnityPlugin
         Harmony.CreateAndPatchAll(typeof(BeltFix));
     }
 
-    private static void BoostSorter(int id)
-    {
-        var prefabDesc = LDB.items.Select(id).prefabDesc;
-        if (prefabDesc.isInserter)
-        {
-            prefabDesc.inserterSTT *= sorterSpeedMultiplier;
-            prefabDesc.idleEnergyPerTick *= sorterPowerConsumptionMultiplier;
-            prefabDesc.workEnergyPerTick *= sorterPowerConsumptionMultiplier;
-        }
-    }
-
-    private static void BoostAssembler(int id)
-    {
-        var prefabDesc = LDB.items.Select(id).prefabDesc;
-        if (prefabDesc.isAssembler)
-        {
-            prefabDesc.assemblerSpeed *= assembleSpeedMultiplier;
-            prefabDesc.idleEnergyPerTick *= assemblePowerConsumptionMultiplier;
-            prefabDesc.workEnergyPerTick *= assemblePowerConsumptionMultiplier;
-        }
-    }
-
-    private static void BoostMiner(int id)
-    {
-        var prefabDesc = LDB.items.Select(id).prefabDesc;
-        if (prefabDesc.minerType != EMinerType.None)
-        {
-            prefabDesc.minerPeriod /= minerSpeedMultiplier;
-            prefabDesc.idleEnergyPerTick *= minerPowerConsumptionMultiplier;
-            prefabDesc.workEnergyPerTick *= minerPowerConsumptionMultiplier;
-        }
-    }
-
-    private static void BoostPower(int id)
-    {
-        var prefabDesc = LDB.items.Select(id).prefabDesc;
-        if (prefabDesc.isPowerGen || prefabDesc.isPowerExchanger)
-        {
-            prefabDesc.genEnergyPerTick *= powerGenerationMultiplier;
-            prefabDesc.useFuelPerTick *= powerFuelConsumptionMultiplier;
-            if (prefabDesc.isPowerConsumer)
-            {
-                prefabDesc.idleEnergyPerTick *= powerGenerationMultiplier;
-                prefabDesc.workEnergyPerTick *= powerGenerationMultiplier;
-            }
-            if (prefabDesc.isPowerNode)
-            {
-                prefabDesc.powerConnectDistance =
-                    Mathf.Floor(prefabDesc.powerConnectDistance) * prefabDesc.powerConnectDistance + 0.5f;
-                prefabDesc.powerCoverRadius =
-                    Mathf.Floor(prefabDesc.powerCoverRadius) * prefabDesc.powerConnectDistance + 0.5f;
-            }
-            if (prefabDesc.isPowerExchanger)
-            {
-                prefabDesc.exchangeEnergyPerTick *= powerFuelConsumptionMultiplier;
-            }
-            if (prefabDesc.isAccumulator)
-            {
-                prefabDesc.maxAcuEnergy *= powerGenerationMultiplier;
-                prefabDesc.inputEnergyPerTick *= powerGenerationMultiplier;
-                prefabDesc.outputEnergyPerTick *= powerGenerationMultiplier;
-            }
-        }
-    }
-
     [HarmonyPostfix, HarmonyPriority(Priority.Last), HarmonyPatch(typeof(VFPreload), "InvokeOnLoadWorkEnded")]
     private static void VFPreload_InvokeOnLoadWorkEnded_Postfix()
     {
@@ -131,50 +65,54 @@ public class Patch : BaseUnityPlugin
         LDB.items.Select(2002).prefabDesc.beltSpeed = (int)beltSpeed[1];
         LDB.items.Select(2003).prefabDesc.beltSpeed = (int)beltSpeed[2];
 
-        // Sorters
-        BoostSorter(2011);
-        BoostSorter(2012);
-        BoostSorter(2013);
-
-        // Smelters
-        BoostAssembler(2302);
-        BoostAssembler(2315);
-        // Assemblers
-        BoostAssembler(2303);
-        BoostAssembler(2304);
-        BoostAssembler(2305);
-        // Chemical Plants
-        BoostAssembler(2309);
-        BoostAssembler(2317);
-        // Refiner
-        BoostAssembler(2308);
-        // Collider
-        BoostAssembler(2310);
-        
-        // Mining Machine
-        BoostMiner(2301);
-        // Advanced Mining Machine
-        BoostMiner(2316);
-        // Water Pump
-        BoostMiner(2306);
-        // Oil Extractor
-        BoostMiner(2307);
-
-        // Thermal
-        BoostPower(2204);
-        // Fusion
-        BoostPower(2211);
-        // Artificial Star
-        BoostPower(2210);
-        // Wind Turbine
-        BoostPower(2203);
-        // Solar Panel
-        BoostPower(2205);
-        // Geothermal
-        BoostPower(2213);
-        // Energy Exchanger
-        BoostPower(2209);
-        // Ray Receiver
-        BoostPower(2208);
+        foreach (var proto in LDB.items.dataArray)
+        {
+            var prefabDesc = proto.prefabDesc;
+            if (prefabDesc.isInserter)
+            {
+                prefabDesc.inserterSTT *= sorterSpeedMultiplier;
+                prefabDesc.idleEnergyPerTick *= sorterPowerConsumptionMultiplier;
+                prefabDesc.workEnergyPerTick *= sorterPowerConsumptionMultiplier;
+            }
+            if (prefabDesc.isAssembler)
+            {
+                prefabDesc.assemblerSpeed *= assembleSpeedMultiplier;
+                prefabDesc.idleEnergyPerTick *= assemblePowerConsumptionMultiplier;
+                prefabDesc.workEnergyPerTick *= assemblePowerConsumptionMultiplier;
+            }
+            if (prefabDesc.minerType != EMinerType.None)
+            {
+                prefabDesc.minerPeriod /= minerSpeedMultiplier;
+                prefabDesc.idleEnergyPerTick *= minerPowerConsumptionMultiplier;
+                prefabDesc.workEnergyPerTick *= minerPowerConsumptionMultiplier;
+            }
+            if (prefabDesc.isPowerGen || prefabDesc.isPowerExchanger || prefabDesc.isAccumulator)
+            {
+                prefabDesc.genEnergyPerTick *= powerGenerationMultiplier;
+                prefabDesc.useFuelPerTick *= powerFuelConsumptionMultiplier;
+                if (prefabDesc.isPowerConsumer)
+                {
+                    prefabDesc.idleEnergyPerTick *= powerGenerationMultiplier;
+                    prefabDesc.workEnergyPerTick *= powerGenerationMultiplier;
+                }
+                if (prefabDesc.isPowerExchanger)
+                {
+                    prefabDesc.exchangeEnergyPerTick *= powerFuelConsumptionMultiplier;
+                }
+                if (prefabDesc.isAccumulator)
+                {
+                    prefabDesc.maxAcuEnergy *= powerGenerationMultiplier;
+                    prefabDesc.inputEnergyPerTick *= powerGenerationMultiplier;
+                    prefabDesc.outputEnergyPerTick *= powerGenerationMultiplier;
+                }
+            }
+            if (prefabDesc.isPowerNode)
+            {
+                prefabDesc.powerConnectDistance =
+                    Mathf.Floor(prefabDesc.powerConnectDistance) * prefabDesc.powerConnectDistance + 0.5f;
+                prefabDesc.powerCoverRadius =
+                    Mathf.Floor(prefabDesc.powerCoverRadius) * prefabDesc.powerConnectDistance + 0.5f;
+            }
+        }
     }
 }
