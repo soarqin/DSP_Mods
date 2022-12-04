@@ -1,4 +1,6 @@
-﻿using BepInEx;
+﻿using System.Collections.Generic;
+using System.Reflection.Emit;
+using BepInEx;
 using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine;
@@ -57,6 +59,48 @@ public class Patch : BaseUnityPlugin
         Harmony.CreateAndPatchAll(typeof(BeltFix));
     }
 
+    [HarmonyTranspiler, HarmonyPatch(typeof(LabComponent), "SetFunction")]
+    private static IEnumerable<CodeInstruction> LabComponent_SetFunction_Transpiler(IEnumerable<CodeInstruction> instructions)
+    {
+        var lastIsLdc10000 = false;
+        foreach (var instr in instructions)
+        {
+            if (instr.opcode == OpCodes.Ldc_I4 && instr.OperandIs(10000))
+            {
+                lastIsLdc10000 = true;
+            }
+            else
+            {
+                if (lastIsLdc10000)
+                {
+                    lastIsLdc10000 = false;
+                    if (instr.opcode == OpCodes.Stfld)
+                    {
+                        yield return new CodeInstruction(OpCodes.Ldc_I4, assembleSpeedMultiplier);
+                        yield return new CodeInstruction(OpCodes.Mul);
+                    }
+                }
+            }
+            yield return instr;
+        }
+    }
+
+    [HarmonyTranspiler, HarmonyPatch(typeof(MechaForge), "GameTick")]
+    private static IEnumerable<CodeInstruction> MechaForge_GameTick_Transpiler(IEnumerable<CodeInstruction> instructions)
+    {
+        foreach (var instr in instructions)
+        {
+            if (instr.opcode == OpCodes.Ldc_R4 && instr.OperandIs(10000f))
+            {
+                yield return new CodeInstruction(OpCodes.Ldc_R4, 10000f * assembleSpeedMultiplier);
+            }
+            else
+            {
+                yield return instr;
+            }
+        }
+    }
+
     [HarmonyPostfix, HarmonyPriority(Priority.Last), HarmonyPatch(typeof(VFPreload), "InvokeOnLoadWorkEnded")]
     private static void VFPreload_InvokeOnLoadWorkEnded_Postfix()
     {
@@ -70,9 +114,13 @@ public class Patch : BaseUnityPlugin
             var prefabDesc = proto.prefabDesc;
             if (prefabDesc.isInserter)
             {
-                prefabDesc.inserterSTT *= sorterSpeedMultiplier;
+                prefabDesc.inserterSTT /= sorterSpeedMultiplier;
                 prefabDesc.idleEnergyPerTick *= sorterPowerConsumptionMultiplier;
                 prefabDesc.workEnergyPerTick *= sorterPowerConsumptionMultiplier;
+            }
+            if (prefabDesc.isLab)
+            {
+                prefabDesc.labAssembleSpeed *= assembleSpeedMultiplier;
             }
             if (prefabDesc.isAssembler)
             {
@@ -108,10 +156,12 @@ public class Patch : BaseUnityPlugin
             }
             if (prefabDesc.isPowerNode)
             {
+                var ival = Mathf.Floor(prefabDesc.powerConnectDistance);
                 prefabDesc.powerConnectDistance =
-                    Mathf.Floor(prefabDesc.powerConnectDistance) * prefabDesc.powerConnectDistance + 0.5f;
+                    ival * powerSupplyAreaMultiplier + (prefabDesc.powerConnectDistance - ival);
+                ival = Mathf.Floor(prefabDesc.powerCoverRadius);
                 prefabDesc.powerCoverRadius =
-                    Mathf.Floor(prefabDesc.powerCoverRadius) * prefabDesc.powerConnectDistance + 0.5f;
+                    ival * powerSupplyAreaMultiplier + (prefabDesc.powerCoverRadius - ival);
             }
         }
     }
