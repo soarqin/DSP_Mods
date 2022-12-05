@@ -1,5 +1,5 @@
-﻿using HarmonyLib;
-using UnityEngine;
+﻿using System.IO;
+using HarmonyLib;
 
 namespace Dustbin;
 
@@ -14,6 +14,32 @@ public static class TankPatch
     {
         tankIsDustbin.Reset();
         lastTankId = 0;
+    }
+
+    public static void Export(BinaryWriter w)
+    {
+        var tempStream = new MemoryStream();
+        var tempWriter = new BinaryWriter(tempStream);
+        int count = 0;
+        tankIsDustbin.ForEachIsDustbin(i =>
+        {
+            tempWriter.Write(i);
+            count++;
+        });
+        w.Write(count);
+        tempStream.Position = 0;
+        /* FixMe: May BinaryWriter not sync with its BaseStream while subclass overrides Write()? */
+        tempStream.CopyTo(w.BaseStream);
+        tempWriter.Dispose();
+        tempStream.Dispose();
+    }
+
+    public static void Import(BinaryReader r)
+    {
+        for (var count = r.ReadInt32(); count > 0; count--)
+        {
+            tankIsDustbin[r.ReadInt32()] = true;
+        }
     }
 
     [HarmonyPostfix]
@@ -69,38 +95,22 @@ public static class TankPatch
     }
 
     [HarmonyPrefix]
-    [HarmonyPatch(typeof(TankComponent), "Export")]
-    private static void TankComponent_Export_Prefix(ref TankComponent __instance, out int __state)
+    [HarmonyPatch(typeof(FactoryStorage), "RemoveTankComponent")]
+    private static void FactoryStorage_RemoveTankComponent_Prefix(FactoryStorage __instance, int id)
     {
-        if (tankIsDustbin[__instance.id])
+        if (__instance.tankPool[id].id != 0)
         {
-            __state = __instance.fluidInc;
-            __instance.fluidInc = -__instance.fluidInc - 1;
+            tankIsDustbin[id] = false;
         }
-        else
-        {
-            __state = -1;
-        }
-    }
-    
-    [HarmonyPostfix]
-    [HarmonyPatch(typeof(TankComponent), "Export")]
-    private static void TankComponent_Export_Postfix(ref TankComponent __instance, int __state)
-    {
-        if (__state < 0) return;
-        __instance.fluidInc = __state;
     }
 
+    /* We keep this to make MOD compatible with older version */
     [HarmonyPostfix]
     [HarmonyPatch(typeof(TankComponent), "Import")]
     private static void TankComponent_Import_Postfix(TankComponent __instance)
     {
-        if (__instance.fluidInc >= 0)
-            tankIsDustbin[__instance.id] = false;
-        else
-        {
-            tankIsDustbin[__instance.id] = true;
-            __instance.fluidInc = -__instance.fluidInc - 1;
-        }
+        if (__instance.fluidInc >= 0) return;
+        tankIsDustbin[__instance.id] = true;
+        __instance.fluidInc = -__instance.fluidInc - 1;
     }
 }

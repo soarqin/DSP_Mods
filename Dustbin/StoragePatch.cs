@@ -1,4 +1,5 @@
-﻿using HarmonyLib;
+﻿using System.IO;
+using HarmonyLib;
 using UnityEngine;
 
 namespace Dustbin;
@@ -14,6 +15,32 @@ public static class StoragePatch
     {
         storageIsDustbin.Reset();
         lastStorageId = 0;
+    }
+
+    public static void Export(BinaryWriter w)
+    {
+        var tempStream = new MemoryStream();
+        var tempWriter = new BinaryWriter(tempStream);
+        int count = 0;
+        storageIsDustbin.ForEachIsDustbin(i =>
+        {
+            tempWriter.Write(i);
+            count++;
+        });
+        w.Write(count);
+        tempStream.Position = 0;
+        /* FixMe: May BinaryWriter not sync with its BaseStream while subclass overrides Write()? */
+        tempStream.CopyTo(w.BaseStream);
+        tempWriter.Dispose();
+        tempStream.Dispose();
+    }
+
+    public static void Import(BinaryReader r)
+    {
+        for (var count = r.ReadInt32(); count > 0; count--)
+        {
+            storageIsDustbin[r.ReadInt32()] = true;
+        }
     }
 
     [HarmonyPostfix]
@@ -81,38 +108,24 @@ public static class StoragePatch
     }
 
     [HarmonyPrefix]
-    [HarmonyPatch(typeof(StorageComponent), "Export")]
-    private static void StorageComponent_Export_Prefix(StorageComponent __instance, out int __state)
+    [HarmonyPatch(typeof(FactoryStorage), "RemoveStorageComponent")]
+    private static void FactoryStorage_RemoveStorageComponent_Prefix(FactoryStorage __instance, int id)
     {
-        if (storageIsDustbin[__instance.id])
+        var storage = __instance.storagePool[id];
+        if (storage != null && storage.id != 0)
         {
-            __state = __instance.bans;
-            __instance.bans = -__instance.bans - 1;
-        }
-        else
-        {
-            __state = -1;
+            storageIsDustbin[id] = false;
         }
     }
 
-    [HarmonyPostfix]
-    [HarmonyPatch(typeof(StorageComponent), "Export")]
-    private static void StorageComponent_Export_Postfix(StorageComponent __instance, int __state)
-    {
-        if (__state < 0) return;
-        __instance.bans = __state;
-    }
-
+    /* We keep this to make MOD compatible with older version */
     [HarmonyPostfix]
     [HarmonyPatch(typeof(StorageComponent), "Import")]
     private static void StorageComponent_Import_Postfix(StorageComponent __instance)
     {
-        if ((__instance.bans & 0x8000) == 0)
-            storageIsDustbin[__instance.id] = false;
-        else
-        {
-            storageIsDustbin[__instance.id] = true;
-            __instance.bans ^= 0x8000;
-        }
+        if (__instance.bans >= 0)
+            return;
+        storageIsDustbin[__instance.id] = true;
+        __instance.bans = -__instance.bans - 1;
     }
 }

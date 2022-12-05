@@ -1,47 +1,62 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections;
+using System.IO;
 using System.Linq;
-using System.Reflection.Emit;
 using BepInEx;
+using crecheng.DSPModSave;
 using HarmonyLib;
-using UnityEngine;
 
 namespace Dustbin;
 
-class IsDusbinIndexer
+public class IsDusbinIndexer
 {
-    private bool[] store = new bool[256];
+    private bool[] _store = new bool[256];
 
     public bool this[int index]
     {
         get
         {
-            if (index < 0 || index >= store.Length) return false;
-            return store[index];
+            if (index < 0 || index >= _store.Length) return false;
+            return _store[index];
         }
         set
         {
-            if (index >= store.Length)
+            if (index >= _store.Length)
             {
-                var oldLen = store.Length;
+                var oldLen = _store.Length;
                 var newLen = oldLen * 2;
-                var oldArr = store;
-                store = new bool[newLen];
-                Array.Copy(oldArr, store, oldLen);
+                var oldArr = _store;
+                _store = new bool[newLen];
+                Array.Copy(oldArr, _store, oldLen);
             }
-            store[index] = value;
+            _store[index] = value;
         }
     }
 
     public void Reset()
     {
-        store = new bool[256];
+        _store = new bool[256];
+    }
+
+    public delegate void ForEachFunc(int id);
+    public void ForEachIsDustbin(ForEachFunc func)
+    {
+        var len = _store.Length;
+        for (var i = 0; i < len; i++)
+        {
+            if (_store[i])
+            {
+                func(i);
+            }
+        }
     }
 }
 
 [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
-public class Dustbin : BaseUnityPlugin
+[BepInDependency(DSPModSavePlugin.MODGUID)]
+public class Dustbin : BaseUnityPlugin, IModCanSave
 {
+    private const ushort ModSaveVersion = 1;
     private new static readonly BepInEx.Logging.ManualLogSource Logger =
         BepInEx.Logging.Logger.CreateLogSource(PluginInfo.PLUGIN_NAME);
 
@@ -78,5 +93,26 @@ public class Dustbin : BaseUnityPlugin
         IsFluid = new bool[maxId + 1];
         foreach (var id in ItemProto.fluids)
             IsFluid[id] = true;
+    }
+
+    public void Export(BinaryWriter w)
+    {
+        w.Write(ModSaveVersion);
+        StoragePatch.Export(w);
+        TankPatch.Export(w);
+    }
+
+    public void Import(BinaryReader r)
+    {
+        var version = r.ReadUInt16();
+        if (version > 0)
+        {
+            StoragePatch.Import(r);
+            TankPatch.Import(r);
+        }
+    }
+
+    public void IntoOtherSave()
+    {
     }
 }
