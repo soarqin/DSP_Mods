@@ -17,6 +17,8 @@ public class Patch : BaseUnityPlugin
     public static uint[] beltSpeed = {
         2, 5, 10
     };
+
+    private static bool initialized = false;
     private static int sorterSpeedMultiplier = 2;
     private static int sorterPowerConsumptionMultiplier = 2;
     private static int assembleSpeedMultiplier = 2;
@@ -104,6 +106,8 @@ public class Patch : BaseUnityPlugin
     [HarmonyPostfix, HarmonyPriority(Priority.Last), HarmonyPatch(typeof(VFPreload), "InvokeOnLoadWorkEnded")]
     private static void VFPreload_InvokeOnLoadWorkEnded_Postfix()
     {
+        if (initialized) return;
+        initialized = true;
         // Belts
         LDB.items.Select(2001).prefabDesc.beltSpeed = (int)beltSpeed[0];
         LDB.items.Select(2002).prefabDesc.beltSpeed = (int)beltSpeed[1];
