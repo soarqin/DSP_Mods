@@ -1,44 +1,139 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using HarmonyLib;
 
 namespace Dustbin;
+
+using IsDustbinIndexer = DynamicObjectArray<DynamicObjectArray<DynamicValueArray<bool>>>;
+
+public class DynamicValueArray<T> where T: struct
+{
+    private T[] _store = new T[16];
+
+    public T this[int index]
+    {
+        get
+        {
+            if (index < 0 || index >= _store.Length) return default;
+            return _store[index];
+        }
+        set
+        {
+            if (index >= _store.Length)
+            {
+                Array.Resize(ref _store, _store.Length * 2);
+            }
+            _store[index] = value;
+        }
+    }
+
+    public void Reset()
+    {
+        _store = new T[16];
+    }
+
+    public delegate void ForEachFunc(int id, T value);
+    public void ForEach(ForEachFunc func)
+    {
+        var len = _store.Length;
+        for (var i = 0; i < len; i++)
+        {
+            func(i, _store[i]);
+        }
+    }
+}
+
+public class DynamicObjectArray<T> where T: class, new()
+{
+    private T[] _store = new T[16];
+
+    public T this[int index]
+    {
+        get
+        {
+            if (index < 0 || index >= _store.Length) return null;
+            var result = _store[index];
+            if (result == null)
+            {
+                result = new T();
+                _store[index] = result;
+            }
+            return result;
+        }
+    }
+
+    public void Reset()
+    {
+        _store = new T[16];
+    }
+
+    public delegate void ForEachFunc(int id, T value);
+    public void ForEach(ForEachFunc func)
+    {
+        var len = _store.Length;
+        for (var i = 0; i < len; i++)
+        {
+            func(i, _store[i]);
+        }
+    }
+}
 
 [HarmonyPatch]
 public static class TankPatch
 {
     private static MyCheckBox _tankDustbinCheckBox;
     private static int lastTankId;
-    private static IsDusbinIndexer tankIsDustbin = new();
+    private static IsDustbinIndexer tankIsDustbin = new();
 
     public static void Reset()
     {
-        tankIsDustbin.Reset();
         lastTankId = 0;
+        tankIsDustbin.Reset();
     }
 
     public static void Export(BinaryWriter w)
     {
         var tempStream = new MemoryStream();
         var tempWriter = new BinaryWriter(tempStream);
-        int count = 0;
-        tankIsDustbin.ForEachIsDustbin(i =>
+        tankIsDustbin.ForEach((i, star) =>
         {
-            tempWriter.Write(i);
-            count++;
+            star?.ForEach((j, planet) =>
+            {
+                var count = 0;
+                planet?.ForEach((id, v) =>
+                {
+                    if (!v) return;
+                    tempWriter.Write(id);
+                    count++;
+                });
+                if (count == 0) return;
+
+                tempWriter.Flush();
+                tempStream.Position = 0;
+                w.Write((byte)2);
+                var planetId = i * 100 + j;
+                w.Write(planetId);
+                w.Write(count);
+                /* FixMe: May BinaryWriter not sync with its BaseStream while subclass overrides Write()? */
+                tempStream.CopyTo(w.BaseStream);
+                tempStream.SetLength(0);
+            });
         });
-        w.Write(count);
-        tempStream.Position = 0;
-        /* FixMe: May BinaryWriter not sync with its BaseStream while subclass overrides Write()? */
-        tempStream.CopyTo(w.BaseStream);
         tempWriter.Dispose();
         tempStream.Dispose();
     }
 
     public static void Import(BinaryReader r)
     {
-        for (var count = r.ReadInt32(); count > 0; count--)
+        while (r.PeekChar() == 2)
         {
-            tankIsDustbin[r.ReadInt32()] = true;
+            r.ReadByte();
+            var planetId = r.ReadInt32();
+            var data = tankIsDustbin[planetId / 100][planetId % 100];
+            for (var count = r.ReadInt32(); count > 0; count--)
+            {
+                data[r.ReadInt32()] = true;
+            }
         }
     }
 
@@ -52,7 +147,8 @@ public static class TankPatch
         {
             var tankId = window.tankId;
             if (tankId <= 0 || window.storage.tankPool[tankId].id != tankId) return;
-            tankIsDustbin[tankId] = _tankDustbinCheckBox.Checked;
+            var planetId = window.storage.planet.id;
+            tankIsDustbin[planetId / 100][planetId % 100][tankId] = _tankDustbinCheckBox.Checked;
         };
     }
     
@@ -65,15 +161,17 @@ public static class TankPatch
         lastTankId = tankId;
         if (tankId > 0 && __instance.storage.tankPool[tankId].id == tankId)
         {
-            _tankDustbinCheckBox.Checked = tankIsDustbin[tankId];
+            var planetId = __instance.storage.planet.id;
+            _tankDustbinCheckBox.Checked = tankIsDustbin[planetId / 100][planetId % 100][tankId];
         }
     }
 
     [HarmonyPrefix]
     [HarmonyPatch(typeof(TankComponent), "GameTick")]
-    private static void TankComponent_GameTick_Prefix(ref TankComponent __instance, out long __state)
+    private static void TankComponent_GameTick_Prefix(ref TankComponent __instance, out long __state, PlanetFactory factory)
     {
-        if (tankIsDustbin[__instance.id])
+        var planetId = factory.planetId;
+        if (tankIsDustbin[planetId / 100][planetId % 100][__instance.id])
         {
             __state = ((long)__instance.fluidInc << 36) | ((long)__instance.fluidCount << 16) | (uint)__instance.fluidId;
             __instance.fluidId = __instance.fluidCount = __instance.fluidInc = 0;
@@ -100,17 +198,8 @@ public static class TankPatch
     {
         if (__instance.tankPool[id].id != 0)
         {
-            tankIsDustbin[id] = false;
+            var planetId = __instance.planet.id;
+            tankIsDustbin[planetId / 100][planetId % 100][id] = false;
         }
-    }
-
-    /* We keep this to make MOD compatible with older version */
-    [HarmonyPostfix]
-    [HarmonyPatch(typeof(TankComponent), "Import")]
-    private static void TankComponent_Import_Postfix(TankComponent __instance)
-    {
-        if (__instance.fluidInc >= 0) return;
-        tankIsDustbin[__instance.id] = true;
-        __instance.fluidInc = -__instance.fluidInc - 1;
     }
 }

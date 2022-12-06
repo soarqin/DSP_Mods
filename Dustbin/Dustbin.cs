@@ -8,56 +8,12 @@ using HarmonyLib;
 
 namespace Dustbin;
 
-public class IsDusbinIndexer
-{
-    private bool[] _store = new bool[256];
-
-    public bool this[int index]
-    {
-        get
-        {
-            if (index < 0 || index >= _store.Length) return false;
-            return _store[index];
-        }
-        set
-        {
-            if (index >= _store.Length)
-            {
-                var oldLen = _store.Length;
-                var newLen = oldLen * 2;
-                var oldArr = _store;
-                _store = new bool[newLen];
-                Array.Copy(oldArr, _store, oldLen);
-            }
-            _store[index] = value;
-        }
-    }
-
-    public void Reset()
-    {
-        _store = new bool[256];
-    }
-
-    public delegate void ForEachFunc(int id);
-    public void ForEachIsDustbin(ForEachFunc func)
-    {
-        var len = _store.Length;
-        for (var i = 0; i < len; i++)
-        {
-            if (_store[i])
-            {
-                func(i);
-            }
-        }
-    }
-}
-
 [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
 [BepInDependency(DSPModSavePlugin.MODGUID)]
 public class Dustbin : BaseUnityPlugin, IModCanSave
 {
     private const ushort ModSaveVersion = 1;
-    private new static readonly BepInEx.Logging.ManualLogSource Logger =
+    public new static readonly BepInEx.Logging.ManualLogSource Logger =
         BepInEx.Logging.Logger.CreateLogSource(PluginInfo.PLUGIN_NAME);
 
     private bool _cfgEnabled = true;

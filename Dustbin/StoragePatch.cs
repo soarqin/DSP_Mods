@@ -1,45 +1,92 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
+using System.Reflection.Emit;
 using HarmonyLib;
 using UnityEngine;
 
 namespace Dustbin;
 
+public class StorageComponentWithDustbin : StorageComponent
+{
+    public bool IsDusbin;
+    public StorageComponentWithDustbin(int size): base(size)
+    {
+        IsDusbin = false;
+    }
+}
+
 [HarmonyPatch]
 public static class StoragePatch
 {
     private static MyCheckBox _storageDustbinCheckBox;
-    private static int lastStorageId;
-    private static IsDusbinIndexer storageIsDustbin = new();
+    private static int _lastStorageId;
 
     public static void Reset()
     {
-        storageIsDustbin.Reset();
-        lastStorageId = 0;
+        _lastStorageId = 0;
     }
 
     public static void Export(BinaryWriter w)
     {
         var tempStream = new MemoryStream();
         var tempWriter = new BinaryWriter(tempStream);
-        int count = 0;
-        storageIsDustbin.ForEachIsDustbin(i =>
+        var factories = GameMain.data.factories;
+        var factoryCount = GameMain.data.factoryCount;
+        for (var i = 0; i < factoryCount; i++)
         {
-            tempWriter.Write(i);
-            count++;
-        });
-        w.Write(count);
-        tempStream.Position = 0;
-        /* FixMe: May BinaryWriter not sync with its BaseStream while subclass overrides Write()? */
-        tempStream.CopyTo(w.BaseStream);
+            var factory = factories[i];
+            var storage = factory?.factoryStorage;
+            var storagePool = storage?.storagePool;
+            if (storagePool == null) continue;
+            var cursor = storage.storageCursor;
+            var count = 0;
+            for (var j = 1; j < cursor; j++)
+            {
+                if (storagePool[j] == null || storagePool[j].id != j) continue;
+                if (storagePool[j] is not StorageComponentWithDustbin { IsDusbin: true }) continue;
+                tempWriter.Write(j);
+                count++;
+            }
+            if (count == 0) continue;
+
+            tempWriter.Flush();
+            tempStream.Position = 0;
+            w.Write((byte)1);
+            w.Write(factory.planetId);
+            w.Write(count);
+            /* FixMe: May BinaryWriter not sync with its BaseStream while subclass overrides Write()? */
+            tempStream.CopyTo(w.BaseStream);
+            tempStream.SetLength(0);
+        }
         tempWriter.Dispose();
         tempStream.Dispose();
     }
 
     public static void Import(BinaryReader r)
     {
-        for (var count = r.ReadInt32(); count > 0; count--)
+        while (r.PeekChar() == 1)
         {
-            storageIsDustbin[r.ReadInt32()] = true;
+            r.ReadByte();
+            var planetId = r.ReadInt32();
+            var planet = GameMain.data.galaxy.PlanetById(planetId);
+            var storagePool = planet?.factory?.factoryStorage?.storagePool;
+            if (storagePool == null)
+            {
+                for (var count = r.ReadInt32(); count > 0; count--)
+                {
+                    r.ReadInt32();
+                }
+                continue;
+            }
+            for (var count = r.ReadInt32(); count > 0; count--)
+            {
+                var id = r.ReadInt32();
+                if (id > 0 && id < storagePool.Length && storagePool[id] != null && storagePool[id].id == id &&
+                    storagePool[id] is StorageComponentWithDustbin comp)
+                {
+                    comp.IsDusbin = true;
+                }
+            }
         }
     }
 
@@ -52,8 +99,11 @@ public static class StoragePatch
         _storageDustbinCheckBox.OnChecked += () =>
         {
             var storageId = window.storageId;
-            if (storageId <= 0 || window.factoryStorage.storagePool[storageId].id != storageId) return;
-            storageIsDustbin[storageId] = _storageDustbinCheckBox.Checked;
+            if (storageId <= 0) return;
+            var storagePool = window.factoryStorage.storagePool;
+            if (storagePool[storageId].id != storageId) return;
+            if (storagePool[storageId] is not StorageComponentWithDustbin comp) return;
+            comp.IsDusbin = _storageDustbinCheckBox.Checked;
         };
     }
     
@@ -62,12 +112,13 @@ public static class StoragePatch
     private static void UIStorageWindow__OnUpdate_Postfix(UIStorageWindow __instance)
     {
         var storageId = __instance.storageId;
-        if (lastStorageId == storageId) return;
-        lastStorageId = storageId;
-        if (storageId > 0 && __instance.factoryStorage.storagePool[storageId].id == storageId)
-        {
-            _storageDustbinCheckBox.Checked = storageIsDustbin[storageId];
-        }
+        if (_lastStorageId == storageId) return;
+        _lastStorageId = storageId;
+        if (storageId <= 0) return;
+        var storagePool = __instance.factoryStorage.storagePool;
+        if (storagePool[storageId].id != storageId) return;
+        if (storagePool[storageId] is not StorageComponentWithDustbin comp) return;
+        _storageDustbinCheckBox.Checked = comp.IsDusbin;
         if (__instance.transform is RectTransform rectTrans) {
             _storageDustbinCheckBox.rectTrans.anchoredPosition3D = new Vector3(50, 58 - rectTrans.sizeDelta.y, 0);
         }
@@ -83,7 +134,7 @@ public static class StoragePatch
     private static bool StorageComponent_AddItem_Prefix(ref int __result, StorageComponent __instance, int itemId, int count, int inc,
         ref int remainInc, bool useBan = false)
     {
-        if (!storageIsDustbin[__instance.id]) return true;
+        if (__instance is not StorageComponentWithDustbin { IsDusbin: true }) return true;
         remainInc = inc;
         __result = count;
         var fluidArr = Dustbin.IsFluid;
@@ -107,25 +158,34 @@ public static class StoragePatch
         return false;
     }
 
-    [HarmonyPrefix]
-    [HarmonyPatch(typeof(FactoryStorage), "RemoveStorageComponent")]
-    private static void FactoryStorage_RemoveStorageComponent_Prefix(FactoryStorage __instance, int id)
-    {
-        var storage = __instance.storagePool[id];
-        if (storage != null && storage.id != 0)
-        {
-            storageIsDustbin[id] = false;
-        }
-    }
-
     /* We keep this to make MOD compatible with older version */
     [HarmonyPostfix]
     [HarmonyPatch(typeof(StorageComponent), "Import")]
     private static void StorageComponent_Import_Postfix(StorageComponent __instance)
     {
-        if (__instance.bans >= 0)
+        if (__instance.bans >= 0 || __instance is not StorageComponentWithDustbin comp)
             return;
-        storageIsDustbin[__instance.id] = true;
         __instance.bans = -__instance.bans - 1;
+        comp.IsDusbin = true;
+    }
+
+    /* Replace: new StorageComponent(int) => new StorageComponentWithDustbin(int) */
+    [HarmonyTranspiler]
+    [HarmonyPatch(typeof(FactoryStorage), "Import")]
+    [HarmonyPatch(typeof(FactoryStorage), "NewStorageComponent")]
+    private static IEnumerable<CodeInstruction> FactoryStorage_NewStorageComponent_Transpiler(
+        IEnumerable<CodeInstruction> instructions)
+    {
+        foreach (var instr in instructions)
+        {
+            if (instr.opcode == OpCodes.Newobj && instr.OperandIs(AccessTools.Constructor(typeof(StorageComponent), new [] { typeof(int) })))
+            {
+                yield return new CodeInstruction(OpCodes.Newobj, AccessTools.Constructor(typeof(StorageComponentWithDustbin), new [] { typeof(int) }));
+            }
+            else
+            {
+                yield return instr;
+            }
+        }
     }
 }
