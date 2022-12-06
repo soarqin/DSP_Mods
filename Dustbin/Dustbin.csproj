@@ -4,7 +4,7 @@
     <TargetFramework>net472</TargetFramework>
     <BepInExPluginGuid>org.soardev.dustbin</BepInExPluginGuid>
     <Description>DSP MOD - Dustbin</Description>
-    <Version>1.1.0</Version>
+    <Version>1.2.0</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
     <PackageId>Dustbin</PackageId>

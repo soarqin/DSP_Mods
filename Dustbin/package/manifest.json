@@ -1,6 +1,6 @@
 ﻿{
   "name": "Dustbin",
-  "version_number": "1.1.0",
+  "version_number": "1.2.0",
   "website_url": "https://github.com/soarqin/DSP_Mods/tree/master/Dustbin",
   "description": "Can turn Storages and Tanks into Dustbin(Destroy incoming items) / 储物仓和储液罐可以转变为垃圾桶(销毁送进的物品)",
   "dependencies": [
