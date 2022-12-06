@@ -166,40 +166,71 @@ public static class TankPatch
         }
     }
 
+    private struct TankState
+    {
+        public int TankId;
+        public int FluidId;
+        public int FluidCount;
+        public int FluidInc;
+    }
+    
     [HarmonyPrefix]
     [HarmonyPatch(typeof(TankComponent), "GameTick")]
-    private static void TankComponent_GameTick_Prefix(ref TankComponent __instance, out long __state, PlanetFactory factory)
+    private static void TankComponent_GameTick_Prefix(ref TankComponent __instance, ref TankState __state, PlanetFactory factory)
     {
         var planetId = factory.planetId;
-        if (tankIsDustbin[planetId / 100][planetId % 100][__instance.id])
+        var data = tankIsDustbin[planetId / 100][planetId % 100];
+        ref var tank = ref __instance;
+        while (true)
         {
-            __state = ((long)__instance.fluidInc << 36) | ((long)__instance.fluidCount << 16) | (uint)__instance.fluidId;
-            __instance.fluidId = __instance.fluidCount = __instance.fluidInc = 0;
-        }
-        else
-        {
-            __state = -1;
+            if (data[tank.id])
+            {
+                __state.TankId = tank.id;
+                __state.FluidId = tank.fluidId;
+                __state.FluidCount = tank.fluidCount;
+                __state.FluidInc = tank.fluidInc;
+                tank.fluidId = tank.fluidCount = tank.fluidInc = 0;
+                return;
+            }
+            if (tank.fluidCount < tank.fluidCapacity || tank.nextTankId <= 0)
+            {
+                __state.TankId = -1;
+                return;
+            }
+            var nextTankId = tank.nextTankId;
+            tank = ref factory.factoryStorage.tankPool[nextTankId];
+            if (tank.id == nextTankId) continue;
+            __state.TankId = -1;
+            return;
         }
     }
 
     [HarmonyPostfix]
     [HarmonyPatch(typeof(TankComponent), "GameTick")]
-    private static void TankComponent_GameTick_Postfix(ref TankComponent __instance, long __state)
+    private static void TankComponent_GameTick_Postfix(ref TankComponent __instance, ref TankState __state, PlanetFactory factory)
     {
-        if (__state < 0) return;
-        __instance.fluidId = (int)(__state & 0xFFFFL);
-        __instance.fluidCount = (int)((__state >> 16) & 0xFFFFFL);
-        __instance.fluidInc = (int)(__state >> 36);
+        if (__state.TankId < 0) return;
+        var tankId = __state.TankId;
+        if (__instance.id == tankId)
+        {
+            __instance.fluidId = __state.FluidId;
+            __instance.fluidCount = __state.FluidCount;
+            __instance.fluidInc = __state.FluidInc;
+            return;
+        }
+        ref var tank = ref factory.factoryStorage.tankPool[tankId];
+        if (tank.id != tankId) return;
+        tank.fluidId = __state.FluidId;
+        tank.fluidCount = __state.FluidCount;
+        tank.fluidInc = __state.FluidInc;
     }
 
     [HarmonyPrefix]
     [HarmonyPatch(typeof(FactoryStorage), "RemoveTankComponent")]
     private static void FactoryStorage_RemoveTankComponent_Prefix(FactoryStorage __instance, int id)
     {
-        if (__instance.tankPool[id].id != 0)
-        {
-            var planetId = __instance.planet.id;
-            tankIsDustbin[planetId / 100][planetId % 100][id] = false;
-        }
+        if (__instance.tankPool[id].id <= 0) return;
+        var planetId = __instance.planet.id;
+        tankIsDustbin[planetId / 100][planetId % 100][id] = false;
     }
 }
