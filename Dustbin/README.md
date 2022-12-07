@@ -5,6 +5,9 @@
 
 ## Updates
 
+* 1.2.1
+  * Fix dynamic array bug in codes, which causes various bugs and errors.
+
 * 1.2.0
   * Use [DSPModSave](https://dsp.thunderstore.io/package/CommonAPI/DSPModSave/) to save dustbin specified data now, which fixes [#1](https://github.com/soarqin/DSP_Mods/issues/1).
   * Fix issue for storages on multiple planets.

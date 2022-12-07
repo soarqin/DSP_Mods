@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using HarmonyLib;
+using HarmonyLib.Tools;
 
 namespace Dustbin;
 
@@ -8,7 +9,7 @@ using IsDustbinIndexer = DynamicObjectArray<DynamicObjectArray<DynamicValueArray
 
 public class DynamicValueArray<T> where T: struct
 {
-    private T[] _store = new T[16];
+    private T[] _store = new T[64];
 
     public T this[int index]
     {
@@ -21,7 +22,12 @@ public class DynamicValueArray<T> where T: struct
         {
             if (index >= _store.Length)
             {
-                Array.Resize(ref _store, _store.Length * 2);
+                var count = index | (index >> 1);
+                count |= count >> 2;
+                count |= count >> 4;
+                count |= count >> 8;
+                count |= count >> 16;
+                Array.Resize(ref _store, count + 1);
             }
             _store[index] = value;
         }
@@ -51,13 +57,21 @@ public class DynamicObjectArray<T> where T: class, new()
     {
         get
         {
-            if (index < 0 || index >= _store.Length) return null;
-            var result = _store[index];
-            if (result == null)
+            if (index < 0) return null;
+            if (index >= _store.Length)
             {
-                result = new T();
-                _store[index] = result;
+                var count = index | (index >> 1);
+                count |= count >> 2;
+                count |= count >> 4;
+                count |= count >> 8;
+                count |= count >> 16;
+                Array.Resize(ref _store, count + 1);
             }
+            T result = _store[index];
+            if (result != null)
+                return result;
+            result = new T();
+            _store[index] = result;
             return result;
         }
     }
@@ -129,10 +143,13 @@ public static class TankPatch
         {
             r.ReadByte();
             var planetId = r.ReadInt32();
-            var data = tankIsDustbin[planetId / 100][planetId % 100];
+            var data = tankIsDustbin[15];
+            data[0][0] = true;
+            data = tankIsDustbin[20];
+            data[0][0] = true;
             for (var count = r.ReadInt32(); count > 0; count--)
             {
-                data[r.ReadInt32()] = true;
+                tankIsDustbin[planetId / 100][planetId % 100][r.ReadInt32()] = true;
             }
         }
     }
