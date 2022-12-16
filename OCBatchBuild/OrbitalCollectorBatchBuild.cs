@@ -20,10 +20,7 @@ public class OrbitalCollectorBatchBuild : BaseUnityPlugin
     private void Awake()
     {
         _cfgEnabled = Config.Bind("General", "Enabled", _cfgEnabled, "enable/disable this plugin").Value;
-        _maxBuildCount = Config.Bind("General", "MaxBuildCount", _maxBuildCount,
-                new ConfigDescription("Maximum Orbital Collectors to build once, set to 0 to build as many as possible",
-                    new AcceptableValueRange<int>(0, 40), new {}))
-            .Value;
+        _maxBuildCount = Config.Bind("General", "MaxBuildCount", _maxBuildCount, "Maximum Orbital Collectors to build once, set to 0 to build as many as possible").Value;
         _instantBuild = Config.Bind("General", "InstantBuild", _instantBuild, "Enable to make Orbital Collectors built instantly. This is thought to be game logic breaking.").Value;
         Harmony.CreateAndPatchAll(typeof(OrbitalCollectorBatchBuild));
     }
@@ -48,14 +45,28 @@ public class OrbitalCollectorBatchBuild : BaseUnityPlugin
         var pos2 = buildPreview.lpos2;
         var itemId = buildPreview.item.ID;
         var countToBuild = _maxBuildCount - 1;
+        if (countToBuild == 0) return;
         var prebuilds = new List<int> {-buildPreview.objId};
         var player = __instance.player;
-        for (var i = 0; i < 39 && countToBuild != 0; i++)
+        var firstPos = pos;
+        var cellCount = PlanetGrid.DetermineLongitudeSegmentCount(0, factory.planet.aux.mainGrid.segment) * 5;
+        var cellRad = Math.PI / cellCount;
+        var distRadCount = 0;
+        for (var i = 1; i <= cellCount; i++)
         {
-            /* rotate for 1/40 on sphere */
-            pos = Maths.RotateLF(0.0, 1.0, 0.0, Math.PI / 40.0, pos);
-            pos2 = Maths.RotateLF(0.0, 1.0, 0.0, Math.PI / 40.0, pos2);
+            pos = Maths.RotateLF(0.0, 1.0, 0.0, cellRad, pos);
+            if ((firstPos - pos).sqrMagnitude < 14297f) continue;
+            distRadCount = i;
+            break;
+        }
 
+        if (distRadCount == 0) return;
+        pos = firstPos;
+        /* rotate for a minimal distance for next OC on sphere */
+        pos = Maths.RotateLF(0.0, 1.0, 0.0, cellRad * distRadCount, pos);
+        pos2 = Maths.RotateLF(0.0, 1.0, 0.0, cellRad * distRadCount, pos2);
+        for (var i = distRadCount; i < cellCount && countToBuild != 0;)
+        {
             /* Check for collision */
             var collide = false;
             for (var j = 1; j < stationCursor; j++)
@@ -65,7 +76,14 @@ public class OrbitalCollectorBatchBuild : BaseUnityPlugin
                 collide = true;
                 break;
             }
-            if (collide) continue;
+            if (collide)
+            {
+                /* rotate for a small cell on sphere */
+                pos = Maths.RotateLF(0.0, 1.0, 0.0, cellRad, pos);
+                pos2 = Maths.RotateLF(0.0, 1.0, 0.0, cellRad, pos2);
+                i++;
+                continue;
+            }
 
             if (player.inhandItemId == itemId && player.inhandItemCount > 0)
             {
@@ -98,6 +116,10 @@ public class OrbitalCollectorBatchBuild : BaseUnityPlugin
             }
             prebuilds.Add(factory.AddPrebuildDataWithComponents(prebuild));
             countToBuild--;
+            /* rotate for minimal distance for next OC on sphere */
+            pos = Maths.RotateLF(0.0, 1.0, 0.0, cellRad * distRadCount, pos);
+            pos2 = Maths.RotateLF(0.0, 1.0, 0.0, cellRad * distRadCount, pos2);
+            i += distRadCount;
         }
 
         if (!_instantBuild) return;

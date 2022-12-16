@@ -4,6 +4,10 @@
 #### 轨道采集器快速批量建造
 
 ## Updates
+### 1.2.0
+* Support for mods that change default radius of Gas Planets, e.g. `GalacticScale`.
+* Remove maximum build count limit in config.
+
 ### 1.1.0
 * Add `InstantBuild` to config
 
