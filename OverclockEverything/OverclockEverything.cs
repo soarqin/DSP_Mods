@@ -112,6 +112,16 @@ public class Patch : BaseUnityPlugin
         LDB.items.Select(2001).prefabDesc.beltSpeed = (int)beltSpeed[0];
         LDB.items.Select(2002).prefabDesc.beltSpeed = (int)beltSpeed[1];
         LDB.items.Select(2003).prefabDesc.beltSpeed = (int)beltSpeed[2];
+        foreach (var proto in LDB.recipes.dataArray)
+        {
+            if (proto.Type == ERecipeType.Fractionate)
+            {
+                for (int i = 0; i < proto.ItemCounts.Length; i++)
+                {
+                    proto.ItemCounts[i] *= assembleSpeedMultiplier;
+                }
+            }
+        }
 
         foreach (var proto in LDB.items.dataArray)
         {
