@@ -176,7 +176,7 @@ public class CheatEnabler : BaseUnityPlugin
             }
             foreach (var currentTech in TechToUnlock)
             {
-                UnlockTechRecursive(history, currentTech);
+                UnlockTechRecursive(history, currentTech, currentTech == 3606 ? 7000 : 10000);
             }
             var techQueue = history.techQueue;
             if (techQueue == null || techQueue.Length == 0)
@@ -204,7 +204,7 @@ public class CheatEnabler : BaseUnityPlugin
             }
             var value = techStates[currentTech];
             var maxLvl = Math.Min(maxLevel, value.maxLevel);
-            if (value.unlocked && value.curLevel >= maxLvl && value.hashUploaded >= value.hashNeeded)
+            if (value.unlocked)
             {
                 return;
             }
@@ -225,6 +225,7 @@ public class CheatEnabler : BaseUnityPlugin
                 }
             }
 
+            if (value.curLevel < techProto.Level) value.curLevel = techProto.Level;
             while (value.curLevel <= maxLvl)
             {
                 for (var j = 0; j < techProto.UnlockFunctions.Length; j++)
