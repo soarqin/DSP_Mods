@@ -16,8 +16,14 @@ public class CheatEnabler : BaseUnityPlugin
     private bool _disableAbnormalChecks = true;
     private bool _alwaysInfiniteResource = true;
     private bool _waterPumpAnywhere = true;
-    private static bool _rareVeinsOnBirthPlanet = true;
-    private static bool _unipolarOnBirthPlanet = true;
+    private static bool _sitiVeinsOnBirthPlanet = true;
+    private static bool _fireIceOnBirthPlanet = false;
+    private static bool _kimberliteOnBirthPlanet = false;
+    private static bool _fractalOnBirthPlanet = false;
+    private static bool _organicOnBirthPlanet = true;
+    private static bool _opticalOnBirthPlanet = false;
+    private static bool _spiniformOnBirthPlanet = false;
+    private static bool _unipolarOnBirthPlanet = false;
     private static bool _flatBirthPlanet = true;
     private static bool _highLuminosityBirthStar = true;
     private static string _unlockTechToMaximumLevel = "";
@@ -34,8 +40,20 @@ public class CheatEnabler : BaseUnityPlugin
             "Unlock listed tech to MaxLevel").Value;
         _waterPumpAnywhere = Config.Bind("General", "WaterPumpAnywhere", _waterPumpAnywhere,
             "Can pump water anywhere (while water type is not None)").Value;
-        _rareVeinsOnBirthPlanet = Config.Bind("Birth", "RareVeinsOnBirthPlanet", _rareVeinsOnBirthPlanet,
-            "Has rare veins on birth planet (except unipolar magnet)").Value;
+        _sitiVeinsOnBirthPlanet = Config.Bind("Birth", "SiTiVeinsOnBirthPlanet", _sitiVeinsOnBirthPlanet,
+            "Has Silicon/Titanium veins on birth planet").Value;
+        _fireIceOnBirthPlanet = Config.Bind("Birth", "FireIceOnBirthPlanet", _fireIceOnBirthPlanet,
+            "Fire ice on birth planet (You should enable Rare Veins first)").Value;
+        _kimberliteOnBirthPlanet = Config.Bind("Birth", "KimberliteOnBirthPlanet", _kimberliteOnBirthPlanet,
+            "Kimberlite on birth planet (You should enable Rare Veins first)").Value;
+        _fractalOnBirthPlanet = Config.Bind("Birth", "FractalOnBirthPlanet", _fractalOnBirthPlanet,
+            "Fractal silicon on birth planet (You should enable Rare Veins first)").Value;
+        _organicOnBirthPlanet = Config.Bind("Birth", "OrganicOnBirthPlanet", _organicOnBirthPlanet,
+            "Organic crystal on birth planet (You should enable Rare Veins first)").Value;
+        _opticalOnBirthPlanet = Config.Bind("Birth", "OpticalOnBirthPlanet", _opticalOnBirthPlanet,
+            "Optical grating crystal on birth planet (You should enable Rare Veins first)").Value;
+        _spiniformOnBirthPlanet = Config.Bind("Birth", "SpiniformOnBirthPlanet", _spiniformOnBirthPlanet,
+            "Spiniform stalagmite crystal on birth planet (You should enable Rare Veins first)").Value;
         _unipolarOnBirthPlanet = Config.Bind("Birth", "UnipolarOnBirthPlanet", _unipolarOnBirthPlanet,
             "Unipolar magnet on birth planet (You should enable Rare Veins first)").Value;
         _flatBirthPlanet = Config.Bind("Birth", "FlatBirthPlanet", _flatBirthPlanet,
@@ -70,7 +88,7 @@ public class CheatEnabler : BaseUnityPlugin
         {
             Harmony.CreateAndPatchAll(typeof(WaterPumperCheat));
         }
-        if (_rareVeinsOnBirthPlanet || _flatBirthPlanet || _highLuminosityBirthStar)
+        if (_sitiVeinsOnBirthPlanet || _fireIceOnBirthPlanet || _kimberliteOnBirthPlanet || _fractalOnBirthPlanet || _organicOnBirthPlanet || _opticalOnBirthPlanet || _spiniformOnBirthPlanet || _unipolarOnBirthPlanet || _flatBirthPlanet || _highLuminosityBirthStar)
         {
             Harmony.CreateAndPatchAll(typeof(BirthPlanetCheat));
         }
@@ -253,7 +271,7 @@ public class CheatEnabler : BaseUnityPlugin
                 theme.Algos[0] = 2;
             }
 
-            if (_rareVeinsOnBirthPlanet)
+            if (_sitiVeinsOnBirthPlanet)
             {
                 theme.VeinSpot[2] = 2;
                 theme.VeinSpot[3] = 2;
@@ -261,35 +279,49 @@ public class CheatEnabler : BaseUnityPlugin
                 theme.VeinCount[3] = 0.7f;
                 theme.VeinOpacity[2] = 1f;
                 theme.VeinOpacity[3] = 1f;
-                if (_unipolarOnBirthPlanet)
-                {
-                    theme.RareVeins = new[] { 8, 9, 10, 11, 12, 13, 14 };
-                    theme.RareSettings = new[]
-                    {
-                        1f, 1f, 0.5f, 1f,
-                        1f, 1f, 0.5f, 1f,
-                        1f, 1f, 0.5f, 1f,
-                        1f, 1f, 0.5f, 1f,
-                        1f, 1f, 0.5f, 1f,
-                        1f, 1f, 0.5f, 1f,
-                        1f, 1f, 0.4f, 1f,
-                    };
-                }
-                else
-                {
-                    theme.RareVeins = new[] { 8, 9, 10, 11, 12, 13 };
-                    theme.RareSettings = new[]
-                    {
-                        1f, 1f, 0.5f, 1f,
-                        1f, 1f, 0.5f, 1f,
-                        1f, 1f, 0.5f, 1f,
-                        1f, 1f, 0.5f, 1f,
-                        1f, 1f, 0.5f, 1f,
-                        1f, 1f, 0.5f, 1f,
-                    };
-                }
             }
-
+            List<int> veins = new();
+            List<float> settings = new();
+            if (_fireIceOnBirthPlanet)
+            {
+                veins.Add(8);
+                settings.AddRange(new [] {1f, 1f, 0,5f, 1f});
+            }
+            if (_kimberliteOnBirthPlanet)
+            {
+                veins.Add(9);
+                settings.AddRange(new [] {1f, 1f, 0,5f, 1f});
+            }
+            if (_fractalOnBirthPlanet)
+            {
+                veins.Add(10);
+                settings.AddRange(new [] {1f, 1f, 0,5f, 1f});
+            }
+            if (_organicOnBirthPlanet)
+            {
+                veins.Add(11);
+                settings.AddRange(new [] {1f, 1f, 0,5f, 1f});
+            }
+            if (_opticalOnBirthPlanet)
+            {
+                veins.Add(12);
+                settings.AddRange(new [] {1f, 1f, 0,5f, 1f});
+            }
+            if (_spiniformOnBirthPlanet)
+            {
+                veins.Add(13);
+                settings.AddRange(new [] {1f, 1f, 0,5f, 1f});
+            }
+            if (_unipolarOnBirthPlanet)
+            {
+                veins.Add(14);
+                settings.AddRange(new [] {1f, 1f, 0,5f, 1f});
+            }
+            if (veins.Count > 0)
+            {
+                theme.RareVeins = veins.ToArray();
+                theme.RareSettings = settings.ToArray();
+            }
             if (_highLuminosityBirthStar)
             {
                 StarGen.specifyBirthStarMass = 100f;
