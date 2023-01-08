@@ -322,6 +322,11 @@ public class CheatEnabler : BaseUnityPlugin
                 theme.RareVeins = veins.ToArray();
                 theme.RareSettings = settings.ToArray();
             }
+            else
+            {
+                theme.RareVeins = null;
+                theme.RareSettings = null;
+            }
             if (_highLuminosityBirthStar)
             {
                 StarGen.specifyBirthStarMass = 100f;

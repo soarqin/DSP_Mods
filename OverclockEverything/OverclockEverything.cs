@@ -23,11 +23,15 @@ public class Patch : BaseUnityPlugin
     private static int sorterPowerConsumptionMultiplier = 2;
     private static int assembleSpeedMultiplier = 2;
     private static int assemblePowerConsumptionMultiplier = 2;
+    private static int researchSpeedMultiplier = 2;
+    private static int labPowerConsumptionMultiplier = 2;
     private static int minerSpeedMultiplier = 2;
     private static int minerPowerConsumptionMultiplier = 2;
     private static long powerGenerationMultiplier = 4;
     private static long powerFuelConsumptionMultiplier = 1;
     private static long powerSupplyAreaMultiplier = 2;
+    private static int ejectMultiplier = 2;
+    private static int siloMultiplier = 2;
 
     private void Awake()
     {
@@ -44,19 +48,27 @@ public class Patch : BaseUnityPlugin
         sorterPowerConsumptionMultiplier = Config.Bind("Sorter", "PowerConsumptionMultiplier", sorterPowerConsumptionMultiplier,
             new ConfigDescription("Power consumption multiplier for Smelters and Assembling Machines", new AcceptableValueRange<int>(1, 100))).Value;
         assembleSpeedMultiplier = Config.Bind("Assemble", "SpeedMultiplier", assembleSpeedMultiplier,
-            new ConfigDescription("Speed multiplier for Smelters and Assembling Machines", new AcceptableValueRange<int>(1, 10))).Value;
+            new ConfigDescription("Speed multiplier for Smelters, Assembling Machines and Lab Matrices", new AcceptableValueRange<int>(1, 10))).Value;
         assemblePowerConsumptionMultiplier = Config.Bind("Assemble", "PowerConsumptionMultiplier", assemblePowerConsumptionMultiplier,
             new ConfigDescription("Power consumption multiplier for Smelters and Assembling Machines", new AcceptableValueRange<int>(1, 100))).Value;
+        researchSpeedMultiplier = Config.Bind("Lab", "SpeedMultiplier", researchSpeedMultiplier,
+            new ConfigDescription("Speed multiplier for Lab Researches", new AcceptableValueRange<int>(1, 10))).Value;
+        labPowerConsumptionMultiplier = Config.Bind("Lab", "PowerConsumptionMultiplier", labPowerConsumptionMultiplier,
+            new ConfigDescription("Power consumption multiplier for Labs", new AcceptableValueRange<int>(1, 100))).Value;
         minerSpeedMultiplier = Config.Bind("Miner", "SpeedMultiplier", minerSpeedMultiplier,
             new ConfigDescription("Speed multiplier for Smelters and Assembling Machines", new AcceptableValueRange<int>(1, 10))).Value;
         minerPowerConsumptionMultiplier = Config.Bind("Miner", "PowerConsumptionMultiplier", minerPowerConsumptionMultiplier,
             new ConfigDescription("Power consumption multiplier for Smelters and Assembling Machines", new AcceptableValueRange<int>(1, 100))).Value;
         powerGenerationMultiplier = Config.Bind("Power", "GenerationMultiplier", powerGenerationMultiplier,
-            new ConfigDescription("Power generation multiplier for all power providers", new AcceptableValueRange<long>(1, 10))).Value;
+            new ConfigDescription("Power generation multiplier for all power providers", new AcceptableValueRange<long>(1, 100))).Value;
         powerFuelConsumptionMultiplier = Config.Bind("Power", "FuelConsumptionMultiplier", powerFuelConsumptionMultiplier,
             new ConfigDescription("Fuel consumption multiplier for all fuel-consuming power providers", new AcceptableValueRange<long>(1, 10))).Value;
         powerSupplyAreaMultiplier = Config.Bind("Power", "SupplyAreaMultiplier", powerSupplyAreaMultiplier,
             new ConfigDescription("Connection length and supply area radius multiplier for power providers", new AcceptableValueRange<long>(1, 10))).Value;
+        ejectMultiplier = Config.Bind("DysonSphere", "EjectMultiplier", ejectMultiplier,
+            new ConfigDescription("Speed multiplier for EM-Rail Ejectors", new AcceptableValueRange<int>(1, 10))).Value;
+        siloMultiplier = Config.Bind("DysonSphere", "SiloMultiplier", siloMultiplier,
+            new ConfigDescription("Speed multiplier for Rocket Silos", new AcceptableValueRange<int>(1, 10))).Value;
         Harmony.CreateAndPatchAll(typeof(Patch));
         Harmony.CreateAndPatchAll(typeof(BeltFix));
     }
@@ -135,6 +147,9 @@ public class Patch : BaseUnityPlugin
             if (prefabDesc.isLab)
             {
                 prefabDesc.labAssembleSpeed *= assembleSpeedMultiplier;
+                prefabDesc.labResearchSpeed *= researchSpeedMultiplier;
+                prefabDesc.idleEnergyPerTick *= labPowerConsumptionMultiplier;
+                prefabDesc.workEnergyPerTick *= labPowerConsumptionMultiplier;
             }
             if (prefabDesc.isAssembler)
             {
@@ -176,6 +191,16 @@ public class Patch : BaseUnityPlugin
                 ival = Mathf.Floor(prefabDesc.powerCoverRadius);
                 prefabDesc.powerCoverRadius =
                     ival * powerSupplyAreaMultiplier + (prefabDesc.powerCoverRadius - ival);
+            }
+            if (prefabDesc.isEjector)
+            {
+                prefabDesc.ejectorChargeFrame /= ejectMultiplier;
+                prefabDesc.ejectorColdFrame /= ejectMultiplier;
+            }
+            if (prefabDesc.isSilo)
+            {
+                prefabDesc.siloChargeFrame /= siloMultiplier;
+                prefabDesc.siloColdFrame /= siloMultiplier;
             }
         }
     }
