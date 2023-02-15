@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Reflection.Emit;
 using BepInEx;
 using BepInEx.Configuration;
@@ -73,6 +74,20 @@ public class Patch : BaseUnityPlugin
         Harmony.CreateAndPatchAll(typeof(BeltFix));
     }
 
+    [HarmonyTranspiler, HarmonyPatch(typeof(BuildTool_Path), "CheckBuildConditions")]
+    private static IEnumerable<CodeInstruction> BuildTool_Path_CheckBuildConditions_Transpiler(
+        IEnumerable<CodeInstruction> instructions)
+    {
+        foreach (var instr in instructions)
+        {
+            if (instr.opcode == OpCodes.Ldc_R4 && instr.OperandIs(0.28f))
+            {
+                instr.operand = 0.21f;
+            }
+            yield return instr;
+        }
+    }
+
     [HarmonyTranspiler, HarmonyPatch(typeof(LabComponent), "SetFunction")]
     private static IEnumerable<CodeInstruction> LabComponent_SetFunction_Transpiler(IEnumerable<CodeInstruction> instructions)
     {
@@ -132,6 +147,21 @@ public class Patch : BaseUnityPlugin
                 {
                     proto.ItemCounts[i] *= assembleSpeedMultiplier;
                 }
+            }
+        }
+
+        foreach (var proto in LDB.items.dataArray)
+        {
+            var prefabDesc = proto.prefabDesc;
+            FixExtValue(ref prefabDesc.buildCollider.ext.x);
+            FixExtValue(ref prefabDesc.buildCollider.ext.y);
+            FixExtValue(ref prefabDesc.buildCollider.ext.z);
+            if (prefabDesc.buildColliders == null) continue;
+            for (var i = 0; i < prefabDesc.buildColliders.Length; i++)
+            {
+                FixExtValue(ref prefabDesc.buildColliders[i].ext.x);
+                FixExtValue(ref prefabDesc.buildColliders[i].ext.y);
+                FixExtValue(ref prefabDesc.buildColliders[i].ext.z);
             }
         }
 
@@ -203,5 +233,15 @@ public class Patch : BaseUnityPlugin
                 prefabDesc.siloColdFrame /= siloMultiplier;
             }
         }
+    }
+
+    private static void FixExtValue(ref float v)
+    {
+        if (v == 0f)
+        {
+            return;
+        }
+        var b = Math.Abs(v);
+        v = (v - b) * 0.75f + b;
     }
 }

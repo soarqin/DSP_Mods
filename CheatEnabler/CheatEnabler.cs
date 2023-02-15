@@ -285,37 +285,37 @@ public class CheatEnabler : BaseUnityPlugin
             if (_fireIceOnBirthPlanet)
             {
                 veins.Add(8);
-                settings.AddRange(new [] {1f, 1f, 0,5f, 1f});
+                settings.AddRange(new [] {1f, 1f, 0.5f, 1f});
             }
             if (_kimberliteOnBirthPlanet)
             {
                 veins.Add(9);
-                settings.AddRange(new [] {1f, 1f, 0,5f, 1f});
+                settings.AddRange(new [] {1f, 1f, 0.5f, 1f});
             }
             if (_fractalOnBirthPlanet)
             {
                 veins.Add(10);
-                settings.AddRange(new [] {1f, 1f, 0,5f, 1f});
+                settings.AddRange(new [] {1f, 1f, 0.5f, 1f});
             }
             if (_organicOnBirthPlanet)
             {
                 veins.Add(11);
-                settings.AddRange(new [] {1f, 1f, 0,5f, 1f});
+                settings.AddRange(new [] {1f, 1f, 0.5f, 1f});
             }
             if (_opticalOnBirthPlanet)
             {
                 veins.Add(12);
-                settings.AddRange(new [] {1f, 1f, 0,5f, 1f});
+                settings.AddRange(new [] {1f, 1f, 0.5f, 1f});
             }
             if (_spiniformOnBirthPlanet)
             {
                 veins.Add(13);
-                settings.AddRange(new [] {1f, 1f, 0,5f, 1f});
+                settings.AddRange(new [] {1f, 1f, 0.5f, 1f});
             }
             if (_unipolarOnBirthPlanet)
             {
                 veins.Add(14);
-                settings.AddRange(new [] {1f, 1f, 0,5f, 1f});
+                settings.AddRange(new [] {1f, 1f, 0.5f, 1f});
             }
             if (veins.Count > 0)
             {
