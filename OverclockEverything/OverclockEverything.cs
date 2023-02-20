@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection.Emit;
 using BepInEx;
 using BepInEx.Configuration;
@@ -33,6 +34,7 @@ public class Patch : BaseUnityPlugin
     private static long powerSupplyAreaMultiplier = 2;
     private static int ejectMultiplier = 2;
     private static int siloMultiplier = 2;
+    private static int inventoryStackMultiplier = 5;
 
     private void Awake()
     {
@@ -70,6 +72,8 @@ public class Patch : BaseUnityPlugin
             new ConfigDescription("Speed multiplier for EM-Rail Ejectors", new AcceptableValueRange<int>(1, 10))).Value;
         siloMultiplier = Config.Bind("DysonSphere", "SiloMultiplier", siloMultiplier,
             new ConfigDescription("Speed multiplier for Rocket Silos", new AcceptableValueRange<int>(1, 10))).Value;
+        inventoryStackMultiplier = Config.Bind("Inventory", "StackMultiplier", inventoryStackMultiplier,
+            new ConfigDescription("Stack count multiplier for inventory items", new AcceptableValueRange<int>(1, 10))).Value;
         Harmony.CreateAndPatchAll(typeof(Patch));
         Harmony.CreateAndPatchAll(typeof(BeltFix));
     }
@@ -83,6 +87,49 @@ public class Patch : BaseUnityPlugin
             if (instr.opcode == OpCodes.Ldc_R4 && instr.OperandIs(0.28f))
             {
                 instr.operand = 0.21f;
+            }
+            yield return instr;
+        }
+    }
+
+    [HarmonyTranspiler]
+    [HarmonyPatch(typeof(UIReplicatorWindow), "OnPlusButtonClick")]
+    [HarmonyPatch(typeof(UIReplicatorWindow), "OnMinusButtonClick")]
+    private static IEnumerable<CodeInstruction> UIReplicatorWindow_OnPlusButtonClick_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+    {
+        var ilist = instructions.ToList();
+        for (var i = 0; i < ilist.Count; i++)
+        {
+            var instr = ilist[i];
+            if (instr.opcode == OpCodes.Ldloc_0 && ilist[i + 1].opcode == OpCodes.Ldc_I4_1 && (ilist[i + 2].opcode == OpCodes.Add || ilist[i + 2].opcode == OpCodes.Sub))
+            {
+                var label1 = generator.DefineLabel();
+                var label2 = generator.DefineLabel();
+                var label3 = generator.DefineLabel();
+                var label4 = generator.DefineLabel();
+                yield return instr;
+                yield return new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(VFInput), "control"));
+                yield return new CodeInstruction(OpCodes.Brfalse_S, label1);
+                yield return new CodeInstruction(OpCodes.Ldc_I4_S, 10);
+                yield return new CodeInstruction(OpCodes.Br_S, label4);
+                yield return new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(VFInput), "shift")).WithLabels(label1);
+                yield return new CodeInstruction(OpCodes.Brfalse_S, label2);
+                yield return new CodeInstruction(OpCodes.Ldc_I4_S, 100);
+                yield return new CodeInstruction(OpCodes.Br_S, label4);
+                yield return new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(VFInput), "alt")).WithLabels(label2);
+                yield return new CodeInstruction(OpCodes.Brfalse_S, label3);
+                yield return new CodeInstruction(OpCodes.Ldc_I4, 1000);
+                yield return new CodeInstruction(OpCodes.Br_S, label4);
+                yield return new CodeInstruction(OpCodes.Ldc_I4_1).WithLabels(label3);
+                ilist[i + 2] = ilist[i + 2].WithLabels(label4);
+                i++;
+                continue;
+            }
+
+            if (instr.opcode == OpCodes.Ldc_I4_S && instr.OperandIs(10))
+            {
+                instr.opcode = OpCodes.Ldc_I4;
+                instr.operand = 1000;
             }
             yield return instr;
         }
@@ -130,6 +177,32 @@ public class Patch : BaseUnityPlugin
         }
     }
 
+    [HarmonyPrefix, HarmonyPatch(typeof(StorageComponent), "LoadStatic")]
+    private static bool StorageComponent_LoadStatic_Prefix()
+    {
+        if (StorageComponent.staticLoaded) return false;
+        foreach (var proto in LDB.items.dataArray)
+        {
+            proto.StackSize *= inventoryStackMultiplier;
+        }
+        return true;
+    }
+
+    [HarmonyPostfix, HarmonyPatch(typeof(StorageComponent), "Import")]
+    private static void StorageComponent_Import_Postfix(StorageComponent __instance)
+    {
+        if (inventoryStackMultiplier <= 1) return;
+        var size = __instance.size;
+        for (var i = 0; i < size; i++)
+        {
+            var itemId = __instance.grids[i].itemId;
+            if (itemId != 0)
+            {
+                __instance.grids[i].stackSize = StorageComponent.itemStackCount[itemId];
+            }
+        }
+    }
+
     [HarmonyPostfix, HarmonyPriority(Priority.Last), HarmonyPatch(typeof(VFPreload), "InvokeOnLoadWorkEnded")]
     private static void VFPreload_InvokeOnLoadWorkEnded_Postfix()
     {
@@ -156,21 +229,19 @@ public class Patch : BaseUnityPlugin
             FixExtValue(ref prefabDesc.buildCollider.ext.x);
             FixExtValue(ref prefabDesc.buildCollider.ext.y);
             FixExtValue(ref prefabDesc.buildCollider.ext.z);
-            if (prefabDesc.buildColliders == null) continue;
-            for (var i = 0; i < prefabDesc.buildColliders.Length; i++)
+            if (prefabDesc.buildColliders != null)
             {
-                FixExtValue(ref prefabDesc.buildColliders[i].ext.x);
-                FixExtValue(ref prefabDesc.buildColliders[i].ext.y);
-                FixExtValue(ref prefabDesc.buildColliders[i].ext.z);
+                for (var i = 0; i < prefabDesc.buildColliders.Length; i++)
+                {
+                    FixExtValue(ref prefabDesc.buildColliders[i].ext.x);
+                    FixExtValue(ref prefabDesc.buildColliders[i].ext.y);
+                    FixExtValue(ref prefabDesc.buildColliders[i].ext.z);
+                }
             }
-        }
-
-        foreach (var proto in LDB.items.dataArray)
-        {
-            var prefabDesc = proto.prefabDesc;
             if (prefabDesc.isInserter)
             {
                 prefabDesc.inserterSTT /= sorterSpeedMultiplier;
+                prefabDesc.inserterDelay /= sorterSpeedMultiplier;
                 prefabDesc.idleEnergyPerTick *= sorterPowerConsumptionMultiplier;
                 prefabDesc.workEnergyPerTick *= sorterPowerConsumptionMultiplier;
             }
