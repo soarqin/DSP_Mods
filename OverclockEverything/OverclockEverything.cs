@@ -93,6 +93,21 @@ public class Patch : BaseUnityPlugin
     }
 
     [HarmonyTranspiler]
+    [HarmonyPatch(typeof(UIReplicatorWindow), "OnOkButtonClick")]
+    private static IEnumerable<CodeInstruction> UIReplicatorWindow_OnOkButtonClick_Transpiler(IEnumerable<CodeInstruction> instructions)
+    {
+        foreach (var instr in instructions)
+        {
+            if (instr.opcode == OpCodes.Ldc_I4_S && instr.OperandIs(10))
+            {
+                instr.opcode = OpCodes.Ldc_I4;
+                instr.operand = 1000;
+            }
+            yield return instr;
+        }
+    }
+
+    [HarmonyTranspiler]
     [HarmonyPatch(typeof(UIReplicatorWindow), "OnPlusButtonClick")]
     [HarmonyPatch(typeof(UIReplicatorWindow), "OnMinusButtonClick")]
     private static IEnumerable<CodeInstruction> UIReplicatorWindow_OnPlusButtonClick_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
