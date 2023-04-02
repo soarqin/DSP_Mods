@@ -13,7 +13,7 @@ public unsafe class BufferWriter : BinaryWriter
 
     private Encoding _encoding;
 
-    private Encoder encoder;
+    private int maxBytesPerChar;
 
     byte[] Buffer => currentBuffer.Buffer;
 
@@ -53,7 +53,7 @@ public unsafe class BufferWriter : BinaryWriter
         doubleBuffer = buffer;
         RefreshStatus();
         _encoding = encoding;
-        encoder = _encoding.GetEncoder();
+        maxBytesPerChar = _encoding.GetMaxByteCount(1);
     }
 
     void SwapBuffer()
@@ -149,9 +149,9 @@ public unsafe class BufferWriter : BinaryWriter
             throw new ArgumentException("Arg_SurrogatesNotAllowedAsSingleChar");
         }
 
-        CheckCapacityAndSwap(4);
+        CheckCapacityAndSwap(maxBytesPerChar);
 
-        curPos += encoder.GetBytes(&ch, 1, curPos, (int)SuplusCapacity, flush: true);
+        curPos += _encoding.GetBytes(&ch, 1, curPos, (int)SuplusCapacity);
     }
 
     //slow
@@ -257,10 +257,7 @@ public unsafe class BufferWriter : BinaryWriter
 
     public unsafe override void Write(float value)
     {
-        if (SuplusCapacity < 4)
-        {
-            SwapBuffer();
-        }
+        CheckCapacityAndSwap(4);
         uint num = *(uint*)(&value);
         *(curPos++) = (byte)num;
         *(curPos++) = (byte)(num >> 8);
@@ -269,49 +266,17 @@ public unsafe class BufferWriter : BinaryWriter
     }
 
 
-    //slow
-    public unsafe override void Write(string value)
+    // Just use same mechanisum from `Write(char[] chars, int index, int count)`
+    public override void Write(string value)
     {
         if (value == null)
         {
             throw new ArgumentNullException("value");
         }
-        int byteCount = _encoding.GetByteCount(value);
-        Write7BitEncodedInt(byteCount);
-        {
-            var dstSuplus = (int)SuplusCapacity;
-            if (byteCount <= dstSuplus)
-            {
-                fixed (char* start = value)
-                {
-                    int Wcount = _encoding.GetBytes(start, value.Length, curPos, dstSuplus);
-                    curPos += Wcount;
-                    //Console.WriteLine($"Using quick write!");
-                    return;
-                }
-            }
-        }
-
-        int charIndex = 0;
-        bool completed;
-        fixed (char* chars = value)
-        {
-            do
-            {
-                encoder.Convert(chars + charIndex, value.Length - charIndex,
-                    curPos, (int)SuplusCapacity, true,
-                    out int charsConsumed, out int bytesWritten, out completed);
-                charIndex += charsConsumed;
-                curPos += bytesWritten;
-                //Console.WriteLine($"charsConsumed{charsConsumed} charIndex{charIndex} bytesWritten{bytesWritten} position{position} suplusCapacity{suplusCapacity}");
-
-                if (SuplusCapacity <= 0)
-                    SwapBuffer();
-            } while (!completed);
-        }
-        encoder.Reset(); //flush
+        byte[] bytes = _encoding.GetBytes(value);
+        Write7BitEncodedInt(bytes.Length);
+        Write(bytes);
     }
-
 
 
     protected new void Write7BitEncodedInt(int value)
