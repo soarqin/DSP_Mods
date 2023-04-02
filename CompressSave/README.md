@@ -7,6 +7,10 @@
 
 ## Updates
 
+### 1.2.2
+* Fix #4, a bug caused by non-ASCII UTF-8 characters.
+* Remove use of Harmony.UnpatchAll() to avoid warnings in BepInEx log.
+
 ### 1.2.1
 * Simplified codes to display compression type and `Decompress` button on save/load UI, making CompressSave compatible with other MODs(like GalacticScale) which override `UILoadGameWindow::OnSelectedChange()`.
 * Add compression level -5 to -1 for zstd, which makes it working better than lz4(which is actually lz4hc used by lz4frame) now:
