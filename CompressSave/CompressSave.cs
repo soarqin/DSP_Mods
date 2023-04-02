@@ -19,6 +19,7 @@ public enum CompressionType
 [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
 public class CompressSave : BaseUnityPlugin
 {
+    private Harmony patchSave, patchUISave, patchUILoad;
     string StringFromCompresstionType(CompressionType type)
     {
         switch (type)
@@ -60,10 +61,10 @@ public class CompressSave : BaseUnityPlugin
                     $"Save version mismatch. Expect:{SaveUtil.VerifiedVersion}, Current:{GameConfig.gameVersion}. MOD may not work as expected.");
             }
 
-            Harmony.CreateAndPatchAll(typeof(PatchSave));
+            patchSave = Harmony.CreateAndPatchAll(typeof(PatchSave));
             if (PatchSave.EnableCompress && PatchSave.CompressionTypeForSaves != CompressionType.None)
-                Harmony.CreateAndPatchAll(typeof(PatchUISaveGame));
-            Harmony.CreateAndPatchAll(typeof(PatchUILoadGame));
+                patchUISave = Harmony.CreateAndPatchAll(typeof(PatchUISaveGame));
+            patchUILoad = Harmony.CreateAndPatchAll(typeof(PatchUILoadGame));
         }
         else
             SaveUtil.logger.LogWarning("Either lz4warp.dll or zstdwrap.dll is not avaliable.");
@@ -71,9 +72,17 @@ public class CompressSave : BaseUnityPlugin
 
     public void OnDestroy()
     {
-        PatchUISaveGame.OnDestroy();
-        PatchUILoadGame.OnDestroy();
-        Harmony.UnpatchAll();
+        if (patchUISave != null)
+        {
+            PatchUISaveGame.OnDestroy();
+            patchUISave.UnpatchSelf();
+        }
+        if (patchUILoad != null)
+        {
+            PatchUILoadGame.OnDestroy();
+            patchUILoad.UnpatchSelf();
+        }
+        patchSave?.UnpatchSelf();
     }
 }
 
