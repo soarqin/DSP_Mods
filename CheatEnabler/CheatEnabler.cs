@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection.Emit;
 using BepInEx;
 using HarmonyLib;
@@ -26,6 +27,7 @@ public class CheatEnabler : BaseUnityPlugin
     private static bool _unipolarOnBirthPlanet = false;
     private static bool _flatBirthPlanet = true;
     private static bool _highLuminosityBirthStar = true;
+    private static bool _terraformAnyway = false;
     private static string _unlockTechToMaximumLevel = "";
     private static readonly List<int> TechToUnlock = new();
 
@@ -60,14 +62,18 @@ public class CheatEnabler : BaseUnityPlugin
             "Birth planet is solid flat (no water)").Value;
         _highLuminosityBirthStar = Config.Bind("Birth", "HighLuminosityBirthStar", _highLuminosityBirthStar,
             "Birth star has high luminosity").Value;
+        _terraformAnyway = Config.Bind("General", "TerraformAnyway", _terraformAnyway,
+            "Can do terraform without enough sands").Value;
         if (_devShortcuts)
         {
             Harmony.CreateAndPatchAll(typeof(DevShortcuts));
         }
+
         if (_disableAbnormalChecks)
         {
             Harmony.CreateAndPatchAll(typeof(AbnormalDisabler));
         }
+
         if (_alwaysInfiniteResource)
         {
             Harmony.CreateAndPatchAll(typeof(AlwaysInfiniteResource));
@@ -80,17 +86,27 @@ public class CheatEnabler : BaseUnityPlugin
                 TechToUnlock.Add(id);
             }
         }
+
         if (TechToUnlock.Count > 0)
         {
             Harmony.CreateAndPatchAll(typeof(UnlockTechOnGameStart));
         }
+
         if (_waterPumpAnywhere)
         {
             Harmony.CreateAndPatchAll(typeof(WaterPumperCheat));
         }
-        if (_sitiVeinsOnBirthPlanet || _fireIceOnBirthPlanet || _kimberliteOnBirthPlanet || _fractalOnBirthPlanet || _organicOnBirthPlanet || _opticalOnBirthPlanet || _spiniformOnBirthPlanet || _unipolarOnBirthPlanet || _flatBirthPlanet || _highLuminosityBirthStar)
+
+        if (_sitiVeinsOnBirthPlanet || _fireIceOnBirthPlanet || _kimberliteOnBirthPlanet || _fractalOnBirthPlanet ||
+            _organicOnBirthPlanet || _opticalOnBirthPlanet || _spiniformOnBirthPlanet || _unipolarOnBirthPlanet ||
+            _flatBirthPlanet || _highLuminosityBirthStar)
         {
             Harmony.CreateAndPatchAll(typeof(BirthPlanetCheat));
+        }
+
+        if (_terraformAnyway)
+        {
+            Harmony.CreateAndPatchAll(typeof(TerraformAnyway));
         }
     }
 
@@ -121,7 +137,9 @@ public class CheatEnabler : BaseUnityPlugin
             __instance.Update();
             if (lastActive != __instance.active)
             {
-                UIRealtimeTip.PopupAhead((lastActive ? "Developer Mode Shortcuts Disabled" : "Developer Mode Shortcuts Enabled").Translate(), false);
+                UIRealtimeTip.PopupAhead(
+                    (lastActive ? "Developer Mode Shortcuts Disabled" : "Developer Mode Shortcuts Enabled").Translate(),
+                    false);
             }
         }
     }
@@ -192,15 +210,18 @@ public class CheatEnabler : BaseUnityPlugin
             {
                 return;
             }
+
             foreach (var currentTech in TechToUnlock)
             {
                 UnlockTechRecursive(history, currentTech, currentTech == 3606 ? 7000 : 10000);
             }
+
             var techQueue = history.techQueue;
             if (techQueue == null || techQueue.Length == 0)
             {
                 return;
             }
+
             history.VarifyTechQueue();
             if (history.currentTech > 0 && history.currentTech != techQueue[0])
             {
@@ -215,17 +236,20 @@ public class CheatEnabler : BaseUnityPlugin
             {
                 return;
             }
+
             var techProto = LDB.techs.Select(currentTech);
             if (techProto == null)
             {
                 return;
             }
+
             var value = techStates[currentTech];
             var maxLvl = Math.Min(maxLevel, value.maxLevel);
             if (value.unlocked)
             {
                 return;
             }
+
             foreach (var preid in techProto.PreTechs)
             {
                 UnlockTechRecursive(history, preid, maxLevel);
@@ -250,8 +274,10 @@ public class CheatEnabler : BaseUnityPlugin
                 {
                     history.UnlockTechFunction(techProto.UnlockFunctions[j], techProto.UnlockValues[j], value.curLevel);
                 }
+
                 value.curLevel++;
             }
+
             value.unlocked = maxLvl >= value.maxLevel;
             value.curLevel = value.unlocked ? maxLvl : maxLvl + 1;
             value.hashNeeded = techProto.GetHashNeeded(value.curLevel);
@@ -280,43 +306,51 @@ public class CheatEnabler : BaseUnityPlugin
                 theme.VeinOpacity[2] = 1f;
                 theme.VeinOpacity[3] = 1f;
             }
+
             List<int> veins = new();
             List<float> settings = new();
             if (_fireIceOnBirthPlanet)
             {
                 veins.Add(8);
-                settings.AddRange(new [] {1f, 1f, 0.5f, 1f});
+                settings.AddRange(new[] { 1f, 1f, 0.5f, 1f });
             }
+
             if (_kimberliteOnBirthPlanet)
             {
                 veins.Add(9);
-                settings.AddRange(new [] {1f, 1f, 0.5f, 1f});
+                settings.AddRange(new[] { 1f, 1f, 0.5f, 1f });
             }
+
             if (_fractalOnBirthPlanet)
             {
                 veins.Add(10);
-                settings.AddRange(new [] {1f, 1f, 0.5f, 1f});
+                settings.AddRange(new[] { 1f, 1f, 0.5f, 1f });
             }
+
             if (_organicOnBirthPlanet)
             {
                 veins.Add(11);
-                settings.AddRange(new [] {1f, 1f, 0.5f, 1f});
+                settings.AddRange(new[] { 1f, 1f, 0.5f, 1f });
             }
+
             if (_opticalOnBirthPlanet)
             {
                 veins.Add(12);
-                settings.AddRange(new [] {1f, 1f, 0.5f, 1f});
+                settings.AddRange(new[] { 1f, 1f, 0.5f, 1f });
             }
+
             if (_spiniformOnBirthPlanet)
             {
                 veins.Add(13);
-                settings.AddRange(new [] {1f, 1f, 0.5f, 1f});
+                settings.AddRange(new[] { 1f, 1f, 0.5f, 1f });
             }
+
             if (_unipolarOnBirthPlanet)
             {
                 veins.Add(14);
-                settings.AddRange(new [] {1f, 1f, 0.5f, 1f});
+                settings.AddRange(new[] { 1f, 1f, 0.5f, 1f });
             }
+
             theme.RareVeins = veins.ToArray();
             theme.RareSettings = settings.ToArray();
             if (_highLuminosityBirthStar)
@@ -331,7 +365,8 @@ public class CheatEnabler : BaseUnityPlugin
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(BuildTool_BlueprintPaste), "CheckBuildConditions")]
         [HarmonyPatch(typeof(BuildTool_Click), "CheckBuildConditions")]
-        private static IEnumerable<CodeInstruction> BuildTool_CheckBuildConditions_Transpiler(IEnumerable<CodeInstruction> instructions)
+        private static IEnumerable<CodeInstruction> BuildTool_CheckBuildConditions_Transpiler(
+            IEnumerable<CodeInstruction> instructions)
         {
             var isFirst = true;
             foreach (var instr in instructions)
@@ -348,7 +383,51 @@ public class CheatEnabler : BaseUnityPlugin
                         continue;
                     }
                 }
+
                 yield return instr;
+            }
+        }
+    }
+
+    private class TerraformAnyway
+    {
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(BuildTool_Reform), "ReformAction")]
+        private static IEnumerable<CodeInstruction> BuildTool_Reform_ReformAction_Patch(
+            IEnumerable<CodeInstruction> instructions)
+        {
+            var list = instructions.ToList();
+            for (var i = 0; i < list.Count; i++)
+            {
+                var instr = list[i];
+                yield return instr;
+                if (instr.opcode == OpCodes.Callvirt &&
+                    instr.OperandIs(AccessTools.Method(typeof(Player), "get_sandCount")))
+                {
+                    /* ldloc.s 6 */
+                    i++;
+                    instr = list[i];
+                    yield return instr;
+                    /* sub */
+                    i++;
+                    instr = list[i];
+                    yield return instr;
+                    /* ldc.i4.0 */
+                    yield return new CodeInstruction(OpCodes.Ldc_I4_0);
+                    /* call Math.Max() */
+                    yield return new CodeInstruction(OpCodes.Call,
+                        AccessTools.Method(typeof(Math), "Max", new[] { typeof(int), typeof(int) }));
+                    /* stloc.s 21 */
+                    i++;
+                    instr = list[i];
+                    yield return instr;
+                    /* skip 3 instructions:
+                     *  ldloc.s 21
+                     *  ldc.i4.0
+                     *  blt (633)
+                     */
+                    i += 3;
+                }
             }
         }
     }
