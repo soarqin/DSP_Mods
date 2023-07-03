@@ -106,7 +106,7 @@ public static class StoragePatch
             comp.IsDusbin = _storageDustbinCheckBox.Checked;
         };
     }
-    
+
     [HarmonyPostfix]
     [HarmonyPatch(typeof(UIStorageWindow), "_OnUpdate")]
     private static void UIStorageWindow__OnUpdate_Postfix(UIStorageWindow __instance)
@@ -119,11 +119,21 @@ public static class StoragePatch
         if (storagePool[storageId].id != storageId) return;
         if (storagePool[storageId] is not StorageComponentWithDustbin comp) return;
         _storageDustbinCheckBox.Checked = comp.IsDusbin;
-        if (__instance.transform is RectTransform rectTrans) {
+        if (__instance.transform is RectTransform rectTrans)
+        {
             _storageDustbinCheckBox.rectTrans.anchoredPosition3D = new Vector3(50, 58 - rectTrans.sizeDelta.y, 0);
         }
     }
     
+    /* Adopt fix from starfi5h's NebulaCompatiblilityAssist */
+    [HarmonyPostfix]
+    [HarmonyPatch(typeof(UIStorageGrid), "OnStorageSizeChanged")]
+    private static void UIStorageGrid_OnStorageSizeChanged_Postfix()
+    {
+        // Due to storage window is empty when open in client, the size will change after receiving data from host
+        _lastStorageId = 0; // Refresh UI to reposition button on client side
+    }
+
     [HarmonyPrefix]
     [HarmonyPatch(typeof(StorageComponent), "AddItem",
         new[] { typeof(int), typeof(int), typeof(int), typeof(int), typeof(bool) },
