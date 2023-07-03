@@ -73,11 +73,13 @@ public static class MechaDronesTweaks
     public static float EnergyMultiplier = 0.1f;
 
     [HarmonyTranspiler, HarmonyPatch(typeof(UITechTree), "RefreshDataValueText")]
-    private static IEnumerable<CodeInstruction> UITechTreeRefreshDataValueText_Transpiler(IEnumerable<CodeInstruction> instructions)
+    private static IEnumerable<CodeInstruction> UITechTreeRefreshDataValueText_Transpiler(
+        IEnumerable<CodeInstruction> instructions)
     {
         foreach (var instr in instructions)
         {
-            if (instr.opcode == OpCodes.Callvirt && instr.OperandIs(AccessTools.Method(typeof(Mecha), "get_droneSpeed")))
+            if (instr.opcode == OpCodes.Callvirt &&
+                instr.OperandIs(AccessTools.Method(typeof(Mecha), "get_droneSpeed")))
             {
                 if (UseFixedSpeed)
                 {
@@ -116,6 +118,7 @@ public static class MechaDronesTweaks
                         instr.opcode = OpCodes.Ldc_I4_2;
                     }
                 }
+
                 yield return instr;
             }
         }
@@ -180,9 +183,11 @@ public static class MechaDronesTweaks
                         yield return new CodeInstruction(OpCodes.Ldc_R4, SpeedMultiplier);
                         yield return new CodeInstruction(OpCodes.Mul);
                     }
+
                     i++;
                     continue;
                 }
+
                 if (instrNext.opcode == OpCodes.Ldc_R4)
                 {
                     if (instrNext.OperandIs(0f))
@@ -218,7 +223,10 @@ public static class MechaDronesTweaks
                 {
                     if (UseFixedSpeed)
                     {
-                        if (FixedSpeed > 75f) { instr.operand = 0.5f * FixedSpeed / 75f; }
+                        if (FixedSpeed > 75f)
+                        {
+                            instr.operand = 0.5f * FixedSpeed / 75f;
+                        }
                     }
                     else
                     {
@@ -233,7 +241,119 @@ public static class MechaDronesTweaks
                     }
                 }
             }
+
             yield return instr;
+        }
+    }
+
+    [HarmonyTranspiler]
+    [HarmonyPatch(typeof(BuildTool_Dismantle), nameof(BuildTool_Dismantle.DeterminePreviews))]
+    [HarmonyPatch(typeof(BuildTool_Upgrade), nameof(BuildTool_Upgrade.DeterminePreviews))]
+    private static IEnumerable<CodeInstruction> BuildTools_CursorSizePatch_Transpiler(
+        IEnumerable<CodeInstruction> instructions)
+    {
+        foreach (var instr in instructions)
+        {
+            if (instr.opcode == OpCodes.Ldc_I4_S && instr.OperandIs(11))
+            {
+                yield return new CodeInstruction(OpCodes.Ldc_I4_S, 31);
+            }
+            else
+            {
+                yield return instr;
+            }
+        }
+    }
+
+    [HarmonyTranspiler, HarmonyPatch(typeof(BuildTool_Reform), nameof(BuildTool_Reform.ReformAction))]
+    private static IEnumerable<CodeInstruction> BuildTool_Reform_ReformAction_Transpiler(
+        IEnumerable<CodeInstruction> instructions)
+    {
+        var ilist = instructions.ToList();
+        for (var i = 0; i < ilist.Count; i++)
+        {
+            var instr = ilist[i];
+            if (instr.opcode == OpCodes.Ldc_I4_S && instr.OperandIs(10) &&
+                (ilist[i - 1].opcode == OpCodes.Ldfld &&
+                 ilist[i - 1].OperandIs(AccessTools.Field(typeof(BuildTool_Reform), "brushSize"))
+                 ||
+                 ilist[i + 1].opcode == OpCodes.Stfld &&
+                 ilist[i + 1].OperandIs(AccessTools.Field(typeof(BuildTool_Reform), "brushSize")))
+               )
+            {
+                yield return new CodeInstruction(OpCodes.Ldc_I4_S, 30);
+            }
+            else
+            {
+                yield return instr;
+            }
+        }
+    }
+   
+    
+    [HarmonyTranspiler, HarmonyPatch(typeof(ConnGizmoGraph), MethodType.Constructor)]
+    private static IEnumerable<CodeInstruction> ConnGizmoGraph_Constructor_Transpiler(
+        IEnumerable<CodeInstruction> instructions)
+    {
+        foreach (var instr in instructions)
+        {
+            if (instr.opcode == OpCodes.Ldc_I4 && instr.OperandIs(256))
+            {
+                yield return new CodeInstruction(OpCodes.Ldc_I4, 2048);
+            }
+            else
+            {
+                yield return instr;
+            }
+        }
+    }
+
+    [HarmonyTranspiler, HarmonyPatch(typeof(ConnGizmoGraph), nameof(ConnGizmoGraph.SetPointCount))]
+    private static IEnumerable<CodeInstruction> ConnGizmoGraph_SetPointCount_Transpiler(
+        IEnumerable<CodeInstruction> instructions)
+    {
+        foreach (var instr in instructions)
+        {
+            if (instr.opcode == OpCodes.Ldc_I4 && instr.OperandIs(256))
+            {
+                yield return new CodeInstruction(OpCodes.Ldc_I4, 2048);
+            }
+            else
+            {
+                yield return instr;
+            }
+        }
+    }
+
+    [HarmonyTranspiler, HarmonyPatch(typeof(BuildTool_Path), nameof(BuildTool_Path._OnInit))]
+    private static IEnumerable<CodeInstruction> BuildTool_Path__OnInit_Transpiler(
+        IEnumerable<CodeInstruction> instructions)
+    {
+        foreach (var instr in instructions)
+        {
+            if (instr.opcode == OpCodes.Ldc_I4 && instr.OperandIs(160))
+            {
+                instr.operand = 2048;
+            }
+
+            yield return instr;
+        }
+    }
+
+    [HarmonyTranspiler, HarmonyPatch(typeof(BuildTool_Click), nameof(BuildTool_Click._OnInit))]
+    private static IEnumerable<CodeInstruction> BuildTool_Click__OnInit_Transpiler(
+        IEnumerable<CodeInstruction> instructions)
+    {
+        foreach (var instr in instructions)
+        {
+            if (instr.opcode == OpCodes.Ldc_I4_S && instr.OperandIs(15))
+            {
+                yield return new CodeInstruction(OpCodes.Ldc_I4, 512);
+            }
+            else
+            {
+                yield return instr;
+            }
         }
     }
 
@@ -247,8 +367,10 @@ public static class MechaDronesTweaks
     [HarmonyPatch(typeof(BuildTool_Reform), nameof(BuildTool_Reform.ReformAction))]
     [HarmonyPatch(typeof(BuildTool_Upgrade), nameof(BuildTool_Upgrade.DetermineMoreChainTargets))]
     [HarmonyPatch(typeof(BuildTool_Upgrade), nameof(BuildTool_Upgrade.DeterminePreviews))]
-    private static IEnumerable<CodeInstruction> BuildAreaElimination_Transpiler(IEnumerable<CodeInstruction> instructions)
+    private static IEnumerable<CodeInstruction> BuildAreaElimination_Transpiler(
+        IEnumerable<CodeInstruction> instructions)
     {
+        /* Patch (player.mecha.buildArea * player.mecha.buildArea) to 100000000 */
         var ilist = instructions.ToList();
         var count = ilist.Count - 8;
         int i;
