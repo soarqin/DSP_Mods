@@ -39,7 +39,7 @@ public class MechaDronesTweaksPlugin : BaseUnityPlugin
             "Use fixed speed for mecha drones").Value;
         MechaDronesTweaks.SkipStage1 = Config.Bind("MechaDrones", "SkipStage1",
             MechaDronesTweaks.SkipStage1,
-            "Skip mecha drones' 1st stage (flying away from mecha in ~1/3 speed for several frames)").Value;
+            "Skip 1st stage of working mecha drones (flying away from mecha in ~1/3 speed for several frames)").Value;
         MechaDronesTweaks.RemoveSpeedLimitForStage1 = Config.Bind("MechaDrones", "RemoveSpeedLimitForStage1",
             MechaDronesTweaks.RemoveSpeedLimitForStage1,
             "Remove speed limit for 1st stage (has a speed limit @ ~10m/s originally)").Value;
@@ -50,6 +50,10 @@ public class MechaDronesTweaksPlugin : BaseUnityPlugin
             MechaDronesTweaks.SpeedMultiplier,
             new ConfigDescription("Speed multiplier for mecha drones, working only when UseFixedSpeed is disabled",
                 new AcceptableValueRange<float>(1f, 10f))).Value;
+        MechaDronesTweaks.EnergyMultiplier = Config.Bind("MechaDrones", "EnergyMultiplier",
+            MechaDronesTweaks.EnergyMultiplier,
+            new ConfigDescription("Energy consumption multiplier for mecha drones",
+                new AcceptableValueRange<float>(0f, 1f))).Value;
         MechaDronesTweaks.EnergyMultiplier = Config.Bind("MechaDrones", "EnergyMultiplier",
             MechaDronesTweaks.EnergyMultiplier,
             new ConfigDescription("Energy consumption multiplier for mecha drones",
@@ -230,6 +234,93 @@ public static class MechaDronesTweaks
                 }
             }
             yield return instr;
+        }
+    }
+
+    [HarmonyTranspiler]
+    [HarmonyPatch(typeof(BuildTool_Addon), nameof(BuildTool_Addon.CheckBuildConditions))]
+    [HarmonyPatch(typeof(BuildTool_Click), nameof(BuildTool_Click.CheckBuildConditions))]
+    [HarmonyPatch(typeof(BuildTool_Dismantle), nameof(BuildTool_Dismantle.DetermineMoreChainTargets))]
+    [HarmonyPatch(typeof(BuildTool_Dismantle), nameof(BuildTool_Dismantle.DeterminePreviews))]
+    [HarmonyPatch(typeof(BuildTool_Inserter), nameof(BuildTool_Inserter.CheckBuildConditions))]
+    [HarmonyPatch(typeof(BuildTool_Path), nameof(BuildTool_Path.CheckBuildConditions))]
+    [HarmonyPatch(typeof(BuildTool_Reform), nameof(BuildTool_Reform.ReformAction))]
+    [HarmonyPatch(typeof(BuildTool_Upgrade), nameof(BuildTool_Upgrade.DetermineMoreChainTargets))]
+    [HarmonyPatch(typeof(BuildTool_Upgrade), nameof(BuildTool_Upgrade.DeterminePreviews))]
+    private static IEnumerable<CodeInstruction> BuildAreaElimination_Transpiler(IEnumerable<CodeInstruction> instructions)
+    {
+        var ilist = instructions.ToList();
+        var count = ilist.Count - 8;
+        int i;
+        for (i = 0; i < count; i++)
+        {
+            var found = false;
+            while (true)
+            {
+                var instr = ilist[i + 1];
+                if (instr.opcode != OpCodes.Call ||
+                    !instr.OperandIs(AccessTools.Method(typeof(BuildTool), "get_player")))
+                {
+                    break;
+                }
+
+                instr = ilist[i + 2];
+                if (instr.opcode != OpCodes.Callvirt ||
+                    !instr.OperandIs(AccessTools.Method(typeof(Player), "get_mecha")))
+                {
+                    break;
+                }
+
+                instr = ilist[i + 3];
+                if (instr.opcode != OpCodes.Ldfld || !instr.OperandIs(AccessTools.Field(typeof(Mecha), "buildArea")))
+                {
+                    break;
+                }
+
+                instr = ilist[i + 5];
+                if (instr.opcode != OpCodes.Call ||
+                    !instr.OperandIs(AccessTools.Method(typeof(BuildTool), "get_player")))
+                {
+                    break;
+                }
+
+                instr = ilist[i + 6];
+                if (instr.opcode != OpCodes.Callvirt ||
+                    !instr.OperandIs(AccessTools.Method(typeof(Player), "get_mecha")))
+                {
+                    break;
+                }
+
+                instr = ilist[i + 7];
+                if (instr.opcode != OpCodes.Ldfld || !instr.OperandIs(AccessTools.Field(typeof(Mecha), "buildArea")))
+                {
+                    break;
+                }
+
+                instr = ilist[i + 8];
+                if (instr.opcode != OpCodes.Mul)
+                {
+                    break;
+                }
+
+                found = true;
+                yield return new CodeInstruction(OpCodes.Ldc_R4, 100000000.0f);
+                break;
+            }
+
+            if (found)
+            {
+                i += 8;
+            }
+            else
+            {
+                yield return ilist[i];
+            }
+        }
+
+        for (; i < ilist.Count; i++)
+        {
+            yield return ilist[i];
         }
     }
 }
