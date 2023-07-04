@@ -1,8 +1,8 @@
 ﻿{
   "name": "MechaDronesTweaks",
-  "version_number": "1.0.0",
+  "version_number": "1.1.0",
   "website_url": "https://github.com/soarqin/DSP_Mods/tree/master/MechaDronesTweaks",
-  "description": "Some tweaks for mecha drones(Successor to FastDrones MOD) / 机甲建设机调整(FastDrones MOD的后继者)",
+  "description": "Some tweaks for mecha drones and build functions(Successor to FastDrones MOD) / 机甲建设机和建设功能调整(FastDrones MOD的后继者)",
   "dependencies": [
     "xiaoye97-BepInEx-5.4.17"
   ]

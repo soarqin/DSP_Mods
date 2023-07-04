@@ -58,6 +58,17 @@ public class MechaDronesTweaksPlugin : BaseUnityPlugin
             MechaDronesTweaks.EnergyMultiplier,
             new ConfigDescription("Energy consumption multiplier for mecha drones",
                 new AcceptableValueRange<float>(0f, 1f))).Value;
+        MechaDronesTweaks.removeBuildRangeLimit = Config.Bind("MechaBuild", "RemoveBuildRangeLimit",
+                MechaDronesTweaks.removeBuildRangeLimit,
+                "Remove limit for build range and maximum count of drag building belts/buildings\nNote: this does not affect range limit for mecha drones' action")
+            .Value;
+        MechaDronesTweaks.largerAreaForUpgradeAndDismantle = Config.Bind("MechaBuild",
+            "LargerAreaForUpgradeAndDismantle", MechaDronesTweaks.largerAreaForUpgradeAndDismantle,
+            "Increase maximum area size for upgrade and dismantle to 31x31 (from 11x11)").Value;
+        MechaDronesTweaks.largerAreaForTerraform = Config.Bind("MechaBuild", "LargerAreaForTerraform",
+                MechaDronesTweaks.largerAreaForTerraform,
+                "Increase maximum area size for terraform to 30x30 (from 10x10)\nNote: this may impact game performance while using large area")
+            .Value;
 
         _harmony.PatchAll(typeof(MechaDronesTweaks));
     }
@@ -71,6 +82,9 @@ public static class MechaDronesTweaks
     public static float FixedSpeed = 300f;
     public static float SpeedMultiplier = 4f;
     public static float EnergyMultiplier = 0.1f;
+    public static bool removeBuildRangeLimit = true;
+    public static bool largerAreaForUpgradeAndDismantle = true;
+    public static bool largerAreaForTerraform = true;
 
     [HarmonyTranspiler, HarmonyPatch(typeof(UITechTree), "RefreshDataValueText")]
     private static IEnumerable<CodeInstruction> UITechTreeRefreshDataValueText_Transpiler(
@@ -157,92 +171,102 @@ public static class MechaDronesTweaks
     [HarmonyTranspiler, HarmonyPatch(typeof(MechaDrone), "Update")]
     private static IEnumerable<CodeInstruction> MechaDroneUpdate_Transpiler(IEnumerable<CodeInstruction> instructions)
     {
-        var ilist = instructions.ToList();
-        for (var i = 0; i < ilist.Count; i++)
+        if (!UseFixedSpeed && Math.Abs(SpeedMultiplier - 1.0f) < 0.01f)
         {
-            var instr = ilist[i];
-            if (instr.opcode == OpCodes.Ldarg_0)
+            foreach (var instr in instructions)
             {
-                var instrNext = ilist[i + 1];
-                if (instrNext.opcode == OpCodes.Ldfld &&
-                    instrNext.OperandIs(AccessTools.Field(typeof(MechaDrone), "speed")))
+                yield return instr;
+            }
+        }
+        else
+        {
+            var ilist = instructions.ToList();
+            for (var i = 0; i < ilist.Count; i++)
+            {
+                var instr = ilist[i];
+                if (instr.opcode == OpCodes.Ldarg_0)
                 {
-                    if (UseFixedSpeed)
+                    var instrNext = ilist[i + 1];
+                    if (instrNext.opcode == OpCodes.Ldfld &&
+                        instrNext.OperandIs(AccessTools.Field(typeof(MechaDrone), "speed")))
                     {
-                        var newInstr = new CodeInstruction(instr)
+                        if (UseFixedSpeed)
                         {
-                            opcode = OpCodes.Ldc_R4,
-                            operand = FixedSpeed
-                        };
-                        yield return newInstr;
-                    }
-                    else
-                    {
-                        yield return instr;
-                        yield return instrNext;
-                        yield return new CodeInstruction(OpCodes.Ldc_R4, SpeedMultiplier);
-                        yield return new CodeInstruction(OpCodes.Mul);
-                    }
-
-                    i++;
-                    continue;
-                }
-
-                if (instrNext.opcode == OpCodes.Ldc_R4)
-                {
-                    if (instrNext.OperandIs(0f))
-                    {
-                        var instrNext2 = ilist[i + 2];
-                        if (instrNext2.opcode == OpCodes.Stfld &&
-                            instrNext2.OperandIs(AccessTools.Field(typeof(MechaDrone), "progress")))
-                        {
-                            ilist[i + 3].labels = instr.labels;
-                            i += 2;
-                            continue;
+                            var newInstr = new CodeInstruction(instr)
+                            {
+                                opcode = OpCodes.Ldc_R4,
+                                operand = FixedSpeed
+                            };
+                            yield return newInstr;
                         }
-                    }
-                    else if (instrNext.OperandIs(1f))
-                    {
-                        var instrNext2 = ilist[i + 2];
-                        if (instrNext2.opcode == OpCodes.Stfld &&
-                            instrNext2.OperandIs(AccessTools.Field(typeof(MechaDrone), "progress")))
+                        else
                         {
-                            instrNext.operand = 0f;
                             yield return instr;
                             yield return instrNext;
-                            yield return instrNext2;
-                            i += 2;
-                            continue;
+                            yield return new CodeInstruction(OpCodes.Ldc_R4, SpeedMultiplier);
+                            yield return new CodeInstruction(OpCodes.Mul);
                         }
-                    }
-                }
-            }
-            else if (instr.opcode == OpCodes.Ldc_R4)
-            {
-                if (instr.OperandIs(0.5f))
-                {
-                    if (UseFixedSpeed)
-                    {
-                        if (FixedSpeed > 75f)
-                        {
-                            instr.operand = 0.5f * FixedSpeed / 75f;
-                        }
-                    }
-                    else
-                    {
-                        instr.operand = 0.5f * SpeedMultiplier;
-                    }
-                }
-                else if (instr.OperandIs(3f))
-                {
-                    if (RemoveSpeedLimitForStage1)
-                    {
-                        instr.operand = 10000f;
-                    }
-                }
-            }
 
-            yield return instr;
+                        i++;
+                        continue;
+                    }
+
+                    if (instrNext.opcode == OpCodes.Ldc_R4)
+                    {
+                        if (instrNext.OperandIs(0f))
+                        {
+                            var instrNext2 = ilist[i + 2];
+                            if (instrNext2.opcode == OpCodes.Stfld &&
+                                instrNext2.OperandIs(AccessTools.Field(typeof(MechaDrone), "progress")))
+                            {
+                                ilist[i + 3].labels = instr.labels;
+                                i += 2;
+                                continue;
+                            }
+                        }
+                        else if (instrNext.OperandIs(1f))
+                        {
+                            var instrNext2 = ilist[i + 2];
+                            if (instrNext2.opcode == OpCodes.Stfld &&
+                                instrNext2.OperandIs(AccessTools.Field(typeof(MechaDrone), "progress")))
+                            {
+                                instrNext.operand = 0f;
+                                yield return instr;
+                                yield return instrNext;
+                                yield return instrNext2;
+                                i += 2;
+                                continue;
+                            }
+                        }
+                    }
+                }
+                else if (instr.opcode == OpCodes.Ldc_R4)
+                {
+                    if (instr.OperandIs(0.5f))
+                    {
+                        if (UseFixedSpeed)
+                        {
+                            if (FixedSpeed > 75f)
+                            {
+                                instr.operand = 0.5f * FixedSpeed / 75f;
+                            }
+                        }
+                        else
+                        {
+                            instr.operand = 0.5f * SpeedMultiplier;
+                        }
+                    }
+                    else if (instr.OperandIs(3f))
+                    {
+                        if (RemoveSpeedLimitForStage1)
+                        {
+                            instr.operand = 10000f;
+                        }
+                    }
+                }
+
+                yield return instr;
+            }
         }
     }
 
@@ -252,15 +276,25 @@ public static class MechaDronesTweaks
     private static IEnumerable<CodeInstruction> BuildTools_CursorSizePatch_Transpiler(
         IEnumerable<CodeInstruction> instructions)
     {
-        foreach (var instr in instructions)
+        if (!largerAreaForUpgradeAndDismantle)
         {
-            if (instr.opcode == OpCodes.Ldc_I4_S && instr.OperandIs(11))
-            {
-                yield return new CodeInstruction(OpCodes.Ldc_I4_S, 31);
-            }
-            else
+            foreach (var instr in instructions)
             {
                 yield return instr;
+            }
+        }
+        else
+        {
+            foreach (var instr in instructions)
+            {
+                if (instr.opcode == OpCodes.Ldc_I4_S && instr.OperandIs(11))
+                {
+                    yield return new CodeInstruction(OpCodes.Ldc_I4_S, 31);
+                }
+                else
+                {
+                    yield return instr;
+                }
             }
         }
     }
@@ -269,41 +303,60 @@ public static class MechaDronesTweaks
     private static IEnumerable<CodeInstruction> BuildTool_Reform_ReformAction_Transpiler(
         IEnumerable<CodeInstruction> instructions)
     {
-        var ilist = instructions.ToList();
-        for (var i = 0; i < ilist.Count; i++)
+        if (!largerAreaForTerraform)
         {
-            var instr = ilist[i];
-            if (instr.opcode == OpCodes.Ldc_I4_S && instr.OperandIs(10) &&
-                (ilist[i - 1].opcode == OpCodes.Ldfld &&
-                 ilist[i - 1].OperandIs(AccessTools.Field(typeof(BuildTool_Reform), "brushSize"))
-                 ||
-                 ilist[i + 1].opcode == OpCodes.Stfld &&
-                 ilist[i + 1].OperandIs(AccessTools.Field(typeof(BuildTool_Reform), "brushSize")))
-               )
-            {
-                yield return new CodeInstruction(OpCodes.Ldc_I4_S, 30);
-            }
-            else
+            foreach (var instr in instructions)
             {
                 yield return instr;
             }
         }
+        else
+        {
+            var ilist = instructions.ToList();
+            for (var i = 0; i < ilist.Count; i++)
+            {
+                var instr = ilist[i];
+                if (instr.opcode == OpCodes.Ldc_I4_S && instr.OperandIs(10) &&
+                    (ilist[i - 1].opcode == OpCodes.Ldfld &&
+                     ilist[i - 1].OperandIs(AccessTools.Field(typeof(BuildTool_Reform), "brushSize"))
+                     ||
+                     ilist[i + 1].opcode == OpCodes.Stfld &&
+                     ilist[i + 1].OperandIs(AccessTools.Field(typeof(BuildTool_Reform), "brushSize")))
+                   )
+                {
+                    yield return new CodeInstruction(OpCodes.Ldc_I4_S, 30);
+                }
+                else
+                {
+                    yield return instr;
+                }
+            }
+        }
     }
-   
-    
+
     [HarmonyTranspiler, HarmonyPatch(typeof(ConnGizmoGraph), MethodType.Constructor)]
     private static IEnumerable<CodeInstruction> ConnGizmoGraph_Constructor_Transpiler(
         IEnumerable<CodeInstruction> instructions)
     {
-        foreach (var instr in instructions)
+        if (!removeBuildRangeLimit)
         {
-            if (instr.opcode == OpCodes.Ldc_I4 && instr.OperandIs(256))
-            {
-                yield return new CodeInstruction(OpCodes.Ldc_I4, 2048);
-            }
-            else
+            foreach (var instr in instructions)
             {
                 yield return instr;
+            }
+        }
+        else
+        {
+            foreach (var instr in instructions)
+            {
+                if (instr.opcode == OpCodes.Ldc_I4 && instr.OperandIs(256))
+                {
+                    yield return new CodeInstruction(OpCodes.Ldc_I4, 2048);
+                }
+                else
+                {
+                    yield return instr;
+                }
             }
         }
     }
@@ -312,15 +365,25 @@ public static class MechaDronesTweaks
     private static IEnumerable<CodeInstruction> ConnGizmoGraph_SetPointCount_Transpiler(
         IEnumerable<CodeInstruction> instructions)
     {
-        foreach (var instr in instructions)
+        if (!removeBuildRangeLimit)
         {
-            if (instr.opcode == OpCodes.Ldc_I4 && instr.OperandIs(256))
-            {
-                yield return new CodeInstruction(OpCodes.Ldc_I4, 2048);
-            }
-            else
+            foreach (var instr in instructions)
             {
                 yield return instr;
+            }
+        }
+        else
+        {
+            foreach (var instr in instructions)
+            {
+                if (instr.opcode == OpCodes.Ldc_I4 && instr.OperandIs(256))
+                {
+                    yield return new CodeInstruction(OpCodes.Ldc_I4, 2048);
+                }
+                else
+                {
+                    yield return instr;
+                }
             }
         }
     }
@@ -329,14 +392,24 @@ public static class MechaDronesTweaks
     private static IEnumerable<CodeInstruction> BuildTool_Path__OnInit_Transpiler(
         IEnumerable<CodeInstruction> instructions)
     {
-        foreach (var instr in instructions)
+        if (!removeBuildRangeLimit)
         {
-            if (instr.opcode == OpCodes.Ldc_I4 && instr.OperandIs(160))
+            foreach (var instr in instructions)
             {
-                instr.operand = 2048;
+                yield return instr;
             }
+        }
+        else
+        {
+            foreach (var instr in instructions)
+            {
+                if (instr.opcode == OpCodes.Ldc_I4 && instr.OperandIs(160))
+                {
+                    instr.operand = 2048;
+                }
 
-            yield return instr;
+                yield return instr;
+            }
         }
     }
 
@@ -344,15 +417,25 @@ public static class MechaDronesTweaks
     private static IEnumerable<CodeInstruction> BuildTool_Click__OnInit_Transpiler(
         IEnumerable<CodeInstruction> instructions)
     {
-        foreach (var instr in instructions)
+        if (!removeBuildRangeLimit)
         {
-            if (instr.opcode == OpCodes.Ldc_I4_S && instr.OperandIs(15))
-            {
-                yield return new CodeInstruction(OpCodes.Ldc_I4, 512);
-            }
-            else
+            foreach (var instr in instructions)
             {
                 yield return instr;
+            }
+        }
+        else
+        {
+            foreach (var instr in instructions)
+            {
+                if (instr.opcode == OpCodes.Ldc_I4_S && instr.OperandIs(15))
+                {
+                    yield return new CodeInstruction(OpCodes.Ldc_I4, 512);
+                }
+                else
+                {
+                    yield return instr;
+                }
             }
         }
     }
@@ -367,82 +450,94 @@ public static class MechaDronesTweaks
     [HarmonyPatch(typeof(BuildTool_Reform), nameof(BuildTool_Reform.ReformAction))]
     [HarmonyPatch(typeof(BuildTool_Upgrade), nameof(BuildTool_Upgrade.DetermineMoreChainTargets))]
     [HarmonyPatch(typeof(BuildTool_Upgrade), nameof(BuildTool_Upgrade.DeterminePreviews))]
-    private static IEnumerable<CodeInstruction> BuildAreaElimination_Transpiler(
+    private static IEnumerable<CodeInstruction> BuildAreaLimitRemoval_Transpiler(
         IEnumerable<CodeInstruction> instructions)
     {
-        /* Patch (player.mecha.buildArea * player.mecha.buildArea) to 100000000 */
-        var ilist = instructions.ToList();
-        var count = ilist.Count - 8;
-        int i;
-        for (i = 0; i < count; i++)
+        if (!removeBuildRangeLimit)
         {
-            var found = false;
-            while (true)
+            foreach (var instr in instructions)
             {
-                var instr = ilist[i + 1];
-                if (instr.opcode != OpCodes.Call ||
-                    !instr.OperandIs(AccessTools.Method(typeof(BuildTool), "get_player")))
+                yield return instr;
+            }
+        }
+        else
+        {
+            /* Patch (player.mecha.buildArea * player.mecha.buildArea) to 100000000 */
+            var ilist = instructions.ToList();
+            var count = ilist.Count - 8;
+            int i;
+            for (i = 0; i < count; i++)
+            {
+                var found = false;
+                while (true)
                 {
+                    var instr = ilist[i + 1];
+                    if (instr.opcode != OpCodes.Call ||
+                        !instr.OperandIs(AccessTools.Method(typeof(BuildTool), "get_player")))
+                    {
+                        break;
+                    }
+
+                    instr = ilist[i + 2];
+                    if (instr.opcode != OpCodes.Callvirt ||
+                        !instr.OperandIs(AccessTools.Method(typeof(Player), "get_mecha")))
+                    {
+                        break;
+                    }
+
+                    instr = ilist[i + 3];
+                    if (instr.opcode != OpCodes.Ldfld ||
+                        !instr.OperandIs(AccessTools.Field(typeof(Mecha), "buildArea")))
+                    {
+                        break;
+                    }
+
+                    instr = ilist[i + 5];
+                    if (instr.opcode != OpCodes.Call ||
+                        !instr.OperandIs(AccessTools.Method(typeof(BuildTool), "get_player")))
+                    {
+                        break;
+                    }
+
+                    instr = ilist[i + 6];
+                    if (instr.opcode != OpCodes.Callvirt ||
+                        !instr.OperandIs(AccessTools.Method(typeof(Player), "get_mecha")))
+                    {
+                        break;
+                    }
+
+                    instr = ilist[i + 7];
+                    if (instr.opcode != OpCodes.Ldfld ||
+                        !instr.OperandIs(AccessTools.Field(typeof(Mecha), "buildArea")))
+                    {
+                        break;
+                    }
+
+                    instr = ilist[i + 8];
+                    if (instr.opcode != OpCodes.Mul)
+                    {
+                        break;
+                    }
+
+                    found = true;
+                    yield return new CodeInstruction(OpCodes.Ldc_R4, 100000000.0f);
                     break;
                 }
 
-                instr = ilist[i + 2];
-                if (instr.opcode != OpCodes.Callvirt ||
-                    !instr.OperandIs(AccessTools.Method(typeof(Player), "get_mecha")))
+                if (found)
                 {
-                    break;
+                    i += 8;
                 }
-
-                instr = ilist[i + 3];
-                if (instr.opcode != OpCodes.Ldfld || !instr.OperandIs(AccessTools.Field(typeof(Mecha), "buildArea")))
+                else
                 {
-                    break;
+                    yield return ilist[i];
                 }
-
-                instr = ilist[i + 5];
-                if (instr.opcode != OpCodes.Call ||
-                    !instr.OperandIs(AccessTools.Method(typeof(BuildTool), "get_player")))
-                {
-                    break;
-                }
-
-                instr = ilist[i + 6];
-                if (instr.opcode != OpCodes.Callvirt ||
-                    !instr.OperandIs(AccessTools.Method(typeof(Player), "get_mecha")))
-                {
-                    break;
-                }
-
-                instr = ilist[i + 7];
-                if (instr.opcode != OpCodes.Ldfld || !instr.OperandIs(AccessTools.Field(typeof(Mecha), "buildArea")))
-                {
-                    break;
-                }
-
-                instr = ilist[i + 8];
-                if (instr.opcode != OpCodes.Mul)
-                {
-                    break;
-                }
-
-                found = true;
-                yield return new CodeInstruction(OpCodes.Ldc_R4, 100000000.0f);
-                break;
             }
 
-            if (found)
-            {
-                i += 8;
-            }
-            else
+            for (; i < ilist.Count; i++)
             {
                 yield return ilist[i];
             }
-        }
-
-        for (; i < ilist.Count; i++)
-        {
-            yield return ilist[i];
         }
     }
 }
