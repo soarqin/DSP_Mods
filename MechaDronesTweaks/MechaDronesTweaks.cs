@@ -299,6 +299,33 @@ public static class MechaDronesTweaks
         }
     }
 
+    [HarmonyTranspiler, HarmonyPatch(typeof(BuildTool_Reform), MethodType.Constructor)]
+    private static IEnumerable<CodeInstruction> BuildTool_Reform_Constructor_Transpiler(
+        IEnumerable<CodeInstruction> instructions)
+    {
+        if (!largerAreaForTerraform)
+        {
+            foreach (var instr in instructions)
+            {
+                yield return instr;
+            }
+        }
+        else
+        {
+            foreach (var instr in instructions)
+            {
+                if (instr.opcode == OpCodes.Ldc_I4_S && instr.OperandIs(100))
+                {
+                    yield return new CodeInstruction(OpCodes.Ldc_I4, 900);
+                }
+                else
+                {
+                    yield return instr;
+                }
+            }
+        }
+    }
+
     [HarmonyTranspiler, HarmonyPatch(typeof(BuildTool_Reform), nameof(BuildTool_Reform.ReformAction))]
     private static IEnumerable<CodeInstruction> BuildTool_Reform_ReformAction_Transpiler(
         IEnumerable<CodeInstruction> instructions)

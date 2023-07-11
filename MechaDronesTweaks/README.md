@@ -3,6 +3,14 @@
 #### Some tweaks for mecha drones(Successor to FastDrones MOD)
 #### 机甲建设机调整(FastDrones MOD的后继者)
 
+## Updates
+
+* 1.1.1
+  * Fixed crash in `LargeAreaForTerraform` functions.
+
+* 1.1.0
+  * Added `RemoveBuildRangeLimit`, `LargerAreaForUpgradeAndDismantle` and `LargerAreaForTerraform` options (Check Usage for details).
+
 ## Usage
 * Inspired by [FastDrones](https://dsp.thunderstore.io/package/dkoppstein/FastDrones/), but patching IL codes, consuming less CPU to reduce lags on massive builds especially blueprints' put.
 * Does not affect current game-saves, which means:
