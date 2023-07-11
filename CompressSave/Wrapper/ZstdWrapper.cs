@@ -27,10 +27,12 @@ public class ZstdAPI: WrapperDefines
                     "zstdwrap.dll", new List<DynDllMapping>
                     {
                         "zstdwrap.dll",
-                        "X64/zstdwrap.dll",
+                        "x64/zstdwrap.dll",
+                        "plugins/x64/zstdwrap.dll",
                         "BepInEx/scripts/x64/zstdwrap.dll",
-                        Path.Combine(root, "X64/zstdwrap.dll"),
-                        Path.Combine(root, "zstdwrap.dll")
+                        Path.Combine(root, "zstdwrap.dll"),
+                        Path.Combine(root, "x64/zstdwrap.dll"),
+                        Path.Combine(root, "plugins/x64/zstdwrap.dll"),
                     }
                 },
             };

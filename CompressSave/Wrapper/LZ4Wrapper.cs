@@ -27,10 +27,12 @@ public class LZ4API: WrapperDefines
                     "lz4wrap.dll", new List<DynDllMapping>
                     {
                         "lz4wrap.dll",
-                        "X64/lz4wrap.dll",
+                        "x64/lz4wrap.dll",
+                        "plugins/x64/lz4wrap.dll",
                         "BepInEx/scripts/x64/lz4wrap.dll",
-                        Path.Combine(root, "X64/lz4wrap.dll"),
-                        Path.Combine(root, "lz4wrap.dll")
+                        Path.Combine(root, "lz4wrap.dll"),
+                        Path.Combine(root, "x64/lz4wrap.dll"),
+                        Path.Combine(root, "plugins/x64/lz4wrap.dll"),
                     }
                 },
             };
