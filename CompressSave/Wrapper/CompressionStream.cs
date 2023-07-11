@@ -20,7 +20,7 @@ public class CompressionStream : Stream
     // only use for game statistics
     public override long Position { get => BufferWriter.WriteSum; set => new NotImplementedException(); }
 
-    readonly Stream outStream;
+    public readonly Stream outStream;
 
     long totalWrite = 0;
     bool useMultiThread;
@@ -62,7 +62,7 @@ public class CompressionStream : Stream
         {
             return new CompressBuffer
             {
-                outBuffer = new byte[wrapper.CompressBufferBound(ExBufferSize) + 1],
+                outBuffer = new byte[wrapper.CompressBufferBound(ExBufferSize)],
                 readBuffer = new byte[ExBufferSize],
                 writeBuffer = new byte[ExBufferSize],
             };
@@ -74,19 +74,18 @@ public class CompressionStream : Stream
         return new CompressBuffer();
     }
        
-    public BufferWriter BufferWriter => bfferWriter;
-    BufferWriter bfferWriter;
+    public BufferWriter BufferWriter { get; private set; }
 
-    public CompressionStream(WrapperDefines wrap, int compressionLevel, Stream outStream, CompressBuffer compressBuffer, bool useMultiThread)
+    public CompressionStream(WrapperDefines wrap, int compressionLevel, Stream outputStream, CompressBuffer compressBuffer, bool multiThread)
     {
-        this.wrapper = wrap;
-        this.outStream = outStream;
+        wrapper = wrap;
+        outStream = outputStream;
         InitBuffer(compressBuffer.readBuffer, compressBuffer.writeBuffer, compressBuffer.outBuffer);
         long writeSize = wrapper.CompressBegin(out cctx, compressionLevel, outBuffer, outBuffer.Length);
         HandleError(writeSize);
-        outStream.Write(outBuffer, 0, (int)writeSize);
-        this.useMultiThread = useMultiThread;
-        if(useMultiThread)
+        outputStream.Write(outBuffer, 0, (int)writeSize);
+        useMultiThread = multiThread;
+        if(multiThread)
         {
             stopWorker = false;
             compressThread = new Thread(() => CompressAsync());
@@ -98,7 +97,7 @@ public class CompressionStream : Stream
     {
         doubleBuffer = new DoubleBuffer(readBuffer ?? new byte[4 * MB], writeBuffer ?? new byte[4 * MB], Compress);
         this.outBuffer = outBuffer ?? new byte[wrapper.CompressBufferBound(writeBuffer.Length)];
-        bfferWriter = new BufferWriter(doubleBuffer,this);
+        BufferWriter = new BufferWriter(doubleBuffer,this);
     }
 
     public override void Flush()

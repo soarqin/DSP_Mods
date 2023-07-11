@@ -15,8 +15,9 @@ public class DecompressionStream : Stream
 
     public override long Length => inStream.Length;
 
-    public override long Position 
-    {   get => readPos; 
+    public override long Position
+    {
+        get => readPos;
         set
         {
             if (value < readPos)
@@ -28,7 +29,7 @@ public class DecompressionStream : Stream
             {
                 value -= Read(tmpBuffer, 0, (int)(value < 1024 ? value : 1024));
             }
-        } 
+        }
     }
 
     public Stream inStream;
@@ -41,11 +42,11 @@ public class DecompressionStream : Stream
     readonly long startPos = 0;
     long readPos = 0; //sum of readlen
 
-    public DecompressionStream(WrapperDefines wrap, Stream inStream,int extraBufferSize = 512*1024)
+    public DecompressionStream(WrapperDefines wrap, Stream inputStream, int extraBufferSize = 512 * 1024)
     {
-        this.wrapper = wrap;
-        this.inStream = inStream;
-        startPos = inStream.Position;
+        wrapper = wrap;
+        inStream = inputStream;
+        startPos = inputStream.Position;
         srcBuffer = new ByteSpan(new byte[extraBufferSize]);
         int len = Fill();
         long expect = wrapper.DecompressBegin(ref dctx, srcBuffer.Buffer, ref len, out var blockSize);
@@ -67,23 +68,24 @@ public class DecompressionStream : Stream
     public int Fill()
     {
         int suplus = srcBuffer.Length - srcBuffer.Position;
-        if (srcBuffer.Length> 0 && srcBuffer.Position >= suplus)
+        if (srcBuffer.Length > 0 && srcBuffer.Position >= suplus)
         {
             Array.Copy(srcBuffer, srcBuffer.Position, srcBuffer, 0, suplus);
             srcBuffer.Length -= srcBuffer.Position;
             srcBuffer.Position = 0;
         }
+
         if (srcBuffer.IdleCapacity > 0)
         {
             var readlen = inStream.Read(srcBuffer, srcBuffer.Length, srcBuffer.IdleCapacity);
             srcBuffer.Length += readlen;
         }
+
         return srcBuffer.Length - srcBuffer.Position;
     }
 
     public override void Flush()
     {
-            
     }
 
     protected override void Dispose(bool disposing)
@@ -101,7 +103,8 @@ public class DecompressionStream : Stream
             var buffSize = Fill();
             if (buffSize <= 0) return readlen;
 
-            var rt = wrapper.DecompressUpdateEx(dctx, dcmpBuffer, 0, dcmpBuffer.Capacity, srcBuffer, srcBuffer.Position,buffSize);
+            var rt = wrapper.DecompressUpdateEx(dctx, dcmpBuffer, 0, dcmpBuffer.Capacity, srcBuffer, srcBuffer.Position,
+                buffSize);
             if (rt.Expect < 0) throw new Exception(rt.Expect.ToString());
             if (rt.Expect == 0) decompressFinish = true;
 
@@ -109,6 +112,7 @@ public class DecompressionStream : Stream
             dcmpBuffer.Position = 0;
             dcmpBuffer.Length = (int)rt.WriteLen;
         }
+
         readPos += readlen;
         return readlen;
     }
@@ -120,7 +124,8 @@ public class DecompressionStream : Stream
             var buffSize = Fill();
             if (buffSize <= 0) return -1;
 
-            var rt = wrapper.DecompressUpdateEx(dctx, dcmpBuffer, 0, dcmpBuffer.Capacity, srcBuffer, srcBuffer.Position, buffSize);
+            var rt = wrapper.DecompressUpdateEx(dctx, dcmpBuffer, 0, dcmpBuffer.Capacity, srcBuffer, srcBuffer.Position,
+                buffSize);
             if (rt.Expect < 0) throw new Exception(rt.Expect.ToString());
             if (rt.Expect == 0) decompressFinish = true;
 
@@ -128,6 +133,7 @@ public class DecompressionStream : Stream
             dcmpBuffer.Position = 0;
             dcmpBuffer.Length = (int)rt.WriteLen;
         }
+
         return dcmpBuffer.Buffer[dcmpBuffer.Position];
     }
 

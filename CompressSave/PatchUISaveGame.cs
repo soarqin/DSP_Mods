@@ -68,23 +68,24 @@ static class PatchUISaveGame
     [HarmonyPatch(typeof(UISaveGameWindow), "_OnOpen"), HarmonyPostfix]
     static void _OnOpen(UISaveGameWindow __instance,  UIButton ___saveButton, Text ___saveButtonText)
     {
-        if (!context.buttonCompress)
-        {
-            context.saveButton = ___saveButton;
-            context.saveButtonText = ___saveButtonText;
+        if (context.buttonCompress) return;
+        context.saveButton = ___saveButton;
+        context.saveButtonText = ___saveButtonText;
 
-            context.ui = __instance;
-            context.buttonCompress = (__instance.transform.Find("button-compress")?.gameObject??GameObject.Instantiate(___saveButton.gameObject, ___saveButton.transform.parent)).GetComponent<UIButton>();
-                
-            context.buttonCompress.gameObject.name = "button-compress";
-            context.buttonCompress.transform.Translate(new Vector3(-2.0f, 0, 0));
-            context.buttonCompress.button.image.color = new Color32(0xfc,0x6f,00,0x77);
-            context.buttonCompressText = context.buttonCompress.transform.Find("button-text")?.GetComponent<Text>();
+        context.ui = __instance;
+        context.buttonCompress =
+            (__instance.transform.Find("button-compress")?.gameObject ??
+             GameObject.Instantiate(___saveButton.gameObject, ___saveButton.transform.parent))
+            .GetComponent<UIButton>();
 
-            context.buttonCompress.onClick += __instance.OnSaveClick;
-            context.saveButton.onClick -= __instance.OnSaveClick;
-            context.saveButton.onClick += WrapClick;
-        }
+        context.buttonCompress.gameObject.name = "button-compress";
+        context.buttonCompress.transform.Translate(new Vector3(-2.0f, 0, 0));
+        context.buttonCompress.button.image.color = new Color32(0xfc, 0x6f, 00, 0x77);
+        context.buttonCompressText = context.buttonCompress.transform.Find("button-text")?.GetComponent<Text>();
+
+        context.buttonCompress.onClick += __instance.OnSaveClick;
+        context.saveButton.onClick -= __instance.OnSaveClick;
+        context.saveButton.onClick += WrapClick;
     }
 
     static void WrapClick(int data)

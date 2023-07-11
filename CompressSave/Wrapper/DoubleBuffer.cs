@@ -77,11 +77,11 @@ public class DoubleBuffer
     Semaphore readEnd = new Semaphore(1, 1);
     Semaphore writeEnd = new Semaphore(0, 1);
 
-    public DoubleBuffer(byte[] readBuffer, byte[] writeBuffer, Action onReadBufferReady)
+    public DoubleBuffer(byte[] readingBuffer, byte[] writingBuffer, Action onReadBufferReadyAction)
     {
-        this.onReadBufferReady = onReadBufferReady;
-        this.midBuffer = new ByteSpan(readBuffer);
-        this.writeBuffer = new ByteSpan(writeBuffer);
+        onReadBufferReady = onReadBufferReadyAction;
+        midBuffer = new ByteSpan(readingBuffer);
+        writeBuffer = new ByteSpan(writingBuffer);
     }
 
     public ByteSpan ReadBegin()
