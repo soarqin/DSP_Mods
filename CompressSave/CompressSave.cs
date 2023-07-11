@@ -62,6 +62,9 @@ public class CompressSave : BaseUnityPlugin
             PatchSave.CompressionLevelForAutoSaves = Config.Bind("Compression", "LevelForAuto", PatchSave.CompressionLevelForAutoSaves,
                     "Set default compression level for auto saves and last-exit save.\n0 for default level.\n3 ~ 12 for lz4, -5 ~ 22 for zstd.\nSmaller level leads to faster speed and less compression ratio.")
                 .Value;
+            PatchSave.EnableForAutoSaves = Config.Bind("Compression", "EnableForAutoSaves", PatchSave.EnableForAutoSaves,
+                    "Enable the feature for auto saves and last-exit save.")
+                .Value;
             PatchSave.CreateCompressBuffer();
             if (GameConfig.gameVersion != SaveUtil.VerifiedVersion)
             {
@@ -107,6 +110,7 @@ class PatchSave
     public static CompressionType CompressionTypeForAutoSaves = CompressionType.Zstd;
     public static int CompressionLevelForSaves;
     public static int CompressionLevelForAutoSaves;
+    public static bool EnableForAutoSaves = true;
     private static Stream _compressionStream;
     public static bool EnableCompress;
 
@@ -117,6 +121,8 @@ class PatchSave
         outBufSize = Math.Max(outBufSize, ZstdWrapper.CompressBufferBound(bufSize));
         outBufSize = Math.Max(outBufSize, NoneWrapper.CompressBufferBound(bufSize));
         _compressBuffer = CompressionStream.CreateBuffer((int)outBufSize, bufSize);
+        _compressionTypeForSaving = CompressionTypeForSaves;
+        _compressionLevelForSaving = CompressionLevelForSaves;
     }
 
     private static void WriteHeader(FileStream fileStream)
@@ -144,7 +150,7 @@ class PatchSave
     [HarmonyPatch(typeof(GameSave), "SaveAsLastExit")]
     static void BeforeAutoSave()
     {
-        UseCompressSave = EnableCompress;
+        UseCompressSave = EnableForAutoSaves && EnableCompress;
         if (UseCompressSave)
         {
             _compressionTypeForSaving = CompressionTypeForAutoSaves;

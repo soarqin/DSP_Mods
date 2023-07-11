@@ -7,6 +7,10 @@
 
 ## Updates
 
+### 1.3.1
+* Add config to disable feature for auto saves.
+* Fix bug that first save after game start is always compressed in Zstd.
+
 ### 1.3.0
 * Separate config entries for manual save and auto save.
 * Now you can still get speed benefit while setting compression type to `None` for auto saves, and for manual saves if using the new `Save` button.
