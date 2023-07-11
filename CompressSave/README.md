@@ -7,6 +7,13 @@
 
 ## Updates
 
+### 1.3.0
+* Separate config entries for manual save and auto save.
+* Now you can still get speed benefit while setting compression type to `None` for auto saves, and for manual saves if using the new `Save` button.
+  * Adds a `nonewrap.dll` for this function.
+* Update `LZ4` and `Zstd` library to latest version.
+* `lz4wrap.dll` and `zstdwrap.dll` are compiled using `-O3` instead of `-Os`, expect to be slightly faster but larger.
+
 ### 1.2.2
 * Fix #4, a bug caused by non-ASCII UTF-8 characters.
 * Remove use of Harmony.UnpatchAll() to avoid warnings in BepInEx log.
@@ -111,8 +118,9 @@
 
 ## Usage
 
-* All autosaves are compressed
+* You can set compression type for manual saves and auto saves individually.
 * Manual saves are compressed while using the new `Save` button.
+* You can still get speed benefit while setting compression type to `None` for auto saves, and for manual saves if using the new `Save` button.
 * You can decompress saves on load panel.
 * Remember to backup your save(use original save button) before updating game to avoid loading failure.
 
@@ -128,7 +136,8 @@
 
 ## 使用说明
 
-* 所有自动存档都会被压缩。
+* 手动和自动存档都可以分开设置压缩方式。
 * 手动存档使用新加的保存按钮即可压缩保存。
+* 即使设置为不压缩，自动存档、以及使用新加的保存按钮手动保存也可以获得速度提升。
 * 可以在读取存档面板解压存档。
 * 如果游戏有版本更新记得先备份存档(使用原保存按钮)以免更新后无法读取存档。

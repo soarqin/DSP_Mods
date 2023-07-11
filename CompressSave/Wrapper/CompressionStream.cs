@@ -56,15 +56,15 @@ public class CompressionStream : Stream
         public byte[] outBuffer;
     }
 
-    public static CompressBuffer CreateBuffer(WrapperDefines wrapper, int ExBufferSize = 4 * MB)
+    public static CompressBuffer CreateBuffer(int outBufferSize, int exBufferSize = 4 * MB)
     {
         try
         {
             return new CompressBuffer
             {
-                outBuffer = new byte[wrapper.CompressBufferBound(ExBufferSize)],
-                readBuffer = new byte[ExBufferSize],
-                writeBuffer = new byte[ExBufferSize],
+                outBuffer = new byte[outBufferSize],
+                readBuffer = new byte[exBufferSize],
+                writeBuffer = new byte[exBufferSize],
             };
         }
         catch (Exception e)
@@ -93,10 +93,10 @@ public class CompressionStream : Stream
         }
     }
 
-    void InitBuffer(byte[] readBuffer, byte[] writeBuffer, byte[] outBuffer)
+    void InitBuffer(byte[] readBuffer, byte[] writeBuffer, byte[] outputBuffer)
     {
         doubleBuffer = new DoubleBuffer(readBuffer ?? new byte[4 * MB], writeBuffer ?? new byte[4 * MB], Compress);
-        this.outBuffer = outBuffer ?? new byte[wrapper.CompressBufferBound(writeBuffer.Length)];
+        outBuffer = outputBuffer ?? new byte[wrapper.CompressBufferBound(writeBuffer?.Length ?? 4 * MB)];
         BufferWriter = new BufferWriter(doubleBuffer,this);
     }
 

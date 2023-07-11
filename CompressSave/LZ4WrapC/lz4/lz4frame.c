@@ -54,7 +54,7 @@
 **************************************/
 /*
  * LZ4F_HEAPMODE :
- * Select how LZ4F_compressFrame will allocate the Compression Context,
+ * Control how LZ4F_compressFrame allocates the Compression State,
  * either on stack (0:default, fastest), or in memory heap (1:requires malloc()).
  */
 #ifndef LZ4F_HEAPMODE
@@ -314,9 +314,9 @@ static LZ4F_errorCode_t LZ4F_returnErrorCode(LZ4F_errorCodes code)
 
 #define RETURN_ERROR(e) return LZ4F_returnErrorCode(LZ4F_ERROR_ ## e)
 
-#define RETURN_ERROR_IF(c,e) if (c) RETURN_ERROR(e)
+#define RETURN_ERROR_IF(c,e) do { if (c) RETURN_ERROR(e); } while (0)
 
-#define FORWARD_IF_ERROR(r)  if (LZ4F_isError(r)) return (r)
+#define FORWARD_IF_ERROR(r) do { if (LZ4F_isError(r)) return (r); } while (0)
 
 unsigned LZ4F_getVersion(void) { return LZ4F_VERSION; }
 
@@ -1085,7 +1085,6 @@ size_t LZ4F_uncompressedUpdate(LZ4F_cctx* cctxPtr,
                                void* dstBuffer, size_t dstCapacity,
                          const void* srcBuffer, size_t srcSize,
                          const LZ4F_compressOptions_t* compressOptionsPtr) {
-    RETURN_ERROR_IF(cctxPtr->prefs.frameInfo.blockMode != LZ4F_blockIndependent, blockMode_invalid);
     return LZ4F_compressUpdateImpl(cctxPtr,
                                    dstBuffer, dstCapacity,
                                    srcBuffer, srcSize,

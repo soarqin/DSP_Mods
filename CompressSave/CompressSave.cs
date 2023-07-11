@@ -51,8 +51,16 @@ public class CompressSave : BaseUnityPlugin
                         new ConfigDescription("Set default compression type for manual saves.",
                             new AcceptableValueList<string>("lz4", "zstd", "none"), new { }))
                     .Value);
+            PatchSave.CompressionTypeForAutoSaves = CompressionTypeFromString(
+                Config.Bind("Compression", "TypeForAuto", StringFromCompresstionType(PatchSave.CompressionTypeForSaves),
+                        new ConfigDescription("Set default compression type for auto saves and last-exit save.",
+                            new AcceptableValueList<string>("lz4", "zstd", "none"), new { }))
+                    .Value);
             PatchSave.CompressionLevelForSaves = Config.Bind("Compression", "Level", PatchSave.CompressionLevelForSaves,
-                    "Set default compression level.\n0 for default level.\n3 ~ 12 for lz4, -5 ~ 22 for zstd.\nSmaller level leads to faster speed and less compression ratio.")
+                    "Set default compression level for manual saves.\n0 for default level.\n3 ~ 12 for lz4, -5 ~ 22 for zstd.\nSmaller level leads to faster speed and less compression ratio.")
+                .Value;
+            PatchSave.CompressionLevelForAutoSaves = Config.Bind("Compression", "LevelForAuto", PatchSave.CompressionLevelForAutoSaves,
+                    "Set default compression level for auto saves and last-exit save.\n0 for default level.\n3 ~ 12 for lz4, -5 ~ 22 for zstd.\nSmaller level leads to faster speed and less compression ratio.")
                 .Value;
             PatchSave.CreateCompressBuffer();
             if (GameConfig.gameVersion != SaveUtil.VerifiedVersion)
@@ -88,45 +96,40 @@ public class CompressSave : BaseUnityPlugin
 
 class PatchSave
 {
-    public static readonly WrapperDefines LZ4Wrapper = new LZ4API(), ZstdWrapper = new ZstdAPI(), NoneWrapper = new NoneAPI();
-    private const long SizeInMBytes = 1024 * 1024;
+    public static readonly WrapperDefines LZ4Wrapper = new LZ4API(), ZstdWrapper = new ZstdAPI();
+    private static readonly WrapperDefines NoneWrapper = new NoneAPI();
     private static CompressionStream.CompressBuffer _compressBuffer;
     public static bool UseCompressSave;
     private static CompressionType _compressionTypeForLoading = CompressionType.None;
+    private static CompressionType _compressionTypeForSaving = CompressionType.Zstd;
+    private static int _compressionLevelForSaving = 0;
     public static CompressionType CompressionTypeForSaves = CompressionType.Zstd;
+    public static CompressionType CompressionTypeForAutoSaves = CompressionType.Zstd;
     public static int CompressionLevelForSaves;
+    public static int CompressionLevelForAutoSaves;
     private static Stream _compressionStream;
     public static bool EnableCompress;
 
     public static void CreateCompressBuffer()
     {
-        switch (CompressionTypeForSaves)
-        {
-            case CompressionType.LZ4:
-                _compressBuffer = CompressionStream.CreateBuffer(LZ4Wrapper, (int)SizeInMBytes);
-                break;
-            case CompressionType.Zstd:
-                _compressBuffer = CompressionStream.CreateBuffer(ZstdWrapper, (int)SizeInMBytes);
-                break;
-            case CompressionType.None:
-                _compressBuffer = CompressionStream.CreateBuffer(NoneWrapper, (int)SizeInMBytes);
-                break;
-            default:
-                throw new ArgumentException("Unknown compression type.");
-        }
+        var bufSize = CompressionStream.MB;
+        var outBufSize = LZ4Wrapper.CompressBufferBound(bufSize);
+        outBufSize = Math.Max(outBufSize, ZstdWrapper.CompressBufferBound(bufSize));
+        outBufSize = Math.Max(outBufSize, NoneWrapper.CompressBufferBound(bufSize));
+        _compressBuffer = CompressionStream.CreateBuffer((int)outBufSize, bufSize);
     }
 
     private static void WriteHeader(FileStream fileStream)
     {
-        switch (CompressionTypeForSaves)
+        switch (_compressionTypeForSaving)
         {
             case CompressionType.Zstd:
-                for (int i = 0; i < 3; i++)
+                for (var i = 0; i < 3; i++)
                     fileStream.WriteByte(0xCC);
                 fileStream.WriteByte(0xCD);
                 break;
             case CompressionType.LZ4:
-                for (int i = 0; i < 4; i++)
+                for (var i = 0; i < 4; i++)
                     fileStream.WriteByte(0xCC);
                 break;
             case CompressionType.None:
@@ -142,6 +145,11 @@ class PatchSave
     static void BeforeAutoSave()
     {
         UseCompressSave = EnableCompress;
+        if (UseCompressSave)
+        {
+            _compressionTypeForSaving = CompressionTypeForAutoSaves;
+            _compressionLevelForSaving = CompressionLevelForAutoSaves;
+        }
     }
 
     [HarmonyTranspiler]
@@ -200,13 +208,13 @@ class PatchSave
         {
             SaveUtil.logger.LogDebug("Begin compress save");
             WriteHeader(fileStream);
-            switch (CompressionTypeForSaves)
+            switch (_compressionTypeForSaving)
             {
                 case CompressionType.LZ4:
-                    _compressionStream = new CompressionStream(LZ4Wrapper, CompressionLevelForSaves, fileStream, _compressBuffer, true);
+                    _compressionStream = new CompressionStream(LZ4Wrapper, _compressionLevelForSaving, fileStream, _compressBuffer, true);
                     break;
                 case CompressionType.Zstd:
-                    _compressionStream = new CompressionStream(ZstdWrapper, CompressionLevelForSaves, fileStream, _compressBuffer, true);
+                    _compressionStream = new CompressionStream(ZstdWrapper, _compressionLevelForSaving, fileStream, _compressBuffer, true);
                     break;
                 case CompressionType.None:
                     _compressionStream = new CompressionStream(NoneWrapper, 0, fileStream, _compressBuffer, true);
@@ -247,7 +255,7 @@ class PatchSave
         }
         var writeflag = _compressionStream.CanWrite;
         Stream stream = null;
-        if (writeflag && CompressionTypeForSaves == CompressionType.None)
+        if (writeflag && _compressionTypeForSaving == CompressionType.None)
         {
             stream = ((CompressionStream)_compressionStream).outStream;
         }
@@ -264,6 +272,8 @@ class PatchSave
                 writer.Write(saveLen);
                 writer.Dispose();
             }
+            _compressionTypeForSaving = CompressionTypeForSaves;
+            _compressionLevelForSaving = CompressionLevelForSaves;
             UseCompressSave = false;
         }
     }
