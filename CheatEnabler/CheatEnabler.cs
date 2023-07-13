@@ -170,32 +170,45 @@ public class CheatEnabler : BaseUnityPlugin
     private class AlwaysInfiniteResource
     {
         [HarmonyTranspiler]
-        [HarmonyPatch(typeof(GameDesc), "isInfiniteResource", MethodType.Getter)]
-        private static IEnumerable<CodeInstruction> ForceInfiniteResource(IEnumerable<CodeInstruction> instructions)
-        {
-            yield return new CodeInstruction(OpCodes.Ldc_I4, 1);
-            yield return new CodeInstruction(OpCodes.Ret);
-        }
-
-        [HarmonyTranspiler]
         [HarmonyPatch(typeof(FactorySystem), "GameTick", typeof(long), typeof(bool))]
         [HarmonyPatch(typeof(FactorySystem), "GameTick", typeof(long), typeof(bool), typeof(int), typeof(int),
             typeof(int))]
+        [HarmonyPatch(typeof(ItemProto), "GetPropValue")]
+        [HarmonyPatch(typeof(PlanetTransport), "GameTick")]
         [HarmonyPatch(typeof(UIMinerWindow), "_OnUpdate")]
+        [HarmonyPatch(typeof(UIMiningUpgradeLabel), "Update")]
+        [HarmonyPatch(typeof(UIPlanetDetail), "OnPlanetDataSet")]
+        [HarmonyPatch(typeof(UIPlanetDetail), "RefreshDynamicProperties")]
+        [HarmonyPatch(typeof(UIStarDetail), "OnStarDataSet")]
+        [HarmonyPatch(typeof(UIStarDetail), "RefreshDynamicProperties")]
+        [HarmonyPatch(typeof(UIStationStorage), "RefreshValues")]
         [HarmonyPatch(typeof(UIVeinCollectorPanel), "_OnUpdate")]
         private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
             foreach (var instruction in instructions)
             {
-                if (instruction.opcode == OpCodes.Ldc_R4 && instruction.OperandIs(99.5f))
+                if (instruction.opcode == OpCodes.Ldfld && instruction.OperandIs(AccessTools.Field(typeof(GameHistoryData), "miningCostRate")))
                 {
+                    yield return new CodeInstruction(OpCodes.Pop);
                     yield return new CodeInstruction(OpCodes.Ldc_R4, 0f);
+                }
+                else if (instruction.opcode == OpCodes.Ldfld && instruction.OperandIs(AccessTools.Field(typeof(GameHistoryData), "miningSpeedScale")))
+                {
+                    yield return new CodeInstruction(OpCodes.Pop);
+                    yield return new CodeInstruction(OpCodes.Ldc_R4, 720f);
                 }
                 else
                 {
                     yield return instruction;
                 }
             }
+        }
+
+        [HarmonyPrefix, HarmonyPatch(typeof(BuildTool_BlueprintPaste), "get_bMeetTech")]
+        private static bool BuildTool_BlueprintPaste_get_bMeetTech_Prefix(ref bool __result)
+        {
+            __result = true;
+            return false;
         }
     }
 
