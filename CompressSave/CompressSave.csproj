@@ -23,6 +23,6 @@
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="del /F /Q package\$(ProjectName)-$(Version).zip&#xA;zip -9 -j package/$(ProjectName)-$(Version).zip $(TargetPath) $(TargetDir)/System.Runtime.CompilerServices.Unsafe.dll package/icon.png package/manifest.json README.md&#xA;cd package&#xA;zip -9 -r $(ProjectName)-$(Version).zip plugins" />
+    <Exec Command="del /F /Q package\$(ProjectName)-$(Version).zip&#xA;zip -9 -j package/$(ProjectName)-$(Version).zip package/icon.png package/manifest.json README.md&#xA;copy /y &quot;$(TargetPath)&quot; package\plugins\&#xA;copy /y &quot;$(TargetDir)\System.Runtime.CompilerServices.Unsafe.dll&quot; package\plugins\&#xA;cd package&#xA;zip -9 -r $(ProjectName)-$(Version).zip plugins" />
   </Target>
 </Project>
