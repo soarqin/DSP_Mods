@@ -17,14 +17,9 @@ public static class Preloader
 
     public static void Patch(AssemblyDefinition assembly)
     {
-        AddMemebers(assembly);
-    }
-
-    private static void AddMemebers(AssemblyDefinition assembly)
-    {
+        var gameModule = assembly.MainModule;
         try
         {
-            var gameModule = assembly.MainModule;
             // Add field: int LabComponent.rootLabId;
             gameModule.GetType("LabComponent").AddFied("rootLabId", gameModule.TypeSystem.Int32);
         }
