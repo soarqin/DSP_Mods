@@ -1,11 +1,9 @@
-﻿using System.Collections.Generic;
-using System.IO;
-using System.Linq;
+﻿using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
 using BepInEx;
 using HarmonyLib;
-using UnityEngine.Yoga;
 
 namespace LabOpt;
 
@@ -199,6 +197,7 @@ public class LabOptPatch : BaseUnityPlugin
     }
     
     // Add a parameter on calling LabComponent.InternalUpdateAssemble()
+    // Remove call to LabComponent.InternalUpdateAssemble()
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(FactorySystem), nameof(FactorySystem.GameTickLabProduceMode), typeof(long), typeof(bool))]
     [HarmonyPatch(typeof(FactorySystem), nameof(FactorySystem.GameTickLabProduceMode), typeof(long), typeof(bool), typeof(int), typeof(int), typeof(int))]
@@ -212,10 +211,14 @@ public class LabOptPatch : BaseUnityPlugin
             new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(FactorySystem), nameof(FactorySystem.labPool))),
             new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(LabOptPatchFunctions), nameof(LabOptPatchFunctions.InternalUpdateAssembleNew)))
         );
+        matcher.Start().MatchForward(false,
+            new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(LabComponent), nameof(LabComponent.UpdateNeedsAssemble)))
+        ).Advance(-4).RemoveInstructions(5);
         return matcher.InstructionEnumeration();
     }
 
     // Add a parameter on calling LabComponent.InternalUpdateResearch()
+    // Remove call to LabComponent.InternalUpdateResearch()
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(FactorySystem), nameof(FactorySystem.GameTickLabResearchMode), typeof(long), typeof(bool))]
     private static IEnumerable<CodeInstruction> FactorySystem_GameTickLabResearchMode_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -228,6 +231,9 @@ public class LabOptPatch : BaseUnityPlugin
             new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(FactorySystem), nameof(FactorySystem.labPool))),
             new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(LabOptPatchFunctions), nameof(LabOptPatchFunctions.InternalUpdateResearchNew)))
         );
+        matcher.Start().MatchForward(false,
+            new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(LabComponent), nameof(LabComponent.UpdateNeedsResearch)))
+        ).Advance(-4).RemoveInstructions(5);
         return matcher.InstructionEnumeration();
     }
 
@@ -349,6 +355,28 @@ public class LabOptPatchFunctions
         {
             if (labPool[id].id != id) continue;
             ref var lab = ref labPool[id];
+            if (lab.researchMode)
+            {
+                var len = lab.matrixIncServed.Length;
+                for (var i = 0; i < len; i++)
+                {
+                    if (lab.matrixIncServed[i] < 0)
+                    {
+                        lab.matrixIncServed[i] = 0;
+                    }
+                }
+            }
+            else
+            {
+                var len = lab.incServed.Length;
+                for (var i = 0; i < len; i++)
+                {
+                    if (lab.incServed[i] < 0)
+                    {
+                        lab.incServed[i] = 0;
+                    }
+                }
+            }
             if (lab.nextLabId != 0) parentDict[lab.nextLabId] = id;
         }
 
@@ -363,43 +391,43 @@ public class LabOptPatchFunctions
             int len;
             if (rootLab.researchMode)
             {
-                len = rootLab.matrixServed.Length;
+                len = Math.Min(rootLab.matrixServed.Length, thisLab.matrixServed.Length);
                 for (var i = 0; i < len; i++)
                 {
-                    if (thisLab.matrixServed[i] == 0) continue;
-                    rootLab.matrixServed[i] += thisLab.matrixServed[i];
-                    thisLab.matrixServed[i] = 0;
-                }
-                len = rootLab.matrixIncServed.Length;
-                for (var i = 0; i < len; i++)
-                {
-                    if (thisLab.matrixIncServed[i] == 0) continue;
-                    rootLab.matrixIncServed[i] += thisLab.matrixIncServed[i];
-                    thisLab.matrixIncServed[i] = 0;
+                    if (thisLab.matrixServed[i] != 0)
+                    {
+                        rootLab.matrixServed[i] += thisLab.matrixServed[i];
+                        thisLab.matrixServed[i] = 0;
+                    }
+                    if (thisLab.matrixIncServed[i] != 0)
+                    {
+                        rootLab.matrixIncServed[i] += thisLab.matrixIncServed[i];
+                        thisLab.matrixIncServed[i] = 0;
+                    }
                 }
             }
             else
             {
-                len = rootLab.produced.Length;
+                len = Math.Min(rootLab.produced.Length, thisLab.produced.Length);
                 for (var i = 0; i < len; i++)
                 {
                     if (thisLab.produced[i] == 0) continue;
                     rootLab.produced[i] += thisLab.produced[i];
                     thisLab.produced[i] = 0;
                 }
-                len = rootLab.served.Length;
+                len = Math.Min(rootLab.served.Length, thisLab.served.Length);
                 for (var i = 0; i < len; i++)
                 {
-                    if (thisLab.served[i] == 0) continue;
-                    rootLab.served[i] += thisLab.served[i];
-                    thisLab.served[i] = 0;
-                }
-                len = rootLab.incServed.Length;
-                for (var i = 0; i < len; i++)
-                {
-                    if (thisLab.incServed[i] == 0) continue;
-                    rootLab.incServed[i] += thisLab.incServed[i];
-                    thisLab.incServed[i] = 0;
+                    if (thisLab.served[i] != 0)
+                    {
+                        rootLab.served[i] += thisLab.served[i];
+                        thisLab.served[i] = 0;
+                    }
+                    if (thisLab.incServed[i] != 0)
+                    {
+                        rootLab.incServed[i] += thisLab.incServed[i];
+                        thisLab.incServed[i] = 0;
+                    }
                 }
             }
 
@@ -422,24 +450,26 @@ public class LabOptPatchFunctions
             ref var rootLab = ref rootLabId > 0 ? ref labPool[rootLabId] : ref lab;
             if (extraPassed)
             {
-                int num = lab.products.Length;
-                if (num == 1)
+                int len = lab.products.Length;
+                lock (rootLab.produced)
                 {
-                    rootLab.produced[0] += lab.productCounts[0];
-                    int[] array = productRegister;
-                    lock (array)
+                    if (len == 1)
                     {
-                        productRegister[lab.products[0]] += lab.productCounts[0];
-                    }
-                }
-                else
-                {
-                    for (int i = 0; i < num; i++)
-                    {
-                        rootLab.produced[i] += lab.productCounts[i];
+                        rootLab.produced[0] += lab.productCounts[0];
                         lock (productRegister)
                         {
-                            productRegister[lab.products[i]] += lab.productCounts[i];
+                            productRegister[lab.products[0]] += lab.productCounts[0];
+                        }
+                    }
+                    else
+                    {
+                        for (int i = 0; i < len; i++)
+                        {
+                            rootLab.produced[i] += lab.productCounts[i];
+                            lock (productRegister)
+                            {
+                                productRegister[lab.products[i]] += lab.productCounts[i];
+                            }
                         }
                     }
                 }
@@ -450,37 +480,39 @@ public class LabOptPatchFunctions
             if (timePassed)
             {
                 lab.replicating = false;
-                int num2 = lab.products.Length;
-                if (num2 == 1)
+                int len = lab.products.Length;
+                lock (rootLab.produced)
                 {
-                    if (rootLab.produced[0] + lab.productCounts[0] > 10)
+                    if (len == 1)
                     {
-                        return 0U;
-                    }
-
-                    rootLab.produced[0] += lab.productCounts[0];
-                    int[] array = productRegister;
-                    lock (array)
-                    {
-                        productRegister[lab.products[0]] += lab.productCounts[0];
-                    }
-                }
-                else
-                {
-                    for (int j = 0; j < num2; j++)
-                    {
-                        if (rootLab.produced[j] + lab.productCounts[j] > 50)
+                        if (rootLab.produced[0] + lab.productCounts[0] > 30)
                         {
                             return 0U;
                         }
-                    }
 
-                    for (int k = 0; k < num2; k++)
-                    {
-                        rootLab.produced[k] += lab.productCounts[k];
+                        rootLab.produced[0] += lab.productCounts[0];
                         lock (productRegister)
                         {
-                            productRegister[lab.products[k]] += lab.productCounts[k];
+                            productRegister[lab.products[0]] += lab.productCounts[0];
+                        }
+                    }
+                    else
+                    {
+                        for (int j = 0; j < len; j++)
+                        {
+                            if (rootLab.produced[j] + lab.productCounts[j] > 30)
+                            {
+                                return 0U;
+                            }
+                        }
+
+                        for (int k = 0; k < len; k++)
+                        {
+                            rootLab.produced[k] += lab.productCounts[k];
+                            lock (productRegister)
+                            {
+                                productRegister[lab.products[k]] += lab.productCounts[k];
+                            }
                         }
                     }
                 }
@@ -493,54 +525,60 @@ public class LabOptPatchFunctions
 
             if (!lab.replicating)
             {
-                int num3 = lab.requireCounts.Length;
-                for (int l = 0; l < num3; l++)
+                int len = lab.requireCounts.Length;
+                int incLevel;
+                if (len > 0)
                 {
-                    if (rootLab.incServed[l] <= 0)
+                    var served = rootLab.served;
+                    lock (served)
                     {
-                        rootLab.incServed[l] = 0;
-                    }
+                        for (int l = 0; l < len; l++)
+                        {
+                            if (served[l] < lab.requireCounts[l] || served[l] == 0)
+                            {
+                                lab.time = 0;
+                                return 0U;
+                            }
+                        }
 
-                    if (rootLab.served[l] < lab.requireCounts[l] || rootLab.served[l] == 0)
-                    {
-                        lab.time = 0;
-                        return 0U;
+                        incLevel = 10;
+                        for (int m = 0; m < len; m++)
+                        {
+                            int splittedIncLevel = lab.split_inc_level(ref served[m], ref rootLab.incServed[m], lab.requireCounts[m]);
+                            if (splittedIncLevel < incLevel) incLevel = splittedIncLevel;
+                            if (served[m] == 0)
+                            {
+                                rootLab.incServed[m] = 0;
+                            }
+                            rootLab.needs[m] = served[m] < 6 ? rootLab.requires[0] : 0;
+                            lock (consumeRegister)
+                            {
+                                consumeRegister[lab.requires[m]] += lab.requireCounts[m];
+                            }
+                        }
+
+                        if (incLevel < 0)
+                        {
+                            incLevel = 0;
+                        }
                     }
                 }
-
-                int num4 = ((num3 > 0) ? 10 : 0);
-                for (int m = 0; m < num3; m++)
+                else
                 {
-                    int num5 = lab.split_inc_level(ref rootLab.served[m], ref rootLab.incServed[m], lab.requireCounts[m]);
-                    num4 = ((num4 < num5) ? num4 : num5);
-                    if (rootLab.served[m] == 0)
-                    {
-                        rootLab.incServed[m] = 0;
-                    }
-
-                    int[] array = consumeRegister;
-                    lock (array)
-                    {
-                        consumeRegister[lab.requires[m]] += lab.requireCounts[m];
-                    }
-                }
-
-                if (num4 < 0)
-                {
-                    num4 = 0;
+                    incLevel = 0;
                 }
 
                 if (lab.productive && !lab.forceAccMode)
                 {
-                    lab.extraSpeed = (int)((double)lab.speed * Cargo.incTableMilli[num4] * 10.0 + 0.1);
+                    lab.extraSpeed = (int)((double)lab.speed * Cargo.incTableMilli[incLevel] * 10.0 + 0.1);
                     lab.speedOverride = lab.speed;
-                    lab.extraPowerRatio = Cargo.powerTable[num4];
+                    lab.extraPowerRatio = Cargo.powerTable[incLevel];
                 }
                 else
                 {
                     lab.extraSpeed = 0;
-                    lab.speedOverride = (int)((double)lab.speed * (1.0 + Cargo.accTableMilli[num4]) + 0.1);
-                    lab.extraPowerRatio = Cargo.powerTable[num4];
+                    lab.speedOverride = (int)((double)lab.speed * (1.0 + Cargo.accTableMilli[incLevel]) + 0.1);
+                    lab.extraPowerRatio = Cargo.powerTable[incLevel];
                 }
 
                 lab.replicating = true;
@@ -570,15 +608,16 @@ public class LabOptPatchFunctions
         var rootLabId = (int)RootLabIdField.GetValue(lab);
         ref var rootLab = ref rootLabId > 0 ? ref labPool[rootLabId] : ref lab;
 
-        int num = (int)(speed + 2f);
+        int multiplier = (int)(speed + 2f);
+        var matrixServed = rootLab.matrixServed;
         for (var i = 0; i < 6; i++)
         {
             if (lab.matrixPoints[i] <= 0) continue;
-            int num2 = rootLab.matrixServed[i] / lab.matrixPoints[i];
-            if (num2 < num)
+            int mult = matrixServed[i] / lab.matrixPoints[i];
+            if (mult < multiplier)
             {
-                num = num2;
-                if (num == 0)
+                multiplier = mult;
+                if (multiplier == 0)
                 {
                     lab.replicating = false;
                     return 0U;
@@ -587,52 +626,49 @@ public class LabOptPatchFunctions
         }
 
         lab.replicating = true;
-        speed = ((speed < (float)num) ? speed : ((float)num));
-        int num3 = (int)(power * 10000f * speed + 0.5f);
-        lab.hashBytes += num3;
-        long num4 = (long)(lab.hashBytes / 10000);
-        lab.hashBytes -= (int)num4 * 10000;
-        long num5 = ts.hashNeeded - ts.hashUploaded;
-        num4 = ((num4 < num5) ? num4 : num5);
-        num4 = ((num4 < (long)num) ? num4 : ((long)num));
-        int num6 = (int)num4;
-        if (num6 > 0)
+        if (multiplier < speed) speed = multiplier;
+        int hashBytes = (int)(power * 10000f * speed + 0.5f);
+        lab.hashBytes += hashBytes;
+        long count = lab.hashBytes / 10000;
+        lab.hashBytes -= (int)count * 10000;
+        long maxNeeded = ts.hashNeeded - ts.hashUploaded;
+        if (maxNeeded < count) count = maxNeeded;
+        if (multiplier < count) count = multiplier;
+        int icount = (int)count;
+        if (icount > 0)
         {
-            int num7 = rootLab.matrixServed.Length;
-            int num8 = ((num7 == 0) ? 0 : 10);
-            for (int i = 0; i < num7; i++)
+            int len = matrixServed.Length;
+            int incLevel = ((len == 0) ? 0 : 10);
+            for (int i = 0; i < len; i++)
             {
-                if (lab.matrixPoints[i] > 0)
+                if (lab.matrixPoints[i] <= 0) continue;
+                int matrixBefore = matrixServed[i];
+                int splittedIncLevel = lab.split_inc_level(ref matrixServed[i], ref rootLab.matrixIncServed[i], lab.matrixPoints[i] * icount);
+                incLevel = incLevel < splittedIncLevel ? incLevel : splittedIncLevel;
+                if (matrixServed[i] <= 0)
                 {
-                    int num9 = rootLab.matrixServed[i] / 3600;
-                    int num10 = lab.split_inc_level(ref rootLab.matrixServed[i], ref rootLab.matrixIncServed[i], lab.matrixPoints[i] * num6);
-                    num8 = ((num8 < num10) ? num8 : num10);
-                    int num11 = rootLab.matrixServed[i] / 3600;
-                    if (rootLab.matrixServed[i] <= 0 || rootLab.matrixIncServed[i] < 0)
-                    {
-                        rootLab.matrixIncServed[i] = 0;
-                    }
-
-                    consumeRegister[LabComponent.matrixIds[i]] += num9 - num11;
+                    rootLab.matrixIncServed[i] = 0;
                 }
+                rootLab.needs[i] = matrixServed[i] < 54000 ? 6001 + i : 0;
+                consumeRegister[LabComponent.matrixIds[i]] += (matrixBefore - rootLab.matrixIncServed[i]) / 3600;
             }
 
-            if (num8 < 0)
+            if (incLevel < 0)
             {
-                num8 = 0;
+                incLevel = 0;
             }
 
-            lab.extraSpeed = (int)(10000.0 * Cargo.incTableMilli[num8] * 10.0 + 0.1);
-            lab.extraPowerRatio = Cargo.powerTable[num8];
-            lab.extraHashBytes += (int)(power * (float)lab.extraSpeed * speed + 0.5f);
-            long num12 = (long)(lab.extraHashBytes / 100000);
-            lab.extraHashBytes -= (int)num12 * 100000;
-            num12 = ((num12 < 0L) ? 0L : num12);
-            int num13 = (int)num12;
-            ts.hashUploaded += num4 + num12;
-            hashRegister += num4 + num12;
-            uMatrixPoint += (long)ts.uPointPerHash * num4;
-            techHashedThisFrame += num6 + num13;
+            lab.extraSpeed = (int)(10000.0 * Cargo.incTableMilli[incLevel] * 10.0 + 0.1);
+            lab.extraPowerRatio = Cargo.powerTable[incLevel];
+            lab.extraHashBytes += (int)(power * lab.extraSpeed * speed + 0.5f);
+            long extraCount = lab.extraHashBytes / 100000;
+            lab.extraHashBytes -= (int)extraCount * 100000;
+            if (extraCount < 0L) extraCount = 0L;
+            int iextraCount = (int)extraCount;
+            ts.hashUploaded += count + extraCount;
+            hashRegister += count + extraCount;
+            uMatrixPoint += ts.uPointPerHash * count;
+            techHashedThisFrame += icount + iextraCount;
             if (ts.hashUploaded >= ts.hashNeeded)
             {
                 TechProto techProto = LDB.techs.Select(lab.techId);
