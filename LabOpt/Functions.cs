@@ -19,7 +19,7 @@ public static class LabOptPatchFunctions
         do
         {
             RootLabIdField.SetValueDirect(__makeref(labPool[targetLabId]), rootId);
-            LabOptPatch.Logger.LogDebug($"Set rootLabId of lab {targetLabId} to {rootId}");
+            // LabOptPatch.Logger.LogDebug($"Set rootLabId of lab {targetLabId} to {rootId}");
         } while ((targetLabId = labPool[targetLabId].nextLabId) > 0);
     }
 
@@ -61,7 +61,7 @@ public static class LabOptPatchFunctions
             var rootId = pair.Value;
             while (parentDict.TryGetValue(rootId, out var parentId)) rootId = parentId;
             RootLabIdField.SetValueDirect(__makeref(labPool[pair.Key]), rootId);
-            LabOptPatch.Logger.LogDebug($"Set rootLabId of lab {pair.Key} to {rootId}");
+            // LabOptPatch.Logger.LogDebug($"Set rootLabId of lab {pair.Key} to {rootId}");
             AssignRootLabValues(ref labPool[rootId], ref labPool[pair.Key]);
         }
     }
@@ -350,7 +350,7 @@ public static class LabOptPatchFunctions
 
     public static void SetFunctionNew(ref LabComponent lab, bool researchMode, int recpId, int techId, SignData[] signPool, LabComponent[] labPool)
     {
-        LabOptPatch.Logger.LogDebug($"SetFunctionNew: {lab.id} {(int)RootLabIdField.GetValue(lab)} {researchMode} {recpId} {techId}");
+        // LabOptPatch.Logger.LogDebug($"SetFunctionNew: {lab.id} {(int)RootLabIdField.GetValue(lab)} {researchMode} {recpId} {techId}");
 		lab.replicating = false;
 		lab.time = 0;
 		lab.hashBytes = 0;
@@ -503,4 +503,39 @@ public static class LabOptPatchFunctions
 		signPool[lab.entityId].iconId0 = (uint)lab.recipeId;
 		signPool[lab.entityId].iconType = lab.recipeId == 0 ? 0U : 2U;
 	}
+
+    public static int InsertIntoLab(PlanetFactory factory, int labId, int itemId, byte itemCount, byte itemInc, ref byte remainInc, int[] needs)
+    {
+        var factorySystem = factory.factorySystem;
+        var served = factorySystem.labPool[labId].served;
+        var incServed = factorySystem.labPool[labId].incServed;
+        var matrixServed = factorySystem.labPool[labId].matrixServed;
+        var matrixIncServed = factorySystem.labPool[labId].matrixIncServed;
+        var len = needs.Length;
+        for (var i = 0; i < len; i++)
+        {
+            if (needs[i] != itemId) continue;
+            if (served != null)
+            {
+                lock (served)
+                {
+                    served[i] += itemCount;
+                    incServed[i] += itemInc;
+                }
+                remainInc = 0;
+                return itemCount;
+            }
+            if (matrixServed != null)
+            {
+                lock (matrixServed)
+                {
+                    matrixServed[i] += 3600 * itemCount;
+                    matrixIncServed[i] += 3600 * itemInc;
+                }
+                remainInc = 0;
+                return itemCount;
+            }
+        }
+        return 0;
+    }
 }
