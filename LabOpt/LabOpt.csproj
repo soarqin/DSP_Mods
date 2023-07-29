@@ -5,7 +5,7 @@
     <AssemblyName>LabOpt</AssemblyName>
     <BepInExPluginGuid>org.soardev.labopt</BepInExPluginGuid>
     <Description>DSP MOD - LabOpt</Description>
-    <Version>0.2.1</Version>
+    <Version>0.3.0</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
