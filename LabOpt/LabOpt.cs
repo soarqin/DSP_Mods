@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Reflection.Emit;
-using System.Threading;
 using BepInEx;
 using HarmonyLib;
 
@@ -144,11 +143,18 @@ public class LabOptPatch : BaseUnityPlugin
     }
 
     // Set rootLabId for LabComponent after loading game-save
-    [HarmonyPostfix]
+    [HarmonyTranspiler]
     [HarmonyPatch(typeof(FactorySystem), nameof(FactorySystem.Import))]
-    private static void FactorySystem_Import_Postfix(FactorySystem __instance)
+    private static IEnumerable<CodeInstruction> FactorySystem_Import_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
     {
-        LabOptPatchFunctions.SetRootLabIdOnLoading(__instance);
+        var matcher = new CodeMatcher(instructions, generator);
+        matcher.End().MatchForward(false,
+            new CodeMatch(OpCodes.Ret)
+        ).Insert(
+            new CodeInstruction(OpCodes.Ldarg_0),
+            new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(LabOptPatchFunctions), nameof(LabOptPatchFunctions.SetRootLabIdOnLoading)))
+        );
+        return matcher.InstructionEnumeration();
     }
 
     // Redirect call of LabComponent.InternalUpdateAssemble() to InternalUpdateAssembleNew()
@@ -269,24 +275,12 @@ public class LabOptPatch : BaseUnityPlugin
         return matcher.InstructionEnumeration();
     }
     
-    // Change locks on PlanetFactory.InsertInto()
+    // Change locks on PlanetFactory.InsertInto(), by calling LabOptPatchFunctions.InsertIntoLab()
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(PlanetFactory), nameof(PlanetFactory.InsertInto))]
     private static IEnumerable<CodeInstruction> PlanetFactory_InsertInto_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
     {
         var matcher = new CodeMatcher(instructions, generator);
-        /* Remove following codes:
-         465	0427	ldarg.0
-         466	0428	ldfld	class Mutex[] PlanetFactory::entityMutexs
-         467	042D	ldarg.1
-         468	042E	ldelem.ref
-         469	042F	stloc.s	V_10 (10)
-         470	0431	ldc.i4.0
-         471	0432	stloc.s	V_11 (11)
-         472	0434	ldloc.s	V_10 (10)
-         473	0436	ldloca.s	V_11 (11)
-         474	0438	call	void [netstandard]System.Threading.Monitor::Enter(object, bool&)
-        */
         matcher.MatchForward(false,
             new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(EntityData), nameof(EntityData.labId)))
         ).Advance(1).MatchForward(false,
@@ -307,4 +301,29 @@ public class LabOptPatch : BaseUnityPlugin
         matcher.Instruction.labels.Clear();
         return matcher.InstructionEnumeration();
     }
+
+    // Change locks on PlanetFactory.PickFrom(), by calling LabOptPatchFunctions.PickFromLab()
+    [HarmonyTranspiler]
+    [HarmonyPatch(typeof(PlanetFactory), nameof(PlanetFactory.PickFrom))]
+    private static IEnumerable<CodeInstruction> PlanetFactory_PickFrom_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+    {
+        var matcher = new CodeMatcher(instructions, generator);
+        matcher.MatchForward(false,
+            new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(EntityData), nameof(EntityData.labId)))
+        ).Advance(1).MatchForward(false,
+            new CodeMatch(OpCodes.Ble)
+        ).Advance(1);
+        var labels = matcher.Instruction.labels;
+        matcher.InsertAndAdvance(
+            new CodeInstruction(OpCodes.Ldarg_0).WithLabels(labels),
+            new CodeInstruction(OpCodes.Ldloc_S, 7),
+            new CodeInstruction(OpCodes.Ldarg_3),
+            new CodeInstruction(OpCodes.Ldarg_S, 4),
+            new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(LabOptPatchFunctions), nameof(LabOptPatchFunctions.PickFromLab))),
+            new CodeInstruction(OpCodes.Ret)
+        );
+        matcher.Instruction.labels.Clear();
+        return matcher.InstructionEnumeration();
+    }
+
 }

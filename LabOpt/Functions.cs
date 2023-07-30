@@ -538,4 +538,27 @@ public static class LabOptPatchFunctions
         }
         return 0;
     }
+
+    public static int PickFromLab(PlanetFactory factory, int labId, int filter, int[] needs)
+    {
+        var factorySystem = factory.factorySystem;
+        var products = factorySystem.labPool[labId].products;
+        if (products == null) return 0;
+        var produced = factorySystem.labPool[labId].produced;
+        if (produced == null) return 0;
+        lock (produced)
+        {
+            for (var j = 0; j < products.Length; j++)
+            {
+                if (produced[j] <= 0 || products[j] <= 0 ||
+                    (filter != 0 && filter != products[j]) ||
+                    (needs != null && needs[0] != products[j] && needs[1] != products[j] &&
+                     needs[2] != products[j] && needs[3] != products[j] &&
+                     needs[4] != products[j] && needs[5] != products[j])) continue;
+                produced[j]--;
+                return products[j];
+            }
+        }
+        return 0;
+    }
 }

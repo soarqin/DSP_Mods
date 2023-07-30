@@ -42,5 +42,10 @@ Universe Generator Tweak
 
 # [MechaDronesTweaks](MechaDronesTweaks)
 
-Some tweaks for mecha drones and build functions(Successor to FastDrones MOD)  
+Some tweaks for mecha drones and build functions(Successor to FastDrones MOD)    
 机甲建设机和建设功能调整(FastDrones MOD的后继者)
+
+# [LabOpt](LabOpt)
+
+Performance optimizations for Matrix Labs  
+优化研究站性能

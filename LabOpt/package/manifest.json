@@ -1,6 +1,6 @@
 ﻿{
   "name": "LabOpt",
-  "version_number": "0.3.2",
+  "version_number": "0.3.3",
   "website_url": "https://github.com/soarqin/DSP_Mods/tree/master/LabOpt",
   "description": "Optimize Lab performance / 优化研究站性能",
   "dependencies": [
