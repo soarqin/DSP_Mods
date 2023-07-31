@@ -348,7 +348,35 @@ public static class LabOptPatchFunctions
         return (uint)(lab.products[0] - LabComponent.matrixIds[0] + 1);
     }
 
-    public static void SetFunctionNew(ref LabComponent lab, bool researchMode, int recpId, int techId, SignData[] signPool, LabComponent[] labPool)
+    public static void SetFunctionManually(ref LabComponent lab, bool researchMode, int recpId, int techId, SignData[] signPool, LabComponent[] labPool)
+    {
+        var rootLabId = (int)RootLabIdField.GetValue(lab);
+        if (rootLabId > 0)
+        {
+            ref var rootLab = ref labPool[rootLabId];
+            if (researchMode != rootLab.researchMode)
+            {
+                SetFunctionInternal(ref rootLab, researchMode, recpId, techId, signPool, labPool);
+            }
+            else if (researchMode)
+            {
+                if (rootLab.techId != techId)
+                {
+                    SetFunctionInternal(ref rootLab, true, recpId, techId, signPool, labPool);
+                }
+            }
+            else
+            {
+                if (rootLab.recipeId != recpId)
+                {
+                    SetFunctionInternal(ref rootLab, false, recpId, techId, signPool, labPool);
+                }
+            }
+        }
+        SetFunctionInternal(ref lab, researchMode, recpId, techId, signPool, labPool);
+    }
+
+    private static void SetFunctionInternal(ref LabComponent lab, bool researchMode, int recpId, int techId, SignData[] signPool, LabComponent[] labPool)
     {
         // LabOptPatch.Logger.LogDebug($"SetFunctionNew: {lab.id} {(int)RootLabIdField.GetValue(lab)} {researchMode} {recpId} {techId}");
 		lab.replicating = false;

@@ -4,6 +4,8 @@
 #### 优化研究站性能
 
 ## Updates
+* 0.3.4
+  * Fix various crashes on recipe/research mode changing on labs that are not base level.
 * 0.3.3
   * Add a lock to `PlanetFactory.PickFrom()` to avoid thread-conflicts. 
 * 0.3.2

@@ -172,7 +172,7 @@ public class LabOptPatch : BaseUnityPlugin
         return matcher.InstructionEnumeration();
     }
 
-    // Redirect call of LabComponent.SetFunction() to SetFunctionNew()
+    // Redirect call of LabComponent.SetFunction() to SetFunctionManually()
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(BuildingParameters), nameof(BuildingParameters.ApplyPrebuildParametersToEntity))]
     private static IEnumerable<CodeInstruction> BuildingParameters_ApplyPrebuildParametersToEntity_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -186,7 +186,7 @@ public class LabOptPatch : BaseUnityPlugin
                 new CodeInstruction(OpCodes.Ldloc_2),
                 new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(FactorySystem), nameof(FactorySystem.labPool)))
             ).SetInstructionAndAdvance(
-                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(LabOptPatchFunctions), nameof(LabOptPatchFunctions.SetFunctionNew)))
+                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(LabOptPatchFunctions), nameof(LabOptPatchFunctions.SetFunctionManually)))
             );
         });
         return matcher.InstructionEnumeration();
@@ -205,7 +205,7 @@ public class LabOptPatch : BaseUnityPlugin
                 new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(PlanetFactory), nameof(PlanetFactory.factorySystem))),
                 new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(FactorySystem), nameof(FactorySystem.labPool)))
             ).SetInstructionAndAdvance(
-                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(LabOptPatchFunctions), nameof(LabOptPatchFunctions.SetFunctionNew)))
+                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(LabOptPatchFunctions), nameof(LabOptPatchFunctions.SetFunctionManually)))
             );
         });
         return matcher.InstructionEnumeration();
@@ -227,7 +227,7 @@ public class LabOptPatch : BaseUnityPlugin
                 new CodeInstruction(OpCodes.Ldarg_0),
                 new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(FactorySystem), nameof(FactorySystem.labPool)))
             ).SetInstructionAndAdvance(
-                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(LabOptPatchFunctions), nameof(LabOptPatchFunctions.SetFunctionNew)))
+                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(LabOptPatchFunctions), nameof(LabOptPatchFunctions.SetFunctionManually)))
             );
         });
         return matcher.InstructionEnumeration();
@@ -247,7 +247,7 @@ public class LabOptPatch : BaseUnityPlugin
                 new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(UILabWindow), nameof(UILabWindow.factorySystem))),
                 new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(FactorySystem), nameof(FactorySystem.labPool)))
             ).SetInstructionAndAdvance(
-                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(LabOptPatchFunctions), nameof(LabOptPatchFunctions.SetFunctionNew)))
+                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(LabOptPatchFunctions), nameof(LabOptPatchFunctions.SetFunctionManually)))
             );
         });
         return matcher.InstructionEnumeration();
