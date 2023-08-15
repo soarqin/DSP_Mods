@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 namespace Dustbin;
 
-// MyCheckbox modified from LSTM: https://github.com/hetima/DSP_LSTM/blob/main/LSTM/LSTM.cs
+// MyCheckBox modified from LSTM: https://github.com/hetima/DSP_LSTM/blob/main/LSTM/MyCheckBox.cs
 public class MyCheckBox : MonoBehaviour
 {
     public UIButton uiButton;
@@ -27,14 +27,18 @@ public class MyCheckBox : MonoBehaviour
 
     public static MyCheckBox CreateCheckBox(bool check, Transform parent = null, float x = 0f, float y = 0f, string label = "", int fontSize = 15)
     {
-        UIBuildMenu buildMenu = UIRoot.instance.uiGame.buildMenu;
-        UIButton src = buildMenu.uxFacilityCheck;
+        var buildMenu = UIRoot.instance.uiGame.buildMenu;
+        var src = buildMenu.uxFacilityCheck;
 
-        GameObject go = GameObject.Instantiate(src.gameObject);
+        var go = Instantiate(src.gameObject);
+        var rect = go.transform as RectTransform;
+        if (rect == null)
+        {
+            return null;
+        }
         go.name = "my-checkbox";
-        MyCheckBox cb = go.AddComponent<MyCheckBox>();
+        var cb = go.AddComponent<MyCheckBox>();
         cb._checked = check;
-        RectTransform rect = go.transform as RectTransform;
         if (parent != null)
         {
             rect.SetParent(parent);
@@ -47,14 +51,11 @@ public class MyCheckBox : MonoBehaviour
         cb.rectTrans = rect;
         cb.uiButton = go.GetComponent<UIButton>();
         cb.checkImage = go.transform.Find("checked")?.GetComponent<Image>();
-        //ResetAnchor(cb.checkImage.rectTransform);
 
-        //text
-        Transform child = go.transform.Find("text");
+        var child = go.transform.Find("text");
         if (child != null)
         {
-            //ResetAnchor(child as RectTransform);
-            GameObject.DestroyImmediate(child.GetComponent<Localizer>());
+            DestroyImmediate(child.GetComponent<Localizer>());
             cb.labelText = child.GetComponent<Text>();
             cb.labelText.fontSize = fontSize;
             cb.SetLabelText(label);
@@ -62,7 +63,10 @@ public class MyCheckBox : MonoBehaviour
 
         //value
         cb.uiButton.onClick += cb.OnClick;
-        cb.checkImage.enabled = check;
+        if (cb.checkImage != null)
+        {
+            cb.checkImage.enabled = check;
+        }
 
         return cb;
     }

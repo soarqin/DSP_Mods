@@ -1,9 +1,15 @@
+# C# project files
+*.user
+
 # Rider project files
 /.idea/
 
 # C# generated folders
 bin/
 obj/
+
+# C++ build folders
+build/
 
 # packaged files
 /*/package/*.zip

@@ -5,6 +5,11 @@
 
 ## Updates
 
+* 1.3.0
+  * Reworked dustbin support for Tanks, to improve performance and resolve known bugs.
+  * Support for [Nebula Mupltiplayer Mod](https://dsp.thunderstore.io/package/nebula/NebulaMultiplayerMod/).
+  * Adopted bug fixes from [ModFixerOne](https://dsp.thunderstore.io/package/starfi5h/ModFixerOne/) by [starfi5h](https://github.com/starfi5h/).
+
 * 1.2.1
   * Fix dynamic array bug in codes, which causes various bugs and errors.
 
@@ -28,7 +33,6 @@
 * Can get sands from destroyed items (with factors configurable):
   * Get 10/100 sands from each silicon/fractal silicon ore
   * Get 1 sand from any other normal item but fluid
-* Known bug: Tank with some fluids inside cannot output to belts if turned into dusbin, you can put a dustbin upon a normal tank to resolve this problem. 
 
 ## 使用说明
 
@@ -37,4 +41,3 @@
 * 可以从移除的物品中获得沙子(可配置，下为默认值):
   * 从硅石和分形硅石中获得10/100个沙子。
   * 从普通物品中获得1个沙子，但液体不会给沙子。
-* 已知问题：装有液体的储液罐变为垃圾桶后无法输出液体，可以在普通储液罐上面叠一个垃圾桶来解决这个问题。

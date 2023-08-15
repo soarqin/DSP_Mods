@@ -1,138 +1,58 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
+using System.Reflection;
 using HarmonyLib;
-using HarmonyLib.Tools;
+using NebulaAPI;
 
 namespace Dustbin;
-
-using IsDustbinIndexer = DynamicObjectArray<DynamicObjectArray<DynamicValueArray<bool>>>;
-
-public class DynamicValueArray<T> where T: struct
-{
-    private T[] _store = new T[64];
-
-    public T this[int index]
-    {
-        get
-        {
-            if (index < 0 || index >= _store.Length) return default;
-            return _store[index];
-        }
-        set
-        {
-            if (index >= _store.Length)
-            {
-                var count = index | (index >> 1);
-                count |= count >> 2;
-                count |= count >> 4;
-                count |= count >> 8;
-                count |= count >> 16;
-                Array.Resize(ref _store, count + 1);
-            }
-            _store[index] = value;
-        }
-    }
-
-    public void Reset()
-    {
-        _store = new T[16];
-    }
-
-    public delegate void ForEachFunc(int id, T value);
-    public void ForEach(ForEachFunc func)
-    {
-        var len = _store.Length;
-        for (var i = 0; i < len; i++)
-        {
-            func(i, _store[i]);
-        }
-    }
-}
-
-public class DynamicObjectArray<T> where T: class, new()
-{
-    private T[] _store = new T[16];
-
-    public T this[int index]
-    {
-        get
-        {
-            if (index < 0) return null;
-            if (index >= _store.Length)
-            {
-                var count = index | (index >> 1);
-                count |= count >> 2;
-                count |= count >> 4;
-                count |= count >> 8;
-                count |= count >> 16;
-                Array.Resize(ref _store, count + 1);
-            }
-            T result = _store[index];
-            if (result != null)
-                return result;
-            result = new T();
-            _store[index] = result;
-            return result;
-        }
-    }
-
-    public void Reset()
-    {
-        _store = new T[16];
-    }
-
-    public delegate void ForEachFunc(int id, T value);
-    public void ForEach(ForEachFunc func)
-    {
-        var len = _store.Length;
-        for (var i = 0; i < len; i++)
-        {
-            func(i, _store[i]);
-        }
-    }
-}
 
 [HarmonyPatch]
 public static class TankPatch
 {
+    public static readonly FieldInfo IsDustbinField = AccessTools.Field(typeof(TankComponent), "IsDustbin");
     private static MyCheckBox _tankDustbinCheckBox;
-    private static int lastTankId;
-    private static IsDustbinIndexer tankIsDustbin = new();
+    private static int _lastTankId;
 
     public static void Reset()
     {
-        lastTankId = 0;
-        tankIsDustbin.Reset();
+        _lastTankId = 0;
     }
 
     public static void Export(BinaryWriter w)
     {
         var tempStream = new MemoryStream();
         var tempWriter = new BinaryWriter(tempStream);
-        tankIsDustbin.ForEach((i, star) =>
-        {
-            star?.ForEach((j, planet) =>
-            {
-                var count = 0;
-                planet?.ForEach((id, v) =>
-                {
-                    if (!v) return;
-                    tempWriter.Write(id);
-                    count++;
-                });
-                if (count == 0) return;
 
-                tempWriter.Flush();
-                tempStream.Position = 0;
-                w.Write((byte)2);
-                var planetId = i * 100 + j;
-                w.Write(planetId);
-                w.Write(count);
-                /* FixMe: May BinaryWriter not sync with its BaseStream while subclass overrides Write()? */
-                tempStream.CopyTo(w.BaseStream);
-                tempStream.SetLength(0);
-            });
-        });
+        var factories = GameMain.data.factories;
+        var factoryCount = GameMain.data.factoryCount;
+        for (var i = 0; i < factoryCount; i++)
+        {
+            var factory = factories[i];
+            if (factory == null) continue;
+            var storage = factory.factoryStorage;
+            var tankPool = storage.tankPool;
+            var cursor = storage.tankCursor;
+            var count = 0;
+
+            for (var j = 1; j < cursor; j++)
+            {
+                if (tankPool[j].id != j) continue;
+                if (!(bool)IsDustbinField.GetValue(tankPool[j])) continue;
+                tempWriter.Write(j);
+                count++;
+            }
+
+            if (count == 0) continue;
+
+            tempWriter.Flush();
+            tempStream.Position = 0;
+            w.Write((byte)2);
+            w.Write(factory.planetId);
+            w.Write(count);
+            /* FixMe: May BinaryWriter not sync with its BaseStream while subclass overrides Write()? */
+            tempStream.CopyTo(w.BaseStream);
+            tempStream.SetLength(0);
+        }
+
         tempWriter.Dispose();
         tempStream.Dispose();
     }
@@ -143,13 +63,25 @@ public static class TankPatch
         {
             r.ReadByte();
             var planetId = r.ReadInt32();
-            var data = tankIsDustbin[15];
-            data[0][0] = true;
-            data = tankIsDustbin[20];
-            data[0][0] = true;
+            var planet = GameMain.data.galaxy.PlanetById(planetId);
+            var tankPool = planet?.factory.factoryStorage.tankPool;
+            if (tankPool == null)
+            {
+                for (var count = r.ReadInt32(); count > 0; count--)
+                {
+                    r.ReadInt32();
+                }
+
+                continue;
+            }
+
             for (var count = r.ReadInt32(); count > 0; count--)
             {
-                tankIsDustbin[planetId / 100][planetId % 100][r.ReadInt32()] = true;
+                var id = r.ReadInt32();
+                if (id > 0 && id < tankPool.Length && tankPool[id].id == id)
+                {
+                    IsDustbinField.SetValueDirect(__makeref(tankPool[id]), true);
+                }
             }
         }
     }
@@ -163,91 +95,155 @@ public static class TankPatch
         _tankDustbinCheckBox.OnChecked += () =>
         {
             var tankId = window.tankId;
-            if (tankId <= 0 || window.storage.tankPool[tankId].id != tankId) return;
-            var planetId = window.storage.planet.id;
-            tankIsDustbin[planetId / 100][planetId % 100][tankId] = _tankDustbinCheckBox.Checked;
+            if (tankId <= 0) return;
+            var tankPool = window.storage.tankPool;
+            if (tankPool[tankId].id != tankId) return;
+            var enabled = _tankDustbinCheckBox.Checked;
+            IsDustbinField.SetValueDirect(__makeref(tankPool[tankId]), enabled);
+            if (!NebulaModAPI.IsMultiplayerActive) return;
+            var planetId = window.factory.planetId;
+            NebulaModAPI.MultiplayerSession.Network.SendPacketToLocalStar(new NebulaSupport.Packet.ToggleEvent(planetId, -tankId, enabled));
         };
     }
-    
+
     [HarmonyPostfix]
     [HarmonyPatch(typeof(UITankWindow), "_OnUpdate")]
     private static void UITankWindow__OnUpdate_Postfix(UITankWindow __instance)
     {
         var tankId = __instance.tankId;
-        if (lastTankId == tankId) return;
-        lastTankId = tankId;
-        if (tankId > 0 && __instance.storage.tankPool[tankId].id == tankId)
-        {
-            var planetId = __instance.storage.planet.id;
-            _tankDustbinCheckBox.Checked = tankIsDustbin[planetId / 100][planetId % 100][tankId];
-        }
-    }
+        if (_lastTankId == tankId) return;
+        _lastTankId = tankId;
 
-    private struct TankState
-    {
-        public int TankId;
-        public int FluidId;
-        public int FluidCount;
-        public int FluidInc;
-    }
-    
-    [HarmonyPrefix]
-    [HarmonyPatch(typeof(TankComponent), "GameTick")]
-    private static void TankComponent_GameTick_Prefix(ref TankComponent __instance, ref TankState __state, PlanetFactory factory)
-    {
-        var planetId = factory.planetId;
-        var data = tankIsDustbin[planetId / 100][planetId % 100];
-        ref var tank = ref __instance;
-        while (true)
-        {
-            if (data[tank.id])
-            {
-                __state.TankId = tank.id;
-                __state.FluidId = tank.fluidId;
-                __state.FluidCount = tank.fluidCount;
-                __state.FluidInc = tank.fluidInc;
-                tank.fluidId = tank.fluidCount = tank.fluidInc = 0;
-                return;
-            }
-            if (tank.fluidCount < tank.fluidCapacity || tank.nextTankId <= 0)
-            {
-                __state.TankId = -1;
-                return;
-            }
-            var nextTankId = tank.nextTankId;
-            tank = ref factory.factoryStorage.tankPool[nextTankId];
-            if (tank.id == nextTankId) continue;
-            __state.TankId = -1;
-            return;
-        }
-    }
-
-    [HarmonyPostfix]
-    [HarmonyPatch(typeof(TankComponent), "GameTick")]
-    private static void TankComponent_GameTick_Postfix(ref TankComponent __instance, ref TankState __state, PlanetFactory factory)
-    {
-        if (__state.TankId < 0) return;
-        var tankId = __state.TankId;
-        if (__instance.id == tankId)
-        {
-            __instance.fluidId = __state.FluidId;
-            __instance.fluidCount = __state.FluidCount;
-            __instance.fluidInc = __state.FluidInc;
-            return;
-        }
-        ref var tank = ref factory.factoryStorage.tankPool[tankId];
-        if (tank.id != tankId) return;
-        tank.fluidId = __state.FluidId;
-        tank.fluidCount = __state.FluidCount;
-        tank.fluidInc = __state.FluidInc;
+        if (tankId <= 0) return;
+        var tankPool = __instance.storage.tankPool;
+        if (tankPool[tankId].id != tankId) return;
+        _tankDustbinCheckBox.Checked = (bool)IsDustbinField.GetValue(tankPool[tankId]);
     }
 
     [HarmonyPrefix]
-    [HarmonyPatch(typeof(FactoryStorage), "RemoveTankComponent")]
-    private static void FactoryStorage_RemoveTankComponent_Prefix(FactoryStorage __instance, int id)
+    [HarmonyPatch(typeof(TankComponent), "GameTick")]
+    private static bool TankComponent_GameTick_Prefix(ref TankComponent __instance, PlanetFactory factory)
     {
-        if (__instance.tankPool[id].id <= 0) return;
-        var planetId = __instance.planet.id;
-        tankIsDustbin[planetId / 100][planetId % 100][id] = false;
+        if (__instance.fluidInc < 0)
+            __instance.fluidInc = 0;
+
+        if (!__instance.isBottom)
+            return false;
+
+        var cargoTraffic = factory.cargoTraffic;
+        var tankPool = factory.factoryStorage.tankPool;
+        var belt = __instance.belt0;
+        if (belt > 0)
+        {
+            TankComponentUpdateBelt(ref __instance, belt, __instance.isOutput0, ref cargoTraffic, ref tankPool);
+        }
+
+        belt = __instance.belt1;
+        if (belt > 0)
+        {
+            TankComponentUpdateBelt(ref __instance, belt, __instance.isOutput1, ref cargoTraffic, ref tankPool);
+        }
+
+        belt = __instance.belt2;
+        if (belt > 0)
+        {
+            TankComponentUpdateBelt(ref __instance, belt, __instance.isOutput2, ref cargoTraffic, ref tankPool);
+        }
+
+        belt = __instance.belt3;
+        if (belt > 0)
+        {
+            TankComponentUpdateBelt(ref __instance, belt, __instance.isOutput3, ref cargoTraffic, ref tankPool);
+        }
+
+        return false;
+    }
+
+    private static void TankComponentUpdateBelt(ref TankComponent thisTank, int belt, bool isOutput, ref CargoTraffic cargoTraffic, ref TankComponent[] tankPool)
+    {
+        switch (isOutput)
+        {
+            case true when thisTank.outputSwitch:
+            {
+                if (thisTank.fluidId <= 0 || thisTank.fluidCount <= 0) return;
+                var inc = thisTank.fluidInc == 0 ? 0 : thisTank.fluidInc / thisTank.fluidCount;
+                if (!cargoTraffic.TryInsertItemAtHead(belt, thisTank.fluidId, 1, (byte)inc)) return;
+                thisTank.fluidCount--;
+                thisTank.fluidInc -= inc;
+                return;
+            }
+            case false when thisTank.inputSwitch:
+            {
+                byte stack;
+                byte inc;
+                switch (thisTank.fluidId)
+                {
+                    case > 0 when thisTank.fluidCount < thisTank.fluidCapacity && cargoTraffic.TryPickItemAtRear(belt, thisTank.fluidId, null, out stack, out inc) > 0 &&
+                                  !(bool)IsDustbinField.GetValue(thisTank):
+                        thisTank.fluidCount += stack;
+                        thisTank.fluidInc += inc;
+                        return;
+                    case 0:
+                    {
+                        var count = cargoTraffic.TryPickItemAtRear(belt, 0, ItemProto.fluids, out stack, out inc);
+                        if (count <= 0 || (bool)IsDustbinField.GetValue(thisTank)) return;
+                        thisTank.fluidId = count;
+                        thisTank.fluidCount += stack;
+                        thisTank.fluidInc += inc;
+                        return;
+                    }
+                }
+
+                if (thisTank.fluidCount < thisTank.fluidCapacity || cargoTraffic.GetItemIdAtRear(belt) != thisTank.fluidId || thisTank.nextTankId <= 0) return;
+                ref var targetTank = ref tankPool[thisTank.nextTankId];
+                while (targetTank.fluidCount >= targetTank.fluidCapacity)
+                {
+                    ref var lastTank = ref tankPool[targetTank.lastTankId];
+                    if (targetTank.fluidId != lastTank.fluidId)
+                    {
+                        targetTank = ref lastTank;
+                        break;
+                    }
+
+                    if (!targetTank.inputSwitch)
+                    {
+                        targetTank = ref lastTank;
+                        break;
+                    }
+
+                    if (targetTank.nextTankId <= 0)
+                    {
+                        break;
+                    }
+
+                    targetTank = ref tankPool[targetTank.nextTankId];
+                }
+
+                ref var lastTank2 = ref tankPool[targetTank.lastTankId];
+                if (!targetTank.inputSwitch)
+                {
+                    targetTank = ref lastTank2;
+                }
+                else
+                {
+                    var fluidId = targetTank.fluidId;
+                    if (fluidId != 0 && fluidId != lastTank2.fluidId)
+                    {
+                        targetTank = ref lastTank2;
+                    }
+                }
+
+                if (targetTank.id == thisTank.id || targetTank.fluidCount >= targetTank.fluidCapacity || !lastTank2.outputSwitch ||
+                    cargoTraffic.TryPickItemAtRear(belt, thisTank.fluidId, null, out stack, out inc) <= 0 || (bool)IsDustbinField.GetValue(targetTank)) return;
+                if (targetTank.fluidCount == 0)
+                {
+                    targetTank.fluidId = thisTank.fluidId;
+                }
+
+                targetTank.fluidCount += stack;
+                targetTank.fluidInc += inc;
+                return;
+            }
+        }
     }
 }

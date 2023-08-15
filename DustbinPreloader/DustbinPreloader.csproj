@@ -2,21 +2,17 @@
 
   <PropertyGroup>
     <TargetFramework>net472</TargetFramework>
-    <BepInExPluginGuid>org.soardev.dustbin</BepInExPluginGuid>
-    <Description>DSP MOD - Dustbin</Description>
+    <AssemblyName>DustbinPreloader</AssemblyName>
+    <Description>DSP MOD - Prealoder for Dustbin</Description>
     <Version>1.3.0</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
-    <PackageId>Dustbin</PackageId>
-    <RootNamespace>Dustbin</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="BepInEx.Core" Version="5.*" />
     <PackageReference Include="BepInEx.PluginInfoProps" Version="1.*" />
     <PackageReference Include="DysonSphereProgram.GameLibs" Version="*-r.*" />
-    <PackageReference Include="DysonSphereProgram.Modding.DSPModSave" Version="1.*" />
-    <PackageReference Include="DysonSphereProgram.Modding.NebulaMultiplayerModApi" Version="1.3.1" />
     <PackageReference Include="UnityEngine.Modules" Version="2018.4.12" IncludeAssets="compile" />
   </ItemGroup>
   
@@ -24,8 +20,7 @@
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
   </ItemGroup>
   
-  
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-      <Exec Command="del /F /Q package\$(ProjectName)-$(Version).zip&#xA;IF NOT EXIST package\plugins (mkdir package\plugins)&#xA;copy /y $(TargetPath) package\plugins\&#xA;zip -9 -j package/$(ProjectName)-$(Version).zip package/icon.png package/manifest.json README.md&#xA;cd package&#xA;zip -9 -r $(ProjectName)-$(Version).zip patchers plugins" />
+    <Exec Command="IF NOT EXIST ..\Dustbin\package\patchers (mkdir ..\Dustbin\package\patchers)&#xA;copy /y $(TargetPath) ..\Dustbin\package\patchers\" />
   </Target>
 </Project>

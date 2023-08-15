@@ -1,24 +1,34 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using BepInEx;
 using crecheng.DSPModSave;
 using HarmonyLib;
+using NebulaAPI;
 
 namespace Dustbin;
 
 [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
 [BepInDependency(DSPModSavePlugin.MODGUID)]
-public class Dustbin : BaseUnityPlugin, IModCanSave
+[BepInDependency(NebulaModAPI.API_GUID)]
+public class Dustbin : BaseUnityPlugin, IModCanSave, IMultiplayerMod
 {
+    public string Version => PluginInfo.PLUGIN_VERSION;
+
     private const ushort ModSaveVersion = 1;
+
     public new static readonly BepInEx.Logging.ManualLogSource Logger =
         BepInEx.Logging.Logger.CreateLogSource(PluginInfo.PLUGIN_NAME);
 
     private bool _cfgEnabled = true;
     public static readonly int[] SandsFactors = { 0, 1, 5, 10, 100 };
     public static bool[] IsFluid;
+
+    public bool CheckVersion(string hostVersion, string clientVersion)
+    {
+        return hostVersion.Equals(clientVersion);
+    }
 
     private void Awake()
     {
@@ -31,6 +41,9 @@ public class Dustbin : BaseUnityPlugin, IModCanSave
         Harmony.CreateAndPatchAll(typeof(Dustbin));
         Harmony.CreateAndPatchAll(typeof(StoragePatch));
         Harmony.CreateAndPatchAll(typeof(TankPatch));
+
+        NebulaModAPI.RegisterPackets(Assembly.GetExecutingAssembly());
+        NebulaModAPI.OnPlanetLoadFinished += RequestPlanetDustbinData;
     }
 
     [HarmonyPrefix]
@@ -61,14 +74,97 @@ public class Dustbin : BaseUnityPlugin, IModCanSave
     public void Import(BinaryReader r)
     {
         var version = r.ReadUInt16();
-        if (version > 0)
-        {
-            StoragePatch.Import(r);
-            TankPatch.Import(r);
-        }
+        if (version <= 0) return;
+        StoragePatch.Import(r);
+        TankPatch.Import(r);
     }
 
     public void IntoOtherSave()
     {
+    }
+
+    public static byte[] ExportData(PlanetFactory factory)
+    {
+        var planetId = factory.planetId;
+        var storageIds = new List<int>();
+        var tankIds = new List<int>();
+
+        var factoryStorage = factory.factoryStorage;
+        var storagePool = factoryStorage.storagePool;
+        for (var i = 1; i < factoryStorage.storageCursor; i++)
+        {
+            var storage = storagePool[i];
+            if (storage == null || storage.id != i) continue;
+            if ((bool)StoragePatch.IsDustbinField.GetValue(storage))
+                storageIds.Add(i);
+        }
+
+        var tankPool = factoryStorage.tankPool;
+        for (var i = 1; i < factoryStorage.tankCursor; i++)
+        {
+            ref var tank = ref tankPool[i];
+            if (tank.id != i) continue;
+            if ((bool)TankPatch.IsDustbinField.GetValue(tank))
+                tankIds.Add(i);
+        }
+
+        using var p = NebulaModAPI.GetBinaryWriter();
+        using var w = p.BinaryWriter;
+        w.Write(planetId);
+        w.Write(storageIds.Count);
+        foreach (var storageId in storageIds)
+            w.Write(storageId);
+        w.Write(tankIds.Count);
+        foreach (var tankId in tankIds)
+            w.Write(tankId);
+        return p.CloseAndGetBytes();
+    }
+
+    public static void ImportData(byte[] bytes)
+    {
+        using var p = NebulaModAPI.GetBinaryReader(bytes);
+        using var r = p.BinaryReader;
+        var planetId = r.ReadInt32();
+        var factory = GameMain.galaxy.PlanetById(planetId)?.factory;
+        if (factory == null) return;
+
+        var factoryStorage = factory.factoryStorage;
+        var count = r.ReadInt32();
+        var storagePool = factoryStorage.storagePool;
+        var cursor = factoryStorage.storageCursor;
+        for (var i = 1; i < cursor; i++)
+        {
+            var storage = storagePool[i];
+            if (storage == null || storage.id != i) continue;
+            StoragePatch.IsDustbinField.SetValue(storage, false);
+        }
+
+        for (var i = 0; i < count; i++)
+        {
+            var id = r.ReadInt32();
+            StoragePatch.IsDustbinField.SetValue(storagePool[id], true);
+        }
+
+        count = r.ReadInt32();
+        var tankPool = factoryStorage.tankPool;
+        cursor = factoryStorage.tankCursor;
+        for (var i = 1; i < cursor; i++)
+        {
+            ref var tank = ref tankPool[i];
+            if (tank.id != i) continue;
+            StoragePatch.IsDustbinField.SetValueDirect(__makeref(tank), false);
+        }
+
+        for (var i = 0; i < count; i++)
+        {
+            var id = r.ReadInt32();
+            StoragePatch.IsDustbinField.SetValueDirect(__makeref(tankPool[id]), true);
+        }
+    }
+
+    public void RequestPlanetDustbinData(int planetId)
+    {
+        if (NebulaModAPI.IsMultiplayerActive && NebulaModAPI.MultiplayerSession.LocalPlayer.IsClient)
+            NebulaModAPI.MultiplayerSession.Network.SendPacket(new NebulaSupport.Packet.ToggleEvent(planetId, 0, false));
     }
 }
