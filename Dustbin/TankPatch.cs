@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using HarmonyLib;
 using NebulaAPI;
 
@@ -159,6 +160,7 @@ public static class TankPatch
         return false;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void TankComponentUpdateBelt(ref TankComponent thisTank, int belt, bool isOutput, ref CargoTraffic cargoTraffic, ref TankComponent[] tankPool)
     {
         switch (isOutput)
@@ -201,12 +203,14 @@ public static class TankPatch
                     ref var lastTank = ref tankPool[targetTank.lastTankId];
                     if (targetTank.fluidId != lastTank.fluidId)
                     {
+                        if (lastTank.id == thisTank.id || targetTank.fluidCount >= targetTank.fluidCapacity) return;
                         targetTank = ref lastTank;
                         break;
                     }
 
                     if (!targetTank.inputSwitch)
                     {
+                        if (lastTank.id == thisTank.id || targetTank.fluidCount >= targetTank.fluidCapacity) return;
                         targetTank = ref lastTank;
                         break;
                     }
@@ -229,12 +233,16 @@ public static class TankPatch
                     var fluidId = targetTank.fluidId;
                     if (fluidId != 0 && fluidId != lastTank2.fluidId)
                     {
+                        if (lastTank2.id == thisTank.id || targetTank.fluidCount >= targetTank.fluidCapacity) return;
                         targetTank = ref lastTank2;
+                    }
+                    else if (!lastTank2.outputSwitch)
+                    {
+                        return;
                     }
                 }
 
-                if (targetTank.id == thisTank.id || targetTank.fluidCount >= targetTank.fluidCapacity || !lastTank2.outputSwitch ||
-                    cargoTraffic.TryPickItemAtRear(belt, thisTank.fluidId, null, out stack, out inc) <= 0 || (bool)IsDustbinField.GetValue(targetTank)) return;
+                if (cargoTraffic.TryPickItemAtRear(belt, thisTank.fluidId, null, out stack, out inc) <= 0 || (bool)IsDustbinField.GetValue(targetTank)) return;
                 if (targetTank.fluidCount == 0)
                 {
                     targetTank.fluidId = thisTank.fluidId;
