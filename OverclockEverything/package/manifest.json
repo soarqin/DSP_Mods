@@ -4,6 +4,7 @@
   "website_url": "https://github.com/soarqin/DSP_Mods/tree/master/OverclockEverything",
   "description": "Overclock everything in game / 加速游戏中的所有建筑",
   "dependencies": [
-    "xiaoye97-BepInEx-5.4.17"
+    "xiaoye97-BepInEx-5.4.17",
+    "CommonAPI-DSPModSave-1.1.4"
   ]
 }

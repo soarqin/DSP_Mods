@@ -7,8 +7,7 @@ namespace OverclockEverything;
 [HarmonyPatch]
 public static class BeltFix
 {
-    private static CodeInstruction[] LdcInstrs = new[]
-    {
+    private static readonly CodeInstruction[] LdcInstrs = {
         new CodeInstruction(OpCodes.Ldc_I4_0), new CodeInstruction(OpCodes.Ldc_I4_1), new CodeInstruction(OpCodes.Ldc_I4_2),
         new CodeInstruction(OpCodes.Ldc_I4_3), new CodeInstruction(OpCodes.Ldc_I4_4), new CodeInstruction(OpCodes.Ldc_I4_5),
         new CodeInstruction(OpCodes.Ldc_I4_6), new CodeInstruction(OpCodes.Ldc_I4_7), new CodeInstruction(OpCodes.Ldc_I4_8),
@@ -17,7 +16,7 @@ public static class BeltFix
     [HarmonyTranspiler, HarmonyPatch(typeof(CargoTraffic), "AlterBeltRenderer")]
     public static IEnumerable<CodeInstruction> CargoTraffic_AlterBeltRenderer_Transpiler(IEnumerable<CodeInstruction> instructions)
     {
-        bool lastIsSpeed = false;
+        var lastIsSpeed = false;
         foreach (var instr in instructions)
         {
             if (lastIsSpeed)
@@ -25,11 +24,11 @@ public static class BeltFix
                 lastIsSpeed = false;
                 if (instr.opcode == OpCodes.Ldc_I4_1)
                 {
-                    yield return LdcInstrs[Patch.beltSpeed[0]];
+                    yield return LdcInstrs[Patch.Cfg.BeltSpeed[0]];
                 }
                 else if (instr.opcode == OpCodes.Ldc_I4_2)
                 {
-                    yield return LdcInstrs[Patch.beltSpeed[1]];
+                    yield return LdcInstrs[Patch.Cfg.BeltSpeed[1]];
                 }
                 else
                 {
@@ -51,7 +50,7 @@ public static class BeltFix
     [HarmonyPatch(typeof(ConnGizmoRenderer), "AddBlueprintBeltConn")]
     public static void ConnGizmoRenderer_AddBlueprintBelt_Prefix(ref ConnGizmoRenderer __instance, ref uint color)
     {
-        var bspeed = Patch.beltSpeed;
+        var bspeed = Patch.Cfg.BeltSpeed;
         color = color >= bspeed[2] ? 3u : color >= bspeed[1] ? 2u : 1u;
     }
 
@@ -71,7 +70,7 @@ public static class BeltFix
                     var label1 = generator.DefineLabel();
                     var label2 = generator.DefineLabel();
                     yield return new CodeInstruction(OpCodes.Ldloc_S, 6);
-                    yield return LdcInstrs[Patch.beltSpeed[1]];
+                    yield return LdcInstrs[Patch.Cfg.BeltSpeed[1]];
                     yield return new CodeInstruction(OpCodes.Bne_Un_S, label1);
                     yield return new CodeInstruction(OpCodes.Ldloca_S, 0);
                     yield return new CodeInstruction(OpCodes.Ldc_I4_2);
@@ -79,7 +78,7 @@ public static class BeltFix
                         AccessTools.Field(typeof(ConnGizmoObj), nameof(ConnGizmoObj.color)));
                     yield return new CodeInstruction(OpCodes.Br, label2);
                     yield return new CodeInstruction(OpCodes.Ldloc_S, 6).WithLabels(label1);
-                    yield return LdcInstrs[Patch.beltSpeed[0]];
+                    yield return LdcInstrs[Patch.Cfg.BeltSpeed[0]];
                     yield return new CodeInstruction(OpCodes.Bne_Un_S, label2);
                     yield return new CodeInstruction(OpCodes.Ldloca_S, 0);
                     yield return new CodeInstruction(OpCodes.Ldc_I4_1);
