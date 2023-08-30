@@ -1,4 +1,5 @@
-﻿using BepInEx;
+﻿using System;
+using BepInEx;
 using HarmonyLib;
 
 namespace PoolOpt;
@@ -13,12 +14,54 @@ public class PoolOptPatch : BaseUnityPlugin
     {
         Harmony.CreateAndPatchAll(typeof(PoolOptPatch));
     }
-    
+
     [HarmonyPostfix]
     [HarmonyPatch(typeof(GameSave), nameof(GameSave.LoadCurrentGame))]
     private static void GameSave_LoadCurrentGame_Postfix()
     {
         DebugOutput();
+        foreach (var planet in GameMain.data.factories)
+        {
+            if (planet == null) continue;
+            var factorySystem = planet.factorySystem;
+            if (factorySystem != null)
+            {
+                OptimizePool((in MinerComponent n) => n.id, 256,
+                    ref factorySystem.minerPool, ref factorySystem.minerCursor, ref factorySystem.minerCapacity,
+                    ref factorySystem.minerRecycle, ref factorySystem.minerRecycleCursor);
+            }
+        }
+        DebugOutput();
+    }
+
+    private delegate int GetId<T>(in T s) where T : struct;
+
+    private static bool OptimizePool<T>(GetId<T> getter, int initCapacity, ref T[] pool, ref int cursor, ref int capacity, ref int[] recycle, ref int recycleCursor) where T : struct
+    {
+        if (cursor <= 1) return false;
+        var pos = cursor;
+        while (pos > 0)
+        {
+            if (getter(pool[pos]) == pos) break;
+            pos--;
+        }
+
+        if (pos == cursor) return false;
+        if (pos == 0)
+        {
+            cursor = 1;
+            capacity = initCapacity;
+            pool = new T[initCapacity];
+            recycle = new int[initCapacity];
+            recycleCursor = 0;
+            return true;
+        }
+
+        cursor = pos + 1;
+        Array.Sort(recycle);
+        var idx = Array.BinarySearch(recycle, 0, recycleCursor, pos);
+        recycleCursor = idx < 0 ? ~idx : idx + 1;
+        return true;
     }
 
     private static void DebugOutput()
@@ -44,6 +87,7 @@ public class PoolOptPatch : BaseUnityPlugin
                 Logger.LogDebug($"  Storage: Storage=[{factoryStorage.storageCursor},{factoryStorage.storageCapacity},{factoryStorage.storageRecycleCursor}]");
                 Logger.LogDebug($"           Tank=[{factoryStorage.tankCursor},{factoryStorage.tankCapacity},{factoryStorage.tankRecycleCursor}]");
             }
+
             var factorySystem = planet.factorySystem;
             if (factorySystem != null)
             {
