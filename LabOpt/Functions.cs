@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using HarmonyLib;
 
 namespace LabOpt;
@@ -376,6 +377,7 @@ public static class LabOptPatchFunctions
         SetFunctionInternal(ref lab, researchMode, recpId, techId, signPool, labPool);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void SetFunctionInternal(ref LabComponent lab, bool researchMode, int recpId, int techId, SignData[] signPool, LabComponent[] labPool)
     {
         // LabOptPatch.Logger.LogDebug($"SetFunctionNew: {lab.id} {(int)RootLabIdField.GetValue(lab)} {researchMode} {recpId} {techId}");
