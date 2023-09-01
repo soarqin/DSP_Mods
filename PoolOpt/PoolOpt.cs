@@ -61,7 +61,7 @@ public class PoolOptPatch : BaseUnityPlugin
                         ref cargoTraffic.beltPool, ref cargoTraffic.beltCursor, ref cargoTraffic.beltCapacity,
                         ref cargoTraffic.beltRecycle, ref cargoTraffic.beltRecycleCursor))
                     Logger.LogDebug($"Optimized `{nameof(cargoTraffic.beltPool)}` on Planet {planet.planetId}");
-                if (OptimizePool((in CargoPath n) => n.id, 16,
+                if (OptimizePool((in CargoPath n) => n?.id ?? 0, 16,
                         ref cargoTraffic.pathPool, ref cargoTraffic.pathCursor, ref cargoTraffic.pathCapacity,
                         ref cargoTraffic.pathRecycle, ref cargoTraffic.pathRecycleCursor))
                     Logger.LogDebug($"Optimized `{nameof(cargoTraffic.pathPool)}` on Planet {planet.planetId}");
@@ -85,7 +85,7 @@ public class PoolOptPatch : BaseUnityPlugin
             var factoryStorage = planet.factoryStorage;
             if (factoryStorage != null)
             {
-                if (OptimizePool((in StorageComponent n) => n.id, 64,
+                if (OptimizePool((in StorageComponent n) => n?.id ?? n.id, 64,
                         ref factoryStorage.storagePool, ref factoryStorage.storageCursor, ref factoryStorage.storageCapacity,
                         ref factoryStorage.storageRecycle, ref factoryStorage.storageRecycleCursor))
                     Logger.LogDebug($"Optimized `{nameof(factoryStorage.storagePool)}` on Planet {planet.planetId}");
@@ -129,11 +129,11 @@ public class PoolOptPatch : BaseUnityPlugin
             var transport = planet.transport;
             if (transport != null)
             {
-                if (OptimizePool((in StationComponent n) => n.id, 16,
+                if (OptimizePool((in StationComponent n) => n?.id ?? 0, 16,
                         ref transport.stationPool, ref transport.stationCursor, ref transport.stationCapacity,
                         ref transport.stationRecycle, ref transport.stationRecycleCursor))
                     Logger.LogDebug($"Optimized `{nameof(transport.stationPool)}` on Planet {planet.planetId}");
-                if (OptimizePool((in DispenserComponent n) => n.id, 8,
+                if (OptimizePool((in DispenserComponent n) => n?.id ?? 0, 8,
                         ref transport.dispenserPool, ref transport.dispenserCursor, ref transport.dispenserCapacity,
                         ref transport.dispenserRecycle, ref transport.dispenserRecycleCursor))
                     Logger.LogDebug($"Optimized `{nameof(transport.dispenserPool)}` on Planet {planet.planetId}");
@@ -162,7 +162,7 @@ public class PoolOptPatch : BaseUnityPlugin
                         ref powerSystem.excPool, ref powerSystem.excCursor, ref powerSystem.excCapacity,
                         ref powerSystem.excRecycle, ref powerSystem.excRecycleCursor))
                     Logger.LogDebug($"Optimized `{nameof(powerSystem.excPool)}` on Planet {planet.planetId}");
-                if (OptimizePool((in PowerNetwork n) => n.id, 8,
+                if (OptimizePool((in PowerNetwork n) => n?.id ?? 0, 8,
                         ref powerSystem.netPool, ref powerSystem.netCursor, ref powerSystem.netCapacity,
                         ref powerSystem.netRecycle, ref powerSystem.netRecycleCursor))
                     Logger.LogDebug($"Optimized `{nameof(powerSystem.netPool)}` on Planet {planet.planetId}");
@@ -210,15 +210,15 @@ public class PoolOptPatch : BaseUnityPlugin
                 foreach (var layer in dysonSphere.layersSorted)
                 {
                     if (layer == null) continue;
-                    if (OptimizePool((in DysonNode n) => n.id, 64,
+                    if (OptimizePool((in DysonNode n) => n?.id ?? 0, 64,
                             ref layer.nodePool, ref layer.nodeCursor, ref layer.nodeCapacity,
                             ref layer.nodeRecycle, ref layer.nodeRecycleCursor))
                         Logger.LogDebug($"Optimized `{nameof(layer.nodePool)}` on Star {dysonSphere.starData.id} layer {layer.id}");
-                    if (OptimizePool((in DysonFrame n) => n.id, 64,
+                    if (OptimizePool((in DysonFrame n) => n?.id ?? 0, 64,
                             ref layer.framePool, ref layer.frameCursor, ref layer.frameCapacity,
                             ref layer.frameRecycle, ref layer.frameRecycleCursor))
                         Logger.LogDebug($"Optimized `{nameof(layer.framePool)}` on Star {dysonSphere.starData.id} layer {layer.id}");
-                    if (OptimizePool((in DysonShell n) => n.id, 64,
+                    if (OptimizePool((in DysonShell n) => n?.id ?? 0, 64,
                             ref layer.shellPool, ref layer.shellCursor, ref layer.shellCapacity,
                             ref layer.shellRecycle, ref layer.shellRecycleCursor))
                         Logger.LogDebug($"Optimized `{nameof(layer.shellPool)}` on Star {dysonSphere.starData.id} layer {layer.id}");
@@ -244,14 +244,14 @@ public class PoolOptPatch : BaseUnityPlugin
     private static bool OptimizePool<T>(GetId<T> getter, int initCapacity, ref T[] pool, ref int cursor, ref int capacity, ref int[] recycle, ref int recycleCursor)
     {
         if (cursor <= 1) return false;
-        var pos = cursor;
+        var pos = cursor - 1;
         while (pos > 0)
         {
             if (getter(pool[pos]) == pos) break;
             pos--;
         }
 
-        if (pos == cursor) return false;
+        if (pos + 1 == cursor) return false;
         if (pos == 0)
         {
             cursor = 1;
@@ -263,11 +263,12 @@ public class PoolOptPatch : BaseUnityPlugin
             return true;
         }
 
+        Logger.LogDebug($"Old size = {cursor}. Old recycle size = {recycleCursor}");
         cursor = pos + 1;
         Array.Sort(recycle, 0, recycleCursor);
         var idx = Array.BinarySearch(recycle, 0, recycleCursor, pos + 1);
         recycleCursor = idx < 0 ? ~idx : idx;
-        Logger.LogDebug($"Shrinked pool size to {pos} and recycle size to {recycleCursor}");
+        Logger.LogDebug($"Shrinked pool size to {cursor} and recycle size to {recycleCursor}");
         return true;
     }
 
@@ -295,7 +296,7 @@ public class PoolOptPatch : BaseUnityPlugin
             return true;
         }
 
-        cursor = pos + 1;
+        cursor = pos;
         Array.Sort(recycle, 0, recycleCursor);
         var idx = Array.BinarySearch(recycle, 0, recycleCursor, pos + 1);
         recycleCursor = idx < 0 ? ~idx : idx;
