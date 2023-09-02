@@ -244,6 +244,16 @@ public class PoolOptPatch : BaseUnityPlugin
     private static bool OptimizePool<T>(GetId<T> getter, int initCapacity, ref T[] pool, ref int cursor, ref int capacity, ref int[] recycle, ref int recycleCursor)
     {
         if (cursor <= 1) return false;
+        if (recycleCursor == pool.Length)
+        {
+            cursor = 1;
+            capacity = initCapacity;
+            pool = new T[initCapacity];
+            recycle = new int[initCapacity];
+            recycleCursor = 0;
+            Logger.LogDebug("Resetted pool to initial status");
+            return true;
+        }
         var pos = cursor - 1;
         while (pos > 0)
         {
