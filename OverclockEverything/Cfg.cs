@@ -7,7 +7,7 @@ public struct Cfg
     }
 
     public readonly uint[] BeltSpeed = {
-        2, 5, 10
+        1, 2, 5
     };
     public int SorterSpeedMultiplier = 1;
     public int SorterPowerConsumptionMultiplier = 1;
