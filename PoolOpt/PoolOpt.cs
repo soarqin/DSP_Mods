@@ -273,7 +273,6 @@ public class PoolOptPatch : BaseUnityPlugin
             return true;
         }
 
-        Logger.LogDebug($"Old size = {cursor}. Old recycle size = {recycleCursor}");
         cursor = pos + 1;
         Array.Sort(recycle, 0, recycleCursor);
         var idx = Array.BinarySearch(recycle, 0, recycleCursor, pos + 1);
