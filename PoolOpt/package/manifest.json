@@ -1,6 +1,6 @@
 ﻿{
   "name": "PoolOpt",
-  "version_number": "0.9.0",
+  "version_number": "0.9.1",
   "website_url": "https://github.com/soarqin/DSP_Mods/tree/master/PoolOpt",
   "description": "Optimize memory pools on loading gamesaves / 加载游戏存档时优化内存池的使用",
   "dependencies": [

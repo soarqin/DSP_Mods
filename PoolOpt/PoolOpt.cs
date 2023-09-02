@@ -85,7 +85,7 @@ public class PoolOptPatch : BaseUnityPlugin
             var factoryStorage = planet.factoryStorage;
             if (factoryStorage != null)
             {
-                if (OptimizePool((in StorageComponent n) => n?.id ?? n.id, 64,
+                if (OptimizePool((in StorageComponent n) => n?.id ?? 0, 64,
                         ref factoryStorage.storagePool, ref factoryStorage.storageCursor, ref factoryStorage.storageCapacity,
                         ref factoryStorage.storageRecycle, ref factoryStorage.storageRecycleCursor))
                     Logger.LogDebug($"Optimized `{nameof(factoryStorage.storagePool)}` on Planet {planet.planetId}");
@@ -244,7 +244,7 @@ public class PoolOptPatch : BaseUnityPlugin
     private static bool OptimizePool<T>(GetId<T> getter, int initCapacity, ref T[] pool, ref int cursor, ref int capacity, ref int[] recycle, ref int recycleCursor)
     {
         if (cursor <= 1) return false;
-        if (recycleCursor == pool.Length)
+        if (recycleCursor == cursor - 1)
         {
             cursor = 1;
             capacity = initCapacity;

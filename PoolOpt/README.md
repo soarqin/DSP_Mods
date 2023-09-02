@@ -3,6 +3,10 @@
 #### Optimize memory pools on loading gamesaves
 #### 加载游戏存档时优化内存池的使用
 
+# Changelog
+* 0.9.1
+  + Fix a bug that may cause game crash on shrinking storage memory pools.
+
 # Notes
 * Does not optimize some rarely uses pools, mostly UI related.
 * Does not optimize solar sails' pool, please use button on dyson sphere panel from original game to clean it up.
