@@ -214,7 +214,8 @@ public class LabOptPatch : BaseUnityPlugin
     [HarmonyPatch(typeof(FactorySystem), nameof(FactorySystem.FindLabFunctionsForBuild))]
     [HarmonyPatch(typeof(FactorySystem), nameof(FactorySystem.GameTickLabResearchMode))]
     [HarmonyPatch(typeof(FactorySystem), nameof(FactorySystem.SyncLabFunctions))]
-    [HarmonyPatch(typeof(FactorySystem), nameof(FactorySystem.TakeBackItems_Lab))]
+    // no need to patch this function, it just set everything to empty
+    //  [HarmonyPatch(typeof(FactorySystem), nameof(FactorySystem.TakeBackItems_Lab))]
     private static IEnumerable<CodeInstruction> FactorySystem_ReplaceLabSetFunction_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
     {
         var matcher = new CodeMatcher(instructions, generator);

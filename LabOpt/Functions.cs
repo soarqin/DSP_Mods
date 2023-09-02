@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using BepInEx.Logging;
 using HarmonyLib;
 
 namespace LabOpt;
@@ -17,10 +18,18 @@ public static class LabOptPatchFunctions
         var rootId = (int)RootLabIdField.GetValue(labPool[labId]);
         var targetLabId = factorySystem.factory.entityPool[nextEntityId].labId;
         if (rootId <= 0) rootId = labId;
+        ref var rootLab = ref labPool[rootId];
+        var needSetFunction = rootLab.researchMode || rootLab.recipeId > 0;
+        var entitySignPool = needSetFunction ? factorySystem.factory.entitySignPool : null;
         do
         {
-            RootLabIdField.SetValueDirect(__makeref(labPool[targetLabId]), rootId);
-            // LabOptPatch.Logger.LogDebug($"Set rootLabId of lab {targetLabId} to {rootId}");
+            ref var targetLab = ref labPool[targetLabId];
+            RootLabIdField.SetValueDirect(__makeref(targetLab), rootId);
+            // LabOptPatch.Logger.LogDebug($"Set rootLabId of lab {targetLabId} to {rootId}, {needSetFunction}");
+            if (needSetFunction)
+            {
+                SetFunctionInternal(ref targetLab, rootLab.researchMode, rootLab.recipeId, rootLab.techId, entitySignPool, labPool);
+            }
         } while ((targetLabId = labPool[targetLabId].nextLabId) > 0);
     }
 
@@ -61,13 +70,14 @@ public static class LabOptPatchFunctions
         {
             var rootId = pair.Value;
             while (parentDict.TryGetValue(rootId, out var parentId)) rootId = parentId;
-            RootLabIdField.SetValueDirect(__makeref(labPool[pair.Key]), rootId);
+            ref var targetLab = ref labPool[pair.Key];
+            RootLabIdField.SetValueDirect(__makeref(targetLab), rootId);
             // LabOptPatch.Logger.LogDebug($"Set rootLabId of lab {pair.Key} to {rootId}");
-            AssignRootLabValues(ref labPool[rootId], ref labPool[pair.Key]);
+            AssignRootLabValues(ref labPool[rootId], ref targetLab);
         }
     }
 
-    public static void AssignRootLabValues(ref LabComponent rootLab, ref LabComponent thisLab)
+    private static void AssignRootLabValues(ref LabComponent rootLab, ref LabComponent thisLab)
     {
         int len;
         if (rootLab.researchMode)
@@ -287,7 +297,7 @@ public static class LabOptPatchFunctions
                 var served = lab.served;
                 lock (served)
                 {
-                    for (int l = 0; l < len; l++)
+                    for (var l = 0; l < len; l++)
                     {
                         if (served[l] >= lab.requireCounts[l] && served[l] != 0) continue;
                         lab.time = 0;
@@ -361,26 +371,37 @@ public static class LabOptPatchFunctions
             }
             else if (researchMode)
             {
-                if (rootLab.techId != techId)
+                if (techId != rootLab.techId)
                 {
                     SetFunctionInternal(ref rootLab, true, recpId, techId, signPool, labPool);
                 }
             }
             else
             {
-                if (rootLab.recipeId != recpId)
+                if (recpId != rootLab.recipeId)
                 {
                     SetFunctionInternal(ref rootLab, false, recpId, techId, signPool, labPool);
                 }
             }
         }
         SetFunctionInternal(ref lab, researchMode, recpId, techId, signPool, labPool);
+        var thisId = lab.id;
+        var needs = lab.needs;
+        var nextLabId = lab.nextLabId;
+        while (nextLabId > 0)
+        {
+            ref var nextLab = ref labPool[nextLabId];
+            if ((int)RootLabIdField.GetValue(nextLab) != thisId) break;
+            if (needs != nextLab.needs)
+                SetFunctionInternal(ref nextLab, researchMode, recpId, techId, signPool, labPool);
+            nextLabId = nextLab.nextLabId;
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void SetFunctionInternal(ref LabComponent lab, bool researchMode, int recpId, int techId, SignData[] signPool, LabComponent[] labPool)
     {
-        // LabOptPatch.Logger.LogDebug($"SetFunctionNew: {lab.id} {(int)RootLabIdField.GetValue(lab)} {researchMode} {recpId} {techId}");
+        // LabOptPatch.Logger.LogDebug($"SetFunctionInternal: id={lab.id} root={(int)RootLabIdField.GetValue(lab)} research={researchMode} recp={recpId} tech={techId}");
 		lab.replicating = false;
 		lab.time = 0;
 		lab.hashBytes = 0;
@@ -489,28 +510,30 @@ public static class LabOptPatchFunctions
             }
             else
             {
-                lab.requires = new int[recipeProto.Items.Length];
-                Array.Copy(recipeProto.Items, lab.requires, lab.requires.Length);
-                lab.requireCounts = new int[recipeProto.ItemCounts.Length];
-                Array.Copy(recipeProto.ItemCounts, lab.requireCounts, lab.requireCounts.Length);
-                lab.served = new int[lab.requireCounts.Length];
-                lab.incServed = new int[lab.requireCounts.Length];
-                Assert.True(lab.requires.Length == lab.requireCounts.Length);
                 if (lab.needs == null || lab.needs.Length != 6)
-                {
                     lab.needs = new int[6];
-                }
                 else
-                {
                     Array.Clear(lab.needs, 0, 6);
-                }
-
-                lab.products = new int[recipeProto.Results.Length];
+                lab.requires ??= new int[recipeProto.Items.Length];
+                Array.Copy(recipeProto.Items, lab.requires, lab.requires.Length);
+                lab.requireCounts ??= new int[recipeProto.ItemCounts.Length];
+                Array.Copy(recipeProto.ItemCounts, lab.requireCounts, lab.requireCounts.Length);
+                if (lab.served == null)
+                    lab.served = new int[lab.requireCounts.Length];
+                else
+                    Array.Clear(lab.served, 0, lab.served.Length);
+                if (lab.incServed == null)
+                    lab.incServed = new int[lab.requireCounts.Length];
+                else
+                    Array.Clear(lab.incServed, 0, lab.incServed.Length);
+                lab.products ??= new int[recipeProto.Results.Length];
                 Array.Copy(recipeProto.Results, lab.products, lab.products.Length);
-                lab.productCounts = new int[recipeProto.ResultCounts.Length];
+                lab.productCounts ??= new int[recipeProto.ResultCounts.Length];
                 Array.Copy(recipeProto.ResultCounts, lab.productCounts, lab.productCounts.Length);
-                Assert.True(lab.products.Length == lab.productCounts.Length);
-                lab.produced = new int[lab.productCounts.Length];
+                if (lab.produced == null)
+                    lab.produced = new int[lab.productCounts.Length];
+                else
+                    Array.Clear(lab.produced, 0, lab.produced.Length);
             }
         }
 		else
