@@ -4,6 +4,8 @@
 #### 优化研究站性能
 
 ## Updates
+* 0.3.6
+  + Fix a critical problem that cause labs not working, as well as optimizations in some functions.
 * 0.3.5
   + Add some codes to avoid labs malfunctioning on stacking.
 * 0.3.4
@@ -32,6 +34,9 @@
 * Insert into or pick from any level of Matrix Labs apply to base level actually.
 * Increased capacity input and output of Matrix Labs to 15 and 30, to avoid lack of supply or output jam.
 
+## Notes
+* If get any lab not working, just save and reload the game to fix it as a temporary solution.
+
 ## Known issue
 * In researching mode, you will find the progress circle runs faster on stacked Labs
   * This is normal due to mechanism of calculation, it does not change the real consumptions and output hashes.
@@ -47,6 +52,9 @@
 * 研究站的UI始终显示底层的物品数量，但显示当前层的工作进度
 * 向任意层放入或取出物品实际上都是对底层的操作
 * 增加研究站的输入和输出容量到15和30，以避免输入供应不足和输出堵塞
+
+## 说明
+* 如果发现有任何研究站不工作，只需保存并重新加载游戏即可暂时解决。
 
 ## 已知问题
 * 在研发模式下，你会发现堆叠研究站的进度圈运行得更快

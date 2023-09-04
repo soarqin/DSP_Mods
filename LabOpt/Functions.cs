@@ -11,16 +11,29 @@ namespace LabOpt;
 public static class LabOptPatchFunctions
 {
     private static readonly FieldInfo RootLabIdField = AccessTools.Field(typeof(LabComponent), "rootLabId");
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void SetRootId(ref LabComponent lab, int rootId)
+    {
+        RootLabIdField.SetValueDirect(__makeref(lab), rootId);
+    }
 
     public static void SetRootLabIdForStacking(FactorySystem factorySystem, int labId, int nextEntityId)
     {
         var labPool = factorySystem.labPool;
+        var factory = factorySystem.factory;
         var rootId = (int)RootLabIdField.GetValue(labPool[labId]);
-        var targetLabId = factorySystem.factory.entityPool[nextEntityId].labId;
-        if (rootId <= 0) rootId = labId;
+        if (rootId <= 0)
+        {
+            var radiusBear = factory.planet.radius + 2.0f;
+            if (factory.entityPool[labPool[labId].entityId].pos.sqrMagnitude > radiusBear * radiusBear)
+                return;
+            rootId = labId;
+        }
         ref var rootLab = ref labPool[rootId];
         var needSetFunction = rootLab.researchMode || rootLab.recipeId > 0;
         var entitySignPool = needSetFunction ? factorySystem.factory.entitySignPool : null;
+        var targetLabId = factory.entityPool[nextEntityId].labId;
         do
         {
             ref var targetLab = ref labPool[targetLabId];
@@ -77,6 +90,7 @@ public static class LabOptPatchFunctions
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void AssignRootLabValues(ref LabComponent rootLab, ref LabComponent thisLab)
     {
         int len;
@@ -367,34 +381,37 @@ public static class LabOptPatchFunctions
             ref var rootLab = ref labPool[rootLabId];
             if (researchMode != rootLab.researchMode)
             {
-                SetFunctionInternal(ref rootLab, researchMode, recpId, techId, signPool, labPool);
+                SetFunctionManually(ref rootLab, researchMode, recpId, techId, signPool, labPool);
             }
             else if (researchMode)
             {
                 if (techId != rootLab.techId)
                 {
-                    SetFunctionInternal(ref rootLab, true, recpId, techId, signPool, labPool);
+                    SetFunctionManually(ref rootLab, true, recpId, techId, signPool, labPool);
                 }
             }
             else
             {
                 if (recpId != rootLab.recipeId)
                 {
-                    SetFunctionInternal(ref rootLab, false, recpId, techId, signPool, labPool);
+                    SetFunctionManually(ref rootLab, false, recpId, techId, signPool, labPool);
                 }
             }
         }
-        SetFunctionInternal(ref lab, researchMode, recpId, techId, signPool, labPool);
-        var thisId = lab.id;
-        var needs = lab.needs;
-        var nextLabId = lab.nextLabId;
-        while (nextLabId > 0)
+        else
         {
-            ref var nextLab = ref labPool[nextLabId];
-            if ((int)RootLabIdField.GetValue(nextLab) != thisId) break;
-            if (needs != nextLab.needs)
-                SetFunctionInternal(ref nextLab, researchMode, recpId, techId, signPool, labPool);
-            nextLabId = nextLab.nextLabId;
+            SetFunctionInternal(ref lab, researchMode, recpId, techId, signPool, labPool);
+            var thisId = lab.id;
+            var needs = lab.needs;
+            var nextLabId = lab.nextLabId;
+            while (nextLabId > 0)
+            {
+                ref var nextLab = ref labPool[nextLabId];
+                if ((int)RootLabIdField.GetValue(nextLab) != thisId) break;
+                if (needs != nextLab.needs)
+                    SetFunctionInternal(ref nextLab, researchMode, recpId, techId, signPool, labPool);
+                nextLabId = nextLab.nextLabId;
+            }
         }
     }
 

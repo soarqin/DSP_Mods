@@ -326,4 +326,10 @@ public class LabOptPatch : BaseUnityPlugin
         return matcher.InstructionEnumeration();
     }
 
+    [HarmonyPostfix]
+    [HarmonyPatch(typeof(LabComponent), nameof(LabComponent.SetEmpty))]
+    private static void LabComponent_SetEmpty_Postfix(ref LabComponent __instance)
+    {
+        LabOptPatchFunctions.SetRootId(ref __instance, 0);
+    }
 }
