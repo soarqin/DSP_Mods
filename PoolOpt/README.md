@@ -4,6 +4,9 @@
 #### 加载游戏存档时优化内存池的使用
 
 # Changelog
+* 0.9.2
+  + Fix a issue that may delete used slots in trash pool
+  + Fix compatibility issue with other mods (expecially [DSPOptimizations](https://dsp.thunderstore.io/package/Selsion/DSPOptimizations/)) by calling `SetXXXCapacity()` on shrinking capacity of pools
 * 0.9.1
   + Fix a bug that may cause game crash on shrinking storage memory pools.
 

@@ -5,7 +5,7 @@
     <AssemblyName>PoolOpt</AssemblyName>
     <BepInExPluginGuid>org.soardev.poolopt</BepInExPluginGuid>
     <Description>DSP MOD - PoolOpt</Description>
-    <Version>0.9.1</Version>
+    <Version>0.9.2</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
