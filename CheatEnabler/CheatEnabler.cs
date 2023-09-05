@@ -64,6 +64,12 @@ public class CheatEnabler : BaseUnityPlugin
             "Birth star has high luminosity").Value;
         _terraformAnyway = Config.Bind("General", "TerraformAnyway", _terraformAnyway,
             "Can do terraform without enough sands").Value;
+
+        I18N.Init();
+
+        // UI Patch
+        Harmony.CreateAndPatchAll(typeof(UI.MyWindowManager.Patch));
+
         if (_devShortcuts)
         {
             Harmony.CreateAndPatchAll(typeof(DevShortcuts));
