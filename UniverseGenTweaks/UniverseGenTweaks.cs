@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
+using System.Globalization;
 using System.Reflection.Emit;
 using BepInEx;
 using BepInEx.Configuration;
@@ -45,7 +45,7 @@ public class UniverseGenTweaks : BaseUnityPlugin
         Harmony.CreateAndPatchAll(typeof(UniverseGenTweaks));
     }
 
-    private static void createSliderWithText(Slider orig, out Text title, out Slider slider, out Text text)
+    private static void CreateSliderWithText(Slider orig, out Text title, out Slider slider, out Text text)
     {
         var origText = orig.transform.parent.GetComponent<Text>();
         title = Object.Instantiate(origText, origText.transform.parent);
@@ -53,7 +53,7 @@ public class UniverseGenTweaks : BaseUnityPlugin
         text = slider.transform.FindChildRecur("Text").GetComponent<Text>();
     }
 
-    private static void transformDeltaY(Transform trans, float delta)
+    private static void TransformDeltaY(Transform trans, float delta)
     {
         var pos = trans.position;
         pos.y += delta;
@@ -66,10 +66,10 @@ public class UniverseGenTweaks : BaseUnityPlugin
     {
         __instance.starCountSlider.maxValue = _maxStarCount;
 
-        createSliderWithText(__instance.starCountSlider, out _minDistTitle, out _minDistSlider, out _minDistText);
-        createSliderWithText(__instance.starCountSlider, out _minStepTitle, out _minStepSlider, out _minStepText);
-        createSliderWithText(__instance.starCountSlider, out _maxStepTitle, out _maxStepSlider, out _maxStepText);
-        createSliderWithText(__instance.starCountSlider, out _flattenTitle, out _flattenSlider, out _flattenText);
+        CreateSliderWithText(__instance.starCountSlider, out _minDistTitle, out _minDistSlider, out _minDistText);
+        CreateSliderWithText(__instance.starCountSlider, out _minStepTitle, out _minStepSlider, out _minStepText);
+        CreateSliderWithText(__instance.starCountSlider, out _maxStepTitle, out _maxStepSlider, out _maxStepText);
+        CreateSliderWithText(__instance.starCountSlider, out _flattenTitle, out _flattenSlider, out _flattenText);
 
         _minDistTitle.name = "min-dist";
         _minDistSlider.minValue = 10f;
@@ -91,14 +91,14 @@ public class UniverseGenTweaks : BaseUnityPlugin
         _flattenSlider.maxValue = 50f;
         _flattenSlider.value = _flatten * 50f;
 
-        transformDeltaY(_minDistTitle.transform, -0.3573f);
-        transformDeltaY(_minStepTitle.transform, -0.3573f * 2);
-        transformDeltaY(_maxStepTitle.transform, -0.3573f * 3);
-        transformDeltaY(_flattenTitle.transform, -0.3573f * 4);
-        transformDeltaY(__instance.resourceMultiplierSlider.transform.parent, -0.3573f * 4);
-        transformDeltaY(__instance.sandboxToggle.transform.parent, -0.3573f * 4);
-        transformDeltaY(__instance.propertyMultiplierText.transform, -0.3573f * 4);
-        transformDeltaY(__instance.addrText.transform.parent, -0.3573f * 4);
+        TransformDeltaY(_minDistTitle.transform, -0.3573f);
+        TransformDeltaY(_minStepTitle.transform, -0.3573f * 2);
+        TransformDeltaY(_maxStepTitle.transform, -0.3573f * 3);
+        TransformDeltaY(_flattenTitle.transform, -0.3573f * 4);
+        TransformDeltaY(__instance.resourceMultiplierSlider.transform.parent, -0.3573f * 4);
+        TransformDeltaY(__instance.sandboxToggle.transform.parent, -0.3573f * 4);
+        TransformDeltaY(__instance.propertyMultiplierText.transform, -0.3573f * 4);
+        TransformDeltaY(__instance.addrText.transform.parent, -0.3573f * 4);
     }
 
     [HarmonyPrefix]
@@ -119,10 +119,10 @@ public class UniverseGenTweaks : BaseUnityPlugin
             _maxStepTitle.text = "Step Distance Max";
             _flattenTitle.text = "Flatten";
         }
-        _minDistText.text = _minDist.ToString();
-        _minStepText.text = _minStep.ToString();
-        _maxStepText.text = _maxStep.ToString();
-        _flattenText.text = _flatten.ToString();
+        _minDistText.text = _minDist.ToString(CultureInfo.InvariantCulture);
+        _minStepText.text = _minStep.ToString(CultureInfo.InvariantCulture);
+        _maxStepText.text = _maxStep.ToString(CultureInfo.InvariantCulture);
+        _flattenText.text = _flatten.ToString(CultureInfo.InvariantCulture);
     }
 
     [HarmonyPostfix]
@@ -135,7 +135,7 @@ public class UniverseGenTweaks : BaseUnityPlugin
             var newVal = Mathf.Round(val) / 10f;
             if (newVal.Equals(_minDist)) return;
             _minDist = newVal;
-            _minDistText.text = _minDist.ToString();
+            _minDistText.text = _minDist.ToString(CultureInfo.InvariantCulture);
             __instance.SetStarmapGalaxy();
         });
         _minStepSlider.onValueChanged.RemoveAllListeners();
@@ -145,7 +145,7 @@ public class UniverseGenTweaks : BaseUnityPlugin
             if (newVal.Equals(_minStep)) return;
             _minStep = newVal;
             _maxStepSlider.minValue = newVal * 10f;
-            _minStepText.text = _minStep.ToString();
+            _minStepText.text = _minStep.ToString(CultureInfo.InvariantCulture);
             __instance.SetStarmapGalaxy();
         });
         _maxStepSlider.onValueChanged.RemoveAllListeners();
@@ -155,7 +155,7 @@ public class UniverseGenTweaks : BaseUnityPlugin
             if (newVal.Equals(_maxStep)) return;
             _maxStep = newVal;
             _minStepSlider.maxValue = newVal * 10f;
-            _maxStepText.text = _maxStep.ToString();
+            _maxStepText.text = _maxStep.ToString(CultureInfo.InvariantCulture);
             __instance.SetStarmapGalaxy();
         });
         _flattenSlider.onValueChanged.RemoveAllListeners();
@@ -164,9 +164,19 @@ public class UniverseGenTweaks : BaseUnityPlugin
             var newVal = Mathf.Round(val) / 50f;
             if (newVal.Equals(_flatten)) return;
             _flatten = newVal;
-            _flattenText.text = _flatten.ToString();
+            _flattenText.text = _flatten.ToString(CultureInfo.InvariantCulture);
             __instance.SetStarmapGalaxy();
         });
+    }
+
+    [HarmonyPostfix]
+    [HarmonyPatch(typeof(UIGalaxySelect), "_OnUnregEvent")]
+    private static void PatchGalaxyUI_OnUnregEvent(UIGalaxySelect __instance)
+    {
+        _minDistSlider.onValueChanged.RemoveAllListeners();
+        _minStepSlider.onValueChanged.RemoveAllListeners();
+        _maxStepSlider.onValueChanged.RemoveAllListeners();
+        _flattenSlider.onValueChanged.RemoveAllListeners();
     }
 
     [HarmonyTranspiler]
