@@ -4,6 +4,9 @@
 #### 加载游戏存档时优化内存池的使用
 
 # Changelog
+* 0.9.3
+  + Fix crash on calling `PlanetFactory.SetEntityCapacity()`
+  + Reduce copies of Lists to improve performance
 * 0.9.2
   + Fix a issue that may delete used slots in trash pool
   + Fix compatibility issue with other mods (expecially [DSPOptimizations](https://dsp.thunderstore.io/package/Selsion/DSPOptimizations/)) by calling `SetXXXCapacity()` on shrinking capacity of pools
