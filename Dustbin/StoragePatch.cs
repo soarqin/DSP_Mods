@@ -10,7 +10,7 @@ namespace Dustbin;
 public static class StoragePatch
 {
     public static readonly FieldInfo IsDustbinField = AccessTools.Field(typeof(StorageComponent), "IsDustbin");
-    private static MyCheckBox _storageDustbinCheckBox;
+    private static UI.MyCheckBox _storageDustbinCheckBox;
     private static int _lastStorageId;
 
     public static void Reset()
@@ -85,7 +85,7 @@ public static class StoragePatch
     [HarmonyPatch(typeof(UIStorageWindow), "_OnCreate")]
     private static void UIStorageWindow__OnCreate_Postfix(UIStorageWindow __instance)
     {
-        _storageDustbinCheckBox = MyCheckBox.CreateCheckBox(false, __instance.transform, 50f, 50f, Localization.language == Language.zhCN ? "垃圾桶" : "Dustbin");
+        _storageDustbinCheckBox = UI.MyCheckBox.CreateCheckBox(false, __instance.transform, 50f, 50f, Localization.language == Language.zhCN ? "垃圾桶" : "Dustbin");
         var window = __instance;
         _storageDustbinCheckBox.OnChecked += () =>
         {

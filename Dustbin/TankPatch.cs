@@ -10,7 +10,7 @@ namespace Dustbin;
 public static class TankPatch
 {
     public static readonly FieldInfo IsDustbinField = AccessTools.Field(typeof(TankComponent), "IsDustbin");
-    private static MyCheckBox _tankDustbinCheckBox;
+    private static UI.MyCheckBox _tankDustbinCheckBox;
     private static int _lastTankId;
 
     public static void Reset()
@@ -91,7 +91,7 @@ public static class TankPatch
     [HarmonyPatch(typeof(UITankWindow), "_OnCreate")]
     private static void UITankWindow__OnCreate_Postfix(UITankWindow __instance)
     {
-        _tankDustbinCheckBox = MyCheckBox.CreateCheckBox(false, __instance.transform, 120f, 20f, Localization.language == Language.zhCN ? "垃圾桶" : "Dustbin");
+        _tankDustbinCheckBox = UI.MyCheckBox.CreateCheckBox(false, __instance.transform, 120f, 20f, Localization.language == Language.zhCN ? "垃圾桶" : "Dustbin");
         var window = __instance;
         _tankDustbinCheckBox.OnChecked += () =>
         {
