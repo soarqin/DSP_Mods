@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
 using BepInEx;
+using BepInEx.Configuration;
 using HarmonyLib;
 
 namespace CheatEnabler;
@@ -10,11 +11,12 @@ namespace CheatEnabler;
 [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
 public class CheatEnabler : BaseUnityPlugin
 {
-    private new static readonly BepInEx.Logging.ManualLogSource Logger =
+    public new static readonly BepInEx.Logging.ManualLogSource Logger =
         BepInEx.Logging.Logger.CreateLogSource(PluginInfo.PLUGIN_NAME);
 
-    private bool _devShortcuts = true;
-    private bool _disableAbnormalChecks = true;
+    private static bool _initialized = false;
+    private static KeyboardShortcut _shortcut = KeyboardShortcut.Deserialize("H + LeftControl");
+    private static UIConfigWindow _configWin;
     private bool _alwaysInfiniteResource = true;
     private bool _waterPumpAnywhere = true;
     private static bool _sitiVeinsOnBirthPlanet = true;
@@ -33,9 +35,9 @@ public class CheatEnabler : BaseUnityPlugin
 
     private void Awake()
     {
-        _devShortcuts = Config.Bind("General", "DevShortcuts", _devShortcuts, "enable DevMode shortcuts").Value;
-        _disableAbnormalChecks = Config.Bind("General", "DisableAbnormalChecks", _disableAbnormalChecks,
-            "disable all abnormal checks").Value;
+        DevShortcuts.Enabled = Config.Bind("General", "DevShortcuts", true, "enable DevMode shortcuts");
+        AbnormalDisabler.Enabled = Config.Bind("General", "DisableAbnormalChecks", false,
+            "disable all abnormal checks");
         _alwaysInfiniteResource = Config.Bind("General", "AlwaysInfiniteResource", _alwaysInfiniteResource,
             "always infinite resource").Value;
         _unlockTechToMaximumLevel = Config.Bind("General", "UnlockTechToMaxLevel", _unlockTechToMaximumLevel,
@@ -69,16 +71,10 @@ public class CheatEnabler : BaseUnityPlugin
 
         // UI Patch
         Harmony.CreateAndPatchAll(typeof(UI.MyWindowManager.Patch));
+        Harmony.CreateAndPatchAll(typeof(CheatEnabler));
 
-        if (_devShortcuts)
-        {
-            Harmony.CreateAndPatchAll(typeof(DevShortcuts));
-        }
-
-        if (_disableAbnormalChecks)
-        {
-            Harmony.CreateAndPatchAll(typeof(AbnormalDisabler));
-        }
+        Harmony.CreateAndPatchAll(typeof(DevShortcuts));
+        Harmony.CreateAndPatchAll(typeof(AbnormalDisabler));
 
         if (_alwaysInfiniteResource)
         {
@@ -115,62 +111,39 @@ public class CheatEnabler : BaseUnityPlugin
             Harmony.CreateAndPatchAll(typeof(TerraformAnyway));
         }
     }
-
-    private class DevShortcuts
+    
+    private void Update()
     {
-        [HarmonyPostfix]
-        [HarmonyPatch(typeof(PlayerController), "Init")]
-        private static void PlayerControllerInit(PlayerController __instance)
+        if (!GameMain.isRunning)
         {
-            var cnt = __instance.actions.Length;
-            var newActions = new PlayerAction[cnt + 1];
-            for (var i = 0; i < cnt; i++)
-            {
-                newActions[i] = __instance.actions[i];
-            }
-
-            var test = new PlayerAction_Test();
-            test.Init(__instance.player);
-            newActions[cnt] = test;
-            __instance.actions = newActions;
+            return;
         }
 
-        [HarmonyPostfix]
-        [HarmonyPatch(typeof(PlayerAction_Test), "GameTick")]
-        private static void PlayerAction_TestGameTick(PlayerAction_Test __instance)
+        if (VFInput.inputing)
         {
-            var lastActive = __instance.active;
-            __instance.Update();
-            if (lastActive != __instance.active)
+            return;
+        }
+        
+        if (_shortcut.IsDown())
+        {
+            if (_configWin.active)
             {
-                UIRealtimeTip.PopupAhead(
-                    (lastActive ? "Developer Mode Shortcuts Disabled" : "Developer Mode Shortcuts Enabled").Translate(),
-                    false);
+                _configWin._Close();
+            }
+            else
+            {
+                UIRoot.instance.uiGame.ShutPlayerInventory();
+                _configWin.Open();
             }
         }
     }
 
-    private class AbnormalDisabler
+    [HarmonyPostfix, HarmonyPatch(typeof(UIGame), "_OnCreate")]
+    public static void UIGame__OnCreate_Postfix()
     {
-        [HarmonyPrefix]
-        [HarmonyPatch(typeof(AbnormalityLogic), "NotifyBeforeGameSave")]
-        [HarmonyPatch(typeof(AbnormalityLogic), "NotifyOnAssemblerRecipePick")]
-        [HarmonyPatch(typeof(AbnormalityLogic), "NotifyOnGameBegin")]
-        [HarmonyPatch(typeof(AbnormalityLogic), "NotifyOnMechaForgeTaskComplete")]
-        [HarmonyPatch(typeof(AbnormalityLogic), "NotifyOnUnlockTech")]
-        [HarmonyPatch(typeof(AbnormalityLogic), "NotifyOnUseConsole")]
-        private static bool DisableAbnormalLogic()
-        {
-            return false;
-        }
-
-        [HarmonyPrefix]
-        [HarmonyPatch(typeof(AbnormalityLogic), "InitDeterminators")]
-        private static bool DisableAbnormalDeterminators(ref Dictionary<int, AbnormalityDeterminator> ___determinators)
-        {
-            ___determinators = new Dictionary<int, AbnormalityDeterminator>();
-            return false;
-        }
+        if (_initialized) return;
+        _initialized = true;
+        _configWin = UIConfigWindow.CreateInstance();
     }
 
     private class AlwaysInfiniteResource

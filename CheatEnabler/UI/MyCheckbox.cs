@@ -1,4 +1,5 @@
 ﻿using System;
+using BepInEx.Configuration;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -11,8 +12,10 @@ public class MyCheckBox : MonoBehaviour
     public Image checkImage;
     public RectTransform rectTrans;
     public Text labelText;
-
     public event Action OnChecked;
+    private bool _checked;
+    private ConfigEntry<bool> _configAssigned;
+
     public bool Checked
     {
         get => _checked;
@@ -23,30 +26,25 @@ public class MyCheckBox : MonoBehaviour
         }
     }
 
-    private bool _checked;
+    public static MyCheckBox CreateCheckBox(float x, float y, RectTransform parent, ConfigEntry<bool> config, string label = "", int fontSize = 15)
+    {
+        var cb = CreateCheckBox(x, y, parent, config.Value, label, fontSize);
+        cb._configAssigned = config;
+        cb.OnChecked += () => config.Value = !config.Value;
+        config.SettingChanged += (_, _) => cb.Checked = config.Value;
+        return cb;
+    }
 
-    public static MyCheckBox CreateCheckBox(bool check, Transform parent = null, float x = 0f, float y = 0f, string label = "", int fontSize = 15)
+    public static MyCheckBox CreateCheckBox(float x, float y, RectTransform parent, bool check, string label = "", int fontSize = 15)
     {
         var buildMenu = UIRoot.instance.uiGame.buildMenu;
         var src = buildMenu.uxFacilityCheck;
 
         var go = Instantiate(src.gameObject);
-        var rect = go.transform as RectTransform;
-        if (rect == null)
-        {
-            return null;
-        }
         go.name = "my-checkbox";
         var cb = go.AddComponent<MyCheckBox>();
         cb._checked = check;
-        if (parent != null)
-        {
-            rect.SetParent(parent);
-        }
-        rect.anchorMax = new Vector2(0f, 1f);
-        rect.anchorMin = new Vector2(0f, 1f);
-        rect.pivot = new Vector2(0f, 1f);
-        rect.anchoredPosition3D = new Vector3(x, -y, 0f);
+        var rect = Util.NormalizeRectWithTopLeft(cb, x, y, parent);
 
         cb.rectTrans = rect;
         cb.uiButton = go.GetComponent<UIButton>();
