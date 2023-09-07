@@ -145,24 +145,53 @@ public class CheatEnabler : BaseUnityPlugin
     public static void UIRoot__OnOpen_Postfix()
     {
         if (_initialized) return;
-        var mainMenu = UIRoot.instance.uiMainMenu;
-        var src = mainMenu.newGameButton.gameObject;
-        var parent = src.transform.parent;
-        var btn = Instantiate(src, parent);
-        btn.name = "btn-cheatenabler-config";
-        var btnConfig = btn.GetComponent<UIMainMenuButton>();
-        btnConfig.text.text = "CheatEnabler Config";
-        btnConfig.text.fontSize = btnConfig.text.fontSize * 7 / 8;
-        I18N.OnInitialized += () =>
         {
-            btnConfig.text.text = "CheatEnabler Config".Translate();
-        };
-        btnConfig.transform.SetParent(parent);
-        var vec = ((RectTransform)mainMenu.exitButton.transform).anchoredPosition3D;
-        var vec2 = ((RectTransform)mainMenu.creditsButton.transform).anchoredPosition3D;
-        var transform1 = (RectTransform)btn.transform;
-        transform1.anchoredPosition3D = new Vector3(vec.x, vec.y + (vec.y - vec2.y) * 2, vec.z);
-        btnConfig.button.onClick.AddListener(ShowConfigWindow);
+            var mainMenu = UIRoot.instance.uiMainMenu;
+            var src = mainMenu.newGameButton.gameObject;
+            var parent = src.transform.parent;
+            var btn = Instantiate(src, parent);
+            btn.name = "btn-cheatenabler-config";
+            var btnConfig = btn.GetComponent<UIMainMenuButton>();
+            btnConfig.text.text = "CheatEnabler Config";
+            btnConfig.text.fontSize = btnConfig.text.fontSize * 7 / 8;
+            I18N.OnInitialized += () => { btnConfig.text.text = "CheatEnabler Config".Translate(); };
+            btnConfig.transform.SetParent(parent);
+            var vec = ((RectTransform)mainMenu.exitButton.transform).anchoredPosition3D;
+            var vec2 = ((RectTransform)mainMenu.creditsButton.transform).anchoredPosition3D;
+            var transform1 = (RectTransform)btn.transform;
+            transform1.anchoredPosition3D = new Vector3(vec.x, vec.y + (vec.y - vec2.y) * 2, vec.z);
+            btnConfig.button.onClick.RemoveAllListeners();
+            btnConfig.button.onClick.AddListener(ShowConfigWindow);
+        }
+        {
+            var panel = UIRoot.instance.uiGame.planetGlobe;
+            var src = panel.button2;
+            var sandboxMenu = UIRoot.instance.uiGame.sandboxMenu;
+            var icon = sandboxMenu.categoryButtons[6].transform.Find("icon")?.GetComponent<Image>()?.sprite;
+            var b = GameObject.Instantiate<Button>(src, src.transform.parent);
+            var panelButtonGo = b.gameObject;
+            var rect = (RectTransform)panelButtonGo.transform;
+            var btn = panelButtonGo.GetComponent<UIButton>();
+            var img = panelButtonGo.transform.Find("button-2/icon")?.GetComponent<Image>();
+            if (img != null)
+            {
+                img.sprite = icon;
+            }
+            if (panelButtonGo != null && btn != null)
+            {
+                panelButtonGo.name = "open-cheatenabler-config";
+                rect.localScale = new Vector3(0.5f, 0.5f, 0.5f);
+                rect.anchoredPosition3D = new Vector3(128f, -105f, 0f);
+                b.onClick.RemoveAllListeners();
+                btn.onClick += (_) => { ShowConfigWindow(); };
+                btn.tips.tipTitle = "CheatEnabler Config";
+                I18N.OnInitialized += () => { btn.tips.tipTitle = "CheatEnabler Config".Translate(); };
+                btn.tips.tipText = null;
+                btn.tips.corner = 9;
+                btn.tips.offset = new Vector2(-20f, -20f);
+                panelButtonGo.SetActive(true);
+            }
+        }
         _initialized = true;
     }
 
