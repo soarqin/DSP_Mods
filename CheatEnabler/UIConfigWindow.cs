@@ -8,7 +8,7 @@ public class UIConfigWindow : UI.MyWindowWithTabs
 
     public static UIConfigWindow CreateInstance()
     {
-        return UI.MyWindowManager.CreateWindow<UIConfigWindow>("CEConfigWindow", "CheatEnabler Config");
+        return UI.MyWindowManager.CreateWindow<UIConfigWindow>("CEConfigWindow", "CheatEnabler Config".Translate());
     }
 
     public override void _OnCreate()
@@ -21,13 +21,23 @@ public class UIConfigWindow : UI.MyWindowWithTabs
 
     private void CreateUI()
     {
-        //General tab
-        var tab1 = AddTab(36f, 0, _windowTrans, "General");
+        // General tab
         var x = 0f;
         var y = 0f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab1, DevShortcuts.Enabled, "Enable Dev Shortcuts");
+        var tab1 = AddTab(36f, 0, _windowTrans, "General".Translate());
+        UI.MyCheckBox.CreateCheckBox(x, y, tab1, DevShortcuts.Enabled, "Enable Dev Shortcuts".Translate());
         y += 26f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab1, AbnormalDisabler.Enabled, "Disable Abnormal Checks");
+        UI.MyCheckBox.CreateCheckBox(x, y, tab1, AbnormalDisabler.Enabled, "Disable Abnormal Checks".Translate());
+
+        // Planet Tab
+        var tab2 = AddTab(136f, 1, _windowTrans, "Planet".Translate());
+        x = 0f;
+        y = 0f;
+        UI.MyCheckBox.CreateCheckBox(x, y, tab2, ResourcePatch.InfiniteEnabled, "Infinite Natural Resources".Translate());
+        y += 26f;
+        UI.MyCheckBox.CreateCheckBox(x, y, tab2, ResourcePatch.FastEnabled, "Fast Mining".Translate());
+        y += 26f;
+        UI.MyCheckBox.CreateCheckBox(x, y, tab2, WaterPumperPatch.Enabled, "Pump Anywhere".Translate());
         SetCurrentTab(0);
     }
 

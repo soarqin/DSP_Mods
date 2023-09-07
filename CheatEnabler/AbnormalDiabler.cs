@@ -7,6 +7,19 @@ public static class AbnormalDisabler
 {
     public static ConfigEntry<bool> Enabled;
     private static Dictionary<int, AbnormalityDeterminator> _savedDeterminators;
+    private static Harmony _patch;
+
+    public static void Init()
+    {
+        _patch = Harmony.CreateAndPatchAll(typeof(AbnormalDisabler));
+    }
+
+    public static void Uninit()
+    {
+        if (_patch == null) return;
+        _patch.UnpatchSelf();
+        _patch = null;
+    }
 
     [HarmonyPrefix]
     [HarmonyPatch(typeof(AbnormalityLogic), "NotifyBeforeGameSave")]

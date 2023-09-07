@@ -5,6 +5,8 @@ using System.Reflection.Emit;
 using BepInEx;
 using BepInEx.Configuration;
 using HarmonyLib;
+using UnityEngine;
+using UnityEngine.UI;
 
 namespace CheatEnabler;
 
@@ -14,11 +16,9 @@ public class CheatEnabler : BaseUnityPlugin
     public new static readonly BepInEx.Logging.ManualLogSource Logger =
         BepInEx.Logging.Logger.CreateLogSource(PluginInfo.PLUGIN_NAME);
 
-    private static bool _initialized = false;
+    private static bool _configWinInitialized = false;
     private static KeyboardShortcut _shortcut = KeyboardShortcut.Deserialize("H + LeftControl");
     private static UIConfigWindow _configWin;
-    private bool _alwaysInfiniteResource = true;
-    private bool _waterPumpAnywhere = true;
     private static bool _sitiVeinsOnBirthPlanet = true;
     private static bool _fireIceOnBirthPlanet = false;
     private static bool _kimberliteOnBirthPlanet = false;
@@ -32,18 +32,25 @@ public class CheatEnabler : BaseUnityPlugin
     private static bool _terraformAnyway = false;
     private static string _unlockTechToMaximumLevel = "";
     private static readonly List<int> TechToUnlock = new();
+    
+    private static Harmony _windowPatch;
+    private static Harmony _patch;
+
+    private static bool _initialized;
 
     private void Awake()
     {
         DevShortcuts.Enabled = Config.Bind("General", "DevShortcuts", true, "enable DevMode shortcuts");
         AbnormalDisabler.Enabled = Config.Bind("General", "DisableAbnormalChecks", false,
             "disable all abnormal checks");
-        _alwaysInfiniteResource = Config.Bind("General", "AlwaysInfiniteResource", _alwaysInfiniteResource,
-            "always infinite resource").Value;
+        ResourcePatch.InfiniteEnabled = Config.Bind("Planet", "AlwaysInfiniteResource", false,
+            "always infinite natural resource");
+        ResourcePatch.FastEnabled = Config.Bind("Planet", "FastMining", false,
+            "super-fast mining speed");
         _unlockTechToMaximumLevel = Config.Bind("General", "UnlockTechToMaxLevel", _unlockTechToMaximumLevel,
             "Unlock listed tech to MaxLevel").Value;
-        _waterPumpAnywhere = Config.Bind("General", "WaterPumpAnywhere", _waterPumpAnywhere,
-            "Can pump water anywhere (while water type is not None)").Value;
+        WaterPumperPatch.Enabled = Config.Bind("Planet", "WaterPumpAnywhere", false,
+            "Can pump water anywhere (while water type is not None)");
         _sitiVeinsOnBirthPlanet = Config.Bind("Birth", "SiTiVeinsOnBirthPlanet", _sitiVeinsOnBirthPlanet,
             "Has Silicon/Titanium veins on birth planet").Value;
         _fireIceOnBirthPlanet = Config.Bind("Birth", "FireIceOnBirthPlanet", _fireIceOnBirthPlanet,
@@ -68,18 +75,22 @@ public class CheatEnabler : BaseUnityPlugin
             "Can do terraform without enough sands").Value;
 
         I18N.Init();
+        I18N.Add("CheatEnabler Config", "CheatEnabler Config", "CheatEnabler设置");
+        I18N.Add("General", "General", "常规");
+        I18N.Add("Enable Dev Shortcuts", "Enable Dev Shortcuts", "启用开发模式快捷键");
+        I18N.Add("Disable Abnormal Checks", "Disable Abnormal Checks", "关闭数据异常检查");
+        I18N.Add("Planet", "Planet", "行星");
+        I18N.Add("Infinite Natural Resources", "Infinite Natural Resources", "自然资源采集不消耗");
+        I18N.Add("Fast Mining", "Fast Mining", "高速采集");
+        I18N.Add("Pump Anywhere", "Pump Anywhere", "平地抽水");
 
         // UI Patch
-        Harmony.CreateAndPatchAll(typeof(UI.MyWindowManager.Patch));
-        Harmony.CreateAndPatchAll(typeof(CheatEnabler));
+        _windowPatch = Harmony.CreateAndPatchAll(typeof(UI.MyWindowManager.Patch));
+        _patch = Harmony.CreateAndPatchAll(typeof(CheatEnabler));
 
-        Harmony.CreateAndPatchAll(typeof(DevShortcuts));
-        Harmony.CreateAndPatchAll(typeof(AbnormalDisabler));
-
-        if (_alwaysInfiniteResource)
-        {
-            Harmony.CreateAndPatchAll(typeof(AlwaysInfiniteResource));
-        }
+        DevShortcuts.Init();
+        AbnormalDisabler.Init();
+        ResourcePatch.Init();
 
         foreach (var idstr in _unlockTechToMaximumLevel.Split(','))
         {
@@ -94,10 +105,7 @@ public class CheatEnabler : BaseUnityPlugin
             Harmony.CreateAndPatchAll(typeof(UnlockTechOnGameStart));
         }
 
-        if (_waterPumpAnywhere)
-        {
-            Harmony.CreateAndPatchAll(typeof(WaterPumperCheat));
-        }
+        WaterPumperPatch.Init();
 
         if (_sitiVeinsOnBirthPlanet || _fireIceOnBirthPlanet || _kimberliteOnBirthPlanet || _fractalOnBirthPlanet ||
             _organicOnBirthPlanet || _opticalOnBirthPlanet || _spiniformOnBirthPlanet || _unipolarOnBirthPlanet ||
@@ -111,83 +119,69 @@ public class CheatEnabler : BaseUnityPlugin
             Harmony.CreateAndPatchAll(typeof(TerraformAnyway));
         }
     }
-    
+
+    public void OnDestroy()
+    {
+        WaterPumperPatch.Uninit();
+        ResourcePatch.Uninit();
+        AbnormalDisabler.Uninit();
+        DevShortcuts.Uninit();
+        _patch?.UnpatchSelf();
+        _windowPatch?.UnpatchSelf();
+    }
+
     private void Update()
     {
-        if (!GameMain.isRunning)
-        {
-            return;
-        }
-
         if (VFInput.inputing)
         {
             return;
         }
         
         if (_shortcut.IsDown())
-        {
-            if (_configWin.active)
-            {
-                _configWin._Close();
-            }
-            else
-            {
-                UIRoot.instance.uiGame.ShutPlayerInventory();
-                _configWin.Open();
-            }
-        }
+            ShowConfigWindow();
     }
 
-    [HarmonyPostfix, HarmonyPatch(typeof(UIGame), "_OnCreate")]
-    public static void UIGame__OnCreate_Postfix()
+    [HarmonyPostfix, HarmonyPatch(typeof(UIRoot), "_OnOpen")]
+    public static void UIRoot__OnOpen_Postfix()
     {
         if (_initialized) return;
+        var mainMenu = UIRoot.instance.uiMainMenu;
+        var src = mainMenu.newGameButton.gameObject;
+        var parent = src.transform.parent;
+        var btn = Instantiate(src, parent);
+        btn.name = "btn-cheatenabler-config";
+        var btnConfig = btn.GetComponent<UIMainMenuButton>();
+        btnConfig.text.text = "CheatEnabler Config";
+        btnConfig.text.fontSize = btnConfig.text.fontSize * 7 / 8;
+        I18N.OnInitialized += () =>
+        {
+            btnConfig.text.text = "CheatEnabler Config".Translate();
+        };
+        btnConfig.transform.SetParent(parent);
+        var vec = ((RectTransform)mainMenu.exitButton.transform).anchoredPosition3D;
+        var vec2 = ((RectTransform)mainMenu.creditsButton.transform).anchoredPosition3D;
+        var transform1 = (RectTransform)btn.transform;
+        transform1.anchoredPosition3D = new Vector3(vec.x, vec.y + (vec.y - vec2.y) * 2, vec.z);
+        btnConfig.button.onClick.AddListener(ShowConfigWindow);
         _initialized = true;
-        _configWin = UIConfigWindow.CreateInstance();
     }
 
-    private class AlwaysInfiniteResource
+    private static void ShowConfigWindow()
     {
-        [HarmonyTranspiler]
-        [HarmonyPatch(typeof(FactorySystem), "GameTick", typeof(long), typeof(bool))]
-        [HarmonyPatch(typeof(FactorySystem), "GameTick", typeof(long), typeof(bool), typeof(int), typeof(int),
-            typeof(int))]
-        [HarmonyPatch(typeof(ItemProto), "GetPropValue")]
-        [HarmonyPatch(typeof(PlanetTransport), "GameTick")]
-        [HarmonyPatch(typeof(UIMinerWindow), "_OnUpdate")]
-        [HarmonyPatch(typeof(UIMiningUpgradeLabel), "Update")]
-        [HarmonyPatch(typeof(UIPlanetDetail), "OnPlanetDataSet")]
-        [HarmonyPatch(typeof(UIPlanetDetail), "RefreshDynamicProperties")]
-        [HarmonyPatch(typeof(UIStarDetail), "OnStarDataSet")]
-        [HarmonyPatch(typeof(UIStarDetail), "RefreshDynamicProperties")]
-        [HarmonyPatch(typeof(UIStationStorage), "RefreshValues")]
-        [HarmonyPatch(typeof(UIVeinCollectorPanel), "_OnUpdate")]
-        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        if (!_configWinInitialized)
         {
-            foreach (var instruction in instructions)
-            {
-                if (instruction.opcode == OpCodes.Ldfld && instruction.OperandIs(AccessTools.Field(typeof(GameHistoryData), "miningCostRate")))
-                {
-                    yield return new CodeInstruction(OpCodes.Pop);
-                    yield return new CodeInstruction(OpCodes.Ldc_R4, 0f);
-                }
-                else if (instruction.opcode == OpCodes.Ldfld && instruction.OperandIs(AccessTools.Field(typeof(GameHistoryData), "miningSpeedScale")))
-                {
-                    yield return new CodeInstruction(OpCodes.Pop);
-                    yield return new CodeInstruction(OpCodes.Ldc_R4, 720f);
-                }
-                else
-                {
-                    yield return instruction;
-                }
-            }
+            _configWinInitialized = true;
+            _configWin = UIConfigWindow.CreateInstance();
         }
 
-        [HarmonyPrefix, HarmonyPatch(typeof(BuildTool_BlueprintPaste), "get_bMeetTech")]
-        private static bool BuildTool_BlueprintPaste_get_bMeetTech_Prefix(ref bool __result)
+        if (_configWin.active)
         {
-            __result = true;
-            return false;
+            _configWin._Close();
+        }
+        else
+        {
+            UIRoot.instance.uiGame.ShutPlayerInventory();
+            _configWin.Open();
         }
     }
 
@@ -348,35 +342,6 @@ public class CheatEnabler : BaseUnityPlugin
             if (_highLuminosityBirthStar)
             {
                 StarGen.specifyBirthStarMass = 100f;
-            }
-        }
-    }
-
-    private class WaterPumperCheat
-    {
-        [HarmonyTranspiler]
-        [HarmonyPatch(typeof(BuildTool_BlueprintPaste), "CheckBuildConditions")]
-        [HarmonyPatch(typeof(BuildTool_Click), "CheckBuildConditions")]
-        private static IEnumerable<CodeInstruction> BuildTool_CheckBuildConditions_Transpiler(
-            IEnumerable<CodeInstruction> instructions)
-        {
-            var isFirst = true;
-            foreach (var instr in instructions)
-            {
-                if (instr.opcode == OpCodes.Ldc_I4_S && instr.OperandIs(22))
-                {
-                    if (isFirst)
-                    {
-                        isFirst = false;
-                    }
-                    else
-                    {
-                        yield return new CodeInstruction(OpCodes.Ldc_I4_S, 0);
-                        continue;
-                    }
-                }
-
-                yield return instr;
             }
         }
     }

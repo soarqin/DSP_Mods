@@ -2,9 +2,22 @@
 using HarmonyLib;
 
 namespace CheatEnabler;
-public class DevShortcuts
+public static class DevShortcuts
 {
     public static ConfigEntry<bool> Enabled;
+    private static Harmony _patch;
+
+    public static void Init()
+    {
+        _patch = Harmony.CreateAndPatchAll(typeof(DevShortcuts));
+    }
+
+    public static void Uninit()
+    {
+        if (_patch == null) return;
+        _patch.UnpatchSelf();
+        _patch = null;
+    }
 
     [HarmonyPostfix]
     [HarmonyPatch(typeof(PlayerController), "Init")]

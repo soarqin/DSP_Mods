@@ -213,13 +213,13 @@ public class MyWindowWithTabs : MyWindow
 public static class MyWindowManager
 {
     private static readonly List<ManualBehaviour> Windows = new(4);
-    private static bool _initialized = false;
+    private static bool _initialized;
 
     public static T CreateWindow<T>(string name, string title = "") where T : MyWindow
     {
         var srcWin = UIRoot.instance.uiGame.tankWindow;
         var src = srcWin.gameObject;
-        var go = Object.Instantiate(src, srcWin.transform.parent);
+        var go = Object.Instantiate(src, UIRoot.instance.uiGame.transform.parent);
         go.name = name;
         go.SetActive(false);
         Object.Destroy(go.GetComponent<UITankWindow>());
@@ -275,19 +275,21 @@ public static class MyWindowManager
         }
         */
 
-        [HarmonyPostfix, HarmonyPatch(typeof(UIGame), "_OnDestroy")]
-        public static void UIGame__OnDestroy_Postfix()
+        [HarmonyPostfix, HarmonyPatch(typeof(UIRoot), "_OnDestroy")]
+        public static void UIRoot__OnDestroy_Postfix()
         {
             foreach (var win in Windows)
             {
+                win._Free();
                 win._Destroy();
             }
             Windows.Clear();
         }
 
-        [HarmonyPostfix, HarmonyPatch(typeof(UIGame), "_OnInit")]
-        public static void UIGame__OnInit_Postfix(UIGame __instance)
+        [HarmonyPostfix, HarmonyPatch(typeof(UIRoot), "_OnOpen")]
+        public static void UIRoot__OnOpen_Postfix()
         {
+            if (_initialized) return;
             foreach (var win in Windows)
             {
                 win._Init(win.data);
@@ -295,6 +297,7 @@ public static class MyWindowManager
             _initialized = true;
         }
 
+        /*
         [HarmonyPostfix, HarmonyPatch(typeof(UIGame), "_OnFree")]
         public static void UIGame__OnFree_Postfix()
         {
@@ -303,9 +306,10 @@ public static class MyWindowManager
                 win._Free();
             }
         }
+        */
 
-        [HarmonyPostfix, HarmonyPatch(typeof(UIGame), "_OnUpdate")]
-        public static void UIGame__OnUpdate_Postfix()
+        [HarmonyPostfix, HarmonyPatch(typeof(UIRoot), "_OnUpdate")]
+        public static void UIRoot__OnUpdate_Postfix()
         {
             if (GameMain.isPaused || !GameMain.isRunning)
             {
