@@ -12,7 +12,8 @@ public static class TerraformPatch
 
     public static void Init()
     {
-        _patch = Harmony.CreateAndPatchAll(typeof(TerraformPatch));
+        Enabled.SettingChanged += (_, _) => ValueChanged();
+        ValueChanged();
     }
 
     public static void Uninit()
@@ -20,6 +21,25 @@ public static class TerraformPatch
         if (_patch == null) return;
         _patch.UnpatchSelf();
         _patch = null;
+    }
+
+    private static void ValueChanged()
+    {
+        if (Enabled.Value)
+        {
+            if (_patch != null)
+            {
+                _patch.UnpatchSelf();
+                _patch = null;
+            }
+
+            _patch = Harmony.CreateAndPatchAll(typeof(TerraformPatch));
+        }
+        else if (_patch != null)
+        {
+            _patch.UnpatchSelf();
+            _patch = null;
+        }
     }
 
     [HarmonyTranspiler]
