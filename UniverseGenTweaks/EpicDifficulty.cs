@@ -12,6 +12,7 @@ public class EpicDifficulty
     {
         I18N.Add("究极少", "Micro", "究极少");
         I18N.Add("史诗难度", "Epic Difficulty !!", "史诗难度 !!");
+        I18N.Apply();
         Harmony.CreateAndPatchAll(typeof(EpicDifficulty));
     }
 

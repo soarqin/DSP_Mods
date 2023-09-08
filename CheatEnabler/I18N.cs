@@ -28,17 +28,23 @@ public class I18N
             ZHCN = string.IsNullOrEmpty(zhcn) ? enus : zhcn,
             FRFR = string.IsNullOrEmpty(frfr) ? enus : frfr
         };
-        if (_initialized)
+        StringsToAdd.Add(strProto);
+    }
+
+    public static void Apply()
+    {
+        if (!_initialized) return;
+        var strings = LDB._strings;
+        var index = strings.dataArray.Length;
+        strings.dataArray = strings.dataArray.Concat(StringsToAdd).ToArray();
+        StringsToAdd.Clear();
+        var newIndex = strings.dataArray.Length;
+        for (; index < newIndex; index++)
         {
-            var index = strings.dataArray.Length;
+            var strProto = strings.dataArray[index];
             strProto.ID = GetNextID();
-            strings.dataArray = strings.dataArray.Append(strProto).ToArray();
             strings.dataIndices[strProto.ID] = index;
-            strings.nameIndices[strProto.Name] = index;
-        }
-        else
-        {
-            StringsToAdd.Add(strProto);
+            strings.nameIndices[strings.dataArray[index].Name] = index;
         }
     }
 
@@ -52,18 +58,8 @@ public class I18N
             OnInitialized?.Invoke();
             return;
         }
-        var strings = LDB._strings;
-        var index = strings.dataArray.Length;
-        strings.dataArray = strings.dataArray.Concat(StringsToAdd).ToArray();
-        StringsToAdd.Clear();
-        var newIndex = strings.dataArray.Length;
-        for (; index < newIndex; index++)
-        {
-            var strProto = strings.dataArray[index];
-            strProto.ID = GetNextID();
-            strings.dataIndices[strProto.ID] = index;
-            strings.nameIndices[strings.dataArray[index].Name] = index;
-        }
+
+        Apply();
         OnInitialized?.Invoke();
     }
 

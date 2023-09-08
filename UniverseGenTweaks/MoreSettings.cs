@@ -32,6 +32,7 @@ public class MoreSettings
         I18N.Add("步进最小距离", "Step Distance Min", "步进最小距离");
         I18N.Add("步进最大距离", "Step Distance Max", "步进最大距离");
         I18N.Add("扁平度", "Flatness", "扁平度");
+        I18N.Apply();
         Harmony.CreateAndPatchAll(typeof(MoreSettings));
     }
 

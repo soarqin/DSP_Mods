@@ -71,18 +71,12 @@ public class CheatEnabler : BaseUnityPlugin
             "Birth planet is solid flat (no water)").Value;
         _highLuminosityBirthStar = Config.Bind("Birth", "HighLuminosityBirthStar", _highLuminosityBirthStar,
             "Birth star has high luminosity").Value;
-        _terraformAnyway = Config.Bind("General", "TerraformAnyway", _terraformAnyway,
-            "Can do terraform without enough sands").Value;
+        TerraformPatch.Enabled = Config.Bind("General", "TerraformAnyway", false,
+            "Can do terraform without enough sands");
 
         I18N.Init();
         I18N.Add("CheatEnabler Config", "CheatEnabler Config", "CheatEnabler设置");
-        I18N.Add("General", "General", "常规");
-        I18N.Add("Enable Dev Shortcuts", "Enable Dev Shortcuts", "启用开发模式快捷键");
-        I18N.Add("Disable Abnormal Checks", "Disable Abnormal Checks", "关闭数据异常检查");
-        I18N.Add("Planet", "Planet", "行星");
-        I18N.Add("Infinite Natural Resources", "Infinite Natural Resources", "自然资源采集不消耗");
-        I18N.Add("Fast Mining", "Fast Mining", "高速采集");
-        I18N.Add("Pump Anywhere", "Pump Anywhere", "平地抽水");
+        I18N.Apply();
 
         // UI Patch
         _windowPatch = Harmony.CreateAndPatchAll(typeof(UI.MyWindowManager.Patch));
@@ -114,14 +108,12 @@ public class CheatEnabler : BaseUnityPlugin
             Harmony.CreateAndPatchAll(typeof(BirthPlanetCheat));
         }
 
-        if (_terraformAnyway)
-        {
-            Harmony.CreateAndPatchAll(typeof(TerraformAnyway));
-        }
+        TerraformPatch.Init();
     }
 
     public void OnDestroy()
     {
+        TerraformPatch.Uninit();
         WaterPumperPatch.Uninit();
         ResourcePatch.Uninit();
         AbnormalDisabler.Uninit();
@@ -375,46 +367,4 @@ public class CheatEnabler : BaseUnityPlugin
         }
     }
 
-    private class TerraformAnyway
-    {
-        [HarmonyTranspiler]
-        [HarmonyPatch(typeof(BuildTool_Reform), "ReformAction")]
-        private static IEnumerable<CodeInstruction> BuildTool_Reform_ReformAction_Patch(
-            IEnumerable<CodeInstruction> instructions)
-        {
-            var list = instructions.ToList();
-            for (var i = 0; i < list.Count; i++)
-            {
-                var instr = list[i];
-                yield return instr;
-                if (instr.opcode == OpCodes.Callvirt &&
-                    instr.OperandIs(AccessTools.Method(typeof(Player), "get_sandCount")))
-                {
-                    /* ldloc.s 6 */
-                    i++;
-                    instr = list[i];
-                    yield return instr;
-                    /* sub */
-                    i++;
-                    instr = list[i];
-                    yield return instr;
-                    /* ldc.i4.0 */
-                    yield return new CodeInstruction(OpCodes.Ldc_I4_0);
-                    /* call Math.Max() */
-                    yield return new CodeInstruction(OpCodes.Call,
-                        AccessTools.Method(typeof(Math), "Max", new[] { typeof(int), typeof(int) }));
-                    /* stloc.s 21 */
-                    i++;
-                    instr = list[i];
-                    yield return instr;
-                    /* skip 3 instructions:
-                     *  ldloc.s 21
-                     *  ldc.i4.0
-                     *  blt (633)
-                     */
-                    i += 3;
-                }
-            }
-        }
-    }
 }
