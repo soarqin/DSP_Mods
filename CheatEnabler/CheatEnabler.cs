@@ -113,34 +113,38 @@ public class CheatEnabler : BaseUnityPlugin
             ShowConfigWindow();
     }
 
-    [HarmonyPostfix, HarmonyPatch(typeof(UIRoot), "_OnOpen")]
-    public static void UIRoot__OnOpen_Postfix()
+    [HarmonyPostfix, HarmonyPatch(typeof(UIRoot), nameof(UIRoot.OpenMainMenuUI))]
+    public static void UIRoot_OpenMainMenuUI_Postfix()
     {
         if (_initialized) return;
         {
             var mainMenu = UIRoot.instance.uiMainMenu;
-            var src = mainMenu.newGameButton.gameObject;
+            var src = mainMenu.newGameButton;
             var parent = src.transform.parent;
             var btn = Instantiate(src, parent);
-            btn.name = "btn-cheatenabler-config";
-            var btnConfig = btn.GetComponent<UIMainMenuButton>();
-            btnConfig.text.text = "CheatEnabler Config";
-            btnConfig.text.fontSize = btnConfig.text.fontSize * 7 / 8;
-            I18N.OnInitialized += () => { btnConfig.text.text = "CheatEnabler Config".Translate(); };
-            btnConfig.transform.SetParent(parent);
+            btn.name = "button-cheatenabler-config";
+            var l = btn.text.GetComponent<Localizer>();
+            if (l != null)
+            {
+                l.stringKey = "CheatEnabler Config";
+                l.translation = "CheatEnabler Config".Translate();
+            }
+            btn.text.text = "CheatEnabler Config".Translate();
+            btn.text.fontSize = btn.text.fontSize * 7 / 8;
+            I18N.OnInitialized += () => { btn.text.text = "CheatEnabler Config".Translate(); };
             var vec = ((RectTransform)mainMenu.exitButton.transform).anchoredPosition3D;
             var vec2 = ((RectTransform)mainMenu.creditsButton.transform).anchoredPosition3D;
             var transform1 = (RectTransform)btn.transform;
             transform1.anchoredPosition3D = new Vector3(vec.x, vec.y + (vec.y - vec2.y) * 2, vec.z);
-            btnConfig.button.onClick.RemoveAllListeners();
-            btnConfig.button.onClick.AddListener(ShowConfigWindow);
+            btn.button.onClick.RemoveAllListeners();
+            btn.button.onClick.AddListener(ShowConfigWindow);
         }
         {
             var panel = UIRoot.instance.uiGame.planetGlobe;
             var src = panel.button2;
             var sandboxMenu = UIRoot.instance.uiGame.sandboxMenu;
             var icon = sandboxMenu.categoryButtons[6].transform.Find("icon")?.GetComponent<Image>()?.sprite;
-            var b = GameObject.Instantiate<Button>(src, src.transform.parent);
+            var b = Instantiate(src, src.transform.parent);
             var panelButtonGo = b.gameObject;
             var rect = (RectTransform)panelButtonGo.transform;
             var btn = panelButtonGo.GetComponent<UIButton>();

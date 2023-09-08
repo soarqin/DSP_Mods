@@ -27,6 +27,8 @@ public class UIConfigWindow : UI.MyWindowWithTabs
         I18N.Add("Unipolar magnet on birth planet", "Unipolar magnet on birth planet", "母星有单极磁石");
         I18N.Add("Birth planet is solid flat (no water at all)", "Birth planet is solid flat (no water at all)", "母星是纯平的（没有水）");
         I18N.Add("Birth star has high luminosity", "Birth star has high luminosity", "母星系恒星高亮");
+        I18N.Add("Initialize This Planet", "Initialize This Planet", "初始化本行星");
+        I18N.Add("Dismantle All Buildings", "Dismantle All Buildings", "拆除所有建筑");
         I18N.Apply();
     }
 
@@ -38,7 +40,7 @@ public class UIConfigWindow : UI.MyWindowWithTabs
     public override void _OnCreate()
     {
         _windowTrans = GetComponent<RectTransform>();
-        _windowTrans.sizeDelta = new Vector2(480f, 295f);
+        _windowTrans.sizeDelta = new Vector2(480f, 331f);
 
         CreateUI();
     }
@@ -64,6 +66,44 @@ public class UIConfigWindow : UI.MyWindowWithTabs
         UI.MyCheckBox.CreateCheckBox(x, y, tab2, WaterPumperPatch.Enabled, "Pump Anywhere".Translate());
         y += 36f;
         UI.MyCheckBox.CreateCheckBox(x, y, tab2, TerraformPatch.Enabled, "Terraform without enought sands".Translate());
+        x = 300f;
+        y = 10f;
+        AddButton(x, y, tab2, "矿物掩埋标题", 16, "button-bury-all", () =>
+        {
+            PlanetFunctions.BuryAllVeins(true);
+        });
+        y += 36f;
+        AddButton(x, y, tab2, "矿物还原标题", 16, "button-bury-restore-all", () =>
+        {
+            PlanetFunctions.BuryAllVeins(false);
+        });
+        y += 36f;
+        AddButton(x, y, tab2, "铺满地基提示", 16, "button-reform-all", () =>
+        {
+            var player = GameMain.mainPlayer;
+            if (player == null) return;
+            var reformTool = player.controller.actionBuild.reformTool;
+            var factory = GameMain.localPlanet?.factory;
+            if (factory == null) return;
+            GameMain.localPlanet.factory.PlanetReformAll(reformTool.brushType, reformTool.brushColor, reformTool.buryVeins);
+        });
+        y += 36f;
+        AddButton(x, y, tab2, "还原地形提示", 16, "button-reform-revert-all", () =>
+        {
+            var factory = GameMain.localPlanet?.factory;
+            if (factory == null) return;
+            GameMain.localPlanet.factory.PlanetReformRevert();
+        });
+        y += 36f;
+        AddButton(x, y, tab2, "Initialize This Planet", 16, "button-init-planet", () =>
+        {
+            PlanetFunctions.RecreatePlanet(true);
+        });
+        y += 36f;
+        AddButton(x, y, tab2, "Dismantle All Buildings", 16, "button-dismantle-all", () =>
+        {
+            PlanetFunctions.DismantleAll(false);
+        });
 
         var tab3 = AddTab(236f, 2, _windowTrans, "Birth".Translate());
         x = 0f;

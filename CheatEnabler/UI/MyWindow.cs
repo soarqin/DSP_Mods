@@ -13,6 +13,7 @@ namespace CheatEnabler.UI;
 public class MyWindow: ManualBehaviour
 {
     private readonly Dictionary<InputField, Tuple<UnityAction<string>, UnityAction<string>>> _inputFields = new();
+    private readonly Dictionary<UIButton, UnityAction> _buttons = new();
     protected bool EventRegistered { get; private set; }
 
     public virtual void TryClose()
@@ -67,18 +68,51 @@ public class MyWindow: ManualBehaviour
         return txt;
     }
     
+    protected UIButton AddButton(float x, float y, RectTransform parent, string text = "", int fontSize = 16, string objName = "button", UnityAction onClick = null)
+    {
+        var panel = UIRoot.instance.uiGame.statWindow.performancePanelUI;
+        var btn = Instantiate(panel.cpuActiveButton);
+        btn.gameObject.name = objName;
+        var rect = Util.NormalizeRectWithTopLeft(btn, x, y, parent);
+        rect.sizeDelta = new Vector2(120, rect.sizeDelta.y);
+        var l = btn.gameObject.transform.Find("button-text").GetComponent<Localizer>();
+        var t = btn.gameObject.transform.Find("button-text").GetComponent<Text>();
+        if (l != null)
+        {
+            l.stringKey = text;
+            l.translation = text.Translate();
+        }
+        if (t != null)
+        {
+            t.text = text.Translate();
+        }
+        t.fontSize = fontSize;
+        btn.button.onClick.RemoveAllListeners();
+        btn.tip = null;
+        btn.tips = new UIButton.TipSettings();
+        _buttons[btn] = onClick;
+        if (EventRegistered)
+        {
+            if (onClick != null)
+                btn.button.onClick.AddListener(onClick);
+        }
+        return btn;
+    }
+
     protected InputField AddInputField(float x, float y, RectTransform parent, string text = "", int fontSize = 16, string objName = "input", UnityAction<string> onChanged = null, UnityAction<string> onEditEnd = null)
     {
         var stationWindow = UIRoot.instance.uiGame.stationWindow;
         //public InputField nameInput;
         var inputField = Instantiate(stationWindow.nameInput);
-        inputField.gameObject.name = "search-field";
+        inputField.gameObject.name = objName;
         Destroy(inputField.GetComponent<UIButton>());
         inputField.GetComponent<Image>().color = new Color(1f, 1f, 1f, 0.05f);
         var rect = Util.NormalizeRectWithTopLeft(inputField, x, y, parent);
         rect.sizeDelta = new Vector2(210, rect.sizeDelta.y);
         inputField.textComponent.text = text;
         inputField.textComponent.fontSize = fontSize;
+        inputField.onValueChanged.RemoveAllListeners();
+        inputField.onEndEdit.RemoveAllListeners();
         _inputFields[inputField] = Tuple.Create(onChanged, onEditEnd);
         if (EventRegistered)
         {
@@ -102,6 +136,12 @@ public class MyWindow: ManualBehaviour
             if (t.Value.Item2 != null)
                 inputField.onEndEdit.AddListener(t.Value.Item2);
         }
+        foreach (var t in _buttons)
+        {
+            var btn = t.Key;
+            if (t.Value != null)
+                btn.button.onClick.AddListener(t.Value);
+        }
         EventRegistered = true;
     }
 
@@ -110,6 +150,12 @@ public class MyWindow: ManualBehaviour
         base._OnUnregEvent();
         if (!EventRegistered) return;
         EventRegistered = false;
+        foreach (var t in _buttons)
+        {
+            var btn = t.Key;
+            if (t.Value != null)
+                btn.button.onClick.RemoveListener(t.Value);
+        }
         foreach (var t in _inputFields)
         {
             var inputField = t.Key;
@@ -144,6 +190,7 @@ public class MyWindowWithTabs : MyWindow
         var src = swarmPanel.orbitButtons[0];
         var btn = Instantiate(src);
         var btnRect = Util.NormalizeRectWithTopLeft(btn, x, 54f, parent);
+        btn.name = "tab-btn-" + index;
         btnRect.sizeDelta = new Vector2(100f, 24f);
         btn.transform.Find("frame").gameObject.SetActive(false);
         if (btn.transitions.Length >= 3)
