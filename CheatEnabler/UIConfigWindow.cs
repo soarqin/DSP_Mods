@@ -11,6 +11,7 @@ public class UIConfigWindow : UI.MyWindowWithTabs
         I18N.Add("General", "General", "常规");
         I18N.Add("Enable Dev Shortcuts", "Enable Dev Shortcuts", "启用开发模式快捷键");
         I18N.Add("Disable Abnormal Checks", "Disable Abnormal Checks", "关闭数据异常检查");
+        I18N.Add("Hotkey", "Hotkey", "快捷键");
         I18N.Add("Build", "Build", "建造");
         I18N.Add("Finish build immediately", "Finish build immediately", "建造秒完成");
         I18N.Add("Infinite buildings", "Infinite buildings", "无限建筑");
@@ -64,6 +65,8 @@ public class UIConfigWindow : UI.MyWindowWithTabs
         UI.MyCheckBox.CreateCheckBox(x, y, tab1, DevShortcuts.Enabled, "Enable Dev Shortcuts".Translate());
         y += 36f;
         UI.MyCheckBox.CreateCheckBox(x, y, tab1, AbnormalDisabler.Enabled, "Disable Abnormal Checks".Translate());
+        y += 86f;
+        UI.MyKeyBinder.CreateKeyBinder(x, y, tab1, CheatEnabler.Hotkey, "Hotkey".Translate());
 
         var tab2 = AddTab(136f, 1, _windowTrans, "Build".Translate());
         x = 0f;

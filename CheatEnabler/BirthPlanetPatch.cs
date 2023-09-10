@@ -31,6 +31,7 @@ public static class BirthPlanetPatch
             _rareVeins = theme.RareVeins.Clone() as int[];
             _rareSettings = theme.RareSettings.Clone() as float[];
             _specifyBirthStarMass = StarGen.specifyBirthStarMass;
+            _specifyBirthStarAge = StarGen.specifyBirthStarAge;
             _inited = true;
         }
 
@@ -44,6 +45,7 @@ public static class BirthPlanetPatch
             theme.RareVeins = _rareVeins.Clone() as int[];
             theme.RareSettings = _rareSettings.Clone() as float[];
             StarGen.specifyBirthStarMass = _specifyBirthStarMass;
+            StarGen.specifyBirthStarAge = _specifyBirthStarAge;
         }
 
         private bool _inited;
@@ -54,6 +56,7 @@ public static class BirthPlanetPatch
         private int[] _rareVeins;
         private float[] _rareSettings;
         private float _specifyBirthStarMass;
+        private float _specifyBirthStarAge;
     }
 
     public static void Init()
@@ -164,7 +167,8 @@ public static class BirthPlanetPatch
 
         if (HighLuminosityBirthStar.Value)
         {
-            StarGen.specifyBirthStarMass = 100f;
+            StarGen.specifyBirthStarMass = 53.81f;
+            StarGen.specifyBirthStarAge = 0.01f;
         }
 
         _initialized = true;

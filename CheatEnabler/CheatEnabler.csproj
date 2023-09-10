@@ -4,7 +4,7 @@
     <TargetFramework>net472</TargetFramework>
     <BepInExPluginGuid>org.soardev.cheatenabler</BepInExPluginGuid>
     <Description>DSP MOD - CheatEnabler</Description>
-    <Version>1.0.0</Version>
+    <Version>2.0.0</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
     <PackageId>CheatEnabler</PackageId>
@@ -21,6 +21,7 @@
   <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
   </ItemGroup>
+  
   
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
     <Exec Command="del /F /Q package\$(ProjectName)-$(Version).zip&#xA;zip -9 -j package/$(ProjectName)-$(Version).zip $(TargetPath) package/icon.png package/manifest.json README.md" />

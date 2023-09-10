@@ -16,8 +16,8 @@ public class CheatEnabler : BaseUnityPlugin
     public new static readonly BepInEx.Logging.ManualLogSource Logger =
         BepInEx.Logging.Logger.CreateLogSource(PluginInfo.PLUGIN_NAME);
 
+    public static ConfigEntry<KeyboardShortcut> Hotkey;
     private static bool _configWinInitialized = false;
-    private static KeyboardShortcut _shortcut = KeyboardShortcut.Deserialize("H + LeftControl");
     private static UIConfigWindow _configWin;
     private static string _unlockTechToMaximumLevel = "";
     private static readonly List<int> TechToUnlock = new();
@@ -29,7 +29,8 @@ public class CheatEnabler : BaseUnityPlugin
 
     private void Awake()
     {
-        DevShortcuts.Enabled = Config.Bind("General", "DevShortcuts", true, "enable DevMode shortcuts");
+        Hotkey = Config.Bind("General", "Shortcut", KeyboardShortcut.Deserialize("BackQuote + LeftAlt"), "Shortcut to open config window");
+        DevShortcuts.Enabled = Config.Bind("General", "DevShortcuts", true, "Enable DevMode shortcuts");
         AbnormalDisabler.Enabled = Config.Bind("General", "DisableAbnormalChecks", false,
             "disable all abnormal checks");
         BuildPatch.ImmediateEnabled = Config.Bind("Build", "ImmediateBuild", false,
@@ -76,8 +77,8 @@ public class CheatEnabler : BaseUnityPlugin
             "Birth planet is solid flat (no water at all)");
         BirthPlanetPatch.HighLuminosityBirthStar = Config.Bind("Birth", "HighLuminosityBirthStar", false,
             "Birth star has high luminosity");
-        _unlockTechToMaximumLevel = Config.Bind("General", "UnlockTechToMaxLevel", _unlockTechToMaximumLevel,
-            "Unlock listed tech to MaxLevel").Value;
+        // _unlockTechToMaximumLevel = Config.Bind("General", "UnlockTechToMaxLevel", _unlockTechToMaximumLevel,
+        //     "Unlock listed tech to MaxLevel").Value;
 
         I18N.Init();
         I18N.Add("CheatEnabler Config", "CheatEnabler Config", "CheatEnabler设置");
@@ -95,17 +96,17 @@ public class CheatEnabler : BaseUnityPlugin
         TerraformPatch.Init();
         DysonSpherePatch.Init();
         BirthPlanetPatch.Init();
-        foreach (var idstr in _unlockTechToMaximumLevel.Split(','))
-        {
-            if (int.TryParse(idstr, out var id))
-            {
-                TechToUnlock.Add(id);
-            }
-        }
-        if (TechToUnlock.Count > 0)
-        {
-            Harmony.CreateAndPatchAll(typeof(UnlockTechOnGameStart));
-        }
+        // foreach (var idstr in _unlockTechToMaximumLevel.Split(','))
+        // {
+        //     if (int.TryParse(idstr, out var id))
+        //     {
+        //         TechToUnlock.Add(id);
+        //     }
+        // }
+        // if (TechToUnlock.Count > 0)
+        // {
+        //     Harmony.CreateAndPatchAll(typeof(UnlockTechOnGameStart));
+        // }
     }
 
     public void OnDestroy()
@@ -129,8 +130,8 @@ public class CheatEnabler : BaseUnityPlugin
             return;
         }
         
-        if (_shortcut.IsDown())
-            ShowConfigWindow();
+        if (Hotkey.Value.IsDown())
+            ToggleConfigWindow();
     }
 
     [HarmonyPostfix, HarmonyPatch(typeof(UIRoot), nameof(UIRoot.OpenMainMenuUI))]
@@ -157,7 +158,7 @@ public class CheatEnabler : BaseUnityPlugin
             var transform1 = (RectTransform)btn.transform;
             transform1.anchoredPosition3D = new Vector3(vec.x, vec.y + (vec.y - vec2.y) * 2, vec.z);
             btn.button.onClick.RemoveAllListeners();
-            btn.button.onClick.AddListener(ShowConfigWindow);
+            btn.button.onClick.AddListener(ToggleConfigWindow);
         }
         {
             var panel = UIRoot.instance.uiGame.planetGlobe;
@@ -179,7 +180,7 @@ public class CheatEnabler : BaseUnityPlugin
                 rect.localScale = new Vector3(0.5f, 0.5f, 0.5f);
                 rect.anchoredPosition3D = new Vector3(128f, -105f, 0f);
                 b.onClick.RemoveAllListeners();
-                btn.onClick += (_) => { ShowConfigWindow(); };
+                btn.onClick += (_) => { ToggleConfigWindow(); };
                 btn.tips.tipTitle = "CheatEnabler Config";
                 I18N.OnInitialized += () => { btn.tips.tipTitle = "CheatEnabler Config".Translate(); };
                 btn.tips.tipText = null;
@@ -191,7 +192,26 @@ public class CheatEnabler : BaseUnityPlugin
         _initialized = true;
     }
 
-    private static void ShowConfigWindow()
+    [HarmonyTranspiler]
+    [HarmonyPatch(typeof(UIBuildMenu), nameof(UIBuildMenu._OnUpdate))]
+    private static IEnumerable<CodeInstruction> UIBuildMenu__OnUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+    {
+        var matcher = new CodeMatcher(instructions, generator);
+        matcher.MatchForward(false,
+            new CodeMatch(OpCodes.Ldsfld, AccessTools.Field(typeof(VFInput), nameof(VFInput.inScreen)))
+        );
+        matcher.Repeat(codeMatcher =>
+        {
+            var jumpPos = codeMatcher.Advance(1).Operand;
+            codeMatcher.Advance(-1).InsertAndAdvance(
+                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(VFInput), nameof(VFInput.noModifier))),
+                new CodeInstruction(OpCodes.Brfalse_S, jumpPos)
+            ).Advance(2);
+        });
+        return matcher.InstructionEnumeration();
+    }
+
+    private static void ToggleConfigWindow()
     {
         if (!_configWinInitialized)
         {
@@ -210,6 +230,7 @@ public class CheatEnabler : BaseUnityPlugin
         }
     }
 
+    /*
     private class UnlockTechOnGameStart
     {
         [HarmonyPostfix]
@@ -296,5 +317,6 @@ public class CheatEnabler : BaseUnityPlugin
             techStates[currentTech] = value;
         }
     }
+    */
 
 }
