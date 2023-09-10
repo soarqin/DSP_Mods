@@ -32,6 +32,14 @@ public class CheatEnabler : BaseUnityPlugin
         DevShortcuts.Enabled = Config.Bind("General", "DevShortcuts", true, "enable DevMode shortcuts");
         AbnormalDisabler.Enabled = Config.Bind("General", "DisableAbnormalChecks", false,
             "disable all abnormal checks");
+        BuildPatch.ImmediateEnabled = Config.Bind("Build", "ImmediateBuild", false,
+            "Build immediately");
+        BuildPatch.NoCostEnabled = Config.Bind("Build", "InfiniteBuildings", false,
+            "Infinite buildings");
+        BuildPatch.NoConditionEnabled = Config.Bind("Build", "BuildWithoutCondition", false,
+            "Build without condition");
+        BuildPatch.NoCollisionEnabled = Config.Bind("Build", "NoCollision", false,
+            "No collision");
         ResourcePatch.InfiniteEnabled = Config.Bind("Planet", "AlwaysInfiniteResource", false,
             "always infinite natural resource");
         ResourcePatch.FastEnabled = Config.Bind("Planet", "FastMining", false,
@@ -40,6 +48,14 @@ public class CheatEnabler : BaseUnityPlugin
             "Can pump water anywhere (while water type is not None)");
         TerraformPatch.Enabled = Config.Bind("Planet", "TerraformAnyway", false,
             "Can do terraform without enough sands");
+        DysonSpherePatch.SkipBulletEnabled = Config.Bind("DysonSphere", "SkipBullet", false,
+            "Skip bullet");
+        DysonSpherePatch.SkipAbsorbEnabled = Config.Bind("DysonSphere", "SkipAbsorb", false,
+            "Skip absorption");
+        DysonSpherePatch.QuickAbsortEnabled = Config.Bind("DysonSphere", "QuickAbsorb", false,
+            "Quick absorb");
+        DysonSpherePatch.EjectAnywayEnabled = Config.Bind("DysonSphere", "EjectAnyway", false,
+            "Eject anyway");
         BirthPlanetPatch.SitiVeinsOnBirthPlanet = Config.Bind("Birth", "SiTiVeinsOnBirthPlanet", false,
             "Silicon/Titanium on birth planet");
         BirthPlanetPatch.FireIceOnBirthPlanet = Config.Bind("Birth", "FireIceOnBirthPlanet", false,
@@ -73,9 +89,11 @@ public class CheatEnabler : BaseUnityPlugin
 
         DevShortcuts.Init();
         AbnormalDisabler.Init();
+        BuildPatch.Init();
         ResourcePatch.Init();
         WaterPumperPatch.Init();
         TerraformPatch.Init();
+        DysonSpherePatch.Init();
         BirthPlanetPatch.Init();
         foreach (var idstr in _unlockTechToMaximumLevel.Split(','))
         {
@@ -93,9 +111,11 @@ public class CheatEnabler : BaseUnityPlugin
     public void OnDestroy()
     {
         BirthPlanetPatch.Uninit();
+        DysonSpherePatch.Uninit();
         TerraformPatch.Uninit();
         WaterPumperPatch.Uninit();
         ResourcePatch.Uninit();
+        BuildPatch.Uninit();
         AbnormalDisabler.Uninit();
         DevShortcuts.Uninit();
         _patch?.UnpatchSelf();
