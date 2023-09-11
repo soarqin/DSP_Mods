@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
@@ -21,7 +22,6 @@
   <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
   </ItemGroup>
-  
   
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
     <Exec Command="del /F /Q package\$(ProjectName)-$(Version).zip&#xA;zip -9 -j package/$(ProjectName)-$(Version).zip $(TargetPath) package/icon.png package/manifest.json README.md" />
