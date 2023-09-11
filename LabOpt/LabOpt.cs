@@ -332,4 +332,35 @@ public class LabOptPatch : BaseUnityPlugin
     {
         LabOptPatchFunctions.SetRootId(ref __instance, 0);
     }
+    
+    [HarmonyTranspiler]
+    [HarmonyPatch(typeof(LabOptPatchFunctions), nameof(LabOptPatchFunctions.SetRootId))]
+    [HarmonyPatch(typeof(LabOptPatchFunctions), nameof(LabOptPatchFunctions.SetRootLabIdForStacking))]
+    [HarmonyPatch(typeof(LabOptPatchFunctions), nameof(LabOptPatchFunctions.SetRootLabIdOnLoading))]
+    [HarmonyPatch(typeof(LabOptPatchFunctions), nameof(LabOptPatchFunctions.SetFunctionManually))]
+    [HarmonyPatch(typeof(LabOptPatchFunctions), nameof(LabOptPatchFunctions.SetFunctionInternal))]
+    private static IEnumerable<CodeInstruction> LabOptPatchFunctions_PatchRootId_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+    {
+        var matcher = new CodeMatcher(instructions, generator);
+        matcher.Start().MatchForward(false,
+            new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(LabComponent), nameof(LabComponent.pcId)))
+        );
+        if (matcher.IsValid)
+        {
+            matcher.Repeat(codeMatcher => codeMatcher.SetInstructionAndAdvance(
+                new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(LabComponent), "rootLabId"))
+            ));
+        }
+
+        matcher.Start().MatchForward(false,
+            new CodeMatch(OpCodes.Stfld, AccessTools.Field(typeof(LabComponent), nameof(LabComponent.pcId)))
+        );
+        if (matcher.IsValid)
+        {
+            matcher.Repeat(codeMatcher => codeMatcher.SetInstructionAndAdvance(
+                new CodeInstruction(OpCodes.Stfld, AccessTools.Field(typeof(LabComponent), "rootLabId"))
+            ));
+        }
+        return matcher.InstructionEnumeration();
+    }
 }

@@ -10,19 +10,16 @@ namespace LabOpt;
 
 public static class LabOptPatchFunctions
 {
-    private static readonly FieldInfo RootLabIdField = AccessTools.Field(typeof(LabComponent), "rootLabId");
-    
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void SetRootId(ref LabComponent lab, int rootId)
     {
-        RootLabIdField.SetValueDirect(__makeref(lab), rootId);
+        lab.pcId = rootId;
     }
 
     public static void SetRootLabIdForStacking(FactorySystem factorySystem, int labId, int nextEntityId)
     {
         var labPool = factorySystem.labPool;
         var factory = factorySystem.factory;
-        var rootId = (int)RootLabIdField.GetValue(labPool[labId]);
+        var rootId = labPool[labId].pcId;
         if (rootId <= 0)
         {
             var radiusBear = factory.planet.radius + 2.0f;
@@ -37,7 +34,7 @@ public static class LabOptPatchFunctions
         do
         {
             ref var targetLab = ref labPool[targetLabId];
-            RootLabIdField.SetValueDirect(__makeref(targetLab), rootId);
+            targetLab.pcId = rootId;
             // LabOptPatch.Logger.LogDebug($"Set rootLabId of lab {targetLabId} to {rootId}, {needSetFunction}");
             if (needSetFunction)
             {
@@ -84,13 +81,12 @@ public static class LabOptPatchFunctions
             var rootId = pair.Value;
             while (parentDict.TryGetValue(rootId, out var parentId)) rootId = parentId;
             ref var targetLab = ref labPool[pair.Key];
-            RootLabIdField.SetValueDirect(__makeref(targetLab), rootId);
+            targetLab.pcId = rootId;
             // LabOptPatch.Logger.LogDebug($"Set rootLabId of lab {pair.Key} to {rootId}");
             AssignRootLabValues(ref labPool[rootId], ref targetLab);
         }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void AssignRootLabValues(ref LabComponent rootLab, ref LabComponent thisLab)
     {
         int len;
@@ -375,7 +371,7 @@ public static class LabOptPatchFunctions
 
     public static void SetFunctionManually(ref LabComponent lab, bool researchMode, int recpId, int techId, SignData[] signPool, LabComponent[] labPool)
     {
-        var rootLabId = (int)RootLabIdField.GetValue(lab);
+        var rootLabId = lab.pcId;
         if (rootLabId > 0)
         {
             ref var rootLab = ref labPool[rootLabId];
@@ -407,7 +403,7 @@ public static class LabOptPatchFunctions
             while (nextLabId > 0)
             {
                 ref var nextLab = ref labPool[nextLabId];
-                if ((int)RootLabIdField.GetValue(nextLab) != thisId) break;
+                if (nextLab.pcId != thisId) break;
                 if (needs != nextLab.needs)
                     SetFunctionInternal(ref nextLab, researchMode, recpId, techId, signPool, labPool);
                 nextLabId = nextLab.nextLabId;
@@ -415,8 +411,7 @@ public static class LabOptPatchFunctions
         }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void SetFunctionInternal(ref LabComponent lab, bool researchMode, int recpId, int techId, SignData[] signPool, LabComponent[] labPool)
+    public static void SetFunctionInternal(ref LabComponent lab, bool researchMode, int recpId, int techId, SignData[] signPool, LabComponent[] labPool)
     {
         // LabOptPatch.Logger.LogDebug($"SetFunctionInternal: id={lab.id} root={(int)RootLabIdField.GetValue(lab)} research={researchMode} recp={recpId} tech={techId}");
 		lab.replicating = false;
@@ -443,7 +438,7 @@ public static class LabOptPatchFunctions
 			lab.productCounts = null;
 			lab.produced = null;
 			lab.productive = true;
-            var rootLabId = (int)RootLabIdField.GetValue(lab);
+            var rootLabId = lab.pcId;
             if (rootLabId > 0)
             {
                 ref var rootLab = ref labPool[rootLabId];
@@ -512,7 +507,7 @@ public static class LabOptPatchFunctions
 			lab.extraTimeSpend = recipeProto.TimeSpend * 100000;
 			lab.productive = recipeProto.productive;
 			lab.forceAccMode &= lab.productive;
-            var rootLabId = (int)RootLabIdField.GetValue(lab);
+            var rootLabId = lab.pcId;
             if (rootLabId > 0)
             {
                 ref var rootLab = ref labPool[rootLabId];
