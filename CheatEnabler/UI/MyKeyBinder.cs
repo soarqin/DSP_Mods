@@ -46,7 +46,7 @@ public class MyKeyBinder : MonoBehaviour
     public static RectTransform CreateKeyBinder(float x, float y, RectTransform parent, ConfigEntry<KeyboardShortcut> config, string label = "", int fontSize = 17)
     {
         var optionWindow = UIRoot.instance.optionWindow;
-        var uikeyEntry = GameObject.Instantiate<UIKeyEntry>(optionWindow.entryPrefab);
+        var uikeyEntry = Instantiate(optionWindow.entryPrefab);
         GameObject go;
         (go = uikeyEntry.gameObject).SetActive(true);
         go.name = "my-keybinder";
@@ -65,7 +65,7 @@ public class MyKeyBinder : MonoBehaviour
         kb.setNoneKeyUIButton = uikeyEntry.setNoneKeyUIButton;
 
 
-        kb.functionText.text = label;
+        kb.functionText.text = label.Translate();
         kb.functionText.fontSize = 17;
 
         ((RectTransform)kb.keyText.transform).anchoredPosition = new Vector2(20f, -27f);
@@ -79,23 +79,17 @@ public class MyKeyBinder : MonoBehaviour
         kb.rectTrans = rect;
 
         //rect.sizeDelta = new Vector2(240f, 64f);
-        GameObject.Destroy(uikeyEntry);
+        Destroy(uikeyEntry);
         kb.setNoneKeyUIButton.gameObject.SetActive(false);
 
         kb.SettingChanged();
-        config.SettingChanged += (sender, args) => {
+        config.SettingChanged += (_, _) => {
             kb.SettingChanged();
         };
         kb.inputUIButton.onClick += kb.OnInputUIButtonClick;
         kb.setDefaultUIButton.onClick += kb.OnSetDefaultKeyClick;
         //kb.setNoneKeyUIButton.onClick += kb.OnSetNoneKeyClick;
         return go.transform as RectTransform;
-
-        void ResetAnchor(RectTransform theRect)
-        {
-            theRect.anchorMax = Vector2.zero;
-            theRect.anchorMin = Vector2.zero;
-        }
     }
 
     private void Update()

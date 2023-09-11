@@ -1,10 +1,13 @@
-﻿using UnityEngine;
+﻿using Steamworks;
+using UnityEngine;
 
 namespace CheatEnabler;
 
 public class UIConfigWindow : UI.MyWindowWithTabs
 {
     private RectTransform _windowTrans;
+
+    private readonly UIButton[] _dysonLayerBtn = new UIButton[10];
 
     static UIConfigWindow()
     {
@@ -26,6 +29,8 @@ public class UIConfigWindow : UI.MyWindowWithTabs
         I18N.Add("Skip absorption period", "Skip absorption period", "跳过吸收阶段");
         I18N.Add("Quick absorb", "Quick absorb", "快速吸收");
         I18N.Add("Eject anyway", "Eject anyway", "全球弹射");
+        I18N.Add("Initialize Dyson Sphere", "Initialize Dyson Sphere", "初始化戴森球");
+        I18N.Add("Click to dismantle selected layer", "Click to dismantle selected layer", "点击拆除对应的戴森壳");
         I18N.Add("Birth", "Birth Sys", "母星系");
         I18N.Add("Terraform without enought sands", "Terraform without enough sands", "沙土不够时依然可以整改地形");
         I18N.Add("Silicon/Titanium on birth planet", "Silicon/Titanium on birth planet", "母星有硅和钛");
@@ -45,7 +50,7 @@ public class UIConfigWindow : UI.MyWindowWithTabs
 
     public static UIConfigWindow CreateInstance()
     {
-        return UI.MyWindowManager.CreateWindow<UIConfigWindow>("CEConfigWindow", "CheatEnabler Config".Translate());
+        return UI.MyWindowManager.CreateWindow<UIConfigWindow>("CEConfigWindow", "CheatEnabler Config");
     }
 
     public override void _OnCreate()
@@ -61,35 +66,35 @@ public class UIConfigWindow : UI.MyWindowWithTabs
         // General tab
         var x = 0f;
         var y = 10f;
-        var tab1 = AddTab(36f, 0, _windowTrans, "General".Translate());
-        UI.MyCheckBox.CreateCheckBox(x, y, tab1, DevShortcuts.Enabled, "Enable Dev Shortcuts".Translate());
+        var tab1 = AddTab(36f, 0, _windowTrans, "General");
+        UI.MyCheckBox.CreateCheckBox(x, y, tab1, DevShortcuts.Enabled, "Enable Dev Shortcuts");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab1, AbnormalDisabler.Enabled, "Disable Abnormal Checks".Translate());
+        UI.MyCheckBox.CreateCheckBox(x, y, tab1, AbnormalDisabler.Enabled, "Disable Abnormal Checks");
         y += 86f;
-        UI.MyKeyBinder.CreateKeyBinder(x, y, tab1, CheatEnabler.Hotkey, "Hotkey".Translate());
+        UI.MyKeyBinder.CreateKeyBinder(x, y, tab1, CheatEnabler.Hotkey, "Hotkey");
 
-        var tab2 = AddTab(136f, 1, _windowTrans, "Build".Translate());
+        var tab2 = AddTab(136f, 1, _windowTrans, "Build");
         x = 0f;
         y = 10f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab2, BuildPatch.ImmediateEnabled, "Finish build immediately".Translate());
+        UI.MyCheckBox.CreateCheckBox(x, y, tab2, BuildPatch.ImmediateEnabled, "Finish build immediately");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab2, BuildPatch.NoCostEnabled, "Infinite buildings".Translate());
+        UI.MyCheckBox.CreateCheckBox(x, y, tab2, BuildPatch.NoCostEnabled, "Infinite buildings");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab2, BuildPatch.NoConditionEnabled, "Build without condition".Translate());
+        UI.MyCheckBox.CreateCheckBox(x, y, tab2, BuildPatch.NoConditionEnabled, "Build without condition");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab2, BuildPatch.NoCollisionEnabled, "No collision".Translate());
+        UI.MyCheckBox.CreateCheckBox(x, y, tab2, BuildPatch.NoCollisionEnabled, "No collision");
 
         // Planet Tab
-        var tab3 = AddTab(236f, 2, _windowTrans, "Planet".Translate());
+        var tab3 = AddTab(236f, 2, _windowTrans, "Planet");
         x = 0f;
         y = 10f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab3, ResourcePatch.InfiniteEnabled, "Infinite Natural Resources".Translate());
+        UI.MyCheckBox.CreateCheckBox(x, y, tab3, ResourcePatch.InfiniteEnabled, "Infinite Natural Resources");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab3, ResourcePatch.FastEnabled, "Fast Mining".Translate());
+        UI.MyCheckBox.CreateCheckBox(x, y, tab3, ResourcePatch.FastEnabled, "Fast Mining");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab3, WaterPumperPatch.Enabled, "Pump Anywhere".Translate());
+        UI.MyCheckBox.CreateCheckBox(x, y, tab3, WaterPumperPatch.Enabled, "Pump Anywhere");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab3, TerraformPatch.Enabled, "Terraform without enought sands".Translate());
+        UI.MyCheckBox.CreateCheckBox(x, y, tab3, TerraformPatch.Enabled, "Terraform without enought sands");
         x = 300f;
         y = 10f;
         AddButton(x, y, tab3, "矿物掩埋标题", 16, "button-bury-all", () =>
@@ -129,41 +134,96 @@ public class UIConfigWindow : UI.MyWindowWithTabs
             PlanetFunctions.DismantleAll(false);
         });
 
-        var tab4 = AddTab(336f, 3, _windowTrans, "Dyson Sphere".Translate());
+        var tab4 = AddTab(336f, 3, _windowTrans, "Dyson Sphere");
         x = 0f;
         y = 10f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.SkipBulletEnabled, "Skip bullet period".Translate());
+        UI.MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.SkipBulletEnabled, "Skip bullet period");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.SkipAbsorbEnabled, "Skip absorption period".Translate());
+        UI.MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.SkipAbsorbEnabled, "Skip absorption period");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.QuickAbsortEnabled, "Quick absorb".Translate());
+        UI.MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.QuickAbsortEnabled, "Quick absorb");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.EjectAnywayEnabled, "Eject anyway".Translate());
+        UI.MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.EjectAnywayEnabled, "Eject anyway");
+        x = 300f;
+        y = 10f;
+        AddButton(x, y, tab4, "Initialize Dyson Sphere", 16, "init-dyson-sphere", () =>
+        {
+            DysonSpherePatch.InitCurrentDysonSphere(-1);
+        });
+        y += 36f;
+        AddText(x, y, tab4, "Click to dismantle selected layer", 16, "text-dismantle-layer");
+        y += 26f;
+        for (var i = 0; i < 10; i++)
+        {
+            var id = i + 1;
+            var btn = AddFlatButton(x, y, tab4, id.ToString(), 12, "dismantle-layer-" + id, () => { DysonSpherePatch.InitCurrentDysonSphere(id); });
+            ((RectTransform)btn.transform).sizeDelta = new Vector2(40f, 20f);
+            _dysonLayerBtn[i] = btn;
+            if (i == 4)
+            {
+                x -= 160f;
+                y += 20f;
+            }
+            else
+            {
+                x += 40f;
+            }
+        }
 
-        var tab5 = AddTab(436f, 4, _windowTrans, "Birth".Translate());
+        var tab5 = AddTab(436f, 4, _windowTrans, "Birth");
         x = 0f;
         y = 10f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.SitiVeinsOnBirthPlanet, "Silicon/Titanium on birth planet".Translate());
+        UI.MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.SitiVeinsOnBirthPlanet, "Silicon/Titanium on birth planet");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.FireIceOnBirthPlanet, "Fire ice on birth planet".Translate());
+        UI.MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.FireIceOnBirthPlanet, "Fire ice on birth planet");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.KimberliteOnBirthPlanet, "Kimberlite on birth planet".Translate());
+        UI.MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.KimberliteOnBirthPlanet, "Kimberlite on birth planet");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.FractalOnBirthPlanet, "Fractal silicon on birth planet".Translate());
+        UI.MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.FractalOnBirthPlanet, "Fractal silicon on birth planet");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.OrganicOnBirthPlanet, "Organic crystal on birth planet".Translate());
+        UI.MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.OrganicOnBirthPlanet, "Organic crystal on birth planet");
         x = 200f;
         y = 10f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.OpticalOnBirthPlanet, "Optical grating crystal on birth planet".Translate());
+        UI.MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.OpticalOnBirthPlanet, "Optical grating crystal on birth planet");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.SpiniformOnBirthPlanet, "Spiniform stalagmite crystal on birth planet".Translate());
+        UI.MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.SpiniformOnBirthPlanet, "Spiniform stalagmite crystal on birth planet");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.UnipolarOnBirthPlanet, "Unipolar magnet on birth planet".Translate());
+        UI.MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.UnipolarOnBirthPlanet, "Unipolar magnet on birth planet");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.FlatBirthPlanet, "Birth planet is solid flat (no water at all)".Translate());
+        UI.MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.FlatBirthPlanet, "Birth planet is solid flat (no water at all)");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.HighLuminosityBirthStar, "Birth star has high luminosity".Translate());
+        UI.MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.HighLuminosityBirthStar, "Birth star has high luminosity");
         SetCurrentTab(0);
+
+        UpdateUI();
+    }
+
+    public void UpdateUI()
+    {
+        if (Tabs[3].Item1.gameObject.activeSelf)
+        {
+            var star = GameMain.localStar;
+            if (star != null)
+            {
+                var dysonSpheres = GameMain.data?.dysonSpheres;
+                if (dysonSpheres?[star.index] != null)
+                {
+                    var ds = dysonSpheres[star.index];
+                    for (var i = 1; i <= 10; i++)
+                    {
+                        var layer = ds.layersIdBased[i];
+                        _dysonLayerBtn[i - 1].button.interactable = layer != null && layer.id == i;
+                    }
+
+                    return;
+                }
+            }
+
+            for (var i = 0; i < 10; i++)
+            {
+                _dysonLayerBtn[i].button.interactable = false;
+            }
+        }
     }
 
     public override void _OnDestroy()
@@ -190,8 +250,13 @@ public class UIConfigWindow : UI.MyWindowWithTabs
 
     public override void _OnUpdate()
     {
-        if (!VFInput.escape || VFInput.inputing) return;
-        VFInput.UseEscape();
-        _Close();
+        if (VFInput.escape && !VFInput.inputing)
+        {
+            VFInput.UseEscape();
+            _Close();
+            return;
+        }
+
+        UpdateUI();
     }
 }

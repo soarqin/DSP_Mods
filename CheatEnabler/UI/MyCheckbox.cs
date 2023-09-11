@@ -73,7 +73,7 @@ public class MyCheckBox : MonoBehaviour
     {
         if (labelText != null)
         {
-            labelText.text = val;
+            labelText.text = val.Translate();
         }
     }
 

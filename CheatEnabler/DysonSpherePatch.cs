@@ -128,6 +128,34 @@ public static class DysonSpherePatch
         }
     }
 
+    public static void InitCurrentDysonSphere(int index)
+    {
+        var star = GameMain.localStar;
+        if (star == null) return;
+        var dysonSpheres = GameMain.data?.dysonSpheres;
+        if (dysonSpheres == null) return;
+        if (index < 0)
+        {
+            if (dysonSpheres[star.index] == null) return;
+            var dysonSphere = new DysonSphere();
+            dysonSpheres[star.index] = dysonSphere;
+            dysonSphere.Init(GameMain.data, star);
+            dysonSphere.ResetNew();
+            return;
+        }
+
+        var ds = dysonSpheres[star.index];
+        if (ds?.layersIdBased[index] == null) return;
+        var pool = ds.rocketPool;
+        for (var id = ds.rocketCursor - 1; id > 0; id--)
+        {
+            if (pool[id].id != id) continue;
+            if (pool[id].nodeLayerId != index) continue;
+            ds.RemoveDysonRocket(id);
+        }
+        ds.RemoveLayer(index);
+    }
+
     private static class SkipBulletPatch
     {
         private static long _sailLifeTime;
@@ -345,6 +373,7 @@ public static class DysonSpherePatch
         private static IEnumerable<CodeInstruction> DysonSphereLayer_GameTick_Patch(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
         {
             var matcher = new CodeMatcher(instructions, generator);
+            /* Insert absorption functions on beginning */
             matcher.Start().InsertAndAdvance(
                 new CodeInstruction(OpCodes.Ldarg_0),
                 new CodeInstruction(OpCodes.Ldarg_1),
@@ -354,6 +383,7 @@ public static class DysonSpherePatch
                 new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(DysonSphereLayer), nameof(DysonSphereLayer.dysonSphere))),
                 new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(DysonSphere), nameof(DysonSphere.swarm)))
             ).Insert(new CodeInstruction(OpCodes.Ret));
+            /* Insert a RETURN before old absorption functions */
             return matcher.InstructionEnumeration();
         }
         
@@ -379,9 +409,9 @@ public static class DysonSpherePatch
         {
             var matcher = new CodeMatcher(instructions, generator);
             matcher.MatchForward(false,
-                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(EjectorComponent), nameof(EjectorComponent.localRot)))
+                new CodeMatch(instr => instr.opcode == OpCodes.Ldc_R8 && Math.Abs((double)instr.operand - 0.08715574) < 0.00000001)
             );
-            var start = matcher.Pos - 6;
+            var start = matcher.Pos - 3;
             matcher.MatchForward(false,
                 new CodeMatch(OpCodes.And)
             ).Advance(1).MatchForward(false,

@@ -39,7 +39,7 @@ public class MyWindow: ManualBehaviour
         var txt = gameObject.transform.Find("panel-bg/title-text")?.gameObject.GetComponent<Text>();
         if (txt)
         {
-            txt.text = title;
+            txt.text = title.Translate();
         }
     }
 
@@ -56,7 +56,7 @@ public class MyWindow: ManualBehaviour
         var src = UIRoot.instance.uiGame.assemblerWindow.stateText;
         var txt = Instantiate(src);
         txt.gameObject.name = objName;
-        txt.text = label;
+        txt.text = label.Translate();
         txt.color = new Color(1f, 1f, 1f, 0.4f);
         txt.alignment = TextAnchor.MiddleLeft;
         txt.fontSize = fontSize;
@@ -74,7 +74,7 @@ public class MyWindow: ManualBehaviour
         var btn = Instantiate(panel.cpuActiveButton);
         btn.gameObject.name = objName;
         var rect = Util.NormalizeRectWithTopLeft(btn, x, y, parent);
-        rect.sizeDelta = new Vector2(120, rect.sizeDelta.y);
+        rect.sizeDelta = new Vector2(150, rect.sizeDelta.y);
         var l = btn.gameObject.transform.Find("button-text").GetComponent<Localizer>();
         var t = btn.gameObject.transform.Find("button-text").GetComponent<Text>();
         if (l != null)
@@ -90,6 +90,28 @@ public class MyWindow: ManualBehaviour
         btn.button.onClick.RemoveAllListeners();
         btn.tip = null;
         btn.tips = new UIButton.TipSettings();
+        _buttons[btn] = onClick;
+        if (EventRegistered)
+        {
+            if (onClick != null)
+                btn.button.onClick.AddListener(onClick);
+        }
+        return btn;
+    }
+
+    protected UIButton AddFlatButton(float x, float y, RectTransform parent, string text = "", int fontSize = 12, string objName = "button", UnityAction onClick = null)
+    {
+        var panel = UIRoot.instance.uiGame.dysonEditor.controlPanel.hierarchy.layerPanel;
+        var btn = Instantiate(panel.layerButtons[0]);
+        btn.gameObject.name = objName;
+        Util.NormalizeRectWithTopLeft(btn, x, y, parent);
+        var t = btn.gameObject.transform.Find("Text").GetComponent<Text>();
+        if (t != null)
+        {
+            t.text = text.Translate();
+        }
+        t.fontSize = fontSize;
+        btn.button.onClick.RemoveAllListeners();
         _buttons[btn] = onClick;
         if (EventRegistered)
         {
@@ -169,7 +191,7 @@ public class MyWindow: ManualBehaviour
 
 public class MyWindowWithTabs : MyWindow
 {
-    private readonly List<Tuple<RectTransform, UIButton>> _tabs = new();
+    protected readonly List<Tuple<RectTransform, UIButton>> Tabs = new();
     public override void TryClose()
     {
         _Close();
@@ -202,11 +224,11 @@ public class MyWindowWithTabs : MyWindow
         }
 
         var btnText = btn.transform.Find("Text").GetComponent<Text>();
-        btnText.text = label;
+        btnText.text = label.Translate();
         btnText.fontSize = 16;
         btn.data = index;
 
-        _tabs.Add(Tuple.Create(tabRect, btn));
+        Tabs.Add(Tuple.Create(tabRect, btn));
         if (EventRegistered)
         {
             btn.onClick += OnTabButtonClick;
@@ -218,7 +240,7 @@ public class MyWindowWithTabs : MyWindow
     {
         if (!EventRegistered)
         {
-            foreach (var t in _tabs)
+            foreach (var t in Tabs)
             {
                 t.Item2.onClick += OnTabButtonClick;
             }
@@ -230,7 +252,7 @@ public class MyWindowWithTabs : MyWindow
     {
         if (EventRegistered)
         {
-            foreach (var t in _tabs)
+            foreach (var t in Tabs)
             {
                 t.Item2.onClick -= OnTabButtonClick;
             }
@@ -242,17 +264,16 @@ public class MyWindowWithTabs : MyWindow
 
     private void OnTabButtonClick(int index)
     {
-        foreach (var t in _tabs)
+        foreach (var (rectTransform, btn) in Tabs)
         {
-            var btn = t.Item2;
             if (btn.data != index)
             {
                 btn.highlighted = false;
-                t.Item1.gameObject.SetActive(false);
+                rectTransform.gameObject.SetActive(false);
                 continue;
             }
             btn.highlighted = true;
-            t.Item1.gameObject.SetActive(true);
+            rectTransform.gameObject.SetActive(true);
         }
     }
 }
