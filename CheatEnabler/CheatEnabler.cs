@@ -30,7 +30,7 @@ public class CheatEnabler : BaseUnityPlugin
     private void Awake()
     {
         Hotkey = Config.Bind("General", "Shortcut", KeyboardShortcut.Deserialize("BackQuote + LeftAlt"), "Shortcut to open config window");
-        DevShortcuts.Enabled = Config.Bind("General", "DevShortcuts", true, "Enable DevMode shortcuts");
+        DevShortcuts.Enabled = Config.Bind("General", "DevShortcuts", false, "Enable DevMode shortcuts");
         AbnormalDisabler.Enabled = Config.Bind("General", "DisableAbnormalChecks", false,
             "disable all abnormal checks");
         BuildPatch.ImmediateEnabled = Config.Bind("Build", "ImmediateBuild", false,
