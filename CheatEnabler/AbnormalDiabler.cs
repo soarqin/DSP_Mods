@@ -11,6 +11,7 @@ public static class AbnormalDisabler
 
     public static void Init()
     {
+        if (_patch != null) return;
         _patch = Harmony.CreateAndPatchAll(typeof(AbnormalDisabler));
     }
 

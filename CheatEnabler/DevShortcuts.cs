@@ -1,4 +1,6 @@
-﻿using BepInEx.Configuration;
+﻿using System.Collections.Generic;
+using System.Reflection.Emit;
+using BepInEx.Configuration;
 using HarmonyLib;
 
 namespace CheatEnabler;
@@ -6,10 +8,15 @@ public static class DevShortcuts
 {
     public static ConfigEntry<bool> Enabled;
     private static Harmony _patch;
+    private static PlayerAction_Test _test;
 
     public static void Init()
     {
         _patch = Harmony.CreateAndPatchAll(typeof(DevShortcuts));
+        Enabled.SettingChanged += (_, _) =>
+        {
+            if (_test != null) _test.active = Enabled.Value;
+        };
     }
 
     public static void Uninit()
@@ -30,32 +37,41 @@ public static class DevShortcuts
             newActions[i] = __instance.actions[i];
         }
 
-        var test = new PlayerAction_Test();
-        test.Init(__instance.player);
-        newActions[cnt] = test;
+        _test = new PlayerAction_Test();
+        _test.Init(__instance.player);
+        _test.active = Enabled.Value;
+        newActions[cnt] = _test;
         __instance.actions = newActions;
-
-        Enabled.SettingChanged += (_, _) =>
-        {
-            if (!Enabled.Value)
-            {
-                test.active = false;
-            }
-        };
     }
 
     [HarmonyPostfix]
     [HarmonyPatch(typeof(PlayerAction_Test), "GameTick")]
     private static void PlayerAction_Test_GameTick_Postfix(PlayerAction_Test __instance)
     {
-        if (!Enabled.Value) return;
-        var lastActive = __instance.active;
         __instance.Update();
-        if (lastActive != __instance.active)
-        {
-            UIRealtimeTip.PopupAhead(
-                (lastActive ? "Developer Mode Shortcuts Disabled" : "Developer Mode Shortcuts Enabled").Translate(),
-                false);
-        }
+    }
+
+    [HarmonyTranspiler]
+    [HarmonyPatch(typeof(PlayerAction_Test), nameof(PlayerAction_Test.Update))]
+    private static IEnumerable<CodeInstruction> PlayerAction_Test_Update_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+    {
+        var matcher = new CodeMatcher(instructions, generator);
+        matcher.End().MatchBack(false,
+            new CodeMatch(OpCodes.Ldarg_0),
+            new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(PlayerAction_Test), nameof(PlayerAction_Test.active)))
+        );
+        var pos = matcher.Pos;
+        /* Remove Shift+F4 part of the method */
+        matcher.Start().RemoveInstructions(pos);
+        matcher.Start().MatchForward(false,
+            new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(GameMain), "get_sandboxToolsEnabled")),
+            new CodeMatch(OpCodes.Ldc_I4_0),
+            new CodeMatch(OpCodes.Ceq)
+        );
+        var labels = matcher.Labels;
+        matcher.SetInstructionAndAdvance(
+            new CodeInstruction(OpCodes.Ldc_I4_1).WithLabels(labels)
+        ).RemoveInstructions(2);
+        return matcher.InstructionEnumeration();
     }
 }

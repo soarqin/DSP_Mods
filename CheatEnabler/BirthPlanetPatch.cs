@@ -72,7 +72,7 @@ public static class BirthPlanetPatch
         FlatBirthPlanet.SettingChanged += (_, _) => PatchBirthThemeData();
         HighLuminosityBirthStar.SettingChanged += (_, _) => PatchBirthThemeData();
         PatchBirthThemeData();
-        _patch = Harmony.CreateAndPatchAll(typeof(DevShortcuts));
+        _patch = Harmony.CreateAndPatchAll(typeof(BirthPlanetPatch));
     }
 
     public static void Uninit()

@@ -18,6 +18,7 @@ public static class BuildPatch
 
     public static void Init()
     {
+        if (_patch != null) return;
         ImmediateEnabled.SettingChanged += (_, _) => ImmediateValueChanged();
         NoCostEnabled.SettingChanged += (_, _) => NoCostValueChanged();
         NoConditionEnabled.SettingChanged += (_, _) => NoConditionValueChanged();

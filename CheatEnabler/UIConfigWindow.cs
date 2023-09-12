@@ -24,15 +24,17 @@ public class UIConfigWindow : UI.MyWindowWithTabs
         I18N.Add("Infinite Natural Resources", "Infinite Natural Resources", "自然资源采集不消耗");
         I18N.Add("Fast Mining", "Fast Mining", "高速采集");
         I18N.Add("Pump Anywhere", "Pump Anywhere", "平地抽水");
+        I18N.Add("Initialize This Planet", "Initialize This Planet", "初始化本行星");
+        I18N.Add("Dismantle All Buildings", "Dismantle All Buildings", "拆除所有建筑");
         I18N.Add("Dyson Sphere", "Dyson Sphere", "戴森球");
         I18N.Add("Skip bullet period", "Skip bullet period", "跳过子弹阶段");
         I18N.Add("Skip absorption period", "Skip absorption period", "跳过吸收阶段");
         I18N.Add("Quick absorb", "Quick absorb", "快速吸收");
         I18N.Add("Eject anyway", "Eject anyway", "全球弹射");
+        I18N.Add("Terraform without enough sands", "Terraform without enough sands", "沙土不够时依然可以整改地形");
         I18N.Add("Initialize Dyson Sphere", "Initialize Dyson Sphere", "初始化戴森球");
         I18N.Add("Click to dismantle selected layer", "Click to dismantle selected layer", "点击拆除对应的戴森壳");
         I18N.Add("Birth", "Birth Sys", "母星系");
-        I18N.Add("Terraform without enought sands", "Terraform without enough sands", "沙土不够时依然可以整改地形");
         I18N.Add("Silicon/Titanium on birth planet", "Silicon/Titanium on birth planet", "母星有硅和钛");
         I18N.Add("Fire ice on birth planet", "Fire ice on birth planet", "母星有可燃冰");
         I18N.Add("Kimberlite on birth planet", "Kimberlite on birth planet", "母星有金伯利矿");
@@ -43,8 +45,6 @@ public class UIConfigWindow : UI.MyWindowWithTabs
         I18N.Add("Unipolar magnet on birth planet", "Unipolar magnet on birth planet", "母星有单极磁石");
         I18N.Add("Birth planet is solid flat (no water at all)", "Birth planet is solid flat (no water at all)", "母星是纯平的（没有水）");
         I18N.Add("Birth star has high luminosity", "Birth star has high luminosity", "母星系恒星高亮");
-        I18N.Add("Initialize This Planet", "Initialize This Planet", "初始化本行星");
-        I18N.Add("Dismantle All Buildings", "Dismantle All Buildings", "拆除所有建筑");
         I18N.Apply();
     }
 
@@ -94,7 +94,7 @@ public class UIConfigWindow : UI.MyWindowWithTabs
         y += 36f;
         UI.MyCheckBox.CreateCheckBox(x, y, tab3, WaterPumperPatch.Enabled, "Pump Anywhere");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab3, TerraformPatch.Enabled, "Terraform without enought sands");
+        UI.MyCheckBox.CreateCheckBox(x, y, tab3, TerraformPatch.Enabled, "Terraform without enough sands");
         x = 300f;
         y = 10f;
         AddButton(x, y, tab3, "矿物掩埋标题", 16, "button-bury-all", () =>
