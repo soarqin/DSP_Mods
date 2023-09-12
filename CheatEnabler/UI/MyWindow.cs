@@ -29,7 +29,7 @@ public class MyWindow: ManualBehaviour
     public void Open()
     {
         _Open();
-        transform.SetAsLastSibling();
+        transform.SetSiblingIndex(UIRoot.instance.uiMechaEditor.transform.GetSiblingIndex() + 1);
     }
 
     public void Close() => _Close();
@@ -66,6 +66,19 @@ public class MyWindow: ManualBehaviour
         }
         AddElement(x, y, txt.rectTransform, parent);
         return txt;
+    }
+    
+    protected static UIButton AddTipsButton(float x, float y, RectTransform parent, string label, string tip, string content, string objName = "tips-button")
+    {
+        var src = UIRoot.instance.galaxySelect.sandboxToggle.gameObject.transform.parent.Find("tip-button");
+        var dst = Instantiate(src);
+        dst.gameObject.name = objName;
+        var btn = dst.GetComponent<UIButton>();
+        Util.NormalizeRectWithTopLeft(btn, x, y, parent);
+        btn.tips.tipTitle = label;
+        btn.tips.tipText = tip;
+        btn.UpdateTip();
+        return btn;
     }
     
     protected UIButton AddButton(float x, float y, RectTransform parent, string text = "", int fontSize = 16, string objName = "button", UnityAction onClick = null)
