@@ -140,10 +140,9 @@ public static class TechPatch
 
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(UITechNode), nameof(UITechNode.OnPointerDown))]
-    private static IEnumerable<CodeInstruction> UITechNode_OnPointerDown_Transpiler(
-        IEnumerable<CodeInstruction> instructions)
+    private static IEnumerable<CodeInstruction> UITechNode_OnPointerDown_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
     {
-        var matcher = new CodeMatcher(instructions);
+        var matcher = new CodeMatcher(instructions, generator);
         matcher.MatchForward(false,
             new CodeMatch(OpCodes.Ldarg_0),
             new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(UITechNode), nameof(UITechNode.tree))),

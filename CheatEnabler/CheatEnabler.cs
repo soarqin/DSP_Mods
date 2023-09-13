@@ -19,8 +19,6 @@ public class CheatEnabler : BaseUnityPlugin
     public static ConfigEntry<KeyboardShortcut> Hotkey;
     private static bool _configWinInitialized = false;
     private static UIConfigWindow _configWin;
-    private static string _unlockTechToMaximumLevel = "";
-    private static readonly List<int> TechToUnlock = new();
     
     private static Harmony _windowPatch;
     private static Harmony _patch;
@@ -37,8 +35,8 @@ public class CheatEnabler : BaseUnityPlugin
             "Unlock clicked tech by holding key-modifilers(Shift/Alt/Ctrl)");
         BuildPatch.ImmediateEnabled = Config.Bind("Build", "ImmediateBuild", false,
             "Build immediately");
-        BuildPatch.NoCostEnabled = Config.Bind("Build", "InfiniteBuildings", false,
-            "Infinite buildings");
+        BuildPatch.ArchitectModeEnabled = Config.Bind("Build", "Architect", false,
+            "Architect Mode");
         BuildPatch.NoConditionEnabled = Config.Bind("Build", "BuildWithoutCondition", false,
             "Build without condition");
         BuildPatch.NoCollisionEnabled = Config.Bind("Build", "NoCollision", false,
@@ -103,7 +101,7 @@ public class CheatEnabler : BaseUnityPlugin
         BirthPlanetPatch.Init();
     }
 
-    public void OnDestroy()
+    private void OnDestroy()
     {
         BirthPlanetPatch.Uninit();
         DysonSpherePatch.Uninit();
@@ -127,6 +125,11 @@ public class CheatEnabler : BaseUnityPlugin
         
         if (Hotkey.Value.IsDown())
             ToggleConfigWindow();
+    }
+
+    private void LateUpdate()
+    {
+        BuildPatch.NightLightLateUpdate();
     }
 
     [HarmonyPostfix, HarmonyPatch(typeof(UIRoot), nameof(UIRoot.OpenMainMenuUI))]

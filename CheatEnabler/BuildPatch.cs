@@ -1,15 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection.Emit;
+using BepInEx;
 using BepInEx.Configuration;
 using HarmonyLib;
+using UnityEngine;
 
 namespace CheatEnabler;
 
 public static class BuildPatch
 {
     public static ConfigEntry<bool> ImmediateEnabled;
-    public static ConfigEntry<bool> NoCostEnabled;
+    public static ConfigEntry<bool> ArchitectModeEnabled;
     public static ConfigEntry<bool> NoConditionEnabled;
     public static ConfigEntry<bool> NoCollisionEnabled;
 
@@ -20,11 +22,11 @@ public static class BuildPatch
     {
         if (_patch != null) return;
         ImmediateEnabled.SettingChanged += (_, _) => ImmediateValueChanged();
-        NoCostEnabled.SettingChanged += (_, _) => NoCostValueChanged();
+        ArchitectModeEnabled.SettingChanged += (_, _) => ArchitectModeValueChanged();
         NoConditionEnabled.SettingChanged += (_, _) => NoConditionValueChanged();
         NoCollisionEnabled.SettingChanged += (_, _) => NoCollisionValueChanged();
         ImmediateValueChanged();
-        NoCostValueChanged();
+        ArchitectModeValueChanged();
         NoConditionValueChanged();
         NoCollisionValueChanged();
         _patch = Harmony.CreateAndPatchAll(typeof(BuildPatch));
@@ -43,16 +45,18 @@ public static class BuildPatch
             _noConditionPatch = null;
         }
         ImmediateBuild.Enable(false);
-        NoCostBuild.Enable(false);
+        ArchitectMode.Enable(false);
+        NightLightEnd();
     }
 
     private static void ImmediateValueChanged()
     {
         ImmediateBuild.Enable(ImmediateEnabled.Value);
     }
-    private static void NoCostValueChanged()
+    private static void ArchitectModeValueChanged()
     {
-        NoCostBuild.Enable(NoCostEnabled.Value);
+        ArchitectMode.Enable(ArchitectModeEnabled.Value);
+        NightLightUpdateState();
     }
 
     private static void NoConditionValueChanged()
@@ -85,8 +89,8 @@ public static class BuildPatch
     public static void ArrivePlanet(PlanetFactory factory)
     {
         var imm = ImmediateEnabled.Value;
-        var noCost = NoCostEnabled.Value;
-        if (!imm && !noCost) return;
+        var architect = ArchitectModeEnabled.Value;
+        if (!imm && !architect) return;
         var prebuilds = factory.prebuildPool;
         if (imm) factory.BeginFlattenTerrain();
         for (var i = factory.prebuildCursor - 1; i > 0; i--)
@@ -94,7 +98,7 @@ public static class BuildPatch
             if (prebuilds[i].id != i) continue;
             if (prebuilds[i].itemRequired > 0)
             {
-                if (!noCost) continue;
+                if (!architect) continue;
                 prebuilds[i].itemRequired = 0;
                 if (imm)
                     factory.BuildFinally(GameMain.mainPlayer, i, false);
@@ -116,6 +120,153 @@ public static class BuildPatch
     {
         ArrivePlanet(__instance.factory);
     }
+
+    /* Night Light Begin */
+    private const float NightLightAngleX = -8;
+    private const float NightLightAngleY = -2;
+    public static bool NightlightEnabled;
+    private static bool _nightlightInitialized;
+    private static bool _mechaOnEarth;
+    private static AnimationState _sail;
+    private static Light _sunlight;
+
+    private static void NightLightUpdateState()
+    {
+        if (ArchitectModeEnabled.Value)
+        {
+            NightlightEnabled = _mechaOnEarth;
+            return;
+        }
+        NightlightEnabled = false;
+        if (_sunlight == null) return;
+        _sunlight.transform.localEulerAngles = new Vector3(0f, 180f);
+    }
+
+	public static void NightLightLateUpdate()
+    {
+        switch (_nightlightInitialized)
+        {
+            case false:
+                NightLightReady();
+                break;
+            case true:
+                NightLightGo();
+                break;
+        }
+    }
+
+	private static void NightLightReady()
+	{
+        if (!GameMain.isRunning || !GameMain.mainPlayer.controller.model.gameObject.activeInHierarchy) return;
+        if (_sail == null)
+        {
+            _sail = GameMain.mainPlayer.animator.sails[GameMain.mainPlayer.animator.sailAnimIndex];
+        }
+
+        _nightlightInitialized = true;
+    }
+
+	private static void NightLightGo()
+	{
+		if (!GameMain.isRunning)
+		{
+			NightLightEnd();
+            return;
+        }
+
+		if (_sail.enabled)
+        {
+            _mechaOnEarth = false;
+            NightlightEnabled = false;
+            if (_sunlight == null) return;
+            _sunlight.transform.localEulerAngles = new Vector3(0f, 180f);
+            _sunlight = null;
+            return;
+        }
+
+        if (!_mechaOnEarth)
+        {
+            if (_sunlight == null)
+            {
+                _sunlight = GameMain.universeSimulator.LocalStarSimulator().sunLight;
+                if (_sunlight == null) return;
+            }
+            _mechaOnEarth = true;
+            NightlightEnabled = ArchitectModeEnabled.Value;
+        }
+        if (NightlightEnabled)
+        {
+            _sunlight.transform.rotation =
+                Quaternion.LookRotation(-GameMain.mainPlayer.transform.up + GameMain.mainPlayer.transform.forward * NightLightAngleX / 10f + GameMain.mainPlayer.transform.right * NightLightAngleY / 10f);
+        }
+    }
+
+	private static void NightLightEnd()
+	{
+		_mechaOnEarth = false;
+        NightlightEnabled = false;
+		if (_sunlight != null)
+		{
+			_sunlight.transform.localEulerAngles = new Vector3(0f, 180f);
+			_sunlight = null;
+		}
+		_sail = null;
+		_nightlightInitialized = false;
+	}
+
+	[HarmonyTranspiler]
+	[HarmonyPatch(typeof(StarSimulator), "LateUpdate")]
+    private static IEnumerable<CodeInstruction> StarSimulator_LateUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+    {
+        // var vec = NightlightEnabled ? GameMain.mainPlayer.transform.up : __instance.transform.forward;
+        var matcher = new CodeMatcher(instructions, generator);
+        var label1 = generator.DefineLabel();
+        var label2 = generator.DefineLabel();
+        matcher.MatchForward(false,
+            new CodeMatch(OpCodes.Ldarg_0),
+            new CodeMatch(OpCodes.Call, AccessTools.PropertyGetter(typeof(Component), nameof(Component.transform)))
+        ).InsertAndAdvance(
+            new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(BuildPatch), nameof(BuildPatch.NightlightEnabled))),
+            new CodeInstruction(OpCodes.Brfalse_S, label1),
+            new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(GameMain), nameof(GameMain.mainPlayer))),
+            new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Player), nameof(Player.transform))),
+            new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Transform), nameof(Transform.up))),
+            new CodeInstruction(OpCodes.Stloc_0),
+            new CodeInstruction(OpCodes.Br_S, label2)
+        );
+        matcher.Labels.Add(label1);
+        matcher.MatchForward(false,
+            new CodeMatch(OpCodes.Stloc_0)
+        ).Advance(1).Labels.Add(label2);
+        return matcher.InstructionEnumeration();
+    }
+
+	[HarmonyTranspiler]
+	[HarmonyPatch(typeof(PlanetSimulator), "LateUpdate")]
+    private static IEnumerable<CodeInstruction> PlanetSimulator_LateUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+    {
+        // var vec = (NightlightEnabled ? GameMain.mainPlayer.transform.up : (Quaternion.Inverse(localPlanet.runtimeRotation) * (__instance.planetData.star.uPosition - __instance.planetData.uPosition).normalized));
+        var matcher = new CodeMatcher(instructions, generator);
+        var label1 = generator.DefineLabel();
+        var label2 = generator.DefineLabel();
+        matcher.MatchForward(false,
+            new CodeMatch(OpCodes.Pop)
+        ).Advance(1).InsertAndAdvance(
+            new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(BuildPatch), nameof(BuildPatch.NightlightEnabled))),
+            new CodeInstruction(OpCodes.Brfalse_S, label1),
+            new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(GameMain), nameof(GameMain.mainPlayer))),
+            new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Player), nameof(Player.transform))),
+            new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Transform), nameof(Transform.up))),
+            new CodeInstruction(OpCodes.Stloc_1),
+            new CodeInstruction(OpCodes.Br_S, label2)
+        );
+        matcher.Labels.Add(label1);
+        matcher.MatchForward(false,
+            new CodeMatch(OpCodes.Ldsfld, AccessTools.Field(typeof(FactoryModel), nameof(FactoryModel.whiteMode0)))
+        ).Labels.Add(label2);
+        return matcher.InstructionEnumeration();
+    }
+    /* Night Light End */
 
     private static class ImmediateBuild
     {
@@ -159,22 +310,22 @@ public static class BuildPatch
             ).Insert(
                 new CodeInstruction(OpCodes.Ldarg_0),
                 new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(BuildTool), nameof(BuildTool.factory))),
-                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(BuildPatch), nameof(BuildPatch.ArrivePlanet)))
+                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(BuildPatch), nameof(ArrivePlanet)))
             );
             return matcher.InstructionEnumeration();
         }
     }
 
-    private static class NoCostBuild
+    private static class ArchitectMode
     {
-        private static Harmony _noCostPatch;
+        private static Harmony _architectPatch;
         private static bool[] _canBuildItems;
 
         public static void Enable(bool enable)
         {
             if (enable)
             {
-                if (_noCostPatch != null)
+                if (_architectPatch != null)
                 {
                     return;
                 }
@@ -185,12 +336,12 @@ public static class BuildPatch
                     ArrivePlanet(factory);
                 }
 
-                _noCostPatch = Harmony.CreateAndPatchAll(typeof(NoCostBuild));
+                _architectPatch = Harmony.CreateAndPatchAll(typeof(ArchitectMode));
             }
-            else if (_noCostPatch != null)
+            else if (_architectPatch != null)
             {
-                _noCostPatch.UnpatchSelf();
-                _noCostPatch = null;
+                _architectPatch.UnpatchSelf();
+                _architectPatch = null;
             }
         }
         
@@ -205,7 +356,7 @@ public static class BuildPatch
             {
                 DoInit();
             }
-            return itemId >= 10000 || !_canBuildItems[itemId];
+            return itemId >= 12000 || !_canBuildItems[itemId];
         }
         [HarmonyPostfix]
         [HarmonyPatch(typeof(StorageComponent), "GetItemCount", new Type[] { typeof(int) })]
@@ -218,7 +369,7 @@ public static class BuildPatch
             {
                 DoInit();
             }
-            if (itemId < 10000 && _canBuildItems[itemId]) __result = 100;
+            if (itemId < 12000 && _canBuildItems[itemId]) __result = 100;
         }
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(PlayerAction_Inspect), nameof(PlayerAction_Inspect.GetObjectSelectDistance))]
@@ -230,10 +381,10 @@ public static class BuildPatch
 
         private static void DoInit()
         {
-            _canBuildItems = new bool[10000];
+            _canBuildItems = new bool[12000];
             foreach (var ip in LDB.items.dataArray)
             {
-                if (ip.CanBuild && ip.ID < 10000) _canBuildItems[ip.ID] = true;
+                if (ip.CanBuild && ip.ID < 12000) _canBuildItems[ip.ID] = true;
             }
         }
     }
@@ -255,7 +406,7 @@ public static class BuildPatch
         private static IEnumerable<CodeInstruction> BuildTool_Click_CheckBuildConditions_Transpiler(IEnumerable<CodeInstruction> instructions)
         {
             yield return new CodeInstruction(OpCodes.Ldarg_0);
-            yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(NoConditionBuild), nameof(NoConditionBuild.CheckForMiner)));
+            yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(NoConditionBuild), nameof(CheckForMiner)));
             yield return new CodeInstruction(OpCodes.Ret);
         }
 
