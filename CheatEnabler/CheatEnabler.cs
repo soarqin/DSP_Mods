@@ -33,6 +33,8 @@ public class CheatEnabler : BaseUnityPlugin
         DevShortcuts.Enabled = Config.Bind("General", "DevShortcuts", false, "Enable DevMode shortcuts");
         AbnormalDisabler.Enabled = Config.Bind("General", "DisableAbnormalChecks", false,
             "disable all abnormal checks");
+        TechPatch.Enabled = Config.Bind("General", "UnlockTech", false,
+            "Unlock clicked tech by holding key-modifilers(Shift/Alt/Ctrl)");
         BuildPatch.ImmediateEnabled = Config.Bind("Build", "ImmediateBuild", false,
             "Build immediately");
         BuildPatch.NoCostEnabled = Config.Bind("Build", "InfiniteBuildings", false,
@@ -57,6 +59,10 @@ public class CheatEnabler : BaseUnityPlugin
             "Quick absorb");
         DysonSpherePatch.EjectAnywayEnabled = Config.Bind("DysonSphere", "EjectAnyway", false,
             "Eject anyway");
+        DysonSpherePatch.OverclockEjectorEnabled = Config.Bind("DysonSphere", "OverclockEjector", false,
+            "Overclock ejector");
+        DysonSpherePatch.OverclockSiloEnabled = Config.Bind("DysonSphere", "OverclockSilo", false,
+            "Overclock silo");
         BirthPlanetPatch.SitiVeinsOnBirthPlanet = Config.Bind("Birth", "SiTiVeinsOnBirthPlanet", false,
             "Silicon/Titanium on birth planet");
         BirthPlanetPatch.FireIceOnBirthPlanet = Config.Bind("Birth", "FireIceOnBirthPlanet", false,
@@ -77,8 +83,6 @@ public class CheatEnabler : BaseUnityPlugin
             "Birth planet is solid flat (no water at all)");
         BirthPlanetPatch.HighLuminosityBirthStar = Config.Bind("Birth", "HighLuminosityBirthStar", false,
             "Birth star has high luminosity");
-        // _unlockTechToMaximumLevel = Config.Bind("General", "UnlockTechToMaxLevel", _unlockTechToMaximumLevel,
-        //     "Unlock listed tech to MaxLevel").Value;
 
         I18N.Init();
         I18N.Add("CheatEnabler Config", "CheatEnabler Config", "CheatEnabler设置");
@@ -90,23 +94,13 @@ public class CheatEnabler : BaseUnityPlugin
 
         DevShortcuts.Init();
         AbnormalDisabler.Init();
+        TechPatch.Init();
         BuildPatch.Init();
         ResourcePatch.Init();
         WaterPumperPatch.Init();
         TerraformPatch.Init();
         DysonSpherePatch.Init();
         BirthPlanetPatch.Init();
-        // foreach (var idstr in _unlockTechToMaximumLevel.Split(','))
-        // {
-        //     if (int.TryParse(idstr, out var id))
-        //     {
-        //         TechToUnlock.Add(id);
-        //     }
-        // }
-        // if (TechToUnlock.Count > 0)
-        // {
-        //     Harmony.CreateAndPatchAll(typeof(UnlockTechOnGameStart));
-        // }
     }
 
     public void OnDestroy()
@@ -117,6 +111,7 @@ public class CheatEnabler : BaseUnityPlugin
         WaterPumperPatch.Uninit();
         ResourcePatch.Uninit();
         BuildPatch.Uninit();
+        TechPatch.Uninit();
         AbnormalDisabler.Uninit();
         DevShortcuts.Uninit();
         _patch?.UnpatchSelf();
@@ -229,94 +224,4 @@ public class CheatEnabler : BaseUnityPlugin
             _configWin.Open();
         }
     }
-
-    /*
-    private class UnlockTechOnGameStart
-    {
-        [HarmonyPostfix]
-        [HarmonyPatch(typeof(GameScenarioLogic), "NotifyOnGameBegin")]
-        private static void UnlockTechPatch()
-        {
-            var history = GameMain.history;
-            if (GameMain.mainPlayer == null || GameMain.mainPlayer.mecha == null)
-            {
-                return;
-            }
-
-            foreach (var currentTech in TechToUnlock)
-            {
-                UnlockTechRecursive(history, currentTech, currentTech == 3606 ? 7000 : 10000);
-            }
-
-            var techQueue = history.techQueue;
-            if (techQueue == null || techQueue.Length == 0)
-            {
-                return;
-            }
-
-            history.VarifyTechQueue();
-            if (history.currentTech > 0 && history.currentTech != techQueue[0])
-            {
-                history.AlterCurrentTech(techQueue[0]);
-            }
-        }
-
-        private static void UnlockTechRecursive(GameHistoryData history, int currentTech, int maxLevel = 10000)
-        {
-            var techStates = history.techStates;
-            if (techStates == null || !techStates.ContainsKey(currentTech))
-            {
-                return;
-            }
-
-            var techProto = LDB.techs.Select(currentTech);
-            if (techProto == null)
-            {
-                return;
-            }
-
-            var value = techStates[currentTech];
-            var maxLvl = Math.Min(maxLevel, value.maxLevel);
-            if (value.unlocked)
-            {
-                return;
-            }
-
-            foreach (var preid in techProto.PreTechs)
-            {
-                UnlockTechRecursive(history, preid, maxLevel);
-            }
-
-            var techQueue = history.techQueue;
-            if (techQueue != null)
-            {
-                for (var i = 0; i < techQueue.Length; i++)
-                {
-                    if (techQueue[i] == currentTech)
-                    {
-                        techQueue[i] = 0;
-                    }
-                }
-            }
-
-            if (value.curLevel < techProto.Level) value.curLevel = techProto.Level;
-            while (value.curLevel <= maxLvl)
-            {
-                for (var j = 0; j < techProto.UnlockFunctions.Length; j++)
-                {
-                    history.UnlockTechFunction(techProto.UnlockFunctions[j], techProto.UnlockValues[j], value.curLevel);
-                }
-
-                value.curLevel++;
-            }
-
-            value.unlocked = maxLvl >= value.maxLevel;
-            value.curLevel = value.unlocked ? maxLvl : maxLvl + 1;
-            value.hashNeeded = techProto.GetHashNeeded(value.curLevel);
-            value.hashUploaded = value.unlocked ? value.hashNeeded : 0;
-            techStates[currentTech] = value;
-        }
-    }
-    */
-
 }

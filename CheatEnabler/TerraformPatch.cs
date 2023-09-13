@@ -29,8 +29,7 @@ public static class TerraformPatch
         {
             if (_patch != null)
             {
-                _patch.UnpatchSelf();
-                _patch = null;
+                return;
             }
 
             _patch = Harmony.CreateAndPatchAll(typeof(TerraformPatch));

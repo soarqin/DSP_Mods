@@ -28,8 +28,7 @@ public static class WaterPumperPatch
         {
             if (_patch != null)
             {
-                _patch.UnpatchSelf();
-                _patch = null;
+                return;
             }
 
             _patch = Harmony.CreateAndPatchAll(typeof(WaterPumperPatch));

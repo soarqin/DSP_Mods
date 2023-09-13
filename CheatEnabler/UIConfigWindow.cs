@@ -1,5 +1,4 @@
-﻿using Steamworks;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace CheatEnabler;
 
@@ -15,12 +14,15 @@ public class UIConfigWindow : UI.MyWindowWithTabs
         I18N.Add("Enable Dev Shortcuts", "Enable Dev Shortcuts", "启用开发模式快捷键");
         I18N.Add("Disable Abnormal Checks", "Disable Abnormal Checks", "关闭数据异常检查");
         I18N.Add("Hotkey", "Hotkey", "快捷键");
+        I18N.Add("Unlock Tech with Key-Modifiers", "Unlock Tech with Key-Modifiers", "使用组合键解锁科技");
         I18N.Add("Dev Shortcuts", "Dev Shortcuts", "开发模式快捷键");
         I18N.Add("Dev Shortcuts Tips", "Caution: Some function may trigger abnormal check!\nNumpad 1: Gets all items and extends bag.\nNumpad 2: Boosts walk speed, gathering speed and mecha energy restoration.\nNumpad 3: Fills planet with foundations and bury all veins.\nNumpad 4: +1 construction drone.\nNumpad 5: Upgrades drone engine tech to full.\nNumpad 6: Unlocks researching tech.\nNumpad 7: Unlocks Drive Engine 1.\nNumpad 8: Unlocks Drive Engine 2 and maximize energy.\nNumpad 9: Unlocks ability to warp.\nNumpad 0: No costs for Logistic Storages' output.\nLCtrl + T: Unlocks all techs (not upgrades).\nLCtrl + A: Resets all local achievements.\nLCtrl + Q: Adds 10000 to every metadata.\nLCtrl + W: Enters Sandbox Mode.\nLCtrl + Shift + W: Leaves Sandbox Mode.\nNumpad *: Proliferates items on hand.\nNumpad /: Removes proliferations from items on hand.\nPageDown: Remembers Pose of game camera.\nPageUp: Locks game camera using remembered Pose.",
             "警告：某些功能可能触发异常检查!\n小键盘1：获得所有物品并扩展背包\n小键盘2：加快行走速度及采集速度，加快能量恢复速度\n小键盘3：将地基铺设整个星球并掩埋所有矿物\n小键盘4：建设机器人 +1\n小键盘5：建设机器人满级\n小键盘6：解锁当前科技\n小键盘7：解锁驱动技术I\n小键盘8：解锁驱动技术II 最大化能量\n小键盘9：机甲曲速解锁\n小键盘0：物流站通过传送带出物品无消耗\n左Ctrl + T：解锁所有非升级科技\n左Ctrl + A：重置所有本地成就\n左Ctrl + Q：增加各项元数据10000点\n左Ctrl + W：进入沙盒模式\n左Ctrl + Shift + W：离开沙盒模式\n小键盘乘号 *：给手上物品喷涂增产剂\n小键盘除号 /：清除手上物品的增产剂\nPageDown：记录摄像机当前的Pose\nPageUp：用记录的Pose锁定摄像机");
+        I18N.Add("Unlock Tech with Key-Modifiers Tips", "Click tech on tree while holding:\n  Shift: Tech level + 1\n  Ctrl: Tech level + 10\n  Ctrl + Shift: Tech level + 100\n  Alt: Tech level to MAX\n\nNote: all direct prerequisites will be unlocked as well.",
+            "按住以下组合键点击科技树：\n  Shift：科技等级+1\n  Ctrl：科技等级+10\n  Ctrl+Shift：科技等级+100\n  Alt：科技等级升到最大\n\n注意：所有直接前置科技也会被解锁");
         I18N.Add("Build", "Build", "建造");
         I18N.Add("Finish build immediately", "Finish build immediately", "建造秒完成");
-        I18N.Add("Infinite buildings", "Infinite buildings", "无限建筑");
+        I18N.Add("Architect mode", "Architect mode", "建筑师模式");
         I18N.Add("Build without condition", "Build without condition", "无条件建造");
         I18N.Add("No collision", "No collision", "无碰撞");
         I18N.Add("Planet", "Planet", "行星");
@@ -34,6 +36,8 @@ public class UIConfigWindow : UI.MyWindowWithTabs
         I18N.Add("Skip absorption period", "Skip absorption period", "跳过吸收阶段");
         I18N.Add("Quick absorb", "Quick absorb", "快速吸收");
         I18N.Add("Eject anyway", "Eject anyway", "全球弹射");
+        I18N.Add("Overclock Ejectors", "Overclock Ejectors (10x)", "高速弹射器(10倍射速)");
+        I18N.Add("Overclock Silos", "Overclock Silos (10x)", "高速发射井(10倍射速)");
         I18N.Add("Terraform without enough sands", "Terraform without enough sands", "沙土不够时依然可以整改地形");
         I18N.Add("Initialize Dyson Sphere", "Initialize Dyson Sphere", "初始化戴森球");
         I18N.Add("Click to dismantle selected layer", "Click to dismantle selected layer", "点击拆除对应的戴森壳");
@@ -73,11 +77,15 @@ public class UIConfigWindow : UI.MyWindowWithTabs
         UI.MyCheckBox.CreateCheckBox(x, y, tab1, DevShortcuts.Enabled, "Enable Dev Shortcuts");
         y += 36f;
         UI.MyCheckBox.CreateCheckBox(x, y, tab1, AbnormalDisabler.Enabled, "Disable Abnormal Checks");
-        y += 86f;
+        y += 36f;
+        UI.MyCheckBox.CreateCheckBox(x, y, tab1, TechPatch.Enabled, "Unlock Tech with Key-Modifiers");
+        y += 50f;
         UI.MyKeyBinder.CreateKeyBinder(x, y, tab1, CheatEnabler.Hotkey, "Hotkey");
         x = 180f;
         y = 16f;
         AddTipsButton(x, y, tab1, "Dev Shortcuts", "Dev Shortcuts Tips", "dev-shortcuts-tips");
+        y += 72f;
+        AddTipsButton(x, y, tab1, "Unlock Tech with Key-Modifiers", "Unlock Tech with Key-Modifiers Tips", "unlock-tech-tips");
 
         var tab2 = AddTab(136f, 1, _windowTrans, "Build");
         x = 0f;
@@ -150,6 +158,10 @@ public class UIConfigWindow : UI.MyWindowWithTabs
         UI.MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.QuickAbsortEnabled, "Quick absorb");
         y += 36f;
         UI.MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.EjectAnywayEnabled, "Eject anyway");
+        y += 36f;
+        UI.MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.OverclockEjectorEnabled, "Overclock Ejectors");
+        y += 36f;
+        UI.MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.OverclockSiloEnabled, "Overclock Silos");
         x = 300f;
         y = 10f;
         AddButton(x, y, tab4, "Initialize Dyson Sphere", 16, "init-dyson-sphere", () =>
@@ -199,36 +211,39 @@ public class UIConfigWindow : UI.MyWindowWithTabs
         UI.MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.FlatBirthPlanet, "Birth planet is solid flat (no water at all)");
         y += 36f;
         UI.MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.HighLuminosityBirthStar, "Birth star has high luminosity");
-        SetCurrentTab(0);
 
+        SetCurrentTab(0);
         UpdateUI();
     }
 
     public void UpdateUI()
     {
-        if (Tabs[3].Item1.gameObject.activeSelf)
+        UpdateDysonShells();
+    }
+
+    private void UpdateDysonShells()
+    {
+        if (!Tabs[3].Item1.gameObject.activeSelf) return;
+        var star = GameMain.localStar;
+        if (star != null)
         {
-            var star = GameMain.localStar;
-            if (star != null)
+            var dysonSpheres = GameMain.data?.dysonSpheres;
+            if (dysonSpheres?[star.index] != null)
             {
-                var dysonSpheres = GameMain.data?.dysonSpheres;
-                if (dysonSpheres?[star.index] != null)
+                var ds = dysonSpheres[star.index];
+                for (var i = 1; i <= 10; i++)
                 {
-                    var ds = dysonSpheres[star.index];
-                    for (var i = 1; i <= 10; i++)
-                    {
-                        var layer = ds.layersIdBased[i];
-                        _dysonLayerBtn[i - 1].button.interactable = layer != null && layer.id == i;
-                    }
-
-                    return;
+                    var layer = ds.layersIdBased[i];
+                    _dysonLayerBtn[i - 1].button.interactable = layer != null && layer.id == i;
                 }
-            }
 
-            for (var i = 0; i < 10; i++)
-            {
-                _dysonLayerBtn[i].button.interactable = false;
+                return;
             }
+        }
+
+        for (var i = 0; i < 10; i++)
+        {
+            _dysonLayerBtn[i].button.interactable = false;
         }
     }
 

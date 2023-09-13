@@ -12,10 +12,14 @@ public static class DysonSpherePatch
     public static ConfigEntry<bool> SkipAbsorbEnabled;
     public static ConfigEntry<bool> QuickAbsortEnabled;
     public static ConfigEntry<bool> EjectAnywayEnabled;
+    public static ConfigEntry<bool> OverclockEjectorEnabled;
+    public static ConfigEntry<bool> OverclockSiloEnabled;
     private static Harmony _skipBulletPatch;
     private static Harmony _skipAbsorbPatch;
     private static Harmony _quickAbsortPatch;
     private static Harmony _ejectAnywayPatch;
+    private static Harmony _overclockEjector;
+    private static Harmony _overclockSilo;
     
     public static void Init()
     {
@@ -23,10 +27,14 @@ public static class DysonSpherePatch
         SkipAbsorbEnabled.SettingChanged += (_, _) => SkipAbsorbValueChanged();
         QuickAbsortEnabled.SettingChanged += (_, _) => QuickAbsortValueChanged();
         EjectAnywayEnabled.SettingChanged += (_, _) => EjectAnywayValueChanged();
+        OverclockEjectorEnabled.SettingChanged += (_, _) => OverclockEjectorValueChanged();
+        OverclockSiloEnabled.SettingChanged += (_, _) => OverclockSiloValueChanged();
         SkipBulletValueChanged();
         SkipAbsorbValueChanged();
         QuickAbsortValueChanged();
         EjectAnywayValueChanged();
+        OverclockEjectorValueChanged();
+        OverclockSiloValueChanged();
     }
     
     public static void Uninit()
@@ -51,6 +59,16 @@ public static class DysonSpherePatch
             _ejectAnywayPatch.UnpatchSelf();
             _ejectAnywayPatch = null;
         }
+        if (_overclockEjector != null)
+        {
+            _overclockEjector.UnpatchSelf();
+            _overclockEjector = null;
+        }
+        if (_overclockSilo != null)
+        {
+            _overclockSilo.UnpatchSelf();
+            _overclockSilo = null;
+        }
     }
     
     private static void SkipBulletValueChanged()
@@ -59,10 +77,8 @@ public static class DysonSpherePatch
         {
             if (_skipBulletPatch != null)
             {
-                _skipBulletPatch.UnpatchSelf();
-                _skipBulletPatch = null;
+                return;
             }
-
             SkipBulletPatch.UpdateSailLifeTime();
             SkipBulletPatch.UpdateSailsCacheForThisGame();
             _skipBulletPatch = Harmony.CreateAndPatchAll(typeof(SkipBulletPatch));
@@ -80,8 +96,7 @@ public static class DysonSpherePatch
         {
             if (_skipAbsorbPatch != null)
             {
-                _skipAbsorbPatch.UnpatchSelf();
-                _skipAbsorbPatch = null;
+                return;
             }
             _skipAbsorbPatch = Harmony.CreateAndPatchAll(typeof(SkipAbsorbPatch));
         }
@@ -98,8 +113,7 @@ public static class DysonSpherePatch
         {
             if (_quickAbsortPatch != null)
             {
-                _quickAbsortPatch.UnpatchSelf();
-                _quickAbsortPatch = null;
+                return;
             }
             _quickAbsortPatch = Harmony.CreateAndPatchAll(typeof(QuickAbsortPatch));
         }
@@ -116,8 +130,7 @@ public static class DysonSpherePatch
         {
             if (_ejectAnywayPatch != null)
             {
-                _ejectAnywayPatch.UnpatchSelf();
-                _ejectAnywayPatch = null;
+                return;
             }
             _ejectAnywayPatch = Harmony.CreateAndPatchAll(typeof(EjectAnywayPatch));
         }
@@ -125,6 +138,40 @@ public static class DysonSpherePatch
         {
             _ejectAnywayPatch.UnpatchSelf();
             _ejectAnywayPatch = null;
+        }
+    }
+    
+    private static void OverclockEjectorValueChanged()
+    {
+        if (OverclockEjectorEnabled.Value)
+        {
+            if (_overclockEjector != null)
+            {
+                return;
+            }
+            _overclockEjector = Harmony.CreateAndPatchAll(typeof(OverclockEjector));
+        }
+        else if (_overclockEjector != null)
+        {
+            _overclockEjector.UnpatchSelf();
+            _overclockEjector = null;
+        }
+    }
+    
+    private static void OverclockSiloValueChanged()
+    {
+        if (OverclockSiloEnabled.Value)
+        {
+            if (_overclockSilo != null)
+            {
+                return;
+            }
+            _overclockSilo = Harmony.CreateAndPatchAll(typeof(OverclockSilo));
+        }
+        else if (_overclockSilo != null)
+        {
+            _overclockSilo.UnpatchSelf();
+            _overclockSilo = null;
         }
     }
 
@@ -428,6 +475,112 @@ public static class DysonSpherePatch
                 new CodeInstruction(OpCodes.Cgt),
                 new CodeInstruction(OpCodes.Stloc_S, 13)
             );
+            return matcher.InstructionEnumeration();
+        }
+    }
+
+    private static class OverclockEjector
+    {
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(EjectorComponent), nameof(EjectorComponent.InternalUpdate))]
+        private static IEnumerable<CodeInstruction> EjectAndSiloComponent_InternalUpdate_Patch(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            /* Add a multiply to ejector speed */
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Stloc_1)
+            ).InsertAndAdvance(
+                new CodeInstruction(OpCodes.Ldc_I4_S, 10),
+                new CodeInstruction(OpCodes.Mul)
+            ).Advance(1);
+
+            /* remove boost part of Sandbox Mode for better performance */
+            var pos = matcher.Pos;
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Stloc_1)
+            ).Advance(1);
+            var end = matcher.Pos;
+            matcher.Start().Advance(pos).RemoveInstructions(end - pos);
+            return matcher.InstructionEnumeration();
+        }
+
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(UIEjectorWindow), nameof(UIEjectorWindow._OnUpdate))]
+        private static IEnumerable<CodeInstruction> UIEjectAndSiloWindow__OnUpdate_Patch(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            /* Add a multiply to ejector speed */
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Ldsfld, AccessTools.Field(typeof(Cargo), nameof(Cargo.accTableMilli)))
+            ).Advance(-1);
+            var operand = matcher.Operand;
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Stloc_S, operand)
+            ).InsertAndAdvance(
+                new CodeInstruction(OpCodes.Ldc_R4, 10f),
+                new CodeInstruction(OpCodes.Mul)
+            ).Advance(1);
+
+            /* remove boost part of Sandbox Mode for better performance */
+            var pos = matcher.Pos;
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Stloc_S, operand)
+            ).Advance(1);
+            var end = matcher.Pos;
+            matcher.Start().Advance(pos).RemoveInstructions(end - pos);
+            return matcher.InstructionEnumeration();
+        }
+    }
+
+    private static class OverclockSilo
+    {
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(SiloComponent), nameof(SiloComponent.InternalUpdate))]
+        private static IEnumerable<CodeInstruction> EjectAndSiloComponent_InternalUpdate_Patch(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            /* Add a multiply to ejector speed */
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Stloc_1)
+            ).InsertAndAdvance(
+                new CodeInstruction(OpCodes.Ldc_I4_S, 10),
+                new CodeInstruction(OpCodes.Mul)
+            ).Advance(1);
+
+            /* remove boost part of Sandbox Mode for better performance */
+            var pos = matcher.Pos;
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Stloc_1)
+            ).Advance(1);
+            var end = matcher.Pos;
+            matcher.Start().Advance(pos).RemoveInstructions(end - pos);
+            return matcher.InstructionEnumeration();
+        }
+
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(UISiloWindow), nameof(UISiloWindow._OnUpdate))]
+        private static IEnumerable<CodeInstruction> UIEjectAndSiloWindow__OnUpdate_Patch(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            /* Add a multiply to ejector speed */
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Ldsfld, AccessTools.Field(typeof(Cargo), nameof(Cargo.accTableMilli)))
+            ).Advance(-1);
+            var operand = matcher.Operand;
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Stloc_S, operand)
+            ).InsertAndAdvance(
+                new CodeInstruction(OpCodes.Ldc_R4, 10f),
+                new CodeInstruction(OpCodes.Mul)
+            ).Advance(1);
+
+            /* remove boost part of Sandbox Mode for better performance */
+            var pos = matcher.Pos;
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Stloc_S, operand)
+            ).Advance(1);
+            var end = matcher.Pos;
+            matcher.Start().Advance(pos).RemoveInstructions(end - pos);
             return matcher.InstructionEnumeration();
         }
     }

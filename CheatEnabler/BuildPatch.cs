@@ -61,8 +61,7 @@ public static class BuildPatch
         {
             if (_noConditionPatch != null)
             {
-                _noConditionPatch.UnpatchSelf();
-                _noConditionPatch = null;
+                return;
             }
 
             _noConditionPatch = Harmony.CreateAndPatchAll(typeof(NoConditionBuild));
@@ -128,8 +127,7 @@ public static class BuildPatch
             {
                 if (_immediatePatch != null)
                 {
-                    _immediatePatch.UnpatchSelf();
-                    _immediatePatch = null;
+                    return;
                 }
 
                 var factory = GameMain.mainPlayer?.factory;
@@ -178,8 +176,7 @@ public static class BuildPatch
             {
                 if (_noCostPatch != null)
                 {
-                    _noCostPatch.UnpatchSelf();
-                    _noCostPatch = null;
+                    return;
                 }
 
                 var factory = GameMain.mainPlayer?.factory;
@@ -222,6 +219,13 @@ public static class BuildPatch
                 DoInit();
             }
             if (itemId < 10000 && _canBuildItems[itemId]) __result = 100;
+        }
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(PlayerAction_Inspect), nameof(PlayerAction_Inspect.GetObjectSelectDistance))]
+        private static IEnumerable<CodeInstruction> PlayerAction_Inspect_GetObjectSelectDistance_Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            yield return new CodeInstruction(OpCodes.Ldc_R4, 10000f);
+            yield return new CodeInstruction(OpCodes.Ret);
         }
 
         private static void DoInit()

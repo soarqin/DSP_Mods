@@ -41,8 +41,7 @@ public static class ResourcePatch
         {
             if (_infinitePatch != null)
             {
-                _infinitePatch.UnpatchSelf();
-                _infinitePatch = null;
+                return;
             }
 
             _infinitePatch = Harmony.CreateAndPatchAll(typeof(InfiniteResource));
@@ -59,8 +58,7 @@ public static class ResourcePatch
         {
             if (_fastPatch != null)
             {
-                _fastPatch.UnpatchSelf();
-                _fastPatch = null;
+                return;
             }
 
             _fastPatch = Harmony.CreateAndPatchAll(typeof(FastMining));
