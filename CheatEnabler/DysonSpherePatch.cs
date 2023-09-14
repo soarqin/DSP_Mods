@@ -246,20 +246,13 @@ public static class DysonSpherePatch
         }
 
         [HarmonyPostfix]
-        [HarmonyPatch(typeof(GameData), nameof(GameData.NewGame))]
-        [HarmonyPatch(typeof(GameData), nameof(GameData.Import))]
-        private static void GameData_NewGame_Postfix()
+        [HarmonyPatch(typeof(GameMain), nameof(GameMain.Begin))]
+        private static void GameMain_Begin_Postfix()
         {
             UpdateSailsCacheForThisGame();
-        }
-
-        [HarmonyPostfix]
-        [HarmonyPatch(typeof(GameHistoryData), nameof(GameHistoryData.SetForNewGame))]
-        [HarmonyPatch(typeof(GameHistoryData), nameof(GameHistoryData.Import))]
-        private static void GameHistoryData_SetForNewGame_Postfix()
-        {
             UpdateSailLifeTime();
         }
+
         [HarmonyPostfix]
         [HarmonyPatch(typeof(GameHistoryData), nameof(GameHistoryData.UnlockTechFunction))]
         private static void GameHistoryData_SetForNewGame_Postfix(int func)

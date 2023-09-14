@@ -49,7 +49,7 @@
 * [Dyson Sphere Program](https://store.steampowered.com/app/1366540): The great game
 * [BepInEx](https://bepinex.dev/): Base modding framework
 * [Multifunction_mod](https://github.com/blacksnipebiu/Multifunction_mod): Some cheat functions
-* [LSTM](https://github.com/hetima/DSP_LSTM) & [PlanetFinder](https://github.com/hetima/DSP_PlanetFinder): UI implemnetations
+* [LSTM](https://github.com/hetima/DSP_LSTM) & [PlanetFinder](https://github.com/hetima/DSP_PlanetFinder): UI implementations
 
 ## 更新日志
 * 2.0.0

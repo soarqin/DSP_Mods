@@ -16,15 +16,18 @@ public class UIConfigWindow : UI.MyWindowWithTabs
         I18N.Add("Hotkey", "Hotkey", "快捷键");
         I18N.Add("Unlock Tech with Key-Modifiers", "Unlock Tech with Key-Modifiers", "使用组合键点击解锁科技");
         I18N.Add("Dev Shortcuts", "Dev Shortcuts", "开发模式快捷键");
-        I18N.Add("Dev Shortcuts Tips", "Caution: Some function may trigger abnormal check!\nNumpad 1: Gets all items and extends bag.\nNumpad 2: Boosts walk speed, gathering speed and mecha energy restoration.\nNumpad 3: Fills planet with foundations and bury all veins.\nNumpad 4: +1 construction drone.\nNumpad 5: Upgrades drone engine tech to full.\nNumpad 6: Unlocks researching tech.\nNumpad 7: Unlocks Drive Engine 1.\nNumpad 8: Unlocks Drive Engine 2 and maximize energy.\nNumpad 9: Unlocks ability to warp.\nNumpad 0: No costs for Logistic Storages' output.\nLCtrl + T: Unlocks all techs (not upgrades).\nLCtrl + A: Resets all local achievements.\nLCtrl + Q: Adds 10000 to every metadata.\nLCtrl + W: Enters Sandbox Mode.\nLCtrl + Shift + W: Leaves Sandbox Mode.\nNumpad *: Proliferates items on hand.\nNumpad /: Removes proliferations from items on hand.\nPageDown: Remembers Pose of game camera.\nPageUp: Locks game camera using remembered Pose.",
+        I18N.Add("Dev Shortcuts Tips",
+            "Caution: Some function may trigger abnormal check!\nNumpad 1: Gets all items and extends bag.\nNumpad 2: Boosts walk speed, gathering speed and mecha energy restoration.\nNumpad 3: Fills planet with foundations and bury all veins.\nNumpad 4: +1 construction drone.\nNumpad 5: Upgrades drone engine tech to full.\nNumpad 6: Unlocks researching tech.\nNumpad 7: Unlocks Drive Engine 1.\nNumpad 8: Unlocks Drive Engine 2 and maximize energy.\nNumpad 9: Unlocks ability to warp.\nNumpad 0: No costs for Logistic Storages' output.\nLCtrl + T: Unlocks all techs (not upgrades).\nLCtrl + A: Resets all local achievements.\nLCtrl + Q: Adds 10000 to every metadata.\nLCtrl + W: Enters Sandbox Mode.\nLCtrl + Shift + W: Leaves Sandbox Mode.\nNumpad *: Proliferates items on hand.\nNumpad /: Removes proliferations from items on hand.\nPageDown: Remembers Pose of game camera.\nPageUp: Locks game camera using remembered Pose.",
             "警告：某些功能可能触发异常检查!\n小键盘1：获得所有物品并扩展背包\n小键盘2：加快行走速度及采集速度，加快能量恢复速度\n小键盘3：将地基铺设整个星球并掩埋所有矿物\n小键盘4：建设机器人 +1\n小键盘5：建设机器人满级\n小键盘6：解锁当前科技\n小键盘7：解锁驱动技术I\n小键盘8：解锁驱动技术II 最大化能量\n小键盘9：机甲曲速解锁\n小键盘0：物流站通过传送带出物品无消耗\n左Ctrl + T：解锁所有非升级科技\n左Ctrl + A：重置所有本地成就\n左Ctrl + Q：增加各项元数据10000点\n左Ctrl + W：进入沙盒模式\n左Ctrl + Shift + W：离开沙盒模式\n小键盘乘号 *：给手上物品喷涂增产剂\n小键盘除号 /：清除手上物品的增产剂\nPageDown：记录摄像机当前的Pose\nPageUp：用记录的Pose锁定摄像机");
-        I18N.Add("Unlock Tech with Key-Modifiers Tips", "Click tech on tree while holding:\n  Shift: Tech level + 1\n  Ctrl: Tech level + 10\n  Ctrl + Shift: Tech level + 100\n  Alt: Tech level to MAX\n\nNote: all direct prerequisites will be unlocked as well.",
+        I18N.Add("Unlock Tech with Key-Modifiers Tips",
+            "Click tech on tree while holding:\n  Shift: Tech level + 1\n  Ctrl: Tech level + 10\n  Ctrl + Shift: Tech level + 100\n  Alt: Tech level to MAX\n\nNote: all direct prerequisites will be unlocked as well.",
             "按住以下组合键点击科技树：\n  Shift：科技等级+1\n  Ctrl：科技等级+10\n  Ctrl+Shift：科技等级+100\n  Alt：科技等级升到最大\n\n注意：所有直接前置科技也会被解锁");
         I18N.Add("Build", "Build", "建造");
         I18N.Add("Finish build immediately", "Finish build immediately", "建造秒完成");
         I18N.Add("Architect mode", "Architect mode", "建筑师模式");
         I18N.Add("Build without condition", "Build without condition check", "无条件建造");
         I18N.Add("No collision", "No collision", "无碰撞");
+        I18N.Add("Belt signal generator", "Belt signal generator", "传送带信号物品生成");
         I18N.Add("Planet", "Planet", "行星");
         I18N.Add("Infinite Natural Resources", "Infinite Natural Resources", "自然资源采集不消耗");
         I18N.Add("Fast Mining", "Fast Mining", "高速采集");
@@ -98,6 +101,8 @@ public class UIConfigWindow : UI.MyWindowWithTabs
         UI.MyCheckBox.CreateCheckBox(x, y, tab2, BuildPatch.NoConditionEnabled, "Build without condition");
         y += 36f;
         UI.MyCheckBox.CreateCheckBox(x, y, tab2, BuildPatch.NoCollisionEnabled, "No collision");
+        y += 36f;
+        UI.MyCheckBox.CreateCheckBox(x, y, tab2, BuildPatch.BeltSignalGeneratorEnabled, "Belt signal generator");
 
         // Planet Tab
         var tab3 = AddTab(236f, 2, _windowTrans, "Planet");
@@ -112,15 +117,9 @@ public class UIConfigWindow : UI.MyWindowWithTabs
         UI.MyCheckBox.CreateCheckBox(x, y, tab3, TerraformPatch.Enabled, "Terraform without enough sands");
         x = 300f;
         y = 10f;
-        AddButton(x, y, tab3, "矿物掩埋标题", 16, "button-bury-all", () =>
-        {
-            PlanetFunctions.BuryAllVeins(true);
-        });
+        AddButton(x, y, tab3, "矿物掩埋标题", 16, "button-bury-all", () => { PlanetFunctions.BuryAllVeins(true); });
         y += 36f;
-        AddButton(x, y, tab3, "矿物还原标题", 16, "button-bury-restore-all", () =>
-        {
-            PlanetFunctions.BuryAllVeins(false);
-        });
+        AddButton(x, y, tab3, "矿物还原标题", 16, "button-bury-restore-all", () => { PlanetFunctions.BuryAllVeins(false); });
         y += 36f;
         AddButton(x, y, tab3, "铺满地基提示", 16, "button-reform-all", () =>
         {
@@ -139,15 +138,9 @@ public class UIConfigWindow : UI.MyWindowWithTabs
             GameMain.localPlanet.factory.PlanetReformRevert();
         });
         y += 36f;
-        AddButton(x, y, tab3, "Initialize This Planet", 16, "button-init-planet", () =>
-        {
-            PlanetFunctions.RecreatePlanet(true);
-        });
+        AddButton(x, y, tab3, "Initialize This Planet", 16, "button-init-planet", () => { PlanetFunctions.RecreatePlanet(true); });
         y += 36f;
-        AddButton(x, y, tab3, "Dismantle All Buildings", 16, "button-dismantle-all", () =>
-        {
-            PlanetFunctions.DismantleAll(false);
-        });
+        AddButton(x, y, tab3, "Dismantle All Buildings", 16, "button-dismantle-all", () => { PlanetFunctions.DismantleAll(false); });
 
         var tab4 = AddTab(336f, 3, _windowTrans, "Dyson Sphere");
         x = 0f;
@@ -165,10 +158,7 @@ public class UIConfigWindow : UI.MyWindowWithTabs
         UI.MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.OverclockSiloEnabled, "Overclock Silos");
         x = 300f;
         y = 10f;
-        AddButton(x, y, tab4, "Initialize Dyson Sphere", 16, "init-dyson-sphere", () =>
-        {
-            DysonSpherePatch.InitCurrentDysonSphere(-1);
-        });
+        AddButton(x, y, tab4, "Initialize Dyson Sphere", 16, "init-dyson-sphere", () => { DysonSpherePatch.InitCurrentDysonSphere(-1); });
         y += 36f;
         AddText(x, y, tab4, "Click to dismantle selected layer", 16, "text-dismantle-layer");
         y += 26f;

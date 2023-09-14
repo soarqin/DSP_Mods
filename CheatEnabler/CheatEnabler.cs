@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 using System.Reflection.Emit;
 using BepInEx;
 using BepInEx.Configuration;
@@ -41,6 +39,8 @@ public class CheatEnabler : BaseUnityPlugin
             "Build without condition");
         BuildPatch.NoCollisionEnabled = Config.Bind("Build", "NoCollision", false,
             "No collision");
+        BuildPatch.BeltSignalGeneratorEnabled = Config.Bind("Build", "BeltSignalGenerator", false,
+            "Belt signal generator");
         ResourcePatch.InfiniteEnabled = Config.Bind("Planet", "AlwaysInfiniteResource", false,
             "always infinite natural resource");
         ResourcePatch.FastEnabled = Config.Bind("Planet", "FastMining", false,
