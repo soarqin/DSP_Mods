@@ -8,8 +8,9 @@ public static class PlanetFunctions {
         var player = GameMain.mainPlayer;
         if (player == null) return;
         var planet = GameMain.localPlanet;
-        if (planet == null || planet.factory == null) return;
-        foreach (var etd in GameMain.localPlanet.factory.entityPool)
+        var factory = planet?.factory;
+        if (factory == null) return;
+        foreach (var etd in factory.entityPool)
         {
             var stationId = etd.stationId;
             if (stationId > 0)
@@ -23,18 +24,16 @@ public static class PlanetFunctions {
                         UIItemup.Up(sc.storage[i].itemId, package);
                     }
                 }
-
                 sc.storage = new StationStore[sc.storage.Length];
                 sc.needs = new int[sc.needs.Length];
             }
-
             if (toBag)
             {
                 player.controller.actionBuild.DoDismantleObject(etd.id);
             }
             else
             {
-                GameMain.localPlanet.factory.RemoveEntityWithComponents(etd.id);
+                factory.RemoveEntityWithComponents(etd.id);
             }
         }
     }
@@ -144,7 +143,6 @@ public static class PlanetFunctions {
             if (warningPool[i].id == i && warningPool[i].factoryId == index)
                 warningSystem.RemoveWarningData(warningPool[i].id);
         }
-
         factory.entityCursor = 1;
         factory.entityRecycleCursor = 0;
         factory.SetEntityCapacity(1024);
