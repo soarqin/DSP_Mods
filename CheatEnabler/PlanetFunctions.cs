@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Threading;
+using UnityEngine;
 
 namespace CheatEnabler;
 public static class PlanetFunctions {
@@ -71,7 +72,7 @@ public static class PlanetFunctions {
         if (factory == null) return;
         //planet.data = new PlanetRawData(planet.precision);
         //planet.data.CalcVerts();
-        for (var id = 1; id < factory.entityCursor; id++)
+        for (var id = factory.entityCursor - 1; id > 0; id--)
         {
             var ed = factory.entityPool[id];
             if (ed.id != id) continue;
@@ -100,9 +101,10 @@ public static class PlanetFunctions {
             }
         }
 
-        if (factory.transport != null && factory.transport.stationPool != null)
+        var stationPool = factory.transport?.stationPool;
+        if (stationPool != null)
         {
-            foreach (var sc in factory.transport.stationPool)
+            foreach (var sc in stationPool)
             {
                 if (sc == null || sc.id <= 0) continue;
                 sc.storage = new StationStore[sc.storage.Length];
@@ -112,16 +114,18 @@ public static class PlanetFunctions {
             }
         }
 
-        if (GameMain.gameScenario != null)
+        var gameScenario = GameMain.gameScenario;
+        if (gameScenario != null)
         {
-            if (factory.powerSystem != null && factory.powerSystem.genPool != null)
+            var genPool = factory.powerSystem?.genPool;
+            if (genPool != null)
             {
-                foreach (var pgc in factory.powerSystem.genPool)
+                foreach (var pgc in genPool)
                 {
                     if (pgc.id <= 0) continue;
                     int protoId = factory.entityPool[pgc.entityId].protoId;
-                    GameMain.gameScenario.achievementLogic.NotifyBeforeDismantleEntity(planet.id, protoId, pgc.entityId);
-                    GameMain.gameScenario.NotifyOnDismantleEntity(planet.id, protoId, pgc.entityId);
+                    gameScenario.achievementLogic.NotifyBeforeDismantleEntity(planet.id, protoId, pgc.entityId);
+                    gameScenario.NotifyOnDismantleEntity(planet.id, protoId, pgc.entityId);
                 }
             }
         }
@@ -133,10 +137,12 @@ public static class PlanetFunctions {
 
         planet.UnloadFactory();
         var index = factory.index;
-        for (var i = 1; i < GameMain.data.warningSystem.warningCursor; i++)
+        var warningSystem = GameMain.data.warningSystem;
+        var warningPool = warningSystem.warningPool;
+        for (var i = warningSystem.warningCursor - 1; i > 0; i--)
         {
-            if (GameMain.data.warningSystem.warningPool[i].factoryId == index)
-                GameMain.data.warningSystem.RemoveWarningData(GameMain.data.warningSystem.warningPool[i].id);
+            if (warningPool[i].id == i && warningPool[i].factoryId == index)
+                warningSystem.RemoveWarningData(warningPool[i].id);
         }
 
         factory.entityCursor = 1;
@@ -156,5 +162,10 @@ public static class PlanetFunctions {
         factory.digitalSystem = new DigitalSystem(planet);
         //GameMain.data.statistics.production.CreateFactoryStat(index);
         planet.LoadFactory();
+        while (!planet.factoryLoaded)
+        {
+            PlanetModelingManager.Update();
+            Thread.Sleep(0);
+        }
     }
 }

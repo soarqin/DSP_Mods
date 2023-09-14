@@ -60,11 +60,6 @@ public class LogisticMiner : BaseUnityPlugin
             .Value - 1;
         if (!_cfgEnabled) return;
 
-        if (_miningScale < 100)
-        {
-            _miningScale = 100;
-        }
-
         Harmony.CreateAndPatchAll(typeof(LogisticMiner));
     }
 
