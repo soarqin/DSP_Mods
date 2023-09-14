@@ -29,6 +29,10 @@ public class MyWindow: ManualBehaviour
     public void Open()
     {
         _Open();
+    }
+
+    public override void _OnUpdate()
+    {
         transform.SetSiblingIndex(UIRoot.instance.uiMechaEditor.transform.GetSiblingIndex() + 1);
     }
 
@@ -75,6 +79,7 @@ public class MyWindow: ManualBehaviour
         dst.gameObject.name = objName;
         var btn = dst.GetComponent<UIButton>();
         Util.NormalizeRectWithTopLeft(btn, x, y, parent);
+        btn.tips.topLevel = true;
         btn.tips.tipTitle = label;
         btn.tips.tipText = tip;
         btn.UpdateTip();

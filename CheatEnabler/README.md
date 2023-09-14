@@ -4,6 +4,9 @@
 #### 添加一些作弊功能，同时屏蔽异常检测
 
 ## Changlog
+* 2.1.0
+  + Belt signal item generation
+  + Fix window display priority which may cause tips to be covered by main window
 * 2.0.0
   + Refactorying codes
   + UI implementation
@@ -26,6 +29,7 @@
     + Architect mode (Infinite buildings + Interactive without distance limit + Sunlight at night)
     + Build without condition
     + No collision
+    + Belt signal item generation
   + Planet:
     + Infinite Natural Resources
     + Fast Mining
@@ -52,6 +56,9 @@
 * [LSTM](https://github.com/hetima/DSP_LSTM) & [PlanetFinder](https://github.com/hetima/DSP_PlanetFinder): UI implementations
 
 ## 更新日志
+* 2.1.0
+  + 传送带信号物品生成
+  + 修复窗口显示优先级可能导致提示信息被主窗口遮挡的问题
 * 2.0.0
   + 重构代码
   + UI实现
@@ -74,6 +81,7 @@
     + 建筑师模式(无限建筑+无视距离操作+夜间日光灯)
     + 无条件建造
     + 无碰撞
+    + 传送带信号物品生成
   + 行星：
     + 自然资源采集不消耗
     + 高速采集

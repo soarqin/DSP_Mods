@@ -262,6 +262,7 @@ public class UIConfigWindow : UI.MyWindowWithTabs
 
     public override void _OnUpdate()
     {
+        base._OnUpdate();
         if (VFInput.escape && !VFInput.inputing)
         {
             VFInput.UseEscape();
