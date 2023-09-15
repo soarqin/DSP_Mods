@@ -208,6 +208,33 @@ public class CheatEnabler : BaseUnityPlugin
         });
         return matcher.InstructionEnumeration();
     }
+    
+    [HarmonyTranspiler]
+    [HarmonyPatch(typeof(UIButton), nameof(UIButton.LateUpdate))]
+    private static IEnumerable<CodeInstruction> UIButton_LateUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+    {
+        var matcher = new CodeMatcher(instructions, generator);
+        matcher.MatchForward(false,
+            new CodeMatch(OpCodes.Ldloc_2),
+            new CodeMatch(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Component), nameof(Component.gameObject))),
+            new CodeMatch(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(GameObject), nameof(GameObject.activeSelf)))
+        ).InsertAndAdvance(
+            new CodeInstruction(OpCodes.Ldloc_2),
+            new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Component), nameof(Component.transform))),
+            new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Transform), nameof(Transform.parent))),
+            new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Transform), nameof(Transform.parent))),
+            new CodeInstruction(OpCodes.Callvirt, AccessTools.Method(typeof(Transform), nameof(Transform.SetAsLastSibling)))
+        ).MatchForward(false,
+            new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(UIButtonTip), nameof(UIButtonTip.SetTip)))
+        ).Advance(1).Insert(
+            new CodeInstruction(OpCodes.Ldloc_2),
+            new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Component), nameof(Component.transform))),
+            new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Transform), nameof(Transform.parent))),
+            new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Transform), nameof(Transform.parent))),
+            new CodeInstruction(OpCodes.Callvirt, AccessTools.Method(typeof(Transform), nameof(Transform.SetAsLastSibling)))
+        );
+        return matcher.InstructionEnumeration();
+    }
 
     private static void ToggleConfigWindow()
     {

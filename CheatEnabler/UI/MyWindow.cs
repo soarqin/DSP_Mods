@@ -29,11 +29,7 @@ public class MyWindow: ManualBehaviour
     public void Open()
     {
         _Open();
-    }
-
-    public override void _OnUpdate()
-    {
-        transform.SetSiblingIndex(UIRoot.instance.uiMechaEditor.transform.GetSiblingIndex() + 1);
+        transform.SetAsLastSibling();
     }
 
     public void Close() => _Close();
