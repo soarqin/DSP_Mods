@@ -178,7 +178,7 @@ public class CheatEnabler : BaseUnityPlugin
                 rect.localScale = new Vector3(0.5f, 0.5f, 0.5f);
                 rect.anchoredPosition3D = new Vector3(128f, -105f, 0f);
                 b.onClick.RemoveAllListeners();
-                btn.onClick += (_) => { ToggleConfigWindow(); };
+                btn.onClick += _ => { ToggleConfigWindow(); };
                 btn.tips.tipTitle = "CheatEnabler Config";
                 I18N.OnInitialized += () => { btn.tips.tipTitle = "CheatEnabler Config".Translate(); };
                 btn.tips.tipText = null;
@@ -218,16 +218,11 @@ public class CheatEnabler : BaseUnityPlugin
             new CodeMatch(OpCodes.Ldloc_2),
             new CodeMatch(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Component), nameof(Component.gameObject))),
             new CodeMatch(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(GameObject), nameof(GameObject.activeSelf)))
-        ).InsertAndAdvance(
-            new CodeInstruction(OpCodes.Ldloc_2),
-            new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Component), nameof(Component.transform))),
-            new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Transform), nameof(Transform.parent))),
-            new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Transform), nameof(Transform.parent))),
-            new CodeInstruction(OpCodes.Callvirt, AccessTools.Method(typeof(Transform), nameof(Transform.SetAsLastSibling)))
-        ).MatchForward(false,
-            new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(UIButtonTip), nameof(UIButtonTip.SetTip)))
-        ).Advance(1).Insert(
-            new CodeInstruction(OpCodes.Ldloc_2),
+        );
+        var labels = matcher.Labels;
+        matcher.Labels = null;
+        matcher.Insert(
+            new CodeInstruction(OpCodes.Ldloc_2).WithLabels(labels),
             new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Component), nameof(Component.transform))),
             new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Transform), nameof(Transform.parent))),
             new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Transform), nameof(Transform.parent))),
