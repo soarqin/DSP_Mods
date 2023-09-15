@@ -1,8 +1,260 @@
-﻿using System.Threading;
-using UnityEngine;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using HarmonyLib;
+using Random = UnityEngine.Random;
 
 namespace CheatEnabler;
-public static class PlanetFunctions {
+public static class PlanetFunctions
+{
+    private static Harmony _patch;
+    private static readonly Dictionary<int, ItemSource> ItemSources = new();
+    private static PumpSource[] _pumpItemSources = new PumpSource[16];
+    private static int _pumpItemSourcesLength = 16;
+
+    private class PumpSource
+    {
+        public Tuple<int, float>[] Items;
+        public float[] Progress;
+    }
+
+    public static void Init()
+    {
+        if (_patch != null) return;
+        _patch = Harmony.CreateAndPatchAll(typeof(PlanetFunctions));
+    }
+
+    public static void Uninit()
+    {
+        _patch?.UnpatchSelf();
+        _patch = null;
+    }
+
+    [HarmonyPostfix]
+    [HarmonyPatch(typeof(GameMain), nameof(GameMain.Begin))]
+    private static void GameMain_Begin_Postfix()
+    {
+        InitItemSources();
+        var factories = GameMain.data.factories;
+        for (var i = GameMain.data.factoryCount - 1; i >= 0; i--)
+        {
+            if (factories[i].index != i) continue;
+            UpdatePumpItemSources(factories[i]);
+        }
+    }
+
+    private static void UpdatePumpItemSources(PlanetFactory factory)
+    {
+        var index = factory.index;
+        var waterItemId = factory.planet.waterItemId;
+        if (waterItemId == 0 || !ItemSources.TryGetValue(waterItemId, out var itemSource) || itemSource.From == null)
+        {
+            if (index < _pumpItemSourcesLength)
+            {
+                _pumpItemSources[index] = null;
+            }
+            return;
+        }
+        if (index >= _pumpItemSourcesLength)
+        {
+            var newLength = _pumpItemSourcesLength * 2;
+            while (index >= newLength)
+            {
+                newLength *= 2;
+            }
+            var newPumpItemSources = new PumpSource[newLength];
+            Array.Copy(_pumpItemSources, newPumpItemSources, _pumpItemSourcesLength);
+            _pumpItemSources = newPumpItemSources;
+            _pumpItemSourcesLength = newLength;
+        }
+        var pump = _pumpItemSources[index];
+        if (pump == null)
+        {
+            pump = new PumpSource();
+            _pumpItemSources[index] = pump;
+        }
+
+        var result = new Dictionary<int, float>();
+        var extra = new Dictionary<int, float>();
+        CalculateAllProductions(result, extra, waterItemId, 1f);
+        foreach (var p in extra)
+        {
+            if (!result.TryGetValue(p.Key, out var cnt) || cnt < p.Value)
+            {
+                result[p.Key] = p.Value;
+            }
+        }
+
+        var count = result.Count;
+        var items = new Tuple<int, float>[count];
+        var progress = new float[count];
+        foreach (var p in result)
+        {
+            items[--count] = Tuple.Create(p.Key, p.Value);
+        }
+        pump.Items = items;
+        pump.Progress = progress;
+    }
+
+    /* Pump item calculation */
+    private class ItemSource
+    {
+        public float Count;
+        public Dictionary<int, float> From;
+        public Dictionary<int, float> Extra;
+    }
+
+    private static void InitItemSources()
+    {
+        ItemSources.Clear();
+        foreach (var vein in LDB.veins.dataArray)
+        {
+            ItemSources[vein.MiningItem] = new ItemSource { Count = 1 };
+        }
+
+        foreach (var ip in LDB.items.dataArray)
+        {
+            if (!string.IsNullOrEmpty(ip.MiningFrom))
+            {
+                ItemSources[ip.ID] = new ItemSource { Count = 1 };
+            }
+        }
+
+        ItemSources[1208] = new ItemSource { Count = 1 };
+        var recipes = LDB.recipes.dataArray;
+        foreach (var recipe in recipes)
+        {
+            if (!recipe.Explicit || recipe.ID == 58 || recipe.ID == 121) continue;
+            var res = recipe.Results;
+            var rescnt = recipe.ResultCounts;
+            var len = res.Length;
+            for (var i = 0; i < len; i++)
+            {
+                if (ItemSources.ContainsKey(res[i])) continue;
+                var rs = new ItemSource { Count = rescnt[i], From = new Dictionary<int, float>() };
+                var it = recipe.Items;
+                var itcnt = recipe.ItemCounts;
+                var len2 = it.Length;
+                for (var j = 0; j < len2; j++)
+                {
+                    rs.From[it[j]] = itcnt[j];
+                }
+                if (len > 1)
+                {
+                    rs.Extra = new Dictionary<int, float>();
+                    for (var k = 0; k < len; k++)
+                    {
+                        if (i != k)
+                        {
+                            rs.Extra[res[k]] = rescnt[k];
+                        }
+                    }
+                }
+
+                ItemSources[res[i]] = rs;
+            }
+        }
+        foreach (var recipe in recipes)
+        {
+            if (recipe.Explicit) continue;
+            var res = recipe.Results;
+            var rescnt = recipe.ResultCounts;
+            var len = res.Length;
+            for (var i = 0; i < len; i++)
+            {
+                if (ItemSources.ContainsKey(res[i])) continue;
+                var rs = new ItemSource { Count = rescnt[i], From = new Dictionary<int, float>() };
+                var it = recipe.Items;
+                var itcnt = recipe.ItemCounts;
+                var len2 = it.Length;
+                for (var j = 0; j < len2; j++)
+                {
+                    rs.From[it[j]] = itcnt[j];
+                }
+                if (len > 1)
+                {
+                    rs.Extra = new Dictionary<int, float>();
+                    for (var k = 0; k < len; k++)
+                    {
+                        if (i != k)
+                        {
+                            rs.Extra[res[k]] = rescnt[k];
+                        }
+                    }
+                }
+
+                ItemSources[res[i]] = rs;
+            }
+        }
+    }
+
+    public static void CalculateAllProductions(Dictionary<int, float> result, Dictionary<int, float> extra, int itemId, float count = 0f)
+    {
+        if (!ItemSources.TryGetValue(itemId, out var itemSource))
+        {
+            if (count <= 0) return;
+            result.TryGetValue(itemId, out var oldCount);
+            result[itemId] = oldCount + count;
+            return;
+        }
+
+        var times = 1f;
+        if (count == 0f)
+        {
+            count = itemSource.Count;
+        }
+        else if (Math.Abs(count - itemSource.Count) > 0.000001f)
+        {
+            times = count / itemSource.Count;
+        }
+
+        {
+            result.TryGetValue(itemId, out var oldCount);
+            result[itemId] = oldCount + count;
+        }
+        if (itemSource.Extra != null)
+        {
+            foreach (var p in itemSource.Extra)
+            {
+                extra.TryGetValue(p.Key, out var oldCount);
+                extra[p.Key] = oldCount + times * p.Value;
+            }
+        }
+
+        if (itemSource.From == null) return;
+        foreach (var p in itemSource.From)
+        {
+            CalculateAllProductions(result, extra, p.Key, times * p.Value);
+        }
+    }
+
+    public static void CalculateAllProductions(Dictionary<int, float> result, int itemId, float count = 0f)
+    {
+        var extra = new Dictionary<int, float>();
+        CalculateAllProductions(result, extra, itemId, count);
+        foreach (var k in extra.Keys.ToArray())
+        {
+            if (!result.TryGetValue(k, out var cnt)) continue;
+            var cnt2 = extra[k];
+            if (Math.Abs(cnt - cnt2) < 0.000001f)
+            {
+                result.Remove(k);
+                extra.Remove(k);
+                continue;
+            }
+            if (cnt > cnt2)
+            {
+                result[k] = cnt - cnt2;
+                extra.Remove(k);
+                continue;
+            }
+            result.Remove(k);
+            extra[k] = cnt2 - cnt;
+        }
+    }
+    /* Pump item calculation */
+    
     public static void DismantleAll(bool toBag)
     {
         var player = GameMain.mainPlayer;

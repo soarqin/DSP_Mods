@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Reflection.Emit;
 using BepInEx;
 using BepInEx.Configuration;
@@ -94,6 +95,7 @@ public class CheatEnabler : BaseUnityPlugin
         AbnormalDisabler.Init();
         TechPatch.Init();
         BuildPatch.Init();
+        PlanetFunctions.Init();
         ResourcePatch.Init();
         WaterPumperPatch.Init();
         TerraformPatch.Init();
@@ -108,12 +110,15 @@ public class CheatEnabler : BaseUnityPlugin
         TerraformPatch.Uninit();
         WaterPumperPatch.Uninit();
         ResourcePatch.Uninit();
+        PlanetFunctions.Uninit();
         BuildPatch.Uninit();
         TechPatch.Uninit();
         AbnormalDisabler.Uninit();
         DevShortcuts.Uninit();
         _patch?.UnpatchSelf();
+        _patch = null;
         _windowPatch?.UnpatchSelf();
+        _windowPatch = null;
     }
 
     private void Update()
