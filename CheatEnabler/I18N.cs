@@ -5,7 +5,7 @@ using HarmonyLib;
 
 namespace CheatEnabler;
 
-public class I18N
+public static class I18N
 {
     private static bool _initialized;
 
@@ -15,6 +15,8 @@ public class I18N
     {
         Harmony.CreateAndPatchAll(typeof(I18N));
     }
+
+    public static bool Initialized() => _initialized;
     private static int _nextID = 1;
     private static readonly List<StringProto> StringsToAdd = new();
     public static void Add(string key, string enus, string zhcn = null, string frfr = null)

@@ -32,16 +32,32 @@ public class CheatEnabler : BaseUnityPlugin
             "disable all abnormal checks");
         TechPatch.Enabled = Config.Bind("General", "UnlockTech", false,
             "Unlock clicked tech by holding key-modifilers(Shift/Alt/Ctrl)");
-        BuildPatch.ImmediateEnabled = Config.Bind("Build", "ImmediateBuild", false,
+        FactoryPatch.ImmediateEnabled = Config.Bind("Build", "ImmediateBuild", false,
             "Build immediately");
-        BuildPatch.ArchitectModeEnabled = Config.Bind("Build", "Architect", false,
+        FactoryPatch.ArchitectModeEnabled = Config.Bind("Build", "Architect", false,
             "Architect Mode");
-        BuildPatch.NoConditionEnabled = Config.Bind("Build", "BuildWithoutCondition", false,
+        FactoryPatch.UnlimitInteractiveEnabled = Config.Bind("Build", "UnlimitInteractive", false,
+            "Unlimit interactive range");
+        FactoryPatch.NoConditionEnabled = Config.Bind("Build", "BuildWithoutCondition", false,
             "Build without condition");
-        BuildPatch.NoCollisionEnabled = Config.Bind("Build", "NoCollision", false,
+        FactoryPatch.NoCollisionEnabled = Config.Bind("Build", "NoCollision", false,
             "No collision");
-        BuildPatch.BeltSignalGeneratorEnabled = Config.Bind("Build", "BeltSignalGenerator", false,
+        FactoryPatch.BeltSignalGeneratorEnabled = Config.Bind("Build", "BeltSignalGenerator", false,
             "Belt signal generator");
+        FactoryPatch.BeltSignalCountRecipeEnabled = Config.Bind("Build", "BeltSignalCountRecipe", false,
+            "Belt signal count all raws and intermediates in statistics");
+        FactoryPatch.NightLightEnabled = Config.Bind("Build", "NightLight", false,
+            "Night light");
+        FactoryPatch.RemovePowerSpaceLimitEnabled = Config.Bind("Build", "RemovePowerDistanceLimit", false,
+            "Remove distance limit for wind turbines and geothermals");
+        FactoryPatch.BoostWindPowerEnabled = Config.Bind("Build", "BoostWindPower", false,
+            "Boost wind power");
+        FactoryPatch.BoostSolarPowerEnabled = Config.Bind("Build", "BoostSolarPower", false,
+            "Boost solar power");
+        FactoryPatch.BoostFuelPowerEnabled = Config.Bind("Build", "BoostFuelPower", false,
+            "Boost fuel power");
+        FactoryPatch.BoostGeothermalPowerEnabled = Config.Bind("Build", "BoostGeothermalPower", false,
+            "Boost geothermal power");
         ResourcePatch.InfiniteEnabled = Config.Bind("Planet", "AlwaysInfiniteResource", false,
             "always infinite natural resource");
         ResourcePatch.FastEnabled = Config.Bind("Planet", "FastMining", false,
@@ -94,8 +110,7 @@ public class CheatEnabler : BaseUnityPlugin
         DevShortcuts.Init();
         AbnormalDisabler.Init();
         TechPatch.Init();
-        BuildPatch.Init();
-        PlanetFunctions.Init();
+        FactoryPatch.Init();
         ResourcePatch.Init();
         WaterPumperPatch.Init();
         TerraformPatch.Init();
@@ -110,8 +125,7 @@ public class CheatEnabler : BaseUnityPlugin
         TerraformPatch.Uninit();
         WaterPumperPatch.Uninit();
         ResourcePatch.Uninit();
-        PlanetFunctions.Uninit();
-        BuildPatch.Uninit();
+        FactoryPatch.Uninit();
         TechPatch.Uninit();
         AbnormalDisabler.Uninit();
         DevShortcuts.Uninit();
@@ -134,7 +148,7 @@ public class CheatEnabler : BaseUnityPlugin
 
     private void LateUpdate()
     {
-        BuildPatch.NightLightLateUpdate();
+        FactoryPatch.NightLight.LateUpdate();
     }
 
     [HarmonyPostfix, HarmonyPatch(typeof(UIRoot), nameof(UIRoot.OpenMainMenuUI))]
@@ -240,6 +254,7 @@ public class CheatEnabler : BaseUnityPlugin
     {
         if (!_configWinInitialized)
         {
+            if (!I18N.Initialized()) return;
             _configWinInitialized = true;
             _configWin = UIConfigWindow.CreateInstance();
         }

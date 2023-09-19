@@ -4,6 +4,10 @@
 #### 添加一些作弊功能，同时屏蔽异常检测
 
 ## Changlog
+* 2.2.0
+  + Add some power related functions
+  + Add a subfunction to belt signal item generation, which simulates production process of raws and intermediates on statistics
+  + Split some functions from Architect mode
 * 2.1.0
   + Belt signal item generation
   + Fix window display priority which may cause tips to be covered by main window
@@ -24,12 +28,17 @@
     + Enable Dev Shortcuts (check config panel for usage)
     + Disable Abnormal Checks
     + Unlock techs with key-modifiers (Ctrl/Alt/Shift)
-  + Build:
+  + Factory:
     + Finish build immediately
-    + Architect mode (Infinite buildings + Interactive without distance limit + Sunlight at night)
+    + Architect mode (Infinite buildings)
+    + Unlimited interactive range
     + Build without condition
     + No collision
     + Belt signal item generation
+      + Count all raws and intermediates in statistics
+    + Sunlight at night
+    + Remove space limit between wind turbines and solar panels
+    + Boost power generations for kinds of power generators
   + Planet:
     + Infinite Natural Resources
     + Fast Mining
@@ -56,6 +65,10 @@
 * [LSTM](https://github.com/hetima/DSP_LSTM) & [PlanetFinder](https://github.com/hetima/DSP_PlanetFinder): UI implementations
 
 ## 更新日志
+* 2.2.0
+  + 添加了一些发电相关功能
+  + 为传送带信号物品生成添加了一个子功能，在统计面板模拟了原材料和中间产物的生产过程
+  + 从建筑师模式中分离了一些功能
 * 2.1.0
   + 传送带信号物品生成
   + 修复窗口显示优先级可能导致提示信息被主窗口遮挡的问题
@@ -76,12 +89,16 @@
     + 启用开发模式快捷键(使用说明见设置面板)
     + 屏蔽异常检测
     + 使用组合键解锁科技（Ctrl/Alt/Shift）
-  + 建造：
+  + 工厂：
     + 建造秒完成
-    + 建筑师模式(无限建筑+无视距离操作+夜间日光灯)
+    + 建筑师模式(无限建筑)
+    + 无限交互距离
     + 无条件建造
     + 无碰撞
     + 传送带信号物品生成
+    + 夜间日光灯
+    + 风力发电机和太阳能板无间距限制
+    + 提升各种发电设备发电量
   + 行星：
     + 自然资源采集不消耗
     + 高速采集

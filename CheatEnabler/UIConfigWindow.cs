@@ -22,12 +22,21 @@ public class UIConfigWindow : UI.MyWindowWithTabs
         I18N.Add("Unlock Tech with Key-Modifiers Tips",
             "Click tech on tree while holding:\n  Shift: Tech level + 1\n  Ctrl: Tech level + 10\n  Ctrl + Shift: Tech level + 100\n  Alt: Tech level to MAX\n\nNote: all direct prerequisites will be unlocked as well.",
             "按住以下组合键点击科技树：\n  Shift：科技等级+1\n  Ctrl：科技等级+10\n  Ctrl+Shift：科技等级+100\n  Alt：科技等级升到最大\n\n注意：所有直接前置科技也会被解锁");
-        I18N.Add("Build", "Build", "建造");
+        I18N.Add("Factory", "Factory", "工厂");
         I18N.Add("Finish build immediately", "Finish build immediately", "建造秒完成");
         I18N.Add("Architect mode", "Architect mode", "建筑师模式");
+        I18N.Add("Unlimited interactive range", "Unlimited interactive range", "无限交互距离");
         I18N.Add("Build without condition", "Build without condition check", "无条件建造");
         I18N.Add("No collision", "No collision", "无碰撞");
         I18N.Add("Belt signal generator", "Belt signal generator", "传送带信号物品生成");
+        I18N.Add("Count all raws and intermediates in statistics","Count all raw materials in statistics", "统计信息里计算所有原料和中间产物");
+        I18N.Add("Night Light", "Sunlight at night", "夜间日光灯");
+        I18N.Add("Remove power space limit", "Remove space limit for winds and geothermals", "移除风力发电和地热发电的间距限制");
+        I18N.Add("Boost wind power", "Boost wind power(x100,000)", "提升风力发电(x100,000)");
+        I18N.Add("Boost solar power", "Boost solar power(x100,000)", "提升太阳能发电(x100,000)");
+        I18N.Add("Boost fuel power", "Boost fuel power(x50,000)", "提升燃料发电(x50,000)");
+        I18N.Add("Boost fuel power 2", "(x20,000 for deuteron, x10,000 for antimatter)", "(氘核燃料棒x20,000，反物质燃料棒x10,000)");
+        I18N.Add("Boost geothermal power", "Boost geothermal power(x50,000)", "提升地热发电(x50,000)");
         I18N.Add("Planet", "Planet", "行星");
         I18N.Add("Infinite Natural Resources", "Infinite Natural Resources", "自然资源采集不消耗");
         I18N.Add("Fast Mining", "Fast Mining", "高速采集");
@@ -66,7 +75,7 @@ public class UIConfigWindow : UI.MyWindowWithTabs
     public override void _OnCreate()
     {
         _windowTrans = GetComponent<RectTransform>();
-        _windowTrans.sizeDelta = new Vector2(580f, 331f);
+        _windowTrans.sizeDelta = new Vector2(580f, 400f);
 
         CreateUI();
     }
@@ -82,7 +91,7 @@ public class UIConfigWindow : UI.MyWindowWithTabs
         UI.MyCheckBox.CreateCheckBox(x, y, tab1, AbnormalDisabler.Enabled, "Disable Abnormal Checks");
         y += 36f;
         UI.MyCheckBox.CreateCheckBox(x, y, tab1, TechPatch.Enabled, "Unlock Tech with Key-Modifiers");
-        y += 50f;
+        y += 118f;
         UI.MyKeyBinder.CreateKeyBinder(x, y, tab1, CheatEnabler.Hotkey, "Hotkey");
         x = 156f;
         y = 16f;
@@ -91,18 +100,44 @@ public class UIConfigWindow : UI.MyWindowWithTabs
         y += 72f;
         AddTipsButton(x, y, tab1, "Unlock Tech with Key-Modifiers", "Unlock Tech with Key-Modifiers Tips", "unlock-tech-tips");
 
-        var tab2 = AddTab(136f, 1, _windowTrans, "Build");
+        var tab2 = AddTab(136f, 1, _windowTrans, "Factory");
         x = 0f;
         y = 10f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab2, BuildPatch.ImmediateEnabled, "Finish build immediately");
+        UI.MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.ImmediateEnabled, "Finish build immediately");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab2, BuildPatch.ArchitectModeEnabled, "Architect mode");
+        UI.MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.ArchitectModeEnabled, "Architect mode");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab2, BuildPatch.NoConditionEnabled, "Build without condition");
+        UI.MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.UnlimitInteractiveEnabled, "Unlimited interactive range");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab2, BuildPatch.NoCollisionEnabled, "No collision");
+        UI.MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.NoConditionEnabled, "Build without condition");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab2, BuildPatch.BeltSignalGeneratorEnabled, "Belt signal generator");
+        UI.MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.NoCollisionEnabled, "No collision");
+        y += 36f;
+        UI.MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.NightLightEnabled, "Night Light");
+        y += 36f;
+        UI.MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.BeltSignalGeneratorEnabled, "Belt signal generator");
+        y += 26f;
+        x += 26f;
+        var cb = UI.MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.BeltSignalCountRecipeEnabled, "Count all raws and intermediates in statistics", 13);
+        cb.gameObject.SetActive(FactoryPatch.BeltSignalGeneratorEnabled.Value);
+        FactoryPatch.BeltSignalGeneratorEnabled.SettingChanged += (_, _) =>
+        {
+            cb.gameObject.SetActive(FactoryPatch.BeltSignalGeneratorEnabled.Value);
+        };
+        x = 240f;
+        y = 10f;
+        UI.MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.RemovePowerSpaceLimitEnabled, "Remove power space limit");
+        y += 36f;
+        UI.MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.BoostWindPowerEnabled, "Boost wind power");
+        y += 36f;
+        UI.MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.BoostSolarPowerEnabled, "Boost solar power");
+        y += 36f;
+        UI.MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.BoostGeothermalPowerEnabled, "Boost geothermal power");
+        y += 36f;
+        UI.MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.BoostFuelPowerEnabled, "Boost fuel power");
+        x += 32f;
+        y += 26f;
+        AddText(x, y, tab2, "Boost fuel power 2", 13);
 
         // Planet Tab
         var tab3 = AddTab(236f, 2, _windowTrans, "Planet");
@@ -191,14 +226,14 @@ public class UIConfigWindow : UI.MyWindowWithTabs
         UI.MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.FractalOnBirthPlanet, "Fractal silicon on birth planet");
         y += 36f;
         UI.MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.OrganicOnBirthPlanet, "Organic crystal on birth planet");
-        x = 200f;
-        y = 10f;
+        y += 36f;
         UI.MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.OpticalOnBirthPlanet, "Optical grating crystal on birth planet");
         y += 36f;
         UI.MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.SpiniformOnBirthPlanet, "Spiniform stalagmite crystal on birth planet");
         y += 36f;
         UI.MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.UnipolarOnBirthPlanet, "Unipolar magnet on birth planet");
-        y += 36f;
+        x = 200f;
+        y = 10f;
         UI.MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.FlatBirthPlanet, "Birth planet is solid flat (no water at all)");
         y += 36f;
         UI.MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.HighLuminosityBirthStar, "Birth star has high luminosity");

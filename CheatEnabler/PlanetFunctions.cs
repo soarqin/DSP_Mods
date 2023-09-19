@@ -8,8 +8,8 @@ using Random = UnityEngine.Random;
 namespace CheatEnabler;
 public static class PlanetFunctions
 {
+    /*
     private static Harmony _patch;
-    private static readonly Dictionary<int, ItemSource> ItemSources = new();
     private static PumpSource[] _pumpItemSources = new PumpSource[16];
     private static int _pumpItemSourcesLength = 16;
 
@@ -42,6 +42,16 @@ public static class PlanetFunctions
             if (factories[i].index != i) continue;
             UpdatePumpItemSources(factories[i]);
         }
+    }
+
+    [HarmonyPostfix]
+    [HarmonyPatch(typeof(PlanetFactory), nameof(PlanetFactory.Init))]
+    private static void PlanetFactory_Init_Postfix(PlanetFactory __instance)
+    {
+        const int waterItemId = 6006;
+        __instance.planet.waterItemId = waterItemId;
+        CheatEnabler.Logger.LogDebug($"Init PlanetFactory with waterItemId {waterItemId}");
+        UpdatePumpItemSources(__instance);
     }
 
     private static void UpdatePumpItemSources(PlanetFactory factory)
@@ -96,164 +106,7 @@ public static class PlanetFunctions
         pump.Items = items;
         pump.Progress = progress;
     }
-
-    /* Pump item calculation */
-    private class ItemSource
-    {
-        public float Count;
-        public Dictionary<int, float> From;
-        public Dictionary<int, float> Extra;
-    }
-
-    private static void InitItemSources()
-    {
-        ItemSources.Clear();
-        foreach (var vein in LDB.veins.dataArray)
-        {
-            ItemSources[vein.MiningItem] = new ItemSource { Count = 1 };
-        }
-
-        foreach (var ip in LDB.items.dataArray)
-        {
-            if (!string.IsNullOrEmpty(ip.MiningFrom))
-            {
-                ItemSources[ip.ID] = new ItemSource { Count = 1 };
-            }
-        }
-
-        ItemSources[1208] = new ItemSource { Count = 1 };
-        var recipes = LDB.recipes.dataArray;
-        foreach (var recipe in recipes)
-        {
-            if (!recipe.Explicit || recipe.ID == 58 || recipe.ID == 121) continue;
-            var res = recipe.Results;
-            var rescnt = recipe.ResultCounts;
-            var len = res.Length;
-            for (var i = 0; i < len; i++)
-            {
-                if (ItemSources.ContainsKey(res[i])) continue;
-                var rs = new ItemSource { Count = rescnt[i], From = new Dictionary<int, float>() };
-                var it = recipe.Items;
-                var itcnt = recipe.ItemCounts;
-                var len2 = it.Length;
-                for (var j = 0; j < len2; j++)
-                {
-                    rs.From[it[j]] = itcnt[j];
-                }
-                if (len > 1)
-                {
-                    rs.Extra = new Dictionary<int, float>();
-                    for (var k = 0; k < len; k++)
-                    {
-                        if (i != k)
-                        {
-                            rs.Extra[res[k]] = rescnt[k];
-                        }
-                    }
-                }
-
-                ItemSources[res[i]] = rs;
-            }
-        }
-        foreach (var recipe in recipes)
-        {
-            if (recipe.Explicit) continue;
-            var res = recipe.Results;
-            var rescnt = recipe.ResultCounts;
-            var len = res.Length;
-            for (var i = 0; i < len; i++)
-            {
-                if (ItemSources.ContainsKey(res[i])) continue;
-                var rs = new ItemSource { Count = rescnt[i], From = new Dictionary<int, float>() };
-                var it = recipe.Items;
-                var itcnt = recipe.ItemCounts;
-                var len2 = it.Length;
-                for (var j = 0; j < len2; j++)
-                {
-                    rs.From[it[j]] = itcnt[j];
-                }
-                if (len > 1)
-                {
-                    rs.Extra = new Dictionary<int, float>();
-                    for (var k = 0; k < len; k++)
-                    {
-                        if (i != k)
-                        {
-                            rs.Extra[res[k]] = rescnt[k];
-                        }
-                    }
-                }
-
-                ItemSources[res[i]] = rs;
-            }
-        }
-    }
-
-    public static void CalculateAllProductions(Dictionary<int, float> result, Dictionary<int, float> extra, int itemId, float count = 0f)
-    {
-        if (!ItemSources.TryGetValue(itemId, out var itemSource))
-        {
-            if (count <= 0) return;
-            result.TryGetValue(itemId, out var oldCount);
-            result[itemId] = oldCount + count;
-            return;
-        }
-
-        var times = 1f;
-        if (count == 0f)
-        {
-            count = itemSource.Count;
-        }
-        else if (Math.Abs(count - itemSource.Count) > 0.000001f)
-        {
-            times = count / itemSource.Count;
-        }
-
-        {
-            result.TryGetValue(itemId, out var oldCount);
-            result[itemId] = oldCount + count;
-        }
-        if (itemSource.Extra != null)
-        {
-            foreach (var p in itemSource.Extra)
-            {
-                extra.TryGetValue(p.Key, out var oldCount);
-                extra[p.Key] = oldCount + times * p.Value;
-            }
-        }
-
-        if (itemSource.From == null) return;
-        foreach (var p in itemSource.From)
-        {
-            CalculateAllProductions(result, extra, p.Key, times * p.Value);
-        }
-    }
-
-    public static void CalculateAllProductions(Dictionary<int, float> result, int itemId, float count = 0f)
-    {
-        var extra = new Dictionary<int, float>();
-        CalculateAllProductions(result, extra, itemId, count);
-        foreach (var k in extra.Keys.ToArray())
-        {
-            if (!result.TryGetValue(k, out var cnt)) continue;
-            var cnt2 = extra[k];
-            if (Math.Abs(cnt - cnt2) < 0.000001f)
-            {
-                result.Remove(k);
-                extra.Remove(k);
-                continue;
-            }
-            if (cnt > cnt2)
-            {
-                result[k] = cnt - cnt2;
-                extra.Remove(k);
-                continue;
-            }
-            result.Remove(k);
-            extra[k] = cnt2 - cnt;
-        }
-    }
-    /* Pump item calculation */
+    */
     
     public static void DismantleAll(bool toBag)
     {
