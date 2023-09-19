@@ -213,6 +213,18 @@ public static class DysonSpherePatch
         {
             public DysonSail Sail;
             public int OrbitId;
+
+            public void FromData(in VectorLF3 delta1, in VectorLF3 delta2, int orbitId)
+            {
+                Sail.px = (float)delta1.x;
+                Sail.py = (float)delta1.y;
+                Sail.pz = (float)delta1.z;
+                Sail.vx = (float)delta2.x;
+                Sail.vy = (float)delta2.y;
+                Sail.vz = (float)delta2.z;
+                Sail.gs = 1f;
+                OrbitId = orbitId;
+            }
         }
 
         public static void UpdateSailLifeTime()
@@ -312,16 +324,7 @@ public static class DysonSpherePatch
                     }
                 }
                 _sailsCacheLen[index] = len + 1;
-                ref var sailCache = ref cache[len];
-                ref var ss = ref sailCache.Sail;
-                ss.px = (float)delta1.x;
-                ss.py = (float)delta1.y;
-                ss.pz = (float)delta1.z;
-                ss.vx = (float)delta2.x;
-                ss.vy = (float)delta2.y;
-                ss.vz = (float)delta2.z;
-                ss.gs = 1f;
-                sailCache.OrbitId = orbitId;
+                cache[len].FromData(delta1, delta2, orbitId);
             }
         }
 
