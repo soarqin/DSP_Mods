@@ -468,7 +468,7 @@ public static class FactoryPatch
 
     private static class NoConditionBuild
     {
-        [HarmonyTranspiler]
+        [HarmonyTranspiler, HarmonyPriority(Priority.Last)]
         [HarmonyPatch(typeof(BuildTool_Addon), nameof(BuildTool_Addon.CheckBuildConditions))]
         // [HarmonyPatch(typeof(BuildTool_Click), nameof(BuildTool_Click.CheckBuildConditions))]
         [HarmonyPatch(typeof(BuildTool_Inserter), nameof(BuildTool_Inserter.CheckBuildConditions))]
@@ -479,13 +479,21 @@ public static class FactoryPatch
             yield return new CodeInstruction(OpCodes.Ret);
         }
 
-        [HarmonyTranspiler]
+        [HarmonyTranspiler, HarmonyPriority(Priority.Last)]
         [HarmonyPatch(typeof(BuildTool_Click), nameof(BuildTool_Click.CheckBuildConditions))]
-        private static IEnumerable<CodeInstruction> BuildTool_Click_CheckBuildConditions_Transpiler(IEnumerable<CodeInstruction> instructions)
+        private static IEnumerable<CodeInstruction> BuildTool_Click_CheckBuildConditions_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
         {
-            yield return new CodeInstruction(OpCodes.Ldarg_0);
-            yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(NoConditionBuild), nameof(CheckForMiner)));
-            yield return new CodeInstruction(OpCodes.Ret);
+            var matcher = new CodeMatcher(instructions, generator);
+            var label1 = generator.DefineLabel();
+            matcher.Start().InsertAndAdvance(
+                new CodeInstruction(OpCodes.Ldarg_0),
+                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(NoConditionBuild), nameof(CheckForMiner))),
+                new CodeInstruction(OpCodes.Brfalse_S, label1),
+                new CodeInstruction(OpCodes.Ldc_I4_1),
+                new CodeInstruction(OpCodes.Ret)
+            );
+            matcher.Labels.Add(label1);
+            return matcher.InstructionEnumeration();
         }
 
         public static bool CheckForMiner(BuildTool tool)
@@ -1102,14 +1110,22 @@ public static class FactoryPatch
             var matcher = new CodeMatcher(instructions);
             matcher.Start().MatchForward(false,
                 new CodeMatch(OpCodes.Ldc_R4, 110.25f)
-            ).Repeat(codeMatcher => codeMatcher.SetAndAdvance(
-                OpCodes.Ldc_R4, 1f
-            ));
+            );
+            if (matcher.IsValid)
+            {
+                matcher.Repeat(codeMatcher => codeMatcher.SetAndAdvance(
+                    OpCodes.Ldc_R4, 1f
+                ));
+            }
             matcher.Start().MatchForward(false,
                 new CodeMatch(OpCodes.Ldc_R4, 144f)
-            ).Repeat(codeMatcher => codeMatcher.SetAndAdvance(
-                OpCodes.Ldc_R4, 1f
-            ));
+            );
+            if (matcher.IsValid)
+            {
+                matcher.Repeat(codeMatcher => codeMatcher.SetAndAdvance(
+                    OpCodes.Ldc_R4, 1f
+                ));
+            }
             return matcher.InstructionEnumeration();
         }
     }
