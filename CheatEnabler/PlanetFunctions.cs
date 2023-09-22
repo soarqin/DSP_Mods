@@ -250,9 +250,11 @@ public static class PlanetFunctions
         }
         factory.entityCursor = 1;
         factory.entityRecycleCursor = 0;
+        factory.entityCapacity = 0;
         factory.SetEntityCapacity(1024);
         factory.prebuildCursor = 1;
         factory.prebuildRecycleCursor = 0;
+        factory.prebuildCapacity = 0;
         factory.SetPrebuildCapacity(256);
         factory.cargoContainer = new CargoContainer();
         factory.cargoTraffic = new CargoTraffic(planet);
