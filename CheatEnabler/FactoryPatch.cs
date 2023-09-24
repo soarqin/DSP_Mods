@@ -15,6 +15,7 @@ public static class FactoryPatch
     public static ConfigEntry<bool> NoConditionEnabled;
     public static ConfigEntry<bool> NoCollisionEnabled;
     public static ConfigEntry<bool> BeltSignalGeneratorEnabled;
+    public static ConfigEntry<bool> BeltSignalNumberAltFormat;
     public static ConfigEntry<bool> BeltSignalCountRecipeEnabled;
     public static ConfigEntry<bool> NightLightEnabled;
     public static ConfigEntry<bool> RemovePowerSpaceLimitEnabled;
@@ -35,6 +36,7 @@ public static class FactoryPatch
         NoConditionEnabled.SettingChanged += (_, _) => NoConditionValueChanged();
         NoCollisionEnabled.SettingChanged += (_, _) => NoCollisionValueChanged();
         BeltSignalGeneratorEnabled.SettingChanged += (_, _) => BeltSignalGeneratorValueChanged();
+        BeltSignalNumberAltFormat.SettingChanged += (_, _) => { BeltSignalGenerator.OnAltFormatChanged(); };
         NightLightEnabled.SettingChanged += (_, _) => NightLightValueChanged();
         RemovePowerSpaceLimitEnabled.SettingChanged += (_, _) => RemovePowerSpaceLimitValueChanged();
         BoostWindPowerEnabled.SettingChanged += (_, _) => BoostWindPowerValueChanged();
@@ -369,8 +371,11 @@ public static class FactoryPatch
             var matcher = new CodeMatcher(instructions, generator);
             matcher.MatchForward(false,
                 new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(GC), nameof(GC.Collect)))
-            ).Insert(
-                new CodeInstruction(OpCodes.Ldarg_0),
+            );
+            var labels = matcher.Labels;
+            matcher.Labels = null;
+            matcher.Insert(
+                new CodeInstruction(OpCodes.Ldarg_0).WithLabels(labels),
                 new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(BuildTool), nameof(BuildTool.factory))),
                 new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(FactoryPatch), nameof(ArrivePlanet)))
             );
@@ -544,6 +549,36 @@ public static class FactoryPatch
             _signalBeltsCapacity = 0;
         }
 
+        public static void OnAltFormatChanged()
+        {
+            var factories = GameMain.data?.factories;
+            if (factories == null) return;
+            var factoryCount = GameMain.data.factoryCount;
+            var altFormat = BeltSignalNumberAltFormat.Value;
+            for (var i = Math.Min(_signalBelts.Length, factoryCount) - 1; i >= 0; i--)
+            {
+                var factory = factories[i];
+                var cargoTraffic = factory?.cargoTraffic;
+                if (cargoTraffic == null) continue;
+                var entitySignPool = factory.entitySignPool;
+                if (entitySignPool == null) continue;
+                var belts = _signalBelts[i];
+                foreach (var pair in belts)
+                {
+                    var beltId = pair.Key;
+                    ref var belt = ref cargoTraffic.beltPool[beltId];
+                    if (belt.id != beltId) continue;
+                    ref var signal = ref entitySignPool[belt.entityId];
+                    if (signal.iconId0 < 1000) continue;
+                    var signalBelt = pair.Value;
+                    if (altFormat)
+                        signal.count0 = signalBelt.SpeedLimit + signalBelt.Stack * 10000 + signalBelt.Inc / signalBelt.Stack * 100000;
+                    else
+                        signal.count0 = signalBelt.SpeedLimit * 100 + signalBelt.Stack + signalBelt.Inc / signalBelt.Stack * 10;
+                }
+            }
+        }
+
         private static void InitSignalBelts()
         {
             if (!GameMain.isRunning) return;
@@ -621,9 +656,18 @@ public static class FactoryPatch
             int speedLimit;
             if (signalId >= 1000)
             {
-                stack = Mathf.Clamp(number % 10, 1, 4);
-                inc = number / 10 % 10 * stack;
-                speedLimit = number / 100 % 4000;
+                if (!BeltSignalNumberAltFormat.Value)
+                {
+                    stack = Mathf.Clamp(number % 10, 1, 4);
+                    inc = number / 10 % 10 * stack;
+                    speedLimit = number / 100;
+                }
+                else
+                {
+                    stack = Mathf.Clamp(number / 10000 % 10, 1, 4);
+                    inc = number / 100000 % 10 * stack;
+                    speedLimit = number % 10000;
+                }
             }
             else
             {
@@ -856,7 +900,7 @@ public static class FactoryPatch
                         {
                             var beltId = pair.Key;
                             var cargoTraffic = factory.cargoTraffic;
-                            var belt = cargoTraffic.beltPool[beltId];
+                            ref var belt = ref cargoTraffic.beltPool[beltId];
                             var cargoPath = cargoTraffic.GetCargoPath(belt.segPathId);
                             int itemId;
                             if ((itemId = cargoPath.TryPickItem(belt.segIndex + belt.segPivotOffset - 5, 12, out var stack, out _)) > 0)
@@ -898,7 +942,7 @@ public static class FactoryPatch
                             {
                                 beltSignal.Progress += beltSignal.SpeedLimit;
                                 if (beltSignal.Progress < 3600) continue;
-                                beltSignal.Progress -= 3600;
+                                beltSignal.Progress %= 3600;
                             }
 
                             var beltId = pair.Key;

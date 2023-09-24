@@ -44,6 +44,8 @@ public class CheatEnabler : BaseUnityPlugin
             "No collision");
         FactoryPatch.BeltSignalGeneratorEnabled = Config.Bind("Build", "BeltSignalGenerator", false,
             "Belt signal generator");
+        FactoryPatch.BeltSignalNumberAltFormat = Config.Bind("Build", "BeltSignalNumberFormat", false,
+            "Belt signal number format alternative format (AAAA=generation speed in minutes, B=proliferate points, C=stack count):\n  AAAABC by default\n  BCAAAA as alternative");
         FactoryPatch.BeltSignalCountRecipeEnabled = Config.Bind("Build", "BeltSignalCountRecipe", false,
             "Belt signal count all raws and intermediates in statistics");
         FactoryPatch.NightLightEnabled = Config.Bind("Build", "NightLight", false,

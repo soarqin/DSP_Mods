@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 
 namespace CheatEnabler;
 
@@ -6,6 +7,7 @@ public class UIConfigWindow : UI.MyWindowWithTabs
 {
     private RectTransform _windowTrans;
 
+    private UIButton _resignGameBtn;
     private readonly UIButton[] _dysonLayerBtn = new UIButton[10];
 
     static UIConfigWindow()
@@ -22,6 +24,7 @@ public class UIConfigWindow : UI.MyWindowWithTabs
         I18N.Add("Unlock Tech with Key-Modifiers Tips",
             "Click tech on tree while holding:\n  Shift: Tech level + 1\n  Ctrl: Tech level + 10\n  Ctrl + Shift: Tech level + 100\n  Alt: Tech level to MAX\n\nNote: all direct prerequisites will be unlocked as well.",
             "按住以下组合键点击科技树：\n  Shift：科技等级+1\n  Ctrl：科技等级+10\n  Ctrl+Shift：科技等级+100\n  Alt：科技等级升到最大\n\n注意：所有直接前置科技也会被解锁");
+        I18N.Add("Assign game to current account", "Assign game to current account", "将游戏绑定给当前账号");
         I18N.Add("Factory", "Factory", "工厂");
         I18N.Add("Finish build immediately", "Finish build immediately", "建造秒完成");
         I18N.Add("Architect mode", "Architect mode", "建筑师模式");
@@ -29,6 +32,10 @@ public class UIConfigWindow : UI.MyWindowWithTabs
         I18N.Add("Build without condition", "Build without condition check", "无条件建造");
         I18N.Add("No collision", "No collision", "无碰撞");
         I18N.Add("Belt signal generator", "Belt signal generator", "传送带信号物品生成");
+        I18N.Add("Belt signal alt format", "Belt signal alt format", "传送带信号替换格式");
+        I18N.Add("Belt signal alt format tips",
+            "Belt signal number format alternative format:\n  AAAABC by default\n  BCAAAA as alternative\nAAAA=generation speed in minutes, B=proliferate points, C=stack count",
+            "传送带信号物品生成数量格式：\n  默认为AAAABC\n  勾选替换为BCAAAA\nAAAA=生成速度，B=增产点数，C=堆叠数量");
         I18N.Add("Count all raws and intermediates in statistics","Count all raw materials in statistics", "统计信息里计算所有原料和中间产物");
         I18N.Add("Night Light", "Sunlight at night", "夜间日光灯");
         I18N.Add("Remove power space limit", "Remove space limit for winds and geothermals", "移除风力发电和地热发电的间距限制");
@@ -75,7 +82,7 @@ public class UIConfigWindow : UI.MyWindowWithTabs
     public override void _OnCreate()
     {
         _windowTrans = GetComponent<RectTransform>();
-        _windowTrans.sizeDelta = new Vector2(580f, 400f);
+        _windowTrans.sizeDelta = new Vector2(580f, 420f);
 
         CreateUI();
     }
@@ -99,6 +106,11 @@ public class UIConfigWindow : UI.MyWindowWithTabs
         x += 52f;
         y += 72f;
         AddTipsButton(x, y, tab1, "Unlock Tech with Key-Modifiers", "Unlock Tech with Key-Modifiers Tips", "unlock-tech-tips");
+        x = 300f;
+        y = 10f;
+        _resignGameBtn = AddButton(x, y, tab1, "Assign game to current account", 16, "resign-game-btn", () => { GameMain.data.account = AccountData.me; });
+        var rect = (RectTransform)_resignGameBtn.transform;
+        rect.sizeDelta = new Vector2(200f, rect.sizeDelta.y);
 
         var tab2 = AddTab(136f, 1, _windowTrans, "Factory");
         x = 0f;
@@ -119,11 +131,18 @@ public class UIConfigWindow : UI.MyWindowWithTabs
         y += 26f;
         x += 26f;
         var cb = UI.MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.BeltSignalCountRecipeEnabled, "Count all raws and intermediates in statistics", 13);
+        y += 26f;
+        var cb2 = UI.MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.BeltSignalNumberAltFormat, "Belt signal alt format", 13);
         cb.gameObject.SetActive(FactoryPatch.BeltSignalGeneratorEnabled.Value);
+        cb2.gameObject.SetActive(FactoryPatch.BeltSignalGeneratorEnabled.Value);
         FactoryPatch.BeltSignalGeneratorEnabled.SettingChanged += (_, _) =>
         {
             cb.gameObject.SetActive(FactoryPatch.BeltSignalGeneratorEnabled.Value);
+            cb2.gameObject.SetActive(FactoryPatch.BeltSignalGeneratorEnabled.Value);
         };
+        x += 180f;
+        y += 6f;
+        AddTipsButton(x, y, tab2, "Belt signal alt format", "Belt signal alt format tips", "belt-signal-alt-format-tips");
         x = 240f;
         y = 10f;
         UI.MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.RemovePowerSpaceLimitEnabled, "Remove power space limit");
@@ -244,7 +263,15 @@ public class UIConfigWindow : UI.MyWindowWithTabs
 
     public void UpdateUI()
     {
+        UpdateResignButton();
         UpdateDysonShells();
+    }
+
+    private void UpdateResignButton()
+    {
+        var resignEnabled = GameMain.data.account != AccountData.me;
+        if (_resignGameBtn.gameObject.activeSelf == resignEnabled) return;
+        _resignGameBtn.gameObject.SetActive(resignEnabled);
     }
 
     private void UpdateDysonShells()

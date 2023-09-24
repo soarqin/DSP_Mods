@@ -4,6 +4,11 @@
 #### 添加一些作弊功能，同时屏蔽异常检测
 
 ## Changlog
+* 2.2.2
+  + New function: `Assign game to currrnet account`
+  + New subfunction: `Belt signal alt format`
+  + Fix a crash on using `Initialize this Planet`
+  + Fix belt build in `Finish build immediately`
 * 2.2.1
   + Check condition for miners even when `Build without condition` is enabled.
   + Fix a patch issue that may cause `Build without condition` not working.
@@ -31,15 +36,17 @@
     + Enable Dev Shortcuts (check config panel for usage)
     + Disable Abnormal Checks
     + Unlock techs with key-modifiers (Ctrl/Alt/Shift)
+    + Assign game to currrnet account
   + Factory:
     + Finish build immediately
     + Architect mode (Infinite buildings)
     + Unlimited interactive range
     + Build without condition
     + No collision
+    + Sunlight at night
     + Belt signal item generation
       + Count all raws and intermediates in statistics
-    + Sunlight at night
+      + Belt signal alt format
     + Remove space limit between wind turbines and solar panels
     + Boost power generations for kinds of power generators
   + Planet:
@@ -73,6 +80,11 @@
 * [LSTM](https://github.com/hetima/DSP_LSTM) & [PlanetFinder](https://github.com/hetima/DSP_PlanetFinder): UI implementations
 
 ## 更新日志
+* 2.2.2
+  + 新功能：`将游戏绑定给当前账号`
+  + 新子功能：`传送带信号替换格式`
+  + 修复了`初始化本行星`可能导致崩溃的问题
+  + 修复了`建造秒完成`中传送带建造的问题
 * 2.2.1
   + 即使在启用`无条件建造`时依然检查矿机的建造条件
   + 修复一个可能导致`无条件建造`不生效的问题
@@ -100,14 +112,17 @@
     + 启用开发模式快捷键(使用说明见设置面板)
     + 屏蔽异常检测
     + 使用组合键解锁科技（Ctrl/Alt/Shift）
+    + 将游戏绑定给当前账号
   + 工厂：
     + 建造秒完成
     + 建筑师模式(无限建筑)
     + 无限交互距离
     + 无条件建造
     + 无碰撞
-    + 传送带信号物品生成
     + 夜间日光灯
+    + 传送带信号物品生成
+      + 统计面板中计算所有原材料和中间产物
+      + 传送带信号替换格式
     + 风力发电机和太阳能板无间距限制
     + 提升各种发电设备发电量
   + 行星：
