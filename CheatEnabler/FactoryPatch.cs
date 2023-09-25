@@ -26,8 +26,6 @@ public static class FactoryPatch
     public static ConfigEntry<bool> BoostGeothermalPowerEnabled;
 
     private static Harmony _factoryPatch;
-    private static Harmony _removeSomeConditionPatch;
-    private static Harmony _noConditionPatch;
 
     public static void Init()
     {
@@ -66,12 +64,10 @@ public static class FactoryPatch
     {
         _factoryPatch?.UnpatchSelf();
         _factoryPatch = null;
-        _removeSomeConditionPatch?.UnpatchSelf();
-        _removeSomeConditionPatch = null;
-        _noConditionPatch?.UnpatchSelf();
-        _noConditionPatch = null;
         ImmediateBuild.Enable(false);
         ArchitectMode.Enable(false);
+        RemoveSomeConditionBuild.Enable(false);
+        NoConditionBuild.Enable(false);
         UnlimitInteractive.Enable(false);
         BeltSignalGenerator.Enable(false);
         NightLight.Enable(false);
@@ -99,24 +95,12 @@ public static class FactoryPatch
 
     private static void RemoveSomeConditionValueChanged()
     {
-        if (RemoveSomeConditionEnabled.Value)
-        {
-            _removeSomeConditionPatch ??= Harmony.CreateAndPatchAll(typeof(RemoveSomeConditionBuild));
-            return;
-        }
-        _removeSomeConditionPatch?.UnpatchSelf();
-        _removeSomeConditionPatch = null;
+        RemoveSomeConditionBuild.Enable(RemoveSomeConditionEnabled.Value);
     }
 
     private static void NoConditionValueChanged()
     {
-        if (NoConditionEnabled.Value)
-        {
-            _noConditionPatch ??= Harmony.CreateAndPatchAll(typeof(NoConditionBuild));
-            return;
-        }
-        _noConditionPatch?.UnpatchSelf();
-        _noConditionPatch = null;
+        NoConditionBuild.Enable(NoConditionEnabled.Value);
     }
 
     private static void NoCollisionValueChanged()
@@ -498,6 +482,17 @@ public static class FactoryPatch
 
     private static class RemoveSomeConditionBuild
     {
+        private static Harmony _patch;
+        public static void Enable(bool on)
+        {
+            if (on)
+            {
+                _patch ??= Harmony.CreateAndPatchAll(typeof(RemoveSomeConditionBuild));
+                return;
+            }
+            _patch?.UnpatchSelf();
+            _patch = null;
+        }
         [HarmonyTranspiler, HarmonyPriority(Priority.First)]
         [HarmonyPatch(typeof(BuildTool_BlueprintPaste), nameof(BuildTool_BlueprintPaste.CheckBuildConditions))]
         [HarmonyPatch(typeof(BuildTool_Click), nameof(BuildTool_Click.CheckBuildConditions))]
@@ -594,6 +589,18 @@ public static class FactoryPatch
 
     private static class NoConditionBuild
     {
+        private static Harmony _noConditionPatch;
+        public static void Enable(bool on)
+        {
+            if (on)
+            {
+                _noConditionPatch ??= Harmony.CreateAndPatchAll(typeof(NoConditionBuild));
+                return;
+            }
+            _noConditionPatch?.UnpatchSelf();
+            _noConditionPatch = null;
+        }
+        
         [HarmonyTranspiler, HarmonyPriority(Priority.Last)]
         [HarmonyPatch(typeof(BuildTool_Addon), nameof(BuildTool_Addon.CheckBuildConditions))]
         // [HarmonyPatch(typeof(BuildTool_Click), nameof(BuildTool_Click.CheckBuildConditions))]

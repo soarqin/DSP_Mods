@@ -4,6 +4,9 @@
 #### 添加一些作弊功能，同时屏蔽异常检测
 
 ## Changlog
+* 2.2.4
+  + New function: `Enable player actions in globe view`
+  + Fix UI bug
 * 2.2.3
   + New function: `Remove some build conditions`
   + Fix compatibility with some mods
@@ -54,6 +57,7 @@
     + Remove space limit between wind turbines and solar panels
     + Boost power generations for kinds of power generators
   + Planet:
+    + Enable player actions in globe view
     + Infinite Natural Resources
     + Fast Mining
     + Pump Anywhere
@@ -84,6 +88,9 @@
 * [LSTM](https://github.com/hetima/DSP_LSTM) & [PlanetFinder](https://github.com/hetima/DSP_PlanetFinder): UI implementations
 
 ## 更新日志
+* 2.2.4
+  + 新功能：`在行星视图中允许玩家操作`
+  + 修复了UI显示问题
 * 2.2.3
   + 新功能：`移除部分不影响游戏逻辑的建造条件`
   + 修复了与一些mod的兼容性问题
@@ -134,6 +141,7 @@
     + 风力发电机和太阳能板无间距限制
     + 提升各种发电设备发电量
   + 行星：
+    + 在行星视图中允许玩家操作
     + 自然资源采集不消耗
     + 高速采集
     + 平地抽水

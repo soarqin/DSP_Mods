@@ -45,11 +45,12 @@ public class UIConfigWindow : UI.MyWindowWithTabs
         I18N.Add("Boost fuel power 2", "(x20,000 for deuteron, x10,000 for antimatter)", "(氘核燃料棒x20,000，反物质燃料棒x10,000)");
         I18N.Add("Boost geothermal power", "Boost geothermal power(x50,000)", "提升地热发电(x50,000)");
         I18N.Add("Planet", "Planet", "行星");
-        I18N.Add("Infinite Natural Resources", "Infinite Natural Resources", "自然资源采集不消耗");
-        I18N.Add("Fast Mining", "Fast Mining", "高速采集");
-        I18N.Add("Pump Anywhere", "Pump Anywhere", "平地抽水");
-        I18N.Add("Initialize This Planet", "Initialize This Planet", "初始化本行星");
-        I18N.Add("Dismantle All Buildings", "Dismantle All Buildings", "拆除所有建筑");
+        I18N.Add("Enable player actions in globe view", "Enable player actions in globe view", "在行星视图中允许玩家操作");
+        I18N.Add("Infinite Natural Resources", "Infinite natural resources", "自然资源采集不消耗");
+        I18N.Add("Fast Mining", "Fast mining", "高速采集");
+        I18N.Add("Pump Anywhere", "Pump anywhere", "平地抽水");
+        I18N.Add("Initialize This Planet", "Initialize this planet", "初始化本行星");
+        I18N.Add("Dismantle All Buildings", "Dismantle all buildings", "拆除所有建筑");
         I18N.Add("Dyson Sphere", "Dyson Sphere", "戴森球");
         I18N.Add("Skip bullet period", "Skip bullet period", "跳过子弹阶段");
         I18N.Add("Skip absorption period", "Skip absorption period", "跳过吸收阶段");
@@ -163,6 +164,8 @@ public class UIConfigWindow : UI.MyWindowWithTabs
         var tab3 = AddTab(236f, 2, _windowTrans, "Planet");
         x = 0f;
         y = 10f;
+        UI.MyCheckBox.CreateCheckBox(x, y, tab3, PlanetFunctions.PlayerActionsInGlobeViewEnabled, "Enable player actions in globe view");
+        y += 36f;
         UI.MyCheckBox.CreateCheckBox(x, y, tab3, ResourcePatch.InfiniteEnabled, "Infinite Natural Resources");
         y += 36f;
         UI.MyCheckBox.CreateCheckBox(x, y, tab3, ResourcePatch.FastEnabled, "Fast Mining");

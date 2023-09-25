@@ -61,6 +61,8 @@ public class CheatEnabler : BaseUnityPlugin
             "Boost fuel power");
         FactoryPatch.BoostGeothermalPowerEnabled = Config.Bind("Build", "BoostGeothermalPower", false,
             "Boost geothermal power");
+        PlanetFunctions.PlayerActionsInGlobeViewEnabled = Config.Bind("Planet", "PlayerActionsInGlobeView", false,
+            "Enable player actions in globe view");
         ResourcePatch.InfiniteEnabled = Config.Bind("Planet", "AlwaysInfiniteResource", false,
             "always infinite natural resource");
         ResourcePatch.FastEnabled = Config.Bind("Planet", "FastMining", false,
@@ -114,6 +116,7 @@ public class CheatEnabler : BaseUnityPlugin
         AbnormalDisabler.Init();
         TechPatch.Init();
         FactoryPatch.Init();
+        PlanetFunctions.Init();
         ResourcePatch.Init();
         WaterPumperPatch.Init();
         TerraformPatch.Init();
@@ -128,6 +131,7 @@ public class CheatEnabler : BaseUnityPlugin
         TerraformPatch.Uninit();
         WaterPumperPatch.Uninit();
         ResourcePatch.Uninit();
+        PlanetFunctions.Uninit();
         FactoryPatch.Uninit();
         TechPatch.Uninit();
         AbnormalDisabler.Uninit();
@@ -252,7 +256,7 @@ public class CheatEnabler : BaseUnityPlugin
         );
         return matcher.InstructionEnumeration();
     }
-
+    
     private static void ToggleConfigWindow()
     {
         if (!_configWinInitialized)
