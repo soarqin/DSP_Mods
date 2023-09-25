@@ -370,8 +370,17 @@ public static class FactoryPatch
         {
             var matcher = new CodeMatcher(instructions, generator);
             matcher.MatchForward(false,
-                new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(GC), nameof(GC.Collect)))
+                new CodeMatch(OpCodes.Ret)
             );
+            if (matcher.IsInvalid)
+            {
+                CheatEnabler.Logger.LogWarning($"Failed to patch CreatePrebuilds");
+                return matcher.InstructionEnumeration();
+            }
+
+            matcher.Advance(-1);
+            if (matcher.Opcode != OpCodes.Nop && (matcher.Opcode != OpCodes.Call || !matcher.Instruction.OperandIs(AccessTools.Method(typeof(GC), nameof(GC.Collect)))))
+                return matcher.InstructionEnumeration();
             var labels = matcher.Labels;
             matcher.Labels = null;
             matcher.Insert(
