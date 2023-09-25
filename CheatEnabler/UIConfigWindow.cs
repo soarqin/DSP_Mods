@@ -29,6 +29,7 @@ public class UIConfigWindow : UI.MyWindowWithTabs
         I18N.Add("Finish build immediately", "Finish build immediately", "建造秒完成");
         I18N.Add("Architect mode", "Architect mode", "建筑师模式");
         I18N.Add("Unlimited interactive range", "Unlimited interactive range", "无限交互距离");
+        I18N.Add("Remove some build conditions", "Remove some build conditions", "移除部分不影响游戏逻辑的建造条件");
         I18N.Add("Build without condition", "Build without condition check", "无条件建造");
         I18N.Add("No collision", "No collision", "无碰撞");
         I18N.Add("Belt signal generator", "Belt signal generator", "传送带信号物品生成");
@@ -133,18 +134,19 @@ public class UIConfigWindow : UI.MyWindowWithTabs
         var cb = UI.MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.BeltSignalCountRecipeEnabled, "Count all raws and intermediates in statistics", 13);
         y += 26f;
         var cb2 = UI.MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.BeltSignalNumberAltFormat, "Belt signal alt format", 13);
-        cb.gameObject.SetActive(FactoryPatch.BeltSignalGeneratorEnabled.Value);
-        cb2.gameObject.SetActive(FactoryPatch.BeltSignalGeneratorEnabled.Value);
-        FactoryPatch.BeltSignalGeneratorEnabled.SettingChanged += (_, _) =>
-        {
-            cb.gameObject.SetActive(FactoryPatch.BeltSignalGeneratorEnabled.Value);
-            cb2.gameObject.SetActive(FactoryPatch.BeltSignalGeneratorEnabled.Value);
-        };
         x += 180f;
         y += 6f;
-        AddTipsButton(x, y, tab2, "Belt signal alt format", "Belt signal alt format tips", "belt-signal-alt-format-tips");
+        var tip1 = AddTipsButton(x, y, tab2, "Belt signal alt format", "Belt signal alt format tips", "belt-signal-alt-format-tips");
+
+        FactoryPatch.BeltSignalGeneratorEnabled.SettingChanged += (_, _) =>
+        {
+            OnBeltSignalChanged();
+        };
+        OnBeltSignalChanged();
         x = 240f;
         y = 10f;
+        UI.MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.RemoveSomeConditionEnabled, "Remove some build conditions");
+        y += 36f;
         UI.MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.RemovePowerSpaceLimitEnabled, "Remove power space limit");
         y += 36f;
         UI.MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.BoostWindPowerEnabled, "Boost wind power");
@@ -259,6 +261,15 @@ public class UIConfigWindow : UI.MyWindowWithTabs
 
         SetCurrentTab(0);
         UpdateUI();
+        return;
+
+        void OnBeltSignalChanged()
+        {
+            var on = FactoryPatch.BeltSignalGeneratorEnabled.Value;
+            cb.gameObject.SetActive(on);
+            cb2.gameObject.SetActive(on);
+            tip1.gameObject.SetActive(on);
+        }
     }
 
     public void UpdateUI()

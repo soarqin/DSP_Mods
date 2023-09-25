@@ -12,6 +12,7 @@ public static class FactoryPatch
     public static ConfigEntry<bool> ImmediateEnabled;
     public static ConfigEntry<bool> ArchitectModeEnabled;
     public static ConfigEntry<bool> UnlimitInteractiveEnabled;
+    public static ConfigEntry<bool> RemoveSomeConditionEnabled;
     public static ConfigEntry<bool> NoConditionEnabled;
     public static ConfigEntry<bool> NoCollisionEnabled;
     public static ConfigEntry<bool> BeltSignalGeneratorEnabled;
@@ -25,6 +26,7 @@ public static class FactoryPatch
     public static ConfigEntry<bool> BoostGeothermalPowerEnabled;
 
     private static Harmony _factoryPatch;
+    private static Harmony _removeSomeConditionPatch;
     private static Harmony _noConditionPatch;
 
     public static void Init()
@@ -33,6 +35,7 @@ public static class FactoryPatch
         ImmediateEnabled.SettingChanged += (_, _) => ImmediateValueChanged();
         ArchitectModeEnabled.SettingChanged += (_, _) => ArchitectModeValueChanged();
         UnlimitInteractiveEnabled.SettingChanged += (_, _) => UnlimitInteractiveValueChanged();
+        RemoveSomeConditionEnabled.SettingChanged += (_, _) => RemoveSomeConditionValueChanged();
         NoConditionEnabled.SettingChanged += (_, _) => NoConditionValueChanged();
         NoCollisionEnabled.SettingChanged += (_, _) => NoCollisionValueChanged();
         BeltSignalGeneratorEnabled.SettingChanged += (_, _) => BeltSignalGeneratorValueChanged();
@@ -46,6 +49,7 @@ public static class FactoryPatch
         ImmediateValueChanged();
         ArchitectModeValueChanged();
         UnlimitInteractiveValueChanged();
+        RemoveSomeConditionValueChanged();
         NoConditionValueChanged();
         NoCollisionValueChanged();
         BeltSignalGeneratorValueChanged();
@@ -62,6 +66,8 @@ public static class FactoryPatch
     {
         _factoryPatch?.UnpatchSelf();
         _factoryPatch = null;
+        _removeSomeConditionPatch?.UnpatchSelf();
+        _removeSomeConditionPatch = null;
         _noConditionPatch?.UnpatchSelf();
         _noConditionPatch = null;
         ImmediateBuild.Enable(false);
@@ -89,6 +95,17 @@ public static class FactoryPatch
     private static void UnlimitInteractiveValueChanged()
     {
         UnlimitInteractive.Enable(UnlimitInteractiveEnabled.Value);
+    }
+
+    private static void RemoveSomeConditionValueChanged()
+    {
+        if (RemoveSomeConditionEnabled.Value)
+        {
+            _removeSomeConditionPatch ??= Harmony.CreateAndPatchAll(typeof(RemoveSomeConditionBuild));
+            return;
+        }
+        _removeSomeConditionPatch?.UnpatchSelf();
+        _removeSomeConditionPatch = null;
     }
 
     private static void NoConditionValueChanged()
@@ -382,7 +399,7 @@ public static class FactoryPatch
             if (matcher.Opcode != OpCodes.Nop && (matcher.Opcode != OpCodes.Call || !matcher.Instruction.OperandIs(AccessTools.Method(typeof(GC), nameof(GC.Collect)))))
                 return matcher.InstructionEnumeration();
             var labels = matcher.Labels;
-            matcher.Labels = null;
+            matcher.Labels = new List<Label>();
             matcher.Insert(
                 new CodeInstruction(OpCodes.Ldarg_0).WithLabels(labels),
                 new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(BuildTool), nameof(BuildTool.factory))),
@@ -432,7 +449,7 @@ public static class FactoryPatch
         }
 
         [HarmonyPostfix]
-        [HarmonyPatch(typeof(StorageComponent), "GetItemCount", new Type[] { typeof(int) })]
+        [HarmonyPatch(typeof(StorageComponent), "GetItemCount", typeof(int))]
         public static void GetItemCountPatch(StorageComponent __instance, int itemId, ref int __result)
         {
             if (__result > 99) return;
@@ -442,7 +459,6 @@ public static class FactoryPatch
             {
                 DoInit();
             }
-
             if (itemId < 12000 && _canBuildItems[itemId]) __result = 100;
         }
 
@@ -477,6 +493,102 @@ public static class FactoryPatch
         {
             yield return new CodeInstruction(OpCodes.Ldc_R4, 10000f);
             yield return new CodeInstruction(OpCodes.Ret);
+        }
+    }
+
+    private static class RemoveSomeConditionBuild
+    {
+        [HarmonyTranspiler, HarmonyPriority(Priority.First)]
+        [HarmonyPatch(typeof(BuildTool_BlueprintPaste), nameof(BuildTool_BlueprintPaste.CheckBuildConditions))]
+        [HarmonyPatch(typeof(BuildTool_Click), nameof(BuildTool_Click.CheckBuildConditions))]
+        private static IEnumerable<CodeInstruction> BuildTool_Click_CheckBuildConditions_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            /* search for:
+             * ldloc.s	V_8 (8)
+             * ldfld	class PrefabDesc BuildPreview::desc
+             * ldfld	bool PrefabDesc::isInserter
+             * brtrue	2358 (1C12) ldloc.s V_8 (8)
+             * ldloca.s	V_10 (10)
+             * call	instance float32 [UnityEngine.CoreModule]UnityEngine.Vector3::get_magnitude()
+             */
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Ldloc_S),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(BuildPreview), nameof(BuildPreview.desc))),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(PrefabDesc), nameof(PrefabDesc.isInserter))),
+                new CodeMatch(instr => instr.opcode == OpCodes.Brtrue || instr.opcode == OpCodes.Brtrue_S),
+                new CodeMatch(OpCodes.Ldloca_S),
+                new CodeMatch(OpCodes.Call, AccessTools.PropertyGetter(typeof(Vector3), nameof(Vector3.magnitude)))
+            );
+            var jumpPos = matcher.InstructionAt(3).operand;
+            var labels = matcher.Labels;
+            matcher.Labels = new List<Label>();
+            /* Insert: br   2358 (1C12) ldloc.s V_8 (8)
+             */
+            matcher.Insert(new CodeInstruction(OpCodes.Br, jumpPos).WithLabels(labels));
+            return matcher.InstructionEnumeration();
+        }
+
+        [HarmonyTranspiler, HarmonyPriority(Priority.First)]
+        [HarmonyPatch(typeof(BuildTool_Path), nameof(BuildTool_Path.CheckBuildConditions))]
+        private static IEnumerable<CodeInstruction> BuildTool_Path_CheckBuildConditions_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            /* search for:
+             * ldloc.s	V_88 (88)
+             * ldloc.s	V_120 (120)
+             * brtrue.s	2054 (173A) ldc.i4.s 17
+             * ldc.i4.s	18
+             * br.s	2055 (173C) stfld valuetype EBuildCondition BuildPreview::condition
+             * ldc.i4.s	17
+             * stfld	valuetype EBuildCondition BuildPreview::condition
+             */
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Ldloc_S),
+                new CodeMatch(OpCodes.Ldloc_S),
+                new CodeMatch(instr => instr.opcode == OpCodes.Brtrue_S || instr.opcode == OpCodes.Brtrue),
+                new CodeMatch(instr => instr.opcode == OpCodes.Ldc_I4_S && instr.OperandIs(18)),
+                new CodeMatch(instr => instr.opcode == OpCodes.Br_S || instr.opcode == OpCodes.Br),
+                new CodeMatch(instr => instr.opcode == OpCodes.Ldc_I4_S && instr.OperandIs(17)),
+                new CodeMatch(OpCodes.Stfld, AccessTools.Field(typeof(BuildPreview), nameof(BuildPreview.condition)))
+            );
+            if (matcher.IsValid)
+            {
+                // Remove 7 instructions, if the following instruction is br/br.s, remove it as well
+                var labels = matcher.Labels;
+                matcher.Labels = new List<Label>();
+                matcher.RemoveInstructions(7);
+                var opcode = matcher.Opcode;
+                if (opcode == OpCodes.Br || opcode == OpCodes.Br_S)
+                    matcher.RemoveInstruction();
+                matcher.Labels.AddRange(labels);
+            }
+            /* search for:
+             * ldloc.s	V_88 (88)
+             * ldc.i4.s	15-18
+             * stfld	valuetype EBuildCondition BuildPreview::condition
+             */
+            matcher.Start().MatchForward(false,
+                new CodeMatch(instr => instr.opcode == OpCodes.Ldloc_S || instr.opcode == OpCodes.Ldloc),
+                new CodeMatch(instr => (instr.opcode == OpCodes.Ldc_I4_S || instr.opcode == OpCodes.Ldc_I4) &&
+                                             (instr.OperandIs(15) || instr.OperandIs(16) || instr.OperandIs(17) || instr.OperandIs(18))),
+                new CodeMatch(OpCodes.Stfld, AccessTools.Field(typeof(BuildPreview), nameof(BuildPreview.condition)))
+            );
+            if (matcher.IsValid)
+            {
+                // Remove 3 instructions, if the following instruction is br/br.s, remove it as well
+                matcher.Repeat(codeMatcher =>
+                {
+                    var labels = codeMatcher.Labels;
+                    codeMatcher.Labels = new List<Label>();
+                    codeMatcher.RemoveInstructions(3);
+                    var opcode = codeMatcher.Opcode;
+                    if (opcode == OpCodes.Br || opcode == OpCodes.Br_S)
+                        codeMatcher.RemoveInstruction();
+                    codeMatcher.Labels.AddRange(labels);
+                });
+            }
+            return matcher.InstructionEnumeration();
         }
     }
 
@@ -621,7 +733,7 @@ public static class FactoryPatch
                             continue;
                         case >= 601 and <= 609:
                             if (number > 0)
-                                SetSignalBeltPortalTo(factory.index, i, (int)signalId, number);
+                                SetSignalBeltPortalTo(factory.index, i, number);
                             continue;
                     }
                 }
@@ -744,7 +856,7 @@ public static class FactoryPatch
             beltSignal.SourceProgress = progress;
         }
 
-        private static void SetSignalBeltPortalTo(int factory, int beltId, int signalId, int number)
+        private static void SetSignalBeltPortalTo(int factory, int beltId, int number)
         {
             var v = ((long)factory << 32) | (uint)beltId;
             _portalFrom[v] = number;
@@ -817,7 +929,7 @@ public static class FactoryPatch
                     var factoryIndex = planet.factoryIndex;
                     var beltId = factory.entityPool[entityId].beltId;
                     if (number > 0)
-                        SetSignalBeltPortalTo(factoryIndex, beltId, signalId, number);
+                        SetSignalBeltPortalTo(factoryIndex, beltId, number);
                     RemoveSignalBelt(factoryIndex, beltId);
                     return;
                 default:
@@ -863,7 +975,7 @@ public static class FactoryPatch
                     var factoryIndex = planet.factoryIndex;
                     var beltId = factory.entityPool[entityId].beltId;
                     RemoveSignalBeltPortalEnd(factoryIndex, beltId);
-                    SetSignalBeltPortalTo(factoryIndex, beltId, (int)signalId, Mathf.RoundToInt(number));
+                    SetSignalBeltPortalTo(factoryIndex, beltId, Mathf.RoundToInt(number));
                     return;
                 default:
                     return;
@@ -1279,7 +1391,7 @@ public static class FactoryPatch
                 new CodeMatch(OpCodes.Stfld, AccessTools.Field(typeof(PowerGeneratorComponent), nameof(PowerGeneratorComponent.capacityCurrentTick)))
             );
             var labels = matcher.Labels;
-            matcher.Labels = null;
+            matcher.Labels = new List<Label>();
             matcher.Insert(
                 // if (this.fuelMask == 4)
                 new CodeInstruction(OpCodes.Ldarg_0).WithLabels(labels),

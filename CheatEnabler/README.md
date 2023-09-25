@@ -4,6 +4,9 @@
 #### 添加一些作弊功能，同时屏蔽异常检测
 
 ## Changlog
+* 2.2.3
+  + New function: `Remove some build conditions`
+  + Fix compatibility with some mods
 * 2.2.2
   + New function: `Assign game to currrnet account`
   + New subfunction: `Belt signal alt format`
@@ -32,7 +35,7 @@
 * There are also buttons on title screen and planet minimap area to call up the config panel.
 * Features:
   + Strict hotkey dectection for build menu, thus building hotkeys(0~9, F1~F10, X, U) are not triggered while holding Ctrl/Alt/Shift.
-  + General: 
+  + General:
     + Enable Dev Shortcuts (check config panel for usage)
     + Disable Abnormal Checks
     + Unlock techs with key-modifiers (Ctrl/Alt/Shift)
@@ -42,6 +45,7 @@
     + Architect mode (Infinite buildings)
     + Unlimited interactive range
     + Build without condition
+    + Remove some build conditions
     + No collision
     + Sunlight at night
     + Belt signal item generation
@@ -80,6 +84,9 @@
 * [LSTM](https://github.com/hetima/DSP_LSTM) & [PlanetFinder](https://github.com/hetima/DSP_PlanetFinder): UI implementations
 
 ## 更新日志
+* 2.2.3
+  + 新功能：`移除部分不影响游戏逻辑的建造条件`
+  + 修复了与一些mod的兼容性问题
 * 2.2.2
   + 新功能：`将游戏绑定给当前账号`
   + 新子功能：`传送带信号替换格式`
@@ -118,6 +125,7 @@
     + 建筑师模式(无限建筑)
     + 无限交互距离
     + 无条件建造
+    + 移除部分不影响游戏逻辑的建造条件
     + 无碰撞
     + 夜间日光灯
     + 传送带信号物品生成

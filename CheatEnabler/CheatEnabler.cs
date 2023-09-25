@@ -38,6 +38,8 @@ public class CheatEnabler : BaseUnityPlugin
             "Architect Mode");
         FactoryPatch.UnlimitInteractiveEnabled = Config.Bind("Build", "UnlimitInteractive", false,
             "Unlimit interactive range");
+        FactoryPatch.RemoveSomeConditionEnabled = Config.Bind("Build", "RemoveSomeBuildConditionCheck", false,
+            "Remove part of build condition checks that does not affect game logic");
         FactoryPatch.NoConditionEnabled = Config.Bind("Build", "BuildWithoutCondition", false,
             "Build without condition");
         FactoryPatch.NoCollisionEnabled = Config.Bind("Build", "NoCollision", false,
