@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using UnityEngine;
@@ -8,69 +7,65 @@ namespace CompressSave;
 
 class PatchUILoadGame
 {
-    static UIButton decompressButton;
+    static UIButton _decompressButton;
 
     [HarmonyPatch(typeof(UILoadGameWindow), "OnSelectedChange"), HarmonyPostfix]
-    static void OnSelectedChange(UILoadGameWindow __instance, Text ___prop3Text)
+    private static void OnSelectedChange(UILoadGameWindow __instance)
     {
-        var compressedType = SaveUtil.SaveGetCompressType(__instance.selected?.saveName);
-        switch (compressedType)
+        var selected = __instance.selected;
+        var compressedType = SaveUtil.SaveGetCompressType(selected == null ? null : selected.saveName);
+        var prop3Text = __instance.prop3Text;
+        prop3Text.text = compressedType switch
         {
-            case CompressionType.LZ4:
-                ___prop3Text.text = "(LZ4)" + ___prop3Text.text;
-                break;
-            case CompressionType.Zstd:
-                ___prop3Text.text = "(ZSTD)" + ___prop3Text.text;
-                break;
-            default:
-                ___prop3Text.text = "(N)" + ___prop3Text.text;
-                break;
-        }
-        if (!decompressButton) return;
-        decompressButton.button.interactable = compressedType != CompressionType.None;
-        decompressButton.gameObject.SetActive(compressedType != CompressionType.None);
+            CompressionType.LZ4 => "(LZ4)" + prop3Text.text,
+            CompressionType.Zstd => "(ZSTD)" + prop3Text.text,
+            _ => "(N)" + prop3Text.text
+        };
+        if (!_decompressButton) return;
+        _decompressButton.button.interactable = compressedType != CompressionType.None;
+        _decompressButton.gameObject.SetActive(compressedType != CompressionType.None);
     }
 
     [HarmonyPatch(typeof(UILoadGameWindow), "_OnOpen"), HarmonyPostfix]
-    static void _OnOpen(UILoadGameWindow __instance, UIButton ___loadButton, GameObject ___loadSandboxGroup, List<UIGameSaveEntry> ___entries)
+    static void _OnOpen(UILoadGameWindow __instance)
     {
-        if (!decompressButton)
+        if (_decompressButton) return;
+        var loadButton = __instance.loadButton;
+
+        var gameObj = __instance.transform.Find("button-decompress")?.gameObject;
+        if (gameObj == null)
+            gameObj = Object.Instantiate(loadButton.gameObject, loadButton.transform.parent);
+        _decompressButton = gameObj.GetComponent<UIButton>();
+
+        __instance.loadSandboxGroup.transform.Translate(new Vector3(-2.5f, 0, 0));
+        _decompressButton.gameObject.name = "button-decompress";
+        _decompressButton.transform.Translate(new Vector3(-2.0f, 0, 0));
+        _decompressButton.button.image.color = new Color32(0, 0xf4, 0x92, 0x77);
+        var localizer = _decompressButton.transform.Find("button-text")?.GetComponent<Localizer>();
+        var text = _decompressButton.transform.Find("button-text")?.GetComponent<Text>();
+
+        if (localizer)
         {
-            decompressButton = ___loadButton;
-
-            decompressButton = (__instance.transform.Find("button-decompress")?.gameObject ?? GameObject.Instantiate(___loadButton.gameObject, ___loadButton.transform.parent)).GetComponent<UIButton>();
-
-            ___loadSandboxGroup.transform.Translate(new Vector3(-2.5f, 0, 0));
-            decompressButton.gameObject.name = "button-decompress";
-            decompressButton.transform.Translate(new Vector3(-2.0f, 0, 0));
-            decompressButton.button.image.color = new Color32(0, 0xf4, 0x92, 0x77);
-            var localizer = decompressButton.transform.Find("button-text")?.GetComponent<Localizer>();
-            var text = decompressButton.transform.Find("button-text")?.GetComponent<Text>();
-
-            if (localizer)
-            {
-                localizer.stringKey = "Decompress";
-                localizer.translation = "Decompress".Translate();
-            }
-            if (text)
-                text.text = "Decompress".Translate();
-
-            decompressButton.onClick += _ =>{ 
-                if(SaveUtil.DecompressSave(__instance.selected.saveName, out var newfileName))
-                {
-                    __instance.RefreshList();
-                    __instance.selected = ___entries.First(e => e.saveName == newfileName);
-                }
-            };
-            decompressButton.button.interactable = false;
-            decompressButton.gameObject.SetActive(false);
+            localizer.stringKey = "Decompress";
+            localizer.translation = "Decompress".Translate();
         }
+        if (text)
+            text.text = "Decompress".Translate();
+
+        _decompressButton.onClick += _ =>
+        {
+            if (!SaveUtil.DecompressSave(__instance.selected.saveName, out var newfileName)) return;
+            __instance.RefreshList();
+            __instance.selected = __instance.entries.First(e => e.saveName == newfileName);
+        };
+        _decompressButton.button.interactable = false;
+        _decompressButton.gameObject.SetActive(false);
     }
         
     public static void OnDestroy()
     {
-        if (decompressButton)
-            GameObject.Destroy(decompressButton.gameObject);
-        decompressButton = null;
+        if (_decompressButton)
+            Object.Destroy(_decompressButton.gameObject);
+        _decompressButton = null;
     }
 }

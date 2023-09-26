@@ -7,9 +7,9 @@ namespace CompressSave;
 
 public static class SaveUtil
 {
-    public static ManualLogSource logger;
+    public static ManualLogSource Logger;
 
-    public static readonly Version VerifiedVersion = new Version
+    public static readonly Version VerifiedVersion = new()
     {
         Major = 0,
         Minor = 9,
@@ -19,19 +19,21 @@ public static class SaveUtil
     private static string UnzipToFile(DecompressionStream lzStream, string fullPath)
     {
         lzStream.ResetStream();
-        string dir = Path.GetDirectoryName(fullPath);
-        string filename = "[Recovery]-" + Path.GetFileNameWithoutExtension(fullPath);
-        fullPath = Path.Combine(dir, filename + GameSave.saveExt);
-        int i = 0;
+        var dir = Path.GetDirectoryName(fullPath);
+        var filename = "[Recovery]-" + Path.GetFileNameWithoutExtension(fullPath);
+        fullPath = filename + GameSave.saveExt;
+        if (dir != null) fullPath = Path.Combine(dir, fullPath);
+        var i = 0;
         while(File.Exists(fullPath))
         {
-            fullPath = Path.Combine(dir, $"{filename}[{i++}]{GameSave.saveExt}"); 
+            fullPath = $"{filename}[{i++}]{GameSave.saveExt}"; 
+            if (dir != null) fullPath = Path.Combine(dir, fullPath);
         }
         var buffer = new byte[1024 * 1024];
         using (var fs = new FileStream(fullPath, FileMode.Create))
         using (var br = new BinaryWriter(fs))
         {
-            for (int read = lzStream.Read(buffer, 0, buffer.Length); read > 0; read = lzStream.Read(buffer, 0, buffer.Length))
+            for (var read = lzStream.Read(buffer, 0, buffer.Length); read > 0; read = lzStream.Read(buffer, 0, buffer.Length))
             {
                 fs.Write(buffer, 0, read);
             }
@@ -45,37 +47,35 @@ public static class SaveUtil
     public static bool DecompressSave(string saveName, out string newSaveName)
     {
         newSaveName = string.Empty;
-        string path = GameConfig.gameSaveFolder + saveName + GameSave.saveExt;
+        var path = GameConfig.gameSaveFolder + saveName + GameSave.saveExt;
         try
         {
-            using (FileStream fileStream = new FileStream(path, FileMode.Open, FileAccess.Read))
+            using var fileStream = new FileStream(path, FileMode.Open, FileAccess.Read);
+            var compressType = SaveGetCompressType(fileStream);
+            switch (compressType)
             {
-                var compressType = SaveGetCompressType(fileStream);
-                switch (compressType)
-                {
-                    case CompressionType.LZ4:
-                    case CompressionType.Zstd:
-                        using (var lzstream = new DecompressionStream(compressType == CompressionType.LZ4 ? PatchSave.LZ4Wrapper : PatchSave.ZstdWrapper, fileStream))
-                        {
-                            newSaveName = UnzipToFile(lzstream, path);
-                        }
-                        return true;
-                    case CompressionType.None:
-                        return false;
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
+                case CompressionType.LZ4:
+                case CompressionType.Zstd:
+                    using (var lzstream = new DecompressionStream(compressType == CompressionType.LZ4 ? PatchSave.LZ4Wrapper : PatchSave.ZstdWrapper, fileStream))
+                    {
+                        newSaveName = UnzipToFile(lzstream, path);
+                    }
+                    return true;
+                case CompressionType.None:
+                    return false;
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
         }
         catch (Exception e)
         {
-            logger.LogError(e);
+            Logger.LogError(e);
             return false;
         }
     }
     public static CompressionType SaveGetCompressType(FileStream fs)
     {
-        for (int i = 0; i < 3; i++)
+        for (var i = 0; i < 3; i++)
         {
             if (0xCC != fs.ReadByte())
                 return CompressionType.None;
@@ -94,12 +94,12 @@ public static class SaveUtil
         if (string.IsNullOrEmpty(saveName)) return CompressionType.None;
         try
         {
-            using (FileStream fileStream = new FileStream(GetFullSavePath(saveName), FileMode.Open))
-                return SaveGetCompressType(fileStream);
+            using var fileStream = new FileStream(GetFullSavePath(saveName), FileMode.Open);
+            return SaveGetCompressType(fileStream);
         }
         catch (Exception e)
         {
-            logger.LogWarning(e);
+            Logger.LogWarning(e);
             return CompressionType.None;
         }
     }

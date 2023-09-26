@@ -19,31 +19,31 @@ public enum CompressionType
 [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
 public class CompressSave : BaseUnityPlugin
 {
-    private Harmony patchSave, patchUISave, patchUILoad;
-    string StringFromCompresstionType(CompressionType type)
+    private Harmony _patchSave, _patchUISave, _patchUILoad;
+    private static string StringFromCompresstionType(CompressionType type)
     {
-        switch (type)
+        return type switch
         {
-            case CompressionType.LZ4: return "lz4";
-            case CompressionType.Zstd: return "zstd";
-            case CompressionType.None: return "none";
-            default: throw new ArgumentException("Unknown compression type.");
-        }
+            CompressionType.LZ4 => "lz4",
+            CompressionType.Zstd => "zstd",
+            CompressionType.None => "none",
+            _ => throw new ArgumentException("Unknown compression type.")
+        };
     }
 
-    CompressionType CompressionTypeFromString(string str)
+    private static CompressionType CompressionTypeFromString(string str)
     {
-        switch (str)
+        return str switch
         {
-            case "lz4": return CompressionType.LZ4;
-            case "zstd": return CompressionType.Zstd;
-            default: return CompressionType.None;
-        }
+            "lz4" => CompressionType.LZ4,
+            "zstd" => CompressionType.Zstd,
+            _ => CompressionType.None
+        };
     }
 
     public void Awake()
     {
-        SaveUtil.logger = Logger;
+        SaveUtil.Logger = Logger;
         if (LZ4API.Avaliable && ZstdAPI.Avaliable)
         {
             PatchSave.CompressionTypeForSaves = CompressionTypeFromString(
@@ -68,36 +68,36 @@ public class CompressSave : BaseUnityPlugin
             PatchSave.CreateCompressBuffer();
             if (GameConfig.gameVersion != SaveUtil.VerifiedVersion)
             {
-                SaveUtil.logger.LogWarning(
+                SaveUtil.Logger.LogWarning(
                     $"Save version mismatch. Expect:{SaveUtil.VerifiedVersion}, Current:{GameConfig.gameVersion}. MOD may not work as expected.");
             }
 
-            patchSave = Harmony.CreateAndPatchAll(typeof(PatchSave));
+            _patchSave = Harmony.CreateAndPatchAll(typeof(PatchSave));
             if (PatchSave.EnableCompress)
-                patchUISave = Harmony.CreateAndPatchAll(typeof(PatchUISaveGame));
-            patchUILoad = Harmony.CreateAndPatchAll(typeof(PatchUILoadGame));
+                _patchUISave = Harmony.CreateAndPatchAll(typeof(PatchUISaveGame));
+            _patchUILoad = Harmony.CreateAndPatchAll(typeof(PatchUILoadGame));
         }
         else
-            SaveUtil.logger.LogWarning("Either lz4warp.dll or zstdwrap.dll is not avaliable.");
+            SaveUtil.Logger.LogWarning("Either lz4warp.dll or zstdwrap.dll is not avaliable.");
     }
 
     public void OnDestroy()
     {
-        if (patchUISave != null)
+        if (_patchUISave != null)
         {
             PatchUISaveGame.OnDestroy();
-            patchUISave.UnpatchSelf();
+            _patchUISave.UnpatchSelf();
         }
-        if (patchUILoad != null)
+        if (_patchUILoad != null)
         {
             PatchUILoadGame.OnDestroy();
-            patchUILoad.UnpatchSelf();
+            _patchUILoad.UnpatchSelf();
         }
-        patchSave?.UnpatchSelf();
+        _patchSave?.UnpatchSelf();
     }
 }
 
-class PatchSave
+public class PatchSave
 {
     public static readonly WrapperDefines LZ4Wrapper = new LZ4API(), ZstdWrapper = new ZstdAPI();
     private static readonly WrapperDefines NoneWrapper = new NoneAPI();
@@ -105,7 +105,7 @@ class PatchSave
     public static bool UseCompressSave;
     private static CompressionType _compressionTypeForLoading = CompressionType.None;
     private static CompressionType _compressionTypeForSaving = CompressionType.Zstd;
-    private static int _compressionLevelForSaving = 0;
+    private static int _compressionLevelForSaving;
     public static CompressionType CompressionTypeForSaves = CompressionType.Zstd;
     public static CompressionType CompressionTypeForAutoSaves = CompressionType.Zstd;
     public static int CompressionLevelForSaves;
@@ -116,7 +116,7 @@ class PatchSave
 
     public static void CreateCompressBuffer()
     {
-        var bufSize = CompressionStream.MB;
+        const int bufSize = CompressionStream.MB;
         var outBufSize = LZ4Wrapper.CompressBufferBound(bufSize);
         outBufSize = Math.Max(outBufSize, ZstdWrapper.CompressBufferBound(bufSize));
         outBufSize = Math.Max(outBufSize, NoneWrapper.CompressBufferBound(bufSize));
@@ -127,6 +127,7 @@ class PatchSave
 
     private static void WriteHeader(FileStream fileStream)
     {
+        if (fileStream == null) throw new ArgumentNullException(nameof(fileStream));
         switch (_compressionTypeForSaving)
         {
             case CompressionType.Zstd:
@@ -148,59 +149,57 @@ class PatchSave
     [HarmonyPrefix]
     [HarmonyPatch(typeof(GameSave), "AutoSave")]
     [HarmonyPatch(typeof(GameSave), "SaveAsLastExit")]
-    static void BeforeAutoSave()
+    private static void BeforeAutoSave()
     {
         UseCompressSave = EnableForAutoSaves && EnableCompress;
-        if (UseCompressSave)
-        {
-            _compressionTypeForSaving = CompressionTypeForAutoSaves;
-            _compressionLevelForSaving = CompressionLevelForAutoSaves;
-        }
+        if (!UseCompressSave) return;
+        _compressionTypeForSaving = CompressionTypeForAutoSaves;
+        _compressionLevelForSaving = CompressionLevelForAutoSaves;
     }
 
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(GameSave), "SaveCurrentGame")]
-    static IEnumerable<CodeInstruction> SaveCurrentGame_Transpiler(IEnumerable<CodeInstruction> instructions,
-        ILGenerator generator)
+    private static IEnumerable<CodeInstruction> SaveCurrentGame_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
     {
         /* BinaryWriter binaryWriter = new BinaryWriter(fileStream); => Create compressionStream and replace binaryWriter.
          * set PerformanceMonitor.BeginStream to compressionStream.
          * fileStream.Seek(6L, SeekOrigin.Begin); binaryWriter.Write(position); => Disable seek&write function.
          * binaryWriter.Dispose(); => Dispose compressionStream before fileStream close.
         */
+        var matcher = new CodeMatcher(instructions, generator);
         try
         {
-            var matcher = new CodeMatcher(instructions, generator)
-                .MatchForward(false,
-                    new CodeMatch(OpCodes.Newobj,
-                        AccessTools.Constructor(typeof(BinaryWriter), new Type[] { typeof(FileStream) })))
-                .Set(OpCodes.Call, AccessTools.Method(typeof(PatchSave), "CreateBinaryWriter"))
-                .MatchForward(false,
-                    new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(PerformanceMonitor), "BeginStream")))
-                .Set(OpCodes.Call, AccessTools.Method(typeof(PatchSave), "MonitorStream"))
-                .MatchForward(false,
-                    new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(System.IO.Stream), "Seek")))
-                .Set(OpCodes.Call, AccessTools.Method(typeof(PatchSave), "FileLengthWrite0"))
-                .MatchForward(false,
-                    new CodeMatch(OpCodes.Callvirt,
-                        AccessTools.Method(typeof(BinaryWriter), "Write", new Type[] { typeof(long) })))
-                .Set(OpCodes.Call, AccessTools.Method(typeof(PatchSave), "FileLengthWrite1"))
-                .MatchForward(false,
-                    new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(System.IDisposable), "Dispose")))
-                .Advance(1)
-                .Insert(new CodeInstruction(OpCodes.Call,
-                    AccessTools.Method(typeof(PatchSave), "DisposeCompressionStream")));
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Newobj, AccessTools.Constructor(typeof(BinaryWriter), new [] { typeof(FileStream) }))
+            ).Set(
+                OpCodes.Call, AccessTools.Method(typeof(PatchSave), "CreateBinaryWriter")
+            ).MatchForward(false,
+                new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(PerformanceMonitor), "BeginStream"))
+            ).Set(
+                OpCodes.Call, AccessTools.Method(typeof(PatchSave), "MonitorStream")
+            ).MatchForward(false,
+                new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(Stream), "Seek"))
+            ).Set(
+                OpCodes.Call, AccessTools.Method(typeof(PatchSave), "FileLengthWrite0")
+            ).MatchForward(false,
+                new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(BinaryWriter), "Write", new [] { typeof(long) }))
+            ).Set(
+                OpCodes.Call, AccessTools.Method(typeof(PatchSave), "FileLengthWrite1")
+            ).MatchForward(false,
+                new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(IDisposable), "Dispose"))
+            ).Advance(1).Insert(
+                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(PatchSave), "DisposeCompressionStream"))
+            );
             EnableCompress = true;
             return matcher.InstructionEnumeration();
         }
         catch (Exception ex)
         {
-            SaveUtil.logger.LogError(
+            SaveUtil.Logger.LogError(
                 "SaveCurrentGame_Transpiler failed. Mod version not compatible with game version.");
-            SaveUtil.logger.LogError(ex);
+            SaveUtil.Logger.LogError(ex);
         }
-
-        return instructions;
+        return matcher.InstructionEnumeration();
     }
 
     public static void MonitorStream(Stream fileStream)
@@ -212,43 +211,32 @@ class PatchSave
     {
         if (UseCompressSave)
         {
-            SaveUtil.logger.LogDebug("Begin compress save");
+            SaveUtil.Logger.LogDebug("Begin compress save");
             WriteHeader(fileStream);
-            switch (_compressionTypeForSaving)
+            _compressionStream = _compressionTypeForSaving switch
             {
-                case CompressionType.LZ4:
-                    _compressionStream = new CompressionStream(LZ4Wrapper, _compressionLevelForSaving, fileStream, _compressBuffer, true);
-                    break;
-                case CompressionType.Zstd:
-                    _compressionStream = new CompressionStream(ZstdWrapper, _compressionLevelForSaving, fileStream, _compressBuffer, true);
-                    break;
-                case CompressionType.None:
-                    _compressionStream = new CompressionStream(NoneWrapper, 0, fileStream, _compressBuffer, true);
-                    break;
-            }
+                CompressionType.LZ4 => new CompressionStream(LZ4Wrapper, _compressionLevelForSaving, fileStream, _compressBuffer, true),
+                CompressionType.Zstd => new CompressionStream(ZstdWrapper, _compressionLevelForSaving, fileStream, _compressBuffer, true),
+                CompressionType.None => new CompressionStream(NoneWrapper, 0, fileStream, _compressBuffer, true),
+                _ => _compressionStream
+            };
 
             return ((CompressionStream)_compressionStream).BufferWriter;
         }
 
-        SaveUtil.logger.LogDebug("Begin normal save");
+        SaveUtil.Logger.LogDebug("Begin normal save");
         return new BinaryWriter(fileStream);
     }
 
     public static long FileLengthWrite0(FileStream fileStream, long offset, SeekOrigin origin)
     {
-        if (!UseCompressSave)
-        {
-            return fileStream.Seek(offset, origin);
-        }
-        return 0L;
+        return UseCompressSave ? 0L : fileStream.Seek(offset, origin);
     }
 
     public static void FileLengthWrite1(BinaryWriter binaryWriter, long value)
     {
-        if (!UseCompressSave)
-        {
-            binaryWriter.Write(value);
-        }
+        if (UseCompressSave) return;
+        binaryWriter.Write(value);
     }
 
     public static void DisposeCompressionStream()
@@ -265,23 +253,23 @@ class PatchSave
         {
             stream = ((CompressionStream)_compressionStream).outStream;
         }
-        _compressionStream.Dispose(); //Dispose need to be done before fstream closed.
+        // Dispose need to be done before fstream closed.
+        _compressionStream.Dispose();
         _compressionStream = null;
-        if (writeflag) //Reset UseCompressSave after writing to file
+        if (!writeflag) return;
+        // Reset UseCompressSave after writing to file
+        if (stream != null)
         {
-            if (stream != null)
-            {
-                // Ugly implementation, but it works. May find a better solution someday.
-                var saveLen = stream.Seek(0L, SeekOrigin.End);
-                stream.Seek(6L, SeekOrigin.Begin);
-                var writer = new BinaryWriter(stream);
-                writer.Write(saveLen);
-                writer.Dispose();
-            }
-            _compressionTypeForSaving = CompressionTypeForSaves;
-            _compressionLevelForSaving = CompressionLevelForSaves;
-            UseCompressSave = false;
+            // Ugly implementation, but it works. May find a better solution someday.
+            var saveLen = stream.Seek(0L, SeekOrigin.End);
+            stream.Seek(6L, SeekOrigin.Begin);
+            var writer = new BinaryWriter(stream);
+            writer.Write(saveLen);
+            writer.Dispose();
         }
+        _compressionTypeForSaving = CompressionTypeForSaves;
+        _compressionLevelForSaving = CompressionLevelForSaves;
+        UseCompressSave = false;
     }
 
     [HarmonyTranspiler]
@@ -290,8 +278,7 @@ class PatchSave
     [HarmonyPatch(typeof(GameSave), "ReadHeader")]
     [HarmonyPatch(typeof(GameSave), "ReadHeaderAndDescAndProperty")]
     [HarmonyPatch(typeof(GameSave), "ReadModes")]
-    static IEnumerable<CodeInstruction> LoadCurrentGame_Transpiler(IEnumerable<CodeInstruction> instructions,
-        ILGenerator iLGenerator)
+    private static IEnumerable<CodeInstruction> LoadCurrentGame_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
     {
         /* using (BinaryReader binaryReader = new BinaryReader(fileStream)) => Create decompressionStream and replace binaryReader.
          * set PerformanceMonitor.BeginStream to decompressionStream.
@@ -299,29 +286,31 @@ class PatchSave
          * fileStream.Seek((long)num2, SeekOrigin.Current); => Use decompressionStream.Read to seek forward
          * binaryReader.Dispose(); => Dispose decompressionStream before fileStream close.
          */
+        var matcher = new CodeMatcher(instructions, generator);
         try
         {
-            var matcher = new CodeMatcher(instructions, iLGenerator)
-                .MatchForward(false,
-                    new CodeMatch(OpCodes.Newobj,
-                        AccessTools.Constructor(typeof(BinaryReader), new Type[] { typeof(FileStream) })))
-                .Set(OpCodes.Call, AccessTools.Method(typeof(PatchSave), "CreateBinaryReader"))
-                .MatchForward(false,
-                    new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(PerformanceMonitor), "BeginStream")));
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Newobj, AccessTools.Constructor(typeof(BinaryReader), new [] { typeof(FileStream) }))
+            ).Set(
+                OpCodes.Call, AccessTools.Method(typeof(PatchSave), "CreateBinaryReader")
+            ).MatchForward(false,
+                new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(PerformanceMonitor), "BeginStream"))
+            );
 
             if (matcher.IsValid)
                 matcher.Set(OpCodes.Call, AccessTools.Method(typeof(PatchSave), "MonitorStream"));
 
             matcher.Start().MatchForward(false,
-                    new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(BinaryReader), "ReadInt64")))
-                .Set(OpCodes.Call, AccessTools.Method(typeof(PatchSave), "FileLengthRead"))
-                .MatchForward(false,
-                    new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(System.IDisposable), "Dispose")))
-                .Advance(1)
-                .Insert(new CodeInstruction(OpCodes.Call,
-                    AccessTools.Method(typeof(PatchSave), "DisposeCompressionStream")))
-                .MatchBack(false,
-                    new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(System.IO.Stream), "Seek")));
+                new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(BinaryReader), "ReadInt64"))
+            ).Set(
+                OpCodes.Call, AccessTools.Method(typeof(PatchSave), "FileLengthRead")
+            ).MatchForward(false,
+                new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(IDisposable), "Dispose"))
+            ).Advance(1).Insert(
+                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(PatchSave), "DisposeCompressionStream"))
+            ).MatchBack(false,
+                new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(Stream), "Seek"))
+            );
             if (matcher.IsValid)
                 matcher.Set(OpCodes.Call, AccessTools.Method(typeof(PatchSave), "ReadSeek"));
 
@@ -329,12 +318,12 @@ class PatchSave
         }
         catch (Exception ex)
         {
-            SaveUtil.logger.LogError(
+            SaveUtil.Logger.LogError(
                 "LoadCurrentGame_Transpiler failed. Mod version not compatible with game version.");
-            SaveUtil.logger.LogError(ex);
+            SaveUtil.Logger.LogError(ex);
         }
 
-        return instructions;
+        return matcher.InstructionEnumeration();
     }
 
     public static BinaryReader CreateBinaryReader(FileStream fileStream)

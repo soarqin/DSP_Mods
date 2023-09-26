@@ -6,104 +6,100 @@ namespace CompressSave;
 
 static class PatchUISaveGame
 {
-    [HarmonyPatch(typeof(UISaveGameWindow), "OnSelectedChange"), HarmonyPostfix]
-    static void OnSelectedChange(UISaveGameWindow __instance, Text ___prop3Text)
+    public static void OnDestroy()
     {
-        var compressedType = SaveUtil.SaveGetCompressType(__instance.selected?.saveName);
-        switch (compressedType)
+        if (_context.ButtonCompress)
+            Object.Destroy(_context.ButtonCompress.gameObject);
+        if (_context.Window)
         {
-            case CompressionType.LZ4:
-                ___prop3Text.text = "(LZ4)" + ___prop3Text.text;
-                break;
-            case CompressionType.Zstd:
-                ___prop3Text.text = "(ZSTD)" + ___prop3Text.text;
-                break;
-            default:
-                ___prop3Text.text = "(N)" + ___prop3Text.text;
-                break;
+            _context.SaveButton.onClick -= WrapClick;
+            _context.SaveButton.onClick += _context.Window.OnSaveClick;
         }
+        _OnDestroy();
+    }
+
+    [HarmonyPatch(typeof(UISaveGameWindow), "OnSelectedChange"), HarmonyPostfix]
+    static void OnSelectedChange(UISaveGameWindow __instance)
+    {
+        var selected = __instance.selected;
+        var compressedType = SaveUtil.SaveGetCompressType(selected == null ? null : selected.saveName);
+        var prop3Text = __instance.prop3Text;
+        prop3Text.text = compressedType switch
+        {
+            CompressionType.LZ4 => "(LZ4)" + prop3Text.text,
+            CompressionType.Zstd => "(ZSTD)" + prop3Text.text,
+            _ => "(N)" + prop3Text.text
+        };
     }
 
     [HarmonyPatch(typeof(UISaveGameWindow), "_OnDestroy"), HarmonyPostfix]
-    static void _OnDestroy()
+    private static void _OnDestroy()
     {
         //Console.WriteLine("OnCreate");
-        context = new UIContext();
+        _context = new UIContext();
     }
  
     [HarmonyPatch(typeof(UISaveGameWindow), "OnSaveClick"), HarmonyReversePatch]
-    static void OSaveGameAs(this UISaveGameWindow ui, int data) { }
+    private static void OSaveGameAs(this UISaveGameWindow ui, int data) { }
 
     [HarmonyPatch(typeof(UISaveGameWindow), "CheckAndSetSaveButtonEnable"), HarmonyPostfix]
-    static void CheckAndSetSaveButtonEnable(UISaveGameWindow __instance, UIButton ___saveButton, Text ___saveButtonText)
+    private static void CheckAndSetSaveButtonEnable(UISaveGameWindow __instance)
     {
-        _OnOpen(__instance, ___saveButton, ___saveButtonText);
-        if (context.saveButtonText && context.saveButton)
-            SetButtonState(context.saveButtonText.text, context.saveButton.button.interactable);
+        _OnOpen(__instance);
+        if (_context.SaveButtonText && _context.SaveButton)
+            SetButtonState(_context.SaveButtonText.text, _context.SaveButton.button.interactable);
     }
 
-    static void SetButtonState(string text, bool interactable)
+    private static void SetButtonState(string text, bool interactable)
     {
-        context.buttonCompress.button.interactable = interactable;
-        context.buttonCompressText.text = text;
+        _context.ButtonCompress.button.interactable = interactable;
+        _context.ButtonCompressText.text = text;
     }
 
-    class UIContext
+    private class UIContext
     {
-        public UIButton buttonCompress;
-        public UIButton saveButton;
-        public Text buttonCompressText;
-        public Text saveButtonText;
-        public UISaveGameWindow ui;
+        public UIButton ButtonCompress;
+        public UIButton SaveButton;
+        public Text ButtonCompressText;
+        public Text SaveButtonText;
+        public UISaveGameWindow Window;
     }
 
     [HarmonyPatch(typeof(UISaveGameWindow), "OnSaveClick"), HarmonyPrefix]
-    static void OnSaveClick()
+    private static void OnSaveClick()
     {
         PatchSave.UseCompressSave = true;
     }
 
-    static UIContext context = new UIContext();
+    private static UIContext _context = new UIContext();
 
     [HarmonyPatch(typeof(UISaveGameWindow), "_OnOpen"), HarmonyPostfix]
-    static void _OnOpen(UISaveGameWindow __instance,  UIButton ___saveButton, Text ___saveButtonText)
+    private static void _OnOpen(UISaveGameWindow __instance)
     {
-        if (context.buttonCompress) return;
-        context.saveButton = ___saveButton;
-        context.saveButtonText = ___saveButtonText;
+        if (_context.ButtonCompress) return;
+        _context.SaveButton = __instance.saveButton;
+        _context.SaveButtonText = __instance.saveButtonText;
 
-        context.ui = __instance;
-        context.buttonCompress =
-            (__instance.transform.Find("button-compress")?.gameObject ??
-             GameObject.Instantiate(___saveButton.gameObject, ___saveButton.transform.parent))
-            .GetComponent<UIButton>();
+        _context.Window = __instance;
+        var gameObj = __instance.transform.Find("button-compress")?.gameObject;
+        if (gameObj == null)
+            gameObj = Object.Instantiate(__instance.saveButton.gameObject, __instance.saveButton.transform.parent);
+        _context.ButtonCompress = gameObj.GetComponent<UIButton>();
 
-        context.buttonCompress.gameObject.name = "button-compress";
-        context.buttonCompress.transform.Translate(new Vector3(-2.0f, 0, 0));
-        context.buttonCompress.button.image.color = new Color32(0xfc, 0x6f, 00, 0x77);
-        context.buttonCompressText = context.buttonCompress.transform.Find("button-text")?.GetComponent<Text>();
+        _context.ButtonCompress.gameObject.name = "button-compress";
+        _context.ButtonCompress.transform.Translate(new Vector3(-2.0f, 0, 0));
+        _context.ButtonCompress.button.image.color = new Color32(0xfc, 0x6f, 00, 0x77);
+        _context.ButtonCompressText = _context.ButtonCompress.transform.Find("button-text")?.GetComponent<Text>();
 
-        context.buttonCompress.onClick += __instance.OnSaveClick;
-        context.saveButton.onClick -= __instance.OnSaveClick;
-        context.saveButton.onClick += WrapClick;
+        _context.ButtonCompress.onClick += __instance.OnSaveClick;
+        _context.SaveButton.onClick -= __instance.OnSaveClick;
+        _context.SaveButton.onClick += WrapClick;
     }
 
-    static void WrapClick(int data)
+    private static void WrapClick(int data)
     {
         PatchSave.UseCompressSave = false;
-        context.ui.OSaveGameAs(data);
+        _context.Window.OSaveGameAs(data);
     }
 
-
-    public static void OnDestroy()
-    {
-        if (context.buttonCompress)
-            GameObject.Destroy(context.buttonCompress.gameObject);
-        if (context.ui)
-        {
-            context.saveButton.onClick -= WrapClick;
-            context.saveButton.onClick += context.ui.OnSaveClick;
-        }
-        _OnDestroy();
-    }
 }
