@@ -20,9 +20,11 @@ public static class DysonSpherePatch
     private static Harmony _ejectAnywayPatch;
     private static Harmony _overclockEjector;
     private static Harmony _overclockSilo;
+    private static Harmony _patch;
     
     public static void Init()
     {
+        _patch ??= Harmony.CreateAndPatchAll(typeof(DysonSpherePatch));
         SkipBulletEnabled.SettingChanged += (_, _) => SkipBulletValueChanged();
         SkipAbsorbEnabled.SettingChanged += (_, _) => SkipAbsorbValueChanged();
         QuickAbsortEnabled.SettingChanged += (_, _) => QuickAbsortValueChanged();
@@ -39,36 +41,20 @@ public static class DysonSpherePatch
     
     public static void Uninit()
     {
-        if (_skipBulletPatch != null)
-        {
-            _skipBulletPatch.UnpatchSelf();
-            _skipBulletPatch = null;
-        }
-        if (_skipAbsorbPatch != null)
-        {
-            _skipAbsorbPatch.UnpatchSelf();
-            _skipAbsorbPatch = null;
-        }
-        if (_quickAbsortPatch != null)
-        {
-            _quickAbsortPatch.UnpatchSelf();
-            _quickAbsortPatch = null;
-        }
-        if (_ejectAnywayPatch != null)
-        {
-            _ejectAnywayPatch.UnpatchSelf();
-            _ejectAnywayPatch = null;
-        }
-        if (_overclockEjector != null)
-        {
-            _overclockEjector.UnpatchSelf();
-            _overclockEjector = null;
-        }
-        if (_overclockSilo != null)
-        {
-            _overclockSilo.UnpatchSelf();
-            _overclockSilo = null;
-        }
+        _skipBulletPatch?.UnpatchSelf();
+        _skipBulletPatch = null;
+        _skipAbsorbPatch?.UnpatchSelf();
+        _skipAbsorbPatch = null;
+        _quickAbsortPatch?.UnpatchSelf();
+        _quickAbsortPatch = null;
+        _ejectAnywayPatch?.UnpatchSelf();
+        _ejectAnywayPatch = null;
+        _overclockEjector?.UnpatchSelf();
+        _overclockEjector = null;
+        _overclockSilo?.UnpatchSelf();
+        _overclockSilo = null;
+        _patch?.UnpatchSelf();
+        _patch = null;
     }
     
     private static void SkipBulletValueChanged()
@@ -201,6 +187,34 @@ public static class DysonSpherePatch
             ds.RemoveDysonRocket(id);
         }
         ds.RemoveLayer(index);
+    }
+    
+    [HarmonyTranspiler]
+    [HarmonyPatch(typeof(DysonNode), nameof(DysonNode.ConstructCp))]
+    private static IEnumerable<CodeInstruction> DysonNode_ConstructCp_Patch(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+    {
+        var matcher = new CodeMatcher(instructions, generator);
+        matcher.MatchBack(false,
+            new CodeMatch(OpCodes.Ldc_I4_0),
+            new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(DysonShell), nameof(DysonShell.Construct)))
+        ).Advance(3).InsertAndAdvance(
+            // node._cpReq = node._cpReq - 1;
+            new CodeInstruction(OpCodes.Ldarg_0),
+            new CodeInstruction(OpCodes.Ldarg_0),
+            new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(DysonNode), nameof(DysonNode._cpReq))),
+            new CodeInstruction(OpCodes.Ldc_I4_1),
+            new CodeInstruction(OpCodes.Sub),
+            new CodeInstruction(OpCodes.Stfld, AccessTools.Field(typeof(DysonNode), nameof(DysonNode._cpReq)))
+        );
+        // Remove use of RecalcCpReq()
+        matcher.MatchForward(false,
+            new CodeMatch(OpCodes.Ldarg_0),
+            new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(DysonNode), nameof(DysonNode.RecalcCpReq)))
+        );
+        var labels = matcher.Labels;
+        matcher.Labels = new List<Label>();
+        matcher.RemoveInstructions(2).Labels.AddRange(labels);
+        return matcher.InstructionEnumeration();
     }
 
     private static class SkipBulletPatch
@@ -348,6 +362,21 @@ public static class DysonSpherePatch
     private static class SkipAbsorbPatch
     {
         [HarmonyTranspiler]
+        [HarmonyPatch(typeof(DysonNode), nameof(DysonNode.OrderConstructCp))]
+        private static IEnumerable<CodeInstruction> DysonNode_OrderConstructCp_Patch(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(DysonSwarm), nameof(DysonSwarm.AbsorbSail)))
+            ).Advance(1).SetInstructionAndAdvance(
+                new CodeInstruction(OpCodes.Pop)
+            ).Insert(
+                new CodeInstruction(OpCodes.Ret)
+            );
+            return matcher.InstructionEnumeration();
+        }
+
+        [HarmonyTranspiler]
         [HarmonyPatch(typeof(DysonSwarm), nameof(DysonSwarm.AbsorbSail))]
         private static IEnumerable<CodeInstruction> DysonSwarm_AbsorbSail_Patch(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
         {
@@ -388,7 +417,7 @@ public static class DysonSpherePatch
                 new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(DysonSwarm), nameof(DysonSwarm.RemoveSolarSail))),
                 
                 // return false;
-                new CodeInstruction(OpCodes.Ldc_I4_0),
+                new CodeInstruction(OpCodes.Ldc_I4_1),
                 new CodeInstruction(OpCodes.Ret)
             );
             return matcher.InstructionEnumeration();
@@ -433,6 +462,17 @@ public static class DysonSpherePatch
         private static void DoAbsorb(DysonSphereLayer layer, long gameTick)
         {
             var swarm = layer.dysonSphere.swarm;
+            if (SkipAbsorbEnabled.Value)
+            {
+                for (var i = layer.nodeCursor - 1; i > 0; i--)
+                {
+                    var node = layer.nodePool[i];
+                    if (node == null || node.id != i || node.sp != node.spMax) continue;
+                    if (node._cpReq <= node.cpOrdered) continue;
+                    while (swarm.AbsorbSail(node, gameTick)) {}
+                }
+                return;
+            }
             for (var i = layer.nodeCursor - 1; i > 0; i--)
             {
                 var node = layer.nodePool[i];
