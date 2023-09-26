@@ -436,10 +436,18 @@ public static class DysonSpherePatch
             for (var i = layer.nodeCursor - 1; i > 0; i--)
             {
                 var node = layer.nodePool[i];
-                if (node != null && node.id == i && node.sp == node.spMax)
+                if (node == null || node.id != i || node.sp != node.spMax) continue;
+                var req = node._cpReq;
+                var ordered = node.cpOrdered;
+                if (req <= ordered) continue;
+                if (!swarm.AbsorbSail(node, gameTick)) continue;
+                ordered++;
+                while (req > ordered)
                 {
-                    node.OrderConstructCp(gameTick, swarm);
-                }
+                    if (!swarm.AbsorbSail(node, gameTick)) break;
+                    ordered++;
+                } 
+                node.cpOrdered = ordered;
             }
         }
     }
