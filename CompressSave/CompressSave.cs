@@ -20,7 +20,7 @@ public enum CompressionType
 public class CompressSave : BaseUnityPlugin
 {
     private Harmony _patchSave, _patchUISave, _patchUILoad;
-    private static string StringFromCompresstionType(CompressionType type)
+    public static string StringFromCompresstionType(CompressionType type)
     {
         return type switch
         {
@@ -46,25 +46,22 @@ public class CompressSave : BaseUnityPlugin
         SaveUtil.Logger = Logger;
         if (LZ4API.Avaliable && ZstdAPI.Avaliable)
         {
-            PatchSave.CompressionTypeForSaves = CompressionTypeFromString(
-                Config.Bind("Compression", "Type", StringFromCompresstionType(PatchSave.CompressionTypeForSaves),
+            PatchSave.CompressionTypeForSavesConfig = Config.Bind("Compression", "Type", StringFromCompresstionType(PatchSave.CompressionTypeForSaves),
                         new ConfigDescription("Set default compression type for manual saves.",
-                            new AcceptableValueList<string>("lz4", "zstd", "none"), new { }))
-                    .Value);
-            PatchSave.CompressionTypeForAutoSaves = CompressionTypeFromString(
-                Config.Bind("Compression", "TypeForAuto", StringFromCompresstionType(PatchSave.CompressionTypeForSaves),
+                            new AcceptableValueList<string>("lz4", "zstd", "none"), new { }));
+            PatchSave.CompressionTypeForSaves = CompressionTypeFromString(PatchSave.CompressionTypeForSavesConfig.Value);
+            PatchSave.CompressionTypeForAutoSavesConfig = Config.Bind("Compression", "TypeForAuto", StringFromCompresstionType(PatchSave.CompressionTypeForAutoSaves),
                         new ConfigDescription("Set default compression type for auto saves and last-exit save.",
-                            new AcceptableValueList<string>("lz4", "zstd", "none"), new { }))
-                    .Value);
+                            new AcceptableValueList<string>("lz4", "zstd", "none"), new { }));
+            PatchSave.CompressionTypeForAutoSaves = CompressionTypeFromString(PatchSave.CompressionTypeForAutoSavesConfig.Value);
             PatchSave.CompressionLevelForSaves = Config.Bind("Compression", "Level", PatchSave.CompressionLevelForSaves,
                     "Set default compression level for manual saves.\n0 for default level.\n3 ~ 12 for lz4, -5 ~ 22 for zstd.\nSmaller level leads to faster speed and less compression ratio.")
                 .Value;
             PatchSave.CompressionLevelForAutoSaves = Config.Bind("Compression", "LevelForAuto", PatchSave.CompressionLevelForAutoSaves,
                     "Set default compression level for auto saves and last-exit save.\n0 for default level.\n3 ~ 12 for lz4, -5 ~ 22 for zstd.\nSmaller level leads to faster speed and less compression ratio.")
                 .Value;
-            PatchSave.EnableForAutoSaves = Config.Bind("Compression", "EnableForAutoSaves", PatchSave.EnableForAutoSaves,
-                    "Enable the feature for auto saves and last-exit save.")
-                .Value;
+            PatchSave.EnableForAutoSaves = Config.Bind("Compression", "EnableForAutoSaves", true,
+                    "Enable the feature for auto saves and last-exit save.");
             PatchSave.CreateCompressBuffer();
             if (GameConfig.gameVersion != SaveUtil.VerifiedVersion)
             {
@@ -78,7 +75,14 @@ public class CompressSave : BaseUnityPlugin
             _patchUILoad = Harmony.CreateAndPatchAll(typeof(PatchUILoadGame));
         }
         else
-            SaveUtil.Logger.LogWarning("Either lz4warp.dll or zstdwrap.dll is not avaliable.");
+            SaveUtil.Logger.LogWarning("Either nonewrap.dll, lz4warp.dll or zstdwrap.dll is not avaliable.");
+        I18N.Init();
+        I18N.Add("Store", "Store (No Compression)", "存储(不压缩)");
+        I18N.Add("Decompress", "Decompress", "解压存档");
+        I18N.Add("Save with Compression", "Save (Compress)", "压缩保存");
+        I18N.Add("Compression for auto saves", "Compression for auto saves", "　　自动存档压缩方式");
+        I18N.Add("Compression for manual saves", "Compression for manual saves", "　　手动存档压缩方式");
+        I18N.Apply();
     }
 
     public void OnDestroy()
@@ -108,9 +112,11 @@ public class PatchSave
     private static int _compressionLevelForSaving;
     public static CompressionType CompressionTypeForSaves = CompressionType.Zstd;
     public static CompressionType CompressionTypeForAutoSaves = CompressionType.Zstd;
+    public static ConfigEntry<string> CompressionTypeForSavesConfig;
+    public static ConfigEntry<string> CompressionTypeForAutoSavesConfig;
     public static int CompressionLevelForSaves;
     public static int CompressionLevelForAutoSaves;
-    public static bool EnableForAutoSaves = true;
+    public static ConfigEntry<bool> EnableForAutoSaves;
     private static Stream _compressionStream;
     public static bool EnableCompress;
 
@@ -151,7 +157,7 @@ public class PatchSave
     [HarmonyPatch(typeof(GameSave), "SaveAsLastExit")]
     private static void BeforeAutoSave()
     {
-        UseCompressSave = EnableForAutoSaves && EnableCompress;
+        UseCompressSave = EnableForAutoSaves.Value && EnableCompress;
         if (!UseCompressSave) return;
         _compressionTypeForSaving = CompressionTypeForAutoSaves;
         _compressionLevelForSaving = CompressionLevelForAutoSaves;

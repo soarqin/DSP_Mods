@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using HarmonyLib;
 using UnityEngine;
 using UnityEngine.UI;
@@ -19,7 +20,7 @@ static class PatchUISaveGame
     }
 
     [HarmonyPatch(typeof(UISaveGameWindow), "OnSelectedChange"), HarmonyPostfix]
-    static void OnSelectedChange(UISaveGameWindow __instance)
+    private static void OnSelectedChange(UISaveGameWindow __instance)
     {
         var selected = __instance.selected;
         var compressedType = SaveUtil.SaveGetCompressType(selected == null ? null : selected.saveName);
@@ -46,20 +47,16 @@ static class PatchUISaveGame
     private static void CheckAndSetSaveButtonEnable(UISaveGameWindow __instance)
     {
         _OnOpen(__instance);
-        if (_context.SaveButtonText && _context.SaveButton)
-            SetButtonState(_context.SaveButtonText.text, _context.SaveButton.button.interactable);
-    }
-
-    private static void SetButtonState(string text, bool interactable)
-    {
-        _context.ButtonCompress.button.interactable = interactable;
-        _context.ButtonCompressText.text = text;
+        if (_context.SaveButton)
+            _context.ButtonCompress.button.interactable = _context.SaveButton.button.interactable;
     }
 
     private class UIContext
     {
         public UIButton ButtonCompress;
         public UIButton SaveButton;
+        public GameObject ManualSaveTypeComboBox;
+        public GameObject AutoSaveTypeComboBox;
         public Text ButtonCompressText;
         public Text SaveButtonText;
         public UISaveGameWindow Window;
@@ -77,23 +74,134 @@ static class PatchUISaveGame
     private static void _OnOpen(UISaveGameWindow __instance)
     {
         if (_context.ButtonCompress) return;
+        RectTransform rtrans;
+        Vector3 pos;
         _context.SaveButton = __instance.saveButton;
         _context.SaveButtonText = __instance.saveButtonText;
-
         _context.Window = __instance;
         var gameObj = __instance.transform.Find("button-compress")?.gameObject;
+        var created = false;
         if (gameObj == null)
+        {
             gameObj = Object.Instantiate(__instance.saveButton.gameObject, __instance.saveButton.transform.parent);
+            created = true;
+        }
         _context.ButtonCompress = gameObj.GetComponent<UIButton>();
+        if (created)
+        {
+            _context.ButtonCompress.gameObject.name = "button-compress";
+            rtrans = (RectTransform)_context.ButtonCompress.transform;
+            pos = rtrans.anchoredPosition3D;
+            rtrans.anchoredPosition3D = new Vector3(pos.x - 180, pos.y, pos.z);
+            _context.ButtonCompress.button.image.color = new Color32(0xfc, 0x6f, 00, 0x77);
+            var textTrans = _context.ButtonCompress.transform.Find("button-text");
+            _context.ButtonCompressText = textTrans.GetComponent<Text>();
+            _context.ButtonCompress.onClick += __instance.OnSaveClick;
+            _context.SaveButton.onClick -= __instance.OnSaveClick;
+            _context.SaveButton.onClick += WrapClick;
+            _context.ButtonCompressText.text = "Save with Compression".Translate();
+            var localizer = textTrans.GetComponent<Localizer>();
+            if (localizer)
+            {
+                localizer.stringKey = "Save with Compression";
+                localizer.translation = "Save with Compression".Translate();
+            }
+        }
 
-        _context.ButtonCompress.gameObject.name = "button-compress";
-        _context.ButtonCompress.transform.Translate(new Vector3(-2.0f, 0, 0));
-        _context.ButtonCompress.button.image.color = new Color32(0xfc, 0x6f, 00, 0x77);
-        _context.ButtonCompressText = _context.ButtonCompress.transform.Find("button-text")?.GetComponent<Text>();
+        created = false;
+        gameObj = __instance.transform.Find("manual-save-type-combobox")?.gameObject;
+        if (gameObj == null)
+        {
+            gameObj = Object.Instantiate(UIRoot.instance.optionWindow.resolutionComp.transform.parent.gameObject, __instance.saveButton.transform.parent);
+            created = true;
+        }
+        _context.ManualSaveTypeComboBox = gameObj;
+        if (created)
+        {
+            _context.ManualSaveTypeComboBox.name = "manual-save-type-combobox";
+            rtrans = (RectTransform)_context.ManualSaveTypeComboBox.transform;
+            var rtrans2 = (RectTransform)_context.ButtonCompress.transform;
+            pos = rtrans2.anchoredPosition3D;
+            rtrans.anchorMin = rtrans2.anchorMin;
+            rtrans.anchorMax = rtrans2.anchorMax;
+            rtrans.pivot = rtrans2.pivot;
+            rtrans.anchoredPosition3D = new Vector3(pos.x + 100, pos.y + 45, pos.z);
+            var cb = rtrans.transform.Find("ComboBox").GetComponent<UIComboBox>();
+            cb.onSubmit.RemoveAllListeners();
+            cb.onItemIndexChange.RemoveAllListeners();
+            cb.Items = new List<string> { "Store".Translate(), "LZ4", "Zstd" };
+            cb.itemIndex = (int)PatchSave.CompressionTypeForSaves;
+            cb.onItemIndexChange.AddListener(()=>
+            {
+                PatchSave.CompressionTypeForSaves = (CompressionType)cb.itemIndex;
+                PatchSave.CompressionTypeForSavesConfig.Value = CompressSave.StringFromCompresstionType(PatchSave.CompressionTypeForSaves);
+            });
+            rtrans = (RectTransform)cb.transform;
+            pos = rtrans.anchoredPosition3D;
+            rtrans.anchoredPosition3D = new Vector3(pos.x - 50, pos.y, pos.z);
+            var size = rtrans.sizeDelta;
+            rtrans.sizeDelta = new Vector2(150f, size.y);
+            var txt = _context.ManualSaveTypeComboBox.GetComponent<Text>();
+            txt.text = "Compression for manual saves".Translate();
+            var localizer = _context.ManualSaveTypeComboBox.GetComponent<Localizer>();
+            if (localizer != null)
+            {
+                localizer.stringKey = "Compression for manual saves";
+                localizer.translation = "Compression for manual saves".Translate();
+            }
+        }
 
-        _context.ButtonCompress.onClick += __instance.OnSaveClick;
-        _context.SaveButton.onClick -= __instance.OnSaveClick;
-        _context.SaveButton.onClick += WrapClick;
+        created = false;
+        gameObj = __instance.transform.Find("auto-save-type-combobox")?.gameObject;
+        if (gameObj == null)
+        {
+            gameObj = Object.Instantiate(UIRoot.instance.optionWindow.resolutionComp.transform.parent.gameObject, __instance.saveButton.transform.parent);
+            created = true;
+        }
+        _context.AutoSaveTypeComboBox = gameObj;
+        if (created)
+        {
+            _context.AutoSaveTypeComboBox.name = "auto-save-type-combobox";
+            rtrans = (RectTransform)_context.AutoSaveTypeComboBox.transform;
+            var rtrans2 = (RectTransform)_context.ButtonCompress.transform;
+            pos = rtrans2.anchoredPosition3D;
+            rtrans.anchorMin = rtrans2.anchorMin;
+            rtrans.anchorMax = rtrans2.anchorMax;
+            rtrans.pivot = rtrans2.pivot;
+            rtrans.anchoredPosition3D = new Vector3(pos.x + 510, pos.y + 45, pos.z);
+            var cb = rtrans.transform.Find("ComboBox").GetComponent<UIComboBox>();
+            cb.onSubmit.RemoveAllListeners();
+            cb.onItemIndexChange.RemoveAllListeners();
+            cb.Items = new List<string> { "已停用".Translate(), "Store".Translate(), "LZ4", "Zstd" };
+            cb.itemIndex = PatchSave.EnableForAutoSaves.Value ? (int)PatchSave.CompressionTypeForAutoSaves + 1 : 0;
+            cb.onItemIndexChange.AddListener(() =>
+            {
+                var idx = cb.itemIndex;
+                if (idx == 0)
+                {
+                    PatchSave.EnableForAutoSaves.Value = false;
+                }
+                else
+                {
+                    PatchSave.EnableForAutoSaves.Value = true;
+                    PatchSave.CompressionTypeForAutoSaves = (CompressionType)idx - 1;
+                    PatchSave.CompressionTypeForAutoSavesConfig.Value = CompressSave.StringFromCompresstionType(PatchSave.CompressionTypeForAutoSaves);
+                }
+            });
+            rtrans = (RectTransform)cb.transform;
+            pos = rtrans.anchoredPosition3D;
+            rtrans.anchoredPosition3D = new Vector3(pos.x - 50, pos.y, pos.z);
+            var size = rtrans.sizeDelta;
+            rtrans.sizeDelta = new Vector2(150f, size.y);
+            var txt = _context.AutoSaveTypeComboBox.GetComponent<Text>();
+            txt.text = "Compression for auto saves".Translate();
+            var localizer = _context.AutoSaveTypeComboBox.GetComponent<Localizer>();
+            if (localizer != null)
+            {
+                localizer.stringKey = "Compression for auto saves";
+                localizer.translation = "Compression for auto saves".Translate();
+            }
+        }
     }
 
     private static void WrapClick(int data)
@@ -101,5 +209,4 @@ static class PatchUISaveGame
         PatchSave.UseCompressSave = false;
         _context.Window.OSaveGameAs(data);
     }
-
 }

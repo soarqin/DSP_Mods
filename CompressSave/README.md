@@ -5,7 +5,11 @@
 #### 压缩游戏存档以降低空间使用并提升保存速度
 #### 原作者 [@bluedoom](https://github.com/bluedoom/DSP_Mod)(直到1.1.11) 和 [@starfi5h](https://github.com/starfi5h/DSP_CompressSave)(1.1.12)，本人继续更新以支持最新游戏版本。
 
-## Updates
+## Changelog
+
+### 1.3.2
+* Add config UI on Save Game dialog, to set compression types.
+* Change button text to `Save (Compress)` for better understanding.
 
 ### 1.3.1
 * Add config to disable feature for auto saves.
@@ -14,7 +18,7 @@
 ### 1.3.0
 * Separate config entries for manual save and auto save.
 * Now you can still get speed benefit while setting compression type to `None` for auto saves, and for manual saves if using the new `Save` button.
-  * Adds a `nonewrap.dll` for this function.
+  + Adds a `nonewrap.dll` for this function.
 * Update `LZ4` and `Zstd` library to latest version.
 * `lz4wrap.dll` and `zstdwrap.dll` are compiled using `-O3` instead of `-Os`, expect to be slightly faster but larger.
 
@@ -112,7 +116,7 @@
 
 ## Introduction
 
-* Reduce archive size by 30% / save time by 75% (On HDD + i7-4790K@4.4G + DDR3 2400MHz)
+* Reduce archive size by 30% / save time by 75% (Compressed by LZ4, on HDD + i7-4790K@4.4G + DDR3 2400MHz)
 
   | Before | After |
   | - | - |
@@ -128,9 +132,38 @@
 * You can decompress saves on load panel.
 * Remember to backup your save(use original save button) before updating game to avoid loading failure.
 
+## 更新日志
+
+### 1.3.2
+* 在保存面板上增加设置压缩方式的UI。
+* 将按钮文本改为`压缩保存`以区分功能。
+
+### 1.3.1
+* 增加在自动存档中禁用压缩的设置项。
+* 修复一个导致游戏开始后第一次保存总是使用Zstd压缩的bug。
+
+### 1.3.0
+* 分离手动存档和自动存档的设置项。
+* 现在在自动存档设置压缩类型为`存储`也可以获得速度提升，手动存档也可以在使用新的`保存`按钮后获得速度提升。
+  + 为此增加了`nonewrap.dll`。
+* 更新`LZ4`和`Zstd`库到最新版本。
+* `lz4wrap.dll`和`zstdwrap.dll`使用`-O3`编译而不是`-Os`，速度略有提升但体积变大。
+
+### 1.2.2
+* 修复 #4，一个导致非ASCII UTF-8字符导致的bug。
+* 移除使用Harmony.UnpatchAll()以避免在BepInEx日志中出现警告。
+
+### 1.2.1
+* 简化代码以在存档读取面板上显示压缩类型和`解压`按钮，使得CompressSave与其他MOD(如GalacticScale)兼容，因为它们都覆盖了`UILoadGameWindow::OnSelectedChange()`。
+* 为zstd添加了压缩等级-5到-1，现在它比lz4(实际上是lz4frame)表现更好了：
+  * -5比lz4更快，但压缩比略有提升。
+  * -1和lz4几乎一样快，但压缩比更高。
+  * 由于r2modman UI的bug，压缩等级的设置项不再限制范围。
+* 将本地的wrapper DLL移动到`x64`
+
 ## 介绍
 
-* 减少存档容量30% / 存档用时75% (测试环境：机械硬盘 + i7-4790K@4.4G + DDR3 2400MHz)  
+* 减少存档容量30% / 存档用时75% (LZ4压缩，测试环境：机械硬盘 + i7-4790K@4.4G + DDR3 2400MHz)  
 
   | 原存档 | 压缩后 |
   | - | - |
