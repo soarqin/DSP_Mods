@@ -18,6 +18,8 @@ public class HideTips : BaseUnityPlugin
     private static bool _skipPrologue = true;
     private static bool _hideMenuDemo = false;
 
+    private static Harmony _patch;
+
     private void Awake()
     {
         _cfgEnabled = Config.Bind("General", "Enabled", _cfgEnabled, "enable/disable this plugin").Value;
@@ -31,8 +33,14 @@ public class HideTips : BaseUnityPlugin
         Harmony.CreateAndPatchAll(typeof(HideTips));
         if (_hideMenuDemo)
         {
-            Harmony.CreateAndPatchAll(typeof(HideMenuDemo));
+            _patch = Harmony.CreateAndPatchAll(typeof(HideMenuDemo));
         }
+    }
+
+    private void OnDestroy()
+    {
+        _patch?.UnpatchSelf();
+        _patch = null;
     }
 
     [HarmonyPostfix]
@@ -93,7 +101,7 @@ public class HideTips : BaseUnityPlugin
 [HarmonyPatch]
 class HideMenuDemo
 {
-    [HarmonyPrefix]
+    [HarmonyPriority(Priority.First), HarmonyPrefix]
     [HarmonyPatch(typeof(DSPGame), "StartDemoGame", typeof(int))]
     private static bool DSPGame_OnStartDemoGame_Prefix()
     {
@@ -129,7 +137,7 @@ class HideMenuDemo
         return false;
     }
     
-    [HarmonyPrefix]
+    [HarmonyPriority(Priority.First), HarmonyPrefix]
     [HarmonyPatch(typeof(VFPreload), "IsMenuDemoLoaded")]
     private static bool VFPreload_IsMenuDemoLoaded_Prefix(ref bool __result)
     {
@@ -137,7 +145,7 @@ class HideMenuDemo
         return false;
     }
     
-    [HarmonyPrefix]
+    [HarmonyPriority(Priority.First), HarmonyPrefix]
     [HarmonyPatch(typeof(DSPGame), "LateUpdate")]
     [HarmonyPatch(typeof(GameMain), "LateUpdate")]
     [HarmonyPatch(typeof(GameMain), "FixedUpdate")]
@@ -148,8 +156,7 @@ class HideMenuDemo
         return !DSPGame.IsMenuDemo;
     }
 
-    [HarmonyPrefix]
-    [HarmonyPriority(Priority.Last)]
+    [HarmonyPriority(Priority.First), HarmonyPrefix]
     [HarmonyPatch(typeof(GameMain), "Begin")]
     private static bool GameMain_Begin_Prefix()
     {
