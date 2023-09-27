@@ -18,8 +18,7 @@ public static class TerraformPatch
 
     public static void Uninit()
     {
-        if (_patch == null) return;
-        _patch.UnpatchSelf();
+        _patch?.UnpatchSelf();
         _patch = null;
     }
 
@@ -27,16 +26,11 @@ public static class TerraformPatch
     {
         if (Enabled.Value)
         {
-            if (_patch != null)
-            {
-                return;
-            }
-
-            _patch = Harmony.CreateAndPatchAll(typeof(TerraformPatch));
+            _patch ??= Harmony.CreateAndPatchAll(typeof(TerraformPatch));
         }
-        else if (_patch != null)
+        else
         {
-            _patch.UnpatchSelf();
+            _patch?.UnpatchSelf();
             _patch = null;
         }
     }

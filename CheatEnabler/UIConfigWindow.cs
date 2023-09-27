@@ -166,9 +166,9 @@ public class UIConfigWindow : UI.MyWindowWithTabs
         y = 10f;
         UI.MyCheckBox.CreateCheckBox(x, y, tab3, PlanetFunctions.PlayerActionsInGlobeViewEnabled, "Enable player actions in globe view");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab3, ResourcePatch.InfiniteEnabled, "Infinite Natural Resources");
+        UI.MyCheckBox.CreateCheckBox(x, y, tab3, ResourcePatch.InfiniteResourceEnabled, "Infinite Natural Resources");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab3, ResourcePatch.FastEnabled, "Fast Mining");
+        UI.MyCheckBox.CreateCheckBox(x, y, tab3, ResourcePatch.FastMiningEnabled, "Fast Mining");
         y += 36f;
         UI.MyCheckBox.CreateCheckBox(x, y, tab3, WaterPumperPatch.Enabled, "Pump Anywhere");
         y += 36f;

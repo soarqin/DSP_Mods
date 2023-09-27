@@ -63,9 +63,9 @@ public class CheatEnabler : BaseUnityPlugin
             "Boost geothermal power");
         PlanetFunctions.PlayerActionsInGlobeViewEnabled = Config.Bind("Planet", "PlayerActionsInGlobeView", false,
             "Enable player actions in globe view");
-        ResourcePatch.InfiniteEnabled = Config.Bind("Planet", "AlwaysInfiniteResource", false,
+        ResourcePatch.InfiniteResourceEnabled = Config.Bind("Planet", "AlwaysInfiniteResource", false,
             "always infinite natural resource");
-        ResourcePatch.FastEnabled = Config.Bind("Planet", "FastMining", false,
+        ResourcePatch.FastMiningEnabled = Config.Bind("Planet", "FastMining", false,
             "super-fast mining speed");
         WaterPumperPatch.Enabled = Config.Bind("Planet", "WaterPumpAnywhere", false,
             "Can pump water anywhere (while water type is not None)");
@@ -109,8 +109,8 @@ public class CheatEnabler : BaseUnityPlugin
         I18N.Apply();
 
         // UI Patch
-        _windowPatch = Harmony.CreateAndPatchAll(typeof(UI.MyWindowManager.Patch));
-        _patch = Harmony.CreateAndPatchAll(typeof(CheatEnabler));
+        _windowPatch ??= Harmony.CreateAndPatchAll(typeof(UI.MyWindowManager.Patch));
+        _patch ??= Harmony.CreateAndPatchAll(typeof(CheatEnabler));
 
         DevShortcuts.Init();
         AbnormalDisabler.Init();
@@ -272,7 +272,6 @@ public class CheatEnabler : BaseUnityPlugin
         }
         else
         {
-            UIRoot.instance.uiGame.ShutPlayerInventory();
             _configWin.Open();
         }
     }

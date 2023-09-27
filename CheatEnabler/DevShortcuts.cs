@@ -12,7 +12,7 @@ public static class DevShortcuts
 
     public static void Init()
     {
-        _patch = Harmony.CreateAndPatchAll(typeof(DevShortcuts));
+        _patch ??= Harmony.CreateAndPatchAll(typeof(DevShortcuts));
         Enabled.SettingChanged += (_, _) =>
         {
             if (_test != null) _test.active = Enabled.Value;
@@ -21,8 +21,7 @@ public static class DevShortcuts
 
     public static void Uninit()
     {
-        if (_patch == null) return;
-        _patch.UnpatchSelf();
+        _patch?.UnpatchSelf();
         _patch = null;
     }
 

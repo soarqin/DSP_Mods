@@ -11,14 +11,12 @@ public static class AbnormalDisabler
 
     public static void Init()
     {
-        if (_patch != null) return;
-        _patch = Harmony.CreateAndPatchAll(typeof(AbnormalDisabler));
+        _patch ??= Harmony.CreateAndPatchAll(typeof(AbnormalDisabler));
     }
 
     public static void Uninit()
     {
-        if (_patch == null) return;
-        _patch.UnpatchSelf();
+        _patch?.UnpatchSelf();
         _patch = null;
     }
 

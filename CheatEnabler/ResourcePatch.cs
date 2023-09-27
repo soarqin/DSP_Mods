@@ -7,71 +7,40 @@ namespace CheatEnabler;
 
 public static class ResourcePatch
 {
-    public static ConfigEntry<bool> InfiniteEnabled;
-    public static ConfigEntry<bool> FastEnabled;
-    private static Harmony _infinitePatch;
-    private static Harmony _fastPatch;
+    public static ConfigEntry<bool> InfiniteResourceEnabled;
+    public static ConfigEntry<bool> FastMiningEnabled;
 
     public static void Init()
     {
-        InfiniteEnabled.SettingChanged += (_, _) => InfiniteValueChanged();
-        FastEnabled.SettingChanged += (_, _) => FastValueChanged();
-        InfiniteValueChanged();
-        FastValueChanged();
+        InfiniteResourceEnabled.SettingChanged += (_, _) => InfiniteResource.Enable(InfiniteResourceEnabled.Value);
+        FastMiningEnabled.SettingChanged += (_, _) => FastMining.Enable(FastMiningEnabled.Value);
+        InfiniteResource.Enable(InfiniteResourceEnabled.Value);
+        FastMining.Enable(FastMiningEnabled.Value);
     }
 
     public static void Uninit()
     {
-        if (_infinitePatch != null)
-        {
-            _infinitePatch.UnpatchSelf();
-            _infinitePatch = null;
-        }
-
-        if (_fastPatch != null)
-        {
-            _fastPatch.UnpatchSelf();
-            _fastPatch = null;
-        }
-    }
-
-    private static void InfiniteValueChanged()
-    {
-        if (InfiniteEnabled.Value)
-        {
-            if (_infinitePatch != null)
-            {
-                return;
-            }
-
-            _infinitePatch = Harmony.CreateAndPatchAll(typeof(InfiniteResource));
-        }
-        else if (_infinitePatch != null)
-        {
-            _infinitePatch.UnpatchSelf();
-            _infinitePatch = null;
-        }
-    }
-    private static void FastValueChanged()
-    {
-        if (FastEnabled.Value)
-        {
-            if (_fastPatch != null)
-            {
-                return;
-            }
-
-            _fastPatch = Harmony.CreateAndPatchAll(typeof(FastMining));
-        }
-        else if (_fastPatch != null)
-        {
-            _fastPatch.UnpatchSelf();
-            _fastPatch = null;
-        }
+        InfiniteResource.Enable(false);
+        FastMining.Enable(false);
     }
 
     private static class InfiniteResource
     {
+        private static Harmony _patch;
+
+        public static void Enable(bool on)
+        {
+            if (on)
+            {
+                _patch ??= Harmony.CreateAndPatchAll(typeof(InfiniteResource));
+            }
+            else
+            {
+                _patch?.UnpatchSelf();
+                _patch = null;
+            }
+        }
+        
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(FactorySystem), "GameTick", typeof(long), typeof(bool))]
         [HarmonyPatch(typeof(FactorySystem), "GameTick", typeof(long), typeof(bool), typeof(int), typeof(int),
@@ -103,6 +72,21 @@ public static class ResourcePatch
 
     private static class FastMining
     {
+        private static Harmony _patch;
+
+        public static void Enable(bool on)
+        {
+            if (on)
+            {
+                _patch ??= Harmony.CreateAndPatchAll(typeof(FastMining));
+            }
+            else
+            {
+                _patch?.UnpatchSelf();
+                _patch = null;
+            }
+        }
+
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(FactorySystem), "GameTick", typeof(long), typeof(bool))]
         [HarmonyPatch(typeof(FactorySystem), "GameTick", typeof(long), typeof(bool), typeof(int), typeof(int),

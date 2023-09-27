@@ -20,8 +20,7 @@ public static class TechPatch
 
     public static void Uninit()
     {
-        if (_patch == null) return;
-        _patch.UnpatchSelf();
+        _patch?.UnpatchSelf();
         _patch = null;
     }
 
@@ -29,16 +28,11 @@ public static class TechPatch
     {
         if (Enabled.Value)
         {
-            if (_patch != null)
-            {
-                return;
-            }
-
-            _patch = Harmony.CreateAndPatchAll(typeof(TechPatch));
+            _patch ??= Harmony.CreateAndPatchAll(typeof(TechPatch));
         }
-        else if (_patch != null)
+        else
         {
-            _patch.UnpatchSelf();
+            _patch?.UnpatchSelf();
             _patch = null;
         }
     }

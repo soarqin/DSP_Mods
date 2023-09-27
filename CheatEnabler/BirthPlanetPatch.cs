@@ -72,13 +72,12 @@ public static class BirthPlanetPatch
         FlatBirthPlanet.SettingChanged += (_, _) => PatchBirthThemeData();
         HighLuminosityBirthStar.SettingChanged += (_, _) => PatchBirthThemeData();
         PatchBirthThemeData();
-        _patch = Harmony.CreateAndPatchAll(typeof(BirthPlanetPatch));
+        _patch ??= Harmony.CreateAndPatchAll(typeof(BirthPlanetPatch));
     }
 
     public static void Uninit()
     {
-        if (_patch == null) return;
-        _patch.UnpatchSelf();
+        _patch?.UnpatchSelf();
         _patch = null;
     }
 

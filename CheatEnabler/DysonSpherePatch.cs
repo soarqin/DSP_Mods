@@ -8,6 +8,7 @@ namespace CheatEnabler;
 
 public static class DysonSpherePatch
 {
+    public static ConfigEntry<bool> StopEjectOnNodeCompleteEnabled;
     public static ConfigEntry<bool> SkipBulletEnabled;
     public static ConfigEntry<bool> SkipAbsorbEnabled;
     public static ConfigEntry<bool> QuickAbsorbEnabled;
@@ -20,18 +21,20 @@ public static class DysonSpherePatch
     private static Harmony _ejectAnywayPatch;
     private static Harmony _overclockEjector;
     private static Harmony _overclockSilo;
-    private static Harmony _patch;
+    private static Harmony _dysonSpherePatch;
     private static bool _instantAbsorb;
    
     public static void Init()
     {
-        _patch ??= Harmony.CreateAndPatchAll(typeof(DysonSpherePatch));
+        _dysonSpherePatch ??= Harmony.CreateAndPatchAll(typeof(DysonSpherePatch));
+        StopEjectOnNodeCompleteEnabled.SettingChanged += (_, _) => StopEjectOnNodeComplete.Enable(StopEjectOnNodeCompleteEnabled.Value);
         SkipBulletEnabled.SettingChanged += (_, _) => SkipBulletValueChanged();
         SkipAbsorbEnabled.SettingChanged += (_, _) => SkipAbsorbValueChanged();
         QuickAbsorbEnabled.SettingChanged += (_, _) => QuickAbsorbValueChanged();
         EjectAnywayEnabled.SettingChanged += (_, _) => EjectAnywayValueChanged();
         OverclockEjectorEnabled.SettingChanged += (_, _) => OverclockEjectorValueChanged();
         OverclockSiloEnabled.SettingChanged += (_, _) => OverclockSiloValueChanged();
+        StopEjectOnNodeComplete.Enable(StopEjectOnNodeCompleteEnabled.Value);
         SkipBulletValueChanged();
         SkipAbsorbValueChanged();
         QuickAbsorbValueChanged();
@@ -42,6 +45,7 @@ public static class DysonSpherePatch
     
     public static void Uninit()
     {
+        StopEjectOnNodeComplete.Enable(false);
         _skipBulletPatch?.UnpatchSelf();
         _skipBulletPatch = null;
         _skipAbsorbPatch?.UnpatchSelf();
@@ -54,8 +58,8 @@ public static class DysonSpherePatch
         _overclockEjector = null;
         _overclockSilo?.UnpatchSelf();
         _overclockSilo = null;
-        _patch?.UnpatchSelf();
-        _patch = null;
+        _dysonSpherePatch?.UnpatchSelf();
+        _dysonSpherePatch = null;
     }
     
     private static void SkipBulletValueChanged()
@@ -191,10 +195,10 @@ public static class DysonSpherePatch
         }
         ds.RemoveLayer(index);
     }
-    
+
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(DysonNode), nameof(DysonNode.ConstructCp))]
-    private static IEnumerable<CodeInstruction> DysonNode_ConstructCp_Patch(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+    private static IEnumerable<CodeInstruction> DysonSpherePatch_DysonNode_ConstructCp_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
     {
         var matcher = new CodeMatcher(instructions, generator);
         matcher.MatchBack(false,
@@ -218,6 +222,136 @@ public static class DysonSpherePatch
         matcher.Labels = new List<Label>();
         matcher.RemoveInstructions(2).Labels.AddRange(labels);
         return matcher.InstructionEnumeration();
+    }
+
+    private static class StopEjectOnNodeComplete
+    {
+        private static Harmony _patch;
+        private static HashSet<int>[] _nodeForAbsorb;
+
+        public static void Enable(bool on)
+        {
+            if (on)
+            {
+                InitNodeForAbsorb();
+                _patch ??= Harmony.CreateAndPatchAll(typeof(StopEjectOnNodeComplete));
+            }
+            else
+            {
+                _patch?.UnpatchSelf();
+                _patch = null;
+                _nodeForAbsorb = null;
+            }
+        }
+
+        private static void InitNodeForAbsorb()
+        {
+            _nodeForAbsorb = new HashSet<int>[GameMain.data.galaxy.starCount];
+            foreach (var sphere in GameMain.data.dysonSpheres)
+            {
+                if (sphere?.layersSorted == null) continue;
+                var starIndex = sphere.starData.index;
+                foreach (var layer in sphere.layersSorted)
+                {
+                    if (layer == null) continue;
+                    for (var i = layer.nodeCursor - 1; i > 0; i--)
+                    {
+                        var node = layer.nodePool[i];
+                        if (node == null || node.id != i) continue;
+                        SetNodeForAbsorb(starIndex, layer.id, node.id, node.sp == node.spMax && node.cpReqOrder > 0);
+                    }
+                }
+            }
+        }
+
+        private static void SetNodeForAbsorb(int index, int layerId, int nodeId, bool canAbsorb)
+        {
+            ref var comp = ref _nodeForAbsorb[index];
+            comp ??= new HashSet<int>();
+            var idx = nodeId * 10 + layerId;
+            if (canAbsorb)
+                comp.Add(idx);
+            else
+                comp.Remove(idx);
+        }
+
+        private static void UpdateNodeForAbsorb(DysonNode node)
+        {
+            var shells = node.shells;
+            if (shells.Count == 0) return;
+            SetNodeForAbsorb(shells[0].dysonSphere.starData.index, node.layerId, node.id, node.sp == node.spMax && node.cpReqOrder > 0);
+        }
+
+        private static bool AnyNodeForAbsorb(int starIndex)
+        {
+            var comp = _nodeForAbsorb[starIndex];
+            return comp != null && comp.Count > 0;
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(GameMain), nameof(GameMain.Begin))]
+        private static void GameMain_Begin_Postfix()
+        {
+            InitNodeForAbsorb();
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(DysonNode), nameof(DysonNode.RecalcCpReq))]
+        private static void DysonNode_RecalcCpReq_Postfix(DysonNode __instance)
+        {
+            UpdateNodeForAbsorb(__instance);
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(DysonSphereLayer), nameof(DysonSphereLayer.RemoveDysonNode))]
+        private static void DysonSphereLayer_RemoveDysonNode_Prefix(DysonSphereLayer __instance, int nodeId)
+        {
+            SetNodeForAbsorb(__instance.starData.index, __instance.id, nodeId, false);
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(DysonSphere), nameof(DysonSphere.ResetNew))]
+        private static void DysonSphere_ResetNew_Prefix(DysonSphere __instance)
+        {
+            var starIndex = __instance.starData.index;
+            if (_nodeForAbsorb[starIndex] == null) return;
+            _nodeForAbsorb[starIndex].Clear();
+            _nodeForAbsorb[starIndex] = null;
+        }
+
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(EjectorComponent), nameof(EjectorComponent.InternalUpdate))]
+        private static IEnumerable<CodeInstruction> EjectorComponent_InternalUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            var label1 = generator.DefineLabel();
+            matcher.Start().InsertAndAdvance(
+                new CodeInstruction(OpCodes.Ldarg_2),
+                new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(DysonSwarm), nameof(DysonSwarm.starData))),
+                new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(StarData), nameof(StarData.index))),
+                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(StopEjectOnNodeComplete), nameof(StopEjectOnNodeComplete.AnyNodeForAbsorb))),
+                new CodeInstruction(OpCodes.Brtrue, label1)
+            );
+            matcher.Labels.Add(label1);
+            return matcher.InstructionEnumeration();
+        }
+
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(DysonNode), nameof(DysonNode.ConstructCp))]
+        private static IEnumerable<CodeInstruction> DysonNode_ConstructCp_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            matcher.Start().MatchForward(false,
+                new CodeMatch(OpCodes.Stfld, AccessTools.Field(typeof(DysonNode), nameof(DysonNode.sp)))
+            ).Advance(1);
+            var labels = matcher.Labels;
+            matcher.Labels = new List<Label>();
+            matcher.Insert(
+                new CodeInstruction(OpCodes.Ldarg_0).WithLabels(labels),
+                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(StopEjectOnNodeComplete), nameof(StopEjectOnNodeComplete.UpdateNodeForAbsorb)))
+            );
+            return matcher.InstructionEnumeration();
+        }
     }
 
     private static class SkipBulletPatch
@@ -294,7 +428,7 @@ public static class DysonSpherePatch
         
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(EjectorComponent), nameof(EjectorComponent.InternalUpdate))]
-        private static IEnumerable<CodeInstruction> EjectorComponent_InternalUpdate_Patch(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        private static IEnumerable<CodeInstruction> EjectorComponent_InternalUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
         {
             var matcher = new CodeMatcher(instructions, generator);
             matcher.MatchForward(false,
@@ -407,7 +541,7 @@ public static class DysonSpherePatch
     {
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(DysonNode), nameof(DysonNode.OrderConstructCp))]
-        private static IEnumerable<CodeInstruction> DysonNode_OrderConstructCp_Patch(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        private static IEnumerable<CodeInstruction> DysonNode_OrderConstructCp_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
         {
             var matcher = new CodeMatcher(instructions, generator);
             matcher.MatchForward(false,
@@ -422,7 +556,7 @@ public static class DysonSpherePatch
 
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(DysonSwarm), nameof(DysonSwarm.AbsorbSail))]
-        private static IEnumerable<CodeInstruction> DysonSwarm_AbsorbSail_Patch(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        private static IEnumerable<CodeInstruction> DysonSwarm_AbsorbSail_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
         {
             var matcher = new CodeMatcher(instructions, generator);
             var label1 = generator.DefineLabel();
@@ -472,7 +606,7 @@ public static class DysonSpherePatch
     {
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(DysonSphereLayer), nameof(DysonSphereLayer.GameTick))]
-        private static IEnumerable<CodeInstruction> DysonSphereLayer_GameTick_Patch(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        private static IEnumerable<CodeInstruction> DysonSphereLayer_GameTick_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
         {
             var matcher = new CodeMatcher(instructions, generator);
             /* Insert absorption functions on beginning */
@@ -506,7 +640,7 @@ public static class DysonSpherePatch
             for (var i = layer.nodeCursor - 1; i > 0; i--)
             {
                 var node = layer.nodePool[i];
-                if (node == null || node.id != i || node.sp != node.spMax) continue;
+                if (node == null || node.id != i || node.sp < node.spMax) continue;
                 var req = node._cpReq;
                 var ordered = node.cpOrdered;
                 if (req <= ordered) continue;
@@ -526,7 +660,7 @@ public static class DysonSpherePatch
     {
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(EjectorComponent), nameof(EjectorComponent.InternalUpdate))]
-        private static IEnumerable<CodeInstruction> EjectorComponent_InternalUpdate_Patch(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        private static IEnumerable<CodeInstruction> EjectorComponent_InternalUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
         {
             var matcher = new CodeMatcher(instructions, generator);
             matcher.MatchForward(false,
@@ -557,7 +691,7 @@ public static class DysonSpherePatch
     {
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(EjectorComponent), nameof(EjectorComponent.InternalUpdate))]
-        private static IEnumerable<CodeInstruction> EjectAndSiloComponent_InternalUpdate_Patch(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        private static IEnumerable<CodeInstruction> EjectAndSiloComponent_InternalUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
         {
             var matcher = new CodeMatcher(instructions, generator);
             /* Add a multiply to ejector speed */
@@ -580,7 +714,7 @@ public static class DysonSpherePatch
 
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(UIEjectorWindow), nameof(UIEjectorWindow._OnUpdate))]
-        private static IEnumerable<CodeInstruction> UIEjectAndSiloWindow__OnUpdate_Patch(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        private static IEnumerable<CodeInstruction> UIEjectAndSiloWindow__OnUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
         {
             var matcher = new CodeMatcher(instructions, generator);
             /* Add a multiply to ejector speed */
@@ -610,7 +744,7 @@ public static class DysonSpherePatch
     {
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(SiloComponent), nameof(SiloComponent.InternalUpdate))]
-        private static IEnumerable<CodeInstruction> EjectAndSiloComponent_InternalUpdate_Patch(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        private static IEnumerable<CodeInstruction> EjectAndSiloComponent_InternalUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
         {
             var matcher = new CodeMatcher(instructions, generator);
             /* Add a multiply to ejector speed */
@@ -633,7 +767,7 @@ public static class DysonSpherePatch
 
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(UISiloWindow), nameof(UISiloWindow._OnUpdate))]
-        private static IEnumerable<CodeInstruction> UIEjectAndSiloWindow__OnUpdate_Patch(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        private static IEnumerable<CodeInstruction> UIEjectAndSiloWindow__OnUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
         {
             var matcher = new CodeMatcher(instructions, generator);
             /* Add a multiply to ejector speed */

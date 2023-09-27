@@ -30,33 +30,33 @@ public static class FactoryPatch
     public static void Init()
     {
         if (_factoryPatch != null) return;
-        ImmediateEnabled.SettingChanged += (_, _) => ImmediateValueChanged();
-        ArchitectModeEnabled.SettingChanged += (_, _) => ArchitectModeValueChanged();
-        UnlimitInteractiveEnabled.SettingChanged += (_, _) => UnlimitInteractiveValueChanged();
-        RemoveSomeConditionEnabled.SettingChanged += (_, _) => RemoveSomeConditionValueChanged();
-        NoConditionEnabled.SettingChanged += (_, _) => NoConditionValueChanged();
+        ImmediateEnabled.SettingChanged += (_, _) => ImmediateBuild.Enable(ImmediateEnabled.Value);
+        ArchitectModeEnabled.SettingChanged += (_, _) => ArchitectMode.Enable(ArchitectModeEnabled.Value);
+        UnlimitInteractiveEnabled.SettingChanged += (_, _) => UnlimitInteractive.Enable(UnlimitInteractiveEnabled.Value);
+        RemoveSomeConditionEnabled.SettingChanged += (_, _) => RemoveSomeConditionBuild.Enable(RemoveSomeConditionEnabled.Value);
+        NoConditionEnabled.SettingChanged += (_, _) => NoConditionBuild.Enable(NoConditionEnabled.Value);
         NoCollisionEnabled.SettingChanged += (_, _) => NoCollisionValueChanged();
-        BeltSignalGeneratorEnabled.SettingChanged += (_, _) => BeltSignalGeneratorValueChanged();
+        BeltSignalGeneratorEnabled.SettingChanged += (_, _) => BeltSignalGenerator.Enable(BeltSignalGeneratorEnabled.Value);
         BeltSignalNumberAltFormat.SettingChanged += (_, _) => { BeltSignalGenerator.OnAltFormatChanged(); };
-        NightLightEnabled.SettingChanged += (_, _) => NightLightValueChanged();
-        RemovePowerSpaceLimitEnabled.SettingChanged += (_, _) => RemovePowerSpaceLimitValueChanged();
-        BoostWindPowerEnabled.SettingChanged += (_, _) => BoostWindPowerValueChanged();
-        BoostSolarPowerEnabled.SettingChanged += (_, _) => BoostSolarPowerValueChanged();
-        BoostFuelPowerEnabled.SettingChanged += (_, _) => BoostFuelPowerValueChanged();
-        BoostGeothermalPowerEnabled.SettingChanged += (_, _) => BoostGeothermalPowerValueChanged();
-        ImmediateValueChanged();
-        ArchitectModeValueChanged();
-        UnlimitInteractiveValueChanged();
-        RemoveSomeConditionValueChanged();
-        NoConditionValueChanged();
+        NightLightEnabled.SettingChanged += (_, _) => NightLight.Enable(NightLightEnabled.Value);
+        RemovePowerSpaceLimitEnabled.SettingChanged += (_, _) => RemovePowerSpaceLimit.Enable(RemovePowerSpaceLimitEnabled.Value);
+        BoostWindPowerEnabled.SettingChanged += (_, _) => BoostWindPower.Enable(BoostWindPowerEnabled.Value);
+        BoostSolarPowerEnabled.SettingChanged += (_, _) => BoostSolarPower.Enable(BoostSolarPowerEnabled.Value);
+        BoostFuelPowerEnabled.SettingChanged += (_, _) => BoostFuelPower.Enable(BoostFuelPowerEnabled.Value);
+        BoostGeothermalPowerEnabled.SettingChanged += (_, _) => BoostGeothermalPower.Enable(BoostGeothermalPowerEnabled.Value);
+        ImmediateBuild.Enable(ImmediateEnabled.Value);
+        ArchitectMode.Enable(ArchitectModeEnabled.Value);
+        UnlimitInteractive.Enable(UnlimitInteractiveEnabled.Value);
+        RemoveSomeConditionBuild.Enable(RemoveSomeConditionEnabled.Value);
+        NoConditionBuild.Enable(NoConditionEnabled.Value);
         NoCollisionValueChanged();
-        BeltSignalGeneratorValueChanged();
-        NightLightValueChanged();
-        RemovePowerSpaceLimitValueChanged();
-        BoostWindPowerValueChanged();
-        BoostSolarPowerValueChanged();
-        BoostFuelPowerValueChanged();
-        BoostGeothermalPowerValueChanged();
+        BeltSignalGenerator.Enable(BeltSignalGeneratorEnabled.Value);
+        NightLight.Enable(NightLightEnabled.Value);
+        RemovePowerSpaceLimit.Enable(RemovePowerSpaceLimitEnabled.Value);
+        BoostWindPower.Enable(BoostWindPowerEnabled.Value);
+        BoostSolarPower.Enable(BoostSolarPowerEnabled.Value);
+        BoostFuelPower.Enable(BoostFuelPowerEnabled.Value);
+        BoostGeothermalPower.Enable(BoostGeothermalPowerEnabled.Value);
         _factoryPatch = Harmony.CreateAndPatchAll(typeof(FactoryPatch));
     }
 
@@ -78,31 +78,6 @@ public static class FactoryPatch
         BoostGeothermalPower.Enable(false);
     }
 
-    private static void ImmediateValueChanged()
-    {
-        ImmediateBuild.Enable(ImmediateEnabled.Value);
-    }
-
-    private static void ArchitectModeValueChanged()
-    {
-        ArchitectMode.Enable(ArchitectModeEnabled.Value);
-    }
-    
-    private static void UnlimitInteractiveValueChanged()
-    {
-        UnlimitInteractive.Enable(UnlimitInteractiveEnabled.Value);
-    }
-
-    private static void RemoveSomeConditionValueChanged()
-    {
-        RemoveSomeConditionBuild.Enable(RemoveSomeConditionEnabled.Value);
-    }
-
-    private static void NoConditionValueChanged()
-    {
-        NoConditionBuild.Enable(NoConditionEnabled.Value);
-    }
-
     private static void NoCollisionValueChanged()
     {
         var coll = ColliderPool.instance;
@@ -110,41 +85,6 @@ public static class FactoryPatch
         var obj = coll.gameObject;
         if (obj == null) return;
         obj.gameObject.SetActive(!NoCollisionEnabled.Value);
-    }
-
-    private static void BeltSignalGeneratorValueChanged()
-    {
-        BeltSignalGenerator.Enable(BeltSignalGeneratorEnabled.Value);
-    }
-    
-    private static void NightLightValueChanged()
-    {
-        NightLight.Enable(NightLightEnabled.Value);
-    }
-    
-    private static void RemovePowerSpaceLimitValueChanged()
-    {
-        RemovePowerSpaceLimit.Enable(RemovePowerSpaceLimitEnabled.Value);
-    }
-    
-    private static void BoostWindPowerValueChanged()
-    {
-        BoostWindPower.Enable(BoostWindPowerEnabled.Value);
-    }
-    
-    private static void BoostSolarPowerValueChanged()
-    {
-        BoostSolarPower.Enable(BoostSolarPowerEnabled.Value);
-    }
-    
-    private static void BoostFuelPowerValueChanged()
-    {
-        BoostFuelPower.Enable(BoostFuelPowerEnabled.Value);
-    }
-    
-    private static void BoostGeothermalPowerValueChanged()
-    {
-        BoostGeothermalPower.Enable(BoostGeothermalPowerEnabled.Value);
     }
 
     public static void ArrivePlanet(PlanetFactory factory)

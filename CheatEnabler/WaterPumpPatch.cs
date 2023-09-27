@@ -17,8 +17,7 @@ public static class WaterPumperPatch
 
     public static void Uninit()
     {
-        if (_patch == null) return;
-        _patch.UnpatchSelf();
+        _patch?.UnpatchSelf();
         _patch = null;
     }
 
@@ -26,16 +25,11 @@ public static class WaterPumperPatch
     {
         if (Enabled.Value)
         {
-            if (_patch != null)
-            {
-                return;
-            }
-
-            _patch = Harmony.CreateAndPatchAll(typeof(WaterPumperPatch));
+            _patch ??= Harmony.CreateAndPatchAll(typeof(WaterPumperPatch));
         }
-        else if (_patch != null)
+        else
         {
-            _patch.UnpatchSelf();
+            _patch?.UnpatchSelf();
             _patch = null;
         }
     }

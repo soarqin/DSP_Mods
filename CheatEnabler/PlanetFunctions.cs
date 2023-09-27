@@ -12,21 +12,16 @@ public static class PlanetFunctions
 
     public static void Init()
     {
-        PlayerActionsInGlobeViewEnabled.SettingChanged += (_, _) => PlayerActionInGlobeViewValueChanged();
-        PlayerActionInGlobeViewValueChanged();
+        PlayerActionsInGlobeViewEnabled.SettingChanged += (_, _) => PlayerActionsInGlobeView.Enable(PlayerActionsInGlobeViewEnabled.Value);
+        PlayerActionsInGlobeView.Enable(PlayerActionsInGlobeViewEnabled.Value);
     }
 
     public static void Uninit()
     {
-        PlayerActionInGlobeView.Enable(false);
+        PlayerActionsInGlobeView.Enable(false);
     }
 
-    private static void PlayerActionInGlobeViewValueChanged()
-    {
-        PlayerActionInGlobeView.Enable(PlayerActionsInGlobeViewEnabled.Value);
-    }
-
-    public static class PlayerActionInGlobeView
+    public static class PlayerActionsInGlobeView
     {
         private static Harmony _patch;
         
@@ -34,7 +29,7 @@ public static class PlanetFunctions
         {
             if (on)
             {
-                _patch ??= Harmony.CreateAndPatchAll(typeof(PlayerActionInGlobeView));
+                _patch ??= Harmony.CreateAndPatchAll(typeof(PlayerActionsInGlobeView));
                 return;
             }
             _patch?.UnpatchSelf();
