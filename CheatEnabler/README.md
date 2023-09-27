@@ -4,6 +4,10 @@
 #### 添加一些作弊功能，同时屏蔽异常检测
 
 ## Changlog
+* 2.2.5
+  + Skip all intermediate states and absorb solar sails instantly while enable `Quick absorb`, `Skip bullet period` and `Skip absorption period` at the same time.
+  + Fix a problem that `Quick absorb` does not absorb all solar sails instantly when most nodes are full.
+  + Fix crash while using with some mods 
 * 2.2.4
   + New function: `Enable player actions in globe view`
   + Fix UI bug
@@ -88,6 +92,10 @@
 * [LSTM](https://github.com/hetima/DSP_LSTM) & [PlanetFinder](https://github.com/hetima/DSP_PlanetFinder): UI implementations
 
 ## 更新日志
+* 2.2.5
+  + 在同时启用`快速吸收`、`跳过子弹阶段`和`跳过吸收阶段`时，所有弹射的太阳帆会跳过所有中间环节立即吸收
+  + 修复了`快速吸收`在大部分节点已满时无法立即吸收所有太阳帆的问题
+  + 修复了与一些mod的兼容性问题
 * 2.2.4
   + 新功能：`在行星视图中允许玩家操作`
   + 修复了UI显示问题

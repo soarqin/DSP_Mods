@@ -207,7 +207,7 @@ public class UIConfigWindow : UI.MyWindowWithTabs
         y += 36f;
         UI.MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.SkipAbsorbEnabled, "Skip absorption period");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.QuickAbsortEnabled, "Quick absorb");
+        UI.MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.QuickAbsorbEnabled, "Quick absorb");
         y += 36f;
         UI.MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.EjectAnywayEnabled, "Eject anyway");
         y += 36f;

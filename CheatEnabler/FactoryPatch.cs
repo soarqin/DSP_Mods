@@ -256,7 +256,9 @@ public static class FactoryPatch
             {
                 if (_sunlight == null)
                 {
-                    _sunlight = GameMain.universeSimulator.LocalStarSimulator().sunLight;
+                    var simu = GameMain.universeSimulator;
+                    if (simu)
+                        _sunlight = simu.LocalStarSimulator()?.sunLight;
                     if (_sunlight == null) return;
                 }
 
@@ -715,7 +717,9 @@ public static class FactoryPatch
             _portalFrom = new Dictionary<long, int>();
             _portalTo = new Dictionary<int, HashSet<long>>();
 
-            foreach (var factory in GameMain.data.factories)
+            var factories = GameMain.data?.factories;
+            if (factories == null) return;
+            foreach (var factory in factories)
             {
                 var entitySignPool = factory?.entitySignPool;
                 if (entitySignPool == null) continue;

@@ -75,7 +75,7 @@ public class CheatEnabler : BaseUnityPlugin
             "Skip bullet");
         DysonSpherePatch.SkipAbsorbEnabled = Config.Bind("DysonSphere", "SkipAbsorb", false,
             "Skip absorption");
-        DysonSpherePatch.QuickAbsortEnabled = Config.Bind("DysonSphere", "QuickAbsorb", false,
+        DysonSpherePatch.QuickAbsorbEnabled = Config.Bind("DysonSphere", "QuickAbsorb", false,
             "Quick absorb");
         DysonSpherePatch.EjectAnywayEnabled = Config.Bind("DysonSphere", "EjectAnyway", false,
             "Eject anyway");
