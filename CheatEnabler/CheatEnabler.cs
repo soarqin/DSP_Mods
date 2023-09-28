@@ -71,6 +71,8 @@ public class CheatEnabler : BaseUnityPlugin
             "Can pump water anywhere (while water type is not None)");
         TerraformPatch.Enabled = Config.Bind("Planet", "TerraformAnyway", false,
             "Can do terraform without enough sands");
+        DysonSpherePatch.StopEjectOnNodeCompleteEnabled = Config.Bind("DysonSphere", "StopEjectOnNodeComplete", false,
+            "Stop ejectors when available nodes are all filled up");
         DysonSpherePatch.SkipBulletEnabled = Config.Bind("DysonSphere", "SkipBullet", false,
             "Skip bullet");
         DysonSpherePatch.SkipAbsorbEnabled = Config.Bind("DysonSphere", "SkipAbsorb", false,

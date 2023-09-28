@@ -52,6 +52,7 @@ public class UIConfigWindow : UI.MyWindowWithTabs
         I18N.Add("Initialize This Planet", "Initialize this planet", "初始化本行星");
         I18N.Add("Dismantle All Buildings", "Dismantle all buildings", "拆除所有建筑");
         I18N.Add("Dyson Sphere", "Dyson Sphere", "戴森球");
+        I18N.Add("Stop ejectors when available nodes are all filled up", "Stop ejectors when available nodes are all filled up", "可用节点全部造完时停止弹射");
         I18N.Add("Skip bullet period", "Skip bullet period", "跳过子弹阶段");
         I18N.Add("Skip absorption period", "Skip absorption period", "跳过吸收阶段");
         I18N.Add("Quick absorb", "Quick absorb", "快速吸收");
@@ -203,6 +204,8 @@ public class UIConfigWindow : UI.MyWindowWithTabs
         var tab4 = AddTab(336f, 3, _windowTrans, "Dyson Sphere");
         x = 0f;
         y = 10f;
+        UI.MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.StopEjectOnNodeCompleteEnabled, "Stop ejectors when available nodes are all filled up");
+        y += 36f;
         UI.MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.SkipBulletEnabled, "Skip bullet period");
         y += 36f;
         UI.MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.SkipAbsorbEnabled, "Skip absorption period");

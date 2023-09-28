@@ -5,7 +5,7 @@
     <TargetFramework>net472</TargetFramework>
     <BepInExPluginGuid>org.soardev.cheatenabler</BepInExPluginGuid>
     <Description>DSP MOD - CheatEnabler</Description>
-    <Version>2.2.5</Version>
+    <Version>2.2.6</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
     <PackageId>CheatEnabler</PackageId>

@@ -4,6 +4,9 @@
 #### 添加一些作弊功能，同时屏蔽异常检测
 
 ## Changlog
+* 2.2.6
+  + New function: `Stop ejectors when available nodes are all filled up` 
+  + Fix a bug that absorb solar sails on unfinised nodes
 * 2.2.5
   + Skip all intermediate states and absorb solar sails instantly while enable `Quick absorb`, `Skip bullet period` and `Skip absorption period` at the same time.
   + Fix a problem that `Quick absorb` does not absorb all solar sails instantly when most nodes are full.
@@ -69,6 +72,7 @@
     + Re-intialize planet (without reseting veins)
     + Quick dismantle all buildings (without drops)
   + Dyson Sphere:
+    + Stop ejectors when available nodes are all filled up   
     + Skip bullet period
     + Skip absorption period
     + Quick absorb
@@ -92,6 +96,9 @@
 * [LSTM](https://github.com/hetima/DSP_LSTM) & [PlanetFinder](https://github.com/hetima/DSP_PlanetFinder): UI implementations
 
 ## 更新日志
+* 2.2.6
+  + 新功能：`可用节点全部造完时停止弹射`
+  + 修复了在未完成的节点上吸收太阳帆的问题
 * 2.2.5
   + 在同时启用`快速吸收`、`跳过子弹阶段`和`跳过吸收阶段`时，所有弹射的太阳帆会跳过所有中间环节立即吸收
   + 修复了`快速吸收`在大部分节点已满时无法立即吸收所有太阳帆的问题
@@ -157,6 +164,7 @@
     + 初始化本行星（不重置矿脉）
     + 快速拆除所有建筑（不掉落）
   + 戴森球：
+    + 可用节点全部造完时停止弹射
     + 跳过子弹阶段
     + 跳过吸收阶段
     + 快速吸收
