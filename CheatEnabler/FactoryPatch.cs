@@ -37,7 +37,7 @@ public static class FactoryPatch
         NoConditionEnabled.SettingChanged += (_, _) => NoConditionBuild.Enable(NoConditionEnabled.Value);
         NoCollisionEnabled.SettingChanged += (_, _) => NoCollisionValueChanged();
         BeltSignalGeneratorEnabled.SettingChanged += (_, _) => BeltSignalGenerator.Enable(BeltSignalGeneratorEnabled.Value);
-        BeltSignalNumberAltFormat.SettingChanged += (_, _) => { BeltSignalGenerator.OnAltFormatChanged(); };
+        BeltSignalNumberAltFormat.SettingChanged += (_, _) => BeltSignalGenerator.OnAltFormatChanged();
         NightLightEnabled.SettingChanged += (_, _) => NightLight.Enable(NightLightEnabled.Value);
         RemovePowerSpaceLimitEnabled.SettingChanged += (_, _) => RemovePowerSpaceLimit.Enable(RemovePowerSpaceLimitEnabled.Value);
         BoostWindPowerEnabled.SettingChanged += (_, _) => BoostWindPower.Enable(BoostWindPowerEnabled.Value);
@@ -502,13 +502,12 @@ public static class FactoryPatch
             }
             /* search for:
              * ldloc.s	V_88 (88)
-             * ldc.i4.s	15-18
+             * ldc.i4.s	15-19
              * stfld	valuetype EBuildCondition BuildPreview::condition
              */
             matcher.Start().MatchForward(false,
                 new CodeMatch(instr => instr.opcode == OpCodes.Ldloc_S || instr.opcode == OpCodes.Ldloc),
-                new CodeMatch(instr => (instr.opcode == OpCodes.Ldc_I4_S || instr.opcode == OpCodes.Ldc_I4) &&
-                                             (instr.OperandIs(15) || instr.OperandIs(16) || instr.OperandIs(17) || instr.OperandIs(18))),
+                new CodeMatch(instr => (instr.opcode == OpCodes.Ldc_I4_S || instr.opcode == OpCodes.Ldc_I4) && Convert.ToInt64(instr.operand) is >= 15 and <= 19),
                 new CodeMatch(OpCodes.Stfld, AccessTools.Field(typeof(BuildPreview), nameof(BuildPreview.condition)))
             );
             if (matcher.IsValid)

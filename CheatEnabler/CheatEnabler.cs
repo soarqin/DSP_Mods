@@ -144,13 +144,8 @@ public class CheatEnabler : BaseUnityPlugin
 
     private void Update()
     {
-        if (VFInput.inputing)
-        {
-            return;
-        }
-        
-        if (Hotkey.Value.IsDown())
-            ToggleConfigWindow();
+        if (VFInput.inputing) return;
+        if (Hotkey.Value.IsDown()) ToggleConfigWindow();
     }
 
     private void LateUpdate()
