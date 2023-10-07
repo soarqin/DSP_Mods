@@ -9,6 +9,7 @@ namespace CheatEnabler;
 public static class DysonSpherePatch
 {
     public static ConfigEntry<bool> StopEjectOnNodeCompleteEnabled;
+    public static ConfigEntry<bool> OnlyConstructNodesEnabled;
     public static ConfigEntry<bool> SkipBulletEnabled;
     public static ConfigEntry<bool> SkipAbsorbEnabled;
     public static ConfigEntry<bool> QuickAbsorbEnabled;
@@ -22,6 +23,7 @@ public static class DysonSpherePatch
     {
         _dysonSpherePatch ??= Harmony.CreateAndPatchAll(typeof(DysonSpherePatch));
         StopEjectOnNodeCompleteEnabled.SettingChanged += (_, _) => StopEjectOnNodeComplete.Enable(StopEjectOnNodeCompleteEnabled.Value);
+        OnlyConstructNodesEnabled.SettingChanged += (_, _) => OnlyConstructNodes.Enable(OnlyConstructNodesEnabled.Value);
         SkipBulletEnabled.SettingChanged += (_, _) => SkipBulletPatch.Enable(SkipBulletEnabled.Value);
         SkipAbsorbEnabled.SettingChanged += (_, _) => SkipAbsorbPatch.Enable(SkipBulletEnabled.Value);
         QuickAbsorbEnabled.SettingChanged += (_, _) => QuickAbsorbPatch.Enable(QuickAbsorbEnabled.Value);
@@ -29,6 +31,7 @@ public static class DysonSpherePatch
         OverclockEjectorEnabled.SettingChanged += (_, _) => OverclockEjector.Enable(OverclockEjectorEnabled.Value);
         OverclockSiloEnabled.SettingChanged += (_, _) => OverclockSilo.Enable(OverclockSiloEnabled.Value);
         StopEjectOnNodeComplete.Enable(StopEjectOnNodeCompleteEnabled.Value);
+        OnlyConstructNodes.Enable(OnlyConstructNodesEnabled.Value);
         SkipBulletPatch.Enable(SkipBulletEnabled.Value);
         SkipAbsorbPatch.Enable(SkipBulletEnabled.Value);
         QuickAbsorbPatch.Enable(QuickAbsorbEnabled.Value);
@@ -40,6 +43,7 @@ public static class DysonSpherePatch
     public static void Uninit()
     {
         StopEjectOnNodeComplete.Enable(false);
+        OnlyConstructNodes.Enable(false);
         SkipBulletPatch.Enable(false);
         SkipAbsorbPatch.Enable(false);
         QuickAbsorbPatch.Enable(false);
@@ -158,7 +162,6 @@ public static class DysonSpherePatch
 
         private static void SetNodeForAbsorb(int index, int layerId, int nodeId, bool canAbsorb)
         {
-            CheatEnabler.Logger.LogDebug($"{index} {layerId} {nodeId} {canAbsorb}");
             ref var comp = ref _nodeForAbsorb[index];
             comp ??= new HashSet<int>();
             var idx = nodeId * 10 + layerId;
@@ -279,6 +282,55 @@ public static class DysonSpherePatch
             ).Advance(6).Insert(
                 new CodeInstruction(OpCodes.Ldarg_0),
                 new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(StopEjectOnNodeComplete), nameof(StopEjectOnNodeComplete.UpdateNodeForAbsorbOnCpChange)))
+            );
+            return matcher.InstructionEnumeration();
+        }
+    }
+
+    private static class OnlyConstructNodes
+    {
+        private static Harmony _patch;
+        
+        public static void Enable(bool on)
+        {
+            if (on)
+            {
+                _patch ??= Harmony.CreateAndPatchAll(typeof(OnlyConstructNodes));
+            }
+            else
+            {
+                _patch?.UnpatchSelf();
+                _patch = null;
+            }
+
+            var spheres = GameMain.data?.dysonSpheres;
+            if (spheres == null) return;
+            foreach (var sphere in spheres)
+            {
+                if (sphere == null) continue;
+                sphere.CheckAutoNodes();
+                if (sphere.autoNodeCount > 0) continue;
+                sphere.PickAutoNode();
+                sphere.PickAutoNode();
+                sphere.PickAutoNode();
+                sphere.PickAutoNode();
+            }
+        }
+        
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(DysonNode), nameof(DysonNode.spReqOrder), MethodType.Getter)]
+        private static IEnumerable<CodeInstruction> DysonNode_spReqOrder_Getter_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Ldarg_0),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(DysonNode), nameof(DysonNode._spReq)))
+            ).Advance(1).SetInstructionAndAdvance(
+                new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(DysonNode), nameof(DysonNode.spMax)))
+            ).Insert(
+                new CodeInstruction(OpCodes.Ldarg_0),
+                new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(DysonNode), nameof(DysonNode.sp))),
+                new CodeInstruction(OpCodes.Sub)
             );
             return matcher.InstructionEnumeration();
         }

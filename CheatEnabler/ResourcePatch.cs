@@ -40,11 +40,10 @@ public static class ResourcePatch
                 _patch = null;
             }
         }
-        
+
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(FactorySystem), "GameTick", typeof(long), typeof(bool))]
-        [HarmonyPatch(typeof(FactorySystem), "GameTick", typeof(long), typeof(bool), typeof(int), typeof(int),
-            typeof(int))]
+        [HarmonyPatch(typeof(FactorySystem), "GameTick", typeof(long), typeof(bool), typeof(int), typeof(int), typeof(int))]
         [HarmonyPatch(typeof(ItemProto), "GetPropValue")]
         [HarmonyPatch(typeof(PlanetTransport), "GameTick")]
         [HarmonyPatch(typeof(UIMinerWindow), "_OnUpdate")]
@@ -89,8 +88,7 @@ public static class ResourcePatch
 
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(FactorySystem), "GameTick", typeof(long), typeof(bool))]
-        [HarmonyPatch(typeof(FactorySystem), "GameTick", typeof(long), typeof(bool), typeof(int), typeof(int),
-            typeof(int))]
+        [HarmonyPatch(typeof(FactorySystem), "GameTick", typeof(long), typeof(bool), typeof(int), typeof(int), typeof(int))]
         [HarmonyPatch(typeof(ItemProto), "GetPropValue")]
         [HarmonyPatch(typeof(PlanetTransport), "GameTick")]
         [HarmonyPatch(typeof(UIMinerWindow), "_OnUpdate")]

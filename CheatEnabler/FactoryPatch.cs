@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Reflection.Emit;
 using BepInEx.Configuration;
 using HarmonyLib;
@@ -620,6 +621,7 @@ public static class FactoryPatch
 
         public static void OnAltFormatChanged()
         {
+            if (_signalBelts == null) return;
             var factories = GameMain.data?.factories;
             if (factories == null) return;
             var factoryCount = GameMain.data.factoryCount;
@@ -632,6 +634,7 @@ public static class FactoryPatch
                 var entitySignPool = factory.entitySignPool;
                 if (entitySignPool == null) continue;
                 var belts = _signalBelts[i];
+                if (belts == null) continue;
                 foreach (var pair in belts)
                 {
                     var beltId = pair.Key;

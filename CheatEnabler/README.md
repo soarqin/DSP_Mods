@@ -4,6 +4,11 @@
 #### 添加一些作弊功能，同时屏蔽异常检测
 
 ## Changlog
+* 2.2.7
+  + New function: `Construct only nodes but frames`
+  + Opening config panel does not close inventory panel now
+  + Remove `Input direction conflict` check while using `Remove some build conditions` 
+  + Fix a bug that prevents `Belt signal alt format` from switching number formats for current belt signals
 * 2.2.6
   + New function: `Stop ejectors when available nodes are all filled up` 
   + Fix a bug that absorb solar sails on unfinised nodes
@@ -72,7 +77,8 @@
     + Re-intialize planet (without reseting veins)
     + Quick dismantle all buildings (without drops)
   + Dyson Sphere:
-    + Stop ejectors when available nodes are all filled up   
+    + Stop ejectors when available nodes are all filled up
+    + Construct only nodes but frames
     + Skip bullet period
     + Skip absorption period
     + Quick absorb
@@ -96,6 +102,11 @@
 * [LSTM](https://github.com/hetima/DSP_LSTM) & [PlanetFinder](https://github.com/hetima/DSP_PlanetFinder): UI implementations
 
 ## 更新日志
+* 2.2.7
+  + 新功能：`只建造节点不建造框架`
+  + 打开设置面板时不再关闭背包面板
+  + 在`移除部分不影响游戏逻辑的建造条件`启用时移除`输入方向冲突`的检查条件
+  + 修复导致`传送带信号替换格式`不切换传送带信号数字格式的问题
 * 2.2.6
   + 新功能：`可用节点全部造完时停止弹射`
   + 修复了在未完成的节点上吸收太阳帆的问题
@@ -165,6 +176,7 @@
     + 快速拆除所有建筑（不掉落）
   + 戴森球：
     + 可用节点全部造完时停止弹射
+    + 只建造节点不建造框架
     + 跳过子弹阶段
     + 跳过吸收阶段
     + 快速吸收
