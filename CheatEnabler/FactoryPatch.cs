@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Net;
 using System.Reflection.Emit;
 using BepInEx.Configuration;
 using HarmonyLib;

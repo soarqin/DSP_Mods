@@ -61,8 +61,7 @@ public static class DevShortcuts
         );
         var pos = matcher.Pos;
         /* Remove Shift+F4 part of the method */
-        matcher.Start().RemoveInstructions(pos);
-        matcher.Start().MatchForward(false,
+        matcher.Start().RemoveInstructions(pos).MatchForward(false,
             new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(GameMain), "get_sandboxToolsEnabled")),
             new CodeMatch(OpCodes.Ldc_I4_0),
             new CodeMatch(OpCodes.Ceq)
@@ -71,6 +70,17 @@ public static class DevShortcuts
         matcher.SetInstructionAndAdvance(
             new CodeInstruction(OpCodes.Ldc_I4_1).WithLabels(labels)
         ).RemoveInstructions(2);
+        /* Remove Ctrl+A */
+        matcher.Start().MatchForward(false,
+            new CodeMatch(instr => (instr.opcode == OpCodes.Ldc_I4_S || instr.opcode == OpCodes.Ldc_I4) && instr.OperandIs(0x61)),
+            new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(UnityEngine.Input), nameof(UnityEngine.Input.GetKeyDown), new[] { typeof(UnityEngine.KeyCode) }))
+        );
+        labels = matcher.Labels;
+        matcher.Labels = null;
+        matcher.RemoveInstructions(2);
+        matcher.Opcode = OpCodes.Br;
+        matcher.Labels = labels;
+        CheatEnabler.Logger.LogDebug($"{matcher.Pos}");
         return matcher.InstructionEnumeration();
     }
 }
