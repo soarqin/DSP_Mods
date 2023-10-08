@@ -195,13 +195,8 @@ public static class PlanetFunctions
                 factory.blockContainer.RemoveMiniBlock(ed.mmblockId);
             }
 
-            if (ed.audioId != 0)
-            {
-                if (planet.audio != null)
-                {
-                    planet.audio.RemoveAudioData(ed.audioId);
-                }
-            }
+            if (ed.audioId == 0) continue;
+            planet.audio?.RemoveAudioData(ed.audioId);
         }
 
         var stationPool = factory.transport?.stationPool;
@@ -264,6 +259,10 @@ public static class PlanetFunctions
         factory.transport = new PlanetTransport(GameMain.data, planet);
         factory.transport.Init();
         factory.digitalSystem = new DigitalSystem(planet);
+        if (FactoryPatch.BeltSignalGeneratorEnabled.Value)
+        {
+            FactoryPatch.BeltSignalGenerator.RemovePlanetSignalBelts(factory.index);
+        }
         //GameMain.data.statistics.production.CreateFactoryStat(index);
         planet.LoadFactory();
         while (!planet.factoryLoaded)

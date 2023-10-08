@@ -584,7 +584,7 @@ public static class FactoryPatch
         }
     }
 
-    private static class BeltSignalGenerator
+    public static class BeltSignalGenerator
     {
         private static Harmony _beltSignalPatch;
         private static Dictionary<int, BeltSignal>[] _signalBelts;
@@ -826,6 +826,11 @@ public static class FactoryPatch
             GetSignalBelts(factory)?.Remove(beltId);
         }
 
+        public static void RemovePlanetSignalBelts(int factory)
+        {
+            GetSignalBelts(factory)?.Clear();
+        }
+
         private static void RemoveSignalBeltPortalEnd(int factory, int beltId)
         {
             var v = ((long)factory << 32) | (uint)beltId;
@@ -841,6 +846,16 @@ public static class FactoryPatch
         {
             if (BeltSignalGeneratorEnabled.Value) InitSignalBelts();
             InitItemSources();
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(PlanetFactory), nameof(PlanetFactory.Init))]
+        private static void PlanetFactory_Init_Postfix(PlanetFactory __instance)
+        {
+            if (BeltSignalGeneratorEnabled.Value)
+            {
+                RemovePlanetSignalBelts(__instance.index);
+            }
         }
 
         [HarmonyPrefix]
@@ -963,6 +978,7 @@ public static class FactoryPatch
                 var productRegister = factoryProductionStat.productRegister;
                 var consumeRegister = factoryProductionStat.consumeRegister;
                 var countRecipe = BeltSignalCountRecipeEnabled.Value;
+                var cargoTraffic = factory.cargoTraffic;
                 foreach (var pair in belts)
                 {
                     var beltSignal = pair.Value;
@@ -972,7 +988,6 @@ public static class FactoryPatch
                         case 404:
                         {
                             var beltId = pair.Key;
-                            var cargoTraffic = factory.cargoTraffic;
                             ref var belt = ref cargoTraffic.beltPool[beltId];
                             var cargoPath = cargoTraffic.GetCargoPath(belt.segPathId);
                             int itemId;
@@ -986,7 +1001,6 @@ public static class FactoryPatch
                         case 600:
                         {
                             if (!_portalTo.TryGetValue(beltSignal.SpeedLimit, out var set)) continue;
-                            var cargoTraffic = factory.cargoTraffic;
                             var beltId = pair.Key;
                             ref var belt = ref cargoTraffic.beltPool[beltId];
                             var cargoPath = cargoTraffic.GetCargoPath(belt.segPathId);
@@ -1019,7 +1033,6 @@ public static class FactoryPatch
                             }
 
                             var beltId = pair.Key;
-                            var cargoTraffic = factory.cargoTraffic;
                             ref var belt = ref cargoTraffic.beltPool[beltId];
                             var stack = beltSignal.Stack;
                             var inc = beltSignal.Inc;
