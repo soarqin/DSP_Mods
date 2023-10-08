@@ -393,7 +393,7 @@ public static class FactoryPatch
             _canBuildItems = new bool[12000];
             foreach (var ip in LDB.items.dataArray)
             {
-                if (ip.CanBuild && ip.ID < 12000) _canBuildItems[ip.ID] = true;
+                if ((ip.Type == EItemType.Logistics || ip.CanBuild) && ip.ID < 12000) _canBuildItems[ip.ID] = true;
             }
         }
     }
