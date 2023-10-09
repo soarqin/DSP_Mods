@@ -2,7 +2,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace CheatEnabler.UI;
+namespace UXAssist.UI;
 
 // MySlider modified from LSTM: https://github.com/hetima/DSP_LSTM/blob/main/LSTM/MySlider.cs
 

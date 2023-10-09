@@ -1,15 +1,19 @@
 ﻿using UnityEngine;
+using UXAssist.UI;
+using UXAssist.Common;
 
 namespace CheatEnabler;
 
-public class UIConfigWindow : UI.MyWindowWithTabs
+public static class UIConfigWindow
 {
-    private RectTransform _windowTrans;
+    private static RectTransform _windowTrans;
+    private static MyConfigWindow _configWindow;
 
-    private UIButton _resignGameBtn;
-    private readonly UIButton[] _dysonLayerBtn = new UIButton[10];
+    private static RectTransform _tab4;
+    private static UIButton _resignGameBtn;
+    private static readonly UIButton[] _dysonLayerBtn = new UIButton[10];
 
-    static UIConfigWindow()
+    public static void Init()
     {
         I18N.Add("General", "General", "常规");
         I18N.Add("Enable Dev Shortcuts", "Enable Dev Shortcuts", "开发模式快捷键");
@@ -75,70 +79,61 @@ public class UIConfigWindow : UI.MyWindowWithTabs
         I18N.Add("Birth planet is solid flat (no water at all)", "Birth planet is solid flat (no water at all)", "母星是纯平的（没有水）");
         I18N.Add("Birth star has high luminosity", "Birth star has high luminosity", "母星系恒星高亮");
         I18N.Apply();
+        MyConfigWindow.OnUICreated += CreateUI;
+        MyConfigWindow.OnUpdateUI += UpdateUI;
     }
 
-    public static UIConfigWindow CreateInstance()
+    private static void CreateUI(MyConfigWindow wnd, RectTransform trans)
     {
-        return UI.MyWindowManager.CreateWindow<UIConfigWindow>("CEConfigWindow", "CheatEnabler Config");
-    }
-
-    public override void _OnCreate()
-    {
-        _windowTrans = GetComponent<RectTransform>();
-        _windowTrans.sizeDelta = new Vector2(580f, 420f);
-
-        CreateUI();
-    }
-
-    private void CreateUI()
-    {
+        _configWindow = wnd;
+        _windowTrans = trans;
         // General tab
         var x = 0f;
         var y = 10f;
-        var tab1 = AddTab(36f, 0, _windowTrans, "General");
-        UI.MyCheckBox.CreateCheckBox(x, y, tab1, DevShortcuts.Enabled, "Enable Dev Shortcuts");
+        var tab1 = wnd.AddTab(_windowTrans, "General");
+        MyCheckBox.CreateCheckBox(x, y, tab1, DevShortcuts.Enabled, "Enable Dev Shortcuts");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab1, AbnormalDisabler.Enabled, "Disable Abnormal Checks");
+        MyCheckBox.CreateCheckBox(x, y, tab1, AbnormalDisabler.Enabled, "Disable Abnormal Checks");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab1, TechPatch.Enabled, "Unlock Tech with Key-Modifiers");
+        MyCheckBox.CreateCheckBox(x, y, tab1, TechPatch.Enabled, "Unlock Tech with Key-Modifiers");
         y += 118f;
-        UI.MyKeyBinder.CreateKeyBinder(x, y, tab1, CheatEnabler.Hotkey, "Hotkey");
+        MyKeyBinder.CreateKeyBinder(x, y, tab1, CheatEnabler.Hotkey, "Hotkey");
         x = 156f;
         y = 16f;
-        AddTipsButton(x, y, tab1, "Dev Shortcuts", "Dev Shortcuts Tips", "dev-shortcuts-tips");
+        MyWindow.AddTipsButton(x, y, tab1, "Dev Shortcuts", "Dev Shortcuts Tips", "dev-shortcuts-tips");
         x += 52f;
         y += 72f;
-        AddTipsButton(x, y, tab1, "Unlock Tech with Key-Modifiers", "Unlock Tech with Key-Modifiers Tips", "unlock-tech-tips");
+        MyWindow.AddTipsButton(x, y, tab1, "Unlock Tech with Key-Modifiers", "Unlock Tech with Key-Modifiers Tips", "unlock-tech-tips");
         x = 300f;
         y = 10f;
-        _resignGameBtn = AddButton(x, y, tab1, "Assign game to current account", 16, "resign-game-btn", () => { GameMain.data.account = AccountData.me; });
+        _resignGameBtn = wnd.AddButton(x, y, tab1, "Assign game to current account", 16, "resign-game-btn", () => { GameMain.data.account = AccountData.me; });
         var rect = (RectTransform)_resignGameBtn.transform;
         rect.sizeDelta = new Vector2(200f, rect.sizeDelta.y);
 
-        var tab2 = AddTab(136f, 1, _windowTrans, "Factory");
+        var tab2 = wnd.AddTab(_windowTrans, "Factory");
         x = 0f;
         y = 10f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.ImmediateEnabled, "Finish build immediately");
+        MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.ImmediateEnabled, "Finish build immediately");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.ArchitectModeEnabled, "Architect mode");
+        MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.ArchitectModeEnabled, "Architect mode");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.UnlimitInteractiveEnabled, "Unlimited interactive range");
+        MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.UnlimitInteractiveEnabled, "Unlimited interactive range");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.NoConditionEnabled, "Build without condition");
+        MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.NoConditionEnabled, "Build without condition");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.NoCollisionEnabled, "No collision");
+        MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.NoCollisionEnabled, "No collision");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.NightLightEnabled, "Night Light");
+        MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.NightLightEnabled, "Night Light");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.BeltSignalGeneratorEnabled, "Belt signal generator");
+        MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.BeltSignalGeneratorEnabled, "Belt signal generator");
         y += 26f;
         x += 26f;
-        var cb = UI.MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.BeltSignalCountRecipeEnabled, "Count all raws and intermediates in statistics", 13);
+        var cb = MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.BeltSignalCountRecipeEnabled, "Count all raws and intermediates in statistics", 13);
         y += 26f;
-        var cb2 = UI.MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.BeltSignalNumberAltFormat, "Belt signal alt format", 13);
+        var cb2 = MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.BeltSignalNumberAltFormat, "Belt signal alt format", 13);
         x += 180f;
         y += 6f;
-        var tip1 = AddTipsButton(x, y, tab2, "Belt signal alt format", "Belt signal alt format tips", "belt-signal-alt-format-tips");
+        var tip1 = MyWindow.AddTipsButton(x, y, tab2, "Belt signal alt format", "Belt signal alt format tips", "belt-signal-alt-format-tips");
 
         FactoryPatch.BeltSignalGeneratorEnabled.SettingChanged += (_, _) =>
         {
@@ -147,41 +142,41 @@ public class UIConfigWindow : UI.MyWindowWithTabs
         OnBeltSignalChanged();
         x = 240f;
         y = 10f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.RemoveSomeConditionEnabled, "Remove some build conditions");
+        MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.RemoveSomeConditionEnabled, "Remove some build conditions");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.RemovePowerSpaceLimitEnabled, "Remove power space limit");
+        MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.RemovePowerSpaceLimitEnabled, "Remove power space limit");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.BoostWindPowerEnabled, "Boost wind power");
+        MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.BoostWindPowerEnabled, "Boost wind power");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.BoostSolarPowerEnabled, "Boost solar power");
+        MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.BoostSolarPowerEnabled, "Boost solar power");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.BoostGeothermalPowerEnabled, "Boost geothermal power");
+        MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.BoostGeothermalPowerEnabled, "Boost geothermal power");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.BoostFuelPowerEnabled, "Boost fuel power");
+        MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.BoostFuelPowerEnabled, "Boost fuel power");
         x += 32f;
         y += 26f;
-        AddText(x, y, tab2, "Boost fuel power 2", 13);
+        MyWindow.AddText(x, y, tab2, "Boost fuel power 2", 13);
 
         // Planet Tab
-        var tab3 = AddTab(236f, 2, _windowTrans, "Planet");
+        var tab3 = wnd.AddTab(_windowTrans, "Planet");
         x = 0f;
         y = 10f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab3, PlanetFunctions.PlayerActionsInGlobeViewEnabled, "Enable player actions in globe view");
+        MyCheckBox.CreateCheckBox(x, y, tab3, PlanetFunctions.PlayerActionsInGlobeViewEnabled, "Enable player actions in globe view");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab3, ResourcePatch.InfiniteResourceEnabled, "Infinite Natural Resources");
+        MyCheckBox.CreateCheckBox(x, y, tab3, ResourcePatch.InfiniteResourceEnabled, "Infinite Natural Resources");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab3, ResourcePatch.FastMiningEnabled, "Fast Mining");
+        MyCheckBox.CreateCheckBox(x, y, tab3, ResourcePatch.FastMiningEnabled, "Fast Mining");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab3, WaterPumperPatch.Enabled, "Pump Anywhere");
+        MyCheckBox.CreateCheckBox(x, y, tab3, WaterPumperPatch.Enabled, "Pump Anywhere");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab3, TerraformPatch.Enabled, "Terraform without enough sands");
+        MyCheckBox.CreateCheckBox(x, y, tab3, TerraformPatch.Enabled, "Terraform without enough sands");
         x = 300f;
         y = 10f;
-        AddButton(x, y, tab3, "矿物掩埋标题", 16, "button-bury-all", () => { PlanetFunctions.BuryAllVeins(true); });
+        wnd.AddButton(x, y, tab3, "矿物掩埋标题", 16, "button-bury-all", () => { PlanetFunctions.BuryAllVeins(true); });
         y += 36f;
-        AddButton(x, y, tab3, "矿物还原标题", 16, "button-bury-restore-all", () => { PlanetFunctions.BuryAllVeins(false); });
+        wnd.AddButton(x, y, tab3, "矿物还原标题", 16, "button-bury-restore-all", () => { PlanetFunctions.BuryAllVeins(false); });
         y += 36f;
-        AddButton(x, y, tab3, "铺满地基提示", 16, "button-reform-all", () =>
+        wnd.AddButton(x, y, tab3, "铺满地基提示", 16, "button-reform-all", () =>
         {
             var player = GameMain.mainPlayer;
             if (player == null) return;
@@ -191,45 +186,45 @@ public class UIConfigWindow : UI.MyWindowWithTabs
             GameMain.localPlanet.factory.PlanetReformAll(reformTool.brushType, reformTool.brushColor, reformTool.buryVeins);
         });
         y += 36f;
-        AddButton(x, y, tab3, "还原地形提示", 16, "button-reform-revert-all", () =>
+        wnd.AddButton(x, y, tab3, "还原地形提示", 16, "button-reform-revert-all", () =>
         {
             var factory = GameMain.localPlanet?.factory;
             if (factory == null) return;
             GameMain.localPlanet.factory.PlanetReformRevert();
         });
         y += 36f;
-        AddButton(x, y, tab3, "Initialize This Planet", 16, "button-init-planet", () => { PlanetFunctions.RecreatePlanet(true); });
+        wnd.AddButton(x, y, tab3, "Initialize This Planet", 16, "button-init-planet", () => { PlanetFunctions.RecreatePlanet(true); });
         y += 36f;
-        AddButton(x, y, tab3, "Dismantle All Buildings", 16, "button-dismantle-all", () => { PlanetFunctions.DismantleAll(false); });
+        wnd.AddButton(x, y, tab3, "Dismantle All Buildings", 16, "button-dismantle-all", () => { PlanetFunctions.DismantleAll(false); });
 
-        var tab4 = AddTab(336f, 3, _windowTrans, "Dyson Sphere");
+        var tab4 = wnd.AddTab(_windowTrans, "Dyson Sphere");
         x = 0f;
         y = 10f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.StopEjectOnNodeCompleteEnabled, "Stop ejectors when available nodes are all filled up");
+        MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.StopEjectOnNodeCompleteEnabled, "Stop ejectors when available nodes are all filled up");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.OnlyConstructNodesEnabled, "Construct only nodes but frames");
+        MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.OnlyConstructNodesEnabled, "Construct only nodes but frames");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.SkipBulletEnabled, "Skip bullet period");
+        MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.SkipBulletEnabled, "Skip bullet period");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.SkipAbsorbEnabled, "Skip absorption period");
+        MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.SkipAbsorbEnabled, "Skip absorption period");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.QuickAbsorbEnabled, "Quick absorb");
+        MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.QuickAbsorbEnabled, "Quick absorb");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.EjectAnywayEnabled, "Eject anyway");
+        MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.EjectAnywayEnabled, "Eject anyway");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.OverclockEjectorEnabled, "Overclock Ejectors");
+        MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.OverclockEjectorEnabled, "Overclock Ejectors");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.OverclockSiloEnabled, "Overclock Silos");
+        MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.OverclockSiloEnabled, "Overclock Silos");
         x = 300f;
         y = 10f;
-        AddButton(x, y, tab4, "Initialize Dyson Sphere", 16, "init-dyson-sphere", () => { DysonSpherePatch.InitCurrentDysonSphere(-1); });
+        wnd.AddButton(x, y, tab4, "Initialize Dyson Sphere", 16, "init-dyson-sphere", () => { DysonSpherePatch.InitCurrentDysonSphere(-1); });
         y += 36f;
-        AddText(x, y, tab4, "Click to dismantle selected layer", 16, "text-dismantle-layer");
+        MyWindow.AddText(x, y, tab4, "Click to dismantle selected layer", 16, "text-dismantle-layer");
         y += 26f;
         for (var i = 0; i < 10; i++)
         {
             var id = i + 1;
-            var btn = AddFlatButton(x, y, tab4, id.ToString(), 12, "dismantle-layer-" + id, () => { DysonSpherePatch.InitCurrentDysonSphere(id); });
+            var btn = wnd.AddFlatButton(x, y, tab4, id.ToString(), 12, "dismantle-layer-" + id, () => { DysonSpherePatch.InitCurrentDysonSphere(id); });
             ((RectTransform)btn.transform).sizeDelta = new Vector2(40f, 20f);
             _dysonLayerBtn[i] = btn;
             if (i == 4)
@@ -243,32 +238,31 @@ public class UIConfigWindow : UI.MyWindowWithTabs
             }
         }
 
-        var tab5 = AddTab(436f, 4, _windowTrans, "Birth");
+        var tab5 = wnd.AddTab(_windowTrans, "Birth");
         x = 0f;
         y = 10f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.SitiVeinsOnBirthPlanet, "Silicon/Titanium on birth planet");
+        MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.SitiVeinsOnBirthPlanet, "Silicon/Titanium on birth planet");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.FireIceOnBirthPlanet, "Fire ice on birth planet");
+        MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.FireIceOnBirthPlanet, "Fire ice on birth planet");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.KimberliteOnBirthPlanet, "Kimberlite on birth planet");
+        MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.KimberliteOnBirthPlanet, "Kimberlite on birth planet");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.FractalOnBirthPlanet, "Fractal silicon on birth planet");
+        MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.FractalOnBirthPlanet, "Fractal silicon on birth planet");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.OrganicOnBirthPlanet, "Organic crystal on birth planet");
+        MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.OrganicOnBirthPlanet, "Organic crystal on birth planet");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.OpticalOnBirthPlanet, "Optical grating crystal on birth planet");
+        MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.OpticalOnBirthPlanet, "Optical grating crystal on birth planet");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.SpiniformOnBirthPlanet, "Spiniform stalagmite crystal on birth planet");
+        MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.SpiniformOnBirthPlanet, "Spiniform stalagmite crystal on birth planet");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.UnipolarOnBirthPlanet, "Unipolar magnet on birth planet");
+        MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.UnipolarOnBirthPlanet, "Unipolar magnet on birth planet");
         x = 200f;
         y = 10f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.FlatBirthPlanet, "Birth planet is solid flat (no water at all)");
+        MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.FlatBirthPlanet, "Birth planet is solid flat (no water at all)");
         y += 36f;
-        UI.MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.HighLuminosityBirthStar, "Birth star has high luminosity");
+        MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.HighLuminosityBirthStar, "Birth star has high luminosity");
 
-        SetCurrentTab(0);
-        UpdateUI();
+        _tab4 = tab4;
         return;
 
         void OnBeltSignalChanged()
@@ -280,22 +274,22 @@ public class UIConfigWindow : UI.MyWindowWithTabs
         }
     }
 
-    public void UpdateUI()
+    private static void UpdateUI()
     {
         UpdateResignButton();
         UpdateDysonShells();
     }
 
-    private void UpdateResignButton()
+    private static void UpdateResignButton()
     {
         var resignEnabled = GameMain.data.account != AccountData.me;
         if (_resignGameBtn.gameObject.activeSelf == resignEnabled) return;
         _resignGameBtn.gameObject.SetActive(resignEnabled);
     }
 
-    private void UpdateDysonShells()
+    private static void UpdateDysonShells()
     {
-        if (!Tabs[3].Item1.gameObject.activeSelf) return;
+        if (!_tab4.gameObject.activeSelf) return;
         var star = GameMain.localStar;
         if (star != null)
         {
@@ -317,40 +311,5 @@ public class UIConfigWindow : UI.MyWindowWithTabs
         {
             _dysonLayerBtn[i].button.interactable = false;
         }
-    }
-
-    public override void _OnDestroy()
-    {
-    }
-
-    public override bool _OnInit()
-    {
-        _windowTrans.anchoredPosition = new Vector2(0, 0);
-        return true;
-    }
-
-    public override void _OnFree()
-    {
-    }
-
-    public override void _OnOpen()
-    {
-    }
-
-    public override void _OnClose()
-    {
-    }
-
-    public override void _OnUpdate()
-    {
-        base._OnUpdate();
-        if (VFInput.escape && !VFInput.inputing)
-        {
-            VFInput.UseEscape();
-            _Close();
-            return;
-        }
-
-        UpdateUI();
     }
 }

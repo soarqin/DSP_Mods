@@ -80,7 +80,6 @@ public static class DevShortcuts
         matcher.RemoveInstructions(2);
         matcher.Opcode = OpCodes.Br;
         matcher.Labels = labels;
-        CheatEnabler.Logger.LogDebug($"{matcher.Pos}");
         return matcher.InstructionEnumeration();
     }
 }

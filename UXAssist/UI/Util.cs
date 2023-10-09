@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace CheatEnabler.UI;
+namespace UXAssist.UI;
 
 public static class Util
 {

@@ -6,7 +6,7 @@ using UnityEngine.Events;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
-namespace CheatEnabler.UI;
+namespace UXAssist.UI;
 
 // MyWindow modified from LSTM: https://github.com/hetima/DSP_LSTM/blob/main/LSTM/MyWindowCtl.cs
 
@@ -51,7 +51,7 @@ public class MyWindow: ManualBehaviour
         }
     }
 
-    protected static Text AddText(float x, float y, RectTransform parent, string label, int fontSize = 14, string objName = "label")
+    public static Text AddText(float x, float y, RectTransform parent, string label, int fontSize = 14, string objName = "label")
     {
         var src = UIRoot.instance.uiGame.assemblerWindow.stateText;
         var txt = Instantiate(src);
@@ -68,7 +68,7 @@ public class MyWindow: ManualBehaviour
         return txt;
     }
     
-    protected static UIButton AddTipsButton(float x, float y, RectTransform parent, string label, string tip, string content, string objName = "tips-button")
+    public static UIButton AddTipsButton(float x, float y, RectTransform parent, string label, string tip, string content, string objName = "tips-button")
     {
         var src = UIRoot.instance.galaxySelect.sandboxToggle.gameObject.transform.parent.Find("tip-button");
         var dst = Instantiate(src);
@@ -82,7 +82,7 @@ public class MyWindow: ManualBehaviour
         return btn;
     }
     
-    protected UIButton AddButton(float x, float y, RectTransform parent, string text = "", int fontSize = 16, string objName = "button", UnityAction onClick = null)
+    public UIButton AddButton(float x, float y, RectTransform parent, string text = "", int fontSize = 16, string objName = "button", UnityAction onClick = null)
     {
         var panel = UIRoot.instance.uiGame.statWindow.performancePanelUI;
         var btn = Instantiate(panel.cpuActiveButton);
@@ -113,7 +113,7 @@ public class MyWindow: ManualBehaviour
         return btn;
     }
 
-    protected UIButton AddFlatButton(float x, float y, RectTransform parent, string text = "", int fontSize = 12, string objName = "button", UnityAction onClick = null)
+    public UIButton AddFlatButton(float x, float y, RectTransform parent, string text = "", int fontSize = 12, string objName = "button", UnityAction onClick = null)
     {
         var panel = UIRoot.instance.uiGame.dysonEditor.controlPanel.hierarchy.layerPanel;
         var btn = Instantiate(panel.layerButtons[0]);
@@ -206,7 +206,8 @@ public class MyWindow: ManualBehaviour
 
 public class MyWindowWithTabs : MyWindow
 {
-    protected readonly List<Tuple<RectTransform, UIButton>> Tabs = new();
+    private readonly List<Tuple<RectTransform, UIButton>> _tabs = new();
+    private float _tabX = 36f;
     public override void TryClose()
     {
         _Close();
@@ -217,7 +218,7 @@ public class MyWindowWithTabs : MyWindow
         return true;
     }
     
-    protected RectTransform AddTab(float x, int index, RectTransform parent, string label)
+    public RectTransform AddTab(float x, int index, RectTransform parent, string label)
     {
         var tab = new GameObject();
         var tabRect = tab.AddComponent<RectTransform>();
@@ -243,7 +244,7 @@ public class MyWindowWithTabs : MyWindow
         btnText.fontSize = 16;
         btn.data = index;
 
-        Tabs.Add(Tuple.Create(tabRect, btn));
+        _tabs.Add(Tuple.Create(tabRect, btn));
         if (EventRegistered)
         {
             btn.onClick += OnTabButtonClick;
@@ -251,11 +252,18 @@ public class MyWindowWithTabs : MyWindow
         return tabRect;
     }
 
+    public RectTransform AddTab(RectTransform parent, string label)
+    {
+        var result = AddTab(_tabX, _tabs.Count, parent, label);
+        _tabX += 100f;
+        return result;
+    }
+
     public override void _OnRegEvent()
     {
         if (!EventRegistered)
         {
-            foreach (var t in Tabs)
+            foreach (var t in _tabs)
             {
                 t.Item2.onClick += OnTabButtonClick;
             }
@@ -267,7 +275,7 @@ public class MyWindowWithTabs : MyWindow
     {
         if (EventRegistered)
         {
-            foreach (var t in Tabs)
+            foreach (var t in _tabs)
             {
                 t.Item2.onClick -= OnTabButtonClick;
             }
@@ -279,7 +287,7 @@ public class MyWindowWithTabs : MyWindow
 
     private void OnTabButtonClick(int index)
     {
-        foreach (var (rectTransform, btn) in Tabs)
+        foreach (var (rectTransform, btn) in _tabs)
         {
             if (btn.data != index)
             {

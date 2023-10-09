@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 
-namespace CheatEnabler;
+namespace UXAssist.Common;
 
 public static class I18N
 {

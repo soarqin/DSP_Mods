@@ -3,7 +3,7 @@ using BepInEx.Configuration;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace CheatEnabler.UI;
+namespace UXAssist.UI;
 
 // MyCheckBox modified from LSTM: https://github.com/hetima/DSP_LSTM/blob/main/LSTM/MyCheckBox.cs
 public class MyCheckBox : MonoBehaviour

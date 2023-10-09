@@ -4,7 +4,7 @@ using BepInEx.Configuration;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace CheatEnabler.UI;
+namespace UXAssist.UI;
 
 // MyKeyBinder modified from LSTM: https://github.com/hetima/DSP_LSTM/blob/main/LSTM/MyKeyBinder.cs
 public class MyKeyBinder : MonoBehaviour
