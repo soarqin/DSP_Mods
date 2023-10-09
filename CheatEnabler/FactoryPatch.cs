@@ -11,14 +11,11 @@ public static class FactoryPatch
 {
     public static ConfigEntry<bool> ImmediateEnabled;
     public static ConfigEntry<bool> ArchitectModeEnabled;
-    public static ConfigEntry<bool> UnlimitInteractiveEnabled;
-    public static ConfigEntry<bool> RemoveSomeConditionEnabled;
     public static ConfigEntry<bool> NoConditionEnabled;
     public static ConfigEntry<bool> NoCollisionEnabled;
     public static ConfigEntry<bool> BeltSignalGeneratorEnabled;
     public static ConfigEntry<bool> BeltSignalNumberAltFormat;
     public static ConfigEntry<bool> BeltSignalCountRecipeEnabled;
-    public static ConfigEntry<bool> NightLightEnabled;
     public static ConfigEntry<bool> RemovePowerSpaceLimitEnabled;
     public static ConfigEntry<bool> BoostWindPowerEnabled;
     public static ConfigEntry<bool> BoostSolarPowerEnabled;
@@ -32,13 +29,10 @@ public static class FactoryPatch
         if (_factoryPatch != null) return;
         ImmediateEnabled.SettingChanged += (_, _) => ImmediateBuild.Enable(ImmediateEnabled.Value);
         ArchitectModeEnabled.SettingChanged += (_, _) => ArchitectMode.Enable(ArchitectModeEnabled.Value);
-        UnlimitInteractiveEnabled.SettingChanged += (_, _) => UnlimitInteractive.Enable(UnlimitInteractiveEnabled.Value);
-        RemoveSomeConditionEnabled.SettingChanged += (_, _) => RemoveSomeConditionBuild.Enable(RemoveSomeConditionEnabled.Value);
         NoConditionEnabled.SettingChanged += (_, _) => NoConditionBuild.Enable(NoConditionEnabled.Value);
         NoCollisionEnabled.SettingChanged += (_, _) => NoCollisionValueChanged();
         BeltSignalGeneratorEnabled.SettingChanged += (_, _) => BeltSignalGenerator.Enable(BeltSignalGeneratorEnabled.Value);
         BeltSignalNumberAltFormat.SettingChanged += (_, _) => BeltSignalGenerator.OnAltFormatChanged();
-        NightLightEnabled.SettingChanged += (_, _) => NightLight.Enable(NightLightEnabled.Value);
         RemovePowerSpaceLimitEnabled.SettingChanged += (_, _) => RemovePowerSpaceLimit.Enable(RemovePowerSpaceLimitEnabled.Value);
         BoostWindPowerEnabled.SettingChanged += (_, _) => BoostWindPower.Enable(BoostWindPowerEnabled.Value);
         BoostSolarPowerEnabled.SettingChanged += (_, _) => BoostSolarPower.Enable(BoostSolarPowerEnabled.Value);
@@ -46,12 +40,9 @@ public static class FactoryPatch
         BoostGeothermalPowerEnabled.SettingChanged += (_, _) => BoostGeothermalPower.Enable(BoostGeothermalPowerEnabled.Value);
         ImmediateBuild.Enable(ImmediateEnabled.Value);
         ArchitectMode.Enable(ArchitectModeEnabled.Value);
-        UnlimitInteractive.Enable(UnlimitInteractiveEnabled.Value);
-        RemoveSomeConditionBuild.Enable(RemoveSomeConditionEnabled.Value);
         NoConditionBuild.Enable(NoConditionEnabled.Value);
         NoCollisionValueChanged();
         BeltSignalGenerator.Enable(BeltSignalGeneratorEnabled.Value);
-        NightLight.Enable(NightLightEnabled.Value);
         RemovePowerSpaceLimit.Enable(RemovePowerSpaceLimitEnabled.Value);
         BoostWindPower.Enable(BoostWindPowerEnabled.Value);
         BoostSolarPower.Enable(BoostSolarPowerEnabled.Value);
@@ -66,11 +57,8 @@ public static class FactoryPatch
         _factoryPatch = null;
         ImmediateBuild.Enable(false);
         ArchitectMode.Enable(false);
-        RemoveSomeConditionBuild.Enable(false);
         NoConditionBuild.Enable(false);
-        UnlimitInteractive.Enable(false);
         BeltSignalGenerator.Enable(false);
-        NightLight.Enable(false);
         RemovePowerSpaceLimit.Enable(false);
         BoostWindPower.Enable(false);
         BoostSolarPower.Enable(false);
@@ -121,165 +109,6 @@ public static class FactoryPatch
     private static void PlanetData_NotifyFactoryLoaded_Postfix(PlanetData __instance)
     {
         ArrivePlanet(__instance.factory);
-    }
-
-    public static class NightLight
-    {
-        private static Harmony _patch;
-        private const float NightLightAngleX = -8;
-        private const float NightLightAngleY = -2;
-        public static bool Enabled;
-        private static bool _nightlightInitialized;
-        private static bool _mechaOnEarth;
-        private static AnimationState _sail;
-        private static Light _sunlight;
-
-        public static void Enable(bool on)
-        {
-            if (on)
-            {
-                Enabled = _mechaOnEarth;
-                _patch ??= Harmony.CreateAndPatchAll(typeof(NightLight));
-                return;
-            }
-
-            Enabled = false;
-            _patch?.UnpatchSelf();
-            _patch = null;
-            if (_sunlight == null) return;
-            _sunlight.transform.localEulerAngles = new Vector3(0f, 180f);
-        }
-
-        public static void LateUpdate()
-        {
-            switch (_nightlightInitialized)
-            {
-                case false:
-                    Ready();
-                    break;
-                case true:
-                    Go();
-                    break;
-            }
-        }
-
-        private static void Ready()
-        {
-            if (!GameMain.isRunning || !GameMain.mainPlayer.controller.model.gameObject.activeInHierarchy) return;
-            if (_sail == null)
-            {
-                _sail = GameMain.mainPlayer.animator.sails[GameMain.mainPlayer.animator.sailAnimIndex];
-            }
-
-            _nightlightInitialized = true;
-        }
-
-        private static void Go()
-        {
-            if (!GameMain.isRunning)
-            {
-                End();
-                return;
-            }
-
-            if (_sail.enabled)
-            {
-                _mechaOnEarth = false;
-                Enabled = false;
-                if (_sunlight == null) return;
-                _sunlight.transform.localEulerAngles = new Vector3(0f, 180f);
-                _sunlight = null;
-                return;
-            }
-
-            if (!_mechaOnEarth)
-            {
-                if (_sunlight == null)
-                {
-                    var simu = GameMain.universeSimulator;
-                    if (simu)
-                        _sunlight = simu.LocalStarSimulator()?.sunLight;
-                    if (_sunlight == null) return;
-                }
-
-                _mechaOnEarth = true;
-                Enabled = NightLightEnabled.Value;
-            }
-
-            if (Enabled)
-            {
-                _sunlight.transform.rotation =
-                    Quaternion.LookRotation(-GameMain.mainPlayer.transform.up + GameMain.mainPlayer.transform.forward * NightLightAngleX / 10f +
-                                            GameMain.mainPlayer.transform.right * NightLightAngleY / 10f);
-            }
-        }
-
-        private static void End()
-        {
-            _mechaOnEarth = false;
-            Enabled = false;
-            if (_sunlight != null)
-            {
-                _sunlight.transform.localEulerAngles = new Vector3(0f, 180f);
-                _sunlight = null;
-            }
-
-            _sail = null;
-            _nightlightInitialized = false;
-        }
-
-        [HarmonyTranspiler]
-        [HarmonyPatch(typeof(StarSimulator), "LateUpdate")]
-        private static IEnumerable<CodeInstruction> StarSimulator_LateUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
-        {
-            // var vec = NightlightEnabled ? GameMain.mainPlayer.transform.up : __instance.transform.forward;
-            var matcher = new CodeMatcher(instructions, generator);
-            var label1 = generator.DefineLabel();
-            var label2 = generator.DefineLabel();
-            matcher.MatchForward(false,
-                new CodeMatch(OpCodes.Ldarg_0),
-                new CodeMatch(OpCodes.Call, AccessTools.PropertyGetter(typeof(Component), nameof(Component.transform)))
-            ).InsertAndAdvance(
-                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(NightLight), nameof(NightLight.Enabled))),
-                new CodeInstruction(OpCodes.Brfalse_S, label1),
-                new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(GameMain), nameof(GameMain.mainPlayer))),
-                new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Player), nameof(Player.transform))),
-                new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Transform), nameof(Transform.up))),
-                new CodeInstruction(OpCodes.Stloc_0),
-                new CodeInstruction(OpCodes.Br_S, label2)
-            );
-            matcher.Labels.Add(label1);
-            matcher.MatchForward(false,
-                new CodeMatch(OpCodes.Stloc_0)
-            ).Advance(1).Labels.Add(label2);
-            return matcher.InstructionEnumeration();
-        }
-
-        [HarmonyTranspiler]
-        [HarmonyPatch(typeof(PlanetSimulator), "LateUpdate")]
-        private static IEnumerable<CodeInstruction> PlanetSimulator_LateUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
-        {
-            // var vec = (NightlightEnabled ? GameMain.mainPlayer.transform.up : (Quaternion.Inverse(localPlanet.runtimeRotation) * (__instance.planetData.star.uPosition - __instance.planetData.uPosition).normalized));
-            var matcher = new CodeMatcher(instructions, generator);
-            var label1 = generator.DefineLabel();
-            var label2 = generator.DefineLabel();
-            matcher.MatchForward(false,
-                new CodeMatch(OpCodes.Pop)
-            ).Advance(1).InsertAndAdvance(
-                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(NightLight), nameof(NightLight.Enabled))),
-                new CodeInstruction(OpCodes.Brfalse_S, label1),
-                new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(GameMain), nameof(GameMain.mainPlayer))),
-                new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Player), nameof(Player.transform))),
-                new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Transform), nameof(Transform.up))),
-                new CodeInstruction(OpCodes.Stloc_1),
-                new CodeInstruction(OpCodes.Br_S, label2)
-            );
-            matcher.Labels.Add(label1);
-            matcher.MatchForward(false,
-                new CodeMatch(OpCodes.Ldsfld, AccessTools.Field(typeof(FactoryModel), nameof(FactoryModel.whiteMode0)))
-            ).Labels.Add(label2);
-            return matcher.InstructionEnumeration();
-        }
     }
 
     private static class ImmediateBuild
@@ -395,136 +224,6 @@ public static class FactoryPatch
             {
                 if ((ip.Type == EItemType.Logistics || ip.CanBuild) && ip.ID < 12000) _canBuildItems[ip.ID] = true;
             }
-        }
-    }
-
-    private static class UnlimitInteractive
-    {
-        private static Harmony _patch;
-        
-        public static void Enable(bool enable)
-        {
-            if (enable)
-            {
-                _patch ??= Harmony.CreateAndPatchAll(typeof(UnlimitInteractive));
-                return;
-            }
-            _patch?.UnpatchSelf();
-            _patch = null;
-        }
-
-        [HarmonyTranspiler]
-        [HarmonyPatch(typeof(PlayerAction_Inspect), nameof(PlayerAction_Inspect.GetObjectSelectDistance))]
-        private static IEnumerable<CodeInstruction> PlayerAction_Inspect_GetObjectSelectDistance_Transpiler(IEnumerable<CodeInstruction> instructions)
-        {
-            yield return new CodeInstruction(OpCodes.Ldc_R4, 10000f);
-            yield return new CodeInstruction(OpCodes.Ret);
-        }
-    }
-
-    private static class RemoveSomeConditionBuild
-    {
-        private static Harmony _patch;
-        public static void Enable(bool on)
-        {
-            if (on)
-            {
-                _patch ??= Harmony.CreateAndPatchAll(typeof(RemoveSomeConditionBuild));
-                return;
-            }
-            _patch?.UnpatchSelf();
-            _patch = null;
-        }
-        [HarmonyTranspiler, HarmonyPriority(Priority.First)]
-        [HarmonyPatch(typeof(BuildTool_BlueprintPaste), nameof(BuildTool_BlueprintPaste.CheckBuildConditions))]
-        [HarmonyPatch(typeof(BuildTool_Click), nameof(BuildTool_Click.CheckBuildConditions))]
-        private static IEnumerable<CodeInstruction> BuildTool_Click_CheckBuildConditions_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
-        {
-            var matcher = new CodeMatcher(instructions, generator);
-            /* search for:
-             * ldloc.s	V_8 (8)
-             * ldfld	class PrefabDesc BuildPreview::desc
-             * ldfld	bool PrefabDesc::isInserter
-             * brtrue	2358 (1C12) ldloc.s V_8 (8)
-             * ldloca.s	V_10 (10)
-             * call	instance float32 [UnityEngine.CoreModule]UnityEngine.Vector3::get_magnitude()
-             */
-            matcher.MatchForward(false,
-                new CodeMatch(OpCodes.Ldloc_S),
-                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(BuildPreview), nameof(BuildPreview.desc))),
-                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(PrefabDesc), nameof(PrefabDesc.isInserter))),
-                new CodeMatch(instr => instr.opcode == OpCodes.Brtrue || instr.opcode == OpCodes.Brtrue_S),
-                new CodeMatch(OpCodes.Ldloca_S),
-                new CodeMatch(OpCodes.Call, AccessTools.PropertyGetter(typeof(Vector3), nameof(Vector3.magnitude)))
-            );
-            var jumpPos = matcher.InstructionAt(3).operand;
-            var labels = matcher.Labels;
-            matcher.Labels = new List<Label>();
-            /* Insert: br   2358 (1C12) ldloc.s V_8 (8)
-             */
-            matcher.Insert(new CodeInstruction(OpCodes.Br, jumpPos).WithLabels(labels));
-            return matcher.InstructionEnumeration();
-        }
-
-        [HarmonyTranspiler, HarmonyPriority(Priority.First)]
-        [HarmonyPatch(typeof(BuildTool_Path), nameof(BuildTool_Path.CheckBuildConditions))]
-        private static IEnumerable<CodeInstruction> BuildTool_Path_CheckBuildConditions_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
-        {
-            var matcher = new CodeMatcher(instructions, generator);
-            /* search for:
-             * ldloc.s	V_88 (88)
-             * ldloc.s	V_120 (120)
-             * brtrue.s	2054 (173A) ldc.i4.s 17
-             * ldc.i4.s	18
-             * br.s	2055 (173C) stfld valuetype EBuildCondition BuildPreview::condition
-             * ldc.i4.s	17
-             * stfld	valuetype EBuildCondition BuildPreview::condition
-             */
-            matcher.MatchForward(false,
-                new CodeMatch(OpCodes.Ldloc_S),
-                new CodeMatch(OpCodes.Ldloc_S),
-                new CodeMatch(instr => instr.opcode == OpCodes.Brtrue_S || instr.opcode == OpCodes.Brtrue),
-                new CodeMatch(instr => instr.opcode == OpCodes.Ldc_I4_S && instr.OperandIs(18)),
-                new CodeMatch(instr => instr.opcode == OpCodes.Br_S || instr.opcode == OpCodes.Br),
-                new CodeMatch(instr => instr.opcode == OpCodes.Ldc_I4_S && instr.OperandIs(17)),
-                new CodeMatch(OpCodes.Stfld, AccessTools.Field(typeof(BuildPreview), nameof(BuildPreview.condition)))
-            );
-            if (matcher.IsValid)
-            {
-                // Remove 7 instructions, if the following instruction is br/br.s, remove it as well
-                var labels = matcher.Labels;
-                matcher.Labels = new List<Label>();
-                matcher.RemoveInstructions(7);
-                var opcode = matcher.Opcode;
-                if (opcode == OpCodes.Br || opcode == OpCodes.Br_S)
-                    matcher.RemoveInstruction();
-                matcher.Labels.AddRange(labels);
-            }
-            /* search for:
-             * ldloc.s	V_88 (88)
-             * ldc.i4.s	15-19
-             * stfld	valuetype EBuildCondition BuildPreview::condition
-             */
-            matcher.Start().MatchForward(false,
-                new CodeMatch(instr => instr.opcode == OpCodes.Ldloc_S || instr.opcode == OpCodes.Ldloc),
-                new CodeMatch(instr => (instr.opcode == OpCodes.Ldc_I4_S || instr.opcode == OpCodes.Ldc_I4) && Convert.ToInt64(instr.operand) is >= 15 and <= 19),
-                new CodeMatch(OpCodes.Stfld, AccessTools.Field(typeof(BuildPreview), nameof(BuildPreview.condition)))
-            );
-            if (matcher.IsValid)
-            {
-                // Remove 3 instructions, if the following instruction is br/br.s, remove it as well
-                matcher.Repeat(codeMatcher =>
-                {
-                    var labels = codeMatcher.Labels;
-                    codeMatcher.Labels = new List<Label>();
-                    codeMatcher.RemoveInstructions(3);
-                    var opcode = codeMatcher.Opcode;
-                    if (opcode == OpCodes.Br || opcode == OpCodes.Br_S)
-                        codeMatcher.RemoveInstruction();
-                    codeMatcher.Labels.AddRange(labels);
-                });
-            }
-            return matcher.InstructionEnumeration();
         }
     }
 
@@ -838,6 +537,20 @@ public static class FactoryPatch
             _portalFrom.Remove(beltId);
             if (!_portalTo.TryGetValue(number, out var set)) return;
             set.Remove(v);
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(UXAssist.PlanetFunctions), nameof(UXAssist.PlanetFunctions.RecreatePlanet))]
+        private static void UXAssist_PlanetFunctions_RecreatePlanet_Postfix()
+        {
+            var player = GameMain.mainPlayer;
+            if (player == null) return;
+            var factory = GameMain.localPlanet?.factory;
+            if (factory == null) return;
+            if (BeltSignalGeneratorEnabled.Value)
+            {
+                RemovePlanetSignalBelts(factory.index);
+            }
         }
 
         [HarmonyPostfix]

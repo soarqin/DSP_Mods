@@ -218,7 +218,7 @@ public class MyWindowWithTabs : MyWindow
         return true;
     }
     
-    public RectTransform AddTab(float x, int index, RectTransform parent, string label)
+    private RectTransform AddTabInternal(float x, int index, RectTransform parent, string label)
     {
         var tab = new GameObject();
         var tabRect = tab.AddComponent<RectTransform>();
@@ -229,7 +229,7 @@ public class MyWindowWithTabs : MyWindow
         var btn = Instantiate(src);
         var btnRect = Util.NormalizeRectWithTopLeft(btn, x, 54f, parent);
         btn.name = "tab-btn-" + index;
-        btnRect.sizeDelta = new Vector2(100f, 24f);
+        btnRect.sizeDelta = new Vector2(105f, 24f);
         btn.transform.Find("frame").gameObject.SetActive(false);
         if (btn.transitions.Length >= 3)
         {
@@ -254,8 +254,8 @@ public class MyWindowWithTabs : MyWindow
 
     public RectTransform AddTab(RectTransform parent, string label)
     {
-        var result = AddTab(_tabX, _tabs.Count, parent, label);
-        _tabX += 100f;
+        var result = AddTabInternal(_tabX, _tabs.Count, parent, label);
+        _tabX += 105f;
         return result;
     }
 

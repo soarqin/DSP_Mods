@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Linq;
 using UnityEngine;
-using UXAssist.Common;
 
 namespace UXAssist.UI;
 
@@ -20,7 +18,7 @@ public class MyConfigWindow : MyWindowWithTabs
     public override void _OnCreate()
     {
         _windowTrans = GetComponent<RectTransform>();
-        _windowTrans.sizeDelta = new Vector2(680f, 420f);
+        _windowTrans.sizeDelta = new Vector2(700f, 472f);
 
         OnUICreated?.Invoke(this, _windowTrans);
         SetCurrentTab(0);

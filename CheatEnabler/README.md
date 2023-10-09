@@ -4,6 +4,9 @@
 #### 添加一些作弊功能，同时屏蔽异常检测
 
 ## Changlog
+* 2.3.0
+  + Move some functions to an individual mod: [UXAssist](https://dsp.thunderstore.io/package/soarqin/UXAssist)
+  + Depends on [UXAssist](https://dsp.thunderstore.io/package/soarqin/UXAssist) now, so that config panel is unified with UXAssist. 
 * 2.2.7
   + New function: `Construct only nodes but frames`
   + Opening config panel does not close inventory panel now
@@ -46,10 +49,9 @@
 
 ## Usage
 
-* Press `` LAlt+`(BackQuote) `` to call up the config panel. You can change the shortcut on the panel.
+* Config panel is unified with UXAssist, tabs with text between star(*) are configurations for CheatEnabler.
 * There are also buttons on title screen and planet minimap area to call up the config panel.
 * Features:
-  + Strict hotkey dectection for build menu, thus building hotkeys(0~9, F1~F10, X, U) are not triggered while holding Ctrl/Alt/Shift.
   + General:
     + Enable Dev Shortcuts (check config panel for usage)
     + Disable Abnormal Checks
@@ -58,33 +60,23 @@
   + Factory:
     + Finish build immediately
     + Architect mode (Infinite buildings)
-    + Unlimited interactive range
     + Build without condition
-    + Remove some build conditions
     + No collision
-    + Sunlight at night
     + Belt signal item generation
       + Count all raws and intermediates in statistics
       + Belt signal alt format
     + Remove space limit between wind turbines and solar panels
     + Boost power generations for kinds of power generators
   + Planet:
-    + Enable player actions in globe view
     + Infinite Natural Resources
     + Fast Mining
     + Pump Anywhere
     + Terraform without enought sands
-    + Re-intialize planet (without reseting veins)
-    + Quick dismantle all buildings (without drops)
   + Dyson Sphere:
-    + Stop ejectors when available nodes are all filled up
-    + Construct only nodes but frames
     + Skip bullet period
     + Skip absorption period
     + Quick absorb
     + Eject anyway
-    + Re-initialize Dyson Spheres
-    + Quick dismantle Dyson Shells
   + Birth star:
     + Rare resources on birth planet
     + Solid flat on birth planet
@@ -99,9 +91,11 @@
 * [Dyson Sphere Program](https://store.steampowered.com/app/1366540): The great game
 * [BepInEx](https://bepinex.dev/): Base modding framework
 * [Multifunction_mod](https://github.com/blacksnipebiu/Multifunction_mod): Some cheat functions
-* [LSTM](https://github.com/hetima/DSP_LSTM) & [PlanetFinder](https://github.com/hetima/DSP_PlanetFinder): UI implementations
 
 ## 更新日志
+* 2.3.0
+  + 将部分功能移动到单独的mod：[UXAssist](https://dsp.thunderstore.io/package/soarqin/UXAssist)
+  + 现在依赖[UXAssist](https://dsp.thunderstore.io/package/soarqin/UXAssist)，因此配置面板与UXAssist合并
 * 2.2.7
   + 新功能：`只建造节点不建造框架`
   + 打开设置面板时不再关闭背包面板
@@ -144,10 +138,9 @@
 
 ## 使用说明
 
-* 按 `` 左Alt+`(反引号) `` 键呼出主面板，可以在面板上修改快捷键。
+* 配置面板已经与UXAssist合并，带有星号(*)的分页是CheatEnabler的配置
 * 标题界面和行星小地图旁也有按钮呼出主面板。
 * 功能：
-  + 更严格的建造菜单热键检测，因此在按住Ctrl/Alt/Shift时不再会触发建造热键(0~9, F1~F10, X, U)
   + 常规： 
     + 启用开发模式快捷键(使用说明见设置面板)
     + 屏蔽异常检测
@@ -156,33 +149,23 @@
   + 工厂：
     + 建造秒完成
     + 建筑师模式(无限建筑)
-    + ** 无限交互距离
     + 无条件建造
-    + ** 移除部分不影响游戏逻辑的建造条件
     + 无碰撞
-    + ** 夜间日光灯
     + 传送带信号物品生成
       + 统计面板中计算所有原材料和中间产物
       + 传送带信号替换格式
     + 风力发电机和太阳能板无间距限制
     + 提升各种发电设备发电量
   + 行星：
-    + ** 在行星视图中允许玩家操作
     + 自然资源采集不消耗
     + 高速采集
     + 平地抽水
     + 沙土不够时依然可以整改地形
-    + ** 初始化本行星（不重置矿脉）
-    + ** 快速拆除所有建筑（不掉落）
   + 戴森球：
-    + ** 可用节点全部造完时停止弹射
-    + ** 只建造节点不建造框架
     + 跳过子弹阶段
     + 跳过吸收阶段
     + 快速吸收
     + 全球弹射
-    + ** 初始化戴森球
-    + ** 快速拆除戴森壳
   + 母星系：
     + 母星有稀有资源
     + 母星是纯平的
@@ -197,4 +180,3 @@
 * [戴森球计划](https://store.steampowered.com/app/1366540): 伟大的游戏
 * [BepInEx](https://bepinex.dev/): 基础模组框架
 * [Multifunction_mod](https://github.com/blacksnipebiu/Multifunction_mod): 一些作弊功能
-* [LSTM](https://github.com/hetima/DSP_LSTM) & [PlanetFinder](https://github.com/hetima/DSP_PlanetFinder): UI实现

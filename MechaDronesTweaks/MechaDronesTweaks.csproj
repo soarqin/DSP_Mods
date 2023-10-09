@@ -6,7 +6,7 @@
     <AssemblyName>MechaDronesTweaks</AssemblyName>
     <BepInExPluginGuid>org.soardev.mechadronestweaks</BepInExPluginGuid>
     <Description>DSP MOD - MechaDronesTweaks</Description>
-    <Version>1.1.1</Version>
+    <Version>1.1.2</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>

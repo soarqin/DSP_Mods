@@ -7,15 +7,12 @@ namespace CheatEnabler;
 public static class UIConfigWindow
 {
     private static RectTransform _windowTrans;
-    private static MyConfigWindow _configWindow;
 
-    private static RectTransform _tab4;
     private static UIButton _resignGameBtn;
-    private static readonly UIButton[] _dysonLayerBtn = new UIButton[10];
 
     public static void Init()
     {
-        I18N.Add("General", "General", "常规");
+        I18N.Add("General", "*General*", "*常规*");
         I18N.Add("Enable Dev Shortcuts", "Enable Dev Shortcuts", "开发模式快捷键");
         I18N.Add("Disable Abnormal Checks", "Disable Abnormal Checks", "关闭数据异常检查");
         I18N.Add("Hotkey", "Hotkey", "快捷键");
@@ -28,11 +25,9 @@ public static class UIConfigWindow
             "Click tech on tree while holding:\n  Shift: Tech level + 1\n  Ctrl: Tech level + 10\n  Ctrl + Shift: Tech level + 100\n  Alt: Tech level to MAX\n\nNote: all direct prerequisites will be unlocked as well.",
             "按住以下组合键点击科技树：\n  Shift：科技等级+1\n  Ctrl：科技等级+10\n  Ctrl+Shift：科技等级+100\n  Alt：科技等级升到最大\n\n注意：所有直接前置科技也会被解锁");
         I18N.Add("Assign game to current account", "Assign game to current account", "将游戏绑定给当前账号");
-        I18N.Add("Factory", "Factory", "工厂");
+        I18N.Add("Factory", "*Factory*", "*工厂*");
         I18N.Add("Finish build immediately", "Finish build immediately", "建造秒完成");
         I18N.Add("Architect mode", "Architect mode", "建筑师模式");
-        I18N.Add("Unlimited interactive range", "Unlimited interactive range", "无限交互距离");
-        I18N.Add("Remove some build conditions", "Remove some build conditions", "移除部分不影响游戏逻辑的建造条件");
         I18N.Add("Build without condition", "Build without condition check", "无条件建造");
         I18N.Add("No collision", "No collision", "无碰撞");
         I18N.Add("Belt signal generator", "Belt signal generator", "传送带信号物品生成");
@@ -41,23 +36,17 @@ public static class UIConfigWindow
             "Belt signal number format alternative format:\n  AAAABC by default\n  BCAAAA as alternative\nAAAA=generation speed in minutes, B=proliferate points, C=stack count",
             "传送带信号物品生成数量格式：\n  默认为AAAABC\n  勾选替换为BCAAAA\nAAAA=生成速度，B=增产点数，C=堆叠数量");
         I18N.Add("Count all raws and intermediates in statistics","Count all raw materials in statistics", "统计信息里计算所有原料和中间产物");
-        I18N.Add("Night Light", "Sunlight at night", "夜间日光灯");
         I18N.Add("Remove power space limit", "Remove space limit for winds and geothermals", "移除风力发电和地热发电的间距限制");
         I18N.Add("Boost wind power", "Boost wind power(x100,000)", "提升风力发电(x100,000)");
         I18N.Add("Boost solar power", "Boost solar power(x100,000)", "提升太阳能发电(x100,000)");
         I18N.Add("Boost fuel power", "Boost fuel power(x50,000)", "提升燃料发电(x50,000)");
         I18N.Add("Boost fuel power 2", "(x20,000 for deuteron, x10,000 for antimatter)", "(氘核燃料棒x20,000，反物质燃料棒x10,000)");
         I18N.Add("Boost geothermal power", "Boost geothermal power(x50,000)", "提升地热发电(x50,000)");
-        I18N.Add("Planet", "Planet", "行星");
-        I18N.Add("Enable player actions in globe view", "Enable player actions in globe view", "在行星视图中允许玩家操作");
+        I18N.Add("Planet", "*Planet*", "*行星*");
         I18N.Add("Infinite Natural Resources", "Infinite natural resources", "自然资源采集不消耗");
         I18N.Add("Fast Mining", "Fast mining", "高速采集");
         I18N.Add("Pump Anywhere", "Pump anywhere", "平地抽水");
-        I18N.Add("Initialize This Planet", "Initialize this planet", "初始化本行星");
-        I18N.Add("Dismantle All Buildings", "Dismantle all buildings", "拆除所有建筑");
-        I18N.Add("Dyson Sphere", "Dyson Sphere", "戴森球");
-        I18N.Add("Stop ejectors when available nodes are all filled up", "Stop ejectors when available nodes are all filled up", "可用节点全部造完时停止弹射");
-        I18N.Add("Construct only nodes but frames", "Construct only nodes but frames", "只造节点不造框架");
+        I18N.Add("Dyson Sphere", "*Dyson Sphere*", "*戴森球*");
         I18N.Add("Skip bullet period", "Skip bullet period", "跳过子弹阶段");
         I18N.Add("Skip absorption period", "Skip absorption period", "跳过吸收阶段");
         I18N.Add("Quick absorb", "Quick absorb", "快速吸收");
@@ -65,9 +54,7 @@ public static class UIConfigWindow
         I18N.Add("Overclock Ejectors", "Overclock Ejectors (10x)", "高速弹射器(10倍射速)");
         I18N.Add("Overclock Silos", "Overclock Silos (10x)", "高速发射井(10倍射速)");
         I18N.Add("Terraform without enough sands", "Terraform without enough sands", "沙土不够时依然可以整改地形");
-        I18N.Add("Initialize Dyson Sphere", "Initialize Dyson Sphere", "初始化戴森球");
-        I18N.Add("Click to dismantle selected layer", "Click to dismantle selected layer", "点击拆除对应的戴森壳");
-        I18N.Add("Birth", "Birth Sys", "母星系");
+        I18N.Add("Birth", "*Birth Sys*", "*母星系*");
         I18N.Add("Silicon/Titanium on birth planet", "Silicon/Titanium on birth planet", "母星有硅和钛");
         I18N.Add("Fire ice on birth planet", "Fire ice on birth planet", "母星有可燃冰");
         I18N.Add("Kimberlite on birth planet", "Kimberlite on birth planet", "母星有金伯利矿");
@@ -85,7 +72,6 @@ public static class UIConfigWindow
 
     private static void CreateUI(MyConfigWindow wnd, RectTransform trans)
     {
-        _configWindow = wnd;
         _windowTrans = trans;
         // General tab
         var x = 0f;
@@ -96,8 +82,6 @@ public static class UIConfigWindow
         MyCheckBox.CreateCheckBox(x, y, tab1, AbnormalDisabler.Enabled, "Disable Abnormal Checks");
         y += 36f;
         MyCheckBox.CreateCheckBox(x, y, tab1, TechPatch.Enabled, "Unlock Tech with Key-Modifiers");
-        y += 118f;
-        MyKeyBinder.CreateKeyBinder(x, y, tab1, CheatEnabler.Hotkey, "Hotkey");
         x = 156f;
         y = 16f;
         MyWindow.AddTipsButton(x, y, tab1, "Dev Shortcuts", "Dev Shortcuts Tips", "dev-shortcuts-tips");
@@ -117,13 +101,9 @@ public static class UIConfigWindow
         y += 36f;
         MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.ArchitectModeEnabled, "Architect mode");
         y += 36f;
-        MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.UnlimitInteractiveEnabled, "Unlimited interactive range");
-        y += 36f;
         MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.NoConditionEnabled, "Build without condition");
         y += 36f;
         MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.NoCollisionEnabled, "No collision");
-        y += 36f;
-        MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.NightLightEnabled, "Night Light");
         y += 36f;
         MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.BeltSignalGeneratorEnabled, "Belt signal generator");
         y += 26f;
@@ -140,10 +120,8 @@ public static class UIConfigWindow
             OnBeltSignalChanged();
         };
         OnBeltSignalChanged();
-        x = 240f;
+        x = 350f;
         y = 10f;
-        MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.RemoveSomeConditionEnabled, "Remove some build conditions");
-        y += 36f;
         MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.RemovePowerSpaceLimitEnabled, "Remove power space limit");
         y += 36f;
         MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.BoostWindPowerEnabled, "Boost wind power");
@@ -161,16 +139,14 @@ public static class UIConfigWindow
         var tab3 = wnd.AddTab(_windowTrans, "Planet");
         x = 0f;
         y = 10f;
-        MyCheckBox.CreateCheckBox(x, y, tab3, PlanetFunctions.PlayerActionsInGlobeViewEnabled, "Enable player actions in globe view");
-        y += 36f;
         MyCheckBox.CreateCheckBox(x, y, tab3, ResourcePatch.InfiniteResourceEnabled, "Infinite Natural Resources");
         y += 36f;
         MyCheckBox.CreateCheckBox(x, y, tab3, ResourcePatch.FastMiningEnabled, "Fast Mining");
         y += 36f;
-        MyCheckBox.CreateCheckBox(x, y, tab3, WaterPumperPatch.Enabled, "Pump Anywhere");
+        MyCheckBox.CreateCheckBox(x, y, tab3, PlanetPatch.WaterPumpAnywhereEnabled, "Pump Anywhere");
         y += 36f;
-        MyCheckBox.CreateCheckBox(x, y, tab3, TerraformPatch.Enabled, "Terraform without enough sands");
-        x = 300f;
+        MyCheckBox.CreateCheckBox(x, y, tab3, PlanetPatch.TerraformAnywayEnabled, "Terraform without enough sands");
+        x = 400f;
         y = 10f;
         wnd.AddButton(x, y, tab3, "矿物掩埋标题", 16, "button-bury-all", () => { PlanetFunctions.BuryAllVeins(true); });
         y += 36f;
@@ -192,18 +168,10 @@ public static class UIConfigWindow
             if (factory == null) return;
             GameMain.localPlanet.factory.PlanetReformRevert();
         });
-        y += 36f;
-        wnd.AddButton(x, y, tab3, "Initialize This Planet", 16, "button-init-planet", () => { PlanetFunctions.RecreatePlanet(true); });
-        y += 36f;
-        wnd.AddButton(x, y, tab3, "Dismantle All Buildings", 16, "button-dismantle-all", () => { PlanetFunctions.DismantleAll(false); });
 
         var tab4 = wnd.AddTab(_windowTrans, "Dyson Sphere");
         x = 0f;
         y = 10f;
-        MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.StopEjectOnNodeCompleteEnabled, "Stop ejectors when available nodes are all filled up");
-        y += 36f;
-        MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.OnlyConstructNodesEnabled, "Construct only nodes but frames");
-        y += 36f;
         MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.SkipBulletEnabled, "Skip bullet period");
         y += 36f;
         MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.SkipAbsorbEnabled, "Skip absorption period");
@@ -215,28 +183,6 @@ public static class UIConfigWindow
         MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.OverclockEjectorEnabled, "Overclock Ejectors");
         y += 36f;
         MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.OverclockSiloEnabled, "Overclock Silos");
-        x = 300f;
-        y = 10f;
-        wnd.AddButton(x, y, tab4, "Initialize Dyson Sphere", 16, "init-dyson-sphere", () => { DysonSpherePatch.InitCurrentDysonSphere(-1); });
-        y += 36f;
-        MyWindow.AddText(x, y, tab4, "Click to dismantle selected layer", 16, "text-dismantle-layer");
-        y += 26f;
-        for (var i = 0; i < 10; i++)
-        {
-            var id = i + 1;
-            var btn = wnd.AddFlatButton(x, y, tab4, id.ToString(), 12, "dismantle-layer-" + id, () => { DysonSpherePatch.InitCurrentDysonSphere(id); });
-            ((RectTransform)btn.transform).sizeDelta = new Vector2(40f, 20f);
-            _dysonLayerBtn[i] = btn;
-            if (i == 4)
-            {
-                x -= 160f;
-                y += 20f;
-            }
-            else
-            {
-                x += 40f;
-            }
-        }
 
         var tab5 = wnd.AddTab(_windowTrans, "Birth");
         x = 0f;
@@ -256,13 +202,11 @@ public static class UIConfigWindow
         MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.SpiniformOnBirthPlanet, "Spiniform stalagmite crystal on birth planet");
         y += 36f;
         MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.UnipolarOnBirthPlanet, "Unipolar magnet on birth planet");
-        x = 200f;
+        x = 300f;
         y = 10f;
         MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.FlatBirthPlanet, "Birth planet is solid flat (no water at all)");
         y += 36f;
         MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.HighLuminosityBirthStar, "Birth star has high luminosity");
-
-        _tab4 = tab4;
         return;
 
         void OnBeltSignalChanged()
@@ -277,7 +221,6 @@ public static class UIConfigWindow
     private static void UpdateUI()
     {
         UpdateResignButton();
-        UpdateDysonShells();
     }
 
     private static void UpdateResignButton()
@@ -285,31 +228,5 @@ public static class UIConfigWindow
         var resignEnabled = GameMain.data.account != AccountData.me;
         if (_resignGameBtn.gameObject.activeSelf == resignEnabled) return;
         _resignGameBtn.gameObject.SetActive(resignEnabled);
-    }
-
-    private static void UpdateDysonShells()
-    {
-        if (!_tab4.gameObject.activeSelf) return;
-        var star = GameMain.localStar;
-        if (star != null)
-        {
-            var dysonSpheres = GameMain.data?.dysonSpheres;
-            if (dysonSpheres?[star.index] != null)
-            {
-                var ds = dysonSpheres[star.index];
-                for (var i = 1; i <= 10; i++)
-                {
-                    var layer = ds.layersIdBased[i];
-                    _dysonLayerBtn[i - 1].button.interactable = layer != null && layer.id == i;
-                }
-
-                return;
-            }
-        }
-
-        for (var i = 0; i < 10; i++)
-        {
-            _dysonLayerBtn[i].button.interactable = false;
-        }
     }
 }

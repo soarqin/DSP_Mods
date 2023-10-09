@@ -5,11 +5,14 @@
 
 ## Updates
 
+* 1.1.2
+  + `RemoveBuildRangeLimit`, `LargerAreaForUpgradeAndDismantle` and `LargerAreaForTerraform` are moved to [UXAssist](https://dsp.thunderstore.io/package/soarqin/UXAssist)
+
 * 1.1.1
-  * Fixed crash in `LargeAreaForTerraform` functions.
+  + Fixed crash in `LargeAreaForTerraform` functions.
 
 * 1.1.0
-  * Added `RemoveBuildRangeLimit`, `LargerAreaForUpgradeAndDismantle` and `LargerAreaForTerraform` options (Check Usage for details).
+  + Added `RemoveBuildRangeLimit`, `LargerAreaForUpgradeAndDismantle` and `LargerAreaForTerraform` options (Check Usage for details).
 
 ## Usage
 * Inspired by [FastDrones](https://dsp.thunderstore.io/package/dkoppstein/FastDrones/), but patching IL codes, consuming less CPU to reduce lags on massive builds especially blueprints' put.
@@ -26,13 +29,18 @@
     * `FixedSpeed` [Default Value: 300]: Fixed flying speed for mecha drones.
     * `SpeedMultiplier` [Default Value: 4]: Speed multiplier for mecha drones.
     * `EnergyMultiplier` [Default Value: 0.1]: Energy consumption multiplier for mecha drones.
-  * `[MechaBuild]`
-    * `RemoveBuildRangeLimit` [Default Value: true]: Remove limit for build range and maximum count of drag building belts/buildings.
-      * Note: this does not affect range limit for mecha drones' action
-    * `LargerAreaForUpgradeAndDismantle` [Default Value: true]: Increase maximum area size for upgrade and dismantle to 31x31 (from 11x11).
-    * `LargerAreaForTerraform` [Default Value: true]: Increase maximum area size for terraform to 30x30 (from 10x10).
-      * Note: this may impact game performance while using large area.
 * Note: This MOD will disable `FastDrones` if the MOD is installed, to avoid conflict in functions.
+
+## 更新日志
+
+* 1.1.2
+  + `RemoveBuildRangeLimit`, `LargerAreaForUpgradeAndDismantle` 和 `LargerAreaForTerraform` 移动到了 MOD [UXAssist](https://dsp.thunderstore.io/package/soarqin/UXAssist) 中
+
+* 1.1.1
+  + 修复了 `LargeAreaForTerraform` 功能可能导致崩溃的问题。
+
+* 1.1.0
+  + 添加了 `RemoveBuildRangeLimit`, `LargerAreaForUpgradeAndDismantle` 和 `LargerAreaForTerraform` 选项 (详情见使用说明)。
 
 ## 使用说明
 * 功能参考 [FastDrones](https://dsp.thunderstore.io/package/dkoppstein/FastDrones/)，但主要对IL代码进行Patch因此消耗更少的CPU，尤其在大规模建造比如放置蓝图的时候可以大大减少卡顿。
@@ -49,10 +57,4 @@
     * `FixedSpeed` [默认值: 300]: 固定速度。
     * `SpeedMultiplier` [默认值: 4]: 速度倍数。
     * `EnergyMultiplier` [默认值: 0.1]: 能量消耗倍数。
-  * `[MechaBuild]`
-    * `RemoveBuildRangeLimit` [默认值: true]: 解除摆放建筑距离和拖放建筑/传送带数量的限制。
-      * 注意: 并不会解除建设机行动的距离限制。
-    * `LargerAreaForUpgradeAndDismantle` [默认值: true]: 提升区域升级和拆除建筑的最大区域至31x31 (之前是11x11)。
-    * `LargerAreaForTerraform` [默认值: true]: 提升区域铺设地地基的最大区域至30x30 (之前是10x10)。
-      * 注意: 使用较大的区域可能对游戏实时性能有影响。
 * 说明: 如果安装了`FastDrones`本MOD会将其禁用避免功能冲突。

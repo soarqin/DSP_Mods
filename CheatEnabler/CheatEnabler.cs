@@ -1,10 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Reflection.Emit;
-using BepInEx;
-using BepInEx.Configuration;
-using HarmonyLib;
-using UnityEngine;
-using UnityEngine.UI;
+﻿using BepInEx;
 using UXAssist.Common;
 
 namespace CheatEnabler;
@@ -16,11 +10,8 @@ public class CheatEnabler : BaseUnityPlugin
     public new static readonly BepInEx.Logging.ManualLogSource Logger =
         BepInEx.Logging.Logger.CreateLogSource(PluginInfo.PLUGIN_NAME);
 
-    public static ConfigEntry<KeyboardShortcut> Hotkey;
-
     private void Awake()
     {
-        Hotkey = Config.Bind("General", "Shortcut", KeyboardShortcut.Deserialize("BackQuote + LeftAlt"), "Shortcut to open config window");
         DevShortcuts.Enabled = Config.Bind("General", "DevShortcuts", false, "Enable DevMode shortcuts");
         AbnormalDisabler.Enabled = Config.Bind("General", "DisableAbnormalChecks", false,
             "disable all abnormal checks");
@@ -30,10 +21,6 @@ public class CheatEnabler : BaseUnityPlugin
             "Build immediately");
         FactoryPatch.ArchitectModeEnabled = Config.Bind("Build", "Architect", false,
             "Architect Mode");
-        FactoryPatch.UnlimitInteractiveEnabled = Config.Bind("Build", "UnlimitInteractive", false,
-            "Unlimit interactive range");
-        FactoryPatch.RemoveSomeConditionEnabled = Config.Bind("Build", "RemoveSomeBuildConditionCheck", false,
-            "Remove part of build condition checks that does not affect game logic");
         FactoryPatch.NoConditionEnabled = Config.Bind("Build", "BuildWithoutCondition", false,
             "Build without condition");
         FactoryPatch.NoCollisionEnabled = Config.Bind("Build", "NoCollision", false,
@@ -44,8 +31,6 @@ public class CheatEnabler : BaseUnityPlugin
             "Belt signal number format alternative format (AAAA=generation speed in minutes, B=proliferate points, C=stack count):\n  AAAABC by default\n  BCAAAA as alternative");
         FactoryPatch.BeltSignalCountRecipeEnabled = Config.Bind("Build", "BeltSignalCountRecipe", false,
             "Belt signal count all raws and intermediates in statistics");
-        FactoryPatch.NightLightEnabled = Config.Bind("Build", "NightLight", false,
-            "Night light");
         FactoryPatch.RemovePowerSpaceLimitEnabled = Config.Bind("Build", "RemovePowerDistanceLimit", false,
             "Remove distance limit for wind turbines and geothermals");
         FactoryPatch.BoostWindPowerEnabled = Config.Bind("Build", "BoostWindPower", false,
@@ -56,20 +41,14 @@ public class CheatEnabler : BaseUnityPlugin
             "Boost fuel power");
         FactoryPatch.BoostGeothermalPowerEnabled = Config.Bind("Build", "BoostGeothermalPower", false,
             "Boost geothermal power");
-        PlanetFunctions.PlayerActionsInGlobeViewEnabled = Config.Bind("Planet", "PlayerActionsInGlobeView", false,
-            "Enable player actions in globe view");
         ResourcePatch.InfiniteResourceEnabled = Config.Bind("Planet", "AlwaysInfiniteResource", false,
             "always infinite natural resource");
         ResourcePatch.FastMiningEnabled = Config.Bind("Planet", "FastMining", false,
             "super-fast mining speed");
-        WaterPumperPatch.Enabled = Config.Bind("Planet", "WaterPumpAnywhere", false,
+        PlanetPatch.WaterPumpAnywhereEnabled = Config.Bind("Planet", "WaterPumpAnywhere", false,
             "Can pump water anywhere (while water type is not None)");
-        TerraformPatch.Enabled = Config.Bind("Planet", "TerraformAnyway", false,
+        PlanetPatch.TerraformAnywayEnabled = Config.Bind("Planet", "TerraformAnyway", false,
             "Can do terraform without enough sands");
-        DysonSpherePatch.StopEjectOnNodeCompleteEnabled = Config.Bind("DysonSphere", "StopEjectOnNodeComplete", false,
-            "Stop ejectors when available nodes are all filled up");
-        DysonSpherePatch.OnlyConstructNodesEnabled = Config.Bind("DysonSphere", "OnlyConstructNodes", false,
-            "Construct only nodes but frames");
         DysonSpherePatch.SkipBulletEnabled = Config.Bind("DysonSphere", "SkipBullet", false,
             "Skip bullet");
         DysonSpherePatch.SkipAbsorbEnabled = Config.Bind("DysonSphere", "SkipAbsorb", false,
@@ -113,10 +92,8 @@ public class CheatEnabler : BaseUnityPlugin
         AbnormalDisabler.Init();
         TechPatch.Init();
         FactoryPatch.Init();
-        PlanetFunctions.Init();
         ResourcePatch.Init();
-        WaterPumperPatch.Init();
-        TerraformPatch.Init();
+        PlanetPatch.Init();
         DysonSpherePatch.Init();
         BirthPlanetPatch.Init();
     }
@@ -125,18 +102,11 @@ public class CheatEnabler : BaseUnityPlugin
     {
         BirthPlanetPatch.Uninit();
         DysonSpherePatch.Uninit();
-        TerraformPatch.Uninit();
-        WaterPumperPatch.Uninit();
+        PlanetPatch.Uninit();
         ResourcePatch.Uninit();
-        PlanetFunctions.Uninit();
         FactoryPatch.Uninit();
         TechPatch.Uninit();
         AbnormalDisabler.Uninit();
         DevShortcuts.Uninit();
-    }
-
-    private void LateUpdate()
-    {
-        FactoryPatch.NightLight.LateUpdate();
     }
 }
