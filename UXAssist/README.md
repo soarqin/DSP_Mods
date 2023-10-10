@@ -6,6 +6,7 @@
 ## Changlog
 * 1.0.0
   + Initial release
+  + Functions moved from [MechaDronesTweaks](https://dsp.thunderstore.io/package/soarqin/MechaDronesTweaks/) and [CheatEnabler](https://dsp.thunderstore.io/package/soarqin/CheatEnabler/)
 
 ## Usage
 
@@ -14,9 +15,13 @@
 * Features:
   + Strict hotkey dectection for build menu, thus building hotkeys(0~9, F1~F10, X, U) are not triggered while holding Ctrl/Alt/Shift.
   + Unlimited interactive range
-  + Remove some build conditions
   + Sunlight at night
+  + Remove some build conditions
+  + Remove build count and range limit
+  + Larger area for upgrade and dismantle(30x30 at max)
+  + Larger area for terraform(30x30 at max)
   + Enable player actions in globe view
+  + Enhanced count control for hand-make
   + Re-intialize planet (without reseting veins)
   + Quick dismantle all buildings (without drops)
   + Stop ejectors when available nodes are all filled up
@@ -37,6 +42,7 @@
 ## 更新日志
 * 1.0.0
   + 初始版本
+  + 从[MechaDronesTweaks](https://dsp.thunderstore.io/package/soarqin/MechaDronesTweaks/)和[CheatEnabler](https://dsp.thunderstore.io/package/soarqin/CheatEnabler/)移动了部分功能过来
 
 ## 使用说明
 
@@ -45,9 +51,13 @@
 * 功能：
   + 更严格的建造菜单热键检测，因此在按住Ctrl/Alt/Shift时不再会触发建造热键(0~9, F1~F10, X, U)
   + 无限交互距离
-  + 移除部分不影响游戏逻辑的建造条件
   + 夜间日光灯
+  + 移除部分不影响游戏逻辑的建造条件
+  + 移除建造数量和范围限制
+  + 范围升级和拆除的最大区域扩大(最大30x30)
+  + 范围铺设地基的最大区域扩大(最大30x30)
   + 在行星视图中允许玩家操作
+  + 手动制造物品的数量控制改进
   + 初始化本行星（不重置矿脉）
   + 快速拆除所有建筑（不掉落）
   + 可用节点全部造完时停止弹射

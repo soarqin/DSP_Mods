@@ -4,6 +4,8 @@
 #### 添加一些作弊功能，同时屏蔽异常检测
 
 ## Changlog
+* 2.3.1
+  + Add UXAssist to dependencies in manifest. 
 * 2.3.0
   + Move some functions to an individual mod: [UXAssist](https://dsp.thunderstore.io/package/soarqin/UXAssist)
   + Depends on [UXAssist](https://dsp.thunderstore.io/package/soarqin/UXAssist) now, so that config panel is unified with UXAssist. 
@@ -93,6 +95,8 @@
 * [Multifunction_mod](https://github.com/blacksnipebiu/Multifunction_mod): Some cheat functions
 
 ## 更新日志
+* 2.3.1
+  + 在manifest中添加UXAssist到依赖
 * 2.3.0
   + 将部分功能移动到单独的mod：[UXAssist](https://dsp.thunderstore.io/package/soarqin/UXAssist)
   + 现在依赖[UXAssist](https://dsp.thunderstore.io/package/soarqin/UXAssist)，因此配置面板与UXAssist合并
@@ -138,7 +142,7 @@
 
 ## 使用说明
 
-* 配置面板已经与UXAssist合并，带有星号(*)的分页是CheatEnabler的配置
+* 配置面板复用UXAssist，打开UXAssist配置面板后带有星号(*)的分页是CheatEnabler的配置
 * 标题界面和行星小地图旁也有按钮呼出主面板。
 * 功能：
   + 常规： 

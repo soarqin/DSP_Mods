@@ -16,9 +16,9 @@ public static class UIConfigWindow
         I18N.Add("Unlimited interactive range", "Unlimited interactive range", "无限交互距离");
         I18N.Add("Night Light", "Sunlight at night", "夜间日光灯");
         I18N.Add("Remove some build conditions", "Remove some build conditions", "移除部分不影响游戏逻辑的建造条件");
-        I18N.Add("Remove build range limit", "Remove build range limit", "移除建造距离限制");
-        I18N.Add("Larger area for upgrade and dismantle", "Larger area for upgrade and dismantle", "提升范围升级和拆除的最大区域");
-        I18N.Add("Larger area for terraform", "Larger area for terraform", "提升范围铺设地基的最大区域");
+        I18N.Add("Remove build range limit", "Remove build count and range limit", "移除建造数量和距离限制");
+        I18N.Add("Larger area for upgrade and dismantle", "Larger area for upgrade and dismantle", "范围升级和拆除的最大区域扩大");
+        I18N.Add("Larger area for terraform", "Larger area for terraform", "范围铺设地基的最大区域扩大");
         I18N.Add("Enable player actions in globe view", "Enable player actions in globe view", "在行星视图中允许玩家操作");
         I18N.Add("Enhanced count control for hand-make", "Enhanced count control for hand-make", "手动制造物品的数量控制改进");
         I18N.Add("Enhanced count control for hand-make tips", "Maximum count is increased to 1000.\nHold Ctrl/Shift/Alt to change the count rapidly.", "最大数量提升至1000\n按住Ctrl/Shift/Alt可快速改变数量");
