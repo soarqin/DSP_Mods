@@ -81,10 +81,6 @@ public class CheatEnabler : BaseUnityPlugin
             "Birth planet is solid flat (no water at all)");
         BirthPlanetPatch.HighLuminosityBirthStar = Config.Bind("Birth", "HighLuminosityBirthStar", false,
             "Birth star has high luminosity");
-
-        I18N.Init();
-        I18N.Add("CheatEnabler Config", "CheatEnabler Config", "CheatEnabler设置");
-        I18N.Apply();
         
         UIConfigWindow.Init();
 

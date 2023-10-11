@@ -101,10 +101,10 @@ public class UXAssist : BaseUnityPlugin
             var l = btn.text.GetComponent<Localizer>();
             if (l != null)
             {
-                l.stringKey = "CheatEnabler Config";
-                l.translation = "CheatEnabler Config".Translate();
+                l.stringKey = "UXAssist Config";
+                l.translation = "UXAssist Config".Translate();
             }
-            btn.text.text = "CheatEnabler Config".Translate();
+            btn.text.text = "UXAssist Config".Translate();
             btn.text.fontSize = btn.text.fontSize * 7 / 8;
             I18N.OnInitialized += () => { btn.text.text = "UXAssist Config".Translate(); };
             var vec = ((RectTransform)mainMenu.exitButton.transform).anchoredPosition3D;
@@ -135,7 +135,7 @@ public class UXAssist : BaseUnityPlugin
                 rect.anchoredPosition3D = new Vector3(128f, -105f, 0f);
                 b.onClick.RemoveAllListeners();
                 btn.onClick += _ => { ToggleConfigWindow(); };
-                btn.tips.tipTitle = "CheatEnabler Config";
+                btn.tips.tipTitle = "UXAssist Config";
                 I18N.OnInitialized += () => { btn.tips.tipTitle = "UXAssist Config".Translate(); };
                 btn.tips.tipText = null;
                 btn.tips.corner = 9;
