@@ -1,5 +1,4 @@
 ﻿using BepInEx;
-using UXAssist.Common;
 
 namespace CheatEnabler;
 

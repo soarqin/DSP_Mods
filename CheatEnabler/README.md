@@ -5,22 +5,24 @@
 
 ## Changlog
 * 2.3.1
-  + Add UXAssist to dependencies in manifest. 
+  + Add UXAssist to dependencies in manifest.
 * 2.3.0
   + Move some functions to an individual mod: [UXAssist](https://dsp.thunderstore.io/package/soarqin/UXAssist)
-  + Depends on [UXAssist](https://dsp.thunderstore.io/package/soarqin/UXAssist) now, so that config panel is unified with UXAssist. 
+  + Depends on [UXAssist](https://dsp.thunderstore.io/package/soarqin/UXAssist) now, so that config panel is unified with UXAssist.
+  + Remove `LCtrl+A` from Dev Shortcuts, to avoid misoperation.
+  + Infinite bots/drones/vessels in `Architect mode` now.
 * 2.2.7
   + New function: `Construct only nodes but frames`
   + Opening config panel does not close inventory panel now
-  + Remove `Input direction conflict` check while using `Remove some build conditions` 
+  + Remove `Input direction conflict` check while using `Remove some build conditions`
   + Fix a bug that prevents `Belt signal alt format` from switching number formats for current belt signals
 * 2.2.6
-  + New function: `Stop ejectors when available nodes are all filled up` 
+  + New function: `Stop ejectors when available nodes are all filled up`
   + Fix a bug that absorb solar sails on unfinised nodes
 * 2.2.5
   + Skip all intermediate states and absorb solar sails instantly while enable `Quick absorb`, `Skip bullet period` and `Skip absorption period` at the same time.
   + Fix a problem that `Quick absorb` does not absorb all solar sails instantly when most nodes are full.
-  + Fix crash while using with some mods 
+  + Fix crash while using with some mods
 * 2.2.4
   + New function: `Enable player actions in globe view`
   + Fix UI bug
@@ -100,6 +102,8 @@
 * 2.3.0
   + 将部分功能移动到单独的mod：[UXAssist](https://dsp.thunderstore.io/package/soarqin/UXAssist)
   + 现在依赖[UXAssist](https://dsp.thunderstore.io/package/soarqin/UXAssist)，因此配置面板与UXAssist合并
+  + 从开发模式快捷键中移除`LCtrl+A`，以避免误操作
+  + 现在`建筑师模式`中配送机/物流机/物流船也无限了
 * 2.2.7
   + 新功能：`只建造节点不建造框架`
   + 打开设置面板时不再关闭背包面板
@@ -145,7 +149,7 @@
 * 配置面板复用UXAssist，打开UXAssist配置面板后带有星号(*)的分页是CheatEnabler的配置
 * 标题界面和行星小地图旁也有按钮呼出主面板。
 * 功能：
-  + 常规： 
+  + 常规：
     + 启用开发模式快捷键(使用说明见设置面板)
     + 屏蔽异常检测
     + 使用组合键解锁科技（Ctrl/Alt/Shift）

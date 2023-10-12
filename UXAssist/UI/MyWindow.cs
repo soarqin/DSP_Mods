@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
-using Object = UnityEngine.Object;
 
 namespace UXAssist.UI;
 
@@ -305,15 +304,27 @@ public static class MyWindowManager
 {
     private static readonly List<ManualBehaviour> Windows = new(4);
     private static bool _initialized;
+    private static Harmony _patch;
 
+    public static void Init()
+    {
+        _patch ??= Harmony.CreateAndPatchAll(typeof(Patch));
+    }
+    
+    public static void Uninit()
+    {
+        _patch?.UnpatchSelf();
+        _patch = null;
+    }
+    
     public static T CreateWindow<T>(string name, string title = "") where T : MyWindow
     {
         var srcWin = UIRoot.instance.uiGame.tankWindow;
         var src = srcWin.gameObject;
-        var go = Object.Instantiate(src, UIRoot.instance.uiGame.transform.parent);
+        var go = GameObject.Instantiate(src, UIRoot.instance.uiGame.transform.parent);
         go.name = name;
         go.SetActive(false);
-        Object.Destroy(go.GetComponent<UITankWindow>());
+        GameObject.Destroy(go.GetComponent<UITankWindow>());
         var win = go.AddComponent<T>() as MyWindow;
         if (win == null)
             return null;
@@ -332,7 +343,7 @@ public static class MyWindowManager
             }
             else if (child.name != "shadow" && child.name != "panel-bg")
             {
-                Object.Destroy(child);
+                GameObject.Destroy(child);
             }
         }
 

@@ -17,12 +17,9 @@ public class UXAssist : BaseUnityPlugin
         BepInEx.Logging.Logger.CreateLogSource(PluginInfo.PLUGIN_NAME);
 
     public static ConfigEntry<KeyboardShortcut> Hotkey;
-    private static bool _configWinInitialized = false;
+    private static bool _configWinInitialized;
     private static MyConfigWindow _configWin;
-    
-    private static Harmony _windowPatch;
     private static Harmony _patch;
-
     private static bool _initialized;
 
     private void Awake()
@@ -54,9 +51,9 @@ public class UXAssist : BaseUnityPlugin
         I18N.Apply();
 
         // UI Patch
-        _windowPatch ??= Harmony.CreateAndPatchAll(typeof(UI.MyWindowManager.Patch));
         _patch ??= Harmony.CreateAndPatchAll(typeof(UXAssist));
         
+        MyWindowManager.Init();
         UIConfigWindow.Init();
         FactoryPatch.Init();
         PlanetPatch.Init();
@@ -70,11 +67,10 @@ public class UXAssist : BaseUnityPlugin
         PlayerPatch.Uninit();
         PlanetPatch.Uninit();
         FactoryPatch.Uninit();
+        MyWindowManager.Uninit();
 
         _patch?.UnpatchSelf();
         _patch = null;
-        _windowPatch?.UnpatchSelf();
-        _windowPatch = null;
     }
 
     private void Update()
@@ -88,6 +84,7 @@ public class UXAssist : BaseUnityPlugin
         FactoryPatch.NightLight.LateUpdate();
     }
 
+    // Add config button to main menu
     [HarmonyPostfix, HarmonyPatch(typeof(UIRoot), nameof(UIRoot.OpenMainMenuUI))]
     public static void UIRoot_OpenMainMenuUI_Postfix()
     {
@@ -146,6 +143,7 @@ public class UXAssist : BaseUnityPlugin
         _initialized = true;
     }
 
+    // Check for noModifier while pressing hotkeys on build bar
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(UIBuildMenu), nameof(UIBuildMenu._OnUpdate))]
     private static IEnumerable<CodeInstruction> UIBuildMenu__OnUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -165,24 +163,25 @@ public class UXAssist : BaseUnityPlugin
         return matcher.InstructionEnumeration();
     }
 
+    // Patch to fix bug that warning popup on VeinUtil upgraded to level 8000+
     [HarmonyTranspiler]
-    [HarmonyPatch(typeof(UIButton), nameof(UIButton.LateUpdate))]
-    private static IEnumerable<CodeInstruction> UIButton_LateUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+    [HarmonyPatch(typeof(ABN_VeinsUtil), nameof(ABN_VeinsUtil.CheckValue))]
+    private static IEnumerable<CodeInstruction> ABN_VeinsUtil_CheckValue_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
     {
         var matcher = new CodeMatcher(instructions, generator);
         matcher.MatchForward(false,
-            new CodeMatch(OpCodes.Ldloc_2),
-            new CodeMatch(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Component), nameof(Component.gameObject))),
-            new CodeMatch(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(GameObject), nameof(GameObject.activeSelf)))
+            new CodeMatch(OpCodes.Ldelem_R8),
+            new CodeMatch(OpCodes.Conv_R4),
+            new CodeMatch(OpCodes.Add),
+            new CodeMatch(OpCodes.Stloc_1)
         );
-        var labels = matcher.Labels;
-        matcher.Labels = null;
-        matcher.Insert(
-            new CodeInstruction(OpCodes.Ldloc_2).WithLabels(labels),
-            new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Component), nameof(Component.transform))),
-            new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Transform), nameof(Transform.parent))),
-            new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Transform), nameof(Transform.parent))),
-            new CodeInstruction(OpCodes.Callvirt, AccessTools.Method(typeof(Transform), nameof(Transform.SetAsLastSibling)))
+        // loc1 = Mathf.Round(n * 1000f) / 1000f;
+        matcher.Advance(3).Insert(
+            new CodeInstruction(OpCodes.Ldc_R4, 1000f),
+            new CodeInstruction(OpCodes.Mul),
+            new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(Mathf), nameof(Mathf.Round))),
+            new CodeInstruction(OpCodes.Ldc_R4, 1000f),
+            new CodeInstruction(OpCodes.Div)
         );
         return matcher.InstructionEnumeration();
     }
@@ -204,5 +203,28 @@ public class UXAssist : BaseUnityPlugin
         {
             _configWin.Open();
         }
+    }
+
+    // Bring popup tip window to top layer
+    [HarmonyTranspiler]
+    [HarmonyPatch(typeof(UIButton), nameof(UIButton.LateUpdate))]
+    private static IEnumerable<CodeInstruction> UIButton_LateUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+    {
+        var matcher = new CodeMatcher(instructions, generator);
+        matcher.MatchForward(false,
+            new CodeMatch(OpCodes.Ldloc_2),
+            new CodeMatch(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Component), nameof(Component.gameObject))),
+            new CodeMatch(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(GameObject), nameof(GameObject.activeSelf)))
+        );
+        var labels = matcher.Labels;
+        matcher.Labels = null;
+        matcher.Insert(
+            new CodeInstruction(OpCodes.Ldloc_2).WithLabels(labels),
+            new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Component), nameof(Component.transform))),
+            new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Transform), nameof(Transform.parent))),
+            new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Transform), nameof(Transform.parent))),
+            new CodeInstruction(OpCodes.Callvirt, AccessTools.Method(typeof(Transform), nameof(Transform.SetAsLastSibling)))
+        );
+        return matcher.InstructionEnumeration();
     }
 }

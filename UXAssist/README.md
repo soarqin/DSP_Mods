@@ -1,9 +1,12 @@
 # UXAssist
 
-#### Some functions and patches for better user experience  
+#### Some functions and patches for better user experience
 #### 一些提升用户体验的功能和补丁
 
 ## Changlog
+* 1.0.1
+  + Fix config button text and tips while returning to title menu.
+  + Add a patch to fix the bug that warning popup on `Veins Utilization` upgraded to level 8000+
 * 1.0.0
   + Initial release
   + Functions moved from [MechaDronesTweaks](https://dsp.thunderstore.io/package/soarqin/MechaDronesTweaks/) and [CheatEnabler](https://dsp.thunderstore.io/package/soarqin/CheatEnabler/)
@@ -12,8 +15,10 @@
 
 * Press `` LAlt+`(BackQuote) `` to call up the config panel. You can change the shortcut on the panel.
 * There are also buttons on title screen and planet minimap area to call up the config panel.
-* Features:
+* Patches:
   + Strict hotkey dectection for build menu, thus building hotkeys(0~9, F1~F10, X, U) are not triggered while holding Ctrl/Alt/Shift.
+  + Fix a bug that warning popup on `Veins Utilization` upgraded to level 8000+
+* Features:
   + Unlimited interactive range
   + Sunlight at night
   + Remove some build conditions
@@ -40,6 +45,8 @@
 * [LSTM](https://github.com/hetima/DSP_LSTM) & [PlanetFinder](https://github.com/hetima/DSP_PlanetFinder): UI implementations
 
 ## 更新日志
+* 1.0.1
+  + 修复了返回标题界面后设置按钮文本和提示信息不正确的问题
 * 1.0.0
   + 初始版本
   + 从[MechaDronesTweaks](https://dsp.thunderstore.io/package/soarqin/MechaDronesTweaks/)和[CheatEnabler](https://dsp.thunderstore.io/package/soarqin/CheatEnabler/)移动了部分功能过来
@@ -48,8 +55,10 @@
 
 * 按 `` 左Alt+`(反引号) `` 键呼出主面板，可以在面板上修改快捷键。
 * 标题界面和行星小地图旁也有按钮呼出主面板。
-* 功能：
+* 补丁：
   + 更严格的建造菜单热键检测，因此在按住Ctrl/Alt/Shift时不再会触发建造热键(0~9, F1~F10, X, U)
+  + 修复了`矿物利用`升级到8000级以上时弹出警告的bug
+* 功能：
   + 无限交互距离
   + 夜间日光灯
   + 移除部分不影响游戏逻辑的建造条件
