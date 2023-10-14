@@ -114,13 +114,15 @@ public static class DysonSpherePatch
             var data = GameMain.data;
             var galaxy = data?.galaxy;
             if (galaxy == null) return;
-            _nodeForAbsorb = new HashSet<int>[galaxy.starCount];
+            var galaxyStarCount = galaxy.starCount;
+            _nodeForAbsorb = new HashSet<int>[galaxyStarCount];
             var spheres = data.dysonSpheres;
             if (spheres == null) return;
             foreach (var sphere in spheres)
             {
                 if (sphere?.layersSorted == null) continue;
                 var starIndex = sphere.starData.index;
+                if (starIndex >= galaxyStarCount) continue;
                 foreach (var layer in sphere.layersSorted)
                 {
                     if (layer == null) continue;

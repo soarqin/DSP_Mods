@@ -4,6 +4,9 @@
 #### 添加一些作弊功能，同时屏蔽异常检测
 
 ## Changlog
+* 2.3.2
+  + Birth star options moved to [UniverseGenTweaks](https://dsp.thunderstore.io/package/soarqin/UniverseGenTweaks/)
+  + Crash fix for some options
 * 2.3.1
   + Add UXAssist to dependencies in manifest.
 * 2.3.0
@@ -97,6 +100,9 @@
 * [Multifunction_mod](https://github.com/blacksnipebiu/Multifunction_mod): Some cheat functions
 
 ## 更新日志
+* 2.3.2
+  + 母星系的选项移动到了[UniverseGenTweaks](https://dsp.thunderstore.io/package/soarqin/UniverseGenTweaks/)
+  + 修复了一些选项可能导致崩溃的问题
 * 2.3.1
   + 在manifest中添加UXAssist到依赖
 * 2.3.0

@@ -21,7 +21,6 @@ public static class I18N
     private static readonly List<StringProto> StringsToAdd = new();
     public static void Add(string key, string enus, string zhcn = null, string frfr = null)
     {
-        var strings = LDB._strings;
         var strProto = new StringProto
         {
             Name = key,
