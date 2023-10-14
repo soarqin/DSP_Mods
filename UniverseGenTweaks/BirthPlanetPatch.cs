@@ -2,7 +2,7 @@
 using BepInEx.Configuration;
 using HarmonyLib;
 
-namespace CheatEnabler;
+namespace UniverseGenTweaks;
 public static class BirthPlanetPatch
 {
     public static ConfigEntry<bool> SitiVeinsOnBirthPlanet;

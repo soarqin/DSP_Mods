@@ -6,6 +6,7 @@
 ## Changlog
 * 2.3.2
   + Birth star options moved to [UniverseGenTweaks](https://dsp.thunderstore.io/package/soarqin/UniverseGenTweaks/)
+  + `Fast Mining` ensures full output of oil extractors now.
   + Crash fix for some options
 * 2.3.1
   + Add UXAssist to dependencies in manifest.
@@ -84,10 +85,6 @@
     + Skip absorption period
     + Quick absorb
     + Eject anyway
-  + Birth star:
-    + Rare resources on birth planet
-    + Solid flat on birth planet
-    + High luminosity for birth star
 
 ## Notes
 * Please upgrade `BepInEx` 5.4.21 or later if using with [BlueprintTweaks](https://dsp.thunderstore.io/package/kremnev8/BlueprintTweaks/) to avoid possible conflicts.
@@ -102,6 +99,7 @@
 ## 更新日志
 * 2.3.2
   + 母星系的选项移动到了[UniverseGenTweaks](https://dsp.thunderstore.io/package/soarqin/UniverseGenTweaks/)
+  + `高速采集`现在可以保证油井的最大产出
   + 修复了一些选项可能导致崩溃的问题
 * 2.3.1
   + 在manifest中添加UXAssist到依赖
@@ -180,10 +178,6 @@
     + 跳过吸收阶段
     + 快速吸收
     + 全球弹射
-  + 母星系：
-    + 母星有稀有资源
-    + 母星是纯平的
-    + 母星系恒星高亮
 
 ## 注意事项
 * 如果和[BlueprintTweaks](https://dsp.thunderstore.io/package/kremnev8/BlueprintTweaks/)一起使用，请升级`BepInEx`到5.4.21或更高版本，以避免可能的冲突。

@@ -4,11 +4,13 @@ using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine;
 using UnityEngine.UI;
+using UXAssist.Common;
 
 namespace UniverseGenTweaks; 
 
 public class MoreSettings
 {
+    public static ConfigEntry<bool> Enabled;
     public static ConfigEntry<int> MaxStarCount;
     private static double _minDist = 2;
     private static double _minStep = 2;
@@ -27,6 +29,7 @@ public class MoreSettings
     private static Text _minStepText;
     private static Text _maxStepText;
     private static Text _flattenText;
+    private static Harmony _harmony;
 
     public static void Init()
     {
@@ -35,7 +38,24 @@ public class MoreSettings
         I18N.Add("步进最大距离", "Step Distance Max", "步进最大距离");
         I18N.Add("扁平度", "Flatness", "扁平度");
         I18N.Apply();
-        Harmony.CreateAndPatchAll(typeof(MoreSettings));
+        Enabled.SettingChanged += (_, _) => Enable(Enabled.Value);
+        Enable(Enabled.Value);
+    }
+
+    public static void Uninit()
+    {
+        Enable(false);
+    }
+
+    private static void Enable(bool on)
+    {
+        if (on)
+        {
+            _harmony ??= Harmony.CreateAndPatchAll(typeof(MoreSettings));
+            return;
+        }
+        _harmony?.UnpatchSelf();
+        _harmony = null;
     }
 
     private static void CreateSliderWithText(Slider orig, out Text title, out Slider slider, out Text text)
@@ -48,9 +68,9 @@ public class MoreSettings
 
     private static void TransformDeltaY(Transform trans, float delta)
     {
-        var pos = trans.position;
+        var pos = ((RectTransform)trans).anchoredPosition3D;
         pos.y += delta;
-        trans.position = pos;
+        ((RectTransform)trans).anchoredPosition3D = pos;
     }
     
     [HarmonyPostfix]
@@ -84,14 +104,14 @@ public class MoreSettings
         _flattenSlider.maxValue = 50f;
         _flattenSlider.value = (float)(_flatten * 50.0);
 
-        TransformDeltaY(_minDistTitle.transform, -0.3573f);
-        TransformDeltaY(_minStepTitle.transform, -0.3573f * 2);
-        TransformDeltaY(_maxStepTitle.transform, -0.3573f * 3);
-        TransformDeltaY(_flattenTitle.transform, -0.3573f * 4);
-        TransformDeltaY(__instance.resourceMultiplierSlider.transform.parent, -0.3573f * 4);
-        TransformDeltaY(__instance.sandboxToggle.transform.parent, -0.3573f * 4);
-        TransformDeltaY(__instance.propertyMultiplierText.transform, -0.3573f * 4);
-        TransformDeltaY(__instance.addrText.transform.parent, -0.3573f * 4);
+        TransformDeltaY(_minDistTitle.transform, -36f);
+        TransformDeltaY(_minStepTitle.transform, -36f * 2);
+        TransformDeltaY(_maxStepTitle.transform, -36f * 3);
+        TransformDeltaY(_flattenTitle.transform, -36f * 4);
+        TransformDeltaY(__instance.resourceMultiplierSlider.transform.parent, -36f * 4);
+        TransformDeltaY(__instance.sandboxToggle.transform.parent, -36f * 4);
+        TransformDeltaY(__instance.propertyMultiplierText.transform, -36f * 4);
+        TransformDeltaY(__instance.addrText.transform.parent, -36f * 4);
     }
 
     [HarmonyPrefix]
@@ -182,7 +202,7 @@ public class MoreSettings
         var matcher = new CodeMatcher(instructions, generator);
         matcher.MatchForward(false,
             new CodeMatch(ci => ci.opcode == OpCodes.Ldc_I4_S && ci.OperandIs(80))
-        ).Set(OpCodes.Ldsfld, AccessTools.Field(typeof(MoreSettings), nameof(MoreSettings.MaxStarCount))).Insert(
+        ).SetAndAdvance(OpCodes.Ldsfld, AccessTools.Field(typeof(MoreSettings), nameof(MoreSettings.MaxStarCount))).Insert(
             new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(ConfigEntry<int>), nameof(ConfigEntry<int>.Value)))
         );
         return matcher.InstructionEnumeration();
@@ -196,7 +216,7 @@ public class MoreSettings
         var matcher = new CodeMatcher(instructions, generator);
         matcher.MatchForward(false,
             new CodeMatch(ci => ci.opcode == OpCodes.Ldc_I4 && ci.OperandIs(25600))
-        ).Set(OpCodes.Ldfld, AccessTools.Field(typeof(MoreSettings), nameof(MoreSettings.MaxStarCount))).Insert(
+        ).SetAndAdvance(OpCodes.Ldsfld, AccessTools.Field(typeof(MoreSettings), nameof(MoreSettings.MaxStarCount))).Insert(
             new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(ConfigEntry<int>), nameof(ConfigEntry<int>.Value))),
             new CodeInstruction(OpCodes.Ldc_I4_1),
             new CodeInstruction(OpCodes.Add),

@@ -1,4 +1,5 @@
 ﻿using System;
+using BepInEx.Configuration;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -24,7 +25,7 @@ public class MySlider : MonoBehaviour
         }
     }
 
-    public static RectTransform CreateSlider(float x, float y, RectTransform parent, float value, float minValue, float maxValue, string format = "{0}", float width = 0f)
+    public static MySlider CreateSlider(float x, float y, RectTransform parent, float value, float minValue, float maxValue, string format = "G", float width = 0f)
     {
         var optionWindow = UIRoot.instance.optionWindow;
         var src = optionWindow.audioVolumeComp;
@@ -71,14 +72,14 @@ public class MySlider : MonoBehaviour
         sl.OnValueSet();
         sl.UpdateLabel();
 
-        return sl.rectTrans;
+        return sl;
     }
     public void OnValueSet()
     {
         lock (this)
         {
             var sliderVal = _value;
-            if (_value.Equals(slider.value)) return;
+            if (sliderVal.Equals(slider.value)) return;
             if (sliderVal > slider.maxValue)
             {
                 _value = sliderVal = slider.maxValue;

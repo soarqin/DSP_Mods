@@ -4,6 +4,10 @@
 #### 宇宙生成参数调节
 
 ## Changelog
+* 1.2.0
+  + Depends on [UXAssist](https://dsp.thunderstore.io/package/soarqin/UXAssist/) now.
+  + Add `Birth star` options
+  + Config tab added to UXAssist config panel.
 * 1.1.0
   + Add epic difficulty
   + `More options` and `Epic difficulty` can be enabled individually now.
@@ -18,8 +22,16 @@
 2. Epic difficulty
    * 0.01x resources and 0.25x oils (very hard difficulty has 0.5x oils).
    * Same oil mining speed as very hard difficuly
+3. Birth star
+   * Rare resources on birth planet
+   * Solid flat on birth planet
+   * High luminosity for birth star
 
 ## 更新日志
+* 1.2.0
+  + 现在依赖于[UXAssist](https://dsp.thunderstore.io/package/soarqin/UXAssist/)
+  + 增加`母星系`选项
+  + 在UXAssist的配置面板中增加了一个选项卡
 * 1.1.0
   + 增加史诗难度
   + `更多选项`和`史诗难度`现在可以单独启用
@@ -34,3 +46,7 @@
 2. 史诗难度
    * 资源0.01倍，油井储量0.25倍(极难是0.5倍)
    * 采油速度和极难相同
+3. 母星系
+   * 母星有稀有资源
+   * 母星是纯平的
+   * 母星系恒星高亮

@@ -183,30 +183,6 @@ public static class UIConfigWindow
         MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.OverclockEjectorEnabled, "Overclock Ejectors");
         y += 36f;
         MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.OverclockSiloEnabled, "Overclock Silos");
-
-        var tab5 = wnd.AddTab(_windowTrans, "Birth");
-        x = 0f;
-        y = 10f;
-        MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.SitiVeinsOnBirthPlanet, "Silicon/Titanium on birth planet");
-        y += 36f;
-        MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.FireIceOnBirthPlanet, "Fire ice on birth planet");
-        y += 36f;
-        MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.KimberliteOnBirthPlanet, "Kimberlite on birth planet");
-        y += 36f;
-        MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.FractalOnBirthPlanet, "Fractal silicon on birth planet");
-        y += 36f;
-        MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.OrganicOnBirthPlanet, "Organic crystal on birth planet");
-        y += 36f;
-        MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.OpticalOnBirthPlanet, "Optical grating crystal on birth planet");
-        y += 36f;
-        MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.SpiniformOnBirthPlanet, "Spiniform stalagmite crystal on birth planet");
-        y += 36f;
-        MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.UnipolarOnBirthPlanet, "Unipolar magnet on birth planet");
-        x = 300f;
-        y = 10f;
-        MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.FlatBirthPlanet, "Birth planet is solid flat (no water at all)");
-        y += 36f;
-        MyCheckBox.CreateCheckBox(x, y, tab5, BirthPlanetPatch.HighLuminosityBirthStar, "Birth star has high luminosity");
         return;
 
         void OnBeltSignalChanged()

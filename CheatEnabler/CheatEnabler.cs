@@ -60,26 +60,6 @@ public class CheatEnabler : BaseUnityPlugin
             "Overclock ejector");
         DysonSpherePatch.OverclockSiloEnabled = Config.Bind("DysonSphere", "OverclockSilo", false,
             "Overclock silo");
-        BirthPlanetPatch.SitiVeinsOnBirthPlanet = Config.Bind("Birth", "SiTiVeinsOnBirthPlanet", false,
-            "Silicon/Titanium on birth planet");
-        BirthPlanetPatch.FireIceOnBirthPlanet = Config.Bind("Birth", "FireIceOnBirthPlanet", false,
-            "Fire ice on birth planet");
-        BirthPlanetPatch.KimberliteOnBirthPlanet = Config.Bind("Birth", "KimberliteOnBirthPlanet", false,
-            "Kimberlite on birth planet");
-        BirthPlanetPatch.FractalOnBirthPlanet = Config.Bind("Birth", "FractalOnBirthPlanet", false,
-            "Fractal silicon on birth planet");
-        BirthPlanetPatch.OrganicOnBirthPlanet = Config.Bind("Birth", "OrganicOnBirthPlanet", false,
-            "Organic crystal on birth planet");
-        BirthPlanetPatch.OpticalOnBirthPlanet = Config.Bind("Birth", "OpticalOnBirthPlanet", false,
-            "Optical grating crystal on birth planet");
-        BirthPlanetPatch.SpiniformOnBirthPlanet = Config.Bind("Birth", "SpiniformOnBirthPlanet", false,
-            "Spiniform stalagmite crystal on birth planet");
-        BirthPlanetPatch.UnipolarOnBirthPlanet = Config.Bind("Birth", "UnipolarOnBirthPlanet", false,
-            "Unipolar magnet on birth planet");
-        BirthPlanetPatch.FlatBirthPlanet = Config.Bind("Birth", "FlatBirthPlanet", false,
-            "Birth planet is solid flat (no water at all)");
-        BirthPlanetPatch.HighLuminosityBirthStar = Config.Bind("Birth", "HighLuminosityBirthStar", false,
-            "Birth star has high luminosity");
         
         UIConfigWindow.Init();
 
@@ -90,12 +70,10 @@ public class CheatEnabler : BaseUnityPlugin
         ResourcePatch.Init();
         PlanetPatch.Init();
         DysonSpherePatch.Init();
-        BirthPlanetPatch.Init();
     }
 
     private void OnDestroy()
     {
-        BirthPlanetPatch.Uninit();
         DysonSpherePatch.Uninit();
         PlanetPatch.Uninit();
         ResourcePatch.Uninit();

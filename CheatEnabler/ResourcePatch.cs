@@ -107,7 +107,7 @@ public static class ResourcePatch
             ).Repeat(codeMatcher =>
                 codeMatcher.RemoveInstruction().InsertAndAdvance(
                     new CodeInstruction(OpCodes.Pop),
-                    new CodeInstruction(OpCodes.Ldc_R4, 720f)
+                    new CodeInstruction(OpCodes.Ldc_R4, 2400f)
                 )
             );
             return matcher.InstructionEnumeration();

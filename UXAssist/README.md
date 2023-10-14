@@ -47,6 +47,7 @@
 ## 更新日志
 * 1.0.1
   + 修复了返回标题界面后设置按钮文本和提示信息不正确的问题
+  + 添加了一个补丁，修复了`矿物利用`升级到8000级以上时弹出警告的bug
 * 1.0.0
   + 初始版本
   + 从[MechaDronesTweaks](https://dsp.thunderstore.io/package/soarqin/MechaDronesTweaks/)和[CheatEnabler](https://dsp.thunderstore.io/package/soarqin/CheatEnabler/)移动了部分功能过来

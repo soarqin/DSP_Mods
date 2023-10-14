@@ -1,19 +1,84 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection.Emit;
+using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine.UI;
+using UXAssist.Common;
 
 namespace UniverseGenTweaks;
 
-public class EpicDifficulty
+public static class EpicDifficulty
 {
+    public static ConfigEntry<bool> Enabled;
+    public static ConfigEntry<float> ResourceMultiplier;
+    public static ConfigEntry<float> OilMultiplier;
+    private static Harmony _harmony;
+
+    private static readonly float[] ResourceMultipliers = new[] { 0.0001f, 0.0005f, 0.001f, 0.005f, 0.01f, 0.02f, 0.03f, 0.04f, 0.05f };
+    private static readonly float[] OilMultipliers = new[] { 0.1f, 0.2f, 0.3f, 0.4f, 0.5f, 0.6f, 0.7f, 0.8f, 0.9f, 1f };
+
     public static void Init()
     {
         I18N.Add("究极少", "Micro", "究极少");
         I18N.Add("史诗难度", "Epic Difficulty !!", "史诗难度 !!");
         I18N.Apply();
-        Harmony.CreateAndPatchAll(typeof(EpicDifficulty));
+        Enabled.SettingChanged += (_, _) => Enable(Enabled.Value);
+        Enable(Enabled.Value);
+    }
+
+    public static void Uninit()
+    {
+        Enable(false);
+    }
+
+    private static void Enable(bool on)
+    {
+        if (on)
+        {
+            _harmony ??= Harmony.CreateAndPatchAll(typeof(EpicDifficulty));
+            return;
+        }
+        _harmony?.UnpatchSelf();
+        _harmony = null;
+    }
+
+    public static float IndexToResourceMultiplier(int index)
+    {
+        return ResourceMultipliers[index < 0 ? 0 : index >= ResourceMultipliers.Length ? ResourceMultipliers.Length - 1 : index];
+    }
+
+    public static int ResourceMultiplierToIndex(float mult)
+    {
+        for (var i = ResourceMultipliers.Length - 1; i > 0; i--)
+        {
+            if (ResourceMultipliers[i] <= mult) return i;
+        }
+        return 0;
+    }
+
+    public static int ResourceMultipliersCount()
+    {
+        return ResourceMultipliers.Length;
+    }
+
+    public static float IndexToOilMultiplier(int index)
+    {
+        return OilMultipliers[index < 0 ? 0 : index >= OilMultipliers.Length ? OilMultipliers.Length - 1 : index];
+    }
+
+    public static int OilMultiplierToIndex(float mult)
+    {
+        for (var i = OilMultipliers.Length - 1; i > 0; i--)
+        {
+            if (OilMultipliers[i] <= mult) return i;
+        }
+        return 0;
+    }
+    
+    public static int OilMultipliersCount()
+    {
+        return OilMultipliers.Length;
     }
 
     [HarmonyPostfix]
@@ -27,51 +92,21 @@ public class EpicDifficulty
     [HarmonyPatch(typeof(UIGalaxySelect), nameof(UIGalaxySelect.OnResourceMultiplierValueChange))]
     private static bool UIGalaxySelect_OnResourceMultiplierValueChange_Prefix(UIGalaxySelect __instance, float val)
     {
-        float value = __instance.resourceMultiplierSlider.value;
-        if (value < 0.5f)
+        var value = __instance.resourceMultiplierSlider.value;
+        __instance.gameDesc.resourceMultiplier = value switch
         {
-            __instance.gameDesc.resourceMultiplier = 0.01f;
-        }
-        else if (value < 1.5f)
-        {
-            __instance.gameDesc.resourceMultiplier = 0.1f;
-        }
-        else if (value < 2.5f)
-        {
-            __instance.gameDesc.resourceMultiplier = 0.5f;
-        }
-        else if (value < 3.5f)
-        {
-            __instance.gameDesc.resourceMultiplier = 0.8f;
-        }
-        else if (value < 4.5f)
-        {
-            __instance.gameDesc.resourceMultiplier = 1f;
-        }
-        else if (value < 5.5f)
-        {
-            __instance.gameDesc.resourceMultiplier = 1.5f;
-        }
-        else if (value < 6.5f)
-        {
-            __instance.gameDesc.resourceMultiplier = 2f;
-        }
-        else if (value < 7.5f)
-        {
-            __instance.gameDesc.resourceMultiplier = 3f;
-        }
-        else if (value < 8.5f)
-        {
-            __instance.gameDesc.resourceMultiplier = 5f;
-        }
-        else if (value < 9.5f)
-        {
-            __instance.gameDesc.resourceMultiplier = 8f;
-        }
-        else
-        {
-            __instance.gameDesc.resourceMultiplier = 100f;
-        }
+            < 0.5f => ResourceMultiplier.Value,
+            < 1.5f => 0.1f,
+            < 2.5f => 0.5f,
+            < 3.5f => 0.8f,
+            < 4.5f => 1f,
+            < 5.5f => 1.5f,
+            < 6.5f => 2f,
+            < 7.5f => 3f,
+            < 8.5f => 5f,
+            < 9.5f => 8f,
+            _ => 100f
+        };
         __instance.UpdateParametersUIDisplay();
         return false;
     }
@@ -80,84 +115,37 @@ public class EpicDifficulty
     [HarmonyPatch(typeof(UIGalaxySelect), nameof(UIGalaxySelect.UpdateParametersUIDisplay))]
     private static bool UIGalaxySelect_UpdateParametersUIDisplay_Prefix(UIGalaxySelect __instance)
     {
-        float resourceMultiplier = __instance.gameDesc.resourceMultiplier;
-        string text = "";
-        if (resourceMultiplier < 0.04f)
+        var resourceMultiplier = __instance.gameDesc.resourceMultiplier;
+        var text = "";
+        __instance.resourceMultiplierSlider.value = resourceMultiplier switch
         {
-            __instance.resourceMultiplierSlider.value = 0f;
-        }
-        else if (resourceMultiplier < 0.11f)
+            < 0.09f => 0f,
+            < 0.11f => 1f,
+            < 0.51f => 2f,
+            < 0.81f => 3f,
+            < 1.01f => 4f,
+            < 1.51f => 5f,
+            < 2.01f => 6f,
+            < 3.01f => 7f,
+            < 5.01f => 8f,
+            < 8.01f => 9f,
+            _ => 10f
+        };
+        text = resourceMultiplier switch
         {
-            __instance.resourceMultiplierSlider.value = 1f;
-        }
-        else if (resourceMultiplier < 0.51f)
-        {
-            __instance.resourceMultiplierSlider.value = 2f;
-        }
-        else if (resourceMultiplier < 0.81f)
-        {
-            __instance.resourceMultiplierSlider.value = 3f;
-        }
-        else if (resourceMultiplier < 1.01f)
-        {
-            __instance.resourceMultiplierSlider.value = 4f;
-        }
-        else if (resourceMultiplier < 1.51f)
-        {
-            __instance.resourceMultiplierSlider.value = 5f;
-        }
-        else if (resourceMultiplier < 2.01f)
-        {
-            __instance.resourceMultiplierSlider.value = 6f;
-        }
-        else if (resourceMultiplier < 3.01f)
-        {
-            __instance.resourceMultiplierSlider.value = 7f;
-        }
-        else if (resourceMultiplier < 5.01f)
-        {
-            __instance.resourceMultiplierSlider.value = 8f;
-        }
-        else if (resourceMultiplier < 8.01f)
-        {
-            __instance.resourceMultiplierSlider.value = 9f;
-        }
-        else
-        {
-            __instance.resourceMultiplierSlider.value = 10f;
-        }
-        if (resourceMultiplier < 100f && resourceMultiplier > 0.1f)
-        {
-            text = resourceMultiplier.ToString() + "x";
-        }
-        else if (resourceMultiplier >= 100f)
-        {
-            text = "无限".Translate();
-        }
-        else if (resourceMultiplier < 0.04f)
-        {
-            text = "究极少".Translate();
-        }
-        else if (resourceMultiplier < 0.11f)
-        {
-            text = "极少".Translate();
-        }
+            < 100f and > 0.1f => resourceMultiplier + "x",
+            >= 100f => "无限".Translate(),
+            < 0.09f => "究极少".Translate(),
+            < 0.11f => "极少".Translate(),
+            _ => text
+        };
         __instance.resourceMultiplierText.text = text;
         __instance.propertyMultiplierText.text = "元数据生成倍率".Translate() + " " + __instance.gameDesc.propertyMultiplier.ToString("P0");
         __instance.addrText.text = __instance.gameDesc.clusterString;
         var showDifficultTip = resourceMultiplier < 0.11f && !__instance.gameDesc.isSandboxMode;
         __instance.difficultTipGroup.SetActive(showDifficultTip);
-        if (showDifficultTip)
-        {
-            if (resourceMultiplier < 0.04f)
-            {
-                __instance.difficultTipGroup.transform.Find("difficult-tip-text").GetComponent<Text>().text = "史诗难度".Translate();
-            }
-            else
-            {
-                __instance.difficultTipGroup.transform.Find("difficult-tip-text").GetComponent<Text>().text = "非常困难".Translate();
-            }
-        }
+        if (!showDifficultTip) return false;
+        __instance.difficultTipGroup.transform.Find("difficult-tip-text").GetComponent<Text>().text = (resourceMultiplier < 0.09f ? "史诗难度" : "非常困难").Translate();
 
         return false;
     }
@@ -167,7 +155,7 @@ public class EpicDifficulty
     private static IEnumerable<CodeInstruction> GameDesc_get_oilAmountMultiplier_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
     {
         var matcher = new CodeMatcher(instructions, generator);
-        if (Math.Abs(UniverseGenTweaks.OilMultiplier - 1f) > 0.00001f)
+        if (Math.Abs(OilMultiplier.Value - 1f) > 0.00001f)
         {
             var label1 = generator.DefineLabel();
             matcher.Start().InsertAndAdvance(
@@ -176,7 +164,7 @@ public class EpicDifficulty
                 new CodeInstruction(OpCodes.Ldc_R4, 0.05f),
                 new CodeInstruction(OpCodes.Ble_S, label1)
             ).End().Advance(1).Insert(
-                new CodeInstruction(OpCodes.Ldc_R4, 0.5f * UniverseGenTweaks.OilMultiplier).WithLabels(label1),
+                new CodeInstruction(OpCodes.Ldc_R4, 0.5f * OilMultiplier.Value).WithLabels(label1),
                 new CodeInstruction(OpCodes.Ret)
             );
         }
