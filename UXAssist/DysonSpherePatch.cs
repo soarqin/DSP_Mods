@@ -100,9 +100,9 @@ public static class DysonSpherePatch
             }
             else
             {
-                _initialized = false;
                 _patch?.UnpatchSelf();
                 _patch = null;
+                _initialized = false;
                 _nodeForAbsorb = null;
             }
         }
@@ -177,6 +177,14 @@ public static class DysonSpherePatch
         private static void GameMain_Begin_Postfix()
         {
             InitNodeForAbsorb();
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(GameMain), nameof(GameMain.End))]
+        private static void GameMain_End_Postfix()
+        {
+            _initialized = false;
+            _nodeForAbsorb = null;
         }
 
         [HarmonyPostfix]

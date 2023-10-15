@@ -312,6 +312,7 @@ public static class FactoryPatch
                 return;
             }
             _beltSignalPatch?.UnpatchSelf();
+            _beltSignalPatch = null;
             _initialized = false;
             _signalBelts = null;
             _signalBeltsCapacity = 0;

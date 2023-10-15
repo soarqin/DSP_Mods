@@ -91,13 +91,16 @@ public class CompressSave : BaseUnityPlugin
         {
             PatchUISaveGame.OnDestroy();
             _patchUISave.UnpatchSelf();
+            _patchUISave = null;
         }
         if (_patchUILoad != null)
         {
             PatchUILoadGame.OnDestroy();
             _patchUILoad.UnpatchSelf();
+            _patchUILoad = null;
         }
         _patchSave?.UnpatchSelf();
+        _patchSave = null;
     }
 }
 
