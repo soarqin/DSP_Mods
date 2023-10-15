@@ -3,6 +3,7 @@ using BepInEx.Configuration;
 
 namespace UniverseGenTweaks;
 
+[BepInDependency("org.soardev.uxassist")]
 [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
 public class UniverseGenTweaks : BaseUnityPlugin
 {

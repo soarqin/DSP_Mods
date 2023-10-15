@@ -4,6 +4,7 @@
   "website_url": "https://github.com/soarqin/DSP_Mods/tree/master/UniverseGenTweaks",
   "description": "Universe Generation Tweaks / 宇宙生成参数调节",
   "dependencies": [
-    "xiaoye97-BepInEx-5.4.17"
+    "xiaoye97-BepInEx-5.4.17",
+    "soarqin-UXAssist-1.0.0"
   ]
 }
