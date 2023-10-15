@@ -118,8 +118,13 @@ public class MyWindow: ManualBehaviour
         var btn = Instantiate(panel.layerButtons[0]);
         btn.gameObject.name = objName;
         btn.highlighted = false;
+        var img = btn.gameObject.transform.Find("frame")?.GetComponent<Image>();
+        if (img != null)
+        {
+            img.color = new Color(img.color.r, img.color.g, img.color.b, 0f);
+        }
         Util.NormalizeRectWithTopLeft(btn, x, y, parent);
-        var t = btn.gameObject.transform.Find("Text").GetComponent<Text>();
+        var t = btn.gameObject.transform.Find("Text")?.GetComponent<Text>();
         if (t != null)
         {
             t.text = text.Translate();
