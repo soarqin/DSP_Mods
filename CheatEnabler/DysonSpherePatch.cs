@@ -15,31 +15,70 @@ public static class DysonSpherePatch
     public static ConfigEntry<bool> OverclockEjectorEnabled;
     public static ConfigEntry<bool> OverclockSiloEnabled;
     private static bool _instantAbsorb;
+
+    private static Harmony _dysonSpherePatch;
    
     public static void Init()
     {
         SkipBulletEnabled.SettingChanged += (_, _) => SkipBulletPatch.Enable(SkipBulletEnabled.Value);
-        SkipAbsorbEnabled.SettingChanged += (_, _) => SkipAbsorbPatch.Enable(SkipBulletEnabled.Value);
+        SkipAbsorbEnabled.SettingChanged += (_, _) => SkipAbsorbPatch.Enable(SkipAbsorbEnabled.Value);
         QuickAbsorbEnabled.SettingChanged += (_, _) => QuickAbsorbPatch.Enable(QuickAbsorbEnabled.Value);
         EjectAnywayEnabled.SettingChanged += (_, _) => EjectAnywayPatch.Enable(EjectAnywayEnabled.Value);
         OverclockEjectorEnabled.SettingChanged += (_, _) => OverclockEjector.Enable(OverclockEjectorEnabled.Value);
         OverclockSiloEnabled.SettingChanged += (_, _) => OverclockSilo.Enable(OverclockSiloEnabled.Value);
         SkipBulletPatch.Enable(SkipBulletEnabled.Value);
-        SkipAbsorbPatch.Enable(SkipBulletEnabled.Value);
+        SkipAbsorbPatch.Enable(SkipAbsorbEnabled.Value);
         QuickAbsorbPatch.Enable(QuickAbsorbEnabled.Value);
         EjectAnywayPatch.Enable(EjectAnywayEnabled.Value);
         OverclockEjector.Enable(OverclockEjectorEnabled.Value);
         OverclockSilo.Enable(OverclockSiloEnabled.Value);
+        _dysonSpherePatch ??= Harmony.CreateAndPatchAll(typeof(DysonSpherePatch));
     }
     
     public static void Uninit()
     {
+        _dysonSpherePatch?.UnpatchSelf();
+        _dysonSpherePatch = null;
         SkipBulletPatch.Enable(false);
         SkipAbsorbPatch.Enable(false);
         QuickAbsorbPatch.Enable(false);
         EjectAnywayPatch.Enable(false);
         OverclockEjector.Enable(false);
         OverclockSilo.Enable(false);
+    }
+        
+    [HarmonyTranspiler]
+    [HarmonyPatch(typeof(DysonNode), nameof(DysonNode.OrderConstructCp))]
+    private static IEnumerable<CodeInstruction> DysonNode_OrderConstructCp_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+    {
+        var matcher = new CodeMatcher(instructions, generator);
+        matcher.MatchForward(false,
+            new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(DysonSwarm), nameof(DysonSwarm.AbsorbSail)))
+        ).Advance(1).SetInstructionAndAdvance(
+            new CodeInstruction(OpCodes.Pop)
+        ).Insert(
+            new CodeInstruction(OpCodes.Ret)
+        );
+        return matcher.InstructionEnumeration();
+    }
+
+    [HarmonyTranspiler]
+    [HarmonyPatch(typeof(DysonSwarm), nameof(DysonSwarm.AbsorbSail))]
+    private static IEnumerable<CodeInstruction> DysonSwarm_AbsorbSail_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+    {
+        var matcher = new CodeMatcher(instructions, generator);
+        matcher.MatchForward(false,
+            new CodeMatch(OpCodes.Stfld, AccessTools.Field(typeof(ExpiryOrder), nameof(ExpiryOrder.time)))
+        ).Advance(1).Insert(
+            // node.cpOrdered = node.cpOrdered + 1;
+            new CodeInstruction(OpCodes.Ldarg_1),
+            new CodeInstruction(OpCodes.Ldarg_1),
+            new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(DysonNode), nameof(DysonNode.cpOrdered))),
+            new CodeInstruction(OpCodes.Ldc_I4_1),
+            new CodeInstruction(OpCodes.Add),
+            new CodeInstruction(OpCodes.Stfld, AccessTools.Field(typeof(DysonNode), nameof(DysonNode.cpOrdered)))
+        );
+        return matcher.InstructionEnumeration();
     }
 
     private static class SkipBulletPatch
@@ -201,16 +240,16 @@ public static class DysonSpherePatch
                 var llen = sphere.layerCount;
                 if (llen > 0)
                 {
-                    var lidx = time / 16 % llen;
+                    var lidx = ((int)time >> 4) % llen;
                     for (var i = llen - 1; i >= 0; i--)
                     {
                         var layer = layers[(lidx + i) % llen];
                         var nodes = layer.nodePool;
-                        var nlen = layer.nodeCursor;
-                        var nidx = time % nlen;
-                        for (var j = nlen - 1; j >= 0; j--)
+                        var nlen = layer.nodeCursor - 1;
+                        var nidx = (int)time % nlen;
+                        for (var j = nlen; j > 0; j--)
                         {
-                            var nodeIdx = (nidx + j) % nlen;
+                            var nodeIdx = (nidx + j) % nlen + 1;
                             var node = nodes[nodeIdx];
                             if (node == null || node.id != nodeIdx || node.sp < node.spMax) continue;
                             while (node.cpReqOrder > 0)
@@ -251,46 +290,21 @@ public static class DysonSpherePatch
             if (on)
             {
                 _patch ??= Harmony.CreateAndPatchAll(typeof(SkipAbsorbPatch));
+                return;
             }
-            else
-            {
-                _patch?.UnpatchSelf();
-                _patch = null;
-            }
-        }
-        
-        [HarmonyTranspiler]
-        [HarmonyPatch(typeof(DysonNode), nameof(DysonNode.OrderConstructCp))]
-        private static IEnumerable<CodeInstruction> DysonNode_OrderConstructCp_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
-        {
-            var matcher = new CodeMatcher(instructions, generator);
-            matcher.MatchForward(false,
-                new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(DysonSwarm), nameof(DysonSwarm.AbsorbSail)))
-            ).Advance(1).SetInstructionAndAdvance(
-                new CodeInstruction(OpCodes.Pop)
-            ).Insert(
-                new CodeInstruction(OpCodes.Ret)
-            );
-            return matcher.InstructionEnumeration();
+            _patch?.UnpatchSelf();
+            _patch = null;
         }
 
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(DysonSwarm), nameof(DysonSwarm.AbsorbSail))]
-        private static IEnumerable<CodeInstruction> DysonSwarm_AbsorbSail_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        private static IEnumerable<CodeInstruction> DysonSwarm_AbsorbSail_Transpiler2(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
         {
             var matcher = new CodeMatcher(instructions, generator);
             var label1 = generator.DefineLabel();
             matcher.MatchForward(false,
                 new CodeMatch(OpCodes.Stfld, AccessTools.Field(typeof(ExpiryOrder), nameof(ExpiryOrder.index)))
             ).Advance(1).RemoveInstructions(matcher.Length - matcher.Pos).Insert(
-                // node.cpOrdered = node.cpOrdered + 1;
-                new CodeInstruction(OpCodes.Ldarg_1),
-                new CodeInstruction(OpCodes.Ldarg_1),
-                new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(DysonNode), nameof(DysonNode.cpOrdered))),
-                new CodeInstruction(OpCodes.Ldc_I4_1),
-                new CodeInstruction(OpCodes.Add),
-                new CodeInstruction(OpCodes.Stfld, AccessTools.Field(typeof(DysonNode), nameof(DysonNode.cpOrdered))),
-                
                 // if (node.ConstructCp() != null)
                 // {
                 //     this.dysonSphere.productRegister[11903]++;
@@ -360,25 +374,19 @@ public static class DysonSpherePatch
         
         private static void DoAbsorb(DysonSphereLayer layer, long gameTick)
         {
+            var nodeCount = layer.nodeCursor - 1;
+            if (nodeCount <= 0) return;
+            var nodes = layer.nodePool;
             var swarm = layer.dysonSphere.swarm;
-            for (var i = layer.nodeCursor - 1; i > 0; i--)
+            var delta = ((int)gameTick >> 6) % nodeCount;
+            for (var i = nodeCount - ((int)gameTick & 0x3F); i > 0; i -= 0x40)
             {
-                var node = layer.nodePool[i];
-                if (node == null || node.id != i || node.sp < node.spMax) continue;
-                var req = node._cpReq;
-                var ordered = node.cpOrdered;
-                if (req <= ordered) continue;
-                if (!swarm.AbsorbSail(node, gameTick)) return; // No more sails can be absorbed
-                ordered++;
-                while (req > ordered)
+                var idx = (delta + i) % nodeCount + 1;
+                var node = nodes[idx];
+                if (node == null || node.id != idx || node.sp < node.spMax) continue;
+                for (var j = node.cpReqOrder; j > 0; j--)
                 {
-                    if (!swarm.AbsorbSail(node, gameTick))
-                    {
-                        // No more sails can be absorbed
-                        node.cpOrdered = ordered;
-                        return;
-                    }
-                    ordered++;
+                    if (!swarm.AbsorbSail(node, gameTick)) return; // No more sails can be absorbed
                 }
             }
         }
