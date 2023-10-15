@@ -361,17 +361,6 @@ public static class DysonSpherePatch
         private static void DoAbsorb(DysonSphereLayer layer, long gameTick)
         {
             var swarm = layer.dysonSphere.swarm;
-            if (SkipAbsorbEnabled.Value)
-            {
-                for (var i = layer.nodeCursor - 1; i > 0; i--)
-                {
-                    var node = layer.nodePool[i];
-                    if (node == null || node.id != i || node.sp < node.spMax) continue;
-                    if (node._cpReq <= node.cpOrdered) continue;
-                    while (swarm.AbsorbSail(node, gameTick)) {}
-                }
-                return;
-            }
             for (var i = layer.nodeCursor - 1; i > 0; i--)
             {
                 var node = layer.nodePool[i];
@@ -379,14 +368,18 @@ public static class DysonSpherePatch
                 var req = node._cpReq;
                 var ordered = node.cpOrdered;
                 if (req <= ordered) continue;
-                if (!swarm.AbsorbSail(node, gameTick)) continue;
+                if (!swarm.AbsorbSail(node, gameTick)) return; // No more sails can be absorbed
                 ordered++;
                 while (req > ordered)
                 {
-                    if (!swarm.AbsorbSail(node, gameTick)) break;
+                    if (!swarm.AbsorbSail(node, gameTick))
+                    {
+                        // No more sails can be absorbed
+                        node.cpOrdered = ordered;
+                        return;
+                    }
                     ordered++;
-                } 
-                node.cpOrdered = ordered;
+                }
             }
         }
     }
