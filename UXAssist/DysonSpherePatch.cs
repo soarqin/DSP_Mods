@@ -80,7 +80,6 @@ public static class DysonSpherePatch
             new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(DysonNode), nameof(DysonNode.RecalcCpReq)))
         );
         var labels = matcher.Labels;
-        matcher.Labels = new List<Label>();
         matcher.RemoveInstructions(2).Labels.AddRange(labels);
         return matcher.InstructionEnumeration();
     }
