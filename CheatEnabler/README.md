@@ -6,7 +6,10 @@
 ## Changlog
 * 2.3.2
   + Birth star options moved to [UniverseGenTweaks](https://dsp.thunderstore.io/package/soarqin/UniverseGenTweaks/)
+  + Optimize `Quick absorb`, consumes less CPU time and take turns firing to nodes. 
   + `Fast Mining` ensures full output of oil extractors now.
+  + Fix issue that `Belt signal generator` not working after switched off then on again.
+  + Fix absorption issue by `Quick absorb` and `Skip bullet period` enabled at the same time.
   + Crash fix for some options
 * 2.3.1
   + Add UXAssist to dependencies in manifest.
@@ -99,7 +102,10 @@
 ## 更新日志
 * 2.3.2
   + 母星系的选项移动到了[UniverseGenTweaks](https://dsp.thunderstore.io/package/soarqin/UniverseGenTweaks/)
+  + 优化了`快速吸收`，现在消耗更少的CPU，并且会轮流打向各节点
   + `高速采集`现在可以保证油井的最大产出
+  + 修复了`传送带信号物品生成`在选项关闭后再次启用时不生效的问题
+  + 修复了`快速吸收`和`跳过子弹阶段`同时启用时可能导致吸收计算错误的问题
   + 修复了一些选项可能导致崩溃的问题
 * 2.3.1
   + 在manifest中添加UXAssist到依赖

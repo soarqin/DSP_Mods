@@ -16,22 +16,23 @@
   + Initial release
 
 ## Features
-1. More options on universe generation
-   * Can set maximum star count(128 by default, up to 1024) in config file.
-     + Note: there is performance issue on galaxy view with large amount of stars.
-2. Epic difficulty
-   * 0.01x resources and 0.25x oils (very hard difficulty has 0.5x oils).
-   * Same oil mining speed as very hard difficuly
-3. Birth star
-   * Rare resources on birth planet
-   * Solid flat on birth planet
-   * High luminosity for birth star
+* Depends on [UXAssist](https://dsp.thunderstore.io/package/soarqin/UXAssist/), all tabs around with '+' are options for this mod.
+* More options on universe generation
+  * Can set maximum star count(128 by default, up to 1024) in config file.
+    + Note: there is performance issue on galaxy view with large amount of stars.
+* Epic difficulty
+  * 0.01x resources and 0.25x oils (very hard difficulty has 0.5x oils).
+  * Same oil mining speed as very hard difficuly
+* Birth star
+  * Rare resources on birth planet
+  * Solid flat on birth planet
+  * High luminosity for birth star
 
 ## 更新日志
 * 1.2.0
   + 现在依赖于[UXAssist](https://dsp.thunderstore.io/package/soarqin/UXAssist/)
   + 增加`母星系`选项
-  + 在UXAssist的配置面板中增加了一个选项卡
+  + 在UXAssist的配置面板中增加了一个页签
 * 1.1.0
   + 增加史诗难度
   + `更多选项`和`史诗难度`现在可以单独启用
@@ -40,13 +41,14 @@
   + 初始版本
 
 ## 功能
-1. 生成宇宙时提供更多选项
-   * 可以在配置文件中设置最大恒星数(默认128, 最多1024)
-     + 注意: 大量恒星会导致宇宙视图出现性能问题
-2. 史诗难度
-   * 资源0.01倍，油井储量0.25倍(极难是0.5倍)
-   * 采油速度和极难相同
-3. 母星系
-   * 母星有稀有资源
-   * 母星是纯平的
-   * 母星系恒星高亮
+* 依赖于[UXAssist](https://dsp.thunderstore.io/package/soarqin/UXAssist/)，所有带有'+'的页签都是本mod的选项
+* 生成宇宙时提供更多选项
+  * 可以在配置文件中设置最大恒星数(默认128, 最多1024)
+    + 注意: 大量恒星会导致宇宙视图出现性能问题
+* 史诗难度
+  * 资源0.01倍，油井储量0.25倍(极难是0.5倍)
+  * 采油速度和极难相同
+* 母星系
+  * 母星有稀有资源
+  * 母星是纯平的
+  * 母星系恒星高亮

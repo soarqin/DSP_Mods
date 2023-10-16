@@ -6,7 +6,8 @@
 ## Changlog
 * 1.0.1
   + Fix config button text and tips while returning to title menu.
-  + Add a patch to fix the bug that warning popup on `Veins Utilization` upgraded to level 8000+
+  + Fix that error occurs while returning to title menu, with `Stop ejectors when available nodes are all filled up` enabled.
+  + Add a patch to fix the bug that warning popup on `Veins Utilization` upgraded to level 8000+.
 * 1.0.0
   + Initial release
   + Functions moved from [MechaDronesTweaks](https://dsp.thunderstore.io/package/soarqin/MechaDronesTweaks/) and [CheatEnabler](https://dsp.thunderstore.io/package/soarqin/CheatEnabler/)
@@ -47,6 +48,7 @@
 ## 更新日志
 * 1.0.1
   + 修复了返回标题界面后设置按钮文本和提示信息不正确的问题
+  + 修复了`当可用节点全部造完时停止弹射`选项启用时返回标题界面可能导致崩溃的问题
   + 添加了一个补丁，修复了`矿物利用`升级到8000级以上时弹出警告的bug
 * 1.0.0
   + 初始版本

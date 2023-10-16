@@ -13,6 +13,7 @@ public static class UIConfigWindow
         I18N.Add("GalaxyGen", "+UniverseGen+", "+宇宙生成+");
         I18N.Add("Enable more settings on UniverseGen", "Enable more settings on UniverseGen", "启用更多宇宙生成设置");
         I18N.Add("* Requires game restart to take effect", "* Requires game restart to take effect", "* 需要重启游戏才能生效");
+        I18N.Add("Maximum star count", "Maximum star count", "最大恒星数");
         I18N.Add("Enable Epic difficulty", "Enable Epic difficulty", "启用史诗难度");
         I18N.Add("Resource multiplier", "Resource multiplier", "资源倍率");
         I18N.Add("Oil multiplier (relative to Very Hard)", "Oil multiplier (relative to Very Hard)", "石油倍率（相对于非常困难）");
@@ -43,6 +44,17 @@ public static class UIConfigWindow
         MyWindow.AddText(x, y, tab, "* Requires game restart to take effect", 13);
         x -= 20f;
         y += 36f;
+        x += 10f;
+        MyWindow.AddText(x, y, tab, "Maximum star count", 16);
+        x += 20f;
+        y += 26f;
+        var sl0 = MySlider.CreateSlider(x, y, tab, (float)MoreSettings.MaxStarCount.Value, 64f, 1024f, "G", 240f);
+        sl0.OnValueChanged += () =>
+        {
+            sl0.Value = MoreSettings.MaxStarCount.Value = (Mathf.RoundToInt(sl0.Value) + 7) & ~7;
+        };
+        x -= 30f;
+        y += 36f;
         MyCheckBox.CreateCheckBox(x, y, tab, EpicDifficulty.Enabled, "Enable Epic difficulty");
         y += 36f;
         x += 10f;
@@ -50,13 +62,13 @@ public static class UIConfigWindow
         x += 20f;
         y += 26f;
         var index = EpicDifficulty.ResourceMultiplierToIndex(EpicDifficulty.ResourceMultiplier.Value);
-        var sl = MySlider.CreateSlider(x, y, tab, index, 0f, (float)EpicDifficulty.ResourceMultipliersCount() - 1, "G", 240f);
-        sl.SetLabelText(EpicDifficulty.IndexToResourceMultiplier(Mathf.RoundToInt(sl.Value)).ToString(sl.labelFormat));
-        sl.OnValueChanged += () =>
+        var sl1 = MySlider.CreateSlider(x, y, tab, index, 0f, (float)EpicDifficulty.ResourceMultipliersCount() - 1, "G", 240f);
+        sl1.SetLabelText(EpicDifficulty.IndexToResourceMultiplier(Mathf.RoundToInt(sl1.Value)).ToString(sl1.labelFormat));
+        sl1.OnValueChanged += () =>
         {
-            var val = EpicDifficulty.IndexToResourceMultiplier(Mathf.RoundToInt(sl.Value));
+            var val = EpicDifficulty.IndexToResourceMultiplier(Mathf.RoundToInt(sl1.Value));
             EpicDifficulty.ResourceMultiplier.Value = val;
-            sl.SetLabelText(val.ToString(sl.labelFormat));
+            sl1.SetLabelText(val.ToString(sl1.labelFormat));
         };
         x -= 30f;
         y += 31f;
