@@ -342,10 +342,11 @@ public static class FactoryPatch
                     ref var signal = ref entitySignPool[belt.entityId];
                     if (signal.iconId0 < 1000) continue;
                     var signalBelt = pair.Value;
+                    var inc = signalBelt.Inc / signalBelt.Stack;
                     if (altFormat)
-                        signal.count0 = signalBelt.SpeedLimit + signalBelt.Stack * 10000 + signalBelt.Inc / signalBelt.Stack * 100000;
+                        signal.count0 = signalBelt.SpeedLimit + signalBelt.Stack * 10000 + inc * 100000;
                     else
-                        signal.count0 = signalBelt.SpeedLimit * 100 + signalBelt.Stack + signalBelt.Inc / signalBelt.Stack * 10;
+                        signal.count0 = signalBelt.SpeedLimit * 100 + signalBelt.Stack + inc * 10;
                 }
             }
         }
@@ -526,7 +527,7 @@ public static class FactoryPatch
             GetSignalBelts(factory)?.Remove(beltId);
         }
 
-        public static void RemovePlanetSignalBelts(int factory)
+        private static void RemovePlanetSignalBelts(int factory)
         {
             GetSignalBelts(factory)?.Clear();
         }

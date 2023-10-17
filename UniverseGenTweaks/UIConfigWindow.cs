@@ -48,7 +48,7 @@ public static class UIConfigWindow
         MyWindow.AddText(x, y, tab, "Maximum star count", 16);
         x += 20f;
         y += 26f;
-        var sl0 = MySlider.CreateSlider(x, y, tab, (float)MoreSettings.MaxStarCount.Value, 64f, 1024f, "G", 240f);
+        var sl0 = MySlider.CreateSlider(x, y, tab, MoreSettings.MaxStarCount.Value, 64f, 1024f, "G", 240f);
         sl0.OnValueChanged += () =>
         {
             sl0.Value = MoreSettings.MaxStarCount.Value = (Mathf.RoundToInt(sl0.Value) + 7) & ~7;

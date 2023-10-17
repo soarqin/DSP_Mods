@@ -96,8 +96,7 @@ public static class PlanetPatch
             );
             matcher.Repeat(codeMatcher =>
             {
-                matcher.Advance(1);
-                matcher.InsertAndAdvance(
+                codeMatcher.Advance(1).InsertAndAdvance(
                     new CodeInstruction(OpCodes.Ldloc, local1),
                     new CodeInstruction(OpCodes.Or)
                 );

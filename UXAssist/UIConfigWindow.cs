@@ -8,7 +8,7 @@ public static class UIConfigWindow
 {
     private static RectTransform _windowTrans;
     private static RectTransform _tab;
-    private static readonly UIButton[] _dysonLayerBtn = new UIButton[10];
+    private static readonly UIButton[] DysonLayerBtn = new UIButton[10];
 
     public static void Init()
     {
@@ -30,6 +30,7 @@ public static class UIConfigWindow
         I18N.Add("Click to dismantle selected layer", "Click to dismantle selected layer", "点击拆除对应的戴森壳");
         I18N.Apply();
         MyConfigWindow.OnUICreated += CreateUI;
+        MyConfigWindow.OnUpdateUI += UpdateUI;
     }
 
     private static void CreateUI(MyConfigWindow wnd, RectTransform trans)
@@ -77,7 +78,7 @@ public static class UIConfigWindow
             var id = i + 1;
             var btn = wnd.AddFlatButton(x, y, tab1, id.ToString(), 12, "dismantle-layer-" + id, () => { DysonSpherePatch.InitCurrentDysonSphere(id); });
             ((RectTransform)btn.transform).sizeDelta = new Vector2(40f, 20f);
-            _dysonLayerBtn[i] = btn;
+            DysonLayerBtn[i] = btn;
             if (i == 4)
             {
                 x -= 160f;
@@ -113,7 +114,7 @@ public static class UIConfigWindow
                 for (var i = 1; i <= 10; i++)
                 {
                     var layer = ds.layersIdBased[i];
-                    _dysonLayerBtn[i - 1].button.interactable = layer != null && layer.id == i;
+                    DysonLayerBtn[i - 1].button.interactable = layer != null && layer.id == i;
                 }
 
                 return;
@@ -122,7 +123,7 @@ public static class UIConfigWindow
 
         for (var i = 0; i < 10; i++)
         {
-            _dysonLayerBtn[i].button.interactable = false;
+            DysonLayerBtn[i].button.interactable = false;
         }
     }
 }
