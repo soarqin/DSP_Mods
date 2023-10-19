@@ -6,8 +6,7 @@
 ## Changelog
 * 1.3.0
   * Reworked dustbin support for Tanks, to improve performance and resolve known bugs.
-  * Support for [Nebula Mupltiplayer Mod](https://dsp.thunderstore.io/package/nebula/NebulaMultiplayerMod/).
-  * Adopted bug fixes from [ModFixerOne](https://dsp.thunderstore.io/package/starfi5h/ModFixerOne/) by [starfi5h](https://github.com/starfi5h/).
+  * [Nebula Mupltiplayer Mod](https://dsp.thunderstore.io/package/nebula/NebulaMultiplayerMod/) and bug fixes from [ModFixerOne](https://dsp.thunderstore.io/package/starfi5h/ModFixerOne/) by [starfi5h](https://github.com/starfi5h/).
 
 * 1.2.1
   * Fix dynamic array bug in codes, which causes various bugs and errors.
@@ -22,21 +21,32 @@
   * Rewrite whole plugin, make a checkbox on UI so that you can turn storages into dustbin by just ticking it.
   * Can turn tank into dustbin now.
 
-* 1.0.1
-  * Remove a debug log
-
 ## Usage
 
 * A checkbox is added to Storages and Tanks UI, which turns them into dustbins.
 * Items sent into dustbins are removed immediately.
-* Can get sands from destroyed items (with factors configurable):
-  * Get 10/100 sands from each silicon/fractal silicon ore
-  * Get 1 sand from any other normal item but fluid
+* Can get sands from destroyed items, configurable through a json encoded config entry.
+
+## 更新日志
+* 1.3.0
+  * 重写了储液罐的垃圾桶实现，以提高性能并解决已知的bug
+  * [Nebula Mupltiplayer Mod](https://dsp.thunderstore.io/package/nebula/NebulaMultiplayerMod/)支持和Bug修正来自[starfi5h](https://github.com/starfi5h/)的[ModFixerOne](https://dsp.thunderstore.io/package/starfi5h/ModFixerOne/)
+
+* 1.2.1
+  * 修正了代码中的动态数组Bug，该Bug可能导致各种问题
+
+* 1.2.0
+  * 现在使用[DSPModSave](https://dsp.thunderstore.io/package/CommonAPI/DSPModSave/)来保存垃圾桶的数据，修正了[#1](https://github.com/soarqin/DSP_Mods/issues/1)
+  * 修正了多星球上的储物仓问题
+  * 修正了多层储液罐的问题
+  * 在README中添加了一个已知储液罐Bug的说明
+
+* 1.1.0
+  * 重写了整个插件，现在可以在仓储类建筑的UI上勾选来将其转变为垃圾桶
+  * 现在可以将储液罐转变为垃圾桶
 
 ## 使用说明
 
 * 在储物仓和储液罐上增加一个垃圾桶的勾选框。
 * 送进垃圾桶的物品会立即被移除。
-* 可以从移除的物品中获得沙子(可配置，下为默认值):
-  * 从硅石和分形硅石中获得10/100个沙子。
-  * 从普通物品中获得1个沙子，但液体不会给沙子。
+* 可以从移除的物品中获得沙子，可以通过json编码的设置项进行配置。

@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using BepInEx;
 using crecheng.DSPModSave;
@@ -22,8 +22,7 @@ public class Dustbin : BaseUnityPlugin, IModCanSave, IMultiplayerMod
         BepInEx.Logging.Logger.CreateLogSource(PluginInfo.PLUGIN_NAME);
 
     private bool _cfgEnabled = true;
-    public static readonly int[] SandsFactors = { 0, 1, 5, 10, 100 };
-    public static bool[] IsFluid;
+    public static readonly int[] SandsFactors = new int[12001];
 
     public bool CheckVersion(string hostVersion, string clientVersion)
     {
@@ -33,11 +32,15 @@ public class Dustbin : BaseUnityPlugin, IModCanSave, IMultiplayerMod
     private void Awake()
     {
         _cfgEnabled = Config.Bind("General", "Enabled", _cfgEnabled, "enable/disable this plugin").Value;
-        SandsFactors[1] = Config.Bind("General", "SandsPerItem", SandsFactors[1], "Sands gathered from normal items").Value;
-        SandsFactors[0] = Config.Bind("General", "SandsPerFluid", SandsFactors[0], "Sands gathered from fluids").Value;
-        SandsFactors[2] = Config.Bind("General", "SandsPerStone", SandsFactors[2], "Sands gathered from stones").Value;
-        SandsFactors[3] = Config.Bind("General", "SandsPerSilicon", SandsFactors[3], "Sands gathered from silicon ores").Value;
-        SandsFactors[4] = Config.Bind("General", "SandsPerFractal", SandsFactors[4], "Sands gathered from fractal silicon ores").Value;
+        var sandsFactorsStr = Config.Bind("General", "SandsFactors", "", "Sands get from different items\nFormat: id1:value1|id2:value2|...").Value;
+        foreach (var s in sandsFactorsStr.Split('|'))
+        {
+            var sp = s.Split(':');
+            if (sp.Length < 2) continue;
+            if (!int.TryParse(sp[0], out var id) || id > 12000) continue;
+            if (!int.TryParse(sp[1], out var factor)) continue;
+            SandsFactors[id] = factor;
+        }
         Harmony.CreateAndPatchAll(typeof(Dustbin));
         Harmony.CreateAndPatchAll(typeof(StoragePatch));
         Harmony.CreateAndPatchAll(typeof(TankPatch));
@@ -52,16 +55,6 @@ public class Dustbin : BaseUnityPlugin, IModCanSave, IMultiplayerMod
     {
         StoragePatch.Reset();
         TankPatch.Reset();
-    }
-
-    [HarmonyPostfix]
-    [HarmonyPatch(typeof(VFPreload), "InvokeOnLoadWorkEnded")]
-    private static void VFPreload_InvokeOnLoadWorkEnded_Postfix()
-    {
-        var maxId = ItemProto.fluids.Max();
-        IsFluid = new bool[maxId + 1];
-        foreach (var id in ItemProto.fluids)
-            IsFluid[id] = true;
     }
 
     public void Export(BinaryWriter w)

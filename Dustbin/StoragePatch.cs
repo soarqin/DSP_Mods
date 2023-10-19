@@ -131,17 +131,7 @@ public static class StoragePatch
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int DustbinAddItem(int itemId, int count)
     {
-        var fluidArr = Dustbin.IsFluid;
-        var sandIndex = itemId < fluidArr.Length && fluidArr[itemId]
-            ? 0
-            : itemId switch
-            {
-                1005 => 2,
-                1003 => 3,
-                1013 => 4,
-                _ => 1,
-            };
-        var sandsPerItem = Dustbin.SandsFactors[sandIndex];
+        var sandsPerItem = itemId <= 12000 ? 0 : Dustbin.SandsFactors[itemId];
         if (sandsPerItem <= 0) return count;
         var player = GameMain.mainPlayer;
         var addCount = count * sandsPerItem;
