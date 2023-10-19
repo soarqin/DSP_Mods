@@ -9,7 +9,6 @@ namespace Dustbin;
 [HarmonyPatch]
 public static class TankPatch
 {
-    public static readonly FieldInfo IsDustbinField = AccessTools.Field(typeof(TankComponent), "IsDustbin");
     private static UI.MyCheckBox _tankDustbinCheckBox;
     private static int _lastTankId;
 
@@ -37,7 +36,7 @@ public static class TankPatch
             for (var j = 1; j < cursor; j++)
             {
                 if (tankPool[j].id != j) continue;
-                if (!(bool)IsDustbinField.GetValue(tankPool[j])) continue;
+                if (!tankPool[j].IsDustbin) continue;
                 tempWriter.Write(j);
                 count++;
             }
@@ -81,7 +80,7 @@ public static class TankPatch
                 var id = r.ReadInt32();
                 if (id > 0 && id < tankPool.Length && tankPool[id].id == id)
                 {
-                    IsDustbinField.SetValueDirect(__makeref(tankPool[id]), true);
+                    tankPool[id].IsDustbin = true;
                 }
             }
         }
@@ -100,7 +99,7 @@ public static class TankPatch
             var tankPool = window.storage.tankPool;
             if (tankPool[tankId].id != tankId) return;
             var enabled = _tankDustbinCheckBox.Checked;
-            IsDustbinField.SetValueDirect(__makeref(tankPool[tankId]), enabled);
+            tankPool[tankId].IsDustbin = enabled;
             if (!NebulaModAPI.IsMultiplayerActive) return;
             var planetId = window.factory.planetId;
             NebulaModAPI.MultiplayerSession.Network.SendPacketToLocalStar(new NebulaSupport.Packet.ToggleEvent(planetId, -tankId, enabled));
@@ -117,8 +116,9 @@ public static class TankPatch
 
         if (tankId <= 0) return;
         var tankPool = __instance.storage.tankPool;
-        if (tankPool[tankId].id != tankId) return;
-        _tankDustbinCheckBox.Checked = (bool)IsDustbinField.GetValue(tankPool[tankId]);
+        ref var tank = ref tankPool[tankId];
+        if (tank.id != tankId) return;
+        _tankDustbinCheckBox.Checked = tank.IsDustbin;
     }
 
     [HarmonyPrefix]
@@ -181,14 +181,14 @@ public static class TankPatch
                 switch (thisTank.fluidId)
                 {
                     case > 0 when thisTank.fluidCount < thisTank.fluidCapacity && cargoTraffic.TryPickItemAtRear(belt, thisTank.fluidId, null, out stack, out inc) > 0 &&
-                                  !(bool)IsDustbinField.GetValue(thisTank):
+                                  !thisTank.IsDustbin:
                         thisTank.fluidCount += stack;
                         thisTank.fluidInc += inc;
                         return;
                     case 0:
                     {
                         var count = cargoTraffic.TryPickItemAtRear(belt, 0, ItemProto.fluids, out stack, out inc);
-                        if (count <= 0 || (bool)IsDustbinField.GetValue(thisTank)) return;
+                        if (count <= 0 || thisTank.IsDustbin) return;
                         thisTank.fluidId = count;
                         thisTank.fluidCount += stack;
                         thisTank.fluidInc += inc;
@@ -242,7 +242,7 @@ public static class TankPatch
                     }
                 }
 
-                if (cargoTraffic.TryPickItemAtRear(belt, thisTank.fluidId, null, out stack, out inc) <= 0 || (bool)IsDustbinField.GetValue(targetTank)) return;
+                if (cargoTraffic.TryPickItemAtRear(belt, thisTank.fluidId, null, out stack, out inc) <= 0 || targetTank.IsDustbin) return;
                 if (targetTank.fluidCount == 0)
                 {
                     targetTank.fluidId = thisTank.fluidId;

@@ -6,7 +6,7 @@ namespace Dustbin.NebulaSupport
     {
         public class SyncPlanetData
         {
-            public byte[] Data { get; set; }
+            public byte[] Data { get; }
 
             public SyncPlanetData()
             {
@@ -20,9 +20,9 @@ namespace Dustbin.NebulaSupport
 
         public class ToggleEvent
         {
-            public int PlanetId { get; set; }
-            public int StorageId { get; set; }
-            public bool Enable { get; set; }
+            public int PlanetId { get;  }
+            public int StorageId { get;  }
+            public bool Enable { get;  }
 
             public ToggleEvent()
             {
@@ -61,13 +61,13 @@ namespace Dustbin.NebulaSupport
                     case < 0:
                     {
                         var tankPool = factory.factoryStorage.tankPool;
-                        TankPatch.IsDustbinField.SetValue(tankPool[-storageId], packet.Enable);
+                        tankPool[-storageId].IsDustbin = packet.Enable;
                         return;
                     }
                     default:
                     {
                         var storagePool = factory.factoryStorage.storagePool;
-                        StoragePatch.IsDustbinField.SetValue(storagePool[storageId], packet.Enable);
+                        storagePool[storageId].IsDustbin = packet.Enable;
                         return;
                     }
                 }

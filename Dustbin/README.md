@@ -3,8 +3,7 @@
 #### Can turn Storages and Tanks into Dustbin(Destroy incoming items)
 #### 储物仓和储液罐可以转变为垃圾桶(销毁送进的物品)
 
-## Updates
-
+## Changelog
 * 1.3.0
   * Reworked dustbin support for Tanks, to improve performance and resolve known bugs.
   * Support for [Nebula Mupltiplayer Mod](https://dsp.thunderstore.io/package/nebula/NebulaMultiplayerMod/).

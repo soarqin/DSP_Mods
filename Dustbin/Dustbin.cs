@@ -95,7 +95,7 @@ public class Dustbin : BaseUnityPlugin, IModCanSave, IMultiplayerMod
         {
             var storage = storagePool[i];
             if (storage == null || storage.id != i) continue;
-            if ((bool)StoragePatch.IsDustbinField.GetValue(storage))
+            if (storage.IsDustbin)
                 storageIds.Add(i);
         }
 
@@ -104,7 +104,7 @@ public class Dustbin : BaseUnityPlugin, IModCanSave, IMultiplayerMod
         {
             ref var tank = ref tankPool[i];
             if (tank.id != i) continue;
-            if ((bool)TankPatch.IsDustbinField.GetValue(tank))
+            if (tank.IsDustbin)
                 tankIds.Add(i);
         }
 
@@ -136,13 +136,13 @@ public class Dustbin : BaseUnityPlugin, IModCanSave, IMultiplayerMod
         {
             var storage = storagePool[i];
             if (storage == null || storage.id != i) continue;
-            StoragePatch.IsDustbinField.SetValue(storage, false);
+            storage.IsDustbin = false;
         }
 
         for (var i = 0; i < count; i++)
         {
             var id = r.ReadInt32();
-            StoragePatch.IsDustbinField.SetValue(storagePool[id], true);
+            storagePool[id].IsDustbin = true;
         }
 
         count = r.ReadInt32();
@@ -152,13 +152,16 @@ public class Dustbin : BaseUnityPlugin, IModCanSave, IMultiplayerMod
         {
             ref var tank = ref tankPool[i];
             if (tank.id != i) continue;
-            StoragePatch.IsDustbinField.SetValueDirect(__makeref(tank), false);
+            tank.IsDustbin = false;
         }
 
         for (var i = 0; i < count; i++)
         {
             var id = r.ReadInt32();
-            StoragePatch.IsDustbinField.SetValueDirect(__makeref(tankPool[id]), true);
+            if (id >= cursor) continue;
+            ref var tank = ref tankPool[id];
+            if (tank.id != id) continue;
+            tank.IsDustbin = true;
         }
     }
 

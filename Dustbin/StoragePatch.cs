@@ -1,5 +1,7 @@
-﻿using System.IO;
-using System.Reflection;
+﻿using System.Collections.Generic;
+using System.IO;
+using System.Reflection.Emit;
+using System.Runtime.CompilerServices;
 using HarmonyLib;
 using NebulaAPI;
 using UnityEngine;
@@ -9,7 +11,6 @@ namespace Dustbin;
 [HarmonyPatch]
 public static class StoragePatch
 {
-    public static readonly FieldInfo IsDustbinField = AccessTools.Field(typeof(StorageComponent), "IsDustbin");
     private static UI.MyCheckBox _storageDustbinCheckBox;
     private static int _lastStorageId;
 
@@ -35,7 +36,7 @@ public static class StoragePatch
             for (var j = 1; j < cursor; j++)
             {
                 if (storagePool[j] == null || storagePool[j].id != j) continue;
-                if (!(bool)IsDustbinField.GetValue(storagePool[j])) continue;
+                if (!storagePool[j].IsDustbin) continue;
                 tempWriter.Write(j);
                 count++;
             }
@@ -75,7 +76,7 @@ public static class StoragePatch
                 var id = r.ReadInt32();
                 if (id > 0 && id < storagePool.Length && storagePool[id] != null && storagePool[id].id == id)
                 {
-                    IsDustbinField.SetValue(storagePool[id], true);
+                    storagePool[id].IsDustbin = true;
                 }
             }
         }
@@ -94,7 +95,7 @@ public static class StoragePatch
             var storagePool = window.factoryStorage.storagePool;
             if (storagePool[storageId].id != storageId) return;
             var enabled = _storageDustbinCheckBox.Checked;
-            IsDustbinField.SetValue(storagePool[storageId], enabled);
+            storagePool[storageId].IsDustbin = enabled;
             if (!NebulaModAPI.IsMultiplayerActive) return;
             var planetId = window.factory.planetId;
             NebulaModAPI.MultiplayerSession.Network.SendPacketToLocalStar(new NebulaSupport.Packet.ToggleEvent(planetId, storageId, enabled));
@@ -111,7 +112,7 @@ public static class StoragePatch
         if (storageId <= 0) return;
         var storagePool = __instance.factoryStorage.storagePool;
         if (storagePool[storageId].id != storageId) return;
-        _storageDustbinCheckBox.Checked = (bool)IsDustbinField.GetValue(storagePool[storageId]);
+        _storageDustbinCheckBox.Checked = storagePool[storageId].IsDustbin;
         if (__instance.transform is RectTransform rectTrans)
         {
             _storageDustbinCheckBox.rectTrans.anchoredPosition3D = new Vector3(50, 58 - rectTrans.sizeDelta.y, 0);
@@ -127,21 +128,11 @@ public static class StoragePatch
         _lastStorageId = 0; // Refresh UI to reposition button on client side
     }
 
-    [HarmonyPrefix]
-    [HarmonyPatch(typeof(StorageComponent), "AddItem",
-        new[] { typeof(int), typeof(int), typeof(int), typeof(int), typeof(bool) },
-        new[]
-        {
-            ArgumentType.Normal, ArgumentType.Normal, ArgumentType.Normal, ArgumentType.Out, ArgumentType.Normal
-        })]
-    private static bool StorageComponent_AddItem_Prefix(ref int __result, StorageComponent __instance, int itemId, int count, int inc,
-        ref int remainInc, bool useBan = false)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int DustbinAddItem(int itemId, int count)
     {
-        if (!(bool)IsDustbinField.GetValue(__instance)) return true;
-        remainInc = inc;
-        __result = count;
         var fluidArr = Dustbin.IsFluid;
-        var sandsPerItem = Dustbin.SandsFactors[itemId < fluidArr.Length && fluidArr[itemId]
+        var sandIndex = itemId < fluidArr.Length && fluidArr[itemId]
             ? 0
             : itemId switch
             {
@@ -149,13 +140,36 @@ public static class StoragePatch
                 1003 => 3,
                 1013 => 4,
                 _ => 1,
-            }];
-        if (sandsPerItem <= 0) return false;
+            };
+        var sandsPerItem = Dustbin.SandsFactors[sandIndex];
+        if (sandsPerItem <= 0) return count;
         var player = GameMain.mainPlayer;
         var addCount = count * sandsPerItem;
         player.sandCount += addCount;
         GameMain.history.OnSandCountChange(player.sandCount, addCount);
-        return false;
+        return count;
+    }
+
+    [HarmonyTranspiler]
+    [HarmonyPatch(typeof(StorageComponent), "AddItem", new[] { typeof(int), typeof(int), typeof(int), typeof(int), typeof(bool) },
+        new[] { ArgumentType.Normal, ArgumentType.Normal, ArgumentType.Normal, ArgumentType.Out, ArgumentType.Normal })]
+    private static IEnumerable<CodeInstruction> StorageComponent_AddItem_HarmonyTranspiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+    {
+        var matcher = new CodeMatcher(instructions, generator);
+        var label1 = generator.DefineLabel();
+        matcher.Start().MatchForward(false,
+            new CodeMatch(OpCodes.Stind_I4)
+        ).Advance(1).InsertAndAdvance(
+            new CodeInstruction(OpCodes.Ldarg_0),
+            new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(StorageComponent), nameof(StorageComponent.IsDustbin))),
+            new CodeInstruction(OpCodes.Brfalse, label1),
+            new CodeInstruction(OpCodes.Ldarg_1),
+            new CodeInstruction(OpCodes.Ldarg_2),
+            new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(StoragePatch), nameof(StoragePatch.DustbinAddItem))),
+            new CodeInstruction(OpCodes.Ret)
+        );
+        matcher.Labels.Add(label1);
+        return matcher.InstructionEnumeration();
     }
 
     /* We keep this to make MOD compatible with older version */
@@ -166,6 +180,6 @@ public static class StoragePatch
         if (__instance.bans >= 0)
             return;
         __instance.bans = -__instance.bans - 1;
-        IsDustbinField.SetValue(__instance, true);
+        __instance.IsDustbin = true;
     }
 }
