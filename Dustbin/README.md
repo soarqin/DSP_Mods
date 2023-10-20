@@ -6,6 +6,7 @@
 ## Changelog
 * 1.3.0
   * Reworked dustbin support for Tanks, to improve performance and resolve known bugs.
+    + Be note that the whole tank logic is optimized which may get a slight better performance even if you don't use them as dustbin.
   * [Nebula Mupltiplayer Mod](https://dsp.thunderstore.io/package/nebula/NebulaMultiplayerMod/) and bug fixes from [ModFixerOne](https://dsp.thunderstore.io/package/starfi5h/ModFixerOne/) by [starfi5h](https://github.com/starfi5h/).
 
 * 1.2.1
@@ -26,10 +27,12 @@
 * A checkbox is added to Storages and Tanks UI, which turns them into dustbins.
 * Items sent into dustbins are removed immediately.
 * Can get sands from destroyed items, configurable through a json encoded config entry.
+  + You can get item ID list [here](https://dsp-wiki.com/Modding:Items_IDs).
 
 ## 更新日志
 * 1.3.0
   * 重写了储液罐的垃圾桶实现，以提高性能并解决已知的bug
+    + 注意：整个储液罐逻辑都被优化了，即使你不把他们作为垃圾桶使用，也可能会获得轻微的性能提升
   * [Nebula Mupltiplayer Mod](https://dsp.thunderstore.io/package/nebula/NebulaMultiplayerMod/)支持和Bug修正来自[starfi5h](https://github.com/starfi5h/)的[ModFixerOne](https://dsp.thunderstore.io/package/starfi5h/ModFixerOne/)
 
 * 1.2.1
@@ -50,3 +53,4 @@
 * 在储物仓和储液罐上增加一个垃圾桶的勾选框。
 * 送进垃圾桶的物品会立即被移除。
 * 可以从移除的物品中获得沙子，可以通过json编码的设置项进行配置。
+  + 可以在[这里](https://dsp-wiki.com/Modding:Items_IDs)获得物品ID列表。
