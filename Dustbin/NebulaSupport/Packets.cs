@@ -6,7 +6,7 @@ namespace Dustbin.NebulaSupport
     {
         public class SyncPlanetData
         {
-            public byte[] Data { get; }
+            public byte[] Data { get; set; }
 
             public SyncPlanetData()
             {
@@ -20,9 +20,9 @@ namespace Dustbin.NebulaSupport
 
         public class ToggleEvent
         {
-            public int PlanetId { get;  }
-            public int StorageId { get;  }
-            public bool Enable { get;  }
+            public int PlanetId { get; set; }
+            public int StorageId { get; set; }
+            public bool Enable { get; set; }
 
             public ToggleEvent()
             {
@@ -41,6 +41,7 @@ namespace Dustbin.NebulaSupport
         {
             public override void ProcessPacket(SyncPlanetData packet, INebulaConnection conn)
             {
+                Dustbin.Logger.LogDebug("SyncPlanetDataProcessor.ProcessPacket()");
                 Dustbin.ImportData(packet.Data);
             }
         }
@@ -50,6 +51,7 @@ namespace Dustbin.NebulaSupport
         {
             public override void ProcessPacket(ToggleEvent packet, INebulaConnection conn)
             {
+                Dustbin.Logger.LogDebug($"ToggleEventProcessor.ProcessPacket(): {packet.PlanetId} {packet.StorageId} {packet.Enable}");
                 var factory = GameMain.galaxy.PlanetById(packet.PlanetId)?.factory;
                 if (factory == null) return;
                 var storageId = packet.StorageId;
@@ -62,16 +64,18 @@ namespace Dustbin.NebulaSupport
                     {
                         var tankPool = factory.factoryStorage.tankPool;
                         tankPool[-storageId].IsDustbin = packet.Enable;
+                        TankPatch.Reset();
                         return;
                     }
-                    default:
+                    case > 0:
                     {
                         var storagePool = factory.factoryStorage.storagePool;
                         storagePool[storageId].IsDustbin = packet.Enable;
+                        StoragePatch.Reset();
                         return;
                     }
                 }
             }
-       }
+        }
     }
 }
