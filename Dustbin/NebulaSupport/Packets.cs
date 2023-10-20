@@ -41,7 +41,6 @@ namespace Dustbin.NebulaSupport
         {
             public override void ProcessPacket(SyncPlanetData packet, INebulaConnection conn)
             {
-                Dustbin.Logger.LogDebug("SyncPlanetDataProcessor.ProcessPacket()");
                 Dustbin.ImportData(packet.Data);
             }
         }
@@ -51,7 +50,6 @@ namespace Dustbin.NebulaSupport
         {
             public override void ProcessPacket(ToggleEvent packet, INebulaConnection conn)
             {
-                Dustbin.Logger.LogDebug($"ToggleEventProcessor.ProcessPacket(): {packet.PlanetId} {packet.StorageId} {packet.Enable}");
                 var factory = GameMain.galaxy.PlanetById(packet.PlanetId)?.factory;
                 if (factory == null) return;
                 var storageId = packet.StorageId;
