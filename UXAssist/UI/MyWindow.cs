@@ -211,7 +211,7 @@ public class MyWindow: ManualBehaviour
 public class MyWindowWithTabs : MyWindow
 {
     private readonly List<Tuple<RectTransform, UIButton>> _tabs = new();
-    private float _tabX = 36f;
+    private float _tabY = 54f;
     public override void TryClose()
     {
         _Close();
@@ -222,18 +222,18 @@ public class MyWindowWithTabs : MyWindow
         return true;
     }
     
-    private RectTransform AddTabInternal(float x, int index, RectTransform parent, string label)
+    private RectTransform AddTabInternal(float y, int index, RectTransform parent, string label)
     {
         var tab = new GameObject();
         var tabRect = tab.AddComponent<RectTransform>();
-        Util.NormalizeRectWithMargin(tabRect, 54f + 28f, 36f, 0f, 0f, parent);
+        Util.NormalizeRectWithMargin(tabRect, 48f, 145f, 0f, 0f, parent);
         tab.name = "tab-" + index;
         var swarmPanel = UIRoot.instance.uiGame.dysonEditor.controlPanel.hierarchy.swarmPanel;
         var src = swarmPanel.orbitButtons[0];
         var btn = Instantiate(src);
-        var btnRect = Util.NormalizeRectWithTopLeft(btn, x, 54f, parent);
+        var btnRect = Util.NormalizeRectWithTopLeft(btn, 30, y, parent);
         btn.name = "tab-btn-" + index;
-        btnRect.sizeDelta = new Vector2(105f, 24f);
+        btnRect.sizeDelta = new Vector2(105f, 27f);
         btn.transform.Find("frame").gameObject.SetActive(false);
         if (btn.transitions.Length >= 3)
         {
@@ -258,9 +258,25 @@ public class MyWindowWithTabs : MyWindow
 
     public RectTransform AddTab(RectTransform parent, string label)
     {
-        var result = AddTabInternal(_tabX, _tabs.Count, parent, label);
-        _tabX += 105f;
+        var result = AddTabInternal(_tabY, _tabs.Count, parent, label);
+        _tabY += 28f;
         return result;
+    }
+
+    public void AddSplitter(RectTransform parent, float spacing)
+    {
+        var img = Instantiate(UIRoot.instance.optionWindow.transform.Find("tab-line").Find("bar"));
+        Destroy(img.Find("tri").gameObject);
+        _tabY += spacing;
+        var rect = Util.NormalizeRectWithTopLeft(img, 28, _tabY, parent);
+        rect.sizeDelta = new Vector2(107, 2);
+        _tabY += 2;
+    }
+
+    public void AddTabGroup(RectTransform parent, string label, string objName = "tabl-group-label")
+    {
+        AddText(28, _tabY - 2, parent, label, 16, objName);
+        _tabY += 28f;
     }
 
     public override void _OnRegEvent()

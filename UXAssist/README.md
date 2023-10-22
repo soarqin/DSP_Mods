@@ -4,6 +4,11 @@
 #### 一些提升用户体验的功能和补丁
 
 ## Changlog
+* 1.0.2
+  + Redesign config tabs, for clearer layout.
+  + Add 2 new options: 
+    - Enable game window resize.
+    - Remember window position and size on last exit.
 * 1.0.1
   + Fix config button text and tips while returning to title menu.
   + Fix that error occurs while returning to title menu, with `Stop ejectors when available nodes are all filled up` enabled.
@@ -20,20 +25,25 @@
   + Strict hotkey dectection for build menu, thus building hotkeys(0~9, F1~F10, X, U) are not triggered while holding Ctrl/Alt/Shift.
   + Fix a bug that warning popup on `Veins Utilization` upgraded to level 8000+
 * Features:
-  + Unlimited interactive range
-  + Sunlight at night
-  + Remove some build conditions
-  + Remove build count and range limit
-  + Larger area for upgrade and dismantle(30x30 at max)
-  + Larger area for terraform(30x30 at max)
-  + Enable player actions in globe view
-  + Enhanced count control for hand-make
-  + Re-intialize planet (without reseting veins)
-  + Quick dismantle all buildings (without drops)
-  + Stop ejectors when available nodes are all filled up
-  + Construct only nodes but frames
-  + Re-initialize Dyson Spheres
-  + Quick dismantle Dyson Shells
+  + General 
+    - Enable game window resize
+    - Remember window position and size on last exit
+  + Planet/Factory
+    - Unlimited interactive range
+    - Sunlight at night
+    - Remove some build conditions
+    - Remove build count and range limit
+    - Larger area for upgrade and dismantle(30x30 at max)
+    - Larger area for terraform(30x30 at max)
+    - Enable player actions in globe view
+    - Enhanced count control for hand-make
+    - Re-intialize planet (without reseting veins)
+    - Quick dismantle all buildings (without drops)
+  + Dyson Sphere
+    - Stop ejectors when available nodes are all filled up
+    - Construct only nodes but frames
+    - Re-initialize Dyson Spheres
+    - Quick dismantle Dyson Shells
 
 ## Notes
 * Please upgrade `BepInEx` 5.4.21 or later if using with [BlueprintTweaks](https://dsp.thunderstore.io/package/kremnev8/BlueprintTweaks/) to avoid possible conflicts.
@@ -46,6 +56,11 @@
 * [LSTM](https://github.com/hetima/DSP_LSTM) & [PlanetFinder](https://github.com/hetima/DSP_PlanetFinder): UI implementations
 
 ## 更新日志
+* 1.0.2
+  + 重新设计了配置面板，使布局更清晰
+  + 添加了两个新选项：
+    - 可调整游戏窗口大小(可最大化和拖动边框)
+    - 记住上次退出时的窗口位置和大小
 * 1.0.1
   + 修复了返回标题界面后设置按钮文本和提示信息不正确的问题
   + 修复了`当可用节点全部造完时停止弹射`选项启用时返回标题界面可能导致崩溃的问题
@@ -62,20 +77,25 @@
   + 更严格的建造菜单热键检测，因此在按住Ctrl/Alt/Shift时不再会触发建造热键(0~9, F1~F10, X, U)
   + 修复了`矿物利用`升级到8000级以上时弹出警告的bug
 * 功能：
-  + 无限交互距离
-  + 夜间日光灯
-  + 移除部分不影响游戏逻辑的建造条件
-  + 移除建造数量和范围限制
-  + 范围升级和拆除的最大区域扩大(最大30x30)
-  + 范围铺设地基的最大区域扩大(最大30x30)
-  + 在行星视图中允许玩家操作
-  + 手动制造物品的数量控制改进
-  + 初始化本行星（不重置矿脉）
-  + 快速拆除所有建筑（不掉落）
-  + 可用节点全部造完时停止弹射
-  + 只建造节点不建造框架
-  + 初始化戴森球
-  + 快速拆除戴森壳
+  + 通用
+    -可调整游戏窗口大小(可最大化和拖动边框)
+    - 记住上次退出时的窗口位置和大小
+  + 行星/工厂
+    - 无限交互距离
+    - 夜间日光灯
+    - 移除部分不影响游戏逻辑的建造条件
+    - 移除建造数量和范围限制
+    - 范围升级和拆除的最大区域扩大(最大30x30)
+    - 范围铺设地基的最大区域扩大(最大30x30)
+    - 在行星视图中允许玩家操作
+    - 手动制造物品的数量控制改进
+    - 初始化本行星（不重置矿脉）
+    - 快速拆除所有建筑（不掉落）
+  + 戴森球
+    - 可用节点全部造完时停止弹射
+    - 只建造节点不建造框架
+    - 初始化戴森球
+    - 快速拆除戴森壳
 
 ## 注意事项
 * 如果和[BlueprintTweaks](https://dsp.thunderstore.io/package/kremnev8/BlueprintTweaks/)一起使用，请升级`BepInEx`到5.4.21或更高版本，以避免可能的冲突。

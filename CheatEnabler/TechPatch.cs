@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection.Emit;
 using BepInEx.Configuration;
 using HarmonyLib;
+using JetBrains.Annotations;
 
 namespace CheatEnabler;
 
@@ -37,18 +38,12 @@ public static class TechPatch
         }
     }
 
-    private static void UnlockTechRecursive(TechProto proto, int maxLevel = 10000)
+    private static void UnlockTechRecursive([NotNull] TechProto techProto, int maxLevel = 10000)
     {
         var history = GameMain.history;
         var techStates = history.techStates;
-        var techID = proto.ID;
+        var techID = techProto.ID;
         if (techStates == null || !techStates.ContainsKey(techID))
-        {
-            return;
-        }
-
-        var techProto = LDB.techs.Select(techID);
-        if (techProto == null)
         {
             return;
         }
@@ -128,7 +123,7 @@ public static class TechPatch
         }
         else if (VFInput.alt)
         {
-            UnlockTechRecursive(node.techProto, node.techProto.ID == 3606 ? 7200 : 10000);
+            UnlockTechRecursive(node.techProto, 10000);
         }
     }
 

@@ -12,7 +12,8 @@ public static class UIConfigWindow
 
     public static void Init()
     {
-        I18N.Add("General", "*General*", "*常规*");
+        I18N.Add("Factory", "Factory", "工厂");
+        I18N.Add("Planet", "Planet", "行星");
         I18N.Add("Enable Dev Shortcuts", "Enable Dev Shortcuts", "开发模式快捷键");
         I18N.Add("Disable Abnormal Checks", "Disable Abnormal Checks", "关闭数据异常检查");
         I18N.Add("Hotkey", "Hotkey", "快捷键");
@@ -25,7 +26,6 @@ public static class UIConfigWindow
             "Click tech on tree while holding:\n  Shift: Tech level + 1\n  Ctrl: Tech level + 10\n  Ctrl + Shift: Tech level + 100\n  Alt: Tech level to MAX\n\nNote: all direct prerequisites will be unlocked as well.",
             "按住以下组合键点击科技树：\n  Shift：科技等级+1\n  Ctrl：科技等级+10\n  Ctrl+Shift：科技等级+100\n  Alt：科技等级升到最大\n\n注意：所有直接前置科技也会被解锁");
         I18N.Add("Assign game to current account", "Assign game to current account", "将游戏绑定给当前账号");
-        I18N.Add("Factory", "*Factory*", "*工厂*");
         I18N.Add("Finish build immediately", "Finish build immediately", "建造秒完成");
         I18N.Add("Architect mode", "Architect mode", "建筑师模式");
         I18N.Add("Build without condition", "Build without condition check", "无条件建造");
@@ -42,11 +42,9 @@ public static class UIConfigWindow
         I18N.Add("Boost fuel power", "Boost fuel power(x50,000)", "提升燃料发电(x50,000)");
         I18N.Add("Boost fuel power 2", "(x20,000 for deuteron, x10,000 for antimatter)", "(氘核燃料棒x20,000，反物质燃料棒x10,000)");
         I18N.Add("Boost geothermal power", "Boost geothermal power(x50,000)", "提升地热发电(x50,000)");
-        I18N.Add("Planet", "*Planet*", "*行星*");
         I18N.Add("Infinite Natural Resources", "Infinite natural resources", "自然资源采集不消耗");
         I18N.Add("Fast Mining", "Fast mining", "高速采集");
         I18N.Add("Pump Anywhere", "Pump anywhere", "平地抽水");
-        I18N.Add("Dyson Sphere", "*Dyson Sphere*", "*戴森球*");
         I18N.Add("Skip bullet period", "Skip bullet period", "跳过子弹阶段");
         I18N.Add("Skip absorption period", "Skip absorption period", "跳过吸收阶段");
         I18N.Add("Quick absorb", "Quick absorb", "快速吸收");
@@ -54,17 +52,6 @@ public static class UIConfigWindow
         I18N.Add("Overclock Ejectors", "Overclock Ejectors (10x)", "高速弹射器(10倍射速)");
         I18N.Add("Overclock Silos", "Overclock Silos (10x)", "高速发射井(10倍射速)");
         I18N.Add("Terraform without enough sands", "Terraform without enough sands", "沙土不够时依然可以整改地形");
-        I18N.Add("Birth", "*Birth Sys*", "*母星系*");
-        I18N.Add("Silicon/Titanium on birth planet", "Silicon/Titanium on birth planet", "母星有硅和钛");
-        I18N.Add("Fire ice on birth planet", "Fire ice on birth planet", "母星有可燃冰");
-        I18N.Add("Kimberlite on birth planet", "Kimberlite on birth planet", "母星有金伯利矿");
-        I18N.Add("Fractal silicon on birth planet", "Fractal silicon on birth planet", "母星有分形硅");
-        I18N.Add("Organic crystal on birth planet", "Organic crystal on birth planet", "母星有有机晶体");
-        I18N.Add("Optical grating crystal on birth planet", "Optical grating crystal on birth planet", "母星有光栅石");
-        I18N.Add("Spiniform stalagmite crystal on birth planet", "Spiniform stalagmite crystal on birth planet", "母星有刺笋结晶");
-        I18N.Add("Unipolar magnet on birth planet", "Unipolar magnet on birth planet", "母星有单极磁石");
-        I18N.Add("Birth planet is solid flat (no water at all)", "Birth planet is solid flat (no water at all)", "母星是纯平的（没有水）");
-        I18N.Add("Birth star has high luminosity", "Birth star has high luminosity", "母星系恒星高亮");
         I18N.Apply();
         MyConfigWindow.OnUICreated += CreateUI;
         MyConfigWindow.OnUpdateUI += UpdateUI;
@@ -76,6 +63,8 @@ public static class UIConfigWindow
         // General tab
         var x = 0f;
         var y = 10f;
+        wnd.AddSplitter(trans, 10f);
+        wnd.AddTabGroup(trans, "Cheat Enabler", "tab-group-cheatenabler");
         var tab1 = wnd.AddTab(_windowTrans, "General");
         MyCheckBox.CreateCheckBox(x, y, tab1, DevShortcuts.Enabled, "Enable Dev Shortcuts");
         y += 36f;

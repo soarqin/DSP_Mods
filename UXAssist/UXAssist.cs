@@ -25,6 +25,12 @@ public class UXAssist : BaseUnityPlugin
     private void Awake()
     {
         Hotkey = Config.Bind("General", "Shortcut", KeyboardShortcut.Deserialize("BackQuote + LeftAlt"), "Shortcut to open config window");
+        GamePatch.EnableWindowResizeEnabled = Config.Bind("Game", "EnableWindowResize", false,
+            "Enable game window resize (maximum box and thick frame)");
+        GamePatch.LoadLastWindowRectEnabled = Config.Bind("Game", "LoadLastWindowRect", false,
+            "Load last window position and size when game starts");
+        GamePatch.LastWindowRect = Config.Bind("Game", "LastWindowRect", new Vector4(0f, 0f, 0f, 0f),
+            "Last window position and size");
         FactoryPatch.UnlimitInteractiveEnabled = Config.Bind("Factory", "UnlimitInteractive", false,
             "Unlimit interactive range");
         FactoryPatch.RemoveSomeConditionEnabled = Config.Bind("Factory", "RemoveSomeBuildConditionCheck", false,
@@ -55,6 +61,7 @@ public class UXAssist : BaseUnityPlugin
         
         MyWindowManager.Init();
         UIConfigWindow.Init();
+        GamePatch.Init();
         FactoryPatch.Init();
         PlanetPatch.Init();
         PlayerPatch.Init();
@@ -67,6 +74,7 @@ public class UXAssist : BaseUnityPlugin
         PlayerPatch.Uninit();
         PlanetPatch.Uninit();
         FactoryPatch.Uninit();
+        GamePatch.Uninit();
         MyWindowManager.Uninit();
 
         _patch?.UnpatchSelf();

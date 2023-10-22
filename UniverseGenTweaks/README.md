@@ -4,6 +4,8 @@
 #### 宇宙生成参数调节
 
 ## Changelog
+* 1.2.1
+  + Use new tab layout of UXAssist 1.0.2
 * 1.2.0
   + Depends on [UXAssist](https://dsp.thunderstore.io/package/soarqin/UXAssist/) now.
   + Add `Birth star` options
@@ -18,8 +20,8 @@
 ## Features
 * Depends on [UXAssist](https://dsp.thunderstore.io/package/soarqin/UXAssist/), all tabs around with '+' are options for this mod.
 * More options on universe generation
-  * Can set maximum star count(128 by default, up to 1024) in config file.
-    + Note: there is performance issue on galaxy view with large amount of stars.
+  + Can set maximum star count(128 by default, up to 1024) in config file.
+    - Note: there is performance issue on galaxy view with large amount of stars.
 * Epic difficulty
   * 0.01x resources and 0.25x oils (very hard difficulty has 0.5x oils).
   * Same oil mining speed as very hard difficuly
@@ -29,6 +31,8 @@
   * High luminosity for birth star
 
 ## 更新日志
+* 1.2.1
+  + 使用UXAssist 1.0.2的新页签布局
 * 1.2.0
   + 现在依赖于[UXAssist](https://dsp.thunderstore.io/package/soarqin/UXAssist/)
   + 增加`母星系`选项
@@ -43,8 +47,8 @@
 ## 功能
 * 依赖于[UXAssist](https://dsp.thunderstore.io/package/soarqin/UXAssist/)，所有带有'+'的页签都是本mod的选项
 * 生成宇宙时提供更多选项
-  * 可以在配置文件中设置最大恒星数(默认128, 最多1024)
-    + 注意: 大量恒星会导致宇宙视图出现性能问题
+  +可以在配置文件中设置最大恒星数(默认128, 最多1024)
+    - 注意: 大量恒星会导致宇宙视图出现性能问题
 * 史诗难度
   * 资源0.01倍，油井储量0.25倍(极难是0.5倍)
   * 采油速度和极难相同

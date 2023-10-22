@@ -18,7 +18,7 @@ public class MyConfigWindow : MyWindowWithTabs
     public override void _OnCreate()
     {
         _windowTrans = GetComponent<RectTransform>();
-        _windowTrans.sizeDelta = new Vector2(700f, 472f);
+        _windowTrans.sizeDelta = new Vector2(810f, 440f);
 
         OnUICreated?.Invoke(this, _windowTrans);
         SetCurrentTab(0);

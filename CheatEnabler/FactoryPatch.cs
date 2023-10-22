@@ -108,7 +108,22 @@ public static class FactoryPatch
     [HarmonyPatch(typeof(PlanetData), nameof(PlanetData.NotifyFactoryLoaded))]
     private static void PlanetData_NotifyFactoryLoaded_Postfix(PlanetData __instance)
     {
-        ArrivePlanet(__instance.factory);
+        var main = GameMain.instance;
+        if (main != null && main._running)
+        {
+            ArrivePlanet(__instance.factory);
+        }
+    }
+
+    [HarmonyPostfix]
+    [HarmonyPatch(typeof(GameMain), nameof(GameMain.Begin))]
+    private static void GameMain_Begin_Postfix_For_ImmBuild()
+    {
+        var factory = GameMain.mainPlayer?.factory;
+        if (factory != null)
+        {
+            ArrivePlanet(factory);
+        }
     }
 
     private static class ImmediateBuild

@@ -197,9 +197,8 @@ public static class DysonSpherePatch
         {
             var index = swarm.starData.index;
             var delta1 = endVec - swarm.starData.uPosition;
-            var delta2 = VectorLF3.Cross(endVec - uPos, swarm.orbits[orbitId].up).normalized * Math.Sqrt(swarm.dysonSphere.gravity / swarm.orbits[orbitId].radius)
-                         + RandomTable.SphericNormal(ref swarm.randSeed, 0.5);
-            lock(swarm)
+            var delta2 = VectorLF3.Cross(endVec - uPos, swarm.orbits[orbitId].up).normalized * Math.Sqrt(swarm.dysonSphere.gravity / swarm.orbits[orbitId].radius);
+            lock (swarm)
             {
                 var cache = _sailsCache[index];
                 var len = _sailsCacheLen[index];
@@ -218,7 +217,7 @@ public static class DysonSpherePatch
                     }
                 }
                 _sailsCacheLen[index] = len + 1;
-                cache[len].FromData(delta1, delta2, orbitId);
+                cache[len].FromData(delta1, delta2 + RandomTable.SphericNormal(ref swarm.randSeed, 0.5), orbitId);
             }
         }
 

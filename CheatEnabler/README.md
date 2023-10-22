@@ -4,6 +4,12 @@
 #### 添加一些作弊功能，同时屏蔽异常检测
 
 ## Changlog
+* 2.3.4
+  + Use new tab layout of UXAssist 1.0.2
+  + Minor bug fixes
+* 2.3.3
+  + Fix a crash in `Skip bullet period`.
+  + Unlock techs with Alt unlocks VeinUtil to 10000 instead of 7200 now, as bug fixed in UXAssist.
 * 2.3.2
   + Birth star options moved to [UniverseGenTweaks](https://dsp.thunderstore.io/package/soarqin/UniverseGenTweaks/)
   + Optimize `Quick absorb`, consumes less CPU time and take turns firing to nodes. 
@@ -74,8 +80,8 @@
     + Build without condition
     + No collision
     + Belt signal item generation
-      + Count all raws and intermediates in statistics
-      + Belt signal alt format
+      - Count all raws and intermediates in statistics
+      - Belt signal alt format
     + Remove space limit between wind turbines and solar panels
     + Boost power generations for kinds of power generators
   + Planet:
@@ -100,6 +106,12 @@
 * [Multifunction_mod](https://github.com/blacksnipebiu/Multifunction_mod): Some cheat functions
 
 ## 更新日志
+* 2.3.4
+  + 使用UXAssist 1.0.2的新页签布局
+  + 修复了一些小bug
+* 2.3.3
+  + 修复了`跳过子弹阶段`可能导致崩溃的问题
+  + 使用Alt解锁科技时，现在`矿物利用`的科技解锁到10000级而不是7200级，因为UXAssist已修复对应bug
 * 2.3.2
   + 母星系的选项移动到了[UniverseGenTweaks](https://dsp.thunderstore.io/package/soarqin/UniverseGenTweaks/)
   + 优化了`快速吸收`，现在消耗更少的CPU，并且会轮流打向各节点
@@ -170,8 +182,8 @@
     + 无条件建造
     + 无碰撞
     + 传送带信号物品生成
-      + 统计面板中计算所有原材料和中间产物
-      + 传送带信号替换格式
+      - 统计面板中计算所有原材料和中间产物
+      - 传送带信号替换格式
     + 风力发电机和太阳能板无间距限制
     + 提升各种发电设备发电量
   + 行星：

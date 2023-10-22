@@ -7,12 +7,17 @@ namespace UXAssist;
 public static class UIConfigWindow
 {
     private static RectTransform _windowTrans;
-    private static RectTransform _tab;
+    private static RectTransform _dysonTab;
     private static readonly UIButton[] DysonLayerBtn = new UIButton[10];
 
     public static void Init()
     {
         I18N.Add("UXAssist", "UXAssist", "UX助手");
+        I18N.Add("General", "General", "常规");
+        I18N.Add("Planet/Factory", "Planet/Factory", "行星/工厂");
+        I18N.Add("Dyson Sphere", "Dyson Sphere", "戴森球");
+        I18N.Add("Enable game window resize", "Enable game window resize (maximum box and thick frame)", "可调整游戏窗口大小(可最大化和拖动边框)");
+        I18N.Add("Remeber window position and size on last exit", "Remeber window position and size on last exit", "记住上次退出时的窗口位置和大小");
         I18N.Add("Unlimited interactive range", "Unlimited interactive range", "无限交互距离");
         I18N.Add("Night Light", "Sunlight at night", "夜间日光灯");
         I18N.Add("Remove some build conditions", "Remove some build conditions", "移除部分不影响游戏逻辑的建造条件");
@@ -36,47 +41,59 @@ public static class UIConfigWindow
     private static void CreateUI(MyConfigWindow wnd, RectTransform trans)
     {
         _windowTrans = trans;
-        var tab1 = wnd.AddTab(_windowTrans, "UXAssist");
+        wnd.AddTabGroup(trans, "UXAssist", "tab-group-uxassist");
+        var tab1 = wnd.AddTab(trans, "General");
         var x = 0f;
         var y = 10f;
-        MyCheckBox.CreateCheckBox(x, y, tab1, FactoryPatch.UnlimitInteractiveEnabled, "Unlimited interactive range");
+        MyCheckBox.CreateCheckBox(x, y, tab1, GamePatch.EnableWindowResizeEnabled, "Enable game window resize");
         y += 36f;
-        MyCheckBox.CreateCheckBox(x, y, tab1, FactoryPatch.NightLightEnabled, "Night Light");
+        MyCheckBox.CreateCheckBox(x, y, tab1, GamePatch.LoadLastWindowRectEnabled, "Remeber window position and size on last exit");
+        x += 10f;
+        y = 278f;
+        MyKeyBinder.CreateKeyBinder(x, y, tab1, UXAssist.Hotkey, "Hotkey");
+        var tab2 = wnd.AddTab(trans, "Planet/Factory");
+        x = 0f;
+        y = 10f;
+        MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.UnlimitInteractiveEnabled, "Unlimited interactive range");
         y += 36f;
-        MyCheckBox.CreateCheckBox(x, y, tab1, FactoryPatch.RemoveSomeConditionEnabled, "Remove some build conditions");
+        MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.RemoveSomeConditionEnabled, "Remove some build conditions");
         y += 36f;
-        MyCheckBox.CreateCheckBox(x, y, tab1, FactoryPatch.RemoveBuildRangeLimitEnabled, "Remove build range limit");
+        MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.RemoveBuildRangeLimitEnabled, "Remove build range limit");
         y += 36f;
-        MyCheckBox.CreateCheckBox(x, y, tab1, FactoryPatch.LargerAreaForUpgradeAndDismantleEnabled, "Larger area for upgrade and dismantle");
+        MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.NightLightEnabled, "Night Light");
         y += 36f;
-        MyCheckBox.CreateCheckBox(x, y, tab1, FactoryPatch.LargerAreaForTerraformEnabled, "Larger area for terraform");
+        MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.LargerAreaForUpgradeAndDismantleEnabled, "Larger area for upgrade and dismantle");
         y += 36f;
-        MyCheckBox.CreateCheckBox(x, y, tab1, PlanetPatch.PlayerActionsInGlobeViewEnabled, "Enable player actions in globe view");
+        MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.LargerAreaForTerraformEnabled, "Larger area for terraform");
         y += 36f;
-        MyCheckBox.CreateCheckBox(x, y, tab1, PlayerPatch.EnhancedMechaForgeCountControlEnabled, "Enhanced count control for hand-make");
+        MyCheckBox.CreateCheckBox(x, y, tab2, PlanetPatch.PlayerActionsInGlobeViewEnabled, "Enable player actions in globe view");
+        y += 36f;
+        MyCheckBox.CreateCheckBox(x, y, tab2, PlayerPatch.EnhancedMechaForgeCountControlEnabled, "Enhanced count control for hand-make");
         x = 240f;
         y += 6f;
-        MyWindow.AddTipsButton(x, y, tab1, "Enhanced count control for hand-make", "Enhanced count control for hand-make tips", "enhanced-count-control-tips");
-        x = 0f;
-        y += 30f;
-        MyCheckBox.CreateCheckBox(x, y, tab1, DysonSpherePatch.StopEjectOnNodeCompleteEnabled, "Stop ejectors when available nodes are all filled up");
-        y += 36f;
-        MyCheckBox.CreateCheckBox(x, y, tab1, DysonSpherePatch.OnlyConstructNodesEnabled, "Construct only nodes but frames");
+        MyWindow.AddTipsButton(x, y, tab2, "Enhanced count control for hand-make", "Enhanced count control for hand-make tips", "enhanced-count-control-tips");
         x = 400f;
         y = 10f;
-        wnd.AddButton(x, y, tab1, "Initialize This Planet", 16, "button-init-planet", () => { PlanetFunctions.RecreatePlanet(true); });
+        wnd.AddButton(x, y, tab2, "Initialize This Planet", 16, "button-init-planet", () => { PlanetFunctions.RecreatePlanet(true); });
         y += 36f;
-        wnd.AddButton(x, y, tab1, "Dismantle All Buildings", 16, "button-dismantle-all", () => { PlanetFunctions.DismantleAll(false); });
+        wnd.AddButton(x, y, tab2, "Dismantle All Buildings", 16, "button-dismantle-all", () => { PlanetFunctions.DismantleAll(false); });
+
+        var tab3 = wnd.AddTab(trans, "Dyson Sphere");
+        x = 0f;
+        y = 10f;
+        MyCheckBox.CreateCheckBox(x, y, tab3, DysonSpherePatch.StopEjectOnNodeCompleteEnabled, "Stop ejectors when available nodes are all filled up");
         y += 36f;
+        MyCheckBox.CreateCheckBox(x, y, tab3, DysonSpherePatch.OnlyConstructNodesEnabled, "Construct only nodes but frames");
+        x = 400f;
+        y = 10f;
+        wnd.AddButton(x, y, tab3, "Initialize Dyson Sphere", 16, "init-dyson-sphere", () => { DysonSpherePatch.InitCurrentDysonSphere(-1); });
         y += 36f;
-        wnd.AddButton(x, y, tab1, "Initialize Dyson Sphere", 16, "init-dyson-sphere", () => { DysonSpherePatch.InitCurrentDysonSphere(-1); });
-        y += 36f;
-        MyWindow.AddText(x, y, tab1, "Click to dismantle selected layer", 16, "text-dismantle-layer");
+        MyWindow.AddText(x, y, tab3, "Click to dismantle selected layer", 16, "text-dismantle-layer");
         y += 26f;
         for (var i = 0; i < 10; i++)
         {
             var id = i + 1;
-            var btn = wnd.AddFlatButton(x, y, tab1, id.ToString(), 12, "dismantle-layer-" + id, () => { DysonSpherePatch.InitCurrentDysonSphere(id); });
+            var btn = wnd.AddFlatButton(x, y, tab3, id.ToString(), 12, "dismantle-layer-" + id, () => { DysonSpherePatch.InitCurrentDysonSphere(id); });
             ((RectTransform)btn.transform).sizeDelta = new Vector2(40f, 20f);
             DysonLayerBtn[i] = btn;
             if (i == 4)
@@ -89,11 +106,7 @@ public static class UIConfigWindow
                 x += 40f;
             }
         }
-        x = 400f;
-        y += 72f;
-        MyKeyBinder.CreateKeyBinder(x, y, tab1, UXAssist.Hotkey, "Hotkey");
-
-        _tab = tab1;
+        _dysonTab = tab3;
     }
 
     private static void UpdateUI()
@@ -103,7 +116,7 @@ public static class UIConfigWindow
 
     private static void UpdateDysonShells()
     {
-        if (!_tab.gameObject.activeSelf) return;
+        if (!_dysonTab.gameObject.activeSelf) return;
         var star = GameMain.localStar;
         if (star != null)
         {
