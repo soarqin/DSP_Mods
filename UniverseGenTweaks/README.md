@@ -18,7 +18,7 @@
   + Initial release
 
 ## Features
-* Depends on [UXAssist](https://dsp.thunderstore.io/package/soarqin/UXAssist/), all tabs around with '+' are options for this mod.
+* Config entries are placed on [UXAssist](https://dsp.thunderstore.io/package/soarqin/UXAssist/)'s config panel.
 * More options on universe generation
   + Can set maximum star count(128 by default, up to 1024) in config file.
     - Note: there is performance issue on galaxy view with large amount of stars.
@@ -45,7 +45,7 @@
   + 初始版本
 
 ## 功能
-* 依赖于[UXAssist](https://dsp.thunderstore.io/package/soarqin/UXAssist/)，所有带有'+'的页签都是本mod的选项
+* 设置选项在[UXAssist](https://dsp.thunderstore.io/package/soarqin/UXAssist/)的配置面板上
 * 生成宇宙时提供更多选项
   +可以在配置文件中设置最大恒星数(默认128, 最多1024)
     - 注意: 大量恒星会导致宇宙视图出现性能问题

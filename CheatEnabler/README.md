@@ -66,7 +66,7 @@
 
 ## Usage
 
-* Config panel is unified with UXAssist, tabs with text between star(*) are configurations for CheatEnabler.
+* Config panel is unified with UXAssist.
 * There are also buttons on title screen and planet minimap area to call up the config panel.
 * Features:
   + General:
@@ -168,8 +168,8 @@
 
 ## 使用说明
 
-* 配置面板复用UXAssist，打开UXAssist配置面板后带有星号(*)的分页是CheatEnabler的配置
-* 标题界面和行星小地图旁也有按钮呼出主面板。
+* 配置面板复用UXAssist
+* 标题界面和行星小地图旁也有按钮呼出主面板
 * 功能：
   + 常规：
     + 启用开发模式快捷键(使用说明见设置面板)
@@ -198,9 +198,9 @@
     + 全球弹射
 
 ## 注意事项
-* 如果和[BlueprintTweaks](https://dsp.thunderstore.io/package/kremnev8/BlueprintTweaks/)一起使用，请升级`BepInEx`到5.4.21或更高版本，以避免可能的冲突。
-  + 你可以在[这里](https://github.com/bepinex/bepinex/releases/latest)（选择x64版本）下载`BepInEx`。
-  + 如果使用r2modman，你可以点击`Settings` -> `Browse profile folder`，然后将下载的zip解压到该文件夹并覆盖现有文件。
+* 如果和[BlueprintTweaks](https://dsp.thunderstore.io/package/kremnev8/BlueprintTweaks/)一起使用，请升级`BepInEx`到5.4.21或更高版本，以避免可能的冲突
+  + 你可以在[这里](https://github.com/bepinex/bepinex/releases/latest)（选择x64版本）下载`BepInEx`
+  + 如果使用r2modman，你可以点击`Settings` -> `Browse profile folder`，然后将下载的zip解压到该文件夹并覆盖现有文件
 
 ## 鸣谢
 * [戴森球计划](https://store.steampowered.com/app/1366540): 伟大的游戏
