@@ -4,6 +4,8 @@
 #### 添加一些作弊功能，同时屏蔽异常检测
 
 ## Changlog
+* 2.3.5
+  + Fix another crash in `Skip bullet period`.
 * 2.3.4
   + Use new tab layout of UXAssist 1.0.2
   + Minor bug fixes
@@ -106,6 +108,8 @@
 * [Multifunction_mod](https://github.com/blacksnipebiu/Multifunction_mod): Some cheat functions
 
 ## 更新日志
+* 2.3.5
+  + 修复了`跳过子弹阶段`可能导致崩溃的问题
 * 2.3.4
   + 使用UXAssist 1.0.2的新页签布局
   + 修复了一些小bug

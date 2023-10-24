@@ -245,6 +245,7 @@ public static class DysonSpherePatch
                         var layer = layers[(lidx + i) % llen];
                         var nodes = layer.nodePool;
                         var nlen = layer.nodeCursor - 1;
+                        if (nlen <= 0) continue;
                         var nidx = (int)time % nlen;
                         for (var j = nlen; j > 0; j--)
                         {
