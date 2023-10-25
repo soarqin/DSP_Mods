@@ -118,15 +118,28 @@ static class PatchUISaveGame
         _context.ManualSaveTypeComboBox = gameObj;
         if (created)
         {
-            _context.ManualSaveTypeComboBox.name = "manual-save-type-combobox";
-            rtrans = (RectTransform)_context.ManualSaveTypeComboBox.transform;
+            gameObj.name = "manual-save-type-combobox";
+            rtrans = (RectTransform)gameObj.transform;
             var rtrans2 = (RectTransform)_context.ButtonCompress.transform;
             pos = rtrans2.anchoredPosition3D;
             rtrans.anchorMin = rtrans2.anchorMin;
             rtrans.anchorMax = rtrans2.anchorMax;
             rtrans.pivot = rtrans2.pivot;
             rtrans.anchoredPosition3D = new Vector3(pos.x + 100, pos.y + 45, pos.z);
-            var cb = rtrans.transform.Find("ComboBox").GetComponent<UIComboBox>();
+            var cbctrl = rtrans.transform.Find("ComboBox");
+            var content = cbctrl.Find("Dropdown List ScrollBox")?.Find("Mask")?.Find("Content Panel");
+            if (content != null)
+            {
+                for (var i = content.childCount - 1; i >= 0; i--)
+                {
+                    var theTrans = content.GetChild(i);
+                    if (theTrans.name == "Item Button(Clone)")
+                    {
+                        Object.Destroy(theTrans.gameObject);
+                    }
+                }
+            }
+            var cb = cbctrl.GetComponent<UIComboBox>();
             cb.onSubmit.RemoveAllListeners();
             cb.onItemIndexChange.RemoveAllListeners();
             cb.Items = new List<string> { "Store".Translate(), "LZ4", "Zstd" };
@@ -141,9 +154,9 @@ static class PatchUISaveGame
             rtrans.anchoredPosition3D = new Vector3(pos.x - 50, pos.y, pos.z);
             var size = rtrans.sizeDelta;
             rtrans.sizeDelta = new Vector2(150f, size.y);
-            var txt = _context.ManualSaveTypeComboBox.GetComponent<Text>();
+            var txt = gameObj.GetComponent<Text>();
             txt.text = "Compression for manual saves".Translate();
-            var localizer = _context.ManualSaveTypeComboBox.GetComponent<Localizer>();
+            var localizer = gameObj.GetComponent<Localizer>();
             if (localizer != null)
             {
                 localizer.stringKey = "Compression for manual saves";
@@ -161,15 +174,28 @@ static class PatchUISaveGame
         _context.AutoSaveTypeComboBox = gameObj;
         if (created)
         {
-            _context.AutoSaveTypeComboBox.name = "auto-save-type-combobox";
-            rtrans = (RectTransform)_context.AutoSaveTypeComboBox.transform;
+            gameObj.name = "auto-save-type-combobox";
+            rtrans = (RectTransform)gameObj.transform;
             var rtrans2 = (RectTransform)_context.ButtonCompress.transform;
             pos = rtrans2.anchoredPosition3D;
             rtrans.anchorMin = rtrans2.anchorMin;
             rtrans.anchorMax = rtrans2.anchorMax;
             rtrans.pivot = rtrans2.pivot;
             rtrans.anchoredPosition3D = new Vector3(pos.x + 510, pos.y + 45, pos.z);
-            var cb = rtrans.transform.Find("ComboBox").GetComponent<UIComboBox>();
+            var cbctrl = rtrans.transform.Find("ComboBox");
+            var content = cbctrl.Find("Dropdown List ScrollBox")?.Find("Mask")?.Find("Content Panel");
+            if (content != null)
+            {
+                for (var i = content.childCount - 1; i >= 0; i--)
+                {
+                    var theTrans = content.GetChild(i);
+                    if (theTrans.name == "Item Button(Clone)")
+                    {
+                        Object.Destroy(theTrans.gameObject);
+                    }
+                }
+            }
+            var cb = cbctrl.GetComponent<UIComboBox>();
             cb.onSubmit.RemoveAllListeners();
             cb.onItemIndexChange.RemoveAllListeners();
             cb.Items = new List<string> { "已停用".Translate(), "Store".Translate(), "LZ4", "Zstd" };
@@ -193,9 +219,9 @@ static class PatchUISaveGame
             rtrans.anchoredPosition3D = new Vector3(pos.x - 50, pos.y, pos.z);
             var size = rtrans.sizeDelta;
             rtrans.sizeDelta = new Vector2(150f, size.y);
-            var txt = _context.AutoSaveTypeComboBox.GetComponent<Text>();
+            var txt = gameObj.GetComponent<Text>();
             txt.text = "Compression for auto saves".Translate();
-            var localizer = _context.AutoSaveTypeComboBox.GetComponent<Localizer>();
+            var localizer = gameObj.GetComponent<Localizer>();
             if (localizer != null)
             {
                 localizer.stringKey = "Compression for auto saves";

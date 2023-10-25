@@ -7,6 +7,9 @@
 
 ## Changelog
 
+### 1.3.3
+* Fix a display issue on combobox of compression type.
+
 ### 1.3.2
 * Add config UI on Save Game dialog, to set compression types.
 * Change button text to `Save (Compress)` for better understanding.
@@ -133,6 +136,9 @@
 * Remember to backup your save(use original save button) before updating game to avoid loading failure.
 
 ## 更新日志
+
+### 1.3.3
+* 修复压缩类型下拉框显示问题。
 
 ### 1.3.2
 * 在保存面板上增加设置压缩方式的UI。
