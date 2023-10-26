@@ -33,8 +33,8 @@ public static class GamePatch
         _gamePatch = null;
     }
 
-    [HarmonyPrefix, HarmonyPatch(typeof(Application), nameof(Application.Quit), new Type[]{})]
-    private static void Application_Quit_Prefix()
+    [HarmonyPrefix, HarmonyPatch(typeof(GameMain), nameof(GameMain.HandleApplicationQuit))]
+    private static void GameMain_HandleApplicationQuit_Prefix()
     {
         var wnd = WinApi.FindWindow(GameWindowClass, GameWindowTitle);
         if (wnd == IntPtr.Zero) return;

@@ -156,7 +156,7 @@ public static class FactoryPatch
         private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
         {
             var matcher = new CodeMatcher(instructions, generator);
-            matcher.MatchForward(false,
+            matcher.End().MatchBack(false,
                 new CodeMatch(OpCodes.Ret)
             );
             if (matcher.IsInvalid)
@@ -167,7 +167,11 @@ public static class FactoryPatch
 
             matcher.Advance(-1);
             if (matcher.Opcode != OpCodes.Nop && (matcher.Opcode != OpCodes.Call || !matcher.Instruction.OperandIs(AccessTools.Method(typeof(GC), nameof(GC.Collect)))))
+            {
+                CheatEnabler.Logger.LogWarning($"Failed to patch CreatePrebuilds: last instruction is not `Nop` or `Call GC.Collect()`: {matcher.Instruction}");
                 return matcher.InstructionEnumeration();
+            }
+
             var labels = matcher.Labels;
             matcher.Labels = new List<Label>();
             matcher.Insert(

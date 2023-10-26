@@ -34,7 +34,7 @@ public class OrbitalCollectorBatchBuild : BaseUnityPlugin
         var buildPreview = __instance.buildPreviews[0];
         /* Check if is collector station */
         if (!buildPreview.desc.isCollectStation) return;
-       
+
         var factory = __instance.factory;
         var stationPool = factory.transport.stationPool;
         var entityPool = factory.entityPool;
