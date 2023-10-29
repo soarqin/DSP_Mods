@@ -28,11 +28,16 @@ public static class UIConfigWindow
         I18N.Add("Enhanced count control for hand-make", "Enhanced count control for hand-make", "手动制造物品的数量控制改进");
         I18N.Add("Enhanced count control for hand-make tips", "Maximum count is increased to 1000.\nHold Ctrl/Shift/Alt to change the count rapidly.", "最大数量提升至1000\n按住Ctrl/Shift/Alt可快速改变数量");
         I18N.Add("Initialize This Planet", "Initialize this planet", "初始化本行星");
+        I18N.Add("Initialize This Planet Confirm", "This operation will destroy all buildings and revert terrains on this planet, are you sure?", "此操作将会摧毁本行星上的所有建筑并恢复地形，确定吗？");
         I18N.Add("Dismantle All Buildings", "Dismantle all buildings", "拆除所有建筑");
+        I18N.Add("Dismantle All Buildings Confirm", "This operation will dismantle all buildings on this planet, are you sure?", "此操作将会拆除本行星上的所有建筑，确定吗？");
         I18N.Add("Stop ejectors when available nodes are all filled up", "Stop ejectors when available nodes are all filled up", "可用节点全部造完时停止弹射");
         I18N.Add("Construct only nodes but frames", "Construct only nodes but frames", "只造节点不造框架");
         I18N.Add("Initialize Dyson Sphere", "Initialize Dyson Sphere", "初始化戴森球");
+        I18N.Add("Initialize Dyson Sphere Confirm", "This operation will destroy all layers on this dyson sphere, are you sure?", "此操作将会摧毁戴森球上的所有层级，确定吗？");
         I18N.Add("Click to dismantle selected layer", "Click to dismantle selected layer", "点击拆除对应的戴森壳");
+        I18N.Add("Dismantle selected layer", "Dismantle selected layer", "拆除选中的戴森壳");
+        I18N.Add("Dismantle selected layer Confirm", "This operation will dismantle selected layer, are you sure?", "此操作将会拆除选中的戴森壳，确定吗？");
         I18N.Apply();
         MyConfigWindow.OnUICreated += CreateUI;
         MyConfigWindow.OnUpdateUI += UpdateUI;
@@ -74,9 +79,19 @@ public static class UIConfigWindow
         MyWindow.AddTipsButton(x, y, tab2, "Enhanced count control for hand-make", "Enhanced count control for hand-make tips", "enhanced-count-control-tips");
         x = 400f;
         y = 10f;
-        wnd.AddButton(x, y, tab2, "Initialize This Planet", 16, "button-init-planet", () => { PlanetFunctions.RecreatePlanet(true); });
+        wnd.AddButton(x, y, tab2, "Initialize This Planet", 16, "button-init-planet", () =>
+            UIMessageBox.Show("Initialize This Planet".Translate(), "Initialize This Planet Confirm".Translate(), "取消".Translate(), "确定".Translate(), 2, null, new UIMessageBox.Response(() =>
+            {
+                PlanetFunctions.RecreatePlanet(true);
+            }))
+        );
         y += 36f;
-        wnd.AddButton(x, y, tab2, "Dismantle All Buildings", 16, "button-dismantle-all", () => { PlanetFunctions.DismantleAll(false); });
+        wnd.AddButton(x, y, tab2, "Dismantle All Buildings", 16, "button-dismantle-all", () =>
+            UIMessageBox.Show("Dismantle All Buildings".Translate(), "Dismantle All Buildings Confirm".Translate(), "取消".Translate(), "确定".Translate(), 2, null, new UIMessageBox.Response(() =>
+            {
+                PlanetFunctions.DismantleAll(false);
+            }))
+        );
 
         var tab3 = wnd.AddTab(trans, "Dyson Sphere");
         x = 0f;
@@ -86,14 +101,24 @@ public static class UIConfigWindow
         MyCheckBox.CreateCheckBox(x, y, tab3, DysonSpherePatch.OnlyConstructNodesEnabled, "Construct only nodes but frames");
         x = 400f;
         y = 10f;
-        wnd.AddButton(x, y, tab3, "Initialize Dyson Sphere", 16, "init-dyson-sphere", () => { DysonSpherePatch.InitCurrentDysonSphere(-1); });
+        wnd.AddButton(x, y, tab3, "Initialize Dyson Sphere", 16, "init-dyson-sphere", () =>
+            UIMessageBox.Show("Initialize Dyson Sphere".Translate(), "Initialize Dyson Sphere Confirm".Translate(), "取消".Translate(), "确定".Translate(), 2, null, new UIMessageBox.Response(() =>
+            {
+                DysonSpherePatch.InitCurrentDysonSphere(-1);
+            }))
+        );
         y += 36f;
         MyWindow.AddText(x, y, tab3, "Click to dismantle selected layer", 16, "text-dismantle-layer");
         y += 26f;
         for (var i = 0; i < 10; i++)
         {
             var id = i + 1;
-            var btn = wnd.AddFlatButton(x, y, tab3, id.ToString(), 12, "dismantle-layer-" + id, () => { DysonSpherePatch.InitCurrentDysonSphere(id); });
+            var btn = wnd.AddFlatButton(x, y, tab3, id.ToString(), 12, "dismantle-layer-" + id, () =>
+                UIMessageBox.Show("Dismantle selected layer".Translate(), "Dismantle selected layer Confirm".Translate(), "取消".Translate(), "确定".Translate(), 2, null, new UIMessageBox.Response(() =>
+                {
+                    DysonSpherePatch.InitCurrentDysonSphere(id);
+                }))
+            );
             ((RectTransform)btn.transform).sizeDelta = new Vector2(40f, 20f);
             DysonLayerBtn[i] = btn;
             if (i == 4)

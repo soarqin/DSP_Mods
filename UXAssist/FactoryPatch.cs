@@ -51,8 +51,19 @@ public static class FactoryPatch
 
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(ConnGizmoGraph), MethodType.Constructor)]
-    [HarmonyPatch(typeof(ConnGizmoGraph), nameof(ConnGizmoGraph.SetPointCount))]
     private static IEnumerable<CodeInstruction> ConnGizmoGraph_Constructor_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+    {
+        var matcher = new CodeMatcher(instructions, generator);
+        matcher.MatchForward(false,
+            new CodeMatch(ci => ci.opcode == OpCodes.Ldc_I4 && ci.OperandIs(256))
+        );
+        matcher.Repeat(m => m.SetAndAdvance(OpCodes.Ldc_I4, 2048));
+        return matcher.InstructionEnumeration();
+    }
+
+    [HarmonyTranspiler]
+    [HarmonyPatch(typeof(ConnGizmoGraph), nameof(ConnGizmoGraph.SetPointCount))]
+    private static IEnumerable<CodeInstruction> ConnGizmoGraph_SetPointCount_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
     {
         var matcher = new CodeMatcher(instructions, generator);
         matcher.MatchForward(false,
