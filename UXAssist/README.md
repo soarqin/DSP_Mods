@@ -4,6 +4,10 @@
 #### 一些提升用户体验的功能和补丁
 
 ## Changlog
+* 1.0.3
+  + Add confirmation popup for `Re-intialize planet`, `Quick dismantle all buildings`, `Re-initialize Dyson Spheres` and `Quick dismantle Dyson Shells`.
+  + Fix error on `Remove build count and range limit` when building a large amount of belts.
+  + Fix an issue that windows position not saved correctly when quit game without using in-game menu.
 * 1.0.2
   + Redesign config tabs, for clearer layout.
   + Add 2 new options: 
@@ -56,6 +60,10 @@
 * [LSTM](https://github.com/hetima/DSP_LSTM) & [PlanetFinder](https://github.com/hetima/DSP_PlanetFinder): UI implementations
 
 ## 更新日志
+* 1.0.3
+  + 为`初始化行星`，`快速拆除所有建筑`，`初始化戴森球`和`快速拆除戴森壳`添加了确认弹窗
+  + 修复了`移除建造数量和范围限制`在建造大量传送带时可能导致的错误
+  + 修复了在不使用游戏内菜单退出游戏时窗口位置无法正确保存的问题
 * 1.0.2
   + 重新设计了配置面板，使布局更清晰
   + 添加了两个新选项：
