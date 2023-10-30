@@ -80,14 +80,19 @@ public class MyWindow: ManualBehaviour
         btn.UpdateTip();
         return btn;
     }
-    
+
     public UIButton AddButton(float x, float y, RectTransform parent, string text = "", int fontSize = 16, string objName = "button", UnityAction onClick = null)
+    {
+        return AddButton(x, y, 150f, parent, text, fontSize, objName, onClick);
+    }
+
+    public UIButton AddButton(float x, float y, float width, RectTransform parent, string text = "", int fontSize = 16, string objName = "button", UnityAction onClick = null)
     {
         var panel = UIRoot.instance.uiGame.statWindow.performancePanelUI;
         var btn = Instantiate(panel.cpuActiveButton);
         btn.gameObject.name = objName;
         var rect = Util.NormalizeRectWithTopLeft(btn, x, y, parent);
-        rect.sizeDelta = new Vector2(150, rect.sizeDelta.y);
+        rect.sizeDelta = new Vector2(width, rect.sizeDelta.y);
         var l = btn.gameObject.transform.Find("button-text").GetComponent<Localizer>();
         var t = btn.gameObject.transform.Find("button-text").GetComponent<Text>();
         if (l != null)

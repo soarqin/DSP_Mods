@@ -5,6 +5,7 @@
 
 ## Changlog
 * 1.0.3
+  + Add new function: `Quick build Orbital Collectors`. 
   + Add confirmation popup for `Re-intialize planet`, `Quick dismantle all buildings`, `Re-initialize Dyson Spheres` and `Quick dismantle Dyson Shells`.
   + Fix error on `Remove build count and range limit` when building a large amount of belts.
   + Fix an issue that windows position not saved correctly when quit game without using in-game menu.
@@ -43,6 +44,7 @@
     - Enhanced count control for hand-make
     - Re-intialize planet (without reseting veins)
     - Quick dismantle all buildings (without drops)
+    - Quick build Orbital Collectors
   + Dyson Sphere
     - Stop ejectors when available nodes are all filled up
     - Construct only nodes but frames
@@ -61,6 +63,7 @@
 
 ## 更新日志
 * 1.0.3
+  + 添加了新功能：`快速建造轨道采集器`
   + 为`初始化行星`，`快速拆除所有建筑`，`初始化戴森球`和`快速拆除戴森壳`添加了确认弹窗
   + 修复了`移除建造数量和范围限制`在建造大量传送带时可能导致的错误
   + 修复了在不使用游戏内菜单退出游戏时窗口位置无法正确保存的问题
@@ -99,6 +102,7 @@
     - 手动制造物品的数量控制改进
     - 初始化本行星（不重置矿脉）
     - 快速拆除所有建筑（不掉落）
+    - 快速建造轨道采集器
   + 戴森球
     - 可用节点全部造完时停止弹射
     - 只建造节点不建造框架

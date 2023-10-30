@@ -4,6 +4,8 @@
 #### 添加一些作弊功能，同时屏蔽异常检测
 
 ## Changlog
+* 2.3.6
+  + Fix a issue in `Finish build immediately` that some buildings are not finished immediately. 
 * 2.3.5
   + Fix another crash in `Skip bullet period`.
 * 2.3.4
@@ -108,6 +110,8 @@
 * [Multifunction_mod](https://github.com/blacksnipebiu/Multifunction_mod): Some cheat functions
 
 ## 更新日志
+* 2.3.6
+  + 修复了`建造秒完成`可能导致部分建筑无法立即完成的问题
 * 2.3.5
   + 修复了`跳过子弹阶段`可能导致崩溃的问题
 * 2.3.4

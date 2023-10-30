@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using UXAssist.UI;
 using UXAssist.Common;
 
@@ -31,6 +32,9 @@ public static class UIConfigWindow
         I18N.Add("Initialize This Planet Confirm", "This operation will destroy all buildings and revert terrains on this planet, are you sure?", "此操作将会摧毁本行星上的所有建筑并恢复地形，确定吗？");
         I18N.Add("Dismantle All Buildings", "Dismantle all buildings", "拆除所有建筑");
         I18N.Add("Dismantle All Buildings Confirm", "This operation will dismantle all buildings on this planet, are you sure?", "此操作将会拆除本行星上的所有建筑，确定吗？");
+        I18N.Add("Quick build Orbital Collectors", "Quick build Orbital Collectors", "快速建造轨道采集器");
+        I18N.Add("Maximum count to build", "Maximum count to build", "最大建造数量");
+        I18N.Add("max", "max", "最大");
         I18N.Add("Stop ejectors when available nodes are all filled up", "Stop ejectors when available nodes are all filled up", "可用节点全部造完时停止弹射");
         I18N.Add("Construct only nodes but frames", "Construct only nodes but frames", "只造节点不造框架");
         I18N.Add("Initialize Dyson Sphere", "Initialize Dyson Sphere", "初始化戴森球");
@@ -92,6 +96,26 @@ public static class UIConfigWindow
                 PlanetFunctions.DismantleAll(false);
             }))
         );
+
+        y += 72f;
+        wnd.AddButton(x, y, 200, tab2, "Quick build Orbital Collectors", 16, "button-init-planet", PlanetFunctions.BuildOrbitalCollectors);
+        x += 10f;
+        y += 30f;
+        MyWindow.AddText(x, y, tab2, "Maximum count to build", 16, "text-oc-build-count");
+        y += 26f;
+        var sl0 = MySlider.CreateSlider(x, y, tab2, PlanetFunctions.OrbitalCollectorMaxBuildCount.Value, 0f, 40f, "G", 200f);
+        if (PlanetFunctions.OrbitalCollectorMaxBuildCount.Value == 0)
+        {
+            sl0.SetLabelText("max".Translate());
+        }
+        sl0.OnValueChanged += () =>
+        {
+            PlanetFunctions.OrbitalCollectorMaxBuildCount.Value = Mathf.RoundToInt(sl0.Value);
+            if (PlanetFunctions.OrbitalCollectorMaxBuildCount.Value == 0)
+            {
+                sl0.SetLabelText("max".Translate());
+            }
+        };
 
         var tab3 = wnd.AddTab(trans, "Dyson Sphere");
         x = 0f;

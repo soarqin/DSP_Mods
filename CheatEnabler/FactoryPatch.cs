@@ -181,6 +181,17 @@ public static class FactoryPatch
             );
             return matcher.InstructionEnumeration();
         }
+        
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(UXAssist.PlanetFunctions), nameof(UXAssist.PlanetFunctions.BuildOrbitalCollectors))]
+        private static void UXAssist_PlanetFunctions_BuildOrbitalCollectors_Postfix()
+        {
+            var factory = GameMain.mainPlayer?.factory;
+            if (factory != null)
+            {
+                ArrivePlanet(factory);
+            }
+        }
     }
 
     private static class ArchitectMode
