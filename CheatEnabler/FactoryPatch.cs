@@ -572,35 +572,23 @@ public static class FactoryPatch
         }
 
         [HarmonyPostfix]
-        [HarmonyPatch(typeof(UXAssist.PlanetFunctions), nameof(UXAssist.PlanetFunctions.RecreatePlanet))]
-        private static void UXAssist_PlanetFunctions_RecreatePlanet_Postfix()
-        {
-            var player = GameMain.mainPlayer;
-            if (player == null) return;
-            var factory = GameMain.localPlanet?.factory;
-            if (factory == null) return;
-            if (BeltSignalGeneratorEnabled.Value)
-            {
-                RemovePlanetSignalBelts(factory.index);
-            }
-        }
-
-        [HarmonyPostfix]
         [HarmonyPatch(typeof(GameMain), nameof(GameMain.Begin))]
         private static void GameMain_Begin_Postfix()
         {
             if (BeltSignalGeneratorEnabled.Value) InitSignalBelts();
             InitItemSources();
         }
-
+    
         [HarmonyPostfix]
-        [HarmonyPatch(typeof(PlanetFactory), nameof(PlanetFactory.Init))]
-        private static void PlanetFactory_Init_Postfix(PlanetFactory __instance)
+        [HarmonyPatch(typeof(DigitalSystem), MethodType.Constructor, typeof(PlanetData))]
+        private static void DigitalSystem_Constructor_Postfix(PlanetData _planet)
         {
-            if (BeltSignalGeneratorEnabled.Value)
-            {
-                RemovePlanetSignalBelts(__instance.index);
-            }
+            if (!BeltSignalGeneratorEnabled.Value) return; 
+            var player = GameMain.mainPlayer;
+            if (player == null) return;
+            var factory = _planet?.factory;
+            if (factory == null) return;
+            RemovePlanetSignalBelts(factory.index);
         }
 
         [HarmonyPrefix]
@@ -735,6 +723,7 @@ public static class FactoryPatch
                             var beltId = pair.Key;
                             ref var belt = ref cargoTraffic.beltPool[beltId];
                             var cargoPath = cargoTraffic.GetCargoPath(belt.segPathId);
+                            if (cargoPath == null) continue;
                             int itemId;
                             if ((itemId = cargoPath.TryPickItem(belt.segIndex + belt.segPivotOffset - 5, 12, out var stack, out _)) > 0)
                             {
@@ -749,6 +738,7 @@ public static class FactoryPatch
                             var beltId = pair.Key;
                             ref var belt = ref cargoTraffic.beltPool[beltId];
                             var cargoPath = cargoTraffic.GetCargoPath(belt.segPathId);
+                            if (cargoPath == null) continue;
                             var segIndex = belt.segIndex + belt.segPivotOffset;
                             if (!cargoPath.GetCargoAtIndex(segIndex, out var cargo, out var cargoId, out var _)) break;
                             var itemId = cargo.item;
@@ -759,7 +749,9 @@ public static class FactoryPatch
                             {
                                 var cargoTraffic1 = factories[(int)(n >> 32)].cargoTraffic;
                                 ref var belt1 = ref cargoTraffic1.beltPool[(int)(n & 0x7FFFFFFF)];
-                                if (!cargoTraffic1.GetCargoPath(belt1.segPathId).TryInsertItem(belt1.segIndex + belt1.segPivotOffset, itemId, stack, inc)) continue;
+                                cargoPath = cargoTraffic1.GetCargoPath(belt1.segPathId);
+                                if (cargoPath == null) continue;
+                                if (!cargoPath.TryInsertItem(belt1.segIndex + belt1.segPivotOffset, itemId, stack, inc)) continue;
                                 cargoPath.TryPickItem(segIndex - 5, 12, out var stack1, out var inc1);
                                 if (inc1 != inc || stack1 != stack)
                                     cargoPath.TryPickItem(segIndex - 5, 12, out _, out _);
@@ -779,9 +771,11 @@ public static class FactoryPatch
 
                             var beltId = pair.Key;
                             ref var belt = ref cargoTraffic.beltPool[beltId];
+                            var cargoPath = cargoTraffic.GetCargoPath(belt.segPathId);
+                            if (cargoPath == null) continue;
                             var stack = beltSignal.Stack;
                             var inc = beltSignal.Inc;
-                            if (!cargoTraffic.GetCargoPath(belt.segPathId).TryInsertItem(belt.segIndex + belt.segPivotOffset, signalId, stack, inc)) continue;
+                            if (!cargoPath.TryInsertItem(belt.segIndex + belt.segPivotOffset, signalId, stack, inc)) continue;
                             productRegister[signalId] += stack;
                             if (!countRecipe) continue;
                             var sources = beltSignal.Sources;

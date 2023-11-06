@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using BepInEx;
 using crecheng.DSPModSave;
-using HarmonyLib;
 using NebulaAPI;
 
 namespace Dustbin;
@@ -20,7 +20,6 @@ public class Dustbin : BaseUnityPlugin, IModCanSave, IMultiplayerMod
     public new static readonly BepInEx.Logging.ManualLogSource Logger =
         BepInEx.Logging.Logger.CreateLogSource(PluginInfo.PLUGIN_NAME);
 
-    private bool _cfgEnabled = true;
     public static readonly int[] SandsFactors = new int[12001];
 
     public bool CheckVersion(string hostVersion, string clientVersion)
@@ -30,7 +29,9 @@ public class Dustbin : BaseUnityPlugin, IModCanSave, IMultiplayerMod
 
     private void Awake()
     {
-        _cfgEnabled = Config.Bind("General", "Enabled", _cfgEnabled, "enable/disable this plugin").Value;
+        var storageDustbin = Config.Bind("General", "StorageDustbin", true, "Can turn storages into dustbins").Value;
+        var tankDustbin = Config.Bind("General", "TankDustbin", true, "Can turn tanks into dustbins").Value;
+        var belgSignalDustbin = Config.Bind("General", "BeltSignalDustbin", true, "Add belt signal as dustbin").Value;
         var sandsFactorsStr = Config.Bind("General", "SandsFactors", "", "Sands get from different items\nFormat: id1:value1|id2:value2|...").Value;
         foreach (var s in sandsFactorsStr.Split('|'))
         {
@@ -40,22 +41,39 @@ public class Dustbin : BaseUnityPlugin, IModCanSave, IMultiplayerMod
             if (!int.TryParse(sp[1], out var factor)) continue;
             SandsFactors[id] = factor;
         }
-        Harmony.CreateAndPatchAll(typeof(Dustbin));
-        Harmony.CreateAndPatchAll(typeof(StoragePatch));
-        Harmony.CreateAndPatchAll(typeof(TankPatch));
+        if (storageDustbin) StoragePatch.Enable(true);
+        if (tankDustbin) TankPatch.Enable(true);
 
-        NebulaModAPI.RegisterPackets(Assembly.GetExecutingAssembly());
-        NebulaModAPI.OnPlanetLoadFinished += RequestPlanetDustbinData;
+        if (storageDustbin || tankDustbin)
+        {
+            NebulaModAPI.RegisterPackets(Assembly.GetExecutingAssembly());
+            NebulaModAPI.OnPlanetLoadFinished += RequestPlanetDustbinData;
+        }
+
+        if (belgSignalDustbin) BeltSignal.Enable(true);
     }
-
-    [HarmonyPrefix]
-    [HarmonyPatch(typeof(GameMain), "Start")]
-    private static void GameMain_Start_Prefix()
+    
+    private void OnDestroy()
     {
-        StoragePatch.Reset();
-        TankPatch.Reset();
+        TankPatch.Enable(false);
+        StoragePatch.Enable(false);
+        BeltSignal.Enable(false);
+        NebulaModAPI.OnPlanetLoadFinished -= RequestPlanetDustbinData;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int CalcGetSands(int itemId, int count)
+    {
+        var sandsPerItem = itemId <= 12000 ? Dustbin.SandsFactors[itemId] : 0;
+        if (sandsPerItem <= 0) return count;
+        var player = GameMain.mainPlayer;
+        var addCount = count * sandsPerItem;
+        player.sandCount += addCount;
+        GameMain.history.OnSandCountChange(player.sandCount, addCount);
+        return count;
+    }
+
+    #region IModSave 
     public void Export(BinaryWriter w)
     {
         w.Write(ModSaveVersion);
@@ -74,7 +92,9 @@ public class Dustbin : BaseUnityPlugin, IModCanSave, IMultiplayerMod
     public void IntoOtherSave()
     {
     }
+    #endregion
 
+    #region IMultiplayerMod
     public static byte[] ExportData(PlanetFactory factory)
     {
         var planetId = factory.planetId;
@@ -162,4 +182,5 @@ public class Dustbin : BaseUnityPlugin, IModCanSave, IMultiplayerMod
         if (NebulaModAPI.IsMultiplayerActive && NebulaModAPI.MultiplayerSession.LocalPlayer.IsClient)
             NebulaModAPI.MultiplayerSession.Network.SendPacket(new NebulaSupport.Packet.ToggleEvent(planetId, 0, false));
     }
+    #endregion
 }

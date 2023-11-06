@@ -1,5 +1,4 @@
 ﻿using System.IO;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 using HarmonyLib;
 using NebulaAPI;
@@ -11,6 +10,20 @@ public static class TankPatch
 {
     private static UI.MyCheckBox _tankDustbinCheckBox;
     private static int _lastTankId;
+    private static Harmony _patch;
+    
+    public static void Enable(bool on)
+    {
+        if (on)
+        {
+            _patch ??= Harmony.CreateAndPatchAll(typeof(TankPatch));
+        }
+        else
+        {
+            _patch?.UnpatchSelf();
+            _patch = null;
+        }
+    }
 
     public static void Reset()
     {
@@ -84,6 +97,13 @@ public static class TankPatch
                 }
             }
         }
+    }
+
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(GameMain), "Start")]
+    private static void GameMain_Start_Prefix()
+    {
+        Reset();
     }
 
     [HarmonyPostfix]

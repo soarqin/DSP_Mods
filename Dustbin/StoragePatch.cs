@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Reflection.Emit;
-using System.Runtime.CompilerServices;
 using HarmonyLib;
 using NebulaAPI;
 using UnityEngine;
@@ -13,6 +12,20 @@ public static class StoragePatch
 {
     private static UI.MyCheckBox _storageDustbinCheckBox;
     private static int _lastStorageId;
+    private static Harmony _patch;
+    
+    public static void Enable(bool on)
+    {
+        if (on)
+        {
+            _patch ??= Harmony.CreateAndPatchAll(typeof(StoragePatch));
+        }
+        else
+        {
+            _patch?.UnpatchSelf();
+            _patch = null;
+        }
+    }
 
     public static void Reset()
     {
@@ -82,6 +95,13 @@ public static class StoragePatch
         }
     }
 
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(GameMain), "Start")]
+    private static void GameMain_Start_Prefix()
+    {
+        Reset();
+    }
+
     [HarmonyPostfix]
     [HarmonyPatch(typeof(UIStorageWindow), "_OnCreate")]
     private static void UIStorageWindow__OnCreate_Postfix(UIStorageWindow __instance)
@@ -128,18 +148,6 @@ public static class StoragePatch
         _lastStorageId = 0; // Refresh UI to reposition button on client side
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int DustbinAddItem(int itemId, int count)
-    {
-        var sandsPerItem = itemId <= 12000 ? 0 : Dustbin.SandsFactors[itemId];
-        if (sandsPerItem <= 0) return count;
-        var player = GameMain.mainPlayer;
-        var addCount = count * sandsPerItem;
-        player.sandCount += addCount;
-        GameMain.history.OnSandCountChange(player.sandCount, addCount);
-        return count;
-    }
-
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(StorageComponent), "AddItem", new[] { typeof(int), typeof(int), typeof(int), typeof(int), typeof(bool) },
         new[] { ArgumentType.Normal, ArgumentType.Normal, ArgumentType.Normal, ArgumentType.Out, ArgumentType.Normal })]
@@ -155,7 +163,7 @@ public static class StoragePatch
             new CodeInstruction(OpCodes.Brfalse, label1),
             new CodeInstruction(OpCodes.Ldarg_1),
             new CodeInstruction(OpCodes.Ldarg_2),
-            new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(StoragePatch), nameof(StoragePatch.DustbinAddItem))),
+            new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(Dustbin), nameof(Dustbin.CalcGetSands))),
             new CodeInstruction(OpCodes.Ret)
         );
         matcher.Labels.Add(label1);
