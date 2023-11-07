@@ -5,7 +5,9 @@
 
 ## Changlog
 * 2.3.6
-  + Fix a issue in `Finish build immediately` that some buildings are not finished immediately. 
+  + Support for UXAssist's new function within `Finish build immediately`.
+  + Add a warning message when `Build without condition` is enabled.
+  + Fix a issue in `Finish build immediately` that some buildings are not finished immediately.
 * 2.3.5
   + Fix another crash in `Skip bullet period`.
 * 2.3.4
@@ -111,6 +113,8 @@
 
 ## 更新日志
 * 2.3.6
+  + 在`建造秒完成`中支持UXAssist的新功能
+  + 在启用`无条件建造`时添加警告信息
   + 修复了`建造秒完成`可能导致部分建筑无法立即完成的问题
 * 2.3.5
   + 修复了`跳过子弹阶段`可能导致崩溃的问题

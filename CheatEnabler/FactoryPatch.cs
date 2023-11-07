@@ -124,6 +124,66 @@ public static class FactoryPatch
         {
             ArrivePlanet(factory);
         }
+        GameMain.data?.warningSystem?.UpdateCriticalWarningText();
+    }
+
+    [HarmonyTranspiler]
+    [HarmonyPatch(typeof(WarningSystem), nameof(WarningSystem.hasCriticalWarning), MethodType.Getter)]
+    private static IEnumerable<CodeInstruction> WarningSystem_hasCriticalWarning_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+    {
+        var matcher = new CodeMatcher(instructions, generator);
+        matcher.End().MatchBack(false,
+            new CodeMatch(OpCodes.Ret)
+        );
+        matcher.InsertAndAdvance(
+            new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(FactoryPatch), nameof(NoConditionEnabled))),
+            new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(ConfigEntry<bool>), nameof(ConfigEntry<bool>.Value))),
+            new CodeInstruction(OpCodes.Or)
+        );
+        return matcher.InstructionEnumeration();
+    }
+
+    [HarmonyTranspiler]
+    [HarmonyPatch(typeof(WarningSystem), nameof(WarningSystem.UpdateCriticalWarningText))]
+    private static IEnumerable<CodeInstruction> WarningSystem_UpdateCriticalWarningText_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+    {
+        var matcher = new CodeMatcher(instructions, generator);
+        matcher.MatchForward(false,
+            new CodeMatch(OpCodes.Ldarg_0),
+            new CodeMatch(OpCodes.Ldstr),
+            new CodeMatch(OpCodes.Call, AccessTools.PropertySetter(typeof(WarningSystem), nameof(WarningSystem.criticalWarningTexts)))
+        );
+        matcher.Repeat(m =>
+        {
+            var label1 = generator.DefineLabel();
+            var label2 = generator.DefineLabel();
+            m.Advance(1).Labels.Add(label1);
+            m.InsertAndAdvance(
+                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(FactoryPatch), nameof(NoConditionEnabled))),
+                new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(ConfigEntry<bool>), nameof(ConfigEntry<bool>.Value))),
+                new CodeInstruction(OpCodes.Brfalse, label1),
+                new CodeInstruction(OpCodes.Ldstr, "Build without condition is enabled!"),
+                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(StringTranslate), nameof(StringTranslate.Translate), new[] { typeof(string) })),
+                new CodeInstruction(OpCodes.Ldstr, "\r\n"),
+                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(string), nameof(string.Concat), new[] { typeof(string), typeof(string) })),
+                new CodeInstruction(OpCodes.Call, AccessTools.PropertySetter(typeof(WarningSystem), nameof(WarningSystem.criticalWarningTexts)))
+            );
+            if (m.InstructionAt(2).opcode == OpCodes.Ret)
+            {
+                m.InsertAndAdvance(
+                    new CodeInstruction(OpCodes.Ldarg_0),
+                    new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(WarningSystem), nameof(WarningSystem.onCriticalWarningTextChanged))),
+                    new CodeInstruction(OpCodes.Brfalse_S, label2),
+                    new CodeInstruction(OpCodes.Ldarg_0),
+                    new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(WarningSystem), nameof(WarningSystem.onCriticalWarningTextChanged))),
+                    new CodeInstruction(OpCodes.Callvirt, AccessTools.Method(typeof(Action), nameof(Action.Invoke)))
+                );
+            }
+            m.InsertAndAdvance(
+                new CodeInstruction(OpCodes.Br, label2)
+            ).Advance(2).Labels.Add(label2);
+        });
+        return matcher.InstructionEnumeration();
     }
 
     private static class ImmediateBuild
@@ -262,6 +322,7 @@ public static class FactoryPatch
         private static Harmony _noConditionPatch;
         public static void Enable(bool on)
         {
+            GameMain.data?.warningSystem?.UpdateCriticalWarningText();
             if (on)
             {
                 _noConditionPatch ??= Harmony.CreateAndPatchAll(typeof(NoConditionBuild));
@@ -270,7 +331,7 @@ public static class FactoryPatch
             _noConditionPatch?.UnpatchSelf();
             _noConditionPatch = null;
         }
-        
+
         [HarmonyTranspiler, HarmonyPriority(Priority.Last)]
         [HarmonyPatch(typeof(BuildTool_Addon), nameof(BuildTool_Addon.CheckBuildConditions))]
         // [HarmonyPatch(typeof(BuildTool_Click), nameof(BuildTool_Click.CheckBuildConditions))]
