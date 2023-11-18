@@ -4,11 +4,14 @@
 #### 一些提升用户体验的功能和补丁
 
 ## Changlog
+* 1.0.4
+  + Add new function: `Off-grid building and stepped rotation`
+  + Fix an issue that window position not restored and can not be resized when function is enabled but game is started with different mod profiles.  
 * 1.0.3
   + Add new function: `Quick build Orbital Collectors`. 
   + Add confirmation popup for `Re-intialize planet`, `Quick dismantle all buildings`, `Re-initialize Dyson Spheres` and `Quick dismantle Dyson Shells`.
   + Fix error on `Remove build count and range limit` when building a large amount of belts.
-  + Fix an issue that windows position not saved correctly when quit game without using in-game menu.
+  + Fix an issue that window position not saved correctly when quit game without using in-game menu.
 * 1.0.2
   + Redesign config tabs, for clearer layout.
   + Add 2 new options: 
@@ -60,8 +63,12 @@
 * [Dyson Sphere Program](https://store.steampowered.com/app/1366540): The great game
 * [Multifunction_mod](https://github.com/blacksnipebiu/Multifunction_mod): Some cheat functions
 * [LSTM](https://github.com/hetima/DSP_LSTM) & [PlanetFinder](https://github.com/hetima/DSP_PlanetFinder): UI implementations
+* [OffGridConstruction](https://github.com/Velociraptor115-DSPModding/OffGridConstruction): Off-grid building & stepped rotation implementations
 
 ## 更新日志
+* 1.0.4
+  + 添加了新功能：`脱离网格建造和小角度旋转`
+  + 修复了当功能启用但游戏使用不同的mod配置文件启动时窗口位置无法正确恢复和不可拖动改变大小的问题
 * 1.0.3
   + 添加了新功能：`快速建造轨道采集器`
   + 为`初始化行星`，`快速拆除所有建筑`，`初始化戴森球`和`快速拆除戴森壳`添加了确认弹窗
@@ -118,3 +125,4 @@
 * [戴森球计划](https://store.steampowered.com/app/1366540): 伟大的游戏
 * [BepInEx](https://bepinex.dev/): 基础模组框架
 * [LSTM](https://github.com/hetima/DSP_LSTM) & [PlanetFinder](https://github.com/hetima/DSP_PlanetFinder): UI实现
+* [OffGridConstruction](https://github.com/Velociraptor115-DSPModding/OffGridConstruction): 脱离网格建造以及小角度旋转的实现

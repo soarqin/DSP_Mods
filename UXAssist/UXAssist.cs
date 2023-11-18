@@ -45,6 +45,8 @@ public class UXAssist : BaseUnityPlugin
             "Increase maximum area size for upgrade and dismantle to 31x31 (from 11x11)");
         FactoryPatch.LargerAreaForTerraformEnabled = Config.Bind("Factory", "LargerAreaForTerraform", false,
                 "Increase maximum area size for terraform to 30x30 (from 10x10)\nNote: this may impact game performance while using large area");
+        FactoryPatch.OffGridBuildingEnabled = Config.Bind("Factory", "OffGridBuilding", false,
+            "Enable off grid building and stepped rotation");
         PlanetFunctions.OrbitalCollectorMaxBuildCount = Config.Bind("Factory", "OCMaxBuildCount", 0, "Maximum Orbital Collectors to build once, set to 0 to build as many as possible");
         PlayerPatch.EnhancedMechaForgeCountControlEnabled = Config.Bind("Player", "EnhancedMechaForgeCountControl", false,
                 "Enhanced count control for hand-make, increases maximum of count to 1000, and you can hold Ctrl/Shift/Alt to change the count rapidly");

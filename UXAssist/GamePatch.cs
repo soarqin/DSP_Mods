@@ -60,15 +60,29 @@ public static class GamePatch
     private static class LoadLastWindowRect
     {
         private static Harmony _patch;
+        private static bool _loaded;
         public static void Enable(bool on)
         {
             if (on)
             {
                 _patch ??= Harmony.CreateAndPatchAll(typeof(LoadLastWindowRect));
+                MoveWindowPosition();
                 return;
             }
             _patch?.UnpatchSelf();
             _patch = null;
+        }
+
+        private static void MoveWindowPosition()
+        {
+            if (Screen.fullScreenMode is FullScreenMode.ExclusiveFullScreen or FullScreenMode.FullScreenWindow or FullScreenMode.MaximizedWindow || GameMain.isRunning) return;
+            var wnd = WinApi.FindWindow(GameWindowClass, GameWindowTitle);
+            if (wnd == IntPtr.Zero) return;
+            var rect = LastWindowRect.Value;
+            if (rect.z == 0f && rect.w == 0f) return;
+            var x = Mathf.RoundToInt(rect.x);
+            var y = Mathf.RoundToInt(rect.y);
+            WinApi.SetWindowPos(wnd, IntPtr.Zero, x, y, 0, 0, 0x0235);
         }
 
         [HarmonyPrefix]
@@ -83,17 +97,29 @@ public static class GamePatch
             width = w;
             height = h;
         }
-
+        
         [HarmonyPostfix]
         [HarmonyPatch(typeof(Screen), nameof(Screen.SetResolution), typeof(int), typeof(int), typeof(FullScreenMode), typeof(int))]
-        private static void Screen_SetResolution_Postfix()
+        private static void Screen_SetResolution_Postfix(FullScreenMode fullscreenMode)
         {
+            MoveWindowPosition();
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(VFPreload), "InvokeOnLoadWorkEnded")]
+        private static void VFPreload_InvokeOnLoadWorkEnded_Postfix()
+        {
+            if (_loaded || Screen.fullScreenMode is FullScreenMode.ExclusiveFullScreen or FullScreenMode.FullScreenWindow or FullScreenMode.MaximizedWindow) return;
+            _loaded = true;
             var wnd = WinApi.FindWindow(GameWindowClass, GameWindowTitle);
             if (wnd == IntPtr.Zero) return;
             var rect = LastWindowRect.Value;
             if (rect.z == 0f && rect.w == 0f) return;
             var x = Mathf.RoundToInt(rect.x);
             var y = Mathf.RoundToInt(rect.y);
+            var w = Mathf.RoundToInt(rect.z);
+            var h = Mathf.RoundToInt(rect.w);
+            Screen.SetResolution(w, h, false);
             WinApi.SetWindowPos(wnd, IntPtr.Zero, x, y, 0, 0, 0x0235);
             if (EnableWindowResizeEnabled.Value)
                 WinApi.SetWindowLong(wnd, (int)WindowLongFlags.GWL_STYLE,
