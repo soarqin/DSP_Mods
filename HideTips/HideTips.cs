@@ -48,6 +48,13 @@ public class HideTips : BaseUnityPlugin
         _patch?.UnpatchSelf();
         _patch = null;
     }
+        
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(VFPreload), nameof(VFPreload.Start))]
+    private static void VFPreload_Start_Prefix(VFPreload __instance)
+    {
+        __instance.splashTime = -0.3f;
+    }
 
     [HarmonyPostfix]
     [HarmonyPatch(typeof(UIBuildMenu), "_OnCreate")]
