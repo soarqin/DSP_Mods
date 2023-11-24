@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Reflection.Emit;
 using BepInEx;
 using BepInEx.Configuration;
@@ -237,5 +238,40 @@ public class UXAssist : BaseUnityPlugin
             new CodeInstruction(OpCodes.Callvirt, AccessTools.Method(typeof(Transform), nameof(Transform.SetAsLastSibling)))
         );
         return matcher.InstructionEnumeration();
+    }
+
+    [HarmonyPostfix]
+    [HarmonyPatch(typeof(BlueprintUtils), nameof(BlueprintUtils.GenerateBlueprintData))]
+    private static void BlueprintUtils_GenerateBlueprintData_Postfix(BlueprintData _blueprintData)
+    {
+        var buildings = _blueprintData.buildings;
+        Array.Sort(buildings, (a, b) =>
+        {
+            var tmpItemId = a.itemId - b.itemId;
+            if(tmpItemId != 0)
+                return tmpItemId;
+
+            var tmpModelIndex = a.modelIndex - b.modelIndex;
+            if(tmpModelIndex != 0)
+                return tmpModelIndex;
+
+            var tmpRecipeId = a.recipeId - b.recipeId;
+            if(tmpRecipeId != 0)
+                return tmpRecipeId;
+
+            var tmpAreaIndex = a.areaIndex - b.areaIndex;
+            if(tmpAreaIndex != 0)
+                return tmpAreaIndex;
+
+            const double ky = 256.0;
+            const double kx = 1024.0;
+            var scorePosA = (a.localOffset_y * ky + a.localOffset_x) * kx + a.localOffset_z;
+            var scorePosB = (b.localOffset_y * ky + b.localOffset_x) * kx + b.localOffset_z;
+            return scorePosA < scorePosB ? 1 : -1;
+        });
+        for (var i = buildings.Length - 1; i >= 0; i--)
+        {
+            buildings[i].index = i;
+        }
     }
 }
