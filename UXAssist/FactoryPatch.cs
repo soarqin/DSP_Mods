@@ -89,6 +89,17 @@ public static class FactoryPatch
         return matcher.InstructionEnumeration();
     }
 
+    [HarmonyTranspiler, HarmonyPatch(typeof(BuildTool_Reform), MethodType.Constructor)]
+    private static IEnumerable<CodeInstruction> BuildTool_Reform_Constructor_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+    {
+        var matcher = new CodeMatcher(instructions, generator);
+        matcher.MatchForward(false,
+            new CodeMatch(ci => ci.opcode == OpCodes.Ldc_I4_S && ci.OperandIs(100))
+        );
+        matcher.Repeat(m => m.SetAndAdvance(OpCodes.Ldc_I4, 900));
+        return matcher.InstructionEnumeration();
+    }
+
     public static class NightLight
     {
         private static Harmony _patch;
@@ -493,17 +504,6 @@ public static class FactoryPatch
 
             _patch?.UnpatchSelf();
             _patch = null;
-        }
-
-        [HarmonyTranspiler, HarmonyPatch(typeof(BuildTool_Reform), MethodType.Constructor)]
-        private static IEnumerable<CodeInstruction> BuildTool_Reform_Constructor_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
-        {
-            var matcher = new CodeMatcher(instructions, generator);
-            matcher.MatchForward(false,
-                new CodeMatch(ci => ci.opcode == OpCodes.Ldc_I4_S && ci.OperandIs(100))
-            );
-            matcher.Repeat(m => m.SetAndAdvance(OpCodes.Ldc_I4, 900));
-            return matcher.InstructionEnumeration();
         }
 
         [HarmonyTranspiler, HarmonyPatch(typeof(BuildTool_Reform), nameof(BuildTool_Reform.ReformAction))]
