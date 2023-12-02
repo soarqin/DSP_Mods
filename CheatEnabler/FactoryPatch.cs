@@ -540,6 +540,8 @@ public static class FactoryPatch
                 inc = 0;
                 speedLimit = number;
             }
+            
+            if (speedLimit > 3600) speedLimit = 3600;
 
             var signalBelts = GetOrCreateSignalBelts(factory);
             if (signalBelts.TryGetValue(beltId, out var oldBeltSignal))
@@ -823,11 +825,18 @@ public static class FactoryPatch
                         }
                         case >= 1000 and < 20000:
                         {
-                            if (beltSignal.SpeedLimit > 0)
+                            var hasSpeedLimit = beltSignal.SpeedLimit > 0;
+                            if (hasSpeedLimit)
                             {
                                 beltSignal.Progress += beltSignal.SpeedLimit;
-                                if (beltSignal.Progress < 3600) continue;
-                                beltSignal.Progress %= 3600;
+                                switch (beltSignal.Progress)
+                                {
+                                    case < 3600:
+                                        continue;
+                                    case > 18000:
+                                        beltSignal.Progress = 14400;
+                                        break;
+                                }
                             }
 
                             var beltId = pair.Key;
@@ -837,6 +846,7 @@ public static class FactoryPatch
                             var stack = beltSignal.Stack;
                             var inc = beltSignal.Inc;
                             if (!cargoPath.TryInsertItem(belt.segIndex + belt.segPivotOffset, signalId, stack, inc)) continue;
+                            if (hasSpeedLimit) beltSignal.Progress -= 3600;
                             productRegister[signalId] += stack;
                             if (!countRecipe) continue;
                             var sources = beltSignal.Sources;
