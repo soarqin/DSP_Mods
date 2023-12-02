@@ -66,6 +66,51 @@ public static class GamePatch
             if (on)
             {
                 _patch ??= Harmony.CreateAndPatchAll(typeof(LoadLastWindowRect));
+                if (Screen.fullScreenMode is not (FullScreenMode.ExclusiveFullScreen or FullScreenMode.FullScreenWindow or FullScreenMode.MaximizedWindow))
+                {
+                    var rect = LastWindowRect.Value;
+                    var x = Mathf.RoundToInt(rect.x);
+                    var y = Mathf.RoundToInt(rect.y);
+                    var w = Mathf.RoundToInt(rect.z);
+                    var h = Mathf.RoundToInt(rect.w);
+                    var needFix = false;
+                    if (w < 100)
+                    {
+                        w = 1280;
+                        needFix = true;
+                    }
+                    if (h < 100)
+                    {
+                        h = 720;
+                        needFix = true;
+                    }
+                    var sw = Screen.currentResolution.width;
+                    var sh = Screen.currentResolution.height;
+                    if (x + w > sw)
+                    {
+                        x = sw - w;
+                        needFix = true;
+                    }
+                    if (y + h > sh)
+                    {
+                        y = sh - h;
+                        needFix = true;
+                    }
+                    if (x < 0)
+                    {
+                        x = 0;
+                        needFix = true;
+                    }
+                    if (y < 0)
+                    {
+                        y = 0;
+                        needFix = true;
+                    }
+                    if (needFix)
+                    {
+                        LastWindowRect.Value = new Vector4(x, y, w, h);
+                    }
+                }
                 MoveWindowPosition();
                 return;
             }
