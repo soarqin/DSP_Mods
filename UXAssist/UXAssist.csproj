@@ -9,6 +9,7 @@
     <LangVersion>latest</LangVersion>
     <PackageId>UXAssist</PackageId>
     <RootNamespace>UXAssist</RootNamespace>
+    <RestoreAdditionalProjectSources>https://nuget.bepinex.dev/v3/index.json</RestoreAdditionalProjectSources>
   </PropertyGroup>
 
   <ItemGroup>
