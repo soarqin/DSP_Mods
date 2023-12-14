@@ -18,7 +18,7 @@ public class Patch : BaseUnityPlugin, IModCanSave
         BepInEx.Logging.Logger.CreateLogSource(PluginInfo.PLUGIN_NAME);
 
     private const ushort SaveVersion = 1;
-    private static bool _initialized = false;
+    private static bool _initialized;
     public static Cfg Cfg = new();
     private static Cfg _oldCfg;
 

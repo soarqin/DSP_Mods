@@ -91,7 +91,10 @@ public class LogisticMiner : BaseUnityPlugin
     {
         _miningSpeedScaleByTech = GameMain.history.miningSpeedScale;
         _miningSpeedScaleLong = (long)(_miningSpeedScaleByTech * 100);
-        _miningFrames = 120f / _miningSpeedScaleByTech;
+        lock (PlanetVeinCacheData)
+        {
+            _miningFrames = 120f / _miningSpeedScaleByTech;
+        }
     }
 
     [HarmonyPostfix]

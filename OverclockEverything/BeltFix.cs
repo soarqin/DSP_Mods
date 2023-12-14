@@ -58,7 +58,7 @@ public static class BeltFix
     [HarmonyPatch(typeof(ConnGizmoRenderer), "Update")]
     public static IEnumerable<CodeInstruction> ConnGizmoRenderer_Update_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
     {
-        bool lastIsLdcI4_3 = false;
+        var lastIsLdcI4_3 = false;
         foreach (var instr in instructions)
         {
             if (lastIsLdcI4_3)

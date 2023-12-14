@@ -20,7 +20,7 @@ public class Dustbin : BaseUnityPlugin, IModCanSave, IMultiplayerMod
     public new static readonly BepInEx.Logging.ManualLogSource Logger =
         BepInEx.Logging.Logger.CreateLogSource(PluginInfo.PLUGIN_NAME);
 
-    public static readonly int[] SandsFactors = new int[12001];
+    private static readonly int[] SandsFactors = new int[12001];
 
     public bool CheckVersion(string hostVersion, string clientVersion)
     {

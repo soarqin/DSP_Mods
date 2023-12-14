@@ -13,7 +13,7 @@ public class OrbitalCollectorBatchBuild : BaseUnityPlugin
 
     private bool _cfgEnabled = true;
     private static int _maxBuildCount;
-    private static bool _instantBuild = false;
+    private static bool _instantBuild;
 
     private void Awake()
     {

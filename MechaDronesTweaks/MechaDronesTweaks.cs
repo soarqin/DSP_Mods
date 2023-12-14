@@ -65,8 +65,8 @@ public class MechaDronesTweaksPlugin : BaseUnityPlugin
 
 public static class MechaDronesTweaks
 {
-    public static bool UseFixedSpeed = false;
-    public static bool SkipStage1 = false;
+    public static bool UseFixedSpeed;
+    public static bool SkipStage1;
     public static bool RemoveSpeedLimitForStage1 = true;
     public static float FixedSpeed = 300f;
     public static float SpeedMultiplier = 4f;
