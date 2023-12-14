@@ -86,17 +86,17 @@ public static class UIConfigWindow
         x = 400f;
         y = 10f;
         wnd.AddButton(x, y, tab2, "Initialize This Planet", 16, "button-init-planet", () =>
-            UIMessageBox.Show("Initialize This Planet".Translate(), "Initialize This Planet Confirm".Translate(), "取消".Translate(), "确定".Translate(), 2, null, new UIMessageBox.Response(() =>
+            UIMessageBox.Show("Initialize This Planet".Translate(), "Initialize This Planet Confirm".Translate(), "取消".Translate(), "确定".Translate(), 2, null, () =>
             {
                 PlanetFunctions.RecreatePlanet(true);
-            }))
+            })
         );
         y += 36f;
         wnd.AddButton(x, y, tab2, "Dismantle All Buildings", 16, "button-dismantle-all", () =>
-            UIMessageBox.Show("Dismantle All Buildings".Translate(), "Dismantle All Buildings Confirm".Translate(), "取消".Translate(), "确定".Translate(), 2, null, new UIMessageBox.Response(() =>
+            UIMessageBox.Show("Dismantle All Buildings".Translate(), "Dismantle All Buildings Confirm".Translate(), "取消".Translate(), "确定".Translate(), 2, null, () =>
             {
                 PlanetFunctions.DismantleAll(false);
-            }))
+            })
         );
 
         y += 72f;
@@ -128,10 +128,10 @@ public static class UIConfigWindow
         x = 400f;
         y = 10f;
         wnd.AddButton(x, y, tab3, "Initialize Dyson Sphere", 16, "init-dyson-sphere", () =>
-            UIMessageBox.Show("Initialize Dyson Sphere".Translate(), "Initialize Dyson Sphere Confirm".Translate(), "取消".Translate(), "确定".Translate(), 2, null, new UIMessageBox.Response(() =>
+            UIMessageBox.Show("Initialize Dyson Sphere".Translate(), "Initialize Dyson Sphere Confirm".Translate(), "取消".Translate(), "确定".Translate(), 2, null, () =>
             {
                 DysonSpherePatch.InitCurrentDysonSphere(-1);
-            }))
+            })
         );
         y += 36f;
         MyWindow.AddText(x, y, tab3, "Click to dismantle selected layer", 16, "text-dismantle-layer");
@@ -140,10 +140,10 @@ public static class UIConfigWindow
         {
             var id = i + 1;
             var btn = wnd.AddFlatButton(x, y, tab3, id.ToString(), 12, "dismantle-layer-" + id, () =>
-                UIMessageBox.Show("Dismantle selected layer".Translate(), "Dismantle selected layer Confirm".Translate(), "取消".Translate(), "确定".Translate(), 2, null, new UIMessageBox.Response(() =>
+                UIMessageBox.Show("Dismantle selected layer".Translate(), "Dismantle selected layer Confirm".Translate(), "取消".Translate(), "确定".Translate(), 2, null, () =>
                 {
                     DysonSpherePatch.InitCurrentDysonSphere(id);
-                }))
+                })
             );
             ((RectTransform)btn.transform).sizeDelta = new Vector2(40f, 20f);
             DysonLayerBtn[i] = btn;

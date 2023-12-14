@@ -114,8 +114,8 @@ public static class BirthPlanetPatch
             theme.VeinOpacity[3] = 1f;
         }
 
-        List<int> veins = new();
-        List<float> settings = new();
+        List<int> veins = [];
+        List<float> settings = [];
         if (FireIceOnBirthPlanet.Value)
         {
             veins.Add(8);

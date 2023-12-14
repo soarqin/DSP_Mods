@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
+using Object = UnityEngine.Object;
 
 namespace UXAssist.UI;
 
@@ -133,14 +134,13 @@ public class MyWindow: ManualBehaviour
         if (t != null)
         {
             t.text = text.Translate();
+            t.fontSize = fontSize;
         }
-        t.fontSize = fontSize;
         btn.button.onClick.RemoveAllListeners();
         _buttons[btn] = onClick;
-        if (EventRegistered)
+        if (EventRegistered && onClick != null)
         {
-            if (onClick != null)
-                btn.button.onClick.AddListener(onClick);
+            btn.button.onClick.AddListener(onClick);
         }
         return btn;
     }
@@ -215,7 +215,7 @@ public class MyWindow: ManualBehaviour
 
 public class MyWindowWithTabs : MyWindow
 {
-    private readonly List<Tuple<RectTransform, UIButton>> _tabs = new();
+    private readonly List<Tuple<RectTransform, UIButton>> _tabs = [];
     private float _tabY = 54f;
     public override void TryClose()
     {
@@ -347,10 +347,10 @@ public static class MyWindowManager
     {
         var srcWin = UIRoot.instance.uiGame.tankWindow;
         var src = srcWin.gameObject;
-        var go = GameObject.Instantiate(src, UIRoot.instance.uiGame.transform.parent);
+        var go = Object.Instantiate(src, UIRoot.instance.uiGame.transform.parent);
         go.name = name;
         go.SetActive(false);
-        GameObject.Destroy(go.GetComponent<UITankWindow>());
+        Object.Destroy(go.GetComponent<UITankWindow>());
         var win = go.AddComponent<T>() as MyWindow;
         if (win == null)
             return null;
@@ -369,7 +369,7 @@ public static class MyWindowManager
             }
             else if (child.name != "shadow" && child.name != "panel-bg")
             {
-                GameObject.Destroy(child);
+                Object.Destroy(child);
             }
         }
 

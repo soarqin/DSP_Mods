@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using HarmonyLib;
 using UnityEngine;
 using UnityEngine.UI;
@@ -142,7 +141,7 @@ static class PatchUISaveGame
             var cb = cbctrl.GetComponent<UIComboBox>();
             cb.onSubmit.RemoveAllListeners();
             cb.onItemIndexChange.RemoveAllListeners();
-            cb.Items = new List<string> { "Store".Translate(), "LZ4", "Zstd" };
+            cb.Items = ["Store".Translate(), "LZ4", "Zstd"];
             cb.itemIndex = (int)PatchSave.CompressionTypeForSaves;
             cb.onItemIndexChange.AddListener(()=>
             {
@@ -198,7 +197,7 @@ static class PatchUISaveGame
             var cb = cbctrl.GetComponent<UIComboBox>();
             cb.onSubmit.RemoveAllListeners();
             cb.onItemIndexChange.RemoveAllListeners();
-            cb.Items = new List<string> { "已停用".Translate(), "Store".Translate(), "LZ4", "Zstd" };
+            cb.Items = ["已停用".Translate(), "Store".Translate(), "LZ4", "Zstd"];
             cb.itemIndex = PatchSave.EnableForAutoSaves.Value ? (int)PatchSave.CompressionTypeForAutoSaves + 1 : 0;
             cb.onItemIndexChange.AddListener(() =>
             {

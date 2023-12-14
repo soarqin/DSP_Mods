@@ -105,7 +105,7 @@ public static class BeltSignal
             if (obj != null) return obj;
         }
 
-        obj = new HashSet<int>();
+        obj = [];
         _signalBelts[index] = obj;
         return obj;
     }

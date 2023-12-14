@@ -24,16 +24,15 @@ public class ZstdAPI: WrapperDefines
             var map = new Dictionary<string, List<DynDllMapping>>
             {
                 {
-                    "zstdwrap.dll", new List<DynDllMapping>
-                    {
+                    "zstdwrap.dll", [
                         "zstdwrap.dll",
                         "x64/zstdwrap.dll",
                         "plugins/x64/zstdwrap.dll",
                         "BepInEx/scripts/x64/zstdwrap.dll",
                         Path.Combine(root, "zstdwrap.dll"),
                         Path.Combine(root, "x64/zstdwrap.dll"),
-                        Path.Combine(root, "plugins/x64/zstdwrap.dll"),
-                    }
+                        Path.Combine(root, "plugins/x64/zstdwrap.dll")
+                    ]
                 },
             };
             typeof(ZstdAPI).ResolveDynDllImports(map);

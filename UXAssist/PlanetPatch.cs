@@ -51,7 +51,7 @@ public static class PlanetPatch
             matcher.Repeat(codeMatcher =>
             {
                 var labels = codeMatcher.Labels;
-                codeMatcher.Labels = new List<Label>();
+                codeMatcher.Labels = [];
                 codeMatcher.RemoveInstructions(3).Labels.AddRange(labels);
             });
             return matcher.InstructionEnumeration();
@@ -82,7 +82,7 @@ public static class PlanetPatch
                 new CodeMatch(OpCodes.Stloc_1)
             );
             var labels = matcher.Labels;
-            matcher.Labels = new List<Label>();
+            matcher.Labels = [];
             matcher.InsertAndAdvance(
                 new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(UIGame), nameof(UIGame.viewMode))).WithLabels(labels),
                 new CodeInstruction(OpCodes.Ldc_I4_3),

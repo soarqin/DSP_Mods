@@ -5,7 +5,7 @@ namespace CompressSave.Wrapper;
 
 class BlackHoleStream : Stream
 {
-    private long length;
+    private long _length;
 
     public override bool CanRead => true;
 
@@ -13,18 +13,13 @@ class BlackHoleStream : Stream
 
     public override bool CanWrite => true;
 
-    public override long Length => length;
+    public override long Length => _length;
 
     public override long Position { get; set; }
 
-    public BlackHoleStream()
-    {
-
-    }
-
     public override void Flush()
     {
-        ;
+        
     }
 
     public override int Read(byte[] buffer, int offset, int count)
@@ -39,12 +34,13 @@ class BlackHoleStream : Stream
 
     public override void SetLength(long value)
     {
-        length = value;
+        _length = value;
     }
-    public byte[] testBuffer = new byte[1024 * 1024];
+
+    private readonly byte[] _testBuffer = new byte[1024 * 1024];
 
     public override void Write(byte[] buffer, int offset, int count)
     {
-        Array.Copy(buffer, offset, testBuffer, 0, Math.Min(count, testBuffer.Length));
+        Array.Copy(buffer, offset, _testBuffer, 0, Math.Min(count, _testBuffer.Length));
     }
 }

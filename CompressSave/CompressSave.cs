@@ -125,7 +125,7 @@ public class PatchSave
 
     public static void CreateCompressBuffer()
     {
-        const int bufSize = CompressionStream.MB;
+        const int bufSize = CompressionStream.Mb;
         var outBufSize = LZ4Wrapper.CompressBufferBound(bufSize);
         outBufSize = Math.Max(outBufSize, ZstdWrapper.CompressBufferBound(bufSize));
         outBufSize = Math.Max(outBufSize, NoneWrapper.CompressBufferBound(bufSize));
@@ -260,7 +260,7 @@ public class PatchSave
         Stream stream = null;
         if (writeflag && _compressionTypeForSaving == CompressionType.None)
         {
-            stream = ((CompressionStream)_compressionStream).outStream;
+            stream = ((CompressionStream)_compressionStream).OutStream;
         }
         // Dispose need to be done before fstream closed.
         _compressionStream.Dispose();
@@ -378,7 +378,7 @@ public class PatchSave
             case CompressionType.LZ4:
             case CompressionType.Zstd:
                 while (offset > 0)
-                    offset -= _compressionStream.Read(_compressBuffer.outBuffer, 0, (int)offset);
+                    offset -= _compressionStream.Read(_compressBuffer.OutBuffer, 0, (int)offset);
                 return _compressionStream.Position;
             case CompressionType.None:
                 return fileStream.Seek(offset, origin);

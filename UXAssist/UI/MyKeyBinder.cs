@@ -121,8 +121,8 @@ public class MyKeyBinder : MonoBehaviour
         }
     }
 
-    
-    public bool TrySetValue()
+
+    private bool TrySetValue()
     {
         if (Input.GetKey(KeyCode.Escape))
         {
@@ -155,7 +155,7 @@ public class MyKeyBinder : MonoBehaviour
              KeyCode.LeftCommand,  KeyCode.LeftApple, KeyCode.LeftWindows,
              KeyCode.RightCommand,  KeyCode.RightApple, KeyCode.RightWindows };
 
-    public string GetPressedKey()
+    private string GetPressedKey()
     {
         var key = _lastKey.ToString();
         if (string.IsNullOrEmpty(key))
@@ -179,7 +179,7 @@ public class MyKeyBinder : MonoBehaviour
     }
 
     //通常キーが押されているかチェック _lastKey に保存
-    public bool GetIunptKeys()
+    private bool GetIunptKeys()
     {
         var anyKey = false;
 

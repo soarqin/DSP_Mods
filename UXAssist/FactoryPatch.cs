@@ -326,7 +326,7 @@ public static class FactoryPatch
             );
             var jumpPos = matcher.InstructionAt(3).operand;
             var labels = matcher.Labels;
-            matcher.Labels = new List<Label>();
+            matcher.Labels = [];
             /* Insert: br   2358 (1C12) ldloc.s V_8 (8)
              */
             matcher.Insert(new CodeInstruction(OpCodes.Br, jumpPos).WithLabels(labels));
@@ -360,7 +360,7 @@ public static class FactoryPatch
             {
                 // Remove 7 instructions, if the following instruction is br/br.s, remove it as well
                 var labels = matcher.Labels;
-                matcher.Labels = new List<Label>();
+                matcher.Labels = [];
                 matcher.RemoveInstructions(7);
                 var opcode = matcher.Opcode;
                 if (opcode == OpCodes.Br || opcode == OpCodes.Br_S)
@@ -384,7 +384,7 @@ public static class FactoryPatch
                 matcher.Repeat(codeMatcher =>
                 {
                     var labels = codeMatcher.Labels;
-                    codeMatcher.Labels = new List<Label>();
+                    codeMatcher.Labels = [];
                     codeMatcher.RemoveInstructions(3);
                     var opcode = codeMatcher.Opcode;
                     if (opcode == OpCodes.Br || opcode == OpCodes.Br_S)

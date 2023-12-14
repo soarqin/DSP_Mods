@@ -18,7 +18,7 @@ public static class I18N
 
     public static bool Initialized() => _initialized;
     private static int _nextID = 1;
-    private static readonly List<StringProto> StringsToAdd = new();
+    private static readonly List<StringProto> StringsToAdd = [];
     public static void Add(string key, string enus, string zhcn = null, string frfr = null)
     {
         var strProto = new StringProto

@@ -139,7 +139,7 @@ public static class DysonSpherePatch
         private static void SetNodeForAbsorb(int index, int layerId, int nodeId, bool canAbsorb)
         {
             ref var comp = ref _nodeForAbsorb[index];
-            comp ??= new HashSet<int>();
+            comp ??= [];
             var idx = nodeId * 10 + layerId;
             if (canAbsorb)
                 comp.Add(idx);
@@ -241,7 +241,7 @@ public static class DysonSpherePatch
                 new CodeMatch(OpCodes.Stfld, AccessTools.Field(typeof(DysonNode), nameof(DysonNode.sp)))
             ).Advance(1);
             var labels = matcher.Labels;
-            matcher.Labels = new List<Label>();
+            matcher.Labels = [];
             matcher.Insert(
                 new CodeInstruction(OpCodes.Ldarg_0).WithLabels(labels),
                 new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(StopEjectOnNodeComplete), nameof(StopEjectOnNodeComplete.UpdateNodeForAbsorbOnSpChange)))

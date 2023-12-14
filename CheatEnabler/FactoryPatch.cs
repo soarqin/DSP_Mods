@@ -233,7 +233,7 @@ public static class FactoryPatch
             }
 
             var labels = matcher.Labels;
-            matcher.Labels = new List<Label>();
+            matcher.Labels = [];
             matcher.Insert(
                 new CodeInstruction(OpCodes.Ldarg_0).WithLabels(labels),
                 new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(BuildTool), nameof(BuildTool.factory))),
@@ -608,7 +608,7 @@ public static class FactoryPatch
             _portalFrom[v] = number;
             if (!_portalTo.TryGetValue(number, out var set))
             {
-                set = new HashSet<long>();
+                set = [];
                 _portalTo[number] = set;
             }
 
@@ -1166,7 +1166,7 @@ public static class FactoryPatch
                 new CodeMatch(OpCodes.Stfld, AccessTools.Field(typeof(PowerGeneratorComponent), nameof(PowerGeneratorComponent.capacityCurrentTick)))
             );
             var labels = matcher.Labels;
-            matcher.Labels = new List<Label>();
+            matcher.Labels = [];
             matcher.Insert(
                 // if (this.fuelMask == 4)
                 new CodeInstruction(OpCodes.Ldarg_0).WithLabels(labels),

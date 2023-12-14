@@ -24,16 +24,15 @@ public class NoneAPI: WrapperDefines
             var map = new Dictionary<string, List<DynDllMapping>>
             {
                 {
-                    "nonewrap.dll", new List<DynDllMapping>
-                    {
+                    "nonewrap.dll", [
                         "nonewrap.dll",
                         "x64/nonewrap.dll",
                         "plugins/x64/nonewrap.dll",
                         "BepInEx/scripts/x64/nonewrap.dll",
                         Path.Combine(root, "nonewrap.dll"),
                         Path.Combine(root, "x64/nonewrap.dll"),
-                        Path.Combine(root, "plugins/x64/nonewrap.dll"),
-                    }
+                        Path.Combine(root, "plugins/x64/nonewrap.dll")
+                    ]
                 },
             };
             typeof(NoneAPI).ResolveDynDllImports(map);

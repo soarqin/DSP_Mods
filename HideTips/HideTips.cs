@@ -120,7 +120,7 @@ public class HideTips : BaseUnityPlugin
         );
         var labels = matcher.Labels;
         var label1 = generator.DefineLabel();
-        matcher.Labels = new List<Label>();
+        matcher.Labels = [];
         matcher.InsertAndAdvance(
             new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(HideTips), nameof(_noResearchCompletionTips))).WithLabels(labels),
             new CodeInstruction(OpCodes.Brtrue, label1)

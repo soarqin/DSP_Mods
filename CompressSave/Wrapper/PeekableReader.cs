@@ -2,16 +2,10 @@
 
 namespace CompressSave.Wrapper;
 
-class PeekableReader : BinaryReader
+internal class PeekableReader(DecompressionStream input) : BinaryReader(input)
 {
-    DecompressionStream decompressionStream;
-    public PeekableReader(DecompressionStream input) : base (input)
-    {
-        decompressionStream = input;
-    }
-
     public override int PeekChar()
     {            
-        return decompressionStream.PeekByte();
+        return input.PeekByte();
     }
 }

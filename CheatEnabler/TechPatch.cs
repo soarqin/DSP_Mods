@@ -123,7 +123,7 @@ public static class TechPatch
         }
         else if (VFInput.alt)
         {
-            UnlockTechRecursive(node.techProto, 10000);
+            UnlockTechRecursive(node.techProto);
         }
     }
 

@@ -363,7 +363,7 @@ public class LogisticMiner : BaseUnityPlugin
                 }
                 else
                 {
-                    _veins.Add(productId, new List<int> { i });
+                    _veins.Add(productId, [i]);
                 }
 
                 if (vg.TryGetValue(productId, out var hs))
@@ -372,7 +372,7 @@ public class LogisticMiner : BaseUnityPlugin
                 }
                 else
                 {
-                    vg.Add(productId, new HashSet<int> { veinPool[i].groupIndex });
+                    vg.Add(productId, [veinPool[i].groupIndex]);
                 }
             }
 

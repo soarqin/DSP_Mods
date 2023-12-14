@@ -5,10 +5,10 @@ namespace CompressSave.Wrapper;
 
 public class ByteSpan
 {
-    public byte[] Buffer { get; private set; }
+    public byte[] Buffer { get; }
     //public int Start;
     public int Length;
-    public int Capacity;
+    public readonly int Capacity;
     public int IdleCapacity => Capacity - Length;
     public int Position;
 
@@ -41,61 +41,45 @@ public class ByteSpan
     public static implicit operator byte[](ByteSpan bs) => bs.Buffer;
 }
 
-public struct ReadOnlySpan
+public struct ReadOnlySpan(byte[] buffer, int length)
 {
-    public readonly int Length;
-    public readonly byte[] Buffer;
-    public int Position;
-
-    public ReadOnlySpan(byte[] buffer, int length)
-    {
-        Buffer = buffer;
-        Length = length;
-        Position = 0;
-    }
+    private readonly byte[] _buffer = buffer;
+    private int _position = 0;
 
     public int Read(byte[] dst, int offset, int count)
     {
-        count = Math.Min(Length - Position, count);
-        Array.Copy(Buffer, Position, dst, offset, count);
-        Position += count;
+        count = Math.Min(length - _position, count);
+        Array.Copy(_buffer, _position, dst, offset, count);
+        _position += count;
         return count;
     }
 
-    public static implicit operator byte[](ReadOnlySpan s) => s.Buffer;
+    public static implicit operator byte[](ReadOnlySpan s) => s._buffer;
 }
 
-public class DoubleBuffer
+public class DoubleBuffer(byte[] readingBuffer, byte[] writingBuffer, Action onReadBufferReadyAction)
 {
-    public const int MB = 1024 * 1024;
+    public const int Mb = 1024 * 1024;
 
-    public ByteSpan writeBuffer;
-    public ByteSpan readBuffer;
-    private ByteSpan midBuffer;
-    private Action onReadBufferReady;
+    public ByteSpan WriteBuffer = new(writingBuffer);
+    private ByteSpan _readBuffer;
+    private ByteSpan _midBuffer = new(readingBuffer);
 
-    Semaphore readEnd = new Semaphore(1, 1);
-    Semaphore writeEnd = new Semaphore(0, 1);
-
-    public DoubleBuffer(byte[] readingBuffer, byte[] writingBuffer, Action onReadBufferReadyAction)
-    {
-        onReadBufferReady = onReadBufferReadyAction;
-        midBuffer = new ByteSpan(readingBuffer);
-        writeBuffer = new ByteSpan(writingBuffer);
-    }
+    private readonly Semaphore _readEnd = new Semaphore(1, 1);
+    private readonly Semaphore _writeEnd = new Semaphore(0, 1);
 
     public ByteSpan ReadBegin()
     {
-        writeEnd.WaitOne();
-        return readBuffer;
+        _writeEnd.WaitOne();
+        return _readBuffer;
     }
 
     public void ReadEnd()
     {
-        readBuffer.Clear();
-        midBuffer = readBuffer;
-        readBuffer = null;
-        readEnd.Release();
+        _readBuffer.Clear();
+        _midBuffer = _readBuffer;
+        _readBuffer = null;
+        _readEnd.Release();
     }
     /// <summary>
     /// swap current write buffer to read and wait a new write buffer
@@ -105,27 +89,27 @@ public class DoubleBuffer
     {
         var write = SwapBegin();
         SwapEnd();
-        onReadBufferReady?.Invoke();
+        onReadBufferReadyAction?.Invoke();
         return write;
     }
 
     public void WaitReadEnd()
     {
-        readEnd.WaitOne();
-        readEnd.Release();
+        _readEnd.WaitOne();
+        _readEnd.Release();
     }
 
-    public ByteSpan SwapBegin()
+    private ByteSpan SwapBegin()
     {
-        readEnd.WaitOne();
-        readBuffer = writeBuffer;
-        writeBuffer = midBuffer;
-        midBuffer = null;
-        return writeBuffer;
+        _readEnd.WaitOne();
+        _readBuffer = WriteBuffer;
+        WriteBuffer = _midBuffer;
+        _midBuffer = null;
+        return WriteBuffer;
     }
 
-    public void SwapEnd()
+    private void SwapEnd()
     {
-        writeEnd.Release();
+        _writeEnd.Release();
     }
 }

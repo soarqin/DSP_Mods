@@ -178,7 +178,6 @@ public static class PlanetFunctions
             {
                 if (prebuildPool[i].id != i) continue;
                 pos = prebuildPool[i].pos;
-                found = true;
                 break;
             }
         }

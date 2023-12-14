@@ -6,65 +6,68 @@ namespace CompressSave.Wrapper;
 
 public class CompressionStream : Stream
 {
-    public WrapperDefines wrapper;
+    private readonly WrapperDefines _wrapper;
 
-    public const int MB = 1024 * 1024;
+    public const int Mb = 1024 * 1024;
     public override bool CanRead => false;
 
     public override bool CanSeek => false;
 
     public override bool CanWrite => true;
 
-    public override long Length => totalWrite;
+    public override long Length => _totalWrite;
 
     // only use for game statistics
-    public override long Position { get => BufferWriter.WriteSum; set => new NotImplementedException(); }
+    public override long Position
+    {
+        get => BufferWriter.WriteSum;
+        set => throw new NotImplementedException();
+    }
 
-    public readonly Stream outStream;
+    public readonly Stream OutStream;
 
-    long totalWrite = 0;
-    bool useMultiThread;
-    DoubleBuffer doubleBuffer;
+    private long _totalWrite;
+    private readonly bool _useMultiThread;
+    private DoubleBuffer _doubleBuffer;
 
-    private byte[] outBuffer;
+    private byte[] _outBuffer;
 
-    IntPtr cctx;
-    long lastError = 0;
-    bool stopWorker = true;
-    Thread compressThread;
+    private IntPtr _cctx;
+    private long _lastError;
+    private bool _stopWorker = true;
 
     public bool HasError()
     {
-        return lastError != 0;
+        return _lastError != 0;
     }
 
-    public void HandleError(long errorCode)
+    private void HandleError(long errorCode)
     {
         if (errorCode < 0)
         {
-            wrapper.CompressContextFree(cctx);
-            cctx = IntPtr.Zero;
-            lastError = errorCode;
+            _wrapper.CompressContextFree(_cctx);
+            _cctx = IntPtr.Zero;
+            _lastError = errorCode;
             throw new Exception(errorCode.ToString());
         }
     }
 
     public struct CompressBuffer
     {
-        public byte[] readBuffer;
-        public byte[] writeBuffer;
-        public byte[] outBuffer;
+        public byte[] ReadBuffer;
+        public byte[] WriteBuffer;
+        public byte[] OutBuffer;
     }
 
-    public static CompressBuffer CreateBuffer(int outBufferSize, int exBufferSize = 4 * MB)
+    public static CompressBuffer CreateBuffer(int outBufferSize, int exBufferSize = 4 * Mb)
     {
         try
         {
             return new CompressBuffer
             {
-                outBuffer = new byte[outBufferSize],
-                readBuffer = new byte[exBufferSize],
-                writeBuffer = new byte[exBufferSize],
+                OutBuffer = new byte[outBufferSize],
+                ReadBuffer = new byte[exBufferSize],
+                WriteBuffer = new byte[exBufferSize],
             };
         }
         catch (Exception e)
@@ -78,79 +81,77 @@ public class CompressionStream : Stream
 
     public CompressionStream(WrapperDefines wrap, int compressionLevel, Stream outputStream, CompressBuffer compressBuffer, bool multiThread)
     {
-        wrapper = wrap;
-        outStream = outputStream;
-        InitBuffer(compressBuffer.readBuffer, compressBuffer.writeBuffer, compressBuffer.outBuffer);
-        long writeSize = wrapper.CompressBegin(out cctx, compressionLevel, outBuffer, outBuffer.Length);
+        _wrapper = wrap;
+        OutStream = outputStream;
+        InitBuffer(compressBuffer.ReadBuffer, compressBuffer.WriteBuffer, compressBuffer.OutBuffer);
+        var writeSize = _wrapper.CompressBegin(out _cctx, compressionLevel, _outBuffer, _outBuffer.Length);
         HandleError(writeSize);
-        outputStream.Write(outBuffer, 0, (int)writeSize);
-        useMultiThread = multiThread;
-        if(multiThread)
-        {
-            stopWorker = false;
-            compressThread = new Thread(() => CompressAsync());
-            compressThread.Start();
-        }
+        outputStream.Write(_outBuffer, 0, (int)writeSize);
+        _useMultiThread = multiThread;
+        if (!multiThread) return;
+        _stopWorker = false;
+        var compressThread = new Thread(CompressAsync);
+        compressThread.Start();
     }
 
-    void InitBuffer(byte[] readBuffer, byte[] writeBuffer, byte[] outputBuffer)
+    private void InitBuffer(byte[] readBuffer, byte[] writeBuffer, byte[] outputBuffer)
     {
-        doubleBuffer = new DoubleBuffer(readBuffer ?? new byte[4 * MB], writeBuffer ?? new byte[4 * MB], Compress);
-        outBuffer = outputBuffer ?? new byte[wrapper.CompressBufferBound(writeBuffer?.Length ?? 4 * MB)];
-        BufferWriter = new BufferWriter(doubleBuffer,this);
+        _doubleBuffer = new DoubleBuffer(readBuffer ?? new byte[4 * Mb], writeBuffer ?? new byte[4 * Mb], Compress);
+        _outBuffer = outputBuffer ?? new byte[_wrapper.CompressBufferBound(writeBuffer?.Length ?? 4 * Mb)];
+        BufferWriter = new BufferWriter(_doubleBuffer,this);
     }
 
     public override void Flush()
     {
-        doubleBuffer.SwapBuffer();
-        if(useMultiThread)
+        _doubleBuffer.SwapBuffer();
+        if(_useMultiThread)
         {
-            doubleBuffer.WaitReadEnd();
+            _doubleBuffer.WaitReadEnd();
         }
-        lock (outBuffer)
+        lock (_outBuffer)
         {
-            outStream.Flush();
+            OutStream.Flush();
         }
     }
 
-    void Compress()
+    private void Compress()
     {
-        if (!useMultiThread)
+        if (!_useMultiThread)
         {
             Compress_Internal();
         }
     }
 
-    void Compress_Internal()
+    private void Compress_Internal()
     {
-        var consumeBuffer = doubleBuffer.ReadBegin();
+        var consumeBuffer = _doubleBuffer.ReadBegin();
         if (consumeBuffer.Length > 0)
         {
-            lock (outBuffer)
+            lock (_outBuffer)
             {
-                long writeSize = 0;
+                long writeSize;
                 try
                 {
-                    writeSize = wrapper.CompressUpdateEx(cctx, outBuffer, 0, consumeBuffer.Buffer, 0, consumeBuffer.Length);
+                    writeSize = _wrapper.CompressUpdateEx(_cctx, _outBuffer, 0, consumeBuffer.Buffer, 0, consumeBuffer.Length);
                     HandleError(writeSize);
                 }
                 finally
                 {
-                    doubleBuffer.ReadEnd();
+                    _doubleBuffer.ReadEnd();
                 }
-                outStream.Write(outBuffer, 0, (int)writeSize);
-                totalWrite += writeSize;
+                OutStream.Write(_outBuffer, 0, (int)writeSize);
+                _totalWrite += writeSize;
             }
         }
         else
         {
-            doubleBuffer.ReadEnd();
+            _doubleBuffer.ReadEnd();
         }
     }
 
-    void CompressAsync()
+    private void CompressAsync()
     {
-        while(!stopWorker)
+        while(!_stopWorker)
         {
             Compress_Internal();
         }
@@ -187,32 +188,30 @@ public class CompressionStream : Stream
         //inputSum += count;
     }
 
-    protected void FreeContext()
+    private void FreeContext()
     {
-        wrapper.CompressContextFree(cctx);
-        cctx = IntPtr.Zero;
+        _wrapper.CompressContextFree(_cctx);
+        _cctx = IntPtr.Zero;
     }
 
-    bool closed = false;
+    private bool _closed;
     public override void Close()
     {
-        if(!closed)
-        {
-            BufferWriter.Close();
-            closed = true;
-            //Console.WriteLine($"FLUSH");
+        if (_closed) return;
+        BufferWriter.Close();
+        _closed = true;
+        //Console.WriteLine($"FLUSH");
 
-            Flush();
+        Flush();
 
-            // try stop the worker
-            stopWorker = true;
-            doubleBuffer.SwapBuffer();
+        // try stop the worker
+        _stopWorker = true;
+        _doubleBuffer.SwapBuffer();
 
-            long size = wrapper.CompressEnd(cctx, outBuffer, outBuffer.Length);
-            //Debug.Log($"End");
-            outStream.Write(outBuffer, 0, (int)size);
-            base.Close();
-        }
+        var size = _wrapper.CompressEnd(_cctx, _outBuffer, _outBuffer.Length);
+        //Debug.Log($"End");
+        OutStream.Write(_outBuffer, 0, (int)size);
+        base.Close();
     }
 
     protected override void Dispose(bool disposing)

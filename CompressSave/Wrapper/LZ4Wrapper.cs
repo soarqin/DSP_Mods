@@ -12,8 +12,8 @@ public class LZ4API: WrapperDefines
     static LZ4API()
     {
         Avaliable = true;
-        string assemblyPath = System.Reflection.Assembly.GetAssembly(typeof(LZ4API)).Location;
-        string root = string.Empty;
+        var assemblyPath = System.Reflection.Assembly.GetAssembly(typeof(LZ4API)).Location;
+        var root = string.Empty;
         try
         {
             if (!string.IsNullOrEmpty(assemblyPath))
@@ -24,16 +24,15 @@ public class LZ4API: WrapperDefines
             var map = new Dictionary<string, List<DynDllMapping>>
             {
                 {
-                    "lz4wrap.dll", new List<DynDllMapping>
-                    {
+                    "lz4wrap.dll", [
                         "lz4wrap.dll",
                         "x64/lz4wrap.dll",
                         "plugins/x64/lz4wrap.dll",
                         "BepInEx/scripts/x64/lz4wrap.dll",
                         Path.Combine(root, "lz4wrap.dll"),
                         Path.Combine(root, "x64/lz4wrap.dll"),
-                        Path.Combine(root, "plugins/x64/lz4wrap.dll"),
-                    }
+                        Path.Combine(root, "plugins/x64/lz4wrap.dll")
+                    ]
                 },
             };
             typeof(LZ4API).ResolveDynDllImports(map);
