@@ -69,7 +69,6 @@ public class Dustbin : BaseUnityPlugin, IModCanSave, IMultiplayerMod
         var player = GameMain.mainPlayer;
         var addCount = count * sandsPerItem;
         player.sandCount += addCount;
-        GameMain.history.OnSandCountChange(player.sandCount, addCount);
         return count;
     }
 

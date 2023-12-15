@@ -12,8 +12,8 @@ public static class SaveUtil
     public static readonly Version VerifiedVersion = new()
     {
         Major = 0,
-        Minor = 9,
-        Release = 27,
+        Minor = 10,
+        Release = 28,
     };
 
     private static string UnzipToFile(DecompressionStream lzStream, string fullPath)

@@ -17,17 +17,21 @@ public static class I18N
     }
 
     public static bool Initialized() => _initialized;
-    private static int _nextID = 1;
-    private static readonly List<StringProto> StringsToAdd = [];
-    public static void Add(string key, string enus, string zhcn = null, string frfr = null)
+    private struct Translation
     {
-        var strProto = new StringProto
+        public string Key;
+        public string English;
+        public string Chinese;
+    }
+    private static readonly List<Translation> StringsToAdd = [];
+    public static void Add(string key, string enus, string zhcn = null)
+    {
+        if (zhcn == null && key == enus) return;
+        var strProto = new Translation
         {
-            Name = key,
-            SID = "",
-            ENUS = enus,
-            ZHCN = string.IsNullOrEmpty(zhcn) ? enus : zhcn,
-            FRFR = string.IsNullOrEmpty(frfr) ? enus : frfr
+            Key = key,
+            English = enus,
+            Chinese = string.IsNullOrEmpty(zhcn) ? enus : zhcn
         };
         StringsToAdd.Add(strProto);
     }
@@ -35,18 +39,52 @@ public static class I18N
     public static void Apply()
     {
         if (!_initialized) return;
-        var strings = LDB._strings;
-        var index = strings.dataArray.Length;
-        strings.dataArray = strings.dataArray.Concat(StringsToAdd).ToArray();
-        StringsToAdd.Clear();
-        var newIndex = strings.dataArray.Length;
-        for (; index < newIndex; index++)
+        var indexer = Localization.namesIndexer;
+        var enIdx = -1;
+        var zhIdx = -1;
+        var llen = 0;
+        for (var i = 0; i < Localization.strings.Length; i++)
         {
-            var strProto = strings.dataArray[index];
-            strProto.ID = GetNextID();
-            strings.dataIndices[strProto.ID] = index;
-            strings.nameIndices[strings.dataArray[index].Name] = index;
+            switch (Localization.Languages[i].lcId)
+            {
+                case Localization.LCID_ENUS:
+                    if (!Localization.LanguageLoaded(i) && Localization.Loaded)
+                    {
+                        Localization.LoadLanguage(i);
+                    }
+                    enIdx = i;
+                    break;
+                case Localization.LCID_ZHCN:
+                    if (!Localization.LanguageLoaded(i) && Localization.Loaded)
+                    {
+                        Localization.LoadLanguage(i);
+                    }
+                    zhIdx = i;
+                    llen = Localization.strings[i].Length;
+                    break;
+            }
         }
+        var enus = new string[StringsToAdd.Count];
+        var zhcn = new string[StringsToAdd.Count];
+        for (var i = 0; i < StringsToAdd.Count; i++)
+        {
+            var str = StringsToAdd[i];
+            enus[i] = str.English;
+            zhcn[i] = str.Chinese;
+            indexer[str.Key] = llen + i;
+        }
+
+        Localization.strings[enIdx] = Localization.strings[enIdx].Concat(enus).ToArray();
+        if (enIdx == Localization.currentLanguageIndex)
+        {
+            Localization.currentStrings = Localization.strings[enIdx];
+        }
+        Localization.strings[zhIdx] = Localization.strings[zhIdx].Concat(zhcn).ToArray();
+        if (zhIdx == Localization.currentLanguageIndex)
+        {
+            Localization.currentStrings = Localization.strings[zhIdx];
+        }
+        StringsToAdd.Clear();
     }
 
     [HarmonyPostfix, HarmonyPriority(Priority.Last), HarmonyPatch(typeof(VFPreload), "InvokeOnLoadWorkEnded")]
@@ -62,23 +100,5 @@ public static class I18N
 
         Apply();
         OnInitialized?.Invoke();
-    }
-
-    private static int GetNextID()
-    {
-        var strings = LDB._strings;
-        while (_nextID <= 12000)
-        {
-            if (!strings.dataIndices.ContainsKey(_nextID))
-            {
-                break;
-            }
-
-            _nextID++;
-        }
-
-        var result = _nextID;
-        _nextID++;
-        return result;
     }
 }

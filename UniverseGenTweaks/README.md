@@ -4,6 +4,8 @@
 #### 宇宙生成参数调节
 
 ## Changelog
+* 1.2.2
+  + Support game version 0.10.28.20759
 * 1.2.1
   + Use new tab layout of UXAssist 1.0.2
 * 1.2.0
@@ -31,6 +33,8 @@
   * High luminosity for birth star
 
 ## 更新日志
+* 1.2.2
+  + 支持游戏版本0.10.28.20759
 * 1.2.1
   + 使用UXAssist 1.0.2的新页签布局
 * 1.2.0

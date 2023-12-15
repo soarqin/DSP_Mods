@@ -4,6 +4,9 @@
 #### 一些提升用户体验的功能和补丁
 
 ## Changlog
+* 1.0.5
+  + Support game version 0.10.28.20759
+  + Sort blueprint structures before saving, to reduce generated blueprint data size a little.
 * 1.0.4
   + Add new function: `Off-grid building and stepped rotation`
   + Fix an issue that window position not restored and can not be resized when function is enabled but game is started with different mod profiles.  
@@ -66,6 +69,9 @@
 * [OffGridConstruction](https://github.com/Velociraptor115-DSPModding/OffGridConstruction): Off-grid building & stepped rotation implementations
 
 ## 更新日志
+* 1.0.5
+  + 支持游戏版本0.10.28.20759
+  + 保存蓝图前对建筑进行排序，以减少生成的蓝图数据大小
 * 1.0.4
   + 添加了新功能：`脱离网格建造和小角度旋转`
   + 修复了当功能启用但游戏使用不同的mod配置文件启动时窗口位置无法正确恢复和不可拖动改变大小的问题

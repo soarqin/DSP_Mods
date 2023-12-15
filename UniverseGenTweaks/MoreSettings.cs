@@ -29,6 +29,10 @@ public class MoreSettings
     private static Text _minStepText;
     private static Text _maxStepText;
     private static Text _flattenText;
+    private static Localizer _minDistLocalizer;
+    private static Localizer _minStepLocalizer;
+    private static Localizer _maxStepLocalizer;
+    private static Localizer _flattenLocalizer;
     private static Harmony _harmony;
 
     public static void Init()
@@ -58,12 +62,13 @@ public class MoreSettings
         _harmony = null;
     }
 
-    private static void CreateSliderWithText(Slider orig, out Text title, out Slider slider, out Text text)
+    private static void CreateSliderWithText(Slider orig, out Text title, out Slider slider, out Text text, out Localizer loc)
     {
         var origText = orig.transform.parent.GetComponent<Text>();
         title = Object.Instantiate(origText, origText.transform.parent);
         slider = title.transform.FindChildRecur("Slider").GetComponent<Slider>();
         text = slider.transform.FindChildRecur("Text").GetComponent<Text>();
+        loc = title.GetComponent<Localizer>();
     }
 
     private static void TransformDeltaY(Transform trans, float delta)
@@ -79,10 +84,10 @@ public class MoreSettings
     {
         __instance.starCountSlider.maxValue = MaxStarCount.Value;
 
-        CreateSliderWithText(__instance.starCountSlider, out _minDistTitle, out _minDistSlider, out _minDistText);
-        CreateSliderWithText(__instance.starCountSlider, out _minStepTitle, out _minStepSlider, out _minStepText);
-        CreateSliderWithText(__instance.starCountSlider, out _maxStepTitle, out _maxStepSlider, out _maxStepText);
-        CreateSliderWithText(__instance.starCountSlider, out _flattenTitle, out _flattenSlider, out _flattenText);
+        CreateSliderWithText(__instance.starCountSlider, out _minDistTitle, out _minDistSlider, out _minDistText, out _minDistLocalizer);
+        CreateSliderWithText(__instance.starCountSlider, out _minStepTitle, out _minStepSlider, out _minStepText, out _minStepLocalizer);
+        CreateSliderWithText(__instance.starCountSlider, out _maxStepTitle, out _maxStepSlider, out _maxStepText, out _maxStepLocalizer);
+        CreateSliderWithText(__instance.starCountSlider, out _flattenTitle, out _flattenSlider, out _flattenText, out _flattenLocalizer);
 
         _minDistTitle.name = "min-dist";
         _minDistSlider.minValue = 10f;
@@ -108,6 +113,7 @@ public class MoreSettings
         TransformDeltaY(_minStepTitle.transform, -36f * 2);
         TransformDeltaY(_maxStepTitle.transform, -36f * 3);
         TransformDeltaY(_flattenTitle.transform, -36f * 4);
+        TransformDeltaY(__instance.darkFogToggle.transform.parent, -36f * 4);
         TransformDeltaY(__instance.resourceMultiplierSlider.transform.parent, -36f * 4);
         TransformDeltaY(__instance.sandboxToggle.transform.parent, -36f * 4);
         TransformDeltaY(__instance.propertyMultiplierText.transform, -36f * 4);
@@ -118,10 +124,31 @@ public class MoreSettings
     [HarmonyPatch(typeof(UIGalaxySelect), nameof(UIGalaxySelect._OnOpen))]
     private static void UIGalaxySelect__OnOpen_Prefix()
     {
-        _minDistTitle.text = "恒星最小距离".Translate();
-        _minStepTitle.text = "步进最小距离".Translate();
-        _maxStepTitle.text = "步进最大距离".Translate();
-        _flattenTitle.text = "扁平度".Translate();
+        if (_minDistLocalizer)
+        {
+            _minDistLocalizer.stringKey = "恒星最小距离";
+            _minDistLocalizer.translation = "恒星最小距离".Translate();
+        }
+        _minDistText.text = "恒星最小距离".Translate();
+        if (_minStepLocalizer)
+        {
+            _minStepLocalizer.stringKey = "步进最小距离".Translate();
+            _minStepLocalizer.translation = "步进最小距离".Translate();
+        }
+        _minStepText.text = "步进最小距离".Translate();
+        if (_maxStepLocalizer)
+        {
+            _maxStepLocalizer.stringKey = "步进最大距离".Translate();
+            _maxStepLocalizer.text.text = "步进最大距离".Translate();
+        }
+        _maxStepText.text = "步进最大距离".Translate();
+        if (_flattenLocalizer)
+        {
+            _flattenLocalizer.stringKey = "扁平度".Translate();
+            _flattenLocalizer.translation = "扁平度".Translate();
+        }
+        _flattenText.text = "扁平度".Translate();
+
         _minDistText.text = _minDist.ToString();
         _minStepText.text = _minStep.ToString();
         _maxStepText.text = _maxStep.ToString();
@@ -212,10 +239,10 @@ public class MoreSettings
     [HarmonyPatch(typeof(GalaxyData), MethodType.Constructor)]
     private static IEnumerable<CodeInstruction> GalaxyData_Constructor_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
     {
-        // 25600 -> (MaxStarCount.Value + 1) * 100
+        // 25700 -> (MaxStarCount.Value + 1) * 100
         var matcher = new CodeMatcher(instructions, generator);
         matcher.MatchForward(false,
-            new CodeMatch(ci => ci.opcode == OpCodes.Ldc_I4 && ci.OperandIs(25600))
+            new CodeMatch(ci => ci.opcode == OpCodes.Ldc_I4 && ci.OperandIs(25700))
         ).SetAndAdvance(OpCodes.Ldsfld, AccessTools.Field(typeof(MoreSettings), nameof(MoreSettings.MaxStarCount))).Insert(
             new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(ConfigEntry<int>), nameof(ConfigEntry<int>.Value))),
             new CodeInstruction(OpCodes.Ldc_I4_1),

@@ -243,14 +243,14 @@ public static class FactoryPatch
             var label1 = generator.DefineLabel();
             var label2 = generator.DefineLabel();
             matcher.MatchForward(false,
-                new CodeMatch(OpCodes.Pop)
+                new CodeMatch(OpCodes.Stloc_1)
             ).Advance(1).InsertAndAdvance(
                 new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(NightLight), nameof(NightLight.Enabled))),
                 new CodeInstruction(OpCodes.Brfalse_S, label1),
                 new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(GameMain), nameof(GameMain.mainPlayer))),
                 new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Player), nameof(Player.transform))),
                 new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Transform), nameof(Transform.up))),
-                new CodeInstruction(OpCodes.Stloc_1),
+                new CodeInstruction(OpCodes.Stloc_2),
                 new CodeInstruction(OpCodes.Br_S, label2)
             );
             matcher.Labels.Add(label1);

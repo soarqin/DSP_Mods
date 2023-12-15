@@ -39,7 +39,7 @@ public static class PlanetFunctions
             }
             else
             {
-                factory.RemoveEntityWithComponents(etd.id);
+                factory.RemoveEntityWithComponents(etd.id, false);
             }
         }
     }

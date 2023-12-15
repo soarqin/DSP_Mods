@@ -4,6 +4,9 @@
 #### 添加一些作弊功能，同时屏蔽异常检测
 
 ## Changlog
+* 2.3.7
+  + Support game version 0.10.28.20759
+  + Fix belt signal that items' generation speed is not fit to number set sometimes. 
 * 2.3.6
   + Support for UXAssist's new function within `Finish build immediately`.
   + Add a warning message when `Build without condition` is enabled.
@@ -112,6 +115,9 @@
 * [Multifunction_mod](https://github.com/blacksnipebiu/Multifunction_mod): Some cheat functions
 
 ## 更新日志
+* 2.3.7
+  + 支持游戏版本0.10.28.20759
+  + 修复了传送带信号有时候物品生成速度和设置不匹配的问题
 * 2.3.6
   + 在`建造秒完成`中支持UXAssist的新功能
   + 在启用`无条件建造`时添加警告信息

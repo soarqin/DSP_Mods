@@ -4,6 +4,9 @@
 #### 储物仓和储液罐可以转变为垃圾桶(销毁送进的物品)
 
 ## Changelog
+* 1.3.1
+  + Support for game version 0.10.28.20759
+
 * 1.3.0
   + Add a belt signal(you can find it in first tab of signal selection panel) as dustbin, which is the simplest way to destroy items.
   + Reworked dustbin support for Tanks, to improve performance and resolve known bugs.
@@ -32,6 +35,8 @@
   + You can get item ID list [here](https://dsp-wiki.com/Modding:Items_IDs).
 
 ## 更新日志
+* 1.3.1
+  + 支持游戏版本 0.10.28.20759
 * 1.3.0
   + 添加了一个传送带信号(可以在信号选择面板的第一个页签中找到)作为垃圾桶，这是目前销毁物品最简单的方法
   + 重写了储液罐的垃圾桶实现，以提高性能并解决已知的bug

@@ -163,7 +163,7 @@ public static class FactoryPatch
                 new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(ConfigEntry<bool>), nameof(ConfigEntry<bool>.Value))),
                 new CodeInstruction(OpCodes.Brfalse, label1),
                 new CodeInstruction(OpCodes.Ldstr, "Build without condition is enabled!"),
-                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(StringTranslate), nameof(StringTranslate.Translate), new[] { typeof(string) })),
+                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(Localization), nameof(Localization.Translate), new[] { typeof(string) })),
                 new CodeInstruction(OpCodes.Ldstr, "\r\n"),
                 new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(string), nameof(string.Concat), new[] { typeof(string), typeof(string) })),
                 new CodeInstruction(OpCodes.Call, AccessTools.PropertySetter(typeof(WarningSystem), nameof(WarningSystem.criticalWarningTexts)))

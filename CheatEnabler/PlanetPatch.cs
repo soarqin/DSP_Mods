@@ -84,10 +84,10 @@ public static class PlanetPatch
             var matcher = new CodeMatcher(instructions, generator);
             matcher.MatchForward(false,
                 new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(Player), "get_sandCount"))
-            ).Advance(3).InsertAndAdvance(
-                new CodeInstruction(OpCodes.Ldc_I4_0),
-                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(Math), "Max", new[] { typeof(int), typeof(int) }))
-            ).Advance(1).RemoveInstructions(3);
+            ).Advance(4).InsertAndAdvance(
+                new CodeInstruction(OpCodes.Ldc_I8, 0L),
+                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(Math), "Max", new[] { typeof(long), typeof(long) }))
+            ).Advance(1).RemoveInstructions(4);
             return matcher.InstructionEnumeration();
         }
     }

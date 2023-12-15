@@ -7,6 +7,9 @@
 
 ## Changelog
 
+### 1.3.4
+* Support for game version 0.10.28.20759.
+
 ### 1.3.3
 * Fix a display issue on combobox of compression type.
 
@@ -136,6 +139,9 @@
 * Remember to backup your save(use original save button) before updating game to avoid loading failure.
 
 ## 更新日志
+
+### 1.3.4
+* 支持游戏版本 0.10.28.20759。
 
 ### 1.3.3
 * 修复压缩类型下拉框显示问题。
