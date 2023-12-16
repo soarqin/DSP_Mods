@@ -4,6 +4,8 @@
 #### 一些提升用户体验的功能和补丁
 
 ## Changlog
+* 1.0.6
+  + Convert old saves to Combat Mode on loading
 * 1.0.5
   + Support game version 0.10.28.20759
   + Sort blueprint structures before saving, to reduce generated blueprint data size a little.
@@ -35,10 +37,12 @@
 * Patches:
   + Strict hotkey dectection for build menu, thus building hotkeys(0~9, F1~F10, X, U) are not triggered while holding Ctrl/Alt/Shift.
   + Fix a bug that warning popup on `Veins Utilization` upgraded to level 8000+
+  + Sort blueprint structures before saving, to reduce generated blueprint data size a little
 * Features:
   + General 
     - Enable game window resize
     - Remember window position and size on last exit
+    - Convert old saves to Combat Mode on loading
   + Planet/Factory
     - Unlimited interactive range
     - Sunlight at night
@@ -69,6 +73,8 @@
 * [OffGridConstruction](https://github.com/Velociraptor115-DSPModding/OffGridConstruction): Off-grid building & stepped rotation implementations
 
 ## 更新日志
+* 1.0.6
+  + 在加载旧存档时将其转换为战斗模式
 * 1.0.5
   + 支持游戏版本0.10.28.20759
   + 保存蓝图前对建筑进行排序，以减少生成的蓝图数据大小
@@ -100,10 +106,12 @@
 * 补丁：
   + 更严格的建造菜单热键检测，因此在按住Ctrl/Alt/Shift时不再会触发建造热键(0~9, F1~F10, X, U)
   + 修复了`矿物利用`升级到8000级以上时弹出警告的bug
+  + 保存蓝图前对建筑进行排序，以减少生成的蓝图数据大小
 * 功能：
   + 通用
-    -可调整游戏窗口大小(可最大化和拖动边框)
+    - 可调整游戏窗口大小(可最大化和拖动边框)
     - 记住上次退出时的窗口位置和大小
+    - 在加载旧存档时将其转换为战斗模式
   + 行星/工厂
     - 无限交互距离
     - 夜间日光灯

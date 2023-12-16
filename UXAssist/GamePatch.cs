@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Reflection.Emit;
 using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine;
@@ -13,6 +15,7 @@ public static class GamePatch
 
     public static ConfigEntry<bool> EnableWindowResizeEnabled;
     public static ConfigEntry<bool> LoadLastWindowRectEnabled;
+    public static ConfigEntry<bool> ConvertSavesFromPeaceEnabled;
     public static ConfigEntry<Vector4> LastWindowRect;
     private static Harmony _gamePatch;
 
@@ -20,8 +23,10 @@ public static class GamePatch
     {
         EnableWindowResizeEnabled.SettingChanged += (_, _) => EnableWindowResize.Enable(EnableWindowResizeEnabled.Value);
         LoadLastWindowRectEnabled.SettingChanged += (_, _) => LoadLastWindowRect.Enable(LoadLastWindowRectEnabled.Value);
+        ConvertSavesFromPeaceEnabled.SettingChanged += (_, _) => ConvertSavesFromPeace.Enable(ConvertSavesFromPeaceEnabled.Value);
         EnableWindowResize.Enable(EnableWindowResizeEnabled.Value);
         LoadLastWindowRect.Enable(LoadLastWindowRectEnabled.Value);
+        ConvertSavesFromPeace.Enable(ConvertSavesFromPeaceEnabled.Value);
         _gamePatch ??= Harmony.CreateAndPatchAll(typeof(GamePatch));
     }
     
@@ -29,6 +34,7 @@ public static class GamePatch
     {
         LoadLastWindowRect.Enable(false);
         EnableWindowResize.Enable(false);
+        ConvertSavesFromPeace.Enable(false);
         _gamePatch?.UnpatchSelf();
         _gamePatch = null;
     }
@@ -169,6 +175,41 @@ public static class GamePatch
             if (EnableWindowResizeEnabled.Value)
                 WinApi.SetWindowLong(wnd, (int)WindowLongFlags.GWL_STYLE,
                     WinApi.GetWindowLong(wnd, (int)WindowLongFlags.GWL_STYLE) | (int)WindowStyles.WS_THICKFRAME | (int)WindowStyles.WS_MAXIMIZEBOX);
+        }
+    }
+
+    private static class ConvertSavesFromPeace
+    {
+        private static Harmony _patch;
+        public static void Enable(bool on)
+        {
+            if (on)
+            {
+                _patch ??= Harmony.CreateAndPatchAll(typeof(ConvertSavesFromPeace));
+                return;
+            }
+            _patch?.UnpatchSelf();
+            _patch = null;
+        }
+        
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(GameDesc), nameof(GameDesc.Import))]
+        private static IEnumerable<CodeInstruction> GameDesc_Import_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(CombatSettings), nameof(CombatSettings.SetDefault)))
+            ).Advance(-1).RemoveInstructions(2).Insert(
+                new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(UIRoot), nameof(UIRoot.instance))),
+                new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(UIRoot), nameof(UIRoot.galaxySelect))),
+                new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(UIGalaxySelect), nameof(UIGalaxySelect.uiCombat))),
+                new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(UICombatSettingsDF), nameof(UICombatSettingsDF.combatSettings))),
+                new CodeInstruction(OpCodes.Stfld, AccessTools.Field(typeof(GameDesc), nameof(GameDesc.combatSettings))),
+                new CodeInstruction(OpCodes.Ldarg_0),
+                new CodeInstruction(OpCodes.Ldc_I4_0),
+                new CodeInstruction(OpCodes.Stfld, AccessTools.Field(typeof(GameDesc), nameof(GameDesc.isPeaceMode)))
+            );
+            return matcher.InstructionEnumeration();
         }
     }
 }

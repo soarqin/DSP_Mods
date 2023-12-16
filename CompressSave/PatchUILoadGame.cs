@@ -46,12 +46,10 @@ class PatchUILoadGame
         {
             var rtrans = (RectTransform)__instance.loadSandboxGroup.transform;
             var anchoredPosition3D = rtrans.anchoredPosition3D;
-            var pos = anchoredPosition3D;
-            anchoredPosition3D = new Vector3(pos.x - 230, pos.y, pos.z);
             _decompressButton.gameObject.name = "button-decompress";
             rtrans = (RectTransform)_decompressButton.transform;
-            pos = anchoredPosition3D;
-            anchoredPosition3D = new Vector3(pos.x - 180, pos.y, pos.z);
+            var pos = anchoredPosition3D;
+            anchoredPosition3D = new Vector3(pos.x - 230, pos.y, pos.z);
             rtrans.anchoredPosition3D = anchoredPosition3D;
             _decompressButton.button.image.color = new Color32(0, 0xf4, 0x92, 0x77);
             var textTrans = _decompressButton.transform.Find("button-text");
