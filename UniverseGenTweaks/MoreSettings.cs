@@ -243,13 +243,13 @@ public class MoreSettings
         var matcher = new CodeMatcher(instructions, generator);
         matcher.MatchForward(false,
             new CodeMatch(ci => ci.opcode == OpCodes.Ldc_I4 && ci.OperandIs(25700))
-        ).SetAndAdvance(OpCodes.Ldsfld, AccessTools.Field(typeof(MoreSettings), nameof(MoreSettings.MaxStarCount))).Insert(
+        ).Repeat(m => m.SetAndAdvance(OpCodes.Ldsfld, AccessTools.Field(typeof(MoreSettings), nameof(MoreSettings.MaxStarCount))).Insert(
             new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(ConfigEntry<int>), nameof(ConfigEntry<int>.Value))),
             new CodeInstruction(OpCodes.Ldc_I4_1),
             new CodeInstruction(OpCodes.Add),
             new CodeInstruction(OpCodes.Ldc_I4_S, 100),
             new CodeInstruction(OpCodes.Mul)
-        );
+        ));
         return matcher.InstructionEnumeration();
     }
 

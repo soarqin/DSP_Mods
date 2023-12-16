@@ -4,6 +4,8 @@
 #### 宇宙生成参数调节
 
 ## Changelog
+* 1.2.3
+  + Fix a crash while setting star count greater than 256
 * 1.2.2
   + Support game version 0.10.28.20759
 * 1.2.1
@@ -33,6 +35,8 @@
   * High luminosity for birth star
 
 ## 更新日志
+* 1.2.3
+  + 修复了设置星系数大于256时崩溃的问题
 * 1.2.2
   + 支持游戏版本0.10.28.20759
 * 1.2.1

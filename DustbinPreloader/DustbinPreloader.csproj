@@ -14,29 +14,8 @@
   <ItemGroup>
     <PackageReference Include="BepInEx.Core" Version="5.*" />
     <PackageReference Include="BepInEx.PluginInfoProps" Version="1.*" />
-    <!--<PackageReference Include="DysonSphereProgram.GameLibs" Version="*-r.*" />-->
+    <PackageReference Include="DysonSphereProgram.GameLibs" Version="*-r.*" />
     <PackageReference Include="UnityEngine.Modules" Version="2018.4.12" IncludeAssets="compile" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="Assembly-CSharp">
-      <HintPath>..\GameAssembly\Assembly-CSharp.dll</HintPath>
-    </Reference>
-    <Reference Include="Unity.TextMeshPro">
-      <HintPath>..\GameAssembly\Unity.TextMeshPro.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.Networking">
-      <HintPath>..\GameAssembly\UnityEngine.Networking.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.SpatialTracking">
-      <HintPath>..\GameAssembly\UnityEngine.SpatialTracking.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.Timeline">
-      <HintPath>..\GameAssembly\UnityEngine.Timeline.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.UI">
-      <HintPath>..\GameAssembly\UnityEngine.UI.dll</HintPath>
-    </Reference>
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
