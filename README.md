@@ -55,6 +55,11 @@ Performance optimizations for Matrix Labs
 Optimize memory pools on loading gamesaves  
 加载游戏存档时优化内存池的使用
 
+# [UserCloak](UserCloak)
+
+Cloak(Fake) user account info  
+隐匿(伪装)用户账号信息
+
 # [UXAssist](UXAssist)
 
 Some functions and patches for better user experience  

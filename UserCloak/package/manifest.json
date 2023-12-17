@@ -1,0 +1,9 @@
+﻿{
+  "name": "UserCloak",
+  "version_number": "1.0.0",
+  "website_url": "https://github.com/soarqin/DSP_Mods/tree/master/UserCloak",
+  "description": "Cloak(Fake) user account info / 隐匿(伪装)用户账号信息",
+  "dependencies": [
+    "xiaoye97-BepInEx-5.4.17"
+  ]
+}

@@ -31,6 +31,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PoolOpt", "PoolOpt\PoolOpt.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UXAssist", "UXAssist\UXAssist.csproj", "{9C048229-6A50-4642-BC5E-02CD39D3869A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UserCloak", "UserCloak\UserCloak.csproj", "{096D2E4B-D1CE-424D-9954-C36A23E9E279}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -93,5 +95,9 @@ Global
 		{9C048229-6A50-4642-BC5E-02CD39D3869A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9C048229-6A50-4642-BC5E-02CD39D3869A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9C048229-6A50-4642-BC5E-02CD39D3869A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{096D2E4B-D1CE-424D-9954-C36A23E9E279}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{096D2E4B-D1CE-424D-9954-C36A23E9E279}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{096D2E4B-D1CE-424D-9954-C36A23E9E279}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{096D2E4B-D1CE-424D-9954-C36A23E9E279}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
