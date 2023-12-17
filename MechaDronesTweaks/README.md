@@ -4,6 +4,9 @@
 #### 机甲建设机调整(FastDrones MOD的后继者)
 
 ## Updates
+* 1.1.3
+  + Support for game version 0.10.28.20759+
+  + Fixed a minor bug that `RemoveSpeedLimitForStage1` not working while `UseFixedSpeed` set to false and `SpeedMultiplier` set to 1
 
 * 1.1.2
   + `RemoveBuildRangeLimit`, `LargerAreaForUpgradeAndDismantle` and `LargerAreaForTerraform` are moved to [UXAssist](https://dsp.thunderstore.io/package/soarqin/UXAssist)
@@ -32,6 +35,9 @@
 * Note: This MOD will disable `FastDrones` if the MOD is installed, to avoid conflict in functions.
 
 ## 更新日志
+* 1.1.3
+  + 支持游戏版本0.10.28.20759+
+  + 修复了当`UseFixedSpeed`设置为false且`SpeedMultiplier`设置为1时`RemoveSpeedLimitForStage1`无效的问题
 
 * 1.1.2
   + `RemoveBuildRangeLimit`, `LargerAreaForUpgradeAndDismantle` 和 `LargerAreaForTerraform` 移动到了 MOD [UXAssist](https://dsp.thunderstore.io/package/soarqin/UXAssist) 中

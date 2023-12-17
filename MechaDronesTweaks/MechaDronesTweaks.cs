@@ -5,6 +5,7 @@ using System.Reflection.Emit;
 using BepInEx;
 using BepInEx.Configuration;
 using HarmonyLib;
+using UnityEngine;
 
 namespace MechaDronesTweaks;
 
@@ -72,187 +73,123 @@ public static class MechaDronesTweaks
     public static float SpeedMultiplier = 4f;
     public static float EnergyMultiplier = 0.1f;
 
-    [HarmonyTranspiler, HarmonyPatch(typeof(UITechTree), "RefreshDataValueText")]
+    [HarmonyTranspiler]
+    [HarmonyPatch(typeof(ConstructionModuleComponent), nameof(ConstructionModuleComponent.SearchForNewTargets))]
+    [HarmonyPatch(typeof(ConstructionSystem), nameof(ConstructionSystem.UpdateDrones))]
+    [HarmonyPatch(typeof(UIMechaWindow), nameof(UIMechaWindow.UpdateProps))]
+    [HarmonyPatch(typeof(UITechTree), nameof(UITechTree.RefreshDataValueText))]
     private static IEnumerable<CodeInstruction> UITechTreeRefreshDataValueText_Transpiler(
-        IEnumerable<CodeInstruction> instructions)
+        IEnumerable<CodeInstruction> instructions, ILGenerator generator)
     {
-        foreach (var instr in instructions)
+        var matcher = new CodeMatcher(instructions, generator);
+        matcher.MatchForward(false,
+            new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(GameHistoryData), nameof(GameHistoryData.constructionDroneSpeed)))
+        );
+        if (UseFixedSpeed)
         {
-            if (instr.opcode == OpCodes.Callvirt &&
-                instr.OperandIs(AccessTools.Method(typeof(Mecha), "get_droneSpeed")))
+            matcher.Repeat(m => m.Advance(1).InsertAndAdvance(
+                new CodeInstruction(OpCodes.Pop),
+                new CodeInstruction(OpCodes.Ldc_R4, FixedSpeed)
+            ));
+        }
+        else
+        {
+            matcher.Repeat(m => m.Advance(1).InsertAndAdvance(
+                new CodeInstruction(OpCodes.Ldc_R4, SpeedMultiplier),
+                new CodeInstruction(OpCodes.Mul)
+            ));
+        }
+        return matcher.InstructionEnumeration();
+    }
+
+    [HarmonyTranspiler]
+    [HarmonyPatch(typeof(ConstructionModuleComponent), nameof(ConstructionModuleComponent.EjectBaseDrone))]
+    [HarmonyPatch(typeof(ConstructionModuleComponent), nameof(ConstructionModuleComponent.EjectMechaDrone))]
+    private static IEnumerable<CodeInstruction> MechaUpdateTargets_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+    {
+        var matcher = new CodeMatcher(instructions, generator);
+        if (!SkipStage1)
+            return matcher.InstructionEnumeration();
+        matcher.MatchForward(false,
+            new CodeMatch(OpCodes.Ldc_I4_1),
+            new CodeMatch(OpCodes.Stfld, AccessTools.Field(typeof(DroneComponent), nameof(DroneComponent.stage)))
+        ).Operand = 2;
+        return matcher.InstructionEnumeration();
+    }
+
+    [HarmonyTranspiler, HarmonyPatch(typeof(ConstructionSystem), nameof(ConstructionSystem.UpdateDrones))]
+    private static IEnumerable<CodeInstruction> MechaUpdateDrones_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+    {
+        var matcher = new CodeMatcher(instructions, generator);
+        if (EnergyMultiplier >= 1f)
+            return matcher.InstructionEnumeration();
+        matcher.MatchForward(false,
+            new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(ModeConfig), nameof(ModeConfig.droneEnergyPerMeter)))
+        ).Advance(1).Insert(
+            new CodeInstruction(OpCodes.Ldc_R8, (double)EnergyMultiplier),
+            new CodeInstruction(OpCodes.Mul)
+        );
+        return matcher.InstructionEnumeration();
+    }
+
+    [HarmonyTranspiler]
+    // ref CraftData craft, PlanetFactory factory, ref Vector3 ejectPos, float droneSpeed, float dt, ref double mechaEnergy, ref double mechaEnergyChange, double flyEnergyRate, double repairEnergyCost, out float energyRatio
+    [HarmonyPatch(typeof(DroneComponent), nameof(DroneComponent.InternalUpdate), new[] { typeof(CraftData), typeof(PlanetFactory), typeof(Vector3), typeof(float), typeof(float), typeof(double), typeof(double), typeof(double), typeof(double), typeof(float) }, new[] { ArgumentType.Ref, ArgumentType.Normal, ArgumentType.Ref, ArgumentType.Normal, ArgumentType.Normal, ArgumentType.Ref, ArgumentType.Ref, ArgumentType.Normal, ArgumentType.Normal, ArgumentType.Out })]
+    // ref CraftData craft, PlanetFactory factory, Vector3 ejectPos, float droneSpeed, float dt, ref long energy, double flyEnergyRate, double repairEnergyCost, out float energyRatio
+    [HarmonyPatch(typeof(DroneComponent), nameof(DroneComponent.InternalUpdate), new[] { typeof(CraftData), typeof(PlanetFactory), typeof(Vector3), typeof(float), typeof(float), typeof(long), typeof(double), typeof(double), typeof(float) }, new[] { ArgumentType.Ref, ArgumentType.Normal, ArgumentType.Normal, ArgumentType.Normal, ArgumentType.Normal, ArgumentType.Ref, ArgumentType.Normal, ArgumentType.Normal, ArgumentType.Out })]
+    private static IEnumerable<CodeInstruction> MechaDroneUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+    {
+        var matcher = new CodeMatcher(instructions, generator);
+
+        if (RemoveSpeedLimitForStage1)
+        {
+            matcher.MatchForward(false,
+                new CodeMatch(instr => instr.opcode == OpCodes.Ldc_R4 && instr.OperandIs(1f)),
+                new CodeMatch(instr => instr.opcode == OpCodes.Ldc_R4 && instr.OperandIs(3f))
+            );
+            matcher.Advance(1).Operand = 10000f;
+        }
+
+        if (!UseFixedSpeed && Math.Abs(SpeedMultiplier - 1.0f) < 0.01f)
+            return matcher.InstructionEnumeration();
+
+        matcher.Start().MatchForward(false,
+            new CodeMatch(OpCodes.Ldarg_0),
+            new CodeMatch(OpCodes.Ldc_R4),
+            new CodeMatch(OpCodes.Stfld, AccessTools.Field(typeof(DroneComponent), nameof(DroneComponent.progress)))
+        );
+        matcher.Repeat(m =>
+            {
+                if (m.InstructionAt(1).OperandIs(0f))
+                {
+                    m.InstructionAt(3).labels = m.Labels;
+                    m.RemoveInstructions(3);
+                }
+                else if (m.InstructionAt(1).OperandIs(1f))
+                {
+                    m.Advance(1).Operand = 0f;
+                    m.Advance(2);
+                }
+            }
+        );
+        matcher.Start().MatchForward(false,
+            new CodeMatch(instr => instr.opcode == OpCodes.Ldc_R4 && instr.OperandIs(0.5f))
+        );
+        matcher.Repeat(m =>
             {
                 if (UseFixedSpeed)
                 {
-                    yield return new CodeInstruction(OpCodes.Pop);
-                    yield return new CodeInstruction(OpCodes.Ldc_R4, FixedSpeed);
+                    if (FixedSpeed > 75f)
+                    {
+                        m.Operand = 0.5f * FixedSpeed / 75f;
+                    }
                 }
                 else
                 {
-                    yield return instr;
-                    yield return new CodeInstruction(OpCodes.Ldc_R4, SpeedMultiplier);
-                    yield return new CodeInstruction(OpCodes.Mul);
+                    m.Operand = 0.5f * SpeedMultiplier;
                 }
             }
-            else
-            {
-                yield return instr;
-            }
-        }
-    }
-
-    [HarmonyTranspiler, HarmonyPatch(typeof(MechaDroneLogic), "UpdateTargets")]
-    private static IEnumerable<CodeInstruction> MechaUpdateTargets_Transpiler(IEnumerable<CodeInstruction> instructions)
-    {
-        if (SkipStage1)
-        {
-            var ilist = instructions.ToList();
-            for (var i = 0; i < ilist.Count; i++)
-            {
-                var instr = ilist[i];
-                if (instr.opcode == OpCodes.Ldc_I4_1)
-                {
-                    var instrNext = ilist[i + 1];
-                    if (instrNext.opcode == OpCodes.Stfld &&
-                        instrNext.OperandIs(AccessTools.Field(typeof(MechaDrone), "stage")))
-                    {
-                        instr.opcode = OpCodes.Ldc_I4_2;
-                    }
-                }
-
-                yield return instr;
-            }
-        }
-        else
-        {
-            foreach (var instr in instructions)
-            {
-                yield return instr;
-            }
-        }
-    }
-
-    [HarmonyTranspiler, HarmonyPatch(typeof(MechaDroneLogic), "UpdateDrones")]
-    private static IEnumerable<CodeInstruction> MechaUpdateDrones_Transpiler(IEnumerable<CodeInstruction> instructions)
-    {
-        if (EnergyMultiplier >= 1f)
-        {
-            foreach (var instr in instructions)
-            {
-                yield return instr;
-            }
-        }
-        else
-        {
-            foreach (var instr in instructions)
-            {
-                yield return instr;
-                if (instr.opcode != OpCodes.Ldfld ||
-                    !instr.OperandIs(AccessTools.Field(typeof(Mecha), "droneEnergyPerMeter"))) continue;
-                yield return new CodeInstruction(OpCodes.Ldc_R8, (double)EnergyMultiplier);
-                yield return new CodeInstruction(OpCodes.Mul);
-            }
-        }
-    }
-
-    [HarmonyTranspiler, HarmonyPatch(typeof(MechaDrone), "Update")]
-    private static IEnumerable<CodeInstruction> MechaDroneUpdate_Transpiler(IEnumerable<CodeInstruction> instructions)
-    {
-        if (!UseFixedSpeed && Math.Abs(SpeedMultiplier - 1.0f) < 0.01f)
-        {
-            foreach (var instr in instructions)
-            {
-                yield return instr;
-            }
-        }
-        else
-        {
-            var ilist = instructions.ToList();
-            for (var i = 0; i < ilist.Count; i++)
-            {
-                var instr = ilist[i];
-                if (instr.opcode == OpCodes.Ldarg_0)
-                {
-                    var instrNext = ilist[i + 1];
-                    if (instrNext.opcode == OpCodes.Ldfld &&
-                        instrNext.OperandIs(AccessTools.Field(typeof(MechaDrone), "speed")))
-                    {
-                        if (UseFixedSpeed)
-                        {
-                            var newInstr = new CodeInstruction(instr)
-                            {
-                                opcode = OpCodes.Ldc_R4,
-                                operand = FixedSpeed
-                            };
-                            yield return newInstr;
-                        }
-                        else
-                        {
-                            yield return instr;
-                            yield return instrNext;
-                            yield return new CodeInstruction(OpCodes.Ldc_R4, SpeedMultiplier);
-                            yield return new CodeInstruction(OpCodes.Mul);
-                        }
-
-                        i++;
-                        continue;
-                    }
-
-                    if (instrNext.opcode == OpCodes.Ldc_R4)
-                    {
-                        if (instrNext.OperandIs(0f))
-                        {
-                            var instrNext2 = ilist[i + 2];
-                            if (instrNext2.opcode == OpCodes.Stfld &&
-                                instrNext2.OperandIs(AccessTools.Field(typeof(MechaDrone), "progress")))
-                            {
-                                ilist[i + 3].labels = instr.labels;
-                                i += 2;
-                                continue;
-                            }
-                        }
-                        else if (instrNext.OperandIs(1f))
-                        {
-                            var instrNext2 = ilist[i + 2];
-                            if (instrNext2.opcode == OpCodes.Stfld &&
-                                instrNext2.OperandIs(AccessTools.Field(typeof(MechaDrone), "progress")))
-                            {
-                                instrNext.operand = 0f;
-                                yield return instr;
-                                yield return instrNext;
-                                yield return instrNext2;
-                                i += 2;
-                                continue;
-                            }
-                        }
-                    }
-                }
-                else if (instr.opcode == OpCodes.Ldc_R4)
-                {
-                    if (instr.OperandIs(0.5f))
-                    {
-                        if (UseFixedSpeed)
-                        {
-                            if (FixedSpeed > 75f)
-                            {
-                                instr.operand = 0.5f * FixedSpeed / 75f;
-                            }
-                        }
-                        else
-                        {
-                            instr.operand = 0.5f * SpeedMultiplier;
-                        }
-                    }
-                    else if (instr.OperandIs(3f))
-                    {
-                        if (RemoveSpeedLimitForStage1)
-                        {
-                            instr.operand = 10000f;
-                        }
-                    }
-                }
-
-                yield return instr;
-            }
-        }
+        );
+        return matcher.InstructionEnumeration();
     }
 }

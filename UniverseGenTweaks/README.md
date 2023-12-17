@@ -4,6 +4,9 @@
 #### 宇宙生成参数调节
 
 ## Changelog
+* 1.2.4
+  + Fix a crash while setting star count greater than 256 (again)
+  + Fix bug that collider check is not enabled on stars with ID greater than 255
 * 1.2.3
   + Fix a crash while setting star count greater than 256
 * 1.2.2
@@ -35,6 +38,9 @@
   * High luminosity for birth star
 
 ## 更新日志
+* 1.2.4
+  + 修复了设置星系数大于256时崩溃的问题(再次)
+  + 修复了ID大于255的星系没有启用碰撞体检测的问题
 * 1.2.3
   + 修复了设置星系数大于256时崩溃的问题
 * 1.2.2

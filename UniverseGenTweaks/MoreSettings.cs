@@ -243,7 +243,28 @@ public class MoreSettings
         var matcher = new CodeMatcher(instructions, generator);
         matcher.MatchForward(false,
             new CodeMatch(ci => ci.opcode == OpCodes.Ldc_I4 && ci.OperandIs(25700))
-        ).Repeat(m => m.SetAndAdvance(OpCodes.Ldsfld, AccessTools.Field(typeof(MoreSettings), nameof(MoreSettings.MaxStarCount))).Insert(
+        );
+        matcher.Repeat(m => m.SetAndAdvance(OpCodes.Ldsfld, AccessTools.Field(typeof(MoreSettings), nameof(MoreSettings.MaxStarCount))).Insert(
+            new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(ConfigEntry<int>), nameof(ConfigEntry<int>.Value))),
+            new CodeInstruction(OpCodes.Ldc_I4_1),
+            new CodeInstruction(OpCodes.Add),
+            new CodeInstruction(OpCodes.Ldc_I4_S, 100),
+            new CodeInstruction(OpCodes.Mul)
+        ));
+        return matcher.InstructionEnumeration();
+    }
+
+    [HarmonyTranspiler]
+    [HarmonyPatch(typeof(SectorModel), nameof(SectorModel.CreateGalaxyAstroBuffer))]
+    [HarmonyPatch(typeof(SpaceColliderLogic), nameof(SpaceColliderLogic.UpdateCollidersPose))]
+    private static IEnumerable<CodeInstruction> SectorModel_CreateGalaxyAstroBuffer_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+    {
+        // 25600 -> (MaxStarCount.Value + 1) * 100
+        var matcher = new CodeMatcher(instructions, generator);
+        matcher.MatchForward(false,
+            new CodeMatch(ci => ci.opcode == OpCodes.Ldc_I4 && ci.OperandIs(25600))
+        );
+        matcher.Repeat(m => m.SetAndAdvance(OpCodes.Ldsfld, AccessTools.Field(typeof(MoreSettings), nameof(MoreSettings.MaxStarCount))).Insert(
             new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(ConfigEntry<int>), nameof(ConfigEntry<int>.Value))),
             new CodeInstruction(OpCodes.Ldc_I4_1),
             new CodeInstruction(OpCodes.Add),
