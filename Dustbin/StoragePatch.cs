@@ -135,7 +135,7 @@ public static class StoragePatch
         _storageDustbinCheckBox.Checked = storagePool[storageId].IsDustbin;
         if (__instance.transform is RectTransform rectTrans)
         {
-            _storageDustbinCheckBox.rectTrans.anchoredPosition3D = new Vector3(50, 58 - rectTrans.sizeDelta.y, 0);
+            _storageDustbinCheckBox.rectTrans.anchoredPosition3D = new Vector3(190, 57 - rectTrans.sizeDelta.y, 0);
         }
     }
     

@@ -4,6 +4,9 @@
 #### 储物仓和储液罐可以转变为垃圾桶(销毁送进的物品)
 
 ## Changelog
+* 1.3.2
+  + Fix a display issue that the dustbin checkbox is overlapped with the filter button in storage UI.
+
 * 1.3.1
   + Support for game version 0.10.28.20759
 
@@ -35,8 +38,12 @@
   + You can get item ID list [here](https://dsp-wiki.com/Modding:Items_IDs).
 
 ## 更新日志
+* 1.3.2
+  + 修正了储物仓UI中的垃圾桶勾选框与筛选按钮重叠的显示问题
+
 * 1.3.1
   + 支持游戏版本 0.10.28.20759
+
 * 1.3.0
   + 添加了一个传送带信号(可以在信号选择面板的第一个页签中找到)作为垃圾桶，这是目前销毁物品最简单的方法
   + 重写了储液罐的垃圾桶实现，以提高性能并解决已知的bug
