@@ -79,7 +79,7 @@ public static class FactoryPatch
     {
         var imm = ImmediateEnabled.Value;
         var architect = ArchitectModeEnabled.Value;
-        if (!imm && !architect) return;
+        if ((!imm && !architect) || GameMain.gameScenario == null) return;
         var prebuilds = factory.prebuildPool;
         if (imm) factory.BeginFlattenTerrain();
         for (var i = factory.prebuildCursor - 1; i > 0; i--)

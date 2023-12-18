@@ -4,8 +4,11 @@
 #### 一些提升用户体验的功能和补丁
 
 ## Changlog
+* 1.0.7
+  + Fix a crash issue on choosing language other than English and Chinese
+  + Games saved in Peace-Mode after Dark-Forg update can also be loaded as Combat-Mode now.
 * 1.0.6
-  + Convert old saves to Combat Mode on loading
+  + Convert old saves to Combat-Mode on loading
 * 1.0.5
   + Support game version 0.10.28.20759
   + Sort blueprint structures before saving, to reduce generated blueprint data size a little.
@@ -42,7 +45,7 @@
   + General 
     - Enable game window resize
     - Remember window position and size on last exit
-    - Convert old saves to Combat Mode on loading
+    - Convert Peace-Mode saves to Combat-Mode on loading
   + Planet/Factory
     - Unlimited interactive range
     - Sunlight at night
@@ -73,6 +76,9 @@
 * [OffGridConstruction](https://github.com/Velociraptor115-DSPModding/OffGridConstruction): Off-grid building & stepped rotation implementations
 
 ## 更新日志
+* 1.0.7
+  + 修复了选择英文和中文以外的语言时的崩溃问题
+  + 黑雾更新后使用和平模式保存的存档现在也可以转换为战斗模式了
 * 1.0.6
   + 在加载旧存档时将其转换为战斗模式
 * 1.0.5
@@ -111,7 +117,7 @@
   + 通用
     - 可调整游戏窗口大小(可最大化和拖动边框)
     - 记住上次退出时的窗口位置和大小
-    - 在加载旧存档时将其转换为战斗模式
+    - 在加载和平模式存档时将其转换为战斗模式
   + 行星/工厂
     - 无限交互距离
     - 夜间日光灯

@@ -7,6 +7,9 @@
 
 ## Changelog
 
+### 1.3.5
+* Fix a crash issue on choosing language other than English and Chinese.
+
 ### 1.3.4
 * Support for game version 0.10.28.20759.
 
@@ -139,6 +142,9 @@
 * Remember to backup your save(use original save button) before updating game to avoid loading failure.
 
 ## 更新日志
+
+### 1.3.5
+* 修复了选择英文和中文以外的语言时的崩溃问题。
 
 ### 1.3.4
 * 支持游戏版本 0.10.28.20759。

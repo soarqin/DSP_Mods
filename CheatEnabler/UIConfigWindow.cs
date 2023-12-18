@@ -136,11 +136,11 @@ public static class UIConfigWindow
         MyCheckBox.CreateCheckBox(x, y, tab3, PlanetPatch.TerraformAnywayEnabled, "Terraform without enough sands");
         x = 400f;
         y = 10f;
-        wnd.AddButton(x, y, tab3, "矿物掩埋标题", 16, "button-bury-all", () => { PlanetFunctions.BuryAllVeins(true); });
+        wnd.AddButton(x, y, 200f, tab3, "矿物掩埋标题", 16, "button-bury-all", () => { PlanetFunctions.BuryAllVeins(true); });
         y += 36f;
-        wnd.AddButton(x, y, tab3, "矿物还原标题", 16, "button-bury-restore-all", () => { PlanetFunctions.BuryAllVeins(false); });
+        wnd.AddButton(x, y, 200f, tab3, "矿物还原标题", 16, "button-bury-restore-all", () => { PlanetFunctions.BuryAllVeins(false); });
         y += 36f;
-        wnd.AddButton(x, y, tab3, "铺满地基提示", 16, "button-reform-all", () =>
+        wnd.AddButton(x, y, 200f, tab3, "铺满地基提示", 16, "button-reform-all", () =>
         {
             var player = GameMain.mainPlayer;
             if (player == null) return;
@@ -150,7 +150,7 @@ public static class UIConfigWindow
             GameMain.localPlanet.factory.PlanetReformAll(reformTool.brushType, reformTool.brushColor, reformTool.buryVeins);
         });
         y += 36f;
-        wnd.AddButton(x, y, tab3, "还原地形提示", 16, "button-reform-revert-all", () =>
+        wnd.AddButton(x, y, 200f, tab3, "还原地形提示", 16, "button-reform-revert-all", () =>
         {
             var factory = GameMain.localPlanet?.factory;
             if (factory == null) return;

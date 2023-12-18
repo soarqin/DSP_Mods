@@ -181,6 +181,7 @@ public static class GamePatch
     private static class ConvertSavesFromPeace
     {
         private static Harmony _patch;
+        private static bool _needConvert;
         public static void Enable(bool on)
         {
             if (on)
@@ -192,24 +193,37 @@ public static class GamePatch
             _patch = null;
         }
         
-        [HarmonyTranspiler]
+        [HarmonyPostfix]
         [HarmonyPatch(typeof(GameDesc), nameof(GameDesc.Import))]
-        private static IEnumerable<CodeInstruction> GameDesc_Import_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        private static void GameDesc_Import_Postfix(GameDesc __instance)
+        {
+            if (DSPGame.IsMenuDemo || !__instance.isPeaceMode) return;
+            __instance.combatSettings = UIRoot.instance.galaxySelect.uiCombat.combatSettings;
+            __instance.isPeaceMode = false;
+            _needConvert = true;
+        }
+        
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(GameData), nameof(GameData.Import))]
+        private static IEnumerable<CodeInstruction> GameData_Import_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
         {
             var matcher = new CodeMatcher(instructions, generator);
-            matcher.MatchForward(false,
-                new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(CombatSettings), nameof(CombatSettings.SetDefault)))
-            ).Advance(-1).RemoveInstructions(2).Insert(
-                new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(UIRoot), nameof(UIRoot.instance))),
-                new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(UIRoot), nameof(UIRoot.galaxySelect))),
-                new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(UIGalaxySelect), nameof(UIGalaxySelect.uiCombat))),
-                new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(UICombatSettingsDF), nameof(UICombatSettingsDF.combatSettings))),
-                new CodeInstruction(OpCodes.Stfld, AccessTools.Field(typeof(GameDesc), nameof(GameDesc.combatSettings))),
-                new CodeInstruction(OpCodes.Ldarg_0),
-                new CodeInstruction(OpCodes.Ldc_I4_0),
-                new CodeInstruction(OpCodes.Stfld, AccessTools.Field(typeof(GameDesc), nameof(GameDesc.isPeaceMode)))
+            matcher.Start().MatchForward(false,
+                new CodeMatch(instr => (instr.opcode == OpCodes.Ldc_I4 || instr.opcode == OpCodes.Ldc_I4_S) && instr.OperandIs(0x1B)),
+                new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(PerformanceMonitor), nameof(PerformanceMonitor.EndData)))
+            );
+            matcher.Advance(2).Opcode = OpCodes.Brfalse;
+            matcher.Insert(
+                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(ConvertSavesFromPeace), nameof(ConvertSavesFromPeace._needConvert)))
             );
             return matcher.InstructionEnumeration();
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(GameData), nameof(GameData.Import))]
+        private static void GameData_Import_Postfix()
+        {
+            _needConvert = false;
         }
     }
 }
