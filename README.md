@@ -7,8 +7,7 @@ Add various cheat functions while disabling abnormal determinants
 
 # [CompressSave](CompressSave)
 
-Compress game saves to reduce space use and boost save speed  
-压缩游戏存档以降低空间使用并提升保存速度
+Moved [here](https://github.com/soarqin/DSP_Mods_TO/tree/master/CompressSave)
 
 # [LogisticMiner](LogisticMiner)
 
