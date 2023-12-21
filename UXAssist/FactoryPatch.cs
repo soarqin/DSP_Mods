@@ -689,6 +689,7 @@ public static class FactoryPatch
 
         private static KeyCode _lastKey = KeyCode.None;
         private static long _nextKeyTick;
+        private static bool _skipNextEvent;
 
         private static bool UpdateKeyPressed(KeyCode code)
         {
@@ -706,6 +707,7 @@ public static class FactoryPatch
             _nextKeyTick = currTick + 4;
             return true;
         }
+
         public static void OnUpdate()
         {
             if (_lastKey != KeyCode.None && Input.GetKeyUp(_lastKey))
@@ -742,47 +744,39 @@ public static class FactoryPatch
                 if (stationStorage is null) continue;
                 var station = stationStorage.station;
                 ref var storage = ref station.storage[stationStorage.index];
-                var modelProto = LDB.models.Select(stationStorage.stationWindow.factory.entityPool[station.entityId].modelIndex);
-                var newMax = storage.max + delta;
+                var oldMax = storage.max;
+                var newMax = oldMax + delta;
                 if (newMax < 0)
                 {
                     newMax = 0;
                 }
                 else
                 {
+                    var modelProto = LDB.models.Select(stationStorage.stationWindow.factory.entityPool[station.entityId].modelIndex);
                     var itemCountMax = 0;
                     if (modelProto != null)
                     {
                         itemCountMax = modelProto.prefabDesc.stationMaxItemCount;
                     }
-
-                    int extraMax;
-                    if (station.isCollector)
+                    itemCountMax += station.isStellar ? GameMain.history.remoteStationExtraStorage : GameMain.history.localStationExtraStorage;
+                    if (newMax > itemCountMax)
                     {
-                        extraMax = GameMain.history.localStationExtraStorage;
-                    }
-                    else if (station.isVeinCollector)
-                    {
-                        extraMax = GameMain.history.localStationExtraStorage;
-                    }
-                    else if (station.isStellar)
-                    {
-                        extraMax = GameMain.history.remoteStationExtraStorage;
-                    }
-                    else
-                    {
-                        extraMax = GameMain.history.localStationExtraStorage;
-                    }
-
-                    if (newMax > itemCountMax + extraMax)
-                    {
-                        newMax = itemCountMax + extraMax;
+                        newMax = itemCountMax;
                     }
                 }
-                UXAssist.Logger.LogInfo($"Set storage[{stationStorage.index}].max from {storage.max} to {newMax}");
                 storage.max = newMax;
+                _skipNextEvent = oldMax / 100 != newMax / 100;
                 break;
             }
+        }
+        
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(UIStationStorage), nameof(UIStationStorage.OnMaxSliderValueChange))]
+        private static bool UIStationStorage_OnMaxSliderValueChange_Prefix()
+        {
+            if (!_skipNextEvent) return true;
+            _skipNextEvent = false;
+            return false;
         }
 
         [HarmonyPrefix]

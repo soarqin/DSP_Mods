@@ -5,7 +5,7 @@
 
 ## Changlog
 * 1.0.8
-  + New function:  logistic storage limits are not scaled on upgrading `Logistics Carrier Capacity`, if they are not set to maximum capacity.
+  + New function: `Enhanced control for logistic storage limits`
 * 1.0.7
   + Fix a crash issue on choosing language other than English and Chinese
   + Games saved in Peace-Mode after Dark-Forg update can also be loaded as Combat-Mode now.
@@ -56,6 +56,9 @@
     - Larger area for upgrade and dismantle(30x30 at max)
     - Larger area for terraform(30x30 at max)
     - Enable player actions in globe view
+    - Enhanced control for logistic storage limits
+      - Logistic storage limits are not scaled on upgrading `Logistics Carrier Capacity`, if they are not set to maximum capacity.
+      - You can use arrow keys to adjust logistic storage limits gracefully.
     - Enhanced count control for hand-make
     - Re-intialize planet (without reseting veins)
     - Quick dismantle all buildings (without drops)
@@ -79,7 +82,7 @@
 
 ## 更新日志
 * 1.0.8
-  + 新功能：当升级`运输机舱扩容`时，不会对各种物流塔的存储限制按比例提升，除非设置为最大允许容量。
+  + 新功能：`物流塔存储数量限制控制改进`
 * 1.0.7
   + 修复了选择英文和中文以外的语言时的崩溃问题
   + 黑雾更新后使用和平模式保存的存档现在也可以转换为战斗模式了
@@ -130,6 +133,9 @@
     - 范围升级和拆除的最大区域扩大(最大30x30)
     - 范围铺设地基的最大区域扩大(最大30x30)
     - 在行星视图中允许玩家操作
+    - 物流塔存储数量限制控制改进
+      - 当升级`运输机舱扩容`时，不会对各种物流塔的存储限制按比例提升，除非设置为最大允许容量。
+      - 你可以使用方向键微调物流塔存储限制
     - 手动制造物品的数量控制改进
     - 初始化本行星（不重置矿脉）
     - 快速拆除所有建筑（不掉落）

@@ -27,6 +27,8 @@ public static class UIConfigWindow
         I18N.Add("Larger area for terraform", "Larger area for terraform", "范围铺设地基的最大区域扩大");
         I18N.Add("Off-grid building and stepped rotation", "Off-grid building and stepped rotation (Hold Shift)", "脱离网格建造以及小角度旋转(按住Shift)");
         I18N.Add("Enable player actions in globe view", "Enable player actions in globe view", "在行星视图中允许玩家操作");
+        I18N.Add("Enhance control for logistic storage limits", "Enhance control for logistic storage limits", "物流塔存储限制控制改进");
+        I18N.Add("Enhance control for logistic storage limits tips", "Logistic storage limits are not scaled on upgrading 'Logistics Carrier Capacity', if they are not set to maximum capacity.\nUse arrow keys to adjust logistic storage limits:\n  \u2190/\u2192: -/+10  \u2193\u2191: -/+100", "当升级'运输机舱扩容'时，不会对各种物流塔的存储限制按比例提升，除非设置为最大允许容量。\n你可以使用方向键微调物流塔存储限制：\n  \u2190\u2192: -/+10  \u2193\u2191: -/+100");
         I18N.Add("Enhanced count control for hand-make", "Enhanced count control for hand-make", "手动制造物品的数量控制改进");
         I18N.Add("Enhanced count control for hand-make tips", "Maximum count is increased to 1000.\nHold Ctrl/Shift/Alt to change the count rapidly.", "最大数量提升至1000\n按住Ctrl/Shift/Alt可快速改变数量");
         I18N.Add("Initialize This Planet", "Initialize this planet", "初始化本行星");
@@ -82,8 +84,14 @@ public static class UIConfigWindow
         y += 36f;
         MyCheckBox.CreateCheckBox(x, y, tab2, PlanetPatch.PlayerActionsInGlobeViewEnabled, "Enable player actions in globe view");
         y += 36f;
+        MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.LogisticsCapacityTweaksEnabled, "Enhance control for logistic storage limits");
+        x = 270f;
+        y += 6f;
+        MyWindow.AddTipsButton(x, y, tab2, "Enhance control for logistic storage limits", "Enhance control for logistic storage limits tips", "enhanced-logistic-limit-tips");
+        x = 0f;
+        y += 30f;
         MyCheckBox.CreateCheckBox(x, y, tab2, PlayerPatch.EnhancedMechaForgeCountControlEnabled, "Enhanced count control for hand-make");
-        x = 240f;
+        x = 270f;
         y += 6f;
         MyWindow.AddTipsButton(x, y, tab2, "Enhanced count control for hand-make", "Enhanced count control for hand-make tips", "enhanced-count-control-tips");
         x = 400f;
