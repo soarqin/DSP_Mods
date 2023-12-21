@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection.Emit;
+using BepInEx;
 using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace UXAssist;
 
@@ -16,6 +18,7 @@ public static class FactoryPatch
     public static ConfigEntry<bool> LargerAreaForUpgradeAndDismantleEnabled;
     public static ConfigEntry<bool> LargerAreaForTerraformEnabled;
     public static ConfigEntry<bool> OffGridBuildingEnabled;
+    public static ConfigEntry<bool> LogisticsCapacityTweaksEnabled;
 
     private static Harmony _factoryPatch;
 
@@ -28,6 +31,7 @@ public static class FactoryPatch
         LargerAreaForUpgradeAndDismantleEnabled.SettingChanged += (_, _) => LargerAreaForUpgradeAndDismantle.Enable(LargerAreaForUpgradeAndDismantleEnabled.Value);
         LargerAreaForTerraformEnabled.SettingChanged += (_, _) => LargerAreaForTerraform.Enable(LargerAreaForTerraformEnabled.Value);
         OffGridBuildingEnabled.SettingChanged += (_, _) => OffGridBuilding.Enable(OffGridBuildingEnabled.Value);
+        LogisticsCapacityTweaksEnabled.SettingChanged += (_, _) => LogisticsCapacityTweaks.Enable(LogisticsCapacityTweaksEnabled.Value);
         UnlimitInteractive.Enable(UnlimitInteractiveEnabled.Value);
         RemoveSomeConditionBuild.Enable(RemoveSomeConditionEnabled.Value);
         NightLight.Enable(NightLightEnabled.Value);
@@ -35,6 +39,7 @@ public static class FactoryPatch
         LargerAreaForUpgradeAndDismantle.Enable(LargerAreaForUpgradeAndDismantleEnabled.Value);
         LargerAreaForTerraform.Enable(LargerAreaForTerraformEnabled.Value);
         OffGridBuilding.Enable(OffGridBuildingEnabled.Value);
+        LogisticsCapacityTweaks.Enable(LogisticsCapacityTweaksEnabled.Value);
 
         _factoryPatch ??= Harmony.CreateAndPatchAll(typeof(FactoryPatch));
     }
@@ -48,6 +53,7 @@ public static class FactoryPatch
         LargerAreaForUpgradeAndDismantle.Enable(false);
         LargerAreaForTerraform.Enable(false);
         OffGridBuilding.Enable(false);
+        LogisticsCapacityTweaks.Enable(false);
 
         _factoryPatch?.UnpatchSelf();
         _factoryPatch = null;
@@ -524,7 +530,7 @@ public static class FactoryPatch
         }
     }
 
-    public class OffGridBuilding
+    public static class OffGridBuilding
     {
         private static Harmony _patch;
         private const float SteppedRotationDegrees = 15f;
@@ -546,19 +552,18 @@ public static class FactoryPatch
             Label? thisIfBlockEntryLabel = null;
             Label? thisElseBlockEntryLabel = null;
 
-            matcher.MatchForward(
-                false
-                , new CodeMatch(ci => ci.Calls(AccessTools.PropertyGetter(typeof(VFInput), nameof(VFInput._ignoreGrid))))
-                , new CodeMatch(ci => ci.Branches(out thisElseBlockEntryLabel))
-                , new CodeMatch(ci => ci.IsLdarg())
-                , new CodeMatch(OpCodes.Ldfld)
-                , new CodeMatch(OpCodes.Ldfld)
-                , new CodeMatch(ci => ci.LoadsConstant(EMinerType.Vein))
-                , new CodeMatch(ci => ci.Branches(out thisIfBlockEntryLabel))
-                , new CodeMatch(ci => ci.IsLdarg())
-                , new CodeMatch(OpCodes.Ldfld)
-                , new CodeMatch(OpCodes.Ldfld)
-                , new CodeMatch(ci => ci.Branches(out _))
+            matcher.MatchForward(false,
+                new CodeMatch(ci => ci.Calls(AccessTools.PropertyGetter(typeof(VFInput), nameof(VFInput._ignoreGrid)))),
+                new CodeMatch(ci => ci.Branches(out thisElseBlockEntryLabel)),
+                new CodeMatch(ci => ci.IsLdarg()),
+                new CodeMatch(OpCodes.Ldfld),
+                new CodeMatch(OpCodes.Ldfld),
+                new CodeMatch(ci => ci.LoadsConstant(EMinerType.Vein)),
+                new CodeMatch(ci => ci.Branches(out thisIfBlockEntryLabel)),
+                new CodeMatch(ci => ci.IsLdarg()),
+                new CodeMatch(OpCodes.Ldfld),
+                new CodeMatch(OpCodes.Ldfld),
+                new CodeMatch(ci => ci.Branches(out _))
             );
 
             ifBlockEntryLabel = thisIfBlockEntryLabel;
@@ -591,12 +596,11 @@ public static class FactoryPatch
 
             Label? exitLabel = null;
 
-            matcher.MatchForward(
-                false
-                , new CodeMatch(ci => ci.Branches(out exitLabel))
-                , new CodeMatch(OpCodes.Ldarg_0)
-                , new CodeMatch(ci => ci.LoadsConstant(1))
-                , new CodeMatch(ci => ci.StoresField(AccessTools.Field(typeof(BuildTool_Click), nameof(BuildTool_Click.isDragging))))
+            matcher.MatchForward(false,
+                new CodeMatch(ci => ci.Branches(out exitLabel)),
+                new CodeMatch(OpCodes.Ldarg_0),
+                new CodeMatch(ci => ci.LoadsConstant(1)),
+                new CodeMatch(ci => ci.StoresField(AccessTools.Field(typeof(BuildTool_Click), nameof(BuildTool_Click.isDragging))))
             );
 
             if (matcher.IsInvalid)
@@ -604,8 +608,8 @@ public static class FactoryPatch
 
             matcher.Advance(1);
             matcher.Insert(
-                new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(VFInput), nameof(VFInput._ignoreGrid)))
-                , new CodeInstruction(OpCodes.Brtrue, exitLabel)
+                new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(VFInput), nameof(VFInput._ignoreGrid))),
+                new CodeInstruction(OpCodes.Brtrue, exitLabel)
             );
 
             return matcher.InstructionEnumeration();
@@ -640,10 +644,10 @@ public static class FactoryPatch
             matcher.Insert(instructionToClone);
             matcher.CreateLabel(out var existingEntryLabel);
             matcher.InsertAndAdvance(
-                new CodeInstruction(OpCodes.Brfalse, existingEntryLabel)
-                , new CodeInstruction(OpCodes.Ldarg_0)
-                , CodeInstruction.Call(typeof(OffGridBuilding), nameof(OffGridBuilding.RotateStepped))
-                , new CodeInstruction(OpCodes.Br, ifBlockExitLabel)
+                new CodeInstruction(OpCodes.Brfalse, existingEntryLabel),
+                new CodeInstruction(OpCodes.Ldarg_0),
+                CodeInstruction.Call(typeof(OffGridBuilding), nameof(OffGridBuilding.RotateStepped)),
+                new CodeInstruction(OpCodes.Br, ifBlockExitLabel)
             );
 
             return matcher.InstructionEnumeration();
@@ -664,6 +668,175 @@ public static class FactoryPatch
                 instance.yaw = Mathf.Repeat(instance.yaw, 360f);
                 instance.yaw = Mathf.Round(instance.yaw / SteppedRotationDegrees) * SteppedRotationDegrees;
             }
+        }
+    }
+
+    public static class LogisticsCapacityTweaks
+    {
+        private static Harmony _patch;
+
+        public static void Enable(bool enable)
+        {
+            if (enable)
+            {
+                _patch ??= Harmony.CreateAndPatchAll(typeof(LogisticsCapacityTweaks));
+                return;
+            }
+
+            _patch?.UnpatchSelf();
+            _patch = null;
+        }
+
+        private static KeyCode _lastKey = KeyCode.None;
+        private static long _nextKeyTick;
+
+        private static bool UpdateKeyPressed(KeyCode code)
+        {
+            if (!Input.GetKey(code))
+                return false;
+            if (code != _lastKey)
+            {
+                _lastKey = code;
+                _nextKeyTick = GameMain.instance.timei + 30;
+                return true;
+            }
+
+            var currTick = GameMain.instance.timei;
+            if (_nextKeyTick > currTick) return false;
+            _nextKeyTick = currTick + 4;
+            return true;
+        }
+        public static void OnUpdate()
+        {
+            if (_lastKey != KeyCode.None && Input.GetKeyUp(_lastKey))
+            {
+                _lastKey = KeyCode.None;
+            }
+            int delta;
+            if (UpdateKeyPressed(KeyCode.LeftArrow))
+            {
+                delta = -10;
+            }
+            else if (UpdateKeyPressed(KeyCode.RightArrow))
+            {
+                delta = 10;
+            }
+            else if (UpdateKeyPressed(KeyCode.DownArrow))
+            {
+                delta = -100;
+            }
+            else if (UpdateKeyPressed(KeyCode.UpArrow))
+            {
+                delta = 100;
+            }
+            else
+            {
+                return;
+            }
+
+            var targets = new List<RaycastResult>();
+            EventSystem.current.RaycastAll(new PointerEventData(EventSystem.current) { position = Input.mousePosition }, targets);
+            foreach (var target in targets)
+            {
+                var stationStorage = target.gameObject.GetComponentInParent<UIStationStorage>();
+                if (stationStorage is null) continue;
+                var station = stationStorage.station;
+                ref var storage = ref station.storage[stationStorage.index];
+                var modelProto = LDB.models.Select(stationStorage.stationWindow.factory.entityPool[station.entityId].modelIndex);
+                var newMax = storage.max + delta;
+                if (newMax < 0)
+                {
+                    newMax = 0;
+                }
+                else
+                {
+                    var itemCountMax = 0;
+                    if (modelProto != null)
+                    {
+                        itemCountMax = modelProto.prefabDesc.stationMaxItemCount;
+                    }
+
+                    int extraMax;
+                    if (station.isCollector)
+                    {
+                        extraMax = GameMain.history.localStationExtraStorage;
+                    }
+                    else if (station.isVeinCollector)
+                    {
+                        extraMax = GameMain.history.localStationExtraStorage;
+                    }
+                    else if (station.isStellar)
+                    {
+                        extraMax = GameMain.history.remoteStationExtraStorage;
+                    }
+                    else
+                    {
+                        extraMax = GameMain.history.localStationExtraStorage;
+                    }
+
+                    if (newMax > itemCountMax + extraMax)
+                    {
+                        newMax = itemCountMax + extraMax;
+                    }
+                }
+                UXAssist.Logger.LogInfo($"Set storage[{stationStorage.index}].max from {storage.max} to {newMax}");
+                storage.max = newMax;
+                break;
+            }
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(PlanetTransport), nameof(PlanetTransport.OnTechFunctionUnlocked))]
+        private static bool PlanetTransport_OnTechFunctionUnlocked_Prefix(PlanetTransport __instance, int _funcId, double _valuelf, int _level)
+        {
+            switch (_funcId)
+            {
+                case 30:
+                {
+                    var stationPool = __instance.stationPool;
+                    var factory = __instance.factory;
+                    var history = GameMain.history;
+                    for (var i = __instance.stationCursor; i > 0; i--)
+                    {
+                        if (stationPool[i] == null || stationPool[i].id != i || (stationPool[i].isStellar && !stationPool[i].isCollector && !stationPool[i].isVeinCollector)) continue;
+                        var modelIndex = factory.entityPool[stationPool[i].entityId].modelIndex;
+                        var maxCount = LDB.models.Select(modelIndex).prefabDesc.stationMaxItemCount;
+                        var oldMaxCount = maxCount + history.localStationExtraStorage - _valuelf;
+                        var intOldMaxCount = (int)Math.Round(oldMaxCount);
+                        var ratio = (maxCount + history.localStationExtraStorage) / oldMaxCount;
+                        var storage = stationPool[i].storage;
+                        for (var j = storage.Length - 1; j >= 0; j--)
+                        {
+                            if (storage[j].max + 10 < intOldMaxCount) continue;
+                            storage[j].max = Mathf.RoundToInt((float)(storage[j].max * ratio / 50.0)) * 50;
+                        }
+                    }
+                    break;
+                }
+                case 31:
+                {
+                    var stationPool = __instance.stationPool;
+                    var factory = __instance.factory;
+                    var history = GameMain.history;
+                    for (var i = __instance.stationCursor; i > 0; i--)
+                    {
+                        if (stationPool[i] == null || stationPool[i].id != i || !stationPool[i].isStellar || stationPool[i].isCollector || stationPool[i].isVeinCollector) continue;
+                        var modelIndex = factory.entityPool[stationPool[i].entityId].modelIndex;
+                        var maxCount = LDB.models.Select(modelIndex).prefabDesc.stationMaxItemCount;
+                        var oldMaxCount = maxCount + history.remoteStationExtraStorage - _valuelf;
+                        var intOldMaxCount = (int)Math.Round(oldMaxCount);
+                        var ratio = (maxCount + history.remoteStationExtraStorage) / oldMaxCount;
+                        var storage = stationPool[i].storage;
+                        for (var j = storage.Length - 1; j >= 0; j--)
+                        {
+                            if (storage[j].max + 10 < intOldMaxCount) continue;
+                            storage[j].max = Mathf.RoundToInt((float)(storage[j].max * ratio / 100.0)) * 100;
+                        }
+                    }
+                    break;
+                }
+            }
+            return false;
         }
     }
 }

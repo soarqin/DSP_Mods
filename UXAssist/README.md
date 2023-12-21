@@ -4,6 +4,8 @@
 #### 一些提升用户体验的功能和补丁
 
 ## Changlog
+* 1.0.8
+  + New function:  logistic storage limits are not scaled on upgrading `Logistics Carrier Capacity`, if they are not set to maximum capacity.
 * 1.0.7
   + Fix a crash issue on choosing language other than English and Chinese
   + Games saved in Peace-Mode after Dark-Forg update can also be loaded as Combat-Mode now.
@@ -76,6 +78,8 @@
 * [OffGridConstruction](https://github.com/Velociraptor115-DSPModding/OffGridConstruction): Off-grid building & stepped rotation implementations
 
 ## 更新日志
+* 1.0.8
+  + 新功能：当升级`运输机舱扩容`时，不会对各种物流塔的存储限制按比例提升，除非设置为最大允许容量。
 * 1.0.7
   + 修复了选择英文和中文以外的语言时的崩溃问题
   + 黑雾更新后使用和平模式保存的存档现在也可以转换为战斗模式了
