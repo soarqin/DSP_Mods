@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Reflection.Emit;
 using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine;
 using UXAssist.Common;
+using Object = UnityEngine.Object;
 
 namespace UXAssist;
 
@@ -15,6 +18,7 @@ public static class GamePatch
 
     public static ConfigEntry<bool> EnableWindowResizeEnabled;
     public static ConfigEntry<bool> LoadLastWindowRectEnabled;
+    public static ConfigEntry<bool> AutoSaveOptEnabled;
     public static ConfigEntry<bool> ConvertSavesFromPeaceEnabled;
     public static ConfigEntry<Vector4> LastWindowRect;
     private static Harmony _gamePatch;
@@ -23,9 +27,11 @@ public static class GamePatch
     {
         EnableWindowResizeEnabled.SettingChanged += (_, _) => EnableWindowResize.Enable(EnableWindowResizeEnabled.Value);
         LoadLastWindowRectEnabled.SettingChanged += (_, _) => LoadLastWindowRect.Enable(LoadLastWindowRectEnabled.Value);
+        AutoSaveOptEnabled.SettingChanged += (_, _) => AutoSaveOpt.Enable(AutoSaveOptEnabled.Value);
         ConvertSavesFromPeaceEnabled.SettingChanged += (_, _) => ConvertSavesFromPeace.Enable(ConvertSavesFromPeaceEnabled.Value);
         EnableWindowResize.Enable(EnableWindowResizeEnabled.Value);
         LoadLastWindowRect.Enable(LoadLastWindowRectEnabled.Value);
+        AutoSaveOpt.Enable(AutoSaveOptEnabled.Value);
         ConvertSavesFromPeace.Enable(ConvertSavesFromPeaceEnabled.Value);
         _gamePatch ??= Harmony.CreateAndPatchAll(typeof(GamePatch));
     }
@@ -34,6 +40,7 @@ public static class GamePatch
     {
         LoadLastWindowRect.Enable(false);
         EnableWindowResize.Enable(false);
+        AutoSaveOpt.Enable(false);
         ConvertSavesFromPeace.Enable(false);
         _gamePatch?.UnpatchSelf();
         _gamePatch = null;
@@ -175,6 +182,148 @@ public static class GamePatch
             if (EnableWindowResizeEnabled.Value)
                 WinApi.SetWindowLong(wnd, (int)WindowLongFlags.GWL_STYLE,
                     WinApi.GetWindowLong(wnd, (int)WindowLongFlags.GWL_STYLE) | (int)WindowStyles.WS_THICKFRAME | (int)WindowStyles.WS_MAXIMIZEBOX);
+        }
+    }
+
+    private static class AutoSaveOpt
+    {
+        private static Harmony _patch;
+
+        public static void Enable(bool on)
+        {
+            if (on)
+            {
+                Directory.CreateDirectory(GameConfig.gameSaveFolder + "AutoSaves/");
+                _patch ??= Harmony.CreateAndPatchAll(typeof(AutoSaveOpt));
+                return;
+            }
+
+            _patch?.UnpatchSelf();
+            _patch = null;
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(GameSave), nameof(GameSave.AutoSave))]
+        private static bool GameSave_AutoSave_Prefix(ref bool __result)
+        {
+            if (!GameSave.SaveCurrentGame(GameSave.AutoSaveTmp))
+            {
+                GlobalObject.SaveOpCounter();
+                __result = false;
+                return false;
+            }
+
+            var tmpFilename = GameConfig.gameSaveFolder + GameSave.AutoSaveTmp + GameSave.saveExt;
+            var targetFilename = $"{GameConfig.gameSaveFolder}AutoSaves/[{GameMain.data.gameDesc.clusterString}] {DateTime.Now:yyyy-MM-dd_hh-mm-ss}{GameSave.saveExt}";
+            File.Move(tmpFilename, targetFilename);
+            __result = true;
+            return false;
+        }
+        
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(UILoadGameWindow), nameof(UILoadGameWindow.RefreshList))]
+        public static void UILoadGameWindow_RefreshList_Postfix(UILoadGameWindow __instance)
+        {
+            var baseDir = GameConfig.gameSaveFolder + "AutoSaves/";
+            var files = Directory.GetFiles(baseDir, "*" + GameSave.saveExt, SearchOption.TopDirectoryOnly);
+            var entries = __instance.entries;
+            var entries2 = new List<UIGameSaveEntry>();
+            var entryPrefab = __instance.entryPrefab;
+            var entryPrefabParent = entryPrefab.transform.parent;
+            foreach (var f in files)
+            {
+                var fileInfo = new FileInfo(f);
+                var entry = Object.Instantiate(entryPrefab, entryPrefabParent);
+                entry.fileInfo = fileInfo;
+                entries2.Add(entry);
+            }
+            entries2.Sort((x, y) => -x.fileDate.CompareTo(y.fileDate));
+            if (entries2.Count > 10)
+                entries2.RemoveRange(10, entries2.Count - 10);
+            var autoSaveText = ">>  " + "自动存档条目".Translate();
+            foreach (var entry in entries2)
+            {
+                entry.indexText.text = "";
+                var saveName = entry.saveName;
+                entry._saveName = $"AutoSaves/{saveName}";
+                var quoteIndex = saveName.IndexOf('[');
+                if (quoteIndex >= 0)
+                {
+                    var quoteIndex2 = saveName.IndexOf(']', quoteIndex + 1);
+                    if (quoteIndex2 > 0) saveName = saveName.Substring(quoteIndex, quoteIndex2 + 1 - quoteIndex);
+                }
+                entry.nameText.text = $"{autoSaveText} {saveName}";
+                entry.nameText.fontStyle = FontStyle.Italic;
+                entry.nameText.color = new Color(1f, 1f, 1f, 0.7f);
+                entry.timeText.text = $"{entry.fileDate:yyyy-MM-dd HH:mm:ss}";
+                GameSave.ReadModes(entry.fileInfo.FullName, out var isSandbox, out var isPeace);
+                if (entry.sandboxIcon != null)
+                {
+                    entry.sandboxIcon.gameObject.SetActive(isSandbox);
+                }
+                if (entry.combatIcon != null)
+                {
+                    entry.combatIcon.gameObject.SetActive(!isPeace);
+                }
+                entry.selected = false;
+                entry.gameObject.SetActive(true);
+            }
+            entries.AddRange(entries2);
+            entries.Sort((x, y) => -x.fileDate.CompareTo(y.fileDate));
+            var displayIndex = 1;
+            for (var i = 0; i < entries.Count; i++)
+            {
+                var entry = entries[i];
+                entry.index = i + 1;
+                entry.rectTrans.anchoredPosition = new Vector2(entry.rectTrans.anchoredPosition.x, -40 * i);
+                if (string.IsNullOrEmpty(entry.indexText.text)) continue;
+                entry.indexText.text = displayIndex.ToString();
+                displayIndex++;
+            }
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(UISaveGameWindow), nameof(UISaveGameWindow.RefreshList))]
+        public static void UISaveGameWindow_RefreshList_Postfix(UISaveGameWindow __instance)
+        {
+            var entries = __instance.entries;
+            entries.Sort((x, y) => -x.fileDate.CompareTo(y.fileDate));
+            for (var i = 0; i < entries.Count; i++)
+            {
+                var entry = entries[i];
+                entry.index = i + 1;
+                entry.rectTrans.anchoredPosition = new Vector2(entry.rectTrans.anchoredPosition.x, -40 * i);
+                entry.indexText.text = (i + 1).ToString();
+            }
+        }
+
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(UILoadGameWindow), nameof(UILoadGameWindow.DoLoadSelectedGame))]
+        [HarmonyPatch(typeof(UILoadGameWindow), nameof(UILoadGameWindow.OnSelectedChange))]
+        private static IEnumerable<CodeInstruction> UILoadGameWindow_ReplaceSaveName_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            matcher.Start().MatchForward(false,
+                new CodeMatch(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(UIGameSaveEntry), nameof(UIGameSaveEntry.saveName)))
+            );
+            matcher.Repeat(m => m.SetAndAdvance(OpCodes.Ldfld, AccessTools.Field(typeof(UIGameSaveEntry), nameof(UIGameSaveEntry._saveName))));
+            return matcher.InstructionEnumeration();
+        }
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(GameSave), nameof(GameSave.LoadCurrentGame))]
+        [HarmonyPatch(typeof(GameSave), nameof(GameSave.LoadGameDesc))]
+        [HarmonyPatch(typeof(GameSave), nameof(GameSave.ReadHeader))]
+        [HarmonyPatch(typeof(GameSave), nameof(GameSave.ReadHeaderAndDescAndProperty))]
+        [HarmonyPatch(typeof(GameSave), nameof(GameSave.SaveExist))]
+        [HarmonyPatch(typeof(GameSave), nameof(GameSave.SavePath))]
+        private static IEnumerable<CodeInstruction> GameSave_RemoveValidateOnLoad_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            matcher.Start().MatchForward(false,
+                new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(CommonUtils), nameof(CommonUtils.ValidFileName)))
+            );
+            matcher.RemoveInstruction();
+            return matcher.InstructionEnumeration();
         }
     }
 

@@ -714,6 +714,7 @@ public static class FactoryPatch
             {
                 _lastKey = KeyCode.None;
             }
+            if (!VFInput.noModifier) return;
             int delta;
             if (UpdateKeyPressed(KeyCode.LeftArrow))
             {
