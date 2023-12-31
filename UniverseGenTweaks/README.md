@@ -4,6 +4,9 @@
 #### 宇宙生成参数调节
 
 ## Changelog
+* 1.2.5
+  + Thanks to [kremnev8](https://github.com/kremnev8)'s work on new version of [DSPModSave](https://dsp.thunderstore.io/package/CommonAPI/DSPModSave/), universe generation options are stored in save file now.
+  + Fix text display issue on new game screen
 * 1.2.4
   + Fix a crash while setting star count greater than 256 (again)
   + Fix bug that collider check is not enabled on stars with ID greater than 255
@@ -38,6 +41,9 @@
   * High luminosity for birth star
 
 ## 更新日志
+* 1.2.5
+  + 感谢[kremnev8](https://github.com/kremnev8)对[DSPModSave](https://dsp.thunderstore.io/package/CommonAPI/DSPModSave/)的更新，现在宇宙生成选项会被保存到存档中
+  + 修复新建游戏界面文本显示问题
 * 1.2.4
   + 修复了设置星系数大于256时崩溃的问题(再次)
   + 修复了ID大于255的星系没有启用碰撞体检测的问题

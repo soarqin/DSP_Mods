@@ -1,11 +1,15 @@
-﻿using BepInEx;
+﻿using System.IO;
+using BepInEx;
 using BepInEx.Configuration;
+using crecheng.DSPModSave;
 
 namespace UniverseGenTweaks;
 
-[BepInDependency("org.soardev.uxassist")]
 [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
-public class UniverseGenTweaks : BaseUnityPlugin
+[BepInDependency(UXAssist.PluginInfo.PLUGIN_GUID)]
+[BepInDependency(DSPModSavePlugin.MODGUID)]
+[ModSaveSettings(LoadOrder = LoadOrder.Preload)]
+public class UniverseGenTweaks : BaseUnityPlugin, IModCanSave
 {
     public new static readonly BepInEx.Logging.ManualLogSource Logger =
         BepInEx.Logging.Logger.CreateLogSource(PluginInfo.PLUGIN_NAME);
@@ -59,4 +63,25 @@ public class UniverseGenTweaks : BaseUnityPlugin
         EpicDifficulty.Uninit();
         MoreSettings.Uninit();
     }
+    
+    #region IModCanSave
+    private const ushort ModSaveVersion = 1;
+
+    public void Export(BinaryWriter w)
+    {
+        w.Write(ModSaveVersion);
+        MoreSettings.Export(w);
+    }
+
+    public void Import(BinaryReader r)
+    {
+        var version = r.ReadUInt16();
+        if (version <= 0) return;
+        MoreSettings.Import(r);
+    }
+
+    public void IntoOtherSave()
+    {
+    }
+    #endregion
 }

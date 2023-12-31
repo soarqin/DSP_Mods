@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 using System.Reflection.Emit;
 using BepInEx.Configuration;
 using HarmonyLib;
@@ -29,10 +30,6 @@ public class MoreSettings
     private static Text _minStepText;
     private static Text _maxStepText;
     private static Text _flattenText;
-    private static Localizer _minDistLocalizer;
-    private static Localizer _minStepLocalizer;
-    private static Localizer _maxStepLocalizer;
-    private static Localizer _flattenLocalizer;
     private static Harmony _harmony;
 
     public static void Init()
@@ -79,15 +76,19 @@ public class MoreSettings
     }
     
     [HarmonyPostfix]
-    [HarmonyPatch(typeof(UIGalaxySelect), nameof(UIGalaxySelect._OnInit))]
-    private static void UIGalaxySelect__OnInit_Postfix(UIGalaxySelect __instance)
+    [HarmonyPatch(typeof(UIGalaxySelect), nameof(UIGalaxySelect._OnCreate))]
+    private static void UIGalaxySelect__OnCreate_Postfix(UIGalaxySelect __instance)
     {
         __instance.starCountSlider.maxValue = MaxStarCount.Value;
 
-        CreateSliderWithText(__instance.starCountSlider, out _minDistTitle, out _minDistSlider, out _minDistText, out _minDistLocalizer);
-        CreateSliderWithText(__instance.starCountSlider, out _minStepTitle, out _minStepSlider, out _minStepText, out _minStepLocalizer);
-        CreateSliderWithText(__instance.starCountSlider, out _maxStepTitle, out _maxStepSlider, out _maxStepText, out _maxStepLocalizer);
-        CreateSliderWithText(__instance.starCountSlider, out _flattenTitle, out _flattenSlider, out _flattenText, out _flattenLocalizer);
+        CreateSliderWithText(__instance.starCountSlider, out _minDistTitle, out _minDistSlider, out _minDistText, out var minDistLocalizer);
+        CreateSliderWithText(__instance.starCountSlider, out _minStepTitle, out _minStepSlider, out _minStepText, out var minStepLocalizer);
+        CreateSliderWithText(__instance.starCountSlider, out _maxStepTitle, out _maxStepSlider, out _maxStepText, out var maxStepLocalizer);
+        CreateSliderWithText(__instance.starCountSlider, out _flattenTitle, out _flattenSlider, out _flattenText, out var flattenLocalizer);
+        minDistLocalizer.stringKey = "恒星最小距离";
+        minStepLocalizer.stringKey = "步进最小距离";
+        maxStepLocalizer.stringKey = "步进最大距离";
+        flattenLocalizer.stringKey = "扁平度";
 
         _minDistTitle.name = "min-dist";
         _minDistSlider.minValue = 10f;
@@ -124,31 +125,6 @@ public class MoreSettings
     [HarmonyPatch(typeof(UIGalaxySelect), nameof(UIGalaxySelect._OnOpen))]
     private static void UIGalaxySelect__OnOpen_Prefix()
     {
-        if (_minDistLocalizer)
-        {
-            _minDistLocalizer.stringKey = "恒星最小距离";
-            _minDistLocalizer.translation = "恒星最小距离".Translate();
-        }
-        _minDistText.text = "恒星最小距离".Translate();
-        if (_minStepLocalizer)
-        {
-            _minStepLocalizer.stringKey = "步进最小距离".Translate();
-            _minStepLocalizer.translation = "步进最小距离".Translate();
-        }
-        _minStepText.text = "步进最小距离".Translate();
-        if (_maxStepLocalizer)
-        {
-            _maxStepLocalizer.stringKey = "步进最大距离".Translate();
-            _maxStepLocalizer.text.text = "步进最大距离".Translate();
-        }
-        _maxStepText.text = "步进最大距离".Translate();
-        if (_flattenLocalizer)
-        {
-            _flattenLocalizer.stringKey = "扁平度".Translate();
-            _flattenLocalizer.translation = "扁平度".Translate();
-        }
-        _flattenText.text = "扁平度".Translate();
-
         _minDistText.text = _minDist.ToString();
         _minStepText.text = _minStep.ToString();
         _maxStepText.text = _maxStep.ToString();
@@ -305,4 +281,19 @@ public class MoreSettings
         return matcher.InstructionEnumeration();
     }
 
+    public static void Export(BinaryWriter w)
+    {
+        w.Write(_minDist);
+        w.Write(_minStep);
+        w.Write(_maxStep);
+        w.Write(_flatten);
+    }
+    
+    public static void Import(BinaryReader r)
+    {
+        _minDist = r.ReadDouble();
+        _minStep = r.ReadDouble();
+        _maxStep = r.ReadDouble();
+        _flatten = r.ReadDouble();
+    }
 }

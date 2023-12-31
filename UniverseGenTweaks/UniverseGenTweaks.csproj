@@ -6,7 +6,7 @@
     <AssemblyName>UniverseGenTweaks</AssemblyName>
     <BepInExPluginGuid>org.soardev.universegentweaks</BepInExPluginGuid>
     <Description>DSP MOD - UniverseGenTweaks</Description>
-    <Version>1.2.4</Version>
+    <Version>1.2.5</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
     <RestoreAdditionalProjectSources>https://nuget.bepinex.dev/v3/index.json</RestoreAdditionalProjectSources>
@@ -16,6 +16,7 @@
     <PackageReference Include="BepInEx.Core" Version="5.*" />
     <PackageReference Include="BepInEx.PluginInfoProps" Version="1.*" />
     <PackageReference Include="DysonSphereProgram.GameLibs" Version="*-r.*" />
+    <PackageReference Include="DysonSphereProgram.Modding.DSPModSave" Version="1.2" />
     <PackageReference Include="UnityEngine.Modules" Version="2018.4.12" IncludeAssets="compile" />
   </ItemGroup>
 
