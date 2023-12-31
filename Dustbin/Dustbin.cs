@@ -15,8 +15,6 @@ public class Dustbin : BaseUnityPlugin, IModCanSave, IMultiplayerMod
 {
     public string Version => PluginInfo.PLUGIN_VERSION;
 
-    private const ushort ModSaveVersion = 1;
-
     public new static readonly BepInEx.Logging.ManualLogSource Logger =
         BepInEx.Logging.Logger.CreateLogSource(PluginInfo.PLUGIN_NAME);
 
@@ -72,7 +70,9 @@ public class Dustbin : BaseUnityPlugin, IModCanSave, IMultiplayerMod
         return count;
     }
 
-    #region IModSave 
+    #region IModCanSave 
+    private const ushort ModSaveVersion = 1;
+
     public void Export(BinaryWriter w)
     {
         w.Write(ModSaveVersion);

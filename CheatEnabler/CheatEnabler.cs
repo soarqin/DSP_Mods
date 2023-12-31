@@ -2,8 +2,8 @@
 
 namespace CheatEnabler;
 
-[BepInDependency("org.soardev.uxassist")]
 [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
+[BepInDependency(UXAssist.PluginInfo.PLUGIN_GUID)]
 public class CheatEnabler : BaseUnityPlugin
 {
     public new static readonly BepInEx.Logging.ManualLogSource Logger =
