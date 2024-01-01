@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection.Emit;
 using BepInEx.Configuration;
@@ -6,6 +7,7 @@ using HarmonyLib;
 using UnityEngine;
 using UnityEngine.UI;
 using UXAssist.Common;
+using Object = UnityEngine.Object;
 
 namespace UniverseGenTweaks; 
 
@@ -31,6 +33,11 @@ public class MoreSettings
     private static Text _maxStepText;
     private static Text _flattenText;
     private static Harmony _harmony;
+
+    private static double _gameMinDist = 2;
+    private static double _gameMinStep = 2;
+    private static double _gameMaxStep = 3.2;
+    private static double _gameFlatten = 0.18;
 
     public static void Init()
     {
@@ -74,7 +81,7 @@ public class MoreSettings
         pos.y += delta;
         ((RectTransform)trans).anchoredPosition3D = pos;
     }
-    
+
     [HarmonyPostfix]
     [HarmonyPatch(typeof(UIGalaxySelect), nameof(UIGalaxySelect._OnCreate))]
     private static void UIGalaxySelect__OnCreate_Postfix(UIGalaxySelect __instance)
@@ -140,16 +147,16 @@ public class MoreSettings
         {
             var newVal = Mathf.Round(val) / 10.0;
             if (newVal.Equals(_minDist)) return;
-            _minDist = newVal;
+            _minDist = _gameMinDist = newVal;
             _minDistText.text = _minDist.ToString();
             if (_minStep < _minDist)
             {
-                _minStep = _minDist;
+                _minStep = _gameMinStep = _minDist;
                 _minStepSlider.value = (float)(_minStep * 10.0);
                 _minStepText.text = _minStep.ToString();
                 if (_maxStep < _minStep)
                 {
-                    _maxStep = _minStep;
+                    _maxStep = _gameMaxStep = _minStep;
                     _maxStepSlider.value = (float)(_maxStep * 10.0);
                     _maxStepText.text = _maxStep.ToString();
                 }
@@ -161,7 +168,7 @@ public class MoreSettings
         {
             var newVal = Mathf.Round(val) / 10.0;
             if (newVal.Equals(_minStep)) return;
-            _minStep = newVal;
+            _minStep = _gameMinStep = newVal;
             _maxStepSlider.minValue = (float)(newVal * 10.0);
             _minStepText.text = _minStep.ToString();
             __instance.SetStarmapGalaxy();
@@ -171,7 +178,7 @@ public class MoreSettings
         {
             var newVal = Mathf.Round(val) / 10.0;
             if (newVal.Equals(_maxStep)) return;
-            _maxStep = newVal;
+            _maxStep = _gameMaxStep = newVal;
             _minStepSlider.maxValue = (float)(newVal * 10.0);
             _maxStepText.text = _maxStep.ToString();
             __instance.SetStarmapGalaxy();
@@ -181,7 +188,7 @@ public class MoreSettings
         {
             var newVal = Mathf.Round(val) / 50.0;
             if (newVal.Equals(_flatten)) return;
-            _flatten = newVal;
+            _flatten = _gameFlatten = newVal;
             _flattenText.text = _flatten.ToString();
             __instance.SetStarmapGalaxy();
         });
@@ -196,7 +203,7 @@ public class MoreSettings
         _maxStepSlider.onValueChanged.RemoveAllListeners();
         _flattenSlider.onValueChanged.RemoveAllListeners();
     }
-    
+
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(UIGalaxySelect), nameof(UIGalaxySelect.OnStarCountSliderValueChange))]
     private static IEnumerable<CodeInstruction> UIGalaxySelect_OnStarCountSliderValueChange_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -258,10 +265,10 @@ public class MoreSettings
         matcher.MatchForward(false,
             new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(UniverseGen), nameof(UniverseGen.GenerateTempPoses)))
         ).Advance(-4).RemoveInstructions(4).Insert(
-            new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(MoreSettings), nameof(_minDist))),
-            new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(MoreSettings), nameof(_minStep))),
-            new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(MoreSettings), nameof(_maxStep))),
-            new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(MoreSettings), nameof(_flatten)))
+            new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(MoreSettings), nameof(_gameMinDist))),
+            new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(MoreSettings), nameof(_gameMinStep))),
+            new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(MoreSettings), nameof(_gameMaxStep))),
+            new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(MoreSettings), nameof(_gameFlatten)))
         );
         return matcher.InstructionEnumeration();
     }
@@ -281,19 +288,400 @@ public class MoreSettings
         return matcher.InstructionEnumeration();
     }
 
-    public static void Export(BinaryWriter w)
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(UIGalaxySelect), nameof(UIGalaxySelect.EnterGame))]
+    private static void UIGalaxySelect_EnterGame_Prefix()
     {
-        w.Write(_minDist);
-        w.Write(_minStep);
-        w.Write(_maxStep);
-        w.Write(_flatten);
+        _gameMinDist = _minDist;
+        _gameMinStep = _minStep;
+        _gameMaxStep = _maxStep;
+        _gameFlatten = _flatten;
+    }
+
+    #region CombatSettings
+
+    [HarmonyPostfix]
+    [HarmonyPatch(typeof(UICombatSettingsDF), nameof(UICombatSettingsDF._OnCreate))]
+    private static void UICombatSettingsDF__OnCreate_Postfix(UICombatSettingsDF __instance)
+    {
+        __instance.initLevelSlider.maxValue = 30f;
+        __instance.initGrowthSlider.maxValue = 10f;
+        __instance.initOccupiedSlider.maxValue = 10f;
+        __instance.growthSpeedSlider.maxValue = 7f;
+        __instance.powerThreatSlider.maxValue = 10f;
+        __instance.combatThreatSlider.maxValue = 10f;
+        __instance.DFExpSlider.maxValue = 10f;
+    }
+
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(UICombatSettingsDF), nameof(UICombatSettingsDF.OnInitLevelSliderChanged))]
+    private static bool UICombatSettingsDF_OnInitLevelSliderChanged_Prefix(UICombatSettingsDF __instance)
+    {
+        __instance.combatSettings.initialLevel = __instance.initLevelSlider.value switch
+        {
+            < 0.5f => 0f,
+            < 1.5f => 1f,
+            < 2.5f => 2f,
+            < 3.5f => 3f,
+            < 4.5f => 4f,
+            < 5.5f => 5f,
+            < 6.5f => 6f,
+            < 7.5f => 7f,
+            < 8.5f => 8f,
+            < 9.5f => 9f,
+            < 10.5f => 10f,
+            < 11.5f => 11f,
+            < 12.5f => 12f,
+            < 13.5f => 13f,
+            < 14.5f => 14f,
+            < 15.5f => 15f,
+            < 16.5f => 16f,
+            < 17.5f => 17f,
+            < 18.5f => 18f,
+            < 19.5f => 19f,
+            < 20.5f => 20f,
+            < 21.5f => 21f,
+            < 22.5f => 22f,
+            < 23.5f => 23f,
+            < 24.5f => 24f,
+            < 25.5f => 25f,
+            < 26.5f => 26f,
+            < 27.5f => 27f,
+            < 28.5f => 28f,
+            < 29.5f => 29f,
+            _ => 30f
+        };
+        __instance.UpdateUIParametersDisplay();
+        return false;
+    }
+
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(UICombatSettingsDF), nameof(UICombatSettingsDF.OnInitGrowthSliderChanged))]
+    private static bool UICombatSettingsDF_OnInitGrowthSliderChanged_Prefix(UICombatSettingsDF __instance)
+    {
+        __instance.combatSettings.initialGrowth = __instance.initGrowthSlider.value switch
+        {
+            < 0.5f => 0f,
+            < 1.5f => 0.25f,
+            < 2.5f => 0.5f,
+            < 3.5f => 0.75f,
+            < 4.5f => 1f,
+            < 5.5f => 1.5f,
+            < 6.5f => 2f,
+            < 7.5f => 2.5f,
+            < 8.5f => 3f,
+            < 9.5f => 3.5f,
+            _ => 4f
+        };
+        __instance.UpdateUIParametersDisplay();
+        return false;
+    }
+
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(UICombatSettingsDF), nameof(UICombatSettingsDF.OnInitOccupiedSliderChanged))]
+    private static bool UICombatSettingsDF_OnInitOccupiedSliderChanged_Prefix(UICombatSettingsDF __instance)
+    {
+        __instance.combatSettings.initialColonize = __instance.initOccupiedSlider.value switch
+        {
+            < 0.5f => 0.01f,
+            < 1.5f => 0.25f,
+            < 2.5f => 0.5f,
+            < 3.5f => 0.75f,
+            < 4.5f => 1f,
+            < 5.5f => 1.5f,
+            < 6.5f => 2f,
+            < 7.5f => 2.5f,
+            < 8.5f => 3f,
+            < 9.5f => 3.5f,
+            _ => 4f
+        };
+        __instance.UpdateUIParametersDisplay();
+        return false;
+    }
+
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(UICombatSettingsDF), nameof(UICombatSettingsDF.OnGrowthSpeedSliderChanged))]
+    private static bool UICombatSettingsDF_OnGrowthSpeedSliderChanged_Prefix(UICombatSettingsDF __instance)
+    {
+        __instance.combatSettings.growthSpeedFactor = __instance.growthSpeedSlider.value switch
+        {
+            < 0.5f => 0.25f,
+            < 1.5f => 0.5f,
+            < 2.5f => 1f,
+            < 3.5f => 2f,
+            < 4.5f => 3f,
+            < 5.5f => 4f,
+            < 6.5f => 5f,
+            _ => 6f
+        };
+        __instance.UpdateUIParametersDisplay();
+        return false;
+    }
+
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(UICombatSettingsDF), nameof(UICombatSettingsDF.OnPowerThreatSliderChanged))]
+    private static bool UICombatSettingsDF_OnPowerThreatSliderChanged_Prefix(UICombatSettingsDF __instance)
+    {
+        __instance.combatSettings.powerThreatFactor = __instance.powerThreatSlider.value switch
+        {
+            < 0.5f => 0.01f,
+            < 1.5f => 0.1f,
+            < 2.5f => 0.2f,
+            < 3.5f => 0.5f,
+            < 4.5f => 1f,
+            < 5.5f => 2f,
+            < 6.5f => 5f,
+            < 7.5f => 8f,
+            < 8.5f => 10f,
+            < 9.5f => 15f,
+            _ => 20f
+        };
+        __instance.UpdateUIParametersDisplay();
+        return false;
+    }
+
+	[HarmonyPrefix]
+	[HarmonyPatch(typeof(UICombatSettingsDF), nameof(UICombatSettingsDF.OnCombatThreatSliderChanged))]
+	private static bool UICombatSettingsDF_OnCombatThreatSliderChanged_Prefix(UICombatSettingsDF __instance)
+	{
+        __instance.combatSettings.battleThreatFactor = __instance.combatThreatSlider.value switch
+        {
+            < 0.5f => 0.01f,
+            < 1.5f => 0.1f,
+            < 2.5f => 0.2f,
+            < 3.5f => 0.5f,
+            < 4.5f => 1f,
+            < 5.5f => 2f,
+            < 6.5f => 5f,
+            < 7.5f => 8f,
+            < 8.5f => 10f,
+            < 9.5f => 15f,
+            _ => 20f
+        };
+        __instance.UpdateUIParametersDisplay();
+		return false;
+	}
+
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(UICombatSettingsDF), nameof(UICombatSettingsDF.OnEXPSliderChanged))]
+    private static bool UICombatSettingsDF_OnEXPSliderChanged_Prefix(UICombatSettingsDF __instance)
+    {
+        __instance.combatSettings.battleExpFactor = __instance.DFExpSlider.value switch
+        {
+            < 0.5f => 0.01f,
+            < 1.5f => 0.1f,
+            < 2.5f => 0.2f,
+            < 3.5f => 0.5f,
+            < 4.5f => 1f,
+            < 5.5f => 2f,
+            < 6.5f => 5f,
+            < 7.5f => 8f,
+            < 8.5f => 10f,
+            < 9.5f => 15f,
+            _ => 20f
+        };
+        __instance.UpdateUIParametersDisplay();
+        return false;
     }
     
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(UICombatSettingsDF), nameof(UICombatSettingsDF.UpdateUIParametersDisplay))]
+	private static bool UICombatSettingsDF_UpdateUIParametersDisplay_Prefix(UICombatSettingsDF __instance)
+	{
+		var text = "";
+        __instance.aggresiveSlider.value = __instance.combatSettings.aggressiveness switch
+        {
+            < -0.99f => 0f,
+            < 0.01f => 1f,
+            < 0.51f => 2f,
+            < 1.01f => 3f,
+            < 2.01f => 4f,
+            _ => 5f
+        };
+        text = (int)(__instance.aggresiveSlider.value + 0.5f) switch
+        {
+            0 => "活靶子".Translate(),
+            1 => "被动".Translate(),
+            2 => "消极".Translate(),
+            3 => "正常".Translate(),
+            4 => "积极".Translate(),
+            5 => "狂暴".Translate(),
+            _ => text
+        };
+        __instance.aggresiveText.text = text;
+		var num = __instance.combatSettings.initialLevel;
+        __instance.initLevelSlider.value = num switch
+        {
+            < 0.01f => 0f,
+            < 1.01f => 1f,
+            < 2.01f => 2f,
+            < 3.01f => 3f,
+            < 4.01f => 4f,
+            < 5.01f => 5f,
+            < 6.01f => 6f,
+            < 7.01f => 7f,
+            < 8.01f => 8f,
+            < 9.01f => 9f,
+            < 10.01f => 10f,
+            < 11.01f => 11f,
+            < 12.01f => 12f,
+            < 13.01f => 13f,
+            < 14.01f => 14f,
+            < 15.01f => 15f,
+            < 16.01f => 16f,
+            < 17.01f => 17f,
+            < 18.01f => 18f,
+            < 19.01f => 19f,
+            < 20.01f => 20f,
+            < 21.01f => 21f,
+            < 22.01f => 22f,
+            < 23.01f => 23f,
+            < 24.01f => 24f,
+            < 25.01f => 25f,
+            < 26.01f => 26f,
+            < 27.01f => 27f,
+            < 28.01f => 28f,
+            < 29.01f => 29f,
+            _ => 30f
+        };
+        __instance.initLevelText.text = num.ToString();
+		num = __instance.combatSettings.initialGrowth;
+        __instance.initGrowthSlider.value = num switch
+        {
+            < 0.01f => 0f,
+            < 0.26f => 1f,
+            < 0.51f => 2f,
+            < 0.76f => 3f,
+            < 1.01f => 4f,
+            < 1.51f => 5f,
+            < 2.01f => 6f,
+            < 2.51f => 7f,
+            < 3.01f => 8f,
+            < 3.51f => 9f,
+            _ => 10f
+        };
+        text = num * 100f + "%";
+        __instance.initGrowthText.text = text;
+		num = __instance.combatSettings.initialColonize;
+        __instance.initOccupiedSlider.value = num switch
+        {
+            < 0.02f => 0f,
+            < 0.26f => 1f,
+            < 0.51f => 2f,
+            < 0.76f => 3f,
+            < 1.01f => 4f,
+            < 1.51f => 5f,
+            < 2.01f => 6f,
+            < 2.51f => 7f,
+            < 3.01f => 8f,
+            < 3.51f => 9f,
+            _ => 10f
+        };
+        text = num * 100f + "%";
+        __instance.initOccupiedText.text = text;
+		num = __instance.combatSettings.maxDensity;
+        __instance.maxDensitySlider.value = num switch
+        {
+            < 1.01f => 0f,
+            < 1.51f => 1f,
+            < 2.01f => 2f,
+            < 2.51f => 3f,
+            _ => 4f
+        };
+        text = num + "x";
+        __instance.maxDensityText.text = text;
+		num = __instance.combatSettings.growthSpeedFactor;
+        __instance.growthSpeedSlider.value = num switch
+        {
+            < 0.26f => 0f,
+            < 0.51f => 1f,
+            < 1.01f => 2f,
+            < 2.01f => 3f,
+            < 3.01f => 4f,
+            < 4.01f => 5f,
+            < 5.01f => 6f,
+            _ => 7f
+        };
+        text = num * 100f + "%";
+        __instance.growthSpeedText.text = text;
+		num = __instance.combatSettings.powerThreatFactor;
+        __instance.powerThreatSlider.value = num switch
+        {
+            < 0.02f => 0f,
+            < 0.11f => 1f,
+            < 0.21000001f => 2f,
+            < 0.51f => 3f,
+            < 1.01f => 4f,
+            < 2.01f => 5f,
+            < 5.01f => 6f,
+            < 8.01f => 7f,
+            < 10.01f => 8f,
+            < 15.01f => 9f,
+            _ => 10f
+        };
+        text = num * 100f + "%";
+        __instance.powerThreatText.text = text;
+		num = __instance.combatSettings.battleThreatFactor;
+        __instance.combatThreatSlider.value = num switch
+        {
+            < 0.02f => 0f,
+            < 0.11f => 1f,
+            < 0.21000001f => 2f,
+            < 0.51f => 3f,
+            < 1.01f => 4f,
+            < 2.01f => 5f,
+            < 5.01f => 6f,
+            < 8.01f => 7f,
+            < 10.01f => 8f,
+            < 15.01f => 9f,
+            _ => 10f
+        };
+        text = num * 100f + "%";
+        __instance.combatThreatText.text = text;
+		num = __instance.combatSettings.battleExpFactor;
+        __instance.DFExpSlider.value = num switch
+        {
+            < 0.02f => 0f,
+            < 0.11f => 1f,
+            < 0.21000001f => 2f,
+            < 0.51f => 3f,
+            < 1.01f => 4f,
+            < 2.01f => 5f,
+            < 5.01f => 6f,
+            < 8.01f => 7f,
+            < 10.01f => 8f,
+            < 15.01f => 9f,
+            _ => 10f
+        };
+        text = num * 100f + "%";
+        __instance.DFExpText.text = text;
+		var gameDesc = new GameDesc();
+		var difficulty = __instance.combatSettings.difficulty;
+		var text2 = difficulty >= 9.9999f ? difficulty.ToString("0.00") : difficulty.ToString("0.000");
+        __instance.difficultyText.text = string.Format("难度系数值".Translate(), text2);
+        __instance.difficultTipGroupDF.SetActive((__instance.combatSettings.aggressiveLevel == EAggressiveLevel.Rampage && difficulty > 4.5f) || difficulty > 6f);
+        __instance.gameDesc.CopyTo(gameDesc);
+		gameDesc.combatSettings = __instance.combatSettings;
+        __instance.propertyMultiplierText.text = "元数据生成倍率".Translate() + " " + gameDesc.propertyMultiplier.ToString("0%");
+        return false;
+    }
+    #endregion
+
+    #region ModSave
+    public static void Export(BinaryWriter w)
+    {
+        w.Write(_gameMinDist);
+        w.Write(_gameMinStep);
+        w.Write(_gameMaxStep);
+        w.Write(_gameFlatten);
+    }
+
     public static void Import(BinaryReader r)
     {
-        _minDist = r.ReadDouble();
-        _minStep = r.ReadDouble();
-        _maxStep = r.ReadDouble();
-        _flatten = r.ReadDouble();
+        _gameMinDist = r.ReadDouble();
+        _gameMinStep = r.ReadDouble();
+        _gameMaxStep = r.ReadDouble();
+        _gameFlatten = r.ReadDouble();
     }
+    #endregion
 }
