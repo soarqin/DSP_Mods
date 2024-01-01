@@ -117,7 +117,6 @@ public static class UIConfigWindow
                 PlanetFunctions.DismantleAll(false);
             })
         );
-
         y += 72f;
         wnd.AddButton(x, y, 200, tab2, "Quick build Orbital Collectors", 16, "button-init-planet", PlanetFunctions.BuildOrbitalCollectors);
         x += 10f;

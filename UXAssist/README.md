@@ -4,6 +4,9 @@
 #### 一些提升用户体验的功能和补丁
 
 ## Changlog
+* 1.0.10
+  + Fix a button display bug
+  + Fix a possible crash while `Enhanced control for logistic storage limits` is enabled
 * 1.0.9
   + New function: `Better auto-save mechanism`
     - Auto saves are stored in 'Save\AutoSaves' folder, filenames are combined with cluster address and date-time
@@ -88,6 +91,9 @@
 * [OffGridConstruction](https://github.com/Velociraptor115-DSPModding/OffGridConstruction): Off-grid building & stepped rotation implementations
 
 ## 更新日志
+* 1.0.10
+  + 修复了一个按钮显示错误
+  + 修复了`物流塔存储数量限制控制改进`启用时可能导致的崩溃问题
 * 1.0.9
   + 新功能：`更好的自动保存机制`
     - 自动存档会以星区地址和日期时间组合为文件名存储在'Save\AutoSaves'文件夹中 

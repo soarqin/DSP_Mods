@@ -24,7 +24,7 @@ public static class PlanetFunctions
                 var sc = GameMain.localPlanet.factory.transport.stationPool[stationId];
                 if (toBag)
                 {
-                    for (var i = 0; i < sc.storage.Length; i++)
+                    for (var i = sc.storage.Length - 1; i >= 0; i--)
                     {
                         var package = player.TryAddItemToPackage(sc.storage[i].itemId, sc.storage[i].count, 0, true, etd.id);
                         UIItemup.Up(sc.storage[i].itemId, package);

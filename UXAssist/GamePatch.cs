@@ -35,7 +35,7 @@ public static class GamePatch
         ConvertSavesFromPeace.Enable(ConvertSavesFromPeaceEnabled.Value);
         _gamePatch ??= Harmony.CreateAndPatchAll(typeof(GamePatch));
     }
-    
+
     public static void Uninit()
     {
         LoadLastWindowRect.Enable(false);
@@ -155,7 +155,7 @@ public static class GamePatch
             width = w;
             height = h;
         }
-        
+
         [HarmonyPostfix]
         [HarmonyPatch(typeof(Screen), nameof(Screen.SetResolution), typeof(int), typeof(int), typeof(FullScreenMode), typeof(int))]
         private static void Screen_SetResolution_Postfix(FullScreenMode fullscreenMode)
@@ -219,7 +219,7 @@ public static class GamePatch
             __result = true;
             return false;
         }
-        
+
         [HarmonyPostfix]
         [HarmonyPatch(typeof(UILoadGameWindow), nameof(UILoadGameWindow.RefreshList))]
         public static void UILoadGameWindow_RefreshList_Postfix(UILoadGameWindow __instance)
@@ -309,6 +309,7 @@ public static class GamePatch
             matcher.Repeat(m => m.SetAndAdvance(OpCodes.Ldfld, AccessTools.Field(typeof(UIGameSaveEntry), nameof(UIGameSaveEntry._saveName))));
             return matcher.InstructionEnumeration();
         }
+
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(GameSave), nameof(GameSave.LoadCurrentGame))]
         [HarmonyPatch(typeof(GameSave), nameof(GameSave.LoadGameDesc))]

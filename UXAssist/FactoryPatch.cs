@@ -791,7 +791,7 @@ public static class FactoryPatch
                     var stationPool = __instance.stationPool;
                     var factory = __instance.factory;
                     var history = GameMain.history;
-                    for (var i = __instance.stationCursor; i > 0; i--)
+                    for (var i = __instance.stationCursor - 1; i > 0; i--)
                     {
                         if (stationPool[i] == null || stationPool[i].id != i || (stationPool[i].isStellar && !stationPool[i].isCollector && !stationPool[i].isVeinCollector)) continue;
                         var modelIndex = factory.entityPool[stationPool[i].entityId].modelIndex;
@@ -813,7 +813,7 @@ public static class FactoryPatch
                     var stationPool = __instance.stationPool;
                     var factory = __instance.factory;
                     var history = GameMain.history;
-                    for (var i = __instance.stationCursor; i > 0; i--)
+                    for (var i = __instance.stationCursor - 1; i > 0; i--)
                     {
                         if (stationPool[i] == null || stationPool[i].id != i || !stationPool[i].isStellar || stationPool[i].isCollector || stationPool[i].isVeinCollector) continue;
                         var modelIndex = factory.entityPool[stationPool[i].entityId].modelIndex;

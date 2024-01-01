@@ -106,6 +106,25 @@ public class UXAssist : BaseUnityPlugin
         FactoryPatch.NightLight.LateUpdate();
     }
 
+    private static void ToggleConfigWindow()
+    {
+        if (!_configWinInitialized)
+        {
+            if (!I18N.Initialized()) return;
+            _configWinInitialized = true;
+            _configWin = MyConfigWindow.CreateInstance();
+        }
+
+        if (_configWin.active)
+        {
+            _configWin._Close();
+        }
+        else
+        {
+            _configWin.Open();
+        }
+    }
+
     // Add config button to main menu
     [HarmonyPostfix, HarmonyPatch(typeof(UIRoot), nameof(UIRoot.OpenMainMenuUI))]
     public static void UIRoot_OpenMainMenuUI_Postfix()
@@ -185,7 +204,7 @@ public class UXAssist : BaseUnityPlugin
         return matcher.InstructionEnumeration();
     }
 
-    // Patch to fix bug that warning popup on VeinUtil upgraded to level 8000+
+    // Patch to fix the issue that warning popup on VeinUtil upgraded to level 8000+
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(ABN_VeinsUtil), nameof(ABN_VeinsUtil.CheckValue))]
     private static IEnumerable<CodeInstruction> ABN_VeinsUtil_CheckValue_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -206,25 +225,6 @@ public class UXAssist : BaseUnityPlugin
             new CodeInstruction(OpCodes.Div)
         );
         return matcher.InstructionEnumeration();
-    }
-
-    private static void ToggleConfigWindow()
-    {
-        if (!_configWinInitialized)
-        {
-            if (!I18N.Initialized()) return;
-            _configWinInitialized = true;
-            _configWin = MyConfigWindow.CreateInstance();
-        }
-
-        if (_configWin.active)
-        {
-            _configWin._Close();
-        }
-        else
-        {
-            _configWin.Open();
-        }
     }
 
     // Bring popup tip window to top layer
@@ -250,6 +250,7 @@ public class UXAssist : BaseUnityPlugin
         return matcher.InstructionEnumeration();
     }
 
+    // Sort blueprint structures by item id, model index, recipe id, area index, and position before saving
     [HarmonyPostfix]
     [HarmonyPatch(typeof(BlueprintUtils), nameof(BlueprintUtils.GenerateBlueprintData))]
     private static void BlueprintUtils_GenerateBlueprintData_Postfix(BlueprintData _blueprintData)
@@ -260,19 +261,15 @@ public class UXAssist : BaseUnityPlugin
             var tmpItemId = a.itemId - b.itemId;
             if(tmpItemId != 0)
                 return tmpItemId;
-
             var tmpModelIndex = a.modelIndex - b.modelIndex;
             if(tmpModelIndex != 0)
                 return tmpModelIndex;
-
             var tmpRecipeId = a.recipeId - b.recipeId;
             if(tmpRecipeId != 0)
                 return tmpRecipeId;
-
             var tmpAreaIndex = a.areaIndex - b.areaIndex;
             if(tmpAreaIndex != 0)
                 return tmpAreaIndex;
-
             const double ky = 256.0;
             const double kx = 1024.0;
             var scorePosA = (a.localOffset_y * ky + a.localOffset_x) * kx + a.localOffset_z;

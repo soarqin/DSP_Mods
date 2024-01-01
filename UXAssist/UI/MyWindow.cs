@@ -124,7 +124,13 @@ public class MyWindow: ManualBehaviour
         var btn = Instantiate(panel.layerButtons[0]);
         btn.gameObject.name = objName;
         btn.highlighted = false;
-        var img = btn.gameObject.transform.Find("frame")?.GetComponent<Image>();
+        var img = btn.GetComponent<Image>();
+        if (img != null)
+        {
+            img.sprite = panel.buttonDefaultSprite;
+            img.color = new Color(img.color.r, img.color.g, img.color.b, 13f / 255f);
+        }
+        img = btn.gameObject.transform.Find("frame")?.GetComponent<Image>();
         if (img != null)
         {
             img.color = new Color(img.color.r, img.color.g, img.color.b, 0f);
