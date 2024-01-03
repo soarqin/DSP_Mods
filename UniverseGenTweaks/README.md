@@ -4,6 +4,9 @@
 #### 宇宙生成参数调节
 
 ## Changelog
+* 1.2.6
+  + Fix possible crash or wrong stars data when loading save file with changed generation settings but with `Enable more settings on UniverseGen` disabled on config window.
+  + Larger maximum value in combat settings (except `Aggressiveness` and `Max Density`).
 * 1.2.5
   + Thanks to [kremnev8](https://github.com/kremnev8)'s work on new version of [DSPModSave](https://dsp.thunderstore.io/package/CommonAPI/DSPModSave/), universe generation options are stored in save file now.
   + Fix text display issue on new game screen
@@ -32,6 +35,7 @@
 * More options on universe generation
   + Can set maximum star count(128 by default, up to 1024) in config file.
     - Note: there is performance issue on galaxy view with large amount of stars.
+  + Larger maximum value in combat settings (except `Aggressiveness` and `Max Density`).
 * Epic difficulty
   * 0.01x resources and 0.25x oils (very hard difficulty has 0.5x oils).
   * Same oil mining speed as very hard difficuly
@@ -41,6 +45,9 @@
   * High luminosity for birth star
 
 ## 更新日志
+* 1.2.6
+  + 修复了在存档中更改了生成参数但是在配置面板中禁用了`启用更多宇宙生成设置`时可能崩溃或者星系数据错误的问题
+  + 在星系生成时的战斗设置面板上提升了各选项的最大值(`黑雾攻击性`和`最大黑雾密度`除外`)
 * 1.2.5
   + 感谢[kremnev8](https://github.com/kremnev8)对[DSPModSave](https://dsp.thunderstore.io/package/CommonAPI/DSPModSave/)的更新，现在宇宙生成选项会被保存到存档中
   + 修复新建游戏界面文本显示问题
@@ -69,6 +76,7 @@
 * 生成宇宙时提供更多选项
   +可以在配置文件中设置最大恒星数(默认128, 最多1024)
     - 注意: 大量恒星会导致宇宙视图出现性能问题
+  + 在星系生成时的战斗设置面板上提升了各选项的最大值(`黑雾攻击性`和`最大黑雾密度`除外`)
 * 史诗难度
   * 资源0.01倍，油井储量0.25倍(极难是0.5倍)
   * 采油速度和极难相同

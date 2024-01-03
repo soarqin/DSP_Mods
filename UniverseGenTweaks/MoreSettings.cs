@@ -32,7 +32,7 @@ public class MoreSettings
     private static Text _minStepText;
     private static Text _maxStepText;
     private static Text _flattenText;
-    private static Harmony _harmony;
+    private static Harmony _patch, _permanentPatch;
 
     private static double _gameMinDist = 2;
     private static double _gameMinStep = 2;
@@ -46,6 +46,9 @@ public class MoreSettings
         I18N.Add("步进最大距离", "Step Distance Max", "步进最大距离");
         I18N.Add("扁平度", "Flatness", "扁平度");
         I18N.Apply();
+
+        _permanentPatch ??= Harmony.CreateAndPatchAll(typeof(PermanentPatch));
+
         Enabled.SettingChanged += (_, _) => Enable(Enabled.Value);
         Enable(Enabled.Value);
     }
@@ -53,17 +56,20 @@ public class MoreSettings
     public static void Uninit()
     {
         Enable(false);
+
+        _permanentPatch?.UnpatchSelf();
+        _permanentPatch = null;
     }
 
     private static void Enable(bool on)
     {
         if (on)
         {
-            _harmony ??= Harmony.CreateAndPatchAll(typeof(MoreSettings));
+            _patch ??= Harmony.CreateAndPatchAll(typeof(MoreSettings));
             return;
         }
-        _harmony?.UnpatchSelf();
-        _harmony = null;
+        _patch?.UnpatchSelf();
+        _patch = null;
     }
 
     private static void CreateSliderWithText(Slider orig, out Text title, out Slider slider, out Text text, out Localizer loc)
@@ -218,74 +224,88 @@ public class MoreSettings
         return matcher.InstructionEnumeration();
     }
 
-    [HarmonyTranspiler]
-    [HarmonyPatch(typeof(GalaxyData), MethodType.Constructor)]
-    private static IEnumerable<CodeInstruction> GalaxyData_Constructor_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+    private static class PermanentPatch
     {
-        // 25700 -> (MaxStarCount.Value + 1) * 100
-        var matcher = new CodeMatcher(instructions, generator);
-        matcher.MatchForward(false,
-            new CodeMatch(ci => ci.opcode == OpCodes.Ldc_I4 && ci.OperandIs(25700))
-        );
-        matcher.Repeat(m => m.SetAndAdvance(OpCodes.Ldsfld, AccessTools.Field(typeof(MoreSettings), nameof(MoreSettings.MaxStarCount))).Insert(
-            new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(ConfigEntry<int>), nameof(ConfigEntry<int>.Value))),
-            new CodeInstruction(OpCodes.Ldc_I4_1),
-            new CodeInstruction(OpCodes.Add),
-            new CodeInstruction(OpCodes.Ldc_I4_S, 100),
-            new CodeInstruction(OpCodes.Mul)
-        ));
-        return matcher.InstructionEnumeration();
-    }
+        private static void ResetSettings()
+        {
+            _gameMinDist = 2;
+            _gameMinStep = 2;
+            _gameMaxStep = 3.2;
+            _gameFlatten = 0.18;
+        }
 
-    [HarmonyTranspiler]
-    [HarmonyPatch(typeof(SectorModel), nameof(SectorModel.CreateGalaxyAstroBuffer))]
-    [HarmonyPatch(typeof(SpaceColliderLogic), nameof(SpaceColliderLogic.UpdateCollidersPose))]
-    private static IEnumerable<CodeInstruction> SectorModel_CreateGalaxyAstroBuffer_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
-    {
-        // 25600 -> (MaxStarCount.Value + 1) * 100
-        var matcher = new CodeMatcher(instructions, generator);
-        matcher.MatchForward(false,
-            new CodeMatch(ci => ci.opcode == OpCodes.Ldc_I4 && ci.OperandIs(25600))
-        );
-        matcher.Repeat(m => m.SetAndAdvance(OpCodes.Ldsfld, AccessTools.Field(typeof(MoreSettings), nameof(MoreSettings.MaxStarCount))).Insert(
-            new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(ConfigEntry<int>), nameof(ConfigEntry<int>.Value))),
-            new CodeInstruction(OpCodes.Ldc_I4_1),
-            new CodeInstruction(OpCodes.Add),
-            new CodeInstruction(OpCodes.Ldc_I4_S, 100),
-            new CodeInstruction(OpCodes.Mul)
-        ));
-        return matcher.InstructionEnumeration();
-    }
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(GameData), nameof(GameData.Import))]
+        private static void GameData_Import_Prefix(GameData __instance)
+        {
+            ResetSettings();
+        }
 
-    [HarmonyTranspiler]
-    [HarmonyPatch(typeof(UniverseGen), nameof(UniverseGen.CreateGalaxy))]
-    private static IEnumerable<CodeInstruction> UniverseGen_CreateGalaxy_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
-    {
-        var matcher = new CodeMatcher(instructions, generator);
-        matcher.MatchForward(false,
-            new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(UniverseGen), nameof(UniverseGen.GenerateTempPoses)))
-        ).Advance(-4).RemoveInstructions(4).Insert(
-            new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(MoreSettings), nameof(_gameMinDist))),
-            new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(MoreSettings), nameof(_gameMinStep))),
-            new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(MoreSettings), nameof(_gameMaxStep))),
-            new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(MoreSettings), nameof(_gameFlatten)))
-        );
-        return matcher.InstructionEnumeration();
-    }
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(GameData), nameof(GameData.SetForNewGame))]
+        private static void GameData_SetForNewGame_Prefix(GameData __instance)
+        {
+            if (Enabled.Value) return;
+            ResetSettings();
+        }
 
-    /* Patch `rand() * (maxStepLen - minStepLen) + minDist` to `rand() * (maxStepLen - minStepLen) + minStepLen`,
-       this should be a bugged line in original game code. */
-    [HarmonyTranspiler]
-    [HarmonyPatch(typeof(UniverseGen), nameof(UniverseGen.RandomPoses))]
-    static IEnumerable<CodeInstruction> UniverseGen_RandomPoses_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
-    {
-        var matcher = new CodeMatcher(instructions, generator);
-        matcher.MatchForward(false,
-            new CodeMatch(OpCodes.Mul),
-            new CodeMatch(OpCodes.Ldarg_2)
-        );
-        matcher.Repeat(m => m.Advance(1).SetInstructionAndAdvance(new CodeInstruction(OpCodes.Ldarg_3)));
-        return matcher.InstructionEnumeration();
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(GalaxyData), MethodType.Constructor)]
+        private static IEnumerable<CodeInstruction> GalaxyData_Constructor_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            // 25700 -> 102500
+            var matcher = new CodeMatcher(instructions, generator);
+            matcher.MatchForward(false,
+                new CodeMatch(ci => ci.opcode == OpCodes.Ldc_I4 && ci.OperandIs(25700))
+            );
+            matcher.Repeat(m => m.SetAndAdvance(OpCodes.Ldc_I4, 102500));
+            return matcher.InstructionEnumeration();
+        }
+
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(SectorModel), nameof(SectorModel.CreateGalaxyAstroBuffer))]
+        [HarmonyPatch(typeof(SpaceColliderLogic), nameof(SpaceColliderLogic.UpdateCollidersPose))]
+        private static IEnumerable<CodeInstruction> SectorModel_CreateGalaxyAstroBuffer_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            // 25600 -> 102500
+            var matcher = new CodeMatcher(instructions, generator);
+            matcher.MatchForward(false,
+                new CodeMatch(ci => ci.opcode == OpCodes.Ldc_I4 && ci.OperandIs(25600))
+            );
+            matcher.Repeat(m => m.SetAndAdvance(OpCodes.Ldc_I4, 102500));
+            return matcher.InstructionEnumeration();
+        }
+
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(UniverseGen), nameof(UniverseGen.CreateGalaxy))]
+        private static IEnumerable<CodeInstruction> UniverseGen_CreateGalaxy_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(UniverseGen), nameof(UniverseGen.GenerateTempPoses)))
+            ).Advance(-4).RemoveInstructions(4).Insert(
+                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(MoreSettings), nameof(_gameMinDist))),
+                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(MoreSettings), nameof(_gameMinStep))),
+                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(MoreSettings), nameof(_gameMaxStep))),
+                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(MoreSettings), nameof(_gameFlatten)))
+            );
+            return matcher.InstructionEnumeration();
+        }
+
+        /* Patch `rand() * (maxStepLen - minStepLen) + minDist` to `rand() * (maxStepLen - minStepLen) + minStepLen`,
+           this should be a bugged line in original game code. */
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(UniverseGen), nameof(UniverseGen.RandomPoses))]
+        static IEnumerable<CodeInstruction> UniverseGen_RandomPoses_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Mul),
+                new CodeMatch(OpCodes.Ldarg_2)
+            );
+            matcher.Repeat(m => m.Advance(1).SetInstructionAndAdvance(new CodeInstruction(OpCodes.Ldarg_3)));
+            return matcher.InstructionEnumeration();
+        }
     }
 
     [HarmonyPrefix]
@@ -663,6 +683,110 @@ public class MoreSettings
         __instance.gameDesc.CopyTo(gameDesc);
 		gameDesc.combatSettings = __instance.combatSettings;
         __instance.propertyMultiplierText.text = "元数据生成倍率".Translate() + " " + gameDesc.propertyMultiplier.ToString("0%");
+        return false;
+    }
+    
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(CombatSettings),nameof(CombatSettings.difficulty), MethodType.Getter)]
+    private static bool CombatSettings_difficulty_Getter_Prefix(CombatSettings __instance, ref float __result)
+    {
+        var aggressivenessScore = __instance.aggressiveness switch
+        {
+            < -0.1f => -0.2f,
+            < 0.25f => 0f,
+            < 0.75f => 0.5f,
+            < 1.5f => 0.75f,
+            < 2.5f => 0.875f,
+            _ => 1.125f
+        };
+        var initialLevelScore = __instance.initialLevel * 0.8f;
+        var initialGrowthScore = __instance.initialGrowth switch
+        {
+            < 0.15f => 0f,
+            < 0.3f => 0.25f,
+            < 0.65f => 0.5f,
+            < 0.8f => 0.75f,
+            < 1.15f => 1f,
+            < 1.65f => 1.25f,
+            < 2.15f => 1.5f,
+            < 2.65f => 1.75f,
+            < 3.15f => 2f,
+            < 3.65f => 2.25f,
+            _ => 2.5f
+        };
+        var initialColonizeScore = __instance.initialColonize switch
+        {
+            < 0.15f => 0f,
+            < 0.3f => 0.25f,
+            < 0.65f => 0.5f,
+            < 0.8f => 0.75f,
+            < 1.15f => 1f,
+            < 1.65f => 1.25f,
+            < 2.15f => 1.5f,
+            < 2.65f => 1.75f,
+            < 3.15f => 2f,
+            < 3.65f => 2.25f,
+            _ => 2.5f
+        };
+        var maxDensityScore = __instance.maxDensity - 1f;
+        var growthSpeedFactorScore = __instance.growthSpeedFactor switch
+        {
+            < 0.35f => 0.3f,
+            < 0.75f => 0.7f,
+            < 1.5f => 1f,
+            < 2.5f => 1.2f,
+            < 3.5f => 1.5f,
+            < 4.5f => 1.6f,
+            < 5.5f => 1.8f,
+            _ => 2f
+        };
+        var powerThreatFactorScore = __instance.powerThreatFactor switch
+        {
+            < 0.05f => 0.125f,
+            < 0.15f => 0.3f,
+            < 0.25f => 0.6f,
+            < 0.55f => 0.8f,
+            < 1.15f => 1f,
+            < 2.15f => 1.2f,
+            < 5.15f => 1.5f,
+            < 8.15f => 1.8f,
+            < 10.15f => 2f,
+            < 15.15f => 2.5f,
+            _ => 3f
+        };
+        var battleThreatFactorScore = __instance.battleThreatFactor switch
+        {
+            < 0.05f => 0.125f,
+            < 0.15f => 0.3f,
+            < 0.25f => 0.6f,
+            < 0.55f => 0.8f,
+            < 1.15f => 1f,
+            < 2.15f => 1.2f,
+            < 5.15f => 1.5f,
+            < 8.15f => 1.8f,
+            < 10.15f => 2f,
+            < 15.15f => 2.5f,
+            _ => 3f
+        };
+        var battleExpFactorScore = __instance.battleExpFactor switch
+        {
+            < 0.05f => 0f,
+            < 0.15f => 1f,
+            < 0.25f => 3f,
+            < 0.55f => 6f,
+            < 1.15f => 10f,
+            < 2.15f => 12f,
+            < 5.15f => 14f,
+            < 8.15f => 16f,
+            < 10.15f => 18f,
+            < 15.15f => 19f,
+            _ => 20f
+        };
+        var score1 = aggressivenessScore < 0f ? 0f : 0.25f + aggressivenessScore * (powerThreatFactorScore * 0.5f + battleThreatFactorScore * 0.5f);
+		var score2 = 0.375f + 0.625f * ((initialLevelScore + battleExpFactorScore) / 10f);
+		var score3 = 0.375f + 0.625f * ((initialColonizeScore * 0.6f + initialGrowthScore * 0.4f * (initialColonizeScore * 0.75f + 0.25f)) * 0.6f + growthSpeedFactorScore * 0.4f * (initialColonizeScore * 0.8f + 0.2f) + maxDensityScore * 0.29f * (initialColonizeScore * 0.5f + 0.5f));
+		__result = (int)(score1 * score2 * score3 * 10000f + 0.5f) / 10000f;
+        
         return false;
     }
     #endregion
