@@ -4,6 +4,8 @@
 #### 添加一些作弊功能，同时屏蔽异常检测
 
 ## Changlog
+* 2.3.9
+  + Support game version 0.10.28.21219
 * 2.3.8
   + Fix a crash on starting new games while `Finish build immediately` is enabled.
   + Fix UI button width.
@@ -118,6 +120,8 @@
 * [Multifunction_mod](https://github.com/blacksnipebiu/Multifunction_mod): Some cheat functions
 
 ## 更新日志
+* 2.3.9
+  + 支持游戏版本0.10.28.21219
 * 2.3.8
   + 修复了启用`建造秒完成`时开新游戏可能导致崩溃的问题
   + 修复了UI按钮宽度

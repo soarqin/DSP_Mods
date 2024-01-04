@@ -237,6 +237,8 @@ public static class DysonSpherePatch
                 var sphere = __instance.dysonSphere;
                 var layers = sphere.layersSorted;
                 var llen = sphere.layerCount;
+                var sphereProductRegister = sphere.productRegister;
+                var sphereConsumeRegister = sphere.consumeRegister;
                 if (llen > 0)
                 {
                     var lidx = ((int)time >> 4) % llen;
@@ -258,9 +260,9 @@ public static class DysonSpherePatch
                                 if (node.ConstructCp() == null) break;
                                 if (idx == 0)
                                 {
-                                    sphere.productRegister[11901] += len;
-                                    sphere.consumeRegister[11901] += len;
-                                    sphere.productRegister[11903] += len;
+                                    sphereProductRegister[11901] += len;
+                                    sphereConsumeRegister[11901] += len;
+                                    sphereProductRegister[11903] += len;
                                     return;
                                 }
                                 idx--;
@@ -269,9 +271,12 @@ public static class DysonSpherePatch
                     }
                 }
                 var absorbCnt = len - 1 - idx;
-                sphere.productRegister[11901] += absorbCnt;
-                sphere.consumeRegister[11901] += absorbCnt;
-                sphere.productRegister[11903] += absorbCnt;
+                if (absorbCnt > 0)
+                {
+                    sphereProductRegister[11901] += absorbCnt;
+                    sphereConsumeRegister[11901] += absorbCnt;
+                    sphereProductRegister[11903] += absorbCnt;
+                }
             }
             for (; idx >= 0; idx--)
             {
@@ -314,7 +319,7 @@ public static class DysonSpherePatch
                 new CodeInstruction(OpCodes.Brfalse_S, label1),
                 new CodeInstruction(OpCodes.Ldarg_0),
                 new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(DysonSwarm), nameof(DysonSwarm.dysonSphere))),
-                new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(DysonSphere), nameof(DysonSphere.productRegister))),
+                new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(DysonSphere), nameof(DysonSphere.productRegister))),
                 new CodeInstruction(OpCodes.Ldc_I4, 11903),
                 new CodeInstruction(OpCodes.Ldelema, typeof(int)),
                 new CodeInstruction(OpCodes.Dup),
