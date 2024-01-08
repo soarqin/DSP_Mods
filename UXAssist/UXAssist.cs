@@ -281,4 +281,31 @@ public class UXAssist : BaseUnityPlugin
             buildings[i].index = i;
         }
     }
+    
+    // Can set belt icon tag to float, and increase maximum belt icon tag length to 8
+    [HarmonyPostfix]
+    [HarmonyPatch(typeof(UIBeltWindow), nameof(UIBeltWindow._OnCreate))]
+    private static void UIBeltWindow_OnCreate_Postfix(UIBeltWindow __instance)
+    {
+        __instance.iconTagCountInput.contentType = InputField.ContentType.DecimalNumber;
+        __instance.iconTagCountInput.characterLimit = 8;
+    }
+
+    [HarmonyTranspiler]
+    [HarmonyPatch(typeof(UIBeltWindow), nameof(UIBeltWindow._OnUpdate))]
+    private static IEnumerable<CodeInstruction> UIBeltWindow_OnUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+    {
+        var matcher = new CodeMatcher(instructions, generator);
+        matcher.End().MatchBack(false,
+            new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(UIBeltWindow), nameof(UIBeltWindow.iconTagCountInput))),
+            new CodeMatch(ci => ci.opcode == OpCodes.Ldloca || ci.opcode == OpCodes.Ldloca_S),
+            new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(float), nameof(float.ToString), []))
+        );
+        matcher.Advance(2).InsertAndAdvance(
+            new CodeInstruction(OpCodes.Ldstr, "G8")
+        ).Set(
+            OpCodes.Call, AccessTools.Method(typeof(float), nameof(float.ToString), [typeof(string)])
+        );
+        return matcher.InstructionEnumeration();
+    }
 }

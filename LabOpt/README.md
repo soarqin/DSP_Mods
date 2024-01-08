@@ -1,7 +1,9 @@
 # LabOpt
 
 #### Performance optimizations for Matrix Labs
+#### Marked as obsoleted temporarily, needs more investigation about LabComponent's mechanism
 #### 优化研究站性能
+#### 暂时标识为过期，需要更多关于LabComponent机制的研究
 
 ## Updates
 * 0.3.6
