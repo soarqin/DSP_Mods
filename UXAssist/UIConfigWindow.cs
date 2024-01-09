@@ -18,8 +18,10 @@ public static class UIConfigWindow
         I18N.Add("Dyson Sphere", "Dyson Sphere", "戴森球");
         I18N.Add("Enable game window resize", "Enable game window resize (maximum box and thick frame)", "可调整游戏窗口大小(可最大化和拖动边框)");
         I18N.Add("Remeber window position and size on last exit", "Remeber window position and size on last exit", "记住上次退出时的窗口位置和大小");
+        /*
         I18N.Add("Better auto-save mechanism", "Better auto-save mechanism", "更好的自动存档机制");
         I18N.Add("Better auto-save mechanism tips", "Auto saves are stored in 'Save\\AutoSaves' folder, filenames are combined with cluster address and date-time", "自动存档会以星区地址和日期时间组合为文件名存储在'Save\\AutoSaves'文件夹中");
+        */
         I18N.Add("Convert old saves to Combat Mode on loading", "Convert old saves to Combat Mode on loading (Use settings in new game panel)", "读取旧档时转为战斗模式(使用新游戏面板的战斗难度设置)");
         I18N.Add("Unlimited interactive range", "Unlimited interactive range", "无限交互距离");
         I18N.Add("Night Light", "Sunlight at night", "夜间日光灯");
@@ -63,12 +65,14 @@ public static class UIConfigWindow
         y += 36f;
         MyCheckBox.CreateCheckBox(x, y, tab1, GamePatch.LoadLastWindowRectEnabled, "Remeber window position and size on last exit");
         y += 36f;
+        /*
         MyCheckBox.CreateCheckBox(x, y, tab1, GamePatch.AutoSaveOptEnabled, "Better auto-save mechanism");
         x = 200f;
         y += 6f;
         MyWindow.AddTipsButton(x, y, tab1, "Better auto-save mechanism", "Better auto-save mechanism tips", "auto-save-opt-tips");
         x = 0f;
         y += 30f;
+        */
         MyCheckBox.CreateCheckBox(x, y, tab1, GamePatch.ConvertSavesFromPeaceEnabled, "Convert old saves to Combat Mode on loading");
         x += 10f;
         y = 278f;

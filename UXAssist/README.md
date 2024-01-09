@@ -4,6 +4,8 @@
 #### 一些提升用户体验的功能和补丁
 
 ## Changlog
+* 1.0.11
+  + Remove `Better auto-save mechanism` due to conflicts with DSPModSave and some other mods.
 * 1.0.10
   + Fix a button display bug
   + Fix a possible crash while `Enhanced control for logistic storage limits` is enabled
@@ -54,9 +56,6 @@
   + General 
     - Enable game window resize
     - Remember window position and size on last exit
-    - Better auto-save mechanism
-      - Auto saves are stored in 'Save\AutoSaves' folder, filenames are combined with cluster address and date-time
-      - Note: this will sort gamesaves by modified time on save/load window, so you don't have to use [DSP_Save_Game_Sorter] anymore
     - Convert Peace-Mode saves to Combat-Mode on loading
   + Planet/Factory
     - Unlimited interactive range
@@ -91,6 +90,8 @@
 * [OffGridConstruction](https://github.com/Velociraptor115-DSPModding/OffGridConstruction): Off-grid building & stepped rotation implementations
 
 ## 更新日志
+* 1.0.11
+  + 移除`更好的自动保存机制`，因为与DSPModSave和其他一些mod冲突
 * 1.0.10
   + 修复了一个按钮显示错误
   + 修复了`物流塔存储数量限制控制改进`启用时可能导致的崩溃问题
@@ -141,9 +142,6 @@
   + 通用
     - 可调整游戏窗口大小(可最大化和拖动边框)
     - 记住上次退出时的窗口位置和大小
-    - 更好的自动保存机制
-      - 自动存档会以星区地址和日期时间组合为文件名存储在'Save\AutoSaves'文件夹中
-      - 注意：此功能会在保存/读取菜单按最后修改时间对存档进行排序，因此你不再需要[DSP_Save_Game_Sorter]了
     - 在加载和平模式存档时将其转换为战斗模式
   + 行星/工厂
     - 无限交互距离

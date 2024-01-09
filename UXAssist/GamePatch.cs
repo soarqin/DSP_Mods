@@ -17,7 +17,7 @@ public static class GamePatch
 
     public static ConfigEntry<bool> EnableWindowResizeEnabled;
     public static ConfigEntry<bool> LoadLastWindowRectEnabled;
-    public static ConfigEntry<bool> AutoSaveOptEnabled;
+    // public static ConfigEntry<bool> AutoSaveOptEnabled;
     public static ConfigEntry<bool> ConvertSavesFromPeaceEnabled;
     public static ConfigEntry<Vector4> LastWindowRect;
     private static Harmony _gamePatch;
@@ -26,11 +26,11 @@ public static class GamePatch
     {
         EnableWindowResizeEnabled.SettingChanged += (_, _) => EnableWindowResize.Enable(EnableWindowResizeEnabled.Value);
         LoadLastWindowRectEnabled.SettingChanged += (_, _) => LoadLastWindowRect.Enable(LoadLastWindowRectEnabled.Value);
-        AutoSaveOptEnabled.SettingChanged += (_, _) => AutoSaveOpt.Enable(AutoSaveOptEnabled.Value);
+        // AutoSaveOptEnabled.SettingChanged += (_, _) => AutoSaveOpt.Enable(AutoSaveOptEnabled.Value);
         ConvertSavesFromPeaceEnabled.SettingChanged += (_, _) => ConvertSavesFromPeace.Enable(ConvertSavesFromPeaceEnabled.Value);
         EnableWindowResize.Enable(EnableWindowResizeEnabled.Value);
         LoadLastWindowRect.Enable(LoadLastWindowRectEnabled.Value);
-        AutoSaveOpt.Enable(AutoSaveOptEnabled.Value);
+        // AutoSaveOpt.Enable(AutoSaveOptEnabled.Value);
         ConvertSavesFromPeace.Enable(ConvertSavesFromPeaceEnabled.Value);
         _gamePatch ??= Harmony.CreateAndPatchAll(typeof(GamePatch));
     }
@@ -39,7 +39,7 @@ public static class GamePatch
     {
         LoadLastWindowRect.Enable(false);
         EnableWindowResize.Enable(false);
-        AutoSaveOpt.Enable(false);
+        // AutoSaveOpt.Enable(false);
         ConvertSavesFromPeace.Enable(false);
         _gamePatch?.UnpatchSelf();
         _gamePatch = null;
@@ -184,6 +184,7 @@ public static class GamePatch
         }
     }
 
+    /*
     private static class AutoSaveOpt
     {
         private static Harmony _patch;
@@ -326,6 +327,7 @@ public static class GamePatch
             return matcher.InstructionEnumeration();
         }
     }
+    */
 
     private static class ConvertSavesFromPeace
     {

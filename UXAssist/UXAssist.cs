@@ -32,8 +32,10 @@ public class UXAssist : BaseUnityPlugin
             "Load last window position and size when game starts");
         GamePatch.LastWindowRect = Config.Bind("Game", "LastWindowRect", new Vector4(0f, 0f, 0f, 0f),
             "Last window position and size");
+        /*
         GamePatch.AutoSaveOptEnabled = Config.Bind("Game", "AutoSaveOpt", false,
             "Better auto-save mechanism");
+        */
         GamePatch.ConvertSavesFromPeaceEnabled = Config.Bind("Game", "ConvertSavesFromPeace", false,
             "Convert saves from Peace mode to Combat mode on save loading");
         FactoryPatch.UnlimitInteractiveEnabled = Config.Bind("Factory", "UnlimitInteractive", false,
