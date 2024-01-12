@@ -4,6 +4,8 @@
 #### 一些提升用户体验的功能和补丁
 
 ## Changlog
+* 1.0.12
+  + Fix a bug that ejectors aimed at even-numbered orbits stop working when `Stop ejectors when available nodes are all filled up` is enabled.
 * 1.0.11
   + Remove `Better auto-save mechanism` due to conflicts with DSPModSave and some other mods.
 * 1.0.10
@@ -90,6 +92,8 @@
 * [OffGridConstruction](https://github.com/Velociraptor115-DSPModding/OffGridConstruction): Off-grid building & stepped rotation implementations
 
 ## 更新日志
+* 1.0.12
+  + 修复了当`当可用节点全部造完时停止弹射`选项启用时，瞄准偶数轨道的弹射器停止工作的bug
 * 1.0.11
   + 移除`更好的自动保存机制`，因为与DSPModSave和其他一些mod冲突
 * 1.0.10

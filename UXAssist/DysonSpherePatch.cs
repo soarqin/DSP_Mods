@@ -223,6 +223,8 @@ public static class DysonSpherePatch
                 new CodeMatch(OpCodes.Brtrue)
             ).Advance(2).Insert(
                 // || !StopEjectOnNodeComplete.AnyNodeForAbsorb(this.starData.index))
+                new CodeInstruction(OpCodes.Ldc_I4_0),
+                new CodeInstruction(OpCodes.Cgt),
                 new CodeInstruction(OpCodes.Ldarg_2),
                 new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(DysonSwarm), nameof(DysonSwarm.starData))),
                 new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(StarData), nameof(StarData.index))),
