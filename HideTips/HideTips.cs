@@ -20,7 +20,7 @@ public class HideTips : BaseUnityPlugin
     private static bool _noResearchCompletionPopups = true;
     private static bool _noResearchCompletionTips;
     private static bool _skipPrologue = true;
-    private static bool _hideMenuDemo;
+//    private static bool _hideMenuDemo;
 
     private static Harmony _patch;
 
@@ -34,13 +34,15 @@ public class HideTips : BaseUnityPlugin
         _noResearchCompletionPopups = Config.Bind("General", "NoResearchCompletionPopups", _noResearchCompletionPopups, "Disable Research Completion Popup Windows").Value;
         _noResearchCompletionTips = Config.Bind("General", "NoResearchCompletionTips", _noResearchCompletionTips, "Disable Research Completion Tips").Value;
         _skipPrologue = Config.Bind("General", "SkipPrologue", _skipPrologue, "Skip prologue for new game").Value;
-        _hideMenuDemo = Config.Bind("General", "HideMenuDemo", _hideMenuDemo, "Disable title screen demo scene loading").Value;
+//        _hideMenuDemo = Config.Bind("General", "HideMenuDemo", _hideMenuDemo, "Disable title screen demo scene loading").Value;
         if (!_cfgEnabled) return;
         Harmony.CreateAndPatchAll(typeof(HideTips));
+        /*
         if (_hideMenuDemo)
         {
             _patch = Harmony.CreateAndPatchAll(typeof(HideMenuDemo));
         }
+        */
     }
 
     private void OnDestroy()
@@ -141,6 +143,7 @@ public class HideTips : BaseUnityPlugin
     }
 }
 
+/*
 [HarmonyPatch]
 class HideMenuDemo
 {
@@ -209,3 +212,4 @@ class HideMenuDemo
         return false;
     }
 }
+*/

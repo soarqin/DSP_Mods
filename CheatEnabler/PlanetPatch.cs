@@ -49,9 +49,9 @@ public static class PlanetPatch
         {
             var matcher = new CodeMatcher(instructions, generator);
             matcher.MatchForward(false,
-                new CodeMatch(instr => instr.opcode == OpCodes.Ldc_I4_S && instr.OperandIs(22))
+                new CodeMatch(instr => instr.opcode == OpCodes.Ldc_I4_S && instr.OperandIs(23))
             ).Advance(1).MatchForward(false,
-                new CodeMatch(instr => instr.opcode == OpCodes.Ldc_I4_S && instr.OperandIs(22))
+                new CodeMatch(instr => instr.opcode == OpCodes.Ldc_I4_S && instr.OperandIs(23))
             );
             matcher.Repeat(codeMatcher =>
             {

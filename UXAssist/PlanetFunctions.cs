@@ -55,7 +55,7 @@ public static class PlanetFunctions
         //planet.data.CalcVerts();
         for (var id = factory.entityCursor - 1; id > 0; id--)
         {
-            var ed = factory.entityPool[id];
+            ref var ed = ref factory.entityPool[id];
             if (ed.id != id) continue;
             if (ed.colliderId != 0)
             {
@@ -75,6 +75,21 @@ public static class PlanetFunctions
 
             if (ed.audioId == 0) continue;
             planet.audio?.RemoveAudioData(ed.audioId);
+        }
+
+        if (planet.factory.enemyPool != null)
+        {
+            for (var i = planet.factory.enemyCursor - 1; i > 0; i--)
+            {
+                ref var ptr13 = ref planet.factory.enemyPool[i];
+                if (ptr13.id != i) continue;
+                var combatStatId = ptr13.combatStatId;
+                planet.factory.skillSystem.OnRemovingSkillTarget(combatStatId, planet.factory.skillSystem.combatStats.buffer[combatStatId].originAstroId, ETargetType.CombatStat);
+                planet.factory.skillSystem.combatStats.Remove(combatStatId);
+                planet.factory.KillEnemyFinally(player, i, ref CombatStat.empty);
+            }
+            planet.factory.enemySystem.Free();
+            UIRoot.instance.uiGame.dfAssaultTip.ClearAllSpots();
         }
 
         var stationPool = factory.transport?.stationPool;
@@ -120,20 +135,34 @@ public static class PlanetFunctions
             if (warningPool[i].id == i && warningPool[i].factoryId == index)
                 warningSystem.RemoveWarningData(warningPool[i].id);
         }
+        var isCombatMode = factory.gameData.gameDesc.isCombatMode;
         factory.entityCursor = 1;
         factory.entityRecycleCursor = 0;
         factory.entityCapacity = 0;
         factory.SetEntityCapacity(1024);
+        factory.craftCursor = 1;
+        factory.craftRecycleCursor = 0;
+        factory.craftCapacity = 0;
+        factory.SetCraftCapacity(128);
         factory.prebuildCursor = 1;
         factory.prebuildRecycleCursor = 0;
         factory.prebuildCapacity = 0;
         factory.SetPrebuildCapacity(256);
+        factory.enemyCursor = 1;
+        factory.enemyRecycleCursor = 0;
+        factory.enemyCapacity = 0;
+        factory.SetEnemyCapacity(isCombatMode ? 1024 : 32);
         factory.cargoContainer = new CargoContainer();
         factory.cargoTraffic = new CargoTraffic(planet);
         factory.blockContainer = new MiniBlockContainer();
         factory.factoryStorage = new FactoryStorage(planet);
         factory.powerSystem = new PowerSystem(planet);
+        factory.constructionSystem = new ConstructionSystem(planet);
         factory.factorySystem = new FactorySystem(planet);
+        factory.enemySystem = new EnemyDFGroundSystem(planet);
+        factory.combatGroundSystem = new CombatGroundSystem(planet);
+        factory.defenseSystem = new DefenseSystem(planet);
+        factory.planetATField = new PlanetATField(planet);
         factory.transport = new PlanetTransport(GameMain.data, planet);
         factory.transport.Init();
         factory.digitalSystem = new DigitalSystem(planet);

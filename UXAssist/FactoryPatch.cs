@@ -347,18 +347,18 @@ public static class FactoryPatch
              * ldloc.s	V_88 (88)
              * ldloc.s	V_120 (120)
              * brtrue.s	2054 (173A) ldc.i4.s 17
-             * ldc.i4.s	18
+             * ldc.i4.s	EBuildCondition.JointCannotLift (19)
              * br.s	2055 (173C) stfld valuetype EBuildCondition BuildPreview::condition
-             * ldc.i4.s	17
+             * ldc.i4.s	EBuildCondition.EBuildCondition.JointCannotLift (19) (18)
              * stfld	valuetype EBuildCondition BuildPreview::condition
              */
             matcher.MatchForward(false,
                 new CodeMatch(OpCodes.Ldloc_S),
                 new CodeMatch(OpCodes.Ldloc_S),
                 new CodeMatch(instr => instr.opcode == OpCodes.Brtrue_S || instr.opcode == OpCodes.Brtrue),
-                new CodeMatch(instr => instr.opcode == OpCodes.Ldc_I4_S && instr.OperandIs(18)),
+                new CodeMatch(instr => instr.opcode == OpCodes.Ldc_I4_S && instr.OperandIs(19)),
                 new CodeMatch(instr => instr.opcode == OpCodes.Br_S || instr.opcode == OpCodes.Br),
-                new CodeMatch(instr => instr.opcode == OpCodes.Ldc_I4_S && instr.OperandIs(17)),
+                new CodeMatch(instr => instr.opcode == OpCodes.Ldc_I4_S && instr.OperandIs(18)),
                 new CodeMatch(OpCodes.Stfld, AccessTools.Field(typeof(BuildPreview), nameof(BuildPreview.condition)))
             );
             if (matcher.IsValid)
@@ -375,12 +375,12 @@ public static class FactoryPatch
 
             /* search for:
              * ldloc.s	V_88 (88)
-             * ldc.i4.s	15-19
+             * ldc.i4.s	EBuildCondition.TooSteep(16)-EBuildCondition.InputConflict(20)
              * stfld	valuetype EBuildCondition BuildPreview::condition
              */
             matcher.Start().MatchForward(false,
                 new CodeMatch(instr => instr.opcode == OpCodes.Ldloc_S || instr.opcode == OpCodes.Ldloc),
-                new CodeMatch(instr => (instr.opcode == OpCodes.Ldc_I4_S || instr.opcode == OpCodes.Ldc_I4) && Convert.ToInt64(instr.operand) is >= 15 and <= 19),
+                new CodeMatch(instr => (instr.opcode == OpCodes.Ldc_I4_S || instr.opcode == OpCodes.Ldc_I4) && Convert.ToInt64(instr.operand) is >= 16 and <= 20),
                 new CodeMatch(OpCodes.Stfld, AccessTools.Field(typeof(BuildPreview), nameof(BuildPreview.condition)))
             );
             if (matcher.IsValid)

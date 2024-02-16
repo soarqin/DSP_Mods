@@ -73,7 +73,6 @@ public static class MechaDronesTweaks
     public static float EnergyMultiplier = 0.1f;
 
     [HarmonyTranspiler]
-    [HarmonyPatch(typeof(ConstructionModuleComponent), nameof(ConstructionModuleComponent.SearchForNewTargets))]
     [HarmonyPatch(typeof(ConstructionSystem), nameof(ConstructionSystem.UpdateDrones))]
     [HarmonyPatch(typeof(UIMechaWindow), nameof(UIMechaWindow.UpdateProps))]
     [HarmonyPatch(typeof(UITechTree), nameof(UITechTree.RefreshDataValueText))]
