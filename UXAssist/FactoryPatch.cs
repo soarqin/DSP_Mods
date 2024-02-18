@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection.Emit;
 using BepInEx.Configuration;
 using HarmonyLib;
@@ -544,6 +545,54 @@ public static class FactoryPatch
 
             _patch?.UnpatchSelf();
             _patch = null;
+        }
+
+        private static void CalculateGridOffset(PlanetData planet, Vector3 pos, out float x, out float y)
+        {
+            var npos = pos.normalized;
+            var segment = planet.aux.activeGrid?.segment ?? 200;
+            var latitudeRadPerGrid = BlueprintUtils.GetLatitudeRadPerGrid(segment);
+            var longitudeSegmentCount = BlueprintUtils.GetLongitudeSegmentCount(npos, segment);
+            var longitudeRadPerGrid = BlueprintUtils.GetLongitudeRadPerGrid(longitudeSegmentCount, segment);
+            var latitudeRad = BlueprintUtils.GetLatitudeRad(npos);
+            var longitudeRad = BlueprintUtils.GetLongitudeRad(npos);
+            x = longitudeRad / longitudeRadPerGrid;
+            y = latitudeRad / latitudeRadPerGrid;
+        }
+        
+        [HarmonyPostfix]
+        [HarmonyPriority(Priority.Last), HarmonyPatch(typeof(BuildTool_Click), nameof(BuildTool_Click.CheckBuildConditions))]
+        private static void BuildTool_Click_CheckBuildConditions_Postfix(BuildTool_Click __instance)
+        {
+            if (__instance.buildPreviews.Count != 1) return;
+            var preview = __instance.buildPreviews[0];
+            if (preview.desc.isInserter) return;
+            CalculateGridOffset(__instance.planet, preview.lpos, out var x, out var y);
+            __instance.actionBuild.model.cursorText = $"({x},{y})\n" + __instance.actionBuild.model.cursorText;
+        }
+
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(UIEntityBriefInfo), nameof(UIEntityBriefInfo._OnUpdate))]
+        private static IEnumerable<CodeInstruction> UIEntityBriefInfo__OnUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Ldarg_0),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(UIEntityBriefInfo), nameof(UIEntityBriefInfo.entityNameText))),
+                new CodeMatch(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(UnityEngine.UI.Text), nameof(UnityEngine.UI.Text.preferredWidth)))
+            );
+            matcher.InsertAndAdvance(
+                new CodeInstruction(OpCodes.Ldarg_0),
+                Transpilers.EmitDelegate((UIEntityBriefInfo entityBriefInfo) =>
+                    {
+                        var entity = entityBriefInfo.factory.entityPool[entityBriefInfo.entityId];
+                        if (entity.inserterId > 0) return;
+                        CalculateGridOffset(entityBriefInfo.factory.planet, entity.pos, out var x, out var y);
+                        entityBriefInfo.entityNameText.text += $" ({x},{y})";
+                    }
+                )
+            );
+            return matcher.InstructionEnumeration();
         }
 
         private static void MatchIgnoreGridAndCheckIfRotatable(CodeMatcher matcher, out Label? ifBlockEntryLabel, out Label? elseBlockEntryLabel)
