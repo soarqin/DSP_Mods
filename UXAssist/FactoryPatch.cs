@@ -350,7 +350,7 @@ public static class FactoryPatch
              * brtrue.s	2054 (173A) ldc.i4.s 17
              * ldc.i4.s	EBuildCondition.JointCannotLift (19)
              * br.s	2055 (173C) stfld valuetype EBuildCondition BuildPreview::condition
-             * ldc.i4.s	EBuildCondition.EBuildCondition.JointCannotLift (19) (18)
+             * ldc.i4.s	EBuildCondition.TooBendToLift (18)
              * stfld	valuetype EBuildCondition BuildPreview::condition
              */
             matcher.MatchForward(false,

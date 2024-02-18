@@ -83,11 +83,20 @@ public static class PlanetPatch
         {
             var matcher = new CodeMatcher(instructions, generator);
             matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Ldarg_0),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(BuildTool_Reform), nameof(BuildTool_Reform.cursorPointCount))),
+                new CodeMatch(ci => ci.opcode == OpCodes.Blt || ci.opcode == OpCodes.Blt_S)
+            ).RemoveInstructions(2).InsertAndAdvance(
+                new CodeInstruction(OpCodes.Ldc_I4_0)
+            ).MatchForward(false,
                 new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(Player), "get_sandCount"))
-            ).Advance(4).InsertAndAdvance(
+            ).Advance(1).MatchForward(false,
+                    new CodeMatch(OpCodes.Conv_I8),
+                    new CodeMatch(OpCodes.Sub)
+            ).Advance(2).InsertAndAdvance(
                 new CodeInstruction(OpCodes.Ldc_I8, 0L),
                 new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(Math), "Max", new[] { typeof(long), typeof(long) }))
-            ).Advance(1).RemoveInstructions(4);
+            );
             return matcher.InstructionEnumeration();
         }
     }

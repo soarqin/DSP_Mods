@@ -284,30 +284,68 @@ public class UXAssist : BaseUnityPlugin
         }
     }
     
-    // Can set belt icon tag to float, and increase maximum belt icon tag length to 8
-    [HarmonyPostfix]
-    [HarmonyPatch(typeof(UIBeltWindow), nameof(UIBeltWindow._OnCreate))]
-    private static void UIBeltWindow_OnCreate_Postfix(UIBeltWindow __instance)
+    // Increase maximum value of property realizing, 2000 -> 20000
+    [HarmonyTranspiler]
+    [HarmonyPatch(typeof(UIPropertyEntry), nameof(UIPropertyEntry.UpdateUIElements))]
+    [HarmonyPatch(typeof(UIPropertyEntry), nameof(UIPropertyEntry.OnRealizeButtonClick))]
+    [HarmonyPatch(typeof(UIPropertyEntry), nameof(UIPropertyEntry.OnInputValueEnd))]
+    private static IEnumerable<CodeInstruction> UIProductEntry_UpdateUIElements_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
     {
-        __instance.iconTagCountInput.contentType = InputField.ContentType.DecimalNumber;
-        __instance.iconTagCountInput.characterLimit = 8;
+        var matcher = new CodeMatcher(instructions, generator);
+        matcher.MatchForward(false,
+            new CodeMatch(OpCodes.Ldc_I4, 2000)
+        );
+        matcher.Repeat(m =>
+        {
+            m.SetAndAdvance(OpCodes.Ldc_I4, 20000);
+        });
+        return matcher.InstructionEnumeration();
     }
 
     [HarmonyTranspiler]
-    [HarmonyPatch(typeof(UIBeltWindow), nameof(UIBeltWindow._OnUpdate))]
-    private static IEnumerable<CodeInstruction> UIBeltWindow_OnUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+    [HarmonyPatch(typeof(UIPropertyEntry), nameof(UIPropertyEntry.OnInputValueEnd))]
+    private static IEnumerable<CodeInstruction> UIProductEntry_OnInputValueEnd_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
     {
         var matcher = new CodeMatcher(instructions, generator);
-        matcher.End().MatchBack(false,
-            new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(UIBeltWindow), nameof(UIBeltWindow.iconTagCountInput))),
-            new CodeMatch(ci => ci.opcode == OpCodes.Ldloca || ci.opcode == OpCodes.Ldloca_S),
-            new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(float), nameof(float.ToString), []))
+        matcher.MatchForward(false,
+            new CodeMatch(ci => ci.opcode == OpCodes.Ldc_R4 && ci.OperandIs(2000f))
         );
-        matcher.Advance(2).InsertAndAdvance(
-            new CodeInstruction(OpCodes.Ldstr, "G8")
-        ).Set(
-            OpCodes.Call, AccessTools.Method(typeof(float), nameof(float.ToString), [typeof(string)])
+        matcher.Repeat(m =>
+        {
+            m.SetAndAdvance(OpCodes.Ldc_R4, 20000f);
+        });
+        return matcher.InstructionEnumeration();
+    }
+
+    // Increase capacity of player order queue, 16 -> 128
+    [HarmonyTranspiler]
+    [HarmonyPatch(typeof(PlayerOrder), MethodType.Constructor, typeof(Player))]
+    private static IEnumerable<CodeInstruction> PlayerOrder_Constructor_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+    {
+        var matcher = new CodeMatcher(instructions, generator);
+        matcher.MatchForward(false,
+            new CodeMatch(ci => (ci.opcode == OpCodes.Ldc_I4_S || ci.opcode == OpCodes.Ldc_I4) && ci.OperandIs(16))
         );
+        matcher.Repeat(m =>
+        {
+            m.SetAndAdvance(OpCodes.Ldc_I4, 128);
+        });
+        return matcher.InstructionEnumeration();
+    }
+
+    [HarmonyTranspiler]
+    [HarmonyPatch(typeof(PlayerOrder), nameof(PlayerOrder._trimEnd))]
+    [HarmonyPatch(typeof(PlayerOrder), nameof(PlayerOrder.Enqueue))]
+    private static IEnumerable<CodeInstruction> PlayerOrder_ExtendCount_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+    {
+        var matcher = new CodeMatcher(instructions, generator);
+        matcher.MatchForward(false,
+            new CodeMatch(ci => (ci.opcode == OpCodes.Ldc_I4_S || ci.opcode == OpCodes.Ldc_I4) && ci.OperandIs(16))
+        );
+        matcher.Repeat(m =>
+        {
+            m.SetAndAdvance(OpCodes.Ldc_I4, 128);
+        });
         return matcher.InstructionEnumeration();
     }
 }

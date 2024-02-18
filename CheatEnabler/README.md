@@ -4,6 +4,10 @@
 #### 添加一些作弊功能，同时屏蔽异常检测
 
 ## Changlog
+* 2.3.10
+  + Fix following functions not working in new game updates:
+    - `Pump Anywhere`
+    - `Terraform without enough sands`
 * 2.3.9
   + Support game version 0.10.28.21219
 * 2.3.8
@@ -120,6 +124,10 @@
 * [Multifunction_mod](https://github.com/blacksnipebiu/Multifunction_mod): Some cheat functions
 
 ## 更新日志
+* 2.3.10
+  + 修复了以下功能在新游戏版本中不生效的问题：
+    - `平地抽水`
+    - `沙土不够时依然可以整改地形`
 * 2.3.9
   + 支持游戏版本0.10.28.21219
 * 2.3.8

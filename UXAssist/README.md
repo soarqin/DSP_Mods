@@ -4,6 +4,13 @@
 #### 一些提升用户体验的功能和补丁
 
 ## Changlog
+* 1.0.13
+  + `Off-grid building and stepped rotation`: show building coorinates(relative to grids) on building preview and building info panel now
+  + Increase maximum count of Metadata Instantiations to 20000 (from 2000)
+  + Increase capacity of player order queue to 128 (from 16)
+  + Fix issue caused by game updates
+    - `Remove some build conditions`: fixed issue that some conditions are not eliminated
+    - `Re-initialize planet`: fixed crash issue
 * 1.0.12
   + Fix a bug that ejectors aimed at even-numbered orbits stop working when `Stop ejectors when available nodes are all filled up` is enabled.
 * 1.0.11
@@ -54,6 +61,8 @@
   + Strict hotkey dectection for build menu, thus building hotkeys(0~9, F1~F10, X, U) are not triggered while holding Ctrl/Alt/Shift.
   + Fix a bug that warning popup on `Veins Utilization` upgraded to level 8000+
   + Sort blueprint structures before saving, to reduce generated blueprint data size a little
+  + Increase maximum count of Metadata Instantiations to 20000 (from 2000)
+  + Increase capacity of player order queue to 128 (from 16)
 * Features:
   + General 
     - Enable game window resize
@@ -92,6 +101,13 @@
 * [OffGridConstruction](https://github.com/Velociraptor115-DSPModding/OffGridConstruction): Off-grid building & stepped rotation implementations
 
 ## 更新日志
+* 1.0.13
+  + `脱离网格建造和小角度旋转`：现在在建造预览和建筑信息面板上显示建筑坐标(相对于网格)
+  + 将元数据提取的最大数量增加到20000(原来为2000)
+  + 将玩家指令队列的容量增加到128(原来为16)
+  + 修复了游戏更新导致的问题
+    - `移除部分不影响游戏逻辑的建造条件`：修复了一些条件未被移除的问题
+    - `初始化本行星`：修复了崩溃问题
 * 1.0.12
   + 修复了当`当可用节点全部造完时停止弹射`选项启用时，瞄准偶数轨道的弹射器停止工作的bug
 * 1.0.11
@@ -147,6 +163,8 @@
     - 可调整游戏窗口大小(可最大化和拖动边框)
     - 记住上次退出时的窗口位置和大小
     - 在加载和平模式存档时将其转换为战斗模式
+    - 将元数据提取的最大数量增加到20000(原来为2000)
+    - 将玩家指令队列的容量增加到128(原来为16)
   + 行星/工厂
     - 无限交互距离
     - 夜间日光灯
