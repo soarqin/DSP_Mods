@@ -5,12 +5,13 @@ using System.Runtime.CompilerServices;
 using BepInEx;
 using crecheng.DSPModSave;
 using NebulaAPI;
+using NebulaAPI.Interfaces;
 
 namespace Dustbin;
 
 [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
 [BepInDependency(DSPModSavePlugin.MODGUID)]
-[BepInDependency(NebulaModAPI.API_GUID)]
+[BepInDependency(NebulaModAPI.API_GUID, BepInDependency.DependencyFlags.SoftDependency)]
 public class Dustbin : BaseUnityPlugin, IModCanSave, IMultiplayerMod
 {
     public string Version => PluginInfo.PLUGIN_VERSION;
@@ -41,14 +42,11 @@ public class Dustbin : BaseUnityPlugin, IModCanSave, IMultiplayerMod
         }
         if (storageDustbin) StoragePatch.Enable(true);
         if (tankDustbin) TankPatch.Enable(true);
-
-        if (storageDustbin || tankDustbin)
-        {
-            NebulaModAPI.RegisterPackets(Assembly.GetExecutingAssembly());
-            NebulaModAPI.OnPlanetLoadFinished += RequestPlanetDustbinData;
-        }
-
         if (belgSignalDustbin) BeltSignal.Enable(true);
+
+        if (!BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("dsp.nebula-multiplayer") || (!storageDustbin && !tankDustbin)) return;
+        NebulaModAPI.RegisterPackets(Assembly.GetExecutingAssembly());
+        NebulaModAPI.OnPlanetLoadFinished += RequestPlanetDustbinData;
     }
     
     private void OnDestroy()
@@ -178,7 +176,7 @@ public class Dustbin : BaseUnityPlugin, IModCanSave, IMultiplayerMod
 
     public void RequestPlanetDustbinData(int planetId)
     {
-        if (NebulaModAPI.IsMultiplayerActive && NebulaModAPI.MultiplayerSession.LocalPlayer.IsClient)
+        if (NebulaModAPI.IsMultiplayerActive && NebulaModAPI.MultiplayerSession.IsClient)
             NebulaModAPI.MultiplayerSession.Network.SendPacket(new NebulaSupport.Packet.ToggleEvent(planetId, 0, false));
     }
     #endregion
