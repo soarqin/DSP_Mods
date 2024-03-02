@@ -167,11 +167,11 @@ public static class FactoryPatch
                 return;
             }
 
-            if (_sail.enabled)
+            if (_sail && _sail.enabled)
             {
                 _mechaOnEarth = false;
                 Enabled = false;
-                if (_sunlight == null) return;
+                if (!_sunlight || !_sunlight.transform) return;
                 _sunlight.transform.localEulerAngles = new Vector3(0f, 180f);
                 _sunlight = null;
                 return;
@@ -179,19 +179,19 @@ public static class FactoryPatch
 
             if (!_mechaOnEarth)
             {
-                if (_sunlight == null)
+                if (!_sunlight)
                 {
                     var simu = GameMain.universeSimulator;
                     if (simu)
                         _sunlight = simu.LocalStarSimulator()?.sunLight;
-                    if (_sunlight == null) return;
+                    if (!_sunlight) return;
                 }
 
                 _mechaOnEarth = true;
                 Enabled = NightLightEnabled.Value;
             }
 
-            if (Enabled)
+            if (Enabled && _sunlight)
             {
                 _sunlight.transform.rotation =
                     Quaternion.LookRotation(-GameMain.mainPlayer.transform.up + GameMain.mainPlayer.transform.forward * NightLightAngleX / 10f +
