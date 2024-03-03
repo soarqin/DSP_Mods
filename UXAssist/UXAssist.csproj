@@ -4,7 +4,7 @@
     <TargetFramework>net472</TargetFramework>
     <BepInExPluginGuid>org.soardev.uxassist</BepInExPluginGuid>
     <Description>DSP MOD - UXAssist</Description>
-    <Version>1.0.13</Version>
+    <Version>1.0.14</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
     <PackageId>UXAssist</PackageId>

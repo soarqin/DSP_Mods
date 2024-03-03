@@ -4,8 +4,11 @@
 #### 一些提升用户体验的功能和补丁
 
 ## Changlog
+* 1.0.14
+  + Fix crash in `Re-initialize planet` again
+  + `Off-grid building and stepped rotation`: Add Z coordinate to display, and adjust the precision to 4 decimal after point
 * 1.0.13
-  + `Off-grid building and stepped rotation`: show building coorinates(relative to grids) on building preview and building info panel now
+  + `Off-grid building and stepped rotation`: show building coordinates(relative to grids) on building preview and building info panel now
   + Increase maximum count of Metadata Instantiations to 20000 (from 2000)
   + Increase capacity of player order queue to 128 (from 16)
   + Fix issue caused by game updates
@@ -101,6 +104,9 @@
 * [OffGridConstruction](https://github.com/Velociraptor115-DSPModding/OffGridConstruction): Off-grid building & stepped rotation implementations
 
 ## 更新日志
+* 1.0.14
+  + 再次尝试修复`初始化本行星`导致的崩溃问题
+  + `脱离网格建造和小角度旋转`：现在显示建筑Z坐标，并将精度调整为小数点后4位
 * 1.0.13
   + `脱离网格建造和小角度旋转`：现在在建造预览和建筑信息面板上显示建筑坐标(相对于网格)
   + 将元数据提取的最大数量增加到20000(原来为2000)

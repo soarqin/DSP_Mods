@@ -547,7 +547,17 @@ public static class FactoryPatch
             _patch = null;
         }
 
-        private static void CalculateGridOffset(PlanetData planet, Vector3 pos, out float x, out float y)
+        private static bool _initialized;
+        [HarmonyPostfix, HarmonyPatch(typeof(UIRoot), "_OnOpen")]
+        public static void UIRoot__OnOpen_Postfix()
+        {
+            if (_initialized) return;
+            UIGeneralTips.instance.buildCursorTextComp.supportRichText = true;
+            UIGeneralTips.instance.entityBriefInfo.entityNameText.supportRichText = true;
+            _initialized = true;
+        }
+
+        private static void CalculateGridOffset(PlanetData planet, Vector3 pos, out float x, out float y, out float z)
         {
             var npos = pos.normalized;
             var segment = planet.aux.activeGrid?.segment ?? 200;
@@ -558,8 +568,19 @@ public static class FactoryPatch
             var longitudeRad = BlueprintUtils.GetLongitudeRad(npos);
             x = longitudeRad / longitudeRadPerGrid;
             y = latitudeRad / latitudeRadPerGrid;
+            z = (pos.magnitude - planet.realRadius - 0.2f) / 1.3333333f;
         }
         
+        private static string FixedPoint(float f)
+        {
+            var s = Mathf.RoundToInt(f * 10000);
+            return $"{s / 10000}.{Math.Abs(s % 10000)}".TrimEnd('0').TrimEnd('.');
+        }
+
+        private static PlanetData _lastPlanet;
+        private static Vector3 _lastPos;
+        private static string _lastOffsetText;
+
         [HarmonyPostfix]
         [HarmonyPriority(Priority.Last), HarmonyPatch(typeof(BuildTool_Click), nameof(BuildTool_Click.CheckBuildConditions))]
         private static void BuildTool_Click_CheckBuildConditions_Postfix(BuildTool_Click __instance)
@@ -567,8 +588,15 @@ public static class FactoryPatch
             if (__instance.buildPreviews.Count != 1) return;
             var preview = __instance.buildPreviews[0];
             if (preview.desc.isInserter) return;
-            CalculateGridOffset(__instance.planet, preview.lpos, out var x, out var y);
-            __instance.actionBuild.model.cursorText = $"({x},{y})\n" + __instance.actionBuild.model.cursorText;
+            var planet = __instance.planet;
+            if (_lastPlanet != planet || _lastPos != preview.lpos)
+            {
+                CalculateGridOffset(__instance.planet, preview.lpos, out var x, out var y, out var z);
+                _lastPlanet = planet;
+                _lastPos = preview.lpos;
+                _lastOffsetText = $"<color=#ffbfbfff>{FixedPoint(x)}</color>,<color=#bfffbfff>{FixedPoint(y)}</color>,<color=#bfbfffff>{FixedPoint(z)}</color>";
+            }
+            __instance.actionBuild.model.cursorText = $"({_lastOffsetText})\n" + __instance.actionBuild.model.cursorText;
         }
 
         [HarmonyTranspiler]
@@ -587,8 +615,15 @@ public static class FactoryPatch
                     {
                         var entity = entityBriefInfo.factory.entityPool[entityBriefInfo.entityId];
                         if (entity.inserterId > 0) return;
-                        CalculateGridOffset(entityBriefInfo.factory.planet, entity.pos, out var x, out var y);
-                        entityBriefInfo.entityNameText.text += $" ({x},{y})";
+                        var planet = entityBriefInfo.factory.planet;
+                        if (_lastPlanet != planet || _lastPos != entity.pos)
+                        {
+                            CalculateGridOffset(planet, entity.pos, out var x, out var y, out var z);
+                            _lastPlanet = planet;
+                            _lastPos = entity.pos;
+                            _lastOffsetText = $"<color=#ffbfbfff>{FixedPoint(x)}</color>,<color=#bfffbfff>{FixedPoint(y)}</color>,<color=#bfbfffff>{FixedPoint(z)}</color>";
+                        }
+                        entityBriefInfo.entityNameText.text += $" ({_lastOffsetText})";
                     }
                 )
             );

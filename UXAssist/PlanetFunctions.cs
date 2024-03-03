@@ -51,6 +51,13 @@ public static class PlanetFunctions
         var planet = GameMain.localPlanet;
         var factory = planet?.factory;
         if (factory == null) return;
+        var uiGame = UIRoot.instance.uiGame;
+        if (uiGame)
+        {
+            uiGame.ShutAllFunctionWindow();
+            uiGame.ShutAllFullScreens();
+        }
+        GameMain.data.mainPlayer?.controller.actionBuild.Close();
         //planet.data = new PlanetRawData(planet.precision);
         //planet.data.CalcVerts();
         for (var id = factory.entityCursor - 1; id > 0; id--)
@@ -152,6 +159,8 @@ public static class PlanetFunctions
         factory.enemyRecycleCursor = 0;
         factory.enemyCapacity = 0;
         factory.SetEnemyCapacity(isCombatMode ? 1024 : 32);
+        factory.hashSystemDynamic = new HashSystem();
+        factory.hashSystemStatic = new HashSystem();
         factory.cargoContainer = new CargoContainer();
         factory.cargoTraffic = new CargoTraffic(planet);
         factory.blockContainer = new MiniBlockContainer();
