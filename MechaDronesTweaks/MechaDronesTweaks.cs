@@ -111,7 +111,7 @@ public static class MechaDronesTweaks
         matcher.MatchForward(false,
             new CodeMatch(OpCodes.Ldc_I4_1),
             new CodeMatch(OpCodes.Stfld, AccessTools.Field(typeof(DroneComponent), nameof(DroneComponent.stage)))
-        ).Operand = 2;
+        ).Opcode = OpCodes.Ldc_I4_2;
         return matcher.InstructionEnumeration();
     }
 
