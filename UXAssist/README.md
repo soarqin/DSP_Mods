@@ -4,6 +4,10 @@
 #### 一些提升用户体验的功能和补丁
 
 ## Changlog
+* 1.0.15
+  + Move shortcut key settings to system options window, which depends on [CommonAPI](https://dsp.thunderstore.io/package/CommonAPI/CommonAPI)
+  + Enable `Hide UI` function(`F11` by default) while on Star Map view
+  + New function: `Treat stack items as single in monitor components`
 * 1.0.14
   + Fix crash in `Re-initialize planet` again
   + `Off-grid building and stepped rotation`: Add Z coordinate to display, and adjust the precision to 4 decimal after point
@@ -66,6 +70,7 @@
   + Sort blueprint structures before saving, to reduce generated blueprint data size a little
   + Increase maximum count of Metadata Instantiations to 20000 (from 2000)
   + Increase capacity of player order queue to 128 (from 16)
+  + Enable `Hide UI` function(`F11` by default) while on Star Map view
 * Features:
   + General 
     - Enable game window resize
@@ -79,6 +84,7 @@
     - Larger area for upgrade and dismantle(30x30 at max)
     - Larger area for terraform(30x30 at max)
     - Enable player actions in globe view
+    - Treat stack items as single in monitor components
     - Enhanced control for logistic storage limits
       - Logistic storage limits are not scaled on upgrading `Logistics Carrier Capacity`, if they are not set to maximum capacity.
       - You can use arrow keys to adjust logistic storage limits gracefully.
@@ -104,6 +110,10 @@
 * [OffGridConstruction](https://github.com/Velociraptor115-DSPModding/OffGridConstruction): Off-grid building & stepped rotation implementations
 
 ## 更新日志
+* 1.0.15
+  + 将快捷键设置移动到系统选项窗口，依赖于[CommonAPI](https://dsp.thunderstore.io/package/CommonAPI/CommonAPI)
+  + 在星图视图中启用`隐藏UI`功能(默认按键为`F11`)
+  + 新功能：`在流速计中将堆叠物品视为单个物品`
 * 1.0.14
   + 再次尝试修复`初始化本行星`导致的崩溃问题
   + `脱离网格建造和小角度旋转`：现在显示建筑Z坐标，并将精度调整为小数点后4位
@@ -164,6 +174,9 @@
   + 更严格的建造菜单热键检测，因此在按住Ctrl/Alt/Shift时不再会触发建造热键(0~9, F1~F10, X, U)
   + 修复了`矿物利用`升级到8000级以上时弹出警告的bug
   + 保存蓝图前对建筑进行排序，以减少生成的蓝图数据大小
+  + 将元数据提取的最大数量增加到20000(原来为2000)
+  + 将玩家指令队列的容量增加到128(原来为16)
+  + 在星图视图中启用`隐藏UI`功能(默认按键为`F11`)
 * 功能：
   + 通用
     - 可调整游戏窗口大小(可最大化和拖动边框)
@@ -179,6 +192,7 @@
     - 范围升级和拆除的最大区域扩大(最大30x30)
     - 范围铺设地基的最大区域扩大(最大30x30)
     - 在行星视图中允许玩家操作
+    - 在流速计中将堆叠物品视为单个物品
     - 物流塔存储数量限制控制改进
       - 当升级`运输机舱扩容`时，不会对各种物流塔的存储限制按比例提升，除非设置为最大允许容量。
       - 你可以使用方向键微调物流塔存储限制

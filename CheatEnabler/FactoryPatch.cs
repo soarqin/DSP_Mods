@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Reflection.Emit;
 using BepInEx.Configuration;
+using CommonAPI.Systems;
 using HarmonyLib;
 using UnityEngine;
+using UXAssist.Common;
 
 namespace CheatEnabler;
 
@@ -23,10 +25,20 @@ public static class FactoryPatch
     public static ConfigEntry<bool> BoostGeothermalPowerEnabled;
 
     private static Harmony _factoryPatch;
+    private static PressKeyBind _noConditionKey;
 
     public static void Init()
     {
         if (_factoryPatch != null) return;
+        _noConditionKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
+            {
+                key = new CombineKey((int)KeyCode.Q, CombineKey.ALT_COMB, ECombineKeyAction.OnceClick, false),
+                conflictGroup = KeyBindConflict.BUILD_MODE_1 | KeyBindConflict.KEYBOARD_KEYBIND,
+                name = "ToggleNoCondition",
+                canOverride = true
+            }
+        );
+        I18N.Add("KEYToggleNoCondition", "Toggle No Condition Build", "切换无条件建造");
         ImmediateEnabled.SettingChanged += (_, _) => ImmediateBuild.Enable(ImmediateEnabled.Value);
         ArchitectModeEnabled.SettingChanged += (_, _) => ArchitectMode.Enable(ArchitectModeEnabled.Value);
         NoConditionEnabled.SettingChanged += (_, _) => NoConditionBuild.Enable(NoConditionEnabled.Value);
@@ -49,6 +61,14 @@ public static class FactoryPatch
         BoostFuelPower.Enable(BoostFuelPowerEnabled.Value);
         BoostGeothermalPower.Enable(BoostGeothermalPowerEnabled.Value);
         _factoryPatch = Harmony.CreateAndPatchAll(typeof(FactoryPatch));
+    }
+
+    public static void OnUpdate()
+    {
+        if (_noConditionKey.keyValue)
+        {
+            NoConditionEnabled.Value = !NoConditionEnabled.Value;
+        }
     }
 
     public static void Uninit()

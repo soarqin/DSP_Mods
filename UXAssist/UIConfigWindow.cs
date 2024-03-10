@@ -35,6 +35,7 @@ public static class UIConfigWindow
         I18N.Add("Enhance control for logistic storage limits tips", "Logistic storage limits are not scaled on upgrading 'Logistics Carrier Capacity', if they are not set to maximum capacity.\nUse arrow keys to adjust logistic storage limits:\n  \u2190/\u2192: -/+10  \u2193\u2191: -/+100", "当升级'运输机舱扩容'时，不会对各种物流塔的存储限制按比例提升，除非设置为最大允许容量。\n你可以使用方向键微调物流塔存储限制：\n  \u2190\u2192: -/+10  \u2193\u2191: -/+100");
         I18N.Add("Enhanced count control for hand-make", "Enhanced count control for hand-make", "手动制造物品的数量控制改进");
         I18N.Add("Enhanced count control for hand-make tips", "Maximum count is increased to 1000.\nHold Ctrl/Shift/Alt to change the count rapidly.", "最大数量提升至1000\n按住Ctrl/Shift/Alt可快速改变数量");
+        I18N.Add("Treat stack items as single in monitor components", "Treat stack items as single in monitor components", "在流速计中将堆叠物品视为单个物品");
         I18N.Add("Initialize This Planet", "Initialize this planet", "初始化本行星");
         I18N.Add("Initialize This Planet Confirm", "This operation will destroy all buildings and revert terrains on this planet, are you sure?", "此操作将会摧毁本行星上的所有建筑并恢复地形，确定吗？");
         I18N.Add("Dismantle All Buildings", "Dismantle all buildings", "拆除所有建筑");
@@ -74,9 +75,6 @@ public static class UIConfigWindow
         y += 30f;
         */
         MyCheckBox.CreateCheckBox(x, y, tab1, GamePatch.ConvertSavesFromPeaceEnabled, "Convert old saves to Combat Mode on loading");
-        x += 10f;
-        y = 278f;
-        MyKeyBinder.CreateKeyBinder(x, y, tab1, UXAssist.Hotkey, "Hotkey");
         var tab2 = wnd.AddTab(trans, "Planet/Factory");
         x = 0f;
         y = 10f;
@@ -93,6 +91,8 @@ public static class UIConfigWindow
         MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.LargerAreaForTerraformEnabled, "Larger area for terraform");
         y += 36f;
         MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.OffGridBuildingEnabled, "Off-grid building and stepped rotation");
+        y += 36f;
+        MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.TreatStackingAsSingleEnabled, "Treat stack items as single in monitor components");
         y += 36f;
         MyCheckBox.CreateCheckBox(x, y, tab2, PlanetPatch.PlayerActionsInGlobeViewEnabled, "Enable player actions in globe view");
         y += 36f;

@@ -19,6 +19,7 @@ public static class FactoryPatch
     public static ConfigEntry<bool> LargerAreaForTerraformEnabled;
     public static ConfigEntry<bool> OffGridBuildingEnabled;
     public static ConfigEntry<bool> LogisticsCapacityTweaksEnabled;
+    public static ConfigEntry<bool> TreatStackingAsSingleEnabled;
 
     private static Harmony _factoryPatch;
 
@@ -32,6 +33,7 @@ public static class FactoryPatch
         LargerAreaForTerraformEnabled.SettingChanged += (_, _) => LargerAreaForTerraform.Enable(LargerAreaForTerraformEnabled.Value);
         OffGridBuildingEnabled.SettingChanged += (_, _) => OffGridBuilding.Enable(OffGridBuildingEnabled.Value);
         LogisticsCapacityTweaksEnabled.SettingChanged += (_, _) => LogisticsCapacityTweaks.Enable(LogisticsCapacityTweaksEnabled.Value);
+        TreatStackingAsSingleEnabled.SettingChanged += (_, _) => TreatStackingAsSingle.Enable(TreatStackingAsSingleEnabled.Value);
         UnlimitInteractive.Enable(UnlimitInteractiveEnabled.Value);
         RemoveSomeConditionBuild.Enable(RemoveSomeConditionEnabled.Value);
         NightLight.Enable(NightLightEnabled.Value);
@@ -40,6 +42,7 @@ public static class FactoryPatch
         LargerAreaForTerraform.Enable(LargerAreaForTerraformEnabled.Value);
         OffGridBuilding.Enable(OffGridBuildingEnabled.Value);
         LogisticsCapacityTweaks.Enable(LogisticsCapacityTweaksEnabled.Value);
+        TreatStackingAsSingle.Enable(TreatStackingAsSingleEnabled.Value);
 
         _factoryPatch ??= Harmony.CreateAndPatchAll(typeof(FactoryPatch));
     }
@@ -54,6 +57,7 @@ public static class FactoryPatch
         LargerAreaForTerraform.Enable(false);
         OffGridBuilding.Enable(false);
         LogisticsCapacityTweaks.Enable(false);
+        TreatStackingAsSingle.Enable(false);
 
         _factoryPatch?.UnpatchSelf();
         _factoryPatch = null;
@@ -915,6 +919,41 @@ public static class FactoryPatch
                 }
             }
             return false;
+        }
+    }
+
+    public static class TreatStackingAsSingle
+    {
+        private static Harmony _patch;
+
+        public static void Enable(bool enable)
+        {
+            if (enable)
+            {
+                _patch ??= Harmony.CreateAndPatchAll(typeof(TreatStackingAsSingle));
+                return;
+            }
+
+            _patch?.UnpatchSelf();
+            _patch = null;
+        }
+        
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(MonitorComponent), nameof(MonitorComponent.InternalUpdate))]
+        private static IEnumerable<CodeInstruction> MonitorComponent_InternalUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(MonitorComponent), nameof(MonitorComponent.GetCargoAtIndexByFilter)))
+            );
+            matcher.Advance(-3);
+            var localVar = matcher.Operand;
+            matcher.Advance(4).Insert(
+                new CodeInstruction(OpCodes.Ldloca, localVar),
+                new CodeInstruction(OpCodes.Ldc_I4_1),
+                new CodeInstruction(OpCodes.Stfld, AccessTools.Field(typeof(Cargo), nameof(Cargo.stack)))
+            );
+            return matcher.InstructionEnumeration();
         }
     }
 }

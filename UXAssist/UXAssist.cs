@@ -2,7 +2,8 @@
 using System.Collections.Generic;
 using System.Reflection.Emit;
 using BepInEx;
-using BepInEx.Configuration;
+using CommonAPI;
+using CommonAPI.Systems;
 using HarmonyLib;
 using UnityEngine;
 using UnityEngine.UI;
@@ -11,21 +12,29 @@ using UXAssist.UI;
 
 namespace UXAssist;
 
+[BepInDependency(CommonAPIPlugin.GUID)]
+[CommonAPISubmoduleDependency(nameof(CustomKeyBindSystem))]
 [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
 public class UXAssist : BaseUnityPlugin
 {
     public new static readonly BepInEx.Logging.ManualLogSource Logger =
         BepInEx.Logging.Logger.CreateLogSource(PluginInfo.PLUGIN_NAME);
 
-    public static ConfigEntry<KeyboardShortcut> Hotkey;
     private static bool _configWinInitialized;
     private static MyConfigWindow _configWin;
     private static Harmony _patch;
     private static bool _initialized;
+    private static PressKeyBind _toggleKey;
 
     private void Awake()
     {
-        Hotkey = Config.Bind("General", "Shortcut", KeyboardShortcut.Deserialize("BackQuote + LeftAlt"), "Shortcut to open config window");
+        _toggleKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
+        {
+            key = new CombineKey((int)KeyCode.BackQuote, CombineKey.ALT_COMB, ECombineKeyAction.OnceClick, false),
+            conflictGroup = KeyBindConflict.BUILD_MODE_1 | KeyBindConflict.KEYBOARD_KEYBIND,
+            name = "OpenUXAssistConfigWindow",
+            canOverride = true
+        });
         GamePatch.EnableWindowResizeEnabled = Config.Bind("Game", "EnableWindowResize", false,
             "Enable game window resize (maximum box and thick frame)");
         GamePatch.LoadLastWindowRectEnabled = Config.Bind("Game", "LoadLastWindowRect", false,
@@ -56,6 +65,8 @@ public class UXAssist : BaseUnityPlugin
             "Enable off grid building and stepped rotation");
         FactoryPatch.LogisticsCapacityTweaksEnabled = Config.Bind("Factory", "LogisticsCapacityTweaks", true,
             "Logistics capacity related tweaks");
+        FactoryPatch.TreatStackingAsSingleEnabled = Config.Bind("Factory", "TreatStackingAsSingle", false,
+            "Treat stack items as single in monitor components");
         PlanetFunctions.OrbitalCollectorMaxBuildCount = Config.Bind("Factory", "OCMaxBuildCount", 0, "Maximum Orbital Collectors to build once, set to 0 to build as many as possible");
         PlayerPatch.EnhancedMechaForgeCountControlEnabled = Config.Bind("Player", "EnhancedMechaForgeCountControl", false,
                 "Enhanced count control for hand-make, increases maximum of count to 1000, and you can hold Ctrl/Shift/Alt to change the count rapidly");
@@ -66,6 +77,7 @@ public class UXAssist : BaseUnityPlugin
 
         I18N.Init();
         I18N.Add("UXAssist Config", "UXAssist Config", "UX助手设置");
+        I18N.Add("KEYOpenUXAssistConfigWindow", "Open UXAssist Config Window", "打开UX助手设置面板");
         I18N.Apply();
 
         // UI Patch
@@ -100,7 +112,10 @@ public class UXAssist : BaseUnityPlugin
         {
             FactoryPatch.LogisticsCapacityTweaks.OnUpdate();
         }
-        if (Hotkey.Value.IsDown()) ToggleConfigWindow();
+        if (_toggleKey.keyValue)
+        {
+            ToggleConfigWindow();
+        }
     }
 
     private void LateUpdate()
@@ -333,6 +348,7 @@ public class UXAssist : BaseUnityPlugin
         return matcher.InstructionEnumeration();
     }
 
+    // Increase Player Command Queue from 16 to 128
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(PlayerOrder), nameof(PlayerOrder._trimEnd))]
     [HarmonyPatch(typeof(PlayerOrder), nameof(PlayerOrder.Enqueue))]
@@ -346,6 +362,26 @@ public class UXAssist : BaseUnityPlugin
         {
             m.SetAndAdvance(OpCodes.Ldc_I4, 128);
         });
+        return matcher.InstructionEnumeration();
+    }
+    
+    // Allow F11 in star map
+    [HarmonyTranspiler]
+    [HarmonyPatch(typeof(UIGame), nameof(UIGame._OnLateUpdate))]
+    private static IEnumerable<CodeInstruction> UIGame__OnLateUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+    {
+        var matcher = new CodeMatcher(instructions, generator);
+        matcher.MatchForward(false,
+            new CodeMatch(OpCodes.Ldsfld, AccessTools.Field(typeof(VFInput), nameof(VFInput.inFullscreenGUI))),
+            new CodeMatch(ci => ci.opcode == OpCodes.Brfalse || ci.opcode == OpCodes.Brfalse_S)
+        );
+        var jumpPos = matcher.Advance(1).Operand;
+        matcher.Advance(-1).Insert(
+            new CodeInstruction(OpCodes.Ldarg_0),
+            new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(UIGame), nameof(UIGame.starmap))),
+            new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(ManualBehaviour), nameof(ManualBehaviour.active))),
+            new CodeInstruction(OpCodes.Brtrue_S, jumpPos)
+        );
         return matcher.InstructionEnumeration();
     }
 }

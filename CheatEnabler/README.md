@@ -4,6 +4,8 @@
 #### 添加一些作弊功能，同时屏蔽异常检测
 
 ## Changlog
+* 2.3.11
+  + Add a shortcut to toggle `No condition build`, you can modify the shortcut on system settings window. This depends on [UXAssist](https://dsp.thunderstore.io/package/soarqin/UXAssist) 1.0.15 or later.
 * 2.3.10
   + Fix following functions not working in new game updates:
     - `Pump Anywhere`
@@ -124,6 +126,8 @@
 * [Multifunction_mod](https://github.com/blacksnipebiu/Multifunction_mod): Some cheat functions
 
 ## 更新日志
+* 2.3.11
+  + 添加了一个快捷键来切换`无条件建造`，你可以在系统设置面板中修改快捷键。这依赖于[UXAssist](https://dsp.thunderstore.io/package/soarqin/UXAssist) 1.0.15或更高版本
 * 2.3.10
   + 修复了以下功能在新游戏版本中不生效的问题：
     - `平地抽水`

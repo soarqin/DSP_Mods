@@ -82,4 +82,11 @@ public class CheatEnabler : BaseUnityPlugin
         AbnormalDisabler.Uninit();
         DevShortcuts.Uninit();
     }
+
+    private void Update()
+    {
+        if (VFInput.inputing) return;
+        FactoryPatch.OnUpdate();
+    }
+
 }
