@@ -17,7 +17,7 @@
   + Add a belt signal(you can find it in first tab of signal selection panel) as dustbin, which is the simplest way to destroy items.
   + Reworked dustbin support for Tanks, to improve performance and resolve known bugs.
     - Be note that the whole tank logic is optimized which may get a slight better performance even if you don't use them as dustbin.
-  + Config entry for sands gain from destroyed items are changed to a more flexible format.
+  + Config entry for soil piless gain from destroyed items are changed to a more flexible format.
   + [Nebula Mupltiplayer Mod](https://dsp.thunderstore.io/package/nebula/NebulaMultiplayerMod/) and bug fixes from [ModFixerOne](https://dsp.thunderstore.io/package/starfi5h/ModFixerOne/) by [starfi5h](https://github.com/starfi5h/).
 
 * 1.2.1
@@ -37,7 +37,7 @@
 
 * A checkbox is added to Storages and Tanks UI, which turns them into dustbins.
 * Items sent into dustbins are removed immediately.
-* Can get sands from destroyed items, configurable through a json encoded config entry.
+* Can get soil piless from destroyed items, configurable through a json encoded config entry.
   + You can get item ID list [here](https://dsp-wiki.com/Modding:Items_IDs).
 
 ## 更新日志

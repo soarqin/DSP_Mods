@@ -31,7 +31,7 @@ public class Dustbin : BaseUnityPlugin, IModCanSave, IMultiplayerMod
         var storageDustbin = Config.Bind("General", "StorageDustbin", true, "Can turn storages into dustbins").Value;
         var tankDustbin = Config.Bind("General", "TankDustbin", true, "Can turn tanks into dustbins").Value;
         var belgSignalDustbin = Config.Bind("General", "BeltSignalDustbin", true, "Add belt signal as dustbin").Value;
-        var sandsFactorsStr = Config.Bind("General", "SandsFactors", "", "Sands get from different items\nFormat: id1:value1|id2:value2|...").Value;
+        var sandsFactorsStr = Config.Bind("General", "SandsFactors", "", "Soil piles get from different items\nFormat: id1:value1|id2:value2|...").Value;
         foreach (var s in sandsFactorsStr.Split('|'))
         {
             var sp = s.Split(':');

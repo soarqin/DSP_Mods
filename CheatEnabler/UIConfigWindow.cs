@@ -52,7 +52,7 @@ public static class UIConfigWindow
         I18N.Add("Eject anyway", "Eject anyway", "全球弹射");
         I18N.Add("Overclock Ejectors", "Overclock Ejectors (10x)", "高速弹射器(10倍射速)");
         I18N.Add("Overclock Silos", "Overclock Silos (10x)", "高速发射井(10倍射速)");
-        I18N.Add("Terraform without enough sands", "Terraform without enough sands", "沙土不够时依然可以整改地形");
+        I18N.Add("Terraform without enough soil piless", "Terraform without enough soil piles", "沙土不够时依然可以整改地形");
         I18N.Apply();
         MyConfigWindow.OnUICreated += CreateUI;
         MyConfigWindow.OnUpdateUI += UpdateUI;
@@ -133,7 +133,7 @@ public static class UIConfigWindow
         y += 36f;
         MyCheckBox.CreateCheckBox(x, y, tab3, PlanetPatch.WaterPumpAnywhereEnabled, "Pump Anywhere");
         y += 36f;
-        MyCheckBox.CreateCheckBox(x, y, tab3, PlanetPatch.TerraformAnywayEnabled, "Terraform without enough sands");
+        MyCheckBox.CreateCheckBox(x, y, tab3, PlanetPatch.TerraformAnywayEnabled, "Terraform without enough soil piles");
         x = 400f;
         y = 10f;
         wnd.AddButton(x, y, 200f, tab3, "矿物掩埋标题", 16, "button-bury-all", () => { PlanetFunctions.BuryAllVeins(true); });

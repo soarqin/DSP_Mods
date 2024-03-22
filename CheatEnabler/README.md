@@ -9,7 +9,7 @@
 * 2.3.10
   + Fix following functions not working in new game updates:
     - `Pump Anywhere`
-    - `Terraform without enough sands`
+    - `Terraform without enough soil piles`
 * 2.3.9
   + Support game version 0.10.28.21219
 * 2.3.8
@@ -108,7 +108,7 @@
     + Infinite Natural Resources
     + Fast Mining
     + Pump Anywhere
-    + Terraform without enought sands
+    + Terraform without enought soil piles
   + Dyson Sphere:
     + Skip bullet period
     + Skip absorption period

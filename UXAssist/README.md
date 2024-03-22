@@ -4,6 +4,9 @@
 #### 一些提升用户体验的功能和补丁
 
 ## Changlog
+* 1.0.16
+  + Add CommonAPI to package manifest dependencies(missing in last version)
+  + New function: `Hide tips for soil piles changes`
 * 1.0.15
   + Move shortcut key settings to system options window, which depends on [CommonAPI](https://dsp.thunderstore.io/package/CommonAPI/CommonAPI)
   + Enable `Hide UI` function(`F11` by default) while on Star Map view
@@ -85,6 +88,7 @@
     - Larger area for terraform(30x30 at max)
     - Enable player actions in globe view
     - Treat stack items as single in monitor components
+    - Hide tips for soil piles changes
     - Enhanced control for logistic storage limits
       - Logistic storage limits are not scaled on upgrading `Logistics Carrier Capacity`, if they are not set to maximum capacity.
       - You can use arrow keys to adjust logistic storage limits gracefully.
@@ -110,6 +114,9 @@
 * [OffGridConstruction](https://github.com/Velociraptor115-DSPModding/OffGridConstruction): Off-grid building & stepped rotation implementations
 
 ## 更新日志
+* 1.0.16
+  + 添加了对CommonAPI的包依赖(上个版本忘记加了)
+  + 新功能：`隐藏沙土数量变动的提示`
 * 1.0.15
   + 将快捷键设置移动到系统选项窗口，依赖于[CommonAPI](https://dsp.thunderstore.io/package/CommonAPI/CommonAPI)
   + 在星图视图中启用`隐藏UI`功能(默认按键为`F11`)
@@ -193,6 +200,7 @@
     - 范围铺设地基的最大区域扩大(最大30x30)
     - 在行星视图中允许玩家操作
     - 在流速计中将堆叠物品视为单个物品
+    - 隐藏沙土数量变动的提示
     - 物流塔存储数量限制控制改进
       - 当升级`运输机舱扩容`时，不会对各种物流塔的存储限制按比例提升，除非设置为最大允许容量。
       - 你可以使用方向键微调物流塔存储限制

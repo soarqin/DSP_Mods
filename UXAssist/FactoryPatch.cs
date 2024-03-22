@@ -575,10 +575,9 @@ public static class FactoryPatch
             z = (pos.magnitude - planet.realRadius - 0.2f) / 1.3333333f;
         }
         
-        private static string FixedPoint(float f)
+        private static string FormatOffsetFloat(float f)
         {
-            var s = Mathf.RoundToInt(f * 10000);
-            return $"{s / 10000}.{Math.Abs(s % 10000)}".TrimEnd('0').TrimEnd('.');
+            return f.ToString("0.0000").TrimEnd('0').TrimEnd('.');
         }
 
         private static PlanetData _lastPlanet;
@@ -598,7 +597,7 @@ public static class FactoryPatch
                 CalculateGridOffset(__instance.planet, preview.lpos, out var x, out var y, out var z);
                 _lastPlanet = planet;
                 _lastPos = preview.lpos;
-                _lastOffsetText = $"<color=#ffbfbfff>{FixedPoint(x)}</color>,<color=#bfffbfff>{FixedPoint(y)}</color>,<color=#bfbfffff>{FixedPoint(z)}</color>";
+                _lastOffsetText = $"<color=#ffbfbfff>{FormatOffsetFloat(x)}</color>,<color=#bfffbfff>{FormatOffsetFloat(y)}</color>,<color=#bfbfffff>{FormatOffsetFloat(z)}</color>";
             }
             __instance.actionBuild.model.cursorText = $"({_lastOffsetText})\n" + __instance.actionBuild.model.cursorText;
         }
@@ -625,7 +624,7 @@ public static class FactoryPatch
                             CalculateGridOffset(planet, entity.pos, out var x, out var y, out var z);
                             _lastPlanet = planet;
                             _lastPos = entity.pos;
-                            _lastOffsetText = $"<color=#ffbfbfff>{FixedPoint(x)}</color>,<color=#bfffbfff>{FixedPoint(y)}</color>,<color=#bfbfffff>{FixedPoint(z)}</color>";
+                            _lastOffsetText = $"<color=#ffbfbfff>{FormatOffsetFloat(x)}</color>,<color=#bfffbfff>{FormatOffsetFloat(y)}</color>,<color=#bfbfffff>{FormatOffsetFloat(z)}</color>";
                         }
                         entityBriefInfo.entityNameText.text += $" ({_lastOffsetText})";
                     }

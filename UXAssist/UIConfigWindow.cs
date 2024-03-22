@@ -31,6 +31,7 @@ public static class UIConfigWindow
         I18N.Add("Larger area for terraform", "Larger area for terraform", "范围铺设地基的最大区域扩大");
         I18N.Add("Off-grid building and stepped rotation", "Off-grid building and stepped rotation (Hold Shift)", "脱离网格建造以及小角度旋转(按住Shift)");
         I18N.Add("Enable player actions in globe view", "Enable player actions in globe view", "在行星视图中允许玩家操作");
+        I18N.Add("Hide tips for soil piles changes", "Hide tips for soil piles changes", "隐藏沙土数量变动的提示");
         I18N.Add("Enhance control for logistic storage limits", "Enhance control for logistic storage limits", "物流塔存储限制控制改进");
         I18N.Add("Enhance control for logistic storage limits tips", "Logistic storage limits are not scaled on upgrading 'Logistics Carrier Capacity', if they are not set to maximum capacity.\nUse arrow keys to adjust logistic storage limits:\n  \u2190/\u2192: -/+10  \u2193\u2191: -/+100", "当升级'运输机舱扩容'时，不会对各种物流塔的存储限制按比例提升，除非设置为最大允许容量。\n你可以使用方向键微调物流塔存储限制：\n  \u2190\u2192: -/+10  \u2193\u2191: -/+100");
         I18N.Add("Enhanced count control for hand-make", "Enhanced count control for hand-make", "手动制造物品的数量控制改进");
@@ -95,6 +96,8 @@ public static class UIConfigWindow
         MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.TreatStackingAsSingleEnabled, "Treat stack items as single in monitor components");
         y += 36f;
         MyCheckBox.CreateCheckBox(x, y, tab2, PlanetPatch.PlayerActionsInGlobeViewEnabled, "Enable player actions in globe view");
+        y += 36f;
+        MyCheckBox.CreateCheckBox(x, y, tab2, PlayerPatch.HideTipsForSandsChangesEnabled, "Hide tips for soil piles changes");
         y += 36f;
         MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.LogisticsCapacityTweaksEnabled, "Enhance control for logistic storage limits");
         x = 270f;

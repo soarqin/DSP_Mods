@@ -68,8 +68,12 @@ public class UXAssist : BaseUnityPlugin
         FactoryPatch.TreatStackingAsSingleEnabled = Config.Bind("Factory", "TreatStackingAsSingle", false,
             "Treat stack items as single in monitor components");
         PlanetFunctions.OrbitalCollectorMaxBuildCount = Config.Bind("Factory", "OCMaxBuildCount", 0, "Maximum Orbital Collectors to build once, set to 0 to build as many as possible");
+        PlayerPatch.HideTipsForSandsChangesEnabled = Config.Bind("Player", "HideTipsForGettingSands", false,
+            "Hide tips for getting soil piles");
         PlayerPatch.EnhancedMechaForgeCountControlEnabled = Config.Bind("Player", "EnhancedMechaForgeCountControl", false,
                 "Enhanced count control for hand-make, increases maximum of count to 1000, and you can hold Ctrl/Shift/Alt to change the count rapidly");
+        PlayerPatch.AutoNavigationEnabled = Config.Bind("Player", "AutoNavigation", false,
+            "Auto navigation");
         DysonSpherePatch.StopEjectOnNodeCompleteEnabled = Config.Bind("DysonSphere", "StopEjectOnNodeComplete", false,
             "Stop ejectors when available nodes are all filled up");
         DysonSpherePatch.OnlyConstructNodesEnabled = Config.Bind("DysonSphere", "OnlyConstructNodes", false,

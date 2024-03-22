@@ -47,7 +47,7 @@ public class CheatEnabler : BaseUnityPlugin
         PlanetPatch.WaterPumpAnywhereEnabled = Config.Bind("Planet", "WaterPumpAnywhere", false,
             "Can pump water anywhere (while water type is not None)");
         PlanetPatch.TerraformAnywayEnabled = Config.Bind("Planet", "TerraformAnyway", false,
-            "Can do terraform without enough sands");
+            "Can do terraform without enough soil piless");
         DysonSpherePatch.SkipBulletEnabled = Config.Bind("DysonSphere", "SkipBullet", false,
             "Skip bullet");
         DysonSpherePatch.SkipAbsorbEnabled = Config.Bind("DysonSphere", "SkipAbsorb", false,
