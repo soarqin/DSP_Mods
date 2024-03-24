@@ -4,8 +4,13 @@
 #### 添加一些作弊功能，同时屏蔽异常检测
 
 ## Changlog
+* 2.3.13
+  + Fix a bug that shortcuts are not working and have display issue on settings window. 
+* 2.3.12
+  + Add a shortcut to toggle `No collision`(Alt+W by default), you can modify the shortcut on system settings window.
+  + Add realtime tips when toggling `No condition build` and `No collision` with shortcuts.
 * 2.3.11
-  + Add a shortcut to toggle `No condition build`, you can modify the shortcut on system settings window. This depends on [UXAssist](https://dsp.thunderstore.io/package/soarqin/UXAssist) 1.0.15 or later.
+  + Add a shortcut to toggle `No condition build`(Alt+Q by default), you can modify the shortcut on system settings window. This depends on [UXAssist](https://dsp.thunderstore.io/package/soarqin/UXAssist) 1.0.15 or later.
 * 2.3.10
   + Fix following functions not working in new game updates:
     - `Pump Anywhere`
@@ -126,6 +131,11 @@
 * [Multifunction_mod](https://github.com/blacksnipebiu/Multifunction_mod): Some cheat functions
 
 ## 更新日志
+* 2.3.13
+  + 修复了快捷键无效和设置窗口上的按键显示问题
+* 2.3.12
+  + 添加了一个快捷键来切换`无碰撞`，你可以在系统设置面板中修改快捷键。
+  + 在使用快捷键切换`无条件建造`和`无碰撞`时添加了实时提示信息。
 * 2.3.11
   + 添加了一个快捷键来切换`无条件建造`，你可以在系统设置面板中修改快捷键。这依赖于[UXAssist](https://dsp.thunderstore.io/package/soarqin/UXAssist) 1.0.15或更高版本
 * 2.3.10

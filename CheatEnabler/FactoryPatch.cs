@@ -26,6 +26,7 @@ public static class FactoryPatch
 
     private static Harmony _factoryPatch;
     private static PressKeyBind _noConditionKey;
+    private static PressKeyBind _noCollisionKey;
 
     public static void Init()
     {
@@ -33,12 +34,25 @@ public static class FactoryPatch
         _noConditionKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
             {
                 key = new CombineKey((int)KeyCode.Q, CombineKey.ALT_COMB, ECombineKeyAction.OnceClick, false),
-                conflictGroup = KeyBindConflict.BUILD_MODE_1 | KeyBindConflict.KEYBOARD_KEYBIND,
+                conflictGroup = KeyBindConflict.MOVEMENT | KeyBindConflict.FLYING | KeyBindConflict.SAILING | KeyBindConflict.BUILD_MODE_1 | KeyBindConflict.KEYBOARD_KEYBIND,
                 name = "ToggleNoCondition",
                 canOverride = true
             }
         );
+        _noCollisionKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
+            {
+                key = new CombineKey((int)KeyCode.W, CombineKey.ALT_COMB, ECombineKeyAction.OnceClick, false),
+                conflictGroup = KeyBindConflict.MOVEMENT | KeyBindConflict.FLYING | KeyBindConflict.SAILING | KeyBindConflict.BUILD_MODE_1 | KeyBindConflict.KEYBOARD_KEYBIND,
+                name = "ToggleNoCollision",
+                canOverride = true
+            }
+        );
         I18N.Add("KEYToggleNoCondition", "Toggle No Condition Build", "切换无条件建造");
+        I18N.Add("KEYToggleNoCollision", "Toggle No Collision", "切换无碰撞");
+        I18N.Add("NoConditionOn", "No condition build is enabled!", "无条件建造已启用");
+        I18N.Add("NoConditionOff", "No condition build is disabled!", "无条件建造已禁用");
+        I18N.Add("NoCollisionOn", "No collision is enabled!", "无碰撞已启用");
+        I18N.Add("NoCollisionOff", "No collision is disabled!", "无碰撞已禁用");
         ImmediateEnabled.SettingChanged += (_, _) => ImmediateBuild.Enable(ImmediateEnabled.Value);
         ArchitectModeEnabled.SettingChanged += (_, _) => ArchitectMode.Enable(ArchitectModeEnabled.Value);
         NoConditionEnabled.SettingChanged += (_, _) => NoConditionBuild.Enable(NoConditionEnabled.Value);
@@ -68,6 +82,18 @@ public static class FactoryPatch
         if (_noConditionKey.keyValue)
         {
             NoConditionEnabled.Value = !NoConditionEnabled.Value;
+            if (!DSPGame.IsMenuDemo && GameMain.isRunning)
+            {
+                UIRoot.instance.uiGame.generalTips.InvokeRealtimeTipAhead((NoConditionEnabled.Value ? "NoConditionOn" : "NoConditionOff").Translate());
+            }
+        }
+        if (_noCollisionKey.keyValue)
+        {
+            NoCollisionEnabled.Value = !NoCollisionEnabled.Value;
+            if (!DSPGame.IsMenuDemo && GameMain.isRunning)
+            {
+                UIRoot.instance.uiGame.generalTips.InvokeRealtimeTipAhead((NoCollisionEnabled.Value ? "NoCollisionOn" : "NoCollisionOff").Translate());
+            }
         }
     }
 

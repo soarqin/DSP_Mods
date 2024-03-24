@@ -31,7 +31,7 @@ public class UXAssist : BaseUnityPlugin
         _toggleKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
         {
             key = new CombineKey((int)KeyCode.BackQuote, CombineKey.ALT_COMB, ECombineKeyAction.OnceClick, false),
-            conflictGroup = KeyBindConflict.BUILD_MODE_1 | KeyBindConflict.KEYBOARD_KEYBIND,
+            conflictGroup = KeyBindConflict.MOVEMENT | KeyBindConflict.FLYING | KeyBindConflict.SAILING | KeyBindConflict.BUILD_MODE_1 | KeyBindConflict.KEYBOARD_KEYBIND,
             name = "OpenUXAssistConfigWindow",
             canOverride = true
         });
@@ -74,6 +74,9 @@ public class UXAssist : BaseUnityPlugin
                 "Enhanced count control for hand-make, increases maximum of count to 1000, and you can hold Ctrl/Shift/Alt to change the count rapidly");
         PlayerPatch.AutoNavigationEnabled = Config.Bind("Player", "AutoNavigation", false,
             "Auto navigation");
+        PlayerPatch.AutoCruiseEnabled = Config.Bind("Player", "AutoCruise", false,
+            "Auto-cruise enabled");
+        PlayerPatch.DistanceToWarp = Config.Bind("Player", "DistanceToWarp", 5.0, "Distance to warp (in AU)");
         DysonSpherePatch.StopEjectOnNodeCompleteEnabled = Config.Bind("DysonSphere", "StopEjectOnNodeComplete", false,
             "Stop ejectors when available nodes are all filled up");
         DysonSpherePatch.OnlyConstructNodesEnabled = Config.Bind("DysonSphere", "OnlyConstructNodes", false,
@@ -82,7 +85,7 @@ public class UXAssist : BaseUnityPlugin
         I18N.Init();
         I18N.Add("UXAssist Config", "UXAssist Config", "UX助手设置");
         I18N.Add("KEYOpenUXAssistConfigWindow", "Open UXAssist Config Window", "打开UX助手设置面板");
-        I18N.Apply();
+        I18N.Add("KEYToggleAutoCruise", "Toggle auto-cruise", "切换自动巡航");
 
         // UI Patch
         _patch ??= Harmony.CreateAndPatchAll(typeof(UXAssist));
@@ -94,6 +97,8 @@ public class UXAssist : BaseUnityPlugin
         PlanetPatch.Init();
         PlayerPatch.Init();
         DysonSpherePatch.Init();
+
+        I18N.Apply();
     }
 
     private void OnDestroy()
@@ -120,6 +125,7 @@ public class UXAssist : BaseUnityPlugin
         {
             ToggleConfigWindow();
         }
+        PlayerPatch.OnUpdate();
     }
 
     private void LateUpdate()

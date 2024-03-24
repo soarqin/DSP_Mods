@@ -4,6 +4,16 @@
 #### 一些提升用户体验的功能和补丁
 
 ## Changlog
+* 1.0.17
+  + New function: `Auto navigation on sailings`, which is inspired by [CruiseAssist](https://dsp.thunderstore.io/package/tanu/CruiseAssist/) and its extension [AutoPilot](https://dsp.thunderstore.io/package/tanu/AutoPilot/)
+    - It keeps Icarus on course to the target planet 
+    - It will try to bypass any obstacles(planets, stars or dark-fog hives) on the way
+    - Furthermore, there is also a shortcut key(Alt+A by default) which can be set in the system options window, which is used to toggle `Auto-cruise` that enables flying to targeted planets fully automatically.
+      - Auto-cruise will start when you target a planet on star map
+      - It will use warper to fly to the target planet if the planet is too far away, the range can be configured.
+      - It will speed down when approaching the target planet, to avoid overshooting
+  + Fix a crash caused by `Stop ejectors when available nodes are all filled up` in latest game update
+  + `Off-grid building and stepped rotation`: Hide Z coordinate from display if it is zero
 * 1.0.16
   + Add CommonAPI to package manifest dependencies(missing in last version)
   + New function: `Hide tips for soil piles changes`
@@ -89,6 +99,13 @@
     - Enable player actions in globe view
     - Treat stack items as single in monitor components
     - Hide tips for soil piles changes
+    - Auto navigation on sailings
+      - It keeps Icarus on course to the target planet
+      - It will try to bypass any obstacles(planets, stars or dark-fog hives) on the way
+      - Furthermore, there is also a shortcut key(Alt+A by default) which can be set in the system options window, which is used to toggle `Auto-cruise` that enables flying to targeted planets fully automatically.
+        - Auto-cruise will start when you select a planet as target
+        - It will use warper to fly to the target planet if the planet is too far away, the range can be configured.
+        - It will speed down when approaching the target planet, to avoid overshooting
     - Enhanced control for logistic storage limits
       - Logistic storage limits are not scaled on upgrading `Logistics Carrier Capacity`, if they are not set to maximum capacity.
       - You can use arrow keys to adjust logistic storage limits gracefully.
@@ -112,8 +129,19 @@
 * [Multifunction_mod](https://github.com/blacksnipebiu/Multifunction_mod): Some cheat functions
 * [LSTM](https://github.com/hetima/DSP_LSTM) & [PlanetFinder](https://github.com/hetima/DSP_PlanetFinder): UI implementations
 * [OffGridConstruction](https://github.com/Velociraptor115-DSPModding/OffGridConstruction): Off-grid building & stepped rotation implementations
+* [CruiseAssist](https://dsp.thunderstore.io/package/tanu/CruiseAssist/) and its extension [AutoPilot](https://dsp.thunderstore.io/package/tanu/AutoPilot/): `Auto navigation on sailings` and `Auto-cruise` implementations
 
 ## 更新日志
+* 1.0.17
+  + 新功能：`航行时自动导航`，想法来自[CruiseAssist](https://dsp.thunderstore.io/package/tanu/CruiseAssist/)及其扩展[AutoPilot](https://dsp.thunderstore.io/package/tanu/AutoPilot/)
+    - 它会保持伊卡洛斯飞向目标星球
+    - 它会尝试绕过途中的任何障碍物(行星、恒星或黑雾巢穴)
+    - 此外，还有一个快捷键(默认为Alt+A)可以在系统选项窗口中设置，用于切换`自动巡航`，实现完全自动化的飞行至目标星球。
+      - 当你选择目标星球后，自动巡航就会开始
+      - 如果目标星球距离过远会自动使用曲速(超过5AU)，你可以在面板上更改这个值。
+      - 它会在接近目标星球时减速，以避免发生越过目标的情况
+  + 修复了最新游戏更新后`当可用节点全部造完时停止弹射`引起崩溃问题
+  + `脱离网格建造和小角度旋转`：如果Z坐标为零则从显示中隐藏
 * 1.0.16
   + 添加了对CommonAPI的包依赖(上个版本忘记加了)
   + 新功能：`隐藏沙土数量变动的提示`
@@ -201,6 +229,13 @@
     - 在行星视图中允许玩家操作
     - 在流速计中将堆叠物品视为单个物品
     - 隐藏沙土数量变动的提示
+    - 航行时自动导航
+      - 它会保持伊卡洛斯飞向目标星球
+      - 它会尝试绕过途中的任何障碍物(行星、恒星或黑雾巢穴)
+      - 此外，还有一个快捷键(默认为Alt+A)可以在系统选项窗口中设置，用于切换`自动巡航`，实现完全自动化的飞行至目标星球。
+        - 当你选择目标星球后，自动巡航就会开始
+        - 如果目标星球距离过远会自动使用曲速(超过5AU)，你可以在面板上更改这个值。
+        - 它会在接近目标星球时减速，以避免发生越过目标的情况
     - 物流塔存储数量限制控制改进
       - 当升级`运输机舱扩容`时，不会对各种物流塔的存储限制按比例提升，除非设置为最大允许容量。
       - 你可以使用方向键微调物流塔存储限制
@@ -224,3 +259,4 @@
 * [BepInEx](https://bepinex.dev/): 基础模组框架
 * [LSTM](https://github.com/hetima/DSP_LSTM) & [PlanetFinder](https://github.com/hetima/DSP_PlanetFinder): UI实现
 * [OffGridConstruction](https://github.com/Velociraptor115-DSPModding/OffGridConstruction): 脱离网格建造以及小角度旋转的实现
+* [CruiseAssist](https://dsp.thunderstore.io/package/tanu/CruiseAssist/)及其扩展[AutoPilot](https://dsp.thunderstore.io/package/tanu/AutoPilot/): `航行时自动导航`和`自动巡航`的实现

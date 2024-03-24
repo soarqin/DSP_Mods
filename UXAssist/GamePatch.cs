@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Reflection.Emit;
 using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine;
 using UXAssist.Common;
-using Object = UnityEngine.Object;
 
 namespace UXAssist;
 

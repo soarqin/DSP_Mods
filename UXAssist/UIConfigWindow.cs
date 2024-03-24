@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using UXAssist.UI;
 using UXAssist.Common;
 
@@ -36,6 +37,9 @@ public static class UIConfigWindow
         I18N.Add("Enhance control for logistic storage limits tips", "Logistic storage limits are not scaled on upgrading 'Logistics Carrier Capacity', if they are not set to maximum capacity.\nUse arrow keys to adjust logistic storage limits:\n  \u2190/\u2192: -/+10  \u2193\u2191: -/+100", "当升级'运输机舱扩容'时，不会对各种物流塔的存储限制按比例提升，除非设置为最大允许容量。\n你可以使用方向键微调物流塔存储限制：\n  \u2190\u2192: -/+10  \u2193\u2191: -/+100");
         I18N.Add("Enhanced count control for hand-make", "Enhanced count control for hand-make", "手动制造物品的数量控制改进");
         I18N.Add("Enhanced count control for hand-make tips", "Maximum count is increased to 1000.\nHold Ctrl/Shift/Alt to change the count rapidly.", "最大数量提升至1000\n按住Ctrl/Shift/Alt可快速改变数量");
+        I18N.Add("Auto navigation on sailings", "Auto navigation on sailings", "宇宙航行时自动导航");
+        I18N.Add("Enable auto-cruise", "Enable auto-cruise", "启用自动巡航");
+        I18N.Add("Distance to use warp", "Distance to use warp (AU)", "使用曲速的距离(AU)");
         I18N.Add("Treat stack items as single in monitor components", "Treat stack items as single in monitor components", "在流速计中将堆叠物品视为单个物品");
         I18N.Add("Initialize This Planet", "Initialize this planet", "初始化本行星");
         I18N.Add("Initialize This Planet Confirm", "This operation will destroy all buildings and revert terrains on this planet, are you sure?", "此操作将会摧毁本行星上的所有建筑并恢复地形，确定吗？");
@@ -109,6 +113,26 @@ public static class UIConfigWindow
         x = 270f;
         y += 6f;
         MyWindow.AddTipsButton(x, y, tab2, "Enhanced count control for hand-make", "Enhanced count control for hand-make tips", "enhanced-count-control-tips");
+        x = 350f;
+        y -= 108f;
+        MyCheckBox.CreateCheckBox(x, y, tab2, PlayerPatch.AutoNavigationEnabled, "Auto navigation on sailings");
+        x += 20f;
+        y += 36f;
+        MyCheckBox.CreateCheckBox(x, y, tab2, PlayerPatch.AutoCruiseEnabled, "Enable auto-cruise", 14);
+        x -= 20f;
+        y += 36f;
+        MyWindow.AddText(x, y, tab2, "Distance to use warp", 15, "text-distance-to-warp");
+        y += 24f;
+        var distanceToWarp = MySlider.CreateSlider(x, y, tab2, (float)Math.Round(PlayerPatch.DistanceToWarp.Value * 2.0), 1f, 40f, "0.0", 200f);
+        if (PlanetFunctions.OrbitalCollectorMaxBuildCount.Value == 0)
+        {
+            distanceToWarp.SetLabelText(PlayerPatch.DistanceToWarp.Value.ToString("0.0"));
+        }
+        distanceToWarp.OnValueChanged += () =>
+        {
+            PlayerPatch.DistanceToWarp.Value = Math.Round(distanceToWarp.Value) * 0.5;
+            distanceToWarp.SetLabelText(PlayerPatch.DistanceToWarp.Value.ToString("0.0"));
+        };
         x = 400f;
         y = 10f;
         wnd.AddButton(x, y, tab2, "Initialize This Planet", 16, "button-init-planet", () =>
@@ -128,19 +152,19 @@ public static class UIConfigWindow
         wnd.AddButton(x, y, 200, tab2, "Quick build Orbital Collectors", 16, "button-init-planet", PlanetFunctions.BuildOrbitalCollectors);
         x += 10f;
         y += 30f;
-        MyWindow.AddText(x, y, tab2, "Maximum count to build", 16, "text-oc-build-count");
-        y += 26f;
-        var sl0 = MySlider.CreateSlider(x, y, tab2, PlanetFunctions.OrbitalCollectorMaxBuildCount.Value, 0f, 40f, "G", 200f);
+        MyWindow.AddText(x, y, tab2, "Maximum count to build", 15, "text-oc-build-count");
+        y += 24f;
+        var ocBuildSlider = MySlider.CreateSlider(x, y, tab2, PlanetFunctions.OrbitalCollectorMaxBuildCount.Value, 0f, 40f, "G", 200f);
         if (PlanetFunctions.OrbitalCollectorMaxBuildCount.Value == 0)
         {
-            sl0.SetLabelText("max".Translate());
+            ocBuildSlider.SetLabelText("max".Translate());
         }
-        sl0.OnValueChanged += () =>
+        ocBuildSlider.OnValueChanged += () =>
         {
-            PlanetFunctions.OrbitalCollectorMaxBuildCount.Value = Mathf.RoundToInt(sl0.Value);
+            PlanetFunctions.OrbitalCollectorMaxBuildCount.Value = Mathf.RoundToInt(ocBuildSlider.Value);
             if (PlanetFunctions.OrbitalCollectorMaxBuildCount.Value == 0)
             {
-                sl0.SetLabelText("max".Translate());
+                ocBuildSlider.SetLabelText("max".Translate());
             }
         };
 

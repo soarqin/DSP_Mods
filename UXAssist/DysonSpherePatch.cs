@@ -205,8 +205,9 @@ public static class DysonSpherePatch
         [HarmonyPatch(typeof(DysonSphere), nameof(DysonSphere.ResetNew))]
         private static void DysonSphere_ResetNew_Prefix(DysonSphere __instance)
         {
+            if (_nodeForAbsorb == null) return;
             var starIndex = __instance.starData.index;
-            if (_nodeForAbsorb[starIndex] == null) return;
+            if (starIndex >= _nodeForAbsorb.Length || _nodeForAbsorb[starIndex] == null) return;
             _nodeForAbsorb[starIndex].Clear();
             _nodeForAbsorb[starIndex] = null;
         }
