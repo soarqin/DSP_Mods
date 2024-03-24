@@ -4,6 +4,9 @@
 #### 一些提升用户体验的功能和补丁
 
 ## Changlog
+* 1.0.18
+  + Fix crash while coursing to a dark-fog hive.
+  + Auto-cruise does not bypass dark-fog hives if they are targeted.
 * 1.0.17
   + New function: `Auto navigation on sailings`, which is inspired by [CruiseAssist](https://dsp.thunderstore.io/package/tanu/CruiseAssist/) and its extension [AutoPilot](https://dsp.thunderstore.io/package/tanu/AutoPilot/)
     - It keeps Icarus on course to the target planet 
@@ -132,6 +135,9 @@
 * [CruiseAssist](https://dsp.thunderstore.io/package/tanu/CruiseAssist/) and its extension [AutoPilot](https://dsp.thunderstore.io/package/tanu/AutoPilot/): `Auto navigation on sailings` and `Auto-cruise` implementations
 
 ## 更新日志
+* 1.0.18
+  + 修复了以黑雾巢穴为目标时导致崩溃的问题
+  + 当黑雾巢穴是目标时，自动导航不会绕过它
 * 1.0.17
   + 新功能：`航行时自动导航`，想法来自[CruiseAssist](https://dsp.thunderstore.io/package/tanu/CruiseAssist/)及其扩展[AutoPilot](https://dsp.thunderstore.io/package/tanu/AutoPilot/)
     - 它会保持伊卡洛斯飞向目标星球

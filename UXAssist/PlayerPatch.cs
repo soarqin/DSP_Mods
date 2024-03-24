@@ -219,14 +219,24 @@ public static class PlayerPatch
                                 (!player.warping && UIRoot.instance.uiGame.disableLockCursor && (VFInput._moveForward.pressing || VFInput._moveBackward.pressing)))
                                 return;
                             var playerPos = player.uPosition;
-                            ref var astro = ref GameMain.galaxy.astrosData[_indicatorAstroId];
+                            var isHive = _indicatorAstroId > 1000000;
+                            ref var astro = ref isHive ? ref GameMain.spaceSector.astros[_indicatorAstroId - 1000000] : ref GameMain.galaxy.astrosData[_indicatorAstroId];
                             var astroVec = astro.uPos - playerPos;
                             var distance = astroVec.magnitude;
-                            if (distance - astro.uRadius < astro.type switch { 
-                                    EAstroType.Planet => 800.0,
-                                    EAstroType.Star => 4000.0,
-                                    _ => 2000.0
-                                    }) return;
+                            if (distance < astro.type switch
+                                {
+                                    EAstroType.Planet => 800.0 + astro.uRadius,
+                                    EAstroType.Star => 4000.0 + astro.uRadius,
+                                    EAstroType.EnemyHive => 400.0,
+                                    _ => 2000.0 + astro.uRadius
+                                })
+                            {
+                                if (isHive)
+                                {
+                                    player.uVelocity = Vector3.zero;
+                                }
+                                return;
+                            }
                             if (GameMain.instance.timei % 6 == 0)
                             {
                                 _direction = astroVec.normalized;
@@ -248,22 +258,28 @@ public static class PlayerPatch
                                         nearestAstroId = p.astroId;
                                     }
 
-                                    var hiveSys = GameMain.spaceSector.dfHives[localStar.index];
-                                    while (hiveSys != null)
+                                    /* If targeting hives, do not bypass them */
+                                    if (!isHive)
                                     {
-                                        if (hiveSys.realized)
+                                        var hiveSys = GameMain.spaceSector.dfHives[localStar.index];
+                                        while (hiveSys != null)
                                         {
-                                            ref var hiveAstro = ref GameMain.galaxy.astrosData[hiveSys.hiveAstroId];
-                                            /* Divide by 4, so that the real range is 2 times of the calculated range,
-                                               which means the minimal range allowed is 4000 */
-                                            var range = (playerPos - hiveAstro.uPos).sqrMagnitude / 4.0;
-                                            if (range >= nearestRange) continue;
-                                            nearestRange = range;
-                                            nearestPos = hiveAstro.uPos;
-                                            nearestAstroId = hiveSys.hiveAstroId;
-                                        }
+                                            if (hiveSys.realized && hiveSys.hiveAstroId > 1000000)
+                                            {
+                                                ref var hiveAstro = ref GameMain.spaceSector.astros[hiveSys.hiveAstroId - 1000000];
+                                                /* Divide by 4, so that the real range is 2 times of the calculated range,
+                                                   which means the minimal range allowed is 4000 */
+                                                var range = (playerPos - hiveAstro.uPos).sqrMagnitude / 4.0;
+                                                if (range < nearestRange)
+                                                {
+                                                    nearestRange = range;
+                                                    nearestPos = hiveAstro.uPos;
+                                                    nearestAstroId = hiveSys.hiveAstroId;
+                                                }
+                                            }
 
-                                        hiveSys = hiveSys.nextSibling;
+                                            hiveSys = hiveSys.nextSibling;
+                                        }
                                     }
 
                                     if (nearestAstroId != _indicatorAstroId && nearestRange < 2000.0 * 2000.0)
