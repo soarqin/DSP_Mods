@@ -67,6 +67,8 @@ public class UXAssist : BaseUnityPlugin
             "Logistics capacity related tweaks");
         FactoryPatch.TreatStackingAsSingleEnabled = Config.Bind("Factory", "TreatStackingAsSingle", false,
             "Treat stack items as single in monitor components");
+        FactoryPatch.QuickBuildAndDismantleLabEnabled = Config.Bind("Factory", "QuickBuildAndDismantleLab", true,
+            "Quick build and dismantle labs");
         PlanetFunctions.OrbitalCollectorMaxBuildCount = Config.Bind("Factory", "OCMaxBuildCount", 0, "Maximum Orbital Collectors to build once, set to 0 to build as many as possible");
         PlayerPatch.HideTipsForSandsChangesEnabled = Config.Bind("Player", "HideTipsForGettingSands", false,
             "Hide tips for getting soil piles");

@@ -27,7 +27,7 @@ public static class PlayerPatch
         AutoNavigation.Enable(AutoNavigationEnabled.Value);
         _autoDriveKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
         {
-            key = new CombineKey((int)KeyCode.A, CombineKey.ALT_COMB, ECombineKeyAction.OnceClick, false),
+            key = new CombineKey(0, 0, ECombineKeyAction.OnceClick, true),
             conflictGroup = KeyBindConflict.MOVEMENT | KeyBindConflict.FLYING | KeyBindConflict.SAILING | KeyBindConflict.BUILD_MODE_1 | KeyBindConflict.KEYBOARD_KEYBIND,
             name = "ToggleAutoCruise",
             canOverride = true
@@ -237,7 +237,7 @@ public static class PlayerPatch
                                 }
                                 return;
                             }
-                            if (GameMain.instance.timei % 6 == 0)
+                            if (GameMain.instance.timei % 6 == 0 || _direction == Vector3.zero)
                             {
                                 _direction = astroVec.normalized;
 

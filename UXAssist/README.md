@@ -4,6 +4,8 @@
 #### 一些提升用户体验的功能和补丁
 
 ## Changlog
+* 1.0.19
+  + Remove default shortcut key for `Auto-cruise`, to avoid misoperation. Please set it in the system options window manually if needed.
 * 1.0.18
   + Fix crash while coursing to a dark-fog hive.
   + Auto-cruise does not bypass dark-fog hives if they are targeted.
@@ -11,7 +13,7 @@
   + New function: `Auto navigation on sailings`, which is inspired by [CruiseAssist](https://dsp.thunderstore.io/package/tanu/CruiseAssist/) and its extension [AutoPilot](https://dsp.thunderstore.io/package/tanu/AutoPilot/)
     - It keeps Icarus on course to the target planet 
     - It will try to bypass any obstacles(planets, stars or dark-fog hives) on the way
-    - Furthermore, there is also a shortcut key(Alt+A by default) which can be set in the system options window, which is used to toggle `Auto-cruise` that enables flying to targeted planets fully automatically.
+    - Furthermore, there is also a shortcut key which can be set in the system options window, which is used to toggle `Auto-cruise` that enables flying to targeted planets fully automatically.
       - Auto-cruise will start when you target a planet on star map
       - It will use warper to fly to the target planet if the planet is too far away, the range can be configured.
       - It will speed down when approaching the target planet, to avoid overshooting
@@ -78,7 +80,7 @@
 
 ## Usage
 
-* Press `` LAlt+`(BackQuote) `` to call up the config panel. You can change the shortcut on the panel.
+* Press `` Alt+`(BackQuote) `` to call up the config panel. You can change the shortcut on the panel.
 * There are also buttons on title screen and planet minimap area to call up the config panel.
 * Patches:
   + Strict hotkey dectection for build menu, thus building hotkeys(0~9, F1~F10, X, U) are not triggered while holding Ctrl/Alt/Shift.
@@ -105,7 +107,7 @@
     - Auto navigation on sailings
       - It keeps Icarus on course to the target planet
       - It will try to bypass any obstacles(planets, stars or dark-fog hives) on the way
-      - Furthermore, there is also a shortcut key(Alt+A by default) which can be set in the system options window, which is used to toggle `Auto-cruise` that enables flying to targeted planets fully automatically.
+      - Furthermore, you can set a shortcut key in the system options window, which is used to toggle `Auto-cruise` that enables flying to targeted planets fully automatically.
         - Auto-cruise will start when you select a planet as target
         - It will use warper to fly to the target planet if the planet is too far away, the range can be configured.
         - It will speed down when approaching the target planet, to avoid overshooting
@@ -135,6 +137,8 @@
 * [CruiseAssist](https://dsp.thunderstore.io/package/tanu/CruiseAssist/) and its extension [AutoPilot](https://dsp.thunderstore.io/package/tanu/AutoPilot/): `Auto navigation on sailings` and `Auto-cruise` implementations
 
 ## 更新日志
+* 1.0.19
+  + 移除了`自动巡航`的默认快捷键，以避免误操作。如有需要请手动在系统选项窗口中设置。
 * 1.0.18
   + 修复了以黑雾巢穴为目标时导致崩溃的问题
   + 当黑雾巢穴是目标时，自动导航不会绕过它
@@ -142,7 +146,7 @@
   + 新功能：`航行时自动导航`，想法来自[CruiseAssist](https://dsp.thunderstore.io/package/tanu/CruiseAssist/)及其扩展[AutoPilot](https://dsp.thunderstore.io/package/tanu/AutoPilot/)
     - 它会保持伊卡洛斯飞向目标星球
     - 它会尝试绕过途中的任何障碍物(行星、恒星或黑雾巢穴)
-    - 此外，还有一个快捷键(默认为Alt+A)可以在系统选项窗口中设置，用于切换`自动巡航`，实现完全自动化的飞行至目标星球。
+    - 此外，还有一个快捷键可以在系统选项窗口中设置，用于切换`自动巡航`，实现完全自动化的飞行至目标星球。
       - 当你选择目标星球后，自动巡航就会开始
       - 如果目标星球距离过远会自动使用曲速(超过5AU)，你可以在面板上更改这个值。
       - 它会在接近目标星球时减速，以避免发生越过目标的情况
@@ -209,7 +213,7 @@
 
 ## 使用说明
 
-* 按 `` 左Alt+`(反引号) `` 键呼出主面板，可以在面板上修改快捷键。
+* 按 `` Alt+`(反引号) `` 键呼出主面板，可以在面板上修改快捷键。
 * 标题界面和行星小地图旁也有按钮呼出主面板。
 * 补丁：
   + 更严格的建造菜单热键检测，因此在按住Ctrl/Alt/Shift时不再会触发建造热键(0~9, F1~F10, X, U)
@@ -238,7 +242,7 @@
     - 航行时自动导航
       - 它会保持伊卡洛斯飞向目标星球
       - 它会尝试绕过途中的任何障碍物(行星、恒星或黑雾巢穴)
-      - 此外，还有一个快捷键(默认为Alt+A)可以在系统选项窗口中设置，用于切换`自动巡航`，实现完全自动化的飞行至目标星球。
+      - 此外，可以在系统选项窗口中设置快捷键，用于切换`自动巡航`，实现完全自动化的飞行至目标星球。
         - 当你选择目标星球后，自动巡航就会开始
         - 如果目标星球距离过远会自动使用曲速(超过5AU)，你可以在面板上更改这个值。
         - 它会在接近目标星球时减速，以避免发生越过目标的情况

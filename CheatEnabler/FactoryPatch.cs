@@ -33,7 +33,7 @@ public static class FactoryPatch
         if (_factoryPatch != null) return;
         _noConditionKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
             {
-                key = new CombineKey((int)KeyCode.Q, CombineKey.ALT_COMB, ECombineKeyAction.OnceClick, false),
+                key = new CombineKey(0, 0, ECombineKeyAction.OnceClick, true),
                 conflictGroup = KeyBindConflict.MOVEMENT | KeyBindConflict.FLYING | KeyBindConflict.SAILING | KeyBindConflict.BUILD_MODE_1 | KeyBindConflict.KEYBOARD_KEYBIND,
                 name = "ToggleNoCondition",
                 canOverride = true
@@ -41,7 +41,7 @@ public static class FactoryPatch
         );
         _noCollisionKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
             {
-                key = new CombineKey((int)KeyCode.W, CombineKey.ALT_COMB, ECombineKeyAction.OnceClick, false),
+                key = new CombineKey(0, 0, ECombineKeyAction.OnceClick, true),
                 conflictGroup = KeyBindConflict.MOVEMENT | KeyBindConflict.FLYING | KeyBindConflict.SAILING | KeyBindConflict.BUILD_MODE_1 | KeyBindConflict.KEYBOARD_KEYBIND,
                 name = "ToggleNoCollision",
                 canOverride = true

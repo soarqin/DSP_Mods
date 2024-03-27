@@ -19,6 +19,7 @@ public static class FactoryPatch
     public static ConfigEntry<bool> OffGridBuildingEnabled;
     public static ConfigEntry<bool> LogisticsCapacityTweaksEnabled;
     public static ConfigEntry<bool> TreatStackingAsSingleEnabled;
+    public static ConfigEntry<bool> QuickBuildAndDismantleLabEnabled;
 
     private static Harmony _factoryPatch;
 
@@ -33,6 +34,7 @@ public static class FactoryPatch
         OffGridBuildingEnabled.SettingChanged += (_, _) => OffGridBuilding.Enable(OffGridBuildingEnabled.Value);
         LogisticsCapacityTweaksEnabled.SettingChanged += (_, _) => LogisticsCapacityTweaks.Enable(LogisticsCapacityTweaksEnabled.Value);
         TreatStackingAsSingleEnabled.SettingChanged += (_, _) => TreatStackingAsSingle.Enable(TreatStackingAsSingleEnabled.Value);
+        QuickBuildAndDismantleLabEnabled.SettingChanged += (_, _) => QuickBuildAndDismantleLab.Enable(QuickBuildAndDismantleLabEnabled.Value);
         UnlimitInteractive.Enable(UnlimitInteractiveEnabled.Value);
         RemoveSomeConditionBuild.Enable(RemoveSomeConditionEnabled.Value);
         NightLight.Enable(NightLightEnabled.Value);
@@ -42,6 +44,7 @@ public static class FactoryPatch
         OffGridBuilding.Enable(OffGridBuildingEnabled.Value);
         LogisticsCapacityTweaks.Enable(LogisticsCapacityTweaksEnabled.Value);
         TreatStackingAsSingle.Enable(TreatStackingAsSingleEnabled.Value);
+        QuickBuildAndDismantleLab.Enable(QuickBuildAndDismantleLabEnabled.Value);
 
         _factoryPatch ??= Harmony.CreateAndPatchAll(typeof(FactoryPatch));
     }
@@ -57,6 +60,7 @@ public static class FactoryPatch
         OffGridBuilding.Enable(false);
         LogisticsCapacityTweaks.Enable(false);
         TreatStackingAsSingle.Enable(false);
+        QuickBuildAndDismantleLab.Enable(false);
 
         _factoryPatch?.UnpatchSelf();
         _factoryPatch = null;
@@ -952,6 +956,99 @@ public static class FactoryPatch
                 new CodeInstruction(OpCodes.Ldloca, localVar),
                 new CodeInstruction(OpCodes.Ldc_I4_1),
                 new CodeInstruction(OpCodes.Stfld, AccessTools.Field(typeof(Cargo), nameof(Cargo.stack)))
+            );
+            return matcher.InstructionEnumeration();
+        }
+    }
+
+    private static class QuickBuildAndDismantleLab
+    {
+        private static Harmony _patch;
+        
+        public static void Enable(bool enable)
+        {
+            if (enable)
+            {
+                _patch ??= Harmony.CreateAndPatchAll(typeof(QuickBuildAndDismantleLab));
+                return;
+            }
+            _patch?.UnpatchSelf();
+            _patch = null;
+        }
+
+        private static bool DetermineMoreLabs(BuildTool_Dismantle dismantle, int id)
+        {
+            if (!VFInput._chainReaction) return true;
+            var factory = dismantle.factory;
+            var entity = factory.entityPool[id];
+            var factorySystem = factory.factorySystem;
+            if (entity.labId <= 0 || entity.labId > factorySystem.labCursor) return true;
+            ref var lab = ref factory.factorySystem.labPool[entity.labId];
+            if (lab.id != entity.labId) return true;
+            factory.ReadObjectConn(id, 14, out _, out var nextId, out _);
+            if (nextId == 0) return true;
+            while (true)
+            {
+                factory.ReadObjectConn(nextId, 14, out _, out var nextNextId, out _);
+                if (nextNextId <= 0) break;
+                var pose = dismantle.GetObjectPose(nextId);
+                var desc = dismantle.GetPrefabDesc(nextId);
+                var preview = new BuildPreview
+                {
+                    item = dismantle.GetItemProto(nextId),
+                    desc = desc,
+                    lpos = pose.position,
+                    lrot = pose.rotation,
+                    lpos2 = pose.position,
+                    lrot2 = pose.rotation,
+                    objId = nextId,
+                    needModel = desc.lodCount > 0 && desc.lodMeshes[0] != null,
+                    isConnNode = true
+                };
+                dismantle.buildPreviews.Add(preview);
+                nextId = nextNextId;
+            }
+            nextId = id;
+            while (true)
+            {
+                factory.ReadObjectConn(nextId, 15, out _, out nextId, out _);
+                if (nextId <= 0) break;
+                var pose = dismantle.GetObjectPose(nextId);
+                var desc = dismantle.GetPrefabDesc(nextId);
+                var preview = new BuildPreview
+                {
+                    item = dismantle.GetItemProto(nextId),
+                    desc = desc,
+                    lpos = pose.position,
+                    lrot = pose.rotation,
+                    lpos2 = pose.position,
+                    lrot2 = pose.rotation,
+                    objId = nextId,
+                    needModel = desc.lodCount > 0 && desc.lodMeshes[0] != null,
+                    isConnNode = true
+                };
+                dismantle.buildPreviews.Add(preview);
+            }
+            return false;
+        }
+        
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(BuildTool_Dismantle), nameof(BuildTool_Dismantle.DeterminePreviews))]
+        private static IEnumerable<CodeInstruction> BuildTool_Dismantle_DeterminePreviews_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Ldloc_3),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(BuildPreview), nameof(BuildPreview.desc))),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(PrefabDesc), nameof(PrefabDesc.isBattleBase))),
+                new CodeMatch(OpCodes.Brfalse)
+            ).Advance(-1);
+            matcher.InsertAndAdvance(
+                new CodeInstruction(OpCodes.Ldarg_0),
+                new CodeInstruction(OpCodes.Ldloc_3),
+                new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(BuildPreview), nameof(BuildPreview.objId))),
+                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(QuickBuildAndDismantleLab), nameof(DetermineMoreLabs))),
+                new CodeInstruction(OpCodes.And)
             );
             return matcher.InstructionEnumeration();
         }
