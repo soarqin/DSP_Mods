@@ -1056,7 +1056,17 @@ public static class FactoryPatch
             if (!click.multiLevelCovering || !VFInput._chainReaction) return;
             var prefDesc = click.GetPrefabDesc(click.castObjectId);
             if (!prefDesc.isLab) return;
-            while (true)
+            var levelMax = GameMain.history.labLevel;
+            var factory = click.factory;
+            var currLevel = 2;
+            var nid = click.castObjectId;
+            do
+            {
+                factory.ReadObjectConn(nid, 14, out _, out nid, out _);
+                if (nid <= 0) break;
+                currLevel++;
+            } while (true);
+            while (currLevel < levelMax)
             {
                 click.UpdateRaycast();
                 click.DeterminePreviews();
@@ -1064,8 +1074,7 @@ public static class FactoryPatch
                 click.UpdateCollidersForGiantBp();
                 var model = click.actionBuild.model;
                 click.UpdatePreviewModels(model);
-                var flag = click.CheckBuildConditions();
-                if (!flag)
+                if (!click.CheckBuildConditions())
                 {
                     model.ClearAllPreviewsModels();
                     model.EarlyGameTickIgnoreActive();
@@ -1075,6 +1084,7 @@ public static class FactoryPatch
                 click.UpdatePreviewModelConditions(model);
                 click.UpdateGizmos(model);
                 click.CreatePrebuilds();
+                currLevel++;
             }
         }
 

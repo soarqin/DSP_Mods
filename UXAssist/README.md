@@ -4,6 +4,9 @@
 #### 一些提升用户体验的功能和补丁
 
 ## Changlog
+* 1.0.20
+  + Fix a infinite-loop issue when `Quick build and dismantle stacking labs` and `No condition build` are both enabled
+  + Fix a crash caused by `Re-initialize planet` in combat mode
 * 1.0.19
   + New functions:
     - `Quick build and dismantle stacking labs`
@@ -148,6 +151,9 @@
 * [CruiseAssist](https://dsp.thunderstore.io/package/tanu/CruiseAssist/) and its extension [AutoPilot](https://dsp.thunderstore.io/package/tanu/AutoPilot/): `Auto navigation on sailings` and `Auto-cruise` implementations
 
 ## 更新日志
+* 1.0.20
+  + 修复了`快速建造和拆除堆叠研究站`和`无条件建造`同时启用时可能导致的逻辑死循环问题
+  + 修复了在战斗模式下`初始化本行星`导致的崩溃问题
 * 1.0.19
   + 新功能：
     - `快速建造和拆除堆叠研究站`

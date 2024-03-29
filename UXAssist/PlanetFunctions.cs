@@ -57,7 +57,15 @@ public static class PlanetFunctions
             uiGame.ShutAllFunctionWindow();
             uiGame.ShutAllFullScreens();
         }
-        GameMain.data.mainPlayer?.controller.actionBuild.Close();
+        player.controller.actionBuild.Close();
+        var groundCombatModule = player.mecha.groundCombatModule;
+        for (var i = 0; i < groundCombatModule.moduleFleets.Length; i++)
+        {
+            var entry = groundCombatModule.moduleFleets[i];
+            if (entry.fleetId <= 0 || !entry.fleetEnabled) continue;
+            entry.fleetEnabled = false;
+            groundCombatModule.RemoveFleetDirectly(i);
+        }
         //planet.data = new PlanetRawData(planet.precision);
         //planet.data.CalcVerts();
         for (var id = factory.entityCursor - 1; id > 0; id--)
@@ -88,9 +96,9 @@ public static class PlanetFunctions
         {
             for (var i = planet.factory.enemyCursor - 1; i > 0; i--)
             {
-                ref var ptr13 = ref planet.factory.enemyPool[i];
-                if (ptr13.id != i) continue;
-                var combatStatId = ptr13.combatStatId;
+                ref var enemyData = ref planet.factory.enemyPool[i];
+                if (enemyData.id != i) continue;
+                var combatStatId = enemyData.combatStatId;
                 planet.factory.skillSystem.OnRemovingSkillTarget(combatStatId, planet.factory.skillSystem.combatStats.buffer[combatStatId].originAstroId, ETargetType.CombatStat);
                 planet.factory.skillSystem.combatStats.Remove(combatStatId);
                 planet.factory.KillEnemyFinally(player, i, ref CombatStat.empty);
