@@ -661,6 +661,7 @@ public static class FactoryPatch
                 new CodeMatch(ci => ci.IsLdarg()),
                 new CodeMatch(OpCodes.Ldfld),
                 new CodeMatch(OpCodes.Ldfld),
+                new CodeMatch(ci => ci.LoadsConstant(EMinerType.Oil)),
                 new CodeMatch(ci => ci.Branches(out _))
             );
 
