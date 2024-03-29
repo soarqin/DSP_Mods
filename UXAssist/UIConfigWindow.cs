@@ -37,6 +37,8 @@ public static class UIConfigWindow
         I18N.Add("Enhance control for logistic storage limits tips", "Logistic storage limits are not scaled on upgrading 'Logistics Carrier Capacity', if they are not set to maximum capacity.\nUse arrow keys to adjust logistic storage limits:\n  \u2190/\u2192: -/+10  \u2193\u2191: -/+100", "当升级'运输机舱扩容'时，不会对各种物流塔的存储限制按比例提升，除非设置为最大允许容量。\n你可以使用方向键微调物流塔存储限制：\n  \u2190\u2192: -/+10  \u2193\u2191: -/+100");
         I18N.Add("Enhanced count control for hand-make", "Enhanced count control for hand-make", "手动制造物品的数量控制改进");
         I18N.Add("Enhanced count control for hand-make tips", "Maximum count is increased to 1000.\nHold Ctrl/Shift/Alt to change the count rapidly.", "最大数量提升至1000\n按住Ctrl/Shift/Alt可快速改变数量");
+        I18N.Add("Quick build and dismantle stacking labs", "Quick build and dismantle stacking labs(hold shift)", "快速建造和拆除堆叠研究站(按住shift)");
+        I18N.Add("Protect veins from exhaustion", "Protect veins from exhaustion", "保护矿脉不会耗尽");
         I18N.Add("Auto navigation on sailings", "Auto navigation on sailings", "宇宙航行时自动导航");
         I18N.Add("Enable auto-cruise", "Enable auto-cruise", "启用自动巡航");
         I18N.Add("Distance to use warp", "Distance to use warp (AU)", "使用曲速的距离(AU)");
@@ -113,6 +115,11 @@ public static class UIConfigWindow
         x = 270f;
         y += 6f;
         MyWindow.AddTipsButton(x, y, tab2, "Enhanced count control for hand-make", "Enhanced count control for hand-make tips", "enhanced-count-control-tips");
+        x = 0f;
+        y += 30f;
+        MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.QuickBuildAndDismantleLabsEnabled, "Quick build and dismantle stacking labs");
+        y += 36f;
+        MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.ProtectVeinsFromExhaustionEnabled, "Protect veins from exhaustion");
         x = 350f;
         y -= 108f;
         MyCheckBox.CreateCheckBox(x, y, tab2, PlayerPatch.AutoNavigationEnabled, "Auto navigation on sailings");

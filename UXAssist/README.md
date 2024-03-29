@@ -5,6 +5,12 @@
 
 ## Changlog
 * 1.0.19
+  + New functions:
+    - `Quick build and dismantle stacking labs`
+    - `Protect veins from exhaustion`
+      - By default, the vein amount is protected at 100, and oil speed is protected at 1.0/s, you can set them yourself in config file.
+      - When reach the protection value, veins/oils steeps will not be mined/extracted any longer.
+      - Close this function to resume mining and pumping, usually when you have enough level on `Veins Utilization`
   + Remove default shortcut key for `Auto-cruise`, to avoid misoperation. Please set it in the system options window manually if needed.
 * 1.0.18
   + Fix crash while coursing to a dark-fog hive.
@@ -115,6 +121,11 @@
       - Logistic storage limits are not scaled on upgrading `Logistics Carrier Capacity`, if they are not set to maximum capacity.
       - You can use arrow keys to adjust logistic storage limits gracefully.
     - Enhanced count control for hand-make
+    - Quick build and dismantle stacking labs
+    - Protect veins from exhaustion
+      - By default, the vein amount is protected at 100, and oil speed is protected at 1.0/s, you can set them yourself in config file.
+      - When reach the protection value, veins/oils steeps will not be mined/extracted any longer.
+      - Close this function to resume mining and pumping, usually when you have enough level on `Veins Utilization`
     - Re-intialize planet (without reseting veins)
     - Quick dismantle all buildings (without drops)
     - Quick build Orbital Collectors
@@ -138,6 +149,12 @@
 
 ## 更新日志
 * 1.0.19
+  + 新功能：
+    - `快速建造和拆除堆叠研究站`
+    - `保护矿脉不会耗尽`
+      - 默认矿脉数量保护在100，采油速保护在1.0/s，你可以在配置文件中自行设置。
+      - 当达到保护值时，矿脉和油井将不再被开采。
+      - 关闭此功能以恢复开采，一般是当你在`矿物利用`上有足够的等级时。
   + 移除了`自动巡航`的默认快捷键，以避免误操作。如有需要请手动在系统选项窗口中设置。
 * 1.0.18
   + 修复了以黑雾巢穴为目标时导致崩溃的问题
@@ -250,6 +267,11 @@
       - 当升级`运输机舱扩容`时，不会对各种物流塔的存储限制按比例提升，除非设置为最大允许容量。
       - 你可以使用方向键微调物流塔存储限制
     - 手动制造物品的数量控制改进
+    - 快速建造和拆除堆叠研究站
+    - 保护矿脉不会耗尽
+      - 默认矿脉数量保护在100，采油速保护在1.0/s，你可以在配置文件中自行设置。
+      - 当达到保护值时，矿脉和油井将不再被开采。
+      - 关闭此功能以恢复开采，一般是当你在`矿物利用`上有足够的等级时。
     - 初始化本行星（不重置矿脉）
     - 快速拆除所有建筑（不掉落）
     - 快速建造轨道采集器

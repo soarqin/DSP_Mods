@@ -52,7 +52,7 @@ public static class UIConfigWindow
         I18N.Add("Eject anyway", "Eject anyway", "全球弹射");
         I18N.Add("Overclock Ejectors", "Overclock Ejectors (10x)", "高速弹射器(10倍射速)");
         I18N.Add("Overclock Silos", "Overclock Silos (10x)", "高速发射井(10倍射速)");
-        I18N.Add("Terraform without enough soil piless", "Terraform without enough soil piles", "沙土不够时依然可以整改地形");
+        I18N.Add("Terraform without enough soil piles", "Terraform without enough soil piles", "沙土不够时依然可以整改地形");
         I18N.Apply();
         MyConfigWindow.OnUICreated += CreateUI;
         MyConfigWindow.OnUpdateUI += UpdateUI;

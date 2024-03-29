@@ -19,7 +19,8 @@ public static class FactoryPatch
     public static ConfigEntry<bool> OffGridBuildingEnabled;
     public static ConfigEntry<bool> LogisticsCapacityTweaksEnabled;
     public static ConfigEntry<bool> TreatStackingAsSingleEnabled;
-    public static ConfigEntry<bool> QuickBuildAndDismantleLabEnabled;
+    public static ConfigEntry<bool> QuickBuildAndDismantleLabsEnabled;
+    public static ConfigEntry<bool> ProtectVeinsFromExhaustionEnabled;
 
     private static Harmony _factoryPatch;
 
@@ -34,7 +35,8 @@ public static class FactoryPatch
         OffGridBuildingEnabled.SettingChanged += (_, _) => OffGridBuilding.Enable(OffGridBuildingEnabled.Value);
         LogisticsCapacityTweaksEnabled.SettingChanged += (_, _) => LogisticsCapacityTweaks.Enable(LogisticsCapacityTweaksEnabled.Value);
         TreatStackingAsSingleEnabled.SettingChanged += (_, _) => TreatStackingAsSingle.Enable(TreatStackingAsSingleEnabled.Value);
-        QuickBuildAndDismantleLabEnabled.SettingChanged += (_, _) => QuickBuildAndDismantleLab.Enable(QuickBuildAndDismantleLabEnabled.Value);
+        QuickBuildAndDismantleLabsEnabled.SettingChanged += (_, _) => QuickBuildAndDismantleLab.Enable(QuickBuildAndDismantleLabsEnabled.Value);
+        ProtectVeinsFromExhaustionEnabled.SettingChanged += (_, _) => ProtectVeinsFromExhaustion.Enable(ProtectVeinsFromExhaustionEnabled.Value);
         UnlimitInteractive.Enable(UnlimitInteractiveEnabled.Value);
         RemoveSomeConditionBuild.Enable(RemoveSomeConditionEnabled.Value);
         NightLight.Enable(NightLightEnabled.Value);
@@ -44,7 +46,8 @@ public static class FactoryPatch
         OffGridBuilding.Enable(OffGridBuildingEnabled.Value);
         LogisticsCapacityTweaks.Enable(LogisticsCapacityTweaksEnabled.Value);
         TreatStackingAsSingle.Enable(TreatStackingAsSingleEnabled.Value);
-        QuickBuildAndDismantleLab.Enable(QuickBuildAndDismantleLabEnabled.Value);
+        QuickBuildAndDismantleLab.Enable(QuickBuildAndDismantleLabsEnabled.Value);
+        ProtectVeinsFromExhaustion.Enable(ProtectVeinsFromExhaustionEnabled.Value);
 
         _factoryPatch ??= Harmony.CreateAndPatchAll(typeof(FactoryPatch));
     }
@@ -61,6 +64,7 @@ public static class FactoryPatch
         LogisticsCapacityTweaks.Enable(false);
         TreatStackingAsSingle.Enable(false);
         QuickBuildAndDismantleLab.Enable(false);
+        ProtectVeinsFromExhaustion.Enable(false);
 
         _factoryPatch?.UnpatchSelf();
         _factoryPatch = null;
@@ -413,7 +417,7 @@ public static class FactoryPatch
     private static class RemoveBuildRangeLimit
     {
         private static Harmony _patch;
-        
+
         public static void Enable(bool enable)
         {
             if (enable)
@@ -555,6 +559,7 @@ public static class FactoryPatch
         }
 
         private static bool _initialized;
+
         [HarmonyPostfix, HarmonyPatch(typeof(UIRoot), "_OnOpen")]
         public static void UIRoot__OnOpen_Postfix()
         {
@@ -577,7 +582,7 @@ public static class FactoryPatch
             y = latitudeRad / latitudeRadPerGrid;
             z = (pos.magnitude - planet.realRadius - 0.2f) / 1.3333333f;
         }
-        
+
         private static string FormatOffsetFloat(float f)
         {
             return f.ToString("0.0000").TrimEnd('0').TrimEnd('.');
@@ -604,6 +609,7 @@ public static class FactoryPatch
                     ? $"<color=#ffbfbfff>{FormatOffsetFloat(x)}</color>,<color=#bfffbfff>{FormatOffsetFloat(y)}</color>"
                     : $"<color=#ffbfbfff>{FormatOffsetFloat(x)}</color>,<color=#bfffbfff>{FormatOffsetFloat(y)}</color>,<color=#bfbfffff>{FormatOffsetFloat(z)}</color>";
             }
+
             __instance.actionBuild.model.cursorText = $"({_lastOffsetText})\n" + __instance.actionBuild.model.cursorText;
         }
 
@@ -631,6 +637,7 @@ public static class FactoryPatch
                             _lastPos = entity.pos;
                             _lastOffsetText = $"<color=#ffbfbfff>{FormatOffsetFloat(x)}</color>,<color=#bfffbfff>{FormatOffsetFloat(y)}</color>,<color=#bfbfffff>{FormatOffsetFloat(z)}</color>";
                         }
+
                         entityBriefInfo.entityNameText.text += $" ({_lastOffsetText})";
                     }
                 )
@@ -805,6 +812,7 @@ public static class FactoryPatch
             {
                 _lastKey = KeyCode.None;
             }
+
             if (!VFInput.noModifier) return;
             int delta;
             if (UpdateKeyPressed(KeyCode.LeftArrow))
@@ -850,18 +858,20 @@ public static class FactoryPatch
                     {
                         itemCountMax = modelProto.prefabDesc.stationMaxItemCount;
                     }
+
                     itemCountMax += station.isStellar ? GameMain.history.remoteStationExtraStorage : GameMain.history.localStationExtraStorage;
                     if (newMax > itemCountMax)
                     {
                         newMax = itemCountMax;
                     }
                 }
+
                 storage.max = newMax;
                 _skipNextEvent = oldMax / 100 != newMax / 100;
                 break;
             }
         }
-        
+
         [HarmonyPrefix]
         [HarmonyPatch(typeof(UIStationStorage), nameof(UIStationStorage.OnMaxSliderValueChange))]
         private static bool UIStationStorage_OnMaxSliderValueChange_Prefix()
@@ -897,6 +907,7 @@ public static class FactoryPatch
                             storage[j].max = Mathf.RoundToInt((float)(storage[j].max * ratio / 50.0)) * 50;
                         }
                     }
+
                     break;
                 }
                 case 31:
@@ -919,9 +930,11 @@ public static class FactoryPatch
                             storage[j].max = Mathf.RoundToInt((float)(storage[j].max * ratio / 100.0)) * 100;
                         }
                     }
+
                     break;
                 }
             }
+
             return false;
         }
     }
@@ -941,7 +954,7 @@ public static class FactoryPatch
             _patch?.UnpatchSelf();
             _patch = null;
         }
-        
+
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(MonitorComponent), nameof(MonitorComponent.InternalUpdate))]
         private static IEnumerable<CodeInstruction> MonitorComponent_InternalUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -964,7 +977,7 @@ public static class FactoryPatch
     private static class QuickBuildAndDismantleLab
     {
         private static Harmony _patch;
-        
+
         public static void Enable(bool enable)
         {
             if (enable)
@@ -972,11 +985,12 @@ public static class FactoryPatch
                 _patch ??= Harmony.CreateAndPatchAll(typeof(QuickBuildAndDismantleLab));
                 return;
             }
+
             _patch?.UnpatchSelf();
             _patch = null;
         }
 
-        private static bool DetermineMoreLabs(BuildTool_Dismantle dismantle, int id)
+        private static bool DetermineMoreLabsForDismantle(BuildTool dismantle, int id)
         {
             if (!VFInput._chainReaction) return true;
             var factory = dismantle.factory;
@@ -986,28 +1000,32 @@ public static class FactoryPatch
             ref var lab = ref factory.factorySystem.labPool[entity.labId];
             if (lab.id != entity.labId) return true;
             factory.ReadObjectConn(id, 14, out _, out var nextId, out _);
-            if (nextId == 0) return true;
-            while (true)
+            /* We keep last lab if selected lab is not the ground one */
+            if (nextId > 0)
             {
-                factory.ReadObjectConn(nextId, 14, out _, out var nextNextId, out _);
-                if (nextNextId <= 0) break;
-                var pose = dismantle.GetObjectPose(nextId);
-                var desc = dismantle.GetPrefabDesc(nextId);
-                var preview = new BuildPreview
+                while (true)
                 {
-                    item = dismantle.GetItemProto(nextId),
-                    desc = desc,
-                    lpos = pose.position,
-                    lrot = pose.rotation,
-                    lpos2 = pose.position,
-                    lrot2 = pose.rotation,
-                    objId = nextId,
-                    needModel = desc.lodCount > 0 && desc.lodMeshes[0] != null,
-                    isConnNode = true
-                };
-                dismantle.buildPreviews.Add(preview);
-                nextId = nextNextId;
+                    factory.ReadObjectConn(nextId, 14, out _, out var nextNextId, out _);
+                    if (nextNextId <= 0) break;
+                    var pose = dismantle.GetObjectPose(nextId);
+                    var desc = dismantle.GetPrefabDesc(nextId);
+                    var preview = new BuildPreview
+                    {
+                        item = dismantle.GetItemProto(nextId),
+                        desc = desc,
+                        lpos = pose.position,
+                        lrot = pose.rotation,
+                        lpos2 = pose.position,
+                        lrot2 = pose.rotation,
+                        objId = nextId,
+                        needModel = desc.lodCount > 0 && desc.lodMeshes[0] != null,
+                        isConnNode = true
+                    };
+                    dismantle.buildPreviews.Add(preview);
+                    nextId = nextNextId;
+                }
             }
+
             nextId = id;
             while (true)
             {
@@ -1029,9 +1047,37 @@ public static class FactoryPatch
                 };
                 dismantle.buildPreviews.Add(preview);
             }
+
             return false;
         }
-        
+
+        private static void BuildLabsToTop(BuildTool_Click click)
+        {
+            if (!click.multiLevelCovering || !VFInput._chainReaction) return;
+            var prefDesc = click.GetPrefabDesc(click.castObjectId);
+            if (!prefDesc.isLab) return;
+            while (true)
+            {
+                click.UpdateRaycast();
+                click.DeterminePreviews();
+                click.UpdateCollidersForCursor();
+                click.UpdateCollidersForGiantBp();
+                var model = click.actionBuild.model;
+                click.UpdatePreviewModels(model);
+                var flag = click.CheckBuildConditions();
+                if (!flag)
+                {
+                    model.ClearAllPreviewsModels();
+                    model.EarlyGameTickIgnoreActive();
+                    return;
+                }
+
+                click.UpdatePreviewModelConditions(model);
+                click.UpdateGizmos(model);
+                click.CreatePrebuilds();
+            }
+        }
+
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(BuildTool_Dismantle), nameof(BuildTool_Dismantle.DeterminePreviews))]
         private static IEnumerable<CodeInstruction> BuildTool_Dismantle_DeterminePreviews_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -1047,10 +1093,320 @@ public static class FactoryPatch
                 new CodeInstruction(OpCodes.Ldarg_0),
                 new CodeInstruction(OpCodes.Ldloc_3),
                 new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(BuildPreview), nameof(BuildPreview.objId))),
-                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(QuickBuildAndDismantleLab), nameof(DetermineMoreLabs))),
+                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(QuickBuildAndDismantleLab), nameof(DetermineMoreLabsForDismantle))),
                 new CodeInstruction(OpCodes.And)
             );
             return matcher.InstructionEnumeration();
+        }
+
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(BuildTool_Click), nameof(BuildTool_Click._OnTick))]
+        private static IEnumerable<CodeInstruction> BuildTool_Click__OnTick_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Ldarg_0),
+                new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(BuildTool_Click), nameof(BuildTool_Click.CreatePrebuilds)))
+            ).Advance(2);
+            matcher.InsertAndAdvance(
+                new CodeInstruction(OpCodes.Ldarg_0),
+                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(QuickBuildAndDismantleLab), nameof(BuildLabsToTop)))
+            );
+            return matcher.InstructionEnumeration();
+        }
+    }
+
+    public static class ProtectVeinsFromExhaustion
+    {
+        public static int KeepVeinAmount = 100;
+        public static float KeepOilSpeed = 1f;
+        private static int _keepOilAmount = Math.Max((int)(KeepOilSpeed / 0.00004f + 0.5f), 2500);
+
+        private static Harmony _patch;
+
+        public static void Enable(bool enable)
+        {
+            if (enable)
+            {
+                _patch ??= Harmony.CreateAndPatchAll(typeof(ProtectVeinsFromExhaustion));
+                return;
+            }
+
+            _patch?.UnpatchSelf();
+            _patch = null;
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(MinerComponent), nameof(MinerComponent.InternalUpdate))]
+        private static bool MinerComponent_InternalUpdate_Prefix(PlanetFactory factory, VeinData[] veinPool, float power, float miningRate, float miningSpeed, int[] productRegister,
+            ref MinerComponent __instance, out uint __result)
+        {
+            if (power < 0.1f)
+            {
+                __result = 0U;
+                return false;
+            }
+
+            var consumeCount = 0U;
+            int veinId;
+            int times;
+            switch (__instance.type)
+            {
+                case EMinerType.Vein:
+                    if (__instance.veinCount <= 0)
+                        break;
+
+                    if (__instance.time <= __instance.period)
+                    {
+                        __instance.time += (int)(power * __instance.speedDamper * __instance.speed * miningSpeed * __instance.veinCount);
+                        consumeCount = 1U;
+                    }
+
+                    if (__instance.time < __instance.period)
+                    {
+                        break;
+                    }
+
+                    veinId = __instance.veins[__instance.currentVeinIndex];
+                    lock (veinPool)
+                    {
+                        if (veinPool[veinId].id == 0)
+                        {
+                            __instance.RemoveVeinFromArray(__instance.currentVeinIndex);
+                            __instance.GetMinimumVeinAmount(factory, veinPool);
+                            if (__instance.veinCount > 1)
+                            {
+                                __instance.currentVeinIndex %= __instance.veinCount;
+                            }
+                            else
+                            {
+                                __instance.currentVeinIndex = 0;
+                            }
+
+                            __instance.time += (int)(power * __instance.speedDamper * __instance.speed * miningSpeed * __instance.veinCount);
+                            __result = 0U;
+                            return false;
+                        }
+
+                        if (__instance.productCount < 50 && (__instance.productId == 0 || __instance.productId == veinPool[veinId].productId))
+                        {
+                            __instance.productId = veinPool[veinId].productId;
+                            times = __instance.time / __instance.period;
+                            var outputCount = 0;
+                            var amount = veinPool[veinId].amount;
+                            if (amount > KeepVeinAmount)
+                            {
+                                if (miningRate > 0f)
+                                {
+                                    var usedCount = 0;
+                                    var maxAllowed = amount - KeepVeinAmount;
+                                    if (miningRate < 0.99999f)
+                                    {
+                                        for (var i = 0; i < times; i++)
+                                        {
+                                            __instance.seed = (uint)((__instance.seed % 2147483646U + 1U) * 48271UL % 2147483647UL) - 1U;
+                                            usedCount += __instance.seed / 2147483646.0 < miningRate ? 1 : 0;
+                                            outputCount++;
+                                            if (usedCount == maxAllowed)
+                                            {
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        outputCount = times > maxAllowed ? maxAllowed : times;
+                                        usedCount = outputCount;
+                                    }
+
+                                    if (usedCount > 0)
+                                    {
+                                        var groupIndex = (int)veinPool[veinId].groupIndex;
+                                        amount = veinPool[veinId].amount -= usedCount;
+                                        if (amount < __instance.minimumVeinAmount)
+                                        {
+                                            __instance.minimumVeinAmount = amount;
+                                        }
+
+                                        var veinGroups = factory.veinGroups;
+                                        veinGroups[groupIndex].amount -= usedCount;
+                                        factory.veinAnimPool[veinId].time = amount >= 20000 ? 0f : 1f - 0.00005f;
+                                        if (amount <= 0)
+                                        {
+                                            var venType = (int)veinPool[veinId].type;
+                                            var pos = veinPool[veinId].pos;
+                                            factory.RemoveVeinWithComponents(veinId);
+                                            factory.RecalculateVeinGroup(groupIndex);
+                                            factory.NotifyVeinExhausted(venType, pos);
+                                            __instance.RemoveVeinFromArray(__instance.currentVeinIndex);
+                                            __instance.GetMinimumVeinAmount(factory, veinPool);
+                                        }
+                                        else
+                                        {
+                                            __instance.currentVeinIndex++;
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    outputCount = times;
+                                }
+
+                                __instance.productCount += outputCount;
+                                lock (productRegister)
+                                {
+                                    productRegister[__instance.productId] += outputCount;
+                                    factory.AddMiningFlagUnsafe(veinPool[veinId].type);
+                                    factory.AddVeinMiningFlagUnsafe(veinPool[veinId].type);
+                                }
+                            }
+                            else if (amount <= 0)
+                            {
+                                __instance.RemoveVeinFromArray(__instance.currentVeinIndex);
+                                __instance.GetMinimumVeinAmount(factory, veinPool);
+                            }
+                            else
+                            {
+                                __instance.currentVeinIndex++;
+                            }
+
+                            __instance.time -= __instance.period * outputCount;
+                            if (__instance.veinCount > 1)
+                            {
+                                __instance.currentVeinIndex %= __instance.veinCount;
+                            }
+                            else
+                            {
+                                __instance.currentVeinIndex = 0;
+                            }
+                        }
+                    }
+
+                    break;
+                case EMinerType.Oil:
+                    if (__instance.veinCount <= 0)
+                        break;
+
+                    veinId = __instance.veins[0];
+                    lock (veinPool)
+                    {
+                        var amount = veinPool[veinId].amount;
+                        var workCount = amount * VeinData.oilSpeedMultiplier;
+                        if (__instance.time < __instance.period)
+                        {
+                            __instance.time += (int)(power * __instance.speedDamper * __instance.speed * miningSpeed * workCount + 0.5f);
+                            consumeCount = 1U;
+                        }
+
+                        if (__instance.time >= __instance.period && __instance.productCount < 50)
+                        {
+                            __instance.productId = veinPool[veinId].productId;
+                            times = __instance.time / __instance.period;
+                            var outputCount = 0;
+                            if (miningRate > 0f && amount > _keepOilAmount)
+                            {
+                                var usedCount = 0;
+                                var maxAllowed = amount - _keepOilAmount;
+                                for (var j = 0; j < times; j++)
+                                {
+                                    __instance.seed = (uint)((__instance.seed % 2147483646U + 1U) * 48271UL % 2147483647UL) - 1U;
+                                    usedCount += __instance.seed / 2147483646.0 < miningRate ? 1 : 0;
+                                    outputCount++;
+                                }
+
+                                if (usedCount > 0)
+                                {
+                                    if (usedCount > maxAllowed)
+                                    {
+                                        usedCount = maxAllowed;
+                                    }
+
+                                    amount = veinPool[veinId].amount -= usedCount;
+                                    var veinGroups = factory.veinGroups;
+                                    var groupIndex = veinPool[veinId].groupIndex;
+                                    veinGroups[groupIndex].amount -= usedCount;
+                                    factory.veinAnimPool[veinId].time = amount >= 25000 ? 0f : 1f - amount * VeinData.oilSpeedMultiplier;
+                                    if (amount <= 2500)
+                                    {
+                                        factory.NotifyVeinExhausted((int)veinPool[veinId].type, veinPool[veinId].pos);
+                                    }
+                                }
+                            }
+                            else if (_keepOilAmount <= 2500)
+                            {
+                                outputCount = times;
+                            }
+
+                            if (outputCount > 0)
+                            {
+                                __instance.productCount += outputCount;
+                                lock (productRegister)
+                                {
+                                    productRegister[__instance.productId] += outputCount;
+                                }
+
+                                __instance.time -= __instance.period * outputCount;
+                            }
+                        }
+                    }
+
+                    break;
+
+                case EMinerType.Water:
+                    if (__instance.time < __instance.period)
+                    {
+                        __instance.time += (int)(power * __instance.speedDamper * __instance.speed * miningSpeed);
+                        consumeCount = 1U;
+                    }
+
+                    if (__instance.time < __instance.period) break;
+                    times = __instance.time / __instance.period;
+                    if (__instance.productCount >= 50) break;
+                    __instance.productId = factory.planet.waterItemId;
+                    do
+                    {
+                        if (__instance.productId > 0)
+                        {
+                            __instance.productCount += times;
+                            lock (productRegister)
+                            {
+                                productRegister[__instance.productId] += times;
+                                break;
+                            }
+                        }
+
+                        __instance.productId = 0;
+                    } while (false);
+
+                    __instance.time -= __instance.period * times;
+                    break;
+            }
+
+            if (__instance.productCount > 0 && __instance.insertTarget > 0 && __instance.productId > 0)
+            {
+                var multiplier = 36000000.0 / __instance.period * miningSpeed;
+                if (__instance.type == EMinerType.Vein)
+                {
+                    multiplier *= __instance.veinCount;
+                }
+                else if (__instance.type == EMinerType.Oil)
+                {
+                    multiplier *= veinPool[__instance.veins[0]].amount * VeinData.oilSpeedMultiplier;
+                }
+
+                var count = (int)(multiplier - 0.01) / 1800 + 1;
+                count = count < 4 ? count < 1 ? 1 : count : 4;
+                var stack = __instance.productCount < count ? __instance.productCount : count;
+                var outputCount = factory.InsertInto(__instance.insertTarget, 0, __instance.productId, (byte)stack, 0, out _);
+                __instance.productCount -= outputCount;
+                if (__instance.productCount == 0 && __instance.type == EMinerType.Vein)
+                {
+                    __instance.productId = 0;
+                }
+            }
+
+            __result = consumeCount;
+            return false;
         }
     }
 }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Reflection.Emit;
 using BepInEx;
+using BepInEx.Configuration;
 using CommonAPI;
 using CommonAPI.Systems;
 using HarmonyLib;
@@ -67,8 +68,12 @@ public class UXAssist : BaseUnityPlugin
             "Logistics capacity related tweaks");
         FactoryPatch.TreatStackingAsSingleEnabled = Config.Bind("Factory", "TreatStackingAsSingle", false,
             "Treat stack items as single in monitor components");
-        FactoryPatch.QuickBuildAndDismantleLabEnabled = Config.Bind("Factory", "QuickBuildAndDismantleLab", true,
-            "Quick build and dismantle labs");
+        FactoryPatch.QuickBuildAndDismantleLabsEnabled = Config.Bind("Factory", "QuickBuildAndDismantleLab", false,
+            "Quick build and dismantle stacking labs");
+        FactoryPatch.ProtectVeinsFromExhaustionEnabled = Config.Bind("Factory", "ProtectVeinsFromExhaustion", false,
+            "Protect veins from exhaustion");
+        FactoryPatch.ProtectVeinsFromExhaustion.KeepVeinAmount = Config.Bind("Factory", "KeepVeinAmount", 100, new ConfigDescription("Keep veins amount (0 to disable)", new AcceptableValueRange<int>(0, 1000))).Value;
+        FactoryPatch.ProtectVeinsFromExhaustion.KeepOilSpeed = Config.Bind("Factory", "KeepOilSpeed", 1.0f, new ConfigDescription("Keep minimal oil speed (< 0.1 to disable)", new AcceptableValueRange<float>(0.0f, 1.0f))).Value;
         PlanetFunctions.OrbitalCollectorMaxBuildCount = Config.Bind("Factory", "OCMaxBuildCount", 0, "Maximum Orbital Collectors to build once, set to 0 to build as many as possible");
         PlayerPatch.HideTipsForSandsChangesEnabled = Config.Bind("Player", "HideTipsForGettingSands", false,
             "Hide tips for getting soil piles");

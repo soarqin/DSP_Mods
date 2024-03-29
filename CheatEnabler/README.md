@@ -6,6 +6,7 @@
 ## Changlog
 * 2.3.14
   + Remove default shortcut key for `No condition build` and `No collision`, to avoid misoperation. You can still set them in system settings window manually if needed.
+  + Fix translation issue.
 * 2.3.13
   + Fix a bug that shortcuts are not working and have display issue on settings window. 
 * 2.3.12
@@ -135,6 +136,7 @@
 ## 更新日志
 * 2.3.14
   + 移除了`无条件建造`和`无碰撞`的默认快捷键，以避免误操作。如有需要请手动在系统选项窗口中设置。
+  + 修复了翻译问题。
 * 2.3.13
   + 修复了快捷键无效和设置窗口上的按键显示问题
 * 2.3.12
