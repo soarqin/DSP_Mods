@@ -4,6 +4,11 @@
 #### 一些提升用户体验的功能和补丁
 
 ## Changlog
+* 1.0.22
+  + Fix a crash issue caused by `Quick build and dismantle stacking labs`
+* 1.0.21
+  + Fix a bug that stepped rotation is not working in `Off-grid building and stepped rotation`, which is caused by latest game update
+  + Fix some issues in `Auto nativation` and `Auto-cruise`, now only speeds up when core energy at least 10% and warps when core energy at least 50% 
 * 1.0.20
   + Fix a infinite-loop issue when `Quick build and dismantle stacking labs` and `No condition build` are both enabled
   + Fix a crash caused by `Re-initialize planet` in combat mode
@@ -151,6 +156,11 @@
 * [CruiseAssist](https://dsp.thunderstore.io/package/tanu/CruiseAssist/) and its extension [AutoPilot](https://dsp.thunderstore.io/package/tanu/AutoPilot/): `Auto navigation on sailings` and `Auto-cruise` implementations
 
 ## 更新日志
+* 1.0.22
+  + 修复了`快速建造和拆除堆叠研究站`导致的崩溃问题
+* 1.0.21
+  + 修复了`脱离网格建造和小角度旋转`在最新游戏更新后无法小角度旋转的问题
+  + 修复了`航行时自动导航`和`自动巡航`的一些问题。现在只有能量至少10%时才加速，能量至少50%时才启动曲速
 * 1.0.20
   + 修复了`快速建造和拆除堆叠研究站`和`无条件建造`同时启用时可能导致的逻辑死循环问题
   + 修复了在战斗模式下`初始化本行星`导致的崩溃问题

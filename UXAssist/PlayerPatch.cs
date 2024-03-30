@@ -325,7 +325,9 @@ public static class PlayerPatch
                             }
                             else
                             {
-                                if (_canUseWarper && GameMain.localPlanet == null && distance > GalaxyData.AU * DistanceToWarp.Value && player.mecha.UseWarper())
+                                var mecha = player.mecha;
+                                var energyRatio = mecha.coreEnergy / mecha.coreEnergyCap;
+                                if (_canUseWarper && GameMain.localPlanet == null && distance > GalaxyData.AU * DistanceToWarp.Value && energyRatio >= 0.5 && player.mecha.UseWarper())
                                 {
                                     player.warpCommand = true;
                                     VFAudio.Create("warp-begin", player.transform, Vector3.zero, true);
@@ -333,7 +335,7 @@ public static class PlayerPatch
                                 else
                                 {
                                     /* Speed up if needed */
-                                    _speedUp = speed + 0.2f < player.mecha.maxSailSpeed;
+                                    _speedUp = speed + 0.2f < player.mecha.maxSailSpeed && energyRatio >= 0.1;
                                 }
                             }
 

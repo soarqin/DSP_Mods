@@ -993,11 +993,8 @@ public static class FactoryPatch
         {
             if (!VFInput._chainReaction) return true;
             var factory = dismantle.factory;
-            var entity = factory.entityPool[id];
-            var factorySystem = factory.factorySystem;
-            if (entity.labId <= 0 || entity.labId > factorySystem.labCursor) return true;
-            ref var lab = ref factory.factorySystem.labPool[entity.labId];
-            if (lab.id != entity.labId) return true;
+            var prefDesc = dismantle.GetPrefabDesc(id);
+            if (!prefDesc.isLab) return true;
             factory.ReadObjectConn(id, 14, out _, out var nextId, out _);
             /* We keep last lab if selected lab is not the ground one */
             if (nextId > 0)
