@@ -593,11 +593,14 @@ public static class FactoryPatch
         private static string _lastOffsetText;
 
         [HarmonyPostfix]
-        [HarmonyPriority(Priority.Last), HarmonyPatch(typeof(BuildTool_Click), nameof(BuildTool_Click.CheckBuildConditions))]
-        private static void BuildTool_Click_CheckBuildConditions_Postfix(BuildTool_Click __instance)
+        [HarmonyPriority(Priority.Last)]
+        [HarmonyPatch(typeof(BuildTool_Click), nameof(BuildTool_Click.CheckBuildConditions))]
+        [HarmonyPatch(typeof(BuildTool_Path), nameof(BuildTool_Path.CheckBuildConditions))]
+        private static void BuildTool_Click_CheckBuildConditions_Postfix(BuildTool __instance)
         {
-            if (__instance.buildPreviews.Count != 1) return;
-            var preview = __instance.buildPreviews[0];
+            var cnt = __instance.buildPreviews.Count;
+            if (cnt == 0) return;
+            var preview = __instance.buildPreviews[cnt - 1];
             if (preview.desc.isInserter) return;
             var planet = __instance.planet;
             if (_lastPlanet != planet || _lastPos != preview.lpos)
@@ -708,6 +711,50 @@ public static class FactoryPatch
                 new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(VFInput), nameof(VFInput._ignoreGrid))),
                 new CodeInstruction(OpCodes.Brtrue, exitLabel)
             );
+
+            return matcher.InstructionEnumeration();
+        }
+
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(BuildTool_Path), nameof(BuildTool_Path.UpdateRaycast))]
+        public static IEnumerable<CodeInstruction> AllowOffGridConstructionForPath(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Ldarg_0),
+                new CodeMatch(OpCodes.Ldarg_0),
+                new CodeMatch(OpCodes.Call, AccessTools.PropertyGetter(typeof(BuildTool), nameof(BuildTool.actionBuild))),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(PlayerAction_Build), nameof(PlayerAction_Build.planetAux))),
+                new CodeMatch(OpCodes.Ldarg_0),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(BuildTool_Path), nameof(BuildTool_Path.castGroundPos))),
+                new CodeMatch(OpCodes.Ldarg_0),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(BuildTool_Path), nameof(BuildTool_Path.castTerrain))),
+                new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(PlanetAuxData), nameof(PlanetAuxData.Snap))),
+                new CodeMatch(OpCodes.Stfld, AccessTools.Field(typeof(BuildTool_Path), nameof(BuildTool_Path.castGroundPosSnapped)))
+            );
+
+            if (matcher.IsInvalid)
+                return matcher.InstructionEnumeration();
+
+            var jmp0 = generator.DefineLabel();
+            var jmp1 = generator.DefineLabel();
+            matcher.InsertAndAdvance(
+                new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(VFInput), nameof(VFInput._ignoreGrid))),
+                new CodeInstruction(OpCodes.Brfalse, jmp0),
+                new CodeInstruction(OpCodes.Ldarg_0),
+                new CodeInstruction(OpCodes.Ldarg_0),
+                new CodeInstruction(OpCodes.Ldflda, AccessTools.Field(typeof(BuildTool_Path), nameof(BuildTool_Path.castGroundPos))),
+                new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(Vector3), nameof(Vector3.normalized))),
+                new CodeInstruction(OpCodes.Ldarg_0),
+                new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(BuildTool_Path), nameof(BuildTool_Path.planet))),
+                new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(PlanetData), nameof(PlanetData.realRadius))),
+                new CodeInstruction(OpCodes.Ldc_R4, 0.2f),
+                new CodeInstruction(OpCodes.Add),
+                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(Vector3), "op_Multiply", [typeof(Vector3), typeof(float)])),
+                new CodeInstruction(OpCodes.Stfld, AccessTools.Field(typeof(BuildTool_Path), nameof(BuildTool_Path.castGroundPosSnapped))),
+                new CodeInstruction(OpCodes.Br, jmp1)
+            ).Labels.Add(jmp0);
+            matcher.Advance(10).Labels.Add(jmp1);
 
             return matcher.InstructionEnumeration();
         }
