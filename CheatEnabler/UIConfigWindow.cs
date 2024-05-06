@@ -53,6 +53,9 @@ public static class UIConfigWindow
         I18N.Add("Overclock Ejectors", "Overclock Ejectors (10x)", "高速弹射器(10倍射速)");
         I18N.Add("Overclock Silos", "Overclock Silos (10x)", "高速发射井(10倍射速)");
         I18N.Add("Terraform without enough soil piles", "Terraform without enough soil piles", "沙土不够时依然可以整改地形");
+        I18N.Add("Instant teleport (like that in Sandbox mode)", "Instant teleport (like that in Sandbox mode)", "快速传送(和沙盒模式一样)");
+        I18N.Add("Mecha and Drones/Fleets invicible", "Mecha and Drones/Fleets invicible", "机甲和战斗无人机无敌");
+        I18N.Add("Buildings invicible", "Buildings invincible", "建筑无敌");
         I18N.Apply();
         MyConfigWindow.OnUICreated += CreateUI;
         MyConfigWindow.OnUpdateUI += UpdateUI;
@@ -134,6 +137,8 @@ public static class UIConfigWindow
         MyCheckBox.CreateCheckBox(x, y, tab3, PlanetPatch.WaterPumpAnywhereEnabled, "Pump Anywhere");
         y += 36f;
         MyCheckBox.CreateCheckBox(x, y, tab3, PlanetPatch.TerraformAnywayEnabled, "Terraform without enough soil piles");
+        y += 36f;
+        MyCheckBox.CreateCheckBox(x, y, tab3, PlayerPatch.InstantTeleportEnabled, "Instant teleport (like that in Sandbox mode)");
         x = 400f;
         y = 10f;
         wnd.AddButton(x, y, 200f, tab3, "矿物掩埋标题", 16, "button-bury-all", () => { PlanetFunctions.BuryAllVeins(true); });
@@ -171,6 +176,13 @@ public static class UIConfigWindow
         MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.OverclockEjectorEnabled, "Overclock Ejectors");
         y += 36f;
         MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.OverclockSiloEnabled, "Overclock Silos");
+
+        var tab5 = wnd.AddTab(_windowTrans, "Combat");
+        x = 0f;
+        y = 10f;
+        MyCheckBox.CreateCheckBox(x, y, tab5, CombatPatch.MechaInvincibleEnabled, "Mecha and Drones/Fleets invicible");
+        y += 36f;
+        MyCheckBox.CreateCheckBox(x, y, tab5, CombatPatch.BuildingsInvincibleEnabled, "Buildings invicible");
         return;
 
         void OnBeltSignalChanged()

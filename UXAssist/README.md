@@ -4,11 +4,19 @@
 #### 一些提升用户体验的功能和补丁
 
 ## Changlog
+* 1.0.23
+  + New features:
+    - `Do not render factory entities (except belts and sorters)`
+      - This also makes players click though factory entities but belts
+    - `Open Dark Fog Communicator` anywhere
+  + Belts can be built off-grid now, by pressing the shortcut key for `Switch Splitter model`(`Tab` by default)
+  + Add a suboption `Auto boost` to `Auto-cruise`
+  + `Auto-cruise` does warp when core energy at least 80% now
 * 1.0.22
   + Fix a crash issue caused by `Quick build and dismantle stacking labs`
 * 1.0.21
   + Fix a bug that stepped rotation is not working in `Off-grid building and stepped rotation`, which is caused by latest game update
-  + Fix some issues in `Auto nativation` and `Auto-cruise`, now only speeds up when core energy at least 10% and warps when core energy at least 50% 
+  + Fix some issues in `Auto nativation` and `Auto-cruise`, now only boosts when core energy at least 10% and warps when core energy at least 50%
 * 1.0.20
   + Fix a infinite-loop issue when `Quick build and dismantle stacking labs` and `No condition build` are both enabled
   + Fix a crash caused by `Re-initialize planet` in combat mode
@@ -109,15 +117,30 @@
     - Remember window position and size on last exit
     - Convert Peace-Mode saves to Combat-Mode on loading
   + Planet/Factory
-    - Unlimited interactive range
     - Sunlight at night
     - Remove some build conditions
     - Remove build count and range limit
     - Larger area for upgrade and dismantle(30x30 at max)
     - Larger area for terraform(30x30 at max)
-    - Enable player actions in globe view
     - Treat stack items as single in monitor components
+    - Enhanced control for logistic storage limits
+      - Logistic storage limits are not scaled on upgrading `Logistics Carrier Capacity`, if they are not set to maximum capacity.
+      - You can use arrow keys to adjust logistic storage limits gracefully.
+    - Quick build and dismantle stacking labs
+    - Protect veins from exhaustion
+      - By default, the vein amount is protected at 100, and oil speed is protected at 1.0/s, you can set them yourself in config file.
+      - When reach the protection value, veins/oils steeps will not be mined/extracted any longer.
+      - Close this function to resume mining and pumping, usually when you have enough level on `Veins Utilization`
+    - Do not render factory entities (except belts and sorters)
+      - This also makes players click though factory entities but belts
+    - Re-intialize planet (without reseting veins)
+    - Quick dismantle all buildings (without drops)
+    - Quick build Orbital Collectors
+  + Player/Mecha
+    - Unlimited interactive range
+    - Enable player actions in globe view
     - Hide tips for soil piles changes
+    - Enhanced count control for hand-make
     - Auto navigation on sailings
       - It keeps Icarus on course to the target planet
       - It will try to bypass any obstacles(planets, stars or dark-fog hives) on the way
@@ -125,23 +148,13 @@
         - Auto-cruise will start when you select a planet as target
         - It will use warper to fly to the target planet if the planet is too far away, the range can be configured.
         - It will speed down when approaching the target planet, to avoid overshooting
-    - Enhanced control for logistic storage limits
-      - Logistic storage limits are not scaled on upgrading `Logistics Carrier Capacity`, if they are not set to maximum capacity.
-      - You can use arrow keys to adjust logistic storage limits gracefully.
-    - Enhanced count control for hand-make
-    - Quick build and dismantle stacking labs
-    - Protect veins from exhaustion
-      - By default, the vein amount is protected at 100, and oil speed is protected at 1.0/s, you can set them yourself in config file.
-      - When reach the protection value, veins/oils steeps will not be mined/extracted any longer.
-      - Close this function to resume mining and pumping, usually when you have enough level on `Veins Utilization`
-    - Re-intialize planet (without reseting veins)
-    - Quick dismantle all buildings (without drops)
-    - Quick build Orbital Collectors
   + Dyson Sphere
     - Stop ejectors when available nodes are all filled up
     - Construct only nodes but frames
     - Re-initialize Dyson Spheres
     - Quick dismantle Dyson Shells
+  + Combat
+    - Open Dark Fog Communicator anywhere
 
 ## Notes
 * Please upgrade `BepInEx` 5.4.21 or later if using with [BlueprintTweaks](https://dsp.thunderstore.io/package/kremnev8/BlueprintTweaks/) to avoid possible conflicts.
@@ -156,6 +169,14 @@
 * [CruiseAssist](https://dsp.thunderstore.io/package/tanu/CruiseAssist/) and its extension [AutoPilot](https://dsp.thunderstore.io/package/tanu/AutoPilot/): `Auto navigation on sailings` and `Auto-cruise` implementations
 
 ## 更新日志
+* 1.0.23
+  + 新功能：
+    - `不渲染工厂建筑实体(除了传送带和分拣器)`
+      - 这使得玩家可以点穿工厂实体直接点到传送带
+    - 在任意位置`打开黑雾通讯器`
+  + 传送带现在可以脱离网格建造了，通过按住`切换分流器样式`的快捷键(默认`Tab`)
+  + 为`自动巡航`添加一个子选项`自动加速`
+  + `自动巡航`现在在核心能量至少80%时才加速
 * 1.0.22
   + 修复了`快速建造和拆除堆叠研究站`导致的崩溃问题
 * 1.0.21
@@ -168,7 +189,7 @@
   + 新功能：
     - `快速建造和拆除堆叠研究站`
     - `保护矿脉不会耗尽`
-      - 默认矿脉数量保护在100，采油速保护在1.0/s，你可以在配置文件中自行设置。
+      - 默认矿脉数量保护于剩余100，采油速保护于速度1.0/s，你可以在配置文件中自行设置。
       - 当达到保护值时，矿脉和油井将不再被开采。
       - 关闭此功能以恢复开采，一般是当你在`矿物利用`上有足够的等级时。
   + 移除了`自动巡航`的默认快捷键，以避免误操作。如有需要请手动在系统选项窗口中设置。
@@ -263,15 +284,29 @@
     - 将元数据提取的最大数量增加到20000(原来为2000)
     - 将玩家指令队列的容量增加到128(原来为16)
   + 行星/工厂
-    - 无限交互距离
     - 夜间日光灯
     - 移除部分不影响游戏逻辑的建造条件
-    - 移除建造数量和范围限制
     - 范围升级和拆除的最大区域扩大(最大30x30)
     - 范围铺设地基的最大区域扩大(最大30x30)
-    - 在行星视图中允许玩家操作
     - 在流速计中将堆叠物品视为单个物品
+    - 物流塔存储数量限制控制改进
+      - 当升级`运输机舱扩容`时，不会对各种物流塔的存储限制按比例提升，除非设置为最大允许容量。
+      - 你可以使用方向键微调物流塔存储限制
+    - 快速建造和拆除堆叠研究站
+    - 保护矿脉不会耗尽
+      - 默认矿脉数量保护在100，采油速保护在1.0/s，你可以在配置文件中自行设置。
+      - 当达到保护值时，矿脉和油井将不再被开采。
+      - 关闭此功能以恢复开采，一般是当你在`矿物利用`上有足够的等级时。
+    - 不渲染工厂建筑实体(除了传送带和分拣器)
+    - 初始化本行星（不重置矿脉）
+    - 快速拆除所有建筑（不掉落）
+    - 快速建造轨道采集器
+  + 玩家/机甲
+    - 无限交互距离
+    - 移除建造数量和范围限制
+    - 在行星视图中允许玩家操作
     - 隐藏沙土数量变动的提示
+    - 手动制造物品的数量控制改进
     - 航行时自动导航
       - 它会保持伊卡洛斯飞向目标星球
       - 它会尝试绕过途中的任何障碍物(行星、恒星或黑雾巢穴)
@@ -279,23 +314,13 @@
         - 当你选择目标星球后，自动巡航就会开始
         - 如果目标星球距离过远会自动使用曲速(超过5AU)，你可以在面板上更改这个值。
         - 它会在接近目标星球时减速，以避免发生越过目标的情况
-    - 物流塔存储数量限制控制改进
-      - 当升级`运输机舱扩容`时，不会对各种物流塔的存储限制按比例提升，除非设置为最大允许容量。
-      - 你可以使用方向键微调物流塔存储限制
-    - 手动制造物品的数量控制改进
-    - 快速建造和拆除堆叠研究站
-    - 保护矿脉不会耗尽
-      - 默认矿脉数量保护在100，采油速保护在1.0/s，你可以在配置文件中自行设置。
-      - 当达到保护值时，矿脉和油井将不再被开采。
-      - 关闭此功能以恢复开采，一般是当你在`矿物利用`上有足够的等级时。
-    - 初始化本行星（不重置矿脉）
-    - 快速拆除所有建筑（不掉落）
-    - 快速建造轨道采集器
   + 戴森球
     - 可用节点全部造完时停止弹射
     - 只建造节点不建造框架
     - 初始化戴森球
     - 快速拆除戴森壳
+  + 战斗
+    - 在任意位置打开黑雾通讯器
 
 ## 注意事项
 * 如果和[BlueprintTweaks](https://dsp.thunderstore.io/package/kremnev8/BlueprintTweaks/)一起使用，请升级`BepInEx`到5.4.21或更高版本，以避免可能的冲突。

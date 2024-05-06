@@ -74,15 +74,19 @@ public class UXAssist : BaseUnityPlugin
             "Protect veins from exhaustion");
         FactoryPatch.ProtectVeinsFromExhaustion.KeepVeinAmount = Config.Bind("Factory", "KeepVeinAmount", 100, new ConfigDescription("Keep veins amount (0 to disable)", new AcceptableValueRange<int>(0, 1000))).Value;
         FactoryPatch.ProtectVeinsFromExhaustion.KeepOilSpeed = Config.Bind("Factory", "KeepOilSpeed", 1.0f, new ConfigDescription("Keep minimal oil speed (< 0.1 to disable)", new AcceptableValueRange<float>(0.0f, 1.0f))).Value;
+        FactoryPatch.DoNotRenderEntitiesEnabled = Config.Bind("Factory", "DoNotRenderEntities", false,
+            "Do not render factory entities");
         PlanetFunctions.OrbitalCollectorMaxBuildCount = Config.Bind("Factory", "OCMaxBuildCount", 0, "Maximum Orbital Collectors to build once, set to 0 to build as many as possible");
+        PlayerPatch.EnhancedMechaForgeCountControlEnabled = Config.Bind("Player", "EnhancedMechaForgeCountControl", false,
+            "Enhanced count control for hand-make, increases maximum of count to 1000, and you can hold Ctrl/Shift/Alt to change the count rapidly");
         PlayerPatch.HideTipsForSandsChangesEnabled = Config.Bind("Player", "HideTipsForGettingSands", false,
             "Hide tips for getting soil piles");
-        PlayerPatch.EnhancedMechaForgeCountControlEnabled = Config.Bind("Player", "EnhancedMechaForgeCountControl", false,
-                "Enhanced count control for hand-make, increases maximum of count to 1000, and you can hold Ctrl/Shift/Alt to change the count rapidly");
         PlayerPatch.AutoNavigationEnabled = Config.Bind("Player", "AutoNavigation", false,
             "Auto navigation");
         PlayerPatch.AutoCruiseEnabled = Config.Bind("Player", "AutoCruise", false,
             "Auto-cruise enabled");
+        PlayerPatch.AutoBoostEnabled = Config.Bind("Player", "AutoBoost", false,
+            "Auto boost speed with auto-cruise enabled");
         PlayerPatch.DistanceToWarp = Config.Bind("Player", "DistanceToWarp", 5.0, "Distance to warp (in AU)");
         DysonSpherePatch.StopEjectOnNodeCompleteEnabled = Config.Bind("DysonSphere", "StopEjectOnNodeComplete", false,
             "Stop ejectors when available nodes are all filled up");
@@ -400,5 +404,13 @@ public class UXAssist : BaseUnityPlugin
             new CodeInstruction(OpCodes.Brtrue_S, jumpPos)
         );
         return matcher.InstructionEnumeration();
+    }
+    
+    // Ignore UIDFCommunicatorWindow.Determine()
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(UIDFCommunicatorWindow), nameof(UIDFCommunicatorWindow.Determine))]
+    private static bool UIDFCommunicatorWindow_Determine_Prefix()
+    {
+        return false;
     }
 }

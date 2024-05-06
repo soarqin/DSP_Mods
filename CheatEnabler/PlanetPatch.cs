@@ -42,8 +42,8 @@ public static class PlanetPatch
         }
 
         [HarmonyTranspiler]
-        [HarmonyPatch(typeof(BuildTool_BlueprintPaste), "CheckBuildConditions")]
-        [HarmonyPatch(typeof(BuildTool_Click), "CheckBuildConditions")]
+        [HarmonyPatch(typeof(BuildTool_BlueprintPaste), nameof(BuildTool_BlueprintPaste.CheckBuildConditions))]
+        [HarmonyPatch(typeof(BuildTool_Click), nameof(BuildTool_Click.CheckBuildConditions))]
         private static IEnumerable<CodeInstruction> BuildTool_CheckBuildConditions_Transpiler(
             IEnumerable<CodeInstruction> instructions, ILGenerator generator)
         {

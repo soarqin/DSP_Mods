@@ -14,6 +14,7 @@ public static class PlayerPatch
     public static ConfigEntry<bool> HideTipsForSandsChangesEnabled;
     public static ConfigEntry<bool> AutoNavigationEnabled;
     public static ConfigEntry<bool> AutoCruiseEnabled;
+    public static ConfigEntry<bool> AutoBoostEnabled;
     public static ConfigEntry<double> DistanceToWarp;
     private static PressKeyBind _autoDriveKey;
     
@@ -237,13 +238,14 @@ public static class PlayerPatch
                                 }
                                 return;
                             }
+                            var autoCruise = AutoCruiseEnabled.Value;
                             if (GameMain.instance.timei % 6 == 0 || _direction == Vector3.zero)
                             {
                                 _direction = astroVec.normalized;
 
                                 /* Check nearest astroes, try to bypass them */
                                 var localStar = GameMain.localStar;
-                                _canUseWarper = AutoCruiseEnabled.Value && !player.warping && player.mecha.warpStorage.GetItemCount(1210) > 0;
+                                _canUseWarper = autoCruise && !player.warping && player.mecha.warpStorage.GetItemCount(1210) > 0;
                                 if (localStar != null)
                                 {
                                     var nearestRange = (playerPos - localStar.uPosition).sqrMagnitude;
@@ -304,7 +306,7 @@ public static class PlayerPatch
                             if (player.warping)
                             {
                                 _speedUp = false;
-                                if (AutoCruiseEnabled.Value)
+                                if (autoCruise)
                                 {
                                     /* Speed down if too close */
                                     var actionSail = controller.actionSail;
@@ -327,7 +329,7 @@ public static class PlayerPatch
                             {
                                 var mecha = player.mecha;
                                 var energyRatio = mecha.coreEnergy / mecha.coreEnergyCap;
-                                if (_canUseWarper && GameMain.localPlanet == null && distance > GalaxyData.AU * DistanceToWarp.Value && energyRatio >= 0.5 && player.mecha.UseWarper())
+                                if (_canUseWarper && GameMain.localPlanet == null && distance > GalaxyData.AU * DistanceToWarp.Value && energyRatio >= 0.8 && player.mecha.UseWarper())
                                 {
                                     player.warpCommand = true;
                                     VFAudio.Create("warp-begin", player.transform, Vector3.zero, true);
@@ -335,7 +337,7 @@ public static class PlayerPatch
                                 else
                                 {
                                     /* Speed up if needed */
-                                    _speedUp = speed + 0.2f < player.mecha.maxSailSpeed && energyRatio >= 0.1;
+                                    _speedUp = autoCruise && AutoBoostEnabled.Value && speed + 0.2f < player.mecha.maxSailSpeed && energyRatio >= 0.1;
                                 }
                             }
 

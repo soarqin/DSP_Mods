@@ -48,6 +48,8 @@ public class CheatEnabler : BaseUnityPlugin
             "Can pump water anywhere (while water type is not None)");
         PlanetPatch.TerraformAnywayEnabled = Config.Bind("Planet", "TerraformAnyway", false,
             "Can do terraform without enough soil piless");
+        PlayerPatch.InstantTeleportEnabled = Config.Bind("Player", "InstantTeleport", false,
+            "Enable instant teleport (like that in Sandbox mode)");
         DysonSpherePatch.SkipBulletEnabled = Config.Bind("DysonSphere", "SkipBullet", false,
             "Skip bullet");
         DysonSpherePatch.SkipAbsorbEnabled = Config.Bind("DysonSphere", "SkipAbsorb", false,
@@ -60,7 +62,11 @@ public class CheatEnabler : BaseUnityPlugin
             "Overclock ejector");
         DysonSpherePatch.OverclockSiloEnabled = Config.Bind("DysonSphere", "OverclockSilo", false,
             "Overclock silo");
-        
+        CombatPatch.MechaInvincibleEnabled = Config.Bind("Battle", "MechaInvincible", false,
+            "Mecha and Drones/Fleets invincible");
+        CombatPatch.BuildingsInvincibleEnabled = Config.Bind("Battle", "BuildingsInvincible", false,
+            "Buildings invincible");
+
         UIConfigWindow.Init();
 
         DevShortcuts.Init();
@@ -69,12 +75,16 @@ public class CheatEnabler : BaseUnityPlugin
         FactoryPatch.Init();
         ResourcePatch.Init();
         PlanetPatch.Init();
+        PlayerPatch.Init();
         DysonSpherePatch.Init();
+        CombatPatch.Init();
     }
 
     private void OnDestroy()
     {
+        CombatPatch.Uninit();
         DysonSpherePatch.Uninit();
+        PlayerPatch.Uninit();
         PlanetPatch.Uninit();
         ResourcePatch.Uninit();
         FactoryPatch.Uninit();

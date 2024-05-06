@@ -16,7 +16,9 @@ public static class UIConfigWindow
         I18N.Add("UXAssist", "UXAssist", "UX助手");
         I18N.Add("General", "General", "常规");
         I18N.Add("Planet/Factory", "Planet/Factory", "行星/工厂");
+        I18N.Add("Player/Mecha", "Player/Mecha", "玩家/机甲");
         I18N.Add("Dyson Sphere", "Dyson Sphere", "戴森球");
+        I18N.Add("Combat", "Combat", "战斗");
         I18N.Add("Enable game window resize", "Enable game window resize (maximum box and thick frame)", "可调整游戏窗口大小(可最大化和拖动边框)");
         I18N.Add("Remeber window position and size on last exit", "Remeber window position and size on last exit", "记住上次退出时的窗口位置和大小");
         /*
@@ -39,8 +41,11 @@ public static class UIConfigWindow
         I18N.Add("Enhanced count control for hand-make tips", "Maximum count is increased to 1000.\nHold Ctrl/Shift/Alt to change the count rapidly.", "最大数量提升至1000\n按住Ctrl/Shift/Alt可快速改变数量");
         I18N.Add("Quick build and dismantle stacking labs", "Quick build and dismantle stacking labs(hold shift)", "快速建造和拆除堆叠研究站(按住shift)");
         I18N.Add("Protect veins from exhaustion", "Protect veins from exhaustion", "保护矿脉不会耗尽");
+        I18N.Add("Protect veins from exhaustion tips", "By default, the vein amount is protected at 100, and oil speed is protected at 1.0/s, you can set them yourself in config file.\nWhen reach the protection value, veins/oils steeps will not be mined/extracted any longer.\nClose this function to resume mining and pumping, usually when you have enough level on `Veins Utilization`", "默认矿脉数量保护于剩余100，采油速保护于速度1.0/s，你可以在配置文件中自行设置。\n当达到保护值时，矿脉和油井将不再被开采。\n关闭此功能以恢复开采，一般是当你在`矿物利用`上有足够的等级时。\n");
+        I18N.Add("Do not render factory entities", "Do not render factory entities (except belts and sorters)", "不渲染工厂建筑实体(除了传送带和分拣器)");
         I18N.Add("Auto navigation on sailings", "Auto navigation on sailings", "宇宙航行时自动导航");
         I18N.Add("Enable auto-cruise", "Enable auto-cruise", "启用自动巡航");
+        I18N.Add("Auto boost", "Auto boost", "自动加速");
         I18N.Add("Distance to use warp", "Distance to use warp (AU)", "使用曲速的距离(AU)");
         I18N.Add("Treat stack items as single in monitor components", "Treat stack items as single in monitor components", "在流速计中将堆叠物品视为单个物品");
         I18N.Add("Initialize This Planet", "Initialize this planet", "初始化本行星");
@@ -57,6 +62,7 @@ public static class UIConfigWindow
         I18N.Add("Click to dismantle selected layer", "Click to dismantle selected layer", "点击拆除对应的戴森壳");
         I18N.Add("Dismantle selected layer", "Dismantle selected layer", "拆除选中的戴森壳");
         I18N.Add("Dismantle selected layer Confirm", "This operation will dismantle selected layer, are you sure?", "此操作将会拆除选中的戴森壳，确定吗？");
+        I18N.Add("Open Dark Fog Communicator", "Open Dark Fog Communicator", "打开黑雾通讯器");
         I18N.Apply();
         MyConfigWindow.OnUICreated += CreateUI;
         MyConfigWindow.OnUpdateUI += UpdateUI;
@@ -85,8 +91,6 @@ public static class UIConfigWindow
         var tab2 = wnd.AddTab(trans, "Planet/Factory");
         x = 0f;
         y = 10f;
-        MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.UnlimitInteractiveEnabled, "Unlimited interactive range");
-        y += 36f;
         MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.RemoveSomeConditionEnabled, "Remove some build conditions");
         y += 36f;
         MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.RemoveBuildRangeLimitEnabled, "Remove build range limit");
@@ -101,45 +105,21 @@ public static class UIConfigWindow
         y += 36f;
         MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.TreatStackingAsSingleEnabled, "Treat stack items as single in monitor components");
         y += 36f;
-        MyCheckBox.CreateCheckBox(x, y, tab2, PlanetPatch.PlayerActionsInGlobeViewEnabled, "Enable player actions in globe view");
-        y += 36f;
-        MyCheckBox.CreateCheckBox(x, y, tab2, PlayerPatch.HideTipsForSandsChangesEnabled, "Hide tips for soil piles changes");
-        y += 36f;
         MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.LogisticsCapacityTweaksEnabled, "Enhance control for logistic storage limits");
         x = 270f;
         y += 6f;
         MyWindow.AddTipsButton(x, y, tab2, "Enhance control for logistic storage limits", "Enhance control for logistic storage limits tips", "enhanced-logistic-limit-tips");
         x = 0f;
         y += 30f;
-        MyCheckBox.CreateCheckBox(x, y, tab2, PlayerPatch.EnhancedMechaForgeCountControlEnabled, "Enhanced count control for hand-make");
-        x = 270f;
-        y += 6f;
-        MyWindow.AddTipsButton(x, y, tab2, "Enhanced count control for hand-make", "Enhanced count control for hand-make tips", "enhanced-count-control-tips");
-        x = 0f;
-        y += 30f;
         MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.QuickBuildAndDismantleLabsEnabled, "Quick build and dismantle stacking labs");
         y += 36f;
         MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.ProtectVeinsFromExhaustionEnabled, "Protect veins from exhaustion");
-        x = 350f;
-        y -= 108f;
-        MyCheckBox.CreateCheckBox(x, y, tab2, PlayerPatch.AutoNavigationEnabled, "Auto navigation on sailings");
-        x += 20f;
-        y += 36f;
-        MyCheckBox.CreateCheckBox(x, y, tab2, PlayerPatch.AutoCruiseEnabled, "Enable auto-cruise", 14);
-        x -= 20f;
-        y += 36f;
-        MyWindow.AddText(x, y, tab2, "Distance to use warp", 15, "text-distance-to-warp");
-        y += 24f;
-        var distanceToWarp = MySlider.CreateSlider(x, y, tab2, (float)Math.Round(PlayerPatch.DistanceToWarp.Value * 2.0), 1f, 40f, "0.0", 200f);
-        if (PlanetFunctions.OrbitalCollectorMaxBuildCount.Value == 0)
-        {
-            distanceToWarp.SetLabelText(PlayerPatch.DistanceToWarp.Value.ToString("0.0"));
-        }
-        distanceToWarp.OnValueChanged += () =>
-        {
-            PlayerPatch.DistanceToWarp.Value = Math.Round(distanceToWarp.Value) * 0.5;
-            distanceToWarp.SetLabelText(PlayerPatch.DistanceToWarp.Value.ToString("0.0"));
-        };
+        x = 270f;
+        y += 6f;
+        MyWindow.AddTipsButton(x, y, tab2, "Protect veins from exhaustion", "Protect veins from exhaustion tips", "protect-veins-tips");
+        x = 0f;
+        y += 30f;
+        MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.DoNotRenderEntitiesEnabled, "Do not render factory entities");
         x = 400f;
         y = 10f;
         wnd.AddButton(x, y, tab2, "Initialize This Planet", 16, "button-init-planet", () =>
@@ -175,27 +155,63 @@ public static class UIConfigWindow
             }
         };
 
-        var tab3 = wnd.AddTab(trans, "Dyson Sphere");
+        var tab3 = wnd.AddTab(trans, "Player/Mecha");
         x = 0f;
         y = 10f;
-        MyCheckBox.CreateCheckBox(x, y, tab3, DysonSpherePatch.StopEjectOnNodeCompleteEnabled, "Stop ejectors when available nodes are all filled up");
+        MyCheckBox.CreateCheckBox(x, y, tab3, FactoryPatch.UnlimitInteractiveEnabled, "Unlimited interactive range");
         y += 36f;
-        MyCheckBox.CreateCheckBox(x, y, tab3, DysonSpherePatch.OnlyConstructNodesEnabled, "Construct only nodes but frames");
+        MyCheckBox.CreateCheckBox(x, y, tab3, PlanetPatch.PlayerActionsInGlobeViewEnabled, "Enable player actions in globe view");
+        y += 36f;
+        MyCheckBox.CreateCheckBox(x, y, tab3, PlayerPatch.HideTipsForSandsChangesEnabled, "Hide tips for soil piles changes");
+        y += 36f;
+        MyCheckBox.CreateCheckBox(x, y, tab3, PlayerPatch.EnhancedMechaForgeCountControlEnabled, "Enhanced count control for hand-make");
+        x = 270f;
+        y += 6f;
+        MyWindow.AddTipsButton(x, y, tab3, "Enhanced count control for hand-make", "Enhanced count control for hand-make tips", "enhanced-count-control-tips");
+        x = 0f;
+        y += 30f;
+        MyCheckBox.CreateCheckBox(x, y, tab3, PlayerPatch.AutoNavigationEnabled, "Auto navigation on sailings");
+        x = 20f;
+        y += 36f;
+        MyCheckBox.CreateCheckBox(x, y, tab3, PlayerPatch.AutoCruiseEnabled, "Enable auto-cruise", 14);
+        x = 10f;
+        y += 32f;
+        MyCheckBox.CreateCheckBox(x, y, tab3, PlayerPatch.AutoBoostEnabled, "Auto boost", 15);
+        y += 32f;
+        MyWindow.AddText(x, y, tab3, "Distance to use warp", 15, "text-distance-to-warp");
+        y += 24f;
+        var distanceToWarp = MySlider.CreateSlider(x, y, tab3, (float)Math.Round(PlayerPatch.DistanceToWarp.Value * 2.0), 1f, 40f, "0.0", 200f);
+        if (PlanetFunctions.OrbitalCollectorMaxBuildCount.Value == 0)
+        {
+            distanceToWarp.SetLabelText(PlayerPatch.DistanceToWarp.Value.ToString("0.0"));
+        }
+        distanceToWarp.OnValueChanged += () =>
+        {
+            PlayerPatch.DistanceToWarp.Value = Math.Round(distanceToWarp.Value) * 0.5;
+            distanceToWarp.SetLabelText(PlayerPatch.DistanceToWarp.Value.ToString("0.0"));
+        };
+
+        var tab4 = wnd.AddTab(trans, "Dyson Sphere");
+        x = 0f;
+        y = 10f;
+        MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.StopEjectOnNodeCompleteEnabled, "Stop ejectors when available nodes are all filled up");
+        y += 36f;
+        MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.OnlyConstructNodesEnabled, "Construct only nodes but frames");
         x = 400f;
         y = 10f;
-        wnd.AddButton(x, y, tab3, "Initialize Dyson Sphere", 16, "init-dyson-sphere", () =>
+        wnd.AddButton(x, y, tab4, "Initialize Dyson Sphere", 16, "init-dyson-sphere", () =>
             UIMessageBox.Show("Initialize Dyson Sphere".Translate(), "Initialize Dyson Sphere Confirm".Translate(), "取消".Translate(), "确定".Translate(), 2, null, () =>
             {
                 DysonSpherePatch.InitCurrentDysonSphere(-1);
             })
         );
         y += 36f;
-        MyWindow.AddText(x, y, tab3, "Click to dismantle selected layer", 16, "text-dismantle-layer");
+        MyWindow.AddText(x, y, tab4, "Click to dismantle selected layer", 16, "text-dismantle-layer");
         y += 26f;
         for (var i = 0; i < 10; i++)
         {
             var id = i + 1;
-            var btn = wnd.AddFlatButton(x, y, tab3, id.ToString(), 12, "dismantle-layer-" + id, () =>
+            var btn = wnd.AddFlatButton(x, y, tab4, id.ToString(), 12, "dismantle-layer-" + id, () =>
                 UIMessageBox.Show("Dismantle selected layer".Translate(), "Dismantle selected layer Confirm".Translate(), "取消".Translate(), "确定".Translate(), 2, null, () =>
                 {
                     DysonSpherePatch.InitCurrentDysonSphere(id);
@@ -213,7 +229,19 @@ public static class UIConfigWindow
                 x += 40f;
             }
         }
-        _dysonTab = tab3;
+        _dysonTab = tab4;
+        
+        var tab5 = wnd.AddTab(_windowTrans, "Combat");
+        x = 10;
+        y = 10;
+        wnd.AddButton(x, y, tab5, "Open Dark Fog Communicator", 16, "button-open-df-communicator", () =>
+        {
+            if (!(GameMain.data?.gameDesc.isCombatMode ?? false)) return;
+            var uiGame = UIRoot.instance.uiGame;
+            uiGame.ShutPlayerInventory();
+            uiGame.CloseEnemyBriefInfo();
+            uiGame.OpenCommunicatorWindow(5);
+        });
     }
 
     private static void UpdateUI()

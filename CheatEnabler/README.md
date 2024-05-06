@@ -4,6 +4,11 @@
 #### 添加一些作弊功能，同时屏蔽异常检测
 
 ## Changlog
+* 2.3.15
+  + New features:
+    - `Instant teleport (like that in Sandbox mode)`
+    - `Mecha and Drones/Fleets invicible`
+    - `Buildings invicible`
 * 2.3.14
   + Remove default shortcut key for `No condition build` and `No collision`, to avoid misoperation. You can still set them in system settings window manually if needed.
   + Fix translation issue.
@@ -117,11 +122,15 @@
     + Fast Mining
     + Pump Anywhere
     + Terraform without enought soil piles
+    + Instant teleport (like that in Sandbox mode)
   + Dyson Sphere:
     + Skip bullet period
     + Skip absorption period
     + Quick absorb
     + Eject anyway
+  + Combat:
+    + Mecha and Drones/Fleets invicible
+    + Buildings invicible
 
 ## Notes
 * Please upgrade `BepInEx` 5.4.21 or later if using with [BlueprintTweaks](https://dsp.thunderstore.io/package/kremnev8/BlueprintTweaks/) to avoid possible conflicts.
@@ -134,6 +143,11 @@
 * [Multifunction_mod](https://github.com/blacksnipebiu/Multifunction_mod): Some cheat functions
 
 ## 更新日志
+* 2.3.15
+  + 新功能：
+    - `快速传送(和沙盒模式一样)`
+    - `机甲和战斗无人机无敌`
+    - `建筑无敌`
 * 2.3.14
   + 移除了`无条件建造`和`无碰撞`的默认快捷键，以避免误操作。如有需要请手动在系统选项窗口中设置。
   + 修复了翻译问题。
@@ -247,11 +261,15 @@
     + 高速采集
     + 平地抽水
     + 沙土不够时依然可以整改地形
+    + 快速传送(和沙盒模式一样)
   + 戴森球：
     + 跳过子弹阶段
     + 跳过吸收阶段
     + 快速吸收
     + 全球弹射
+  + 战斗：
+    + 机甲和战斗无人机无敌
+    + 建筑无敌
 
 ## 注意事项
 * 如果和[BlueprintTweaks](https://dsp.thunderstore.io/package/kremnev8/BlueprintTweaks/)一起使用，请升级`BepInEx`到5.4.21或更高版本，以避免可能的冲突

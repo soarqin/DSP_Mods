@@ -21,6 +21,7 @@ public static class FactoryPatch
     public static ConfigEntry<bool> TreatStackingAsSingleEnabled;
     public static ConfigEntry<bool> QuickBuildAndDismantleLabsEnabled;
     public static ConfigEntry<bool> ProtectVeinsFromExhaustionEnabled;
+    public static ConfigEntry<bool> DoNotRenderEntitiesEnabled;
 
     private static Harmony _factoryPatch;
 
@@ -37,6 +38,7 @@ public static class FactoryPatch
         TreatStackingAsSingleEnabled.SettingChanged += (_, _) => TreatStackingAsSingle.Enable(TreatStackingAsSingleEnabled.Value);
         QuickBuildAndDismantleLabsEnabled.SettingChanged += (_, _) => QuickBuildAndDismantleLab.Enable(QuickBuildAndDismantleLabsEnabled.Value);
         ProtectVeinsFromExhaustionEnabled.SettingChanged += (_, _) => ProtectVeinsFromExhaustion.Enable(ProtectVeinsFromExhaustionEnabled.Value);
+        DoNotRenderEntitiesEnabled.SettingChanged += (_, _) => DoNotRenderEntities.Enable(DoNotRenderEntitiesEnabled.Value);
         UnlimitInteractive.Enable(UnlimitInteractiveEnabled.Value);
         RemoveSomeConditionBuild.Enable(RemoveSomeConditionEnabled.Value);
         NightLight.Enable(NightLightEnabled.Value);
@@ -48,6 +50,7 @@ public static class FactoryPatch
         TreatStackingAsSingle.Enable(TreatStackingAsSingleEnabled.Value);
         QuickBuildAndDismantleLab.Enable(QuickBuildAndDismantleLabsEnabled.Value);
         ProtectVeinsFromExhaustion.Enable(ProtectVeinsFromExhaustionEnabled.Value);
+        DoNotRenderEntities.Enable(DoNotRenderEntitiesEnabled.Value);
 
         _factoryPatch ??= Harmony.CreateAndPatchAll(typeof(FactoryPatch));
     }
@@ -65,6 +68,7 @@ public static class FactoryPatch
         TreatStackingAsSingle.Enable(false);
         QuickBuildAndDismantleLab.Enable(false);
         ProtectVeinsFromExhaustion.Enable(false);
+        DoNotRenderEntities.Enable(false);
 
         _factoryPatch?.UnpatchSelf();
         _factoryPatch = null;
@@ -739,7 +743,8 @@ public static class FactoryPatch
             var jmp0 = generator.DefineLabel();
             var jmp1 = generator.DefineLabel();
             matcher.InsertAndAdvance(
-                new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(VFInput), nameof(VFInput._ignoreGrid))),
+                new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(VFInput), nameof(VFInput._switchModelStyle))),
+                new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(VFInput.InputValue), nameof(VFInput.InputValue.pressing))),
                 new CodeInstruction(OpCodes.Brfalse, jmp0),
                 new CodeInstruction(OpCodes.Ldarg_0),
                 new CodeInstruction(OpCodes.Ldarg_0),
@@ -1460,6 +1465,64 @@ public static class FactoryPatch
 
             __result = consumeCount;
             return false;
+        }
+    }
+
+    private static class DoNotRenderEntities
+    {
+        private static Harmony _patch;
+        
+        public static void Enable(bool enable)
+        {
+            if (enable)
+            {
+                _patch ??= Harmony.CreateAndPatchAll(typeof(DoNotRenderEntities));
+                return;
+            }
+
+            _patch?.UnpatchSelf();
+            _patch = null;
+        }
+        
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(ObjectRenderer), nameof(ObjectRenderer.Render))]
+        [HarmonyPatch(typeof(DynamicRenderer), nameof(DynamicRenderer.Render))]
+        private static bool ObjectRenderer_Render_Prefix(GPUInstancingManager __instance)
+        {
+            return false;
+        }
+        
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(GPUInstancingManager), nameof(GPUInstancingManager.Render))]
+        private static void FactoryModel_DrawInstancedBatches_Postfix(GPUInstancingManager __instance)
+        {
+            __instance.renderEntity = true;
+        }
+        
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(RaycastLogic), nameof(RaycastLogic.GameTick))]
+        private static IEnumerable<CodeInstruction> RaycastLogic_GameTick_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Ldc_I4_0),
+                new CodeMatch(OpCodes.Brtrue));
+            var branch1 = (Label)matcher.Advance(1).Operand;
+            matcher.Start().MatchForward(false,
+                new CodeMatch(OpCodes.Call),
+                new CodeMatch(ci => ci.IsStloc()),
+                new CodeMatch(OpCodes.Call),
+                new CodeMatch(ci => ci.IsStloc()),
+                new CodeMatch(OpCodes.Call),
+                new CodeMatch(ci => ci.IsStloc()),
+                new CodeMatch(ci => ci.IsLdloc()),
+                new CodeMatch(ci => ci.Branches(out _)),
+                new CodeMatch(OpCodes.Ldarg_0)
+            ).Advance(8).Insert(
+                new CodeInstruction(OpCodes.Ldloc_S, 45),
+                new CodeInstruction(OpCodes.Brfalse, branch1)
+            );
+            return matcher.InstructionEnumeration();
         }
     }
 }
