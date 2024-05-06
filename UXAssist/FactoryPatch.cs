@@ -52,6 +52,7 @@ public static class FactoryPatch
         QuickBuildAndDismantleLab.Enable(QuickBuildAndDismantleLabsEnabled.Value);
         ProtectVeinsFromExhaustion.Enable(ProtectVeinsFromExhaustionEnabled.Value);
         DoNotRenderEntities.Enable(DoNotRenderEntitiesEnabled.Value);
+        DragBuildPowerPoles.Enable(true);
 
         _factoryPatch ??= Harmony.CreateAndPatchAll(typeof(FactoryPatch));
     }
@@ -70,6 +71,7 @@ public static class FactoryPatch
         QuickBuildAndDismantleLab.Enable(false);
         ProtectVeinsFromExhaustion.Enable(false);
         DoNotRenderEntities.Enable(false);
+        DragBuildPowerPoles.Enable(false);
 
         _factoryPatch?.UnpatchSelf();
         _factoryPatch = null;
@@ -1527,7 +1529,6 @@ public static class FactoryPatch
         }
     }
     
-
     private static class DragBuildPowerPoles
     {
         private static Harmony _patch;
