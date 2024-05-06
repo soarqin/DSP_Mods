@@ -33,7 +33,8 @@ public static class BeltSignal
         }
     }
 
-    [HarmonyPostfix, HarmonyPriority(Priority.Last), HarmonyPatch(typeof(VFPreload), "InvokeOnLoadWorkEnded")]
+    [HarmonyPostfix, HarmonyPriority(Priority.Last)]
+    [HarmonyPatch(typeof(VFPreload), "InvokeOnLoadWorkEnded")]
     private static void VFPreload_InvokeOnLoadWorkEnded_Postfix()
     {
         if (_initialized) return;

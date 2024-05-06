@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection.Emit;
 using BepInEx.Configuration;
 using HarmonyLib;
@@ -1522,6 +1523,173 @@ public static class FactoryPatch
                 new CodeInstruction(OpCodes.Ldloc_S, 45),
                 new CodeInstruction(OpCodes.Brfalse, branch1)
             );
+            return matcher.InstructionEnumeration();
+        }
+    }
+    
+
+    private static class DragBuildPowerPoles
+    {
+        private static Harmony _patch;
+        private static readonly List<bool> OldDragBuild = [];
+        private static readonly List<Vector2> OldDragBuildDist = [];
+        private static readonly int[] PowerPoleIds = [2201, 2202, 2212];
+
+        public static void Enable(bool enable)
+        {
+            if (enable)
+            {
+                _patch ??= Harmony.CreateAndPatchAll(typeof(DragBuildPowerPoles));
+                FixProto();
+                return;
+            }
+
+            UnfixProto();
+            _patch?.UnpatchSelf();
+            _patch = null;
+        }
+        
+        private static bool IsPowerPole(int id)
+        {
+            return PowerPoleIds.Contains(id);
+        }
+
+        private static void FixProto()
+        {
+            if (DSPGame.IsMenuDemo) return;
+            OldDragBuild.Clear();
+            OldDragBuildDist.Clear();
+            foreach (var id in PowerPoleIds)
+            {
+                var powerPole = LDB.items.Select(id);
+                if (powerPole?.prefabDesc == null) return;
+                OldDragBuild.Add(powerPole.prefabDesc.dragBuild);
+                OldDragBuildDist.Add(powerPole.prefabDesc.dragBuildDist);
+                powerPole.prefabDesc.dragBuild = true;
+                var distance = (id == 2201 ? LDB.items.Select(2202) : powerPole).prefabDesc.powerConnectDistance - 0.72f;
+                powerPole.prefabDesc.dragBuildDist = new Vector2(distance, distance);
+            }
+        }
+
+        private static void UnfixProto()
+        {
+            if (_patch == null || OldDragBuild.Count < 3 || DSPGame.IsMenuDemo) return;
+            var i = 0;
+            foreach (var id in PowerPoleIds)
+            {
+                var powerPole = LDB.items.Select(id);
+                if (powerPole?.prefabDesc != null)
+                {
+                    powerPole.prefabDesc.dragBuild = OldDragBuild[i];
+                    powerPole.prefabDesc.dragBuildDist = OldDragBuildDist[i];
+                }
+                i++;
+            }
+            OldDragBuild.Clear();
+            OldDragBuildDist.Clear();
+        }
+
+        [HarmonyPostfix, HarmonyPriority(Priority.Last)]
+        [HarmonyPatch(typeof(GameMain), nameof(GameMain.Begin))]
+        private static void GameMain_Begin_Postfix()
+        {
+            FixProto();
+        }
+        [HarmonyPostfix, HarmonyPriority(Priority.Last)]
+        [HarmonyPatch(typeof(GameMain), nameof(GameMain.End))]
+        private static void GameMain_End_Postfix()
+        {
+            UnfixProto();
+        }
+        
+        private static int PlanetGridSnapDotsNonAllocNotAligned(PlanetGrid planetGrid, Vector3 begin, Vector3 end, Vector2 interval, float yaw, float planetRadius, float gap, Vector3[] snaps)
+        {
+            begin = begin.normalized;
+            end = end.normalized;
+            var intervalAll = interval.x;
+            var radTotal = Mathf.Acos(Vector3.Dot(begin, end));
+            var distTotal = radTotal * planetRadius;
+            var ignoreGrid = VFInput._ignoreGrid;
+
+            var maxCount = snaps.Length;
+            var finalCount = 0;
+            var maxT = 1f - intervalAll * 0.5f / distTotal;
+            while (finalCount < maxCount)
+            {
+                var t = finalCount * intervalAll / distTotal;
+                if (ignoreGrid)
+                    snaps[finalCount] = Vector3.Slerp(begin, end, t);
+                else
+                    snaps[finalCount] = planetGrid.SnapTo(Vector3.Slerp(begin, end, t));
+                finalCount++;
+                if (t > maxT) break;
+            }
+            return finalCount;
+        }
+
+        private static int PlanetAuxDataSnapDotsNonAllocNotAligned(PlanetAuxData aux, Vector3 begin, Vector3 end, Vector2 interval, float yaw, float gap, Vector3[] snaps)
+        {
+            var num = 0;
+            var magnitude = begin.magnitude;
+            if (aux.activeGrid != null)
+            {
+                num = PlanetGridSnapDotsNonAllocNotAligned(aux.activeGrid, begin, end, interval, yaw, aux.planet.realRadius, gap, snaps);
+                for (var i = 0; i < num; i++)
+                {
+                    snaps[i] *= magnitude;
+                }
+            }
+            else
+            {
+                snaps[num++] = aux.Snap(begin, false);
+            }
+            return num;
+        }
+
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(BuildTool_Click), nameof(BuildTool_Click.DeterminePreviews))]
+        private static IEnumerable<CodeInstruction> BuildTool_Click_DeterminePreviews_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            var label1 = generator.DefineLabel();
+            var label2 = generator.DefineLabel();
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(PlanetAuxData), nameof(PlanetAuxData.SnapDotsNonAlloc)))
+            );
+            matcher.Labels.Add(label1);
+            matcher.InstructionAt(1).labels.Add(label2);
+            matcher.InsertAndAdvance(
+                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(VFInput), nameof(VFInput.control))),
+                new CodeInstruction(OpCodes.Brtrue, label1),
+                new CodeInstruction(OpCodes.Ldarg_0),
+                new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(BuildTool_Click), nameof(BuildTool_Click.handItem))),
+                new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(ItemProto), nameof(ItemProto.ID))),
+                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(DragBuildPowerPoles), nameof(IsPowerPole))),
+                new CodeInstruction(OpCodes.Brfalse, label1),
+                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(DragBuildPowerPoles), nameof(PlanetAuxDataSnapDotsNonAllocNotAligned))),
+                new CodeInstruction(OpCodes.Br, label2)
+            ).Advance(1).MatchForward(false,
+                new CodeMatch(ci => ci.IsLdloc()),
+                new CodeMatch(OpCodes.Ldarg_0),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(BuildTool_Click), nameof(BuildTool_Click.handItem))),
+                new CodeMatch(OpCodes.Stfld, AccessTools.Field(typeof(BuildPreview), nameof(BuildPreview.item))),
+                new CodeMatch(ci => ci.IsLdloc()),
+                new CodeMatch(OpCodes.Ldarg_0),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(BuildTool_Click), nameof(BuildTool_Click.handPrefabDesc))),
+                new CodeMatch(OpCodes.Stfld, AccessTools.Field(typeof(BuildPreview), nameof(BuildPreview.desc)))
+            ).Advance(2).InsertAndAdvance(new CodeInstruction(OpCodes.Ldloc_S, 6)).SetInstructionAndAdvance(Transpilers.EmitDelegate((BuildTool_Click click, int i) =>
+            {
+                if ((i & 1) == 0) return click.handItem;
+                var id = click.handItem.ID;
+                if (id != 2201 && id != 2202) return click.handItem;
+                return LDB.items.Select(id ^ 3);
+            })).Advance(3).InsertAndAdvance(new CodeInstruction(OpCodes.Ldloc_S, 6)).SetInstructionAndAdvance(Transpilers.EmitDelegate((BuildTool_Click click, int i) =>
+            {
+                if ((i & 1) == 0) return click.handPrefabDesc;
+                var id = click.handItem.ID;
+                if (id != 2201 && id != 2202) return click.handPrefabDesc;
+                return LDB.items.Select(id ^ 3).prefabDesc;
+            }));
             return matcher.InstructionEnumeration();
         }
     }
