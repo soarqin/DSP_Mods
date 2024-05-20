@@ -413,4 +413,30 @@ public class UXAssist : BaseUnityPlugin
     {
         return false;
     }
+    
+    // Do not check for overflow when try to send hand items into storages
+    [HarmonyTranspiler]
+    [HarmonyPatch(typeof(UIStationStorage), nameof(UIStationStorage.OnItemIconMouseDown))]
+    private static IEnumerable<CodeInstruction> UIStationStorage_OnItemIconMouseDown_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+    {
+        var matcher = new CodeMatcher(instructions, generator);
+        matcher.MatchForward(false,
+            new CodeMatch(OpCodes.Call, AccessTools.PropertyGetter(typeof(LDB), nameof(LDB.items))),
+            new CodeMatch(OpCodes.Ldarg_0)
+        );
+        var pos = matcher.Pos;
+        matcher.MatchForward(false,
+            new CodeMatch(OpCodes.Ldloc_S),
+            new CodeMatch(OpCodes.Stloc_S)
+        );
+        var inst = matcher.InstructionAt(1).Clone();
+        var pos2 = matcher.Pos + 2;
+        matcher.Start().Advance(pos).RemoveInstructions(pos2 - pos)
+            .Insert(
+                new CodeInstruction(OpCodes.Ldloc_1),
+                new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Player), nameof(Player.inhandItemCount))),
+                inst
+            );
+        return matcher.InstructionEnumeration();
+    }
 }
