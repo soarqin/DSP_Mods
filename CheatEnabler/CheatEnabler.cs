@@ -28,6 +28,10 @@ public class CheatEnabler : BaseUnityPlugin
             "Belt signal generator");
         FactoryPatch.BeltSignalNumberAltFormat = Config.Bind("Build", "BeltSignalNumberFormat", false,
             "Belt signal number format alternative format (AAAA=generation speed in minutes, B=proliferate points, C=stack count):\n  AAAABC by default\n  BCAAAA as alternative");
+        FactoryPatch.BeltSignalCountGenEnabled = Config.Bind("Build", "BeltSignalCountGenerations", true,
+            "Belt signal count generations as production in statistics");
+        FactoryPatch.BeltSignalCountRemEnabled = Config.Bind("Build", "BeltSignalCountRemovals", true,
+            "Belt signal count removals as comsumption in statistics");
         FactoryPatch.BeltSignalCountRecipeEnabled = Config.Bind("Build", "BeltSignalCountRecipe", false,
             "Belt signal count all raws and intermediates in statistics");
         FactoryPatch.RemovePowerSpaceLimitEnabled = Config.Bind("Build", "RemovePowerDistanceLimit", false,

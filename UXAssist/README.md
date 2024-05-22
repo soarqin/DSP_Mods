@@ -4,6 +4,18 @@
 #### 一些提升用户体验的功能和补丁
 
 ## Changlog
+* 1.0.24
+  + Changes to `Do not render factory entities (except belts and sorters)`
+    - Add shortcut key in config panel to toggle this function
+    - Can click on both belts and sorters now
+  + New feature: `Drag building power poles in maximum connection range`
+  + New feature: `Allow overflow for Logistic Stations and Advanced Mining Machines`
+    - Allow overflow when trying to insert in-hand items
+    - Allow `Enhanced control for logistic storage limits` to exceed tech capacity limits
+    - Remove logistic strorage limit check on loading game
+  + New feature: `Increase maximum power usage in Logistic Stations and Advanced Mining Machines`
+    - Logistic Stations: Increased max charging power to 3GW(ILS) and 600MW(PLS) (10x of original)
+    - Advanced Mining Machines: Increased max mining speed to 1000%
 * 1.0.23
   + New features:
     - `Do not render factory entities (except belts and sorters)`
@@ -132,7 +144,14 @@
       - When reach the protection value, veins/oils steeps will not be mined/extracted any longer.
       - Close this function to resume mining and pumping, usually when you have enough level on `Veins Utilization`
     - Do not render factory entities (except belts and sorters)
-      - This also makes players click though factory entities but belts
+      - This also makes players click though factory entities but belts and sorters
+    - Allow overflow for Logistic Stations and Advanced Mining Machines
+      - Allow overflow when trying to insert in-hand items
+      - Allow `Enhanced control for logistic storage limits` to exceed tech capacity limits
+      - Remove logistic strorage limit check on loading game
+    - Increase maximum power usage in Logistic Stations and Advanced Mining Machines
+      - Logistic Stations: Increased max charging power to 3GW(ILS) and 600MW(PLS) (10x of original)
+      - Advanced Mining Machines: Increased max mining speed to 1000%
     - Re-intialize planet (without reseting veins)
     - Quick dismantle all buildings (without drops)
     - Quick build Orbital Collectors
@@ -169,6 +188,17 @@
 * [CruiseAssist](https://dsp.thunderstore.io/package/tanu/CruiseAssist/) and its extension [AutoPilot](https://dsp.thunderstore.io/package/tanu/AutoPilot/): `Auto navigation on sailings` and `Auto-cruise` implementations
 
 ## 更新日志
+* 1.0.24
+  + `不渲染工厂建筑实体(除了传送带和分拣器)`的改动
+    - 在配置面板中添加了一个快捷键来切换此功能
+    - 现在也可以点击到分拣器了
+  + 新功能：`允许物流塔和大型采矿机物品溢出`
+    - 当尝试塞入手中物品时允许溢出
+    - 允许`物流塔存储数量限制控制改进`超过科技容量限制
+    - 在加载游戏时移除物流塔容量限制检查
+  + 新功能：`提升物流塔和大型采矿机的最大功耗`
+    - 物流塔：将最大充电功率提高到3GW(星际物流塔)和600MW(行星物流塔)（原来的10倍）
+    - 大型采矿机：将最大采矿速度提高到1000%
 * 1.0.23
   + 新功能：
     - `不渲染工厂建筑实体(除了传送带和分拣器)`
@@ -298,6 +328,14 @@
       - 当达到保护值时，矿脉和油井将不再被开采。
       - 关闭此功能以恢复开采，一般是当你在`矿物利用`上有足够的等级时。
     - 不渲染工厂建筑实体(除了传送带和分拣器)
+      - 这也使玩家可以点穿工厂实体直接点到传送带和分拣器
+    - 允许物流塔和大型采矿机物品溢出
+      - 当尝试塞入手中物品时允许溢出
+      - 允许`物流塔存储数量限制控制改进`超过科技容量限制
+      - 在加载游戏时移除物流塔容量限制检查
+    - 提升物流塔和大型采矿机的最大功耗
+      - 物流塔：将最大充电功率提高到3GW(星际物流塔)和600MW(行星物流塔)（原来的10倍）
+      - 大型采矿机：将最大采矿速度提高到1000%
     - 初始化本行星（不重置矿脉）
     - 快速拆除所有建筑（不掉落）
     - 快速建造轨道采集器

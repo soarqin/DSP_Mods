@@ -36,6 +36,8 @@ public static class UIConfigWindow
         I18N.Add("Belt signal alt format tips",
             "Belt signal number format alternative format:\n  AAAABC by default\n  BCAAAA as alternative\nAAAA=generation speed in minutes, B=proliferate points, C=stack count",
             "传送带信号物品生成数量格式：\n  默认为AAAABC\n  勾选替换为BCAAAA\nAAAA=生成速度，B=增产点数，C=堆叠数量");
+        I18N.Add("Count generations as production in statistics", "Count generations as production in statistics", "统计信息里将生成计算为产物");
+        I18N.Add("Count removals as consumption in statistics", "Count removals as consumption in statistics", "统计信息里将移除计算为消耗");
         I18N.Add("Count all raws and intermediates in statistics","Count all raw materials in statistics", "统计信息里计算所有原料和中间产物");
         I18N.Add("Remove power space limit", "Remove space limit for winds and geothermals", "移除风力发电和地热发电的间距限制");
         I18N.Add("Boost wind power", "Boost wind power(x100,000)", "提升风力发电(x100,000)");
@@ -97,11 +99,15 @@ public static class UIConfigWindow
         MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.NoCollisionEnabled, "No collision");
         y += 36f;
         MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.BeltSignalGeneratorEnabled, "Belt signal generator");
-        y += 26f;
         x += 26f;
-        var cb = MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.BeltSignalCountRecipeEnabled, "Count all raws and intermediates in statistics", 13);
         y += 26f;
-        var cb2 = MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.BeltSignalNumberAltFormat, "Belt signal alt format", 13);
+        var cb1 = MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.BeltSignalCountGenEnabled, "Count generations as production in statistics", 13);
+        y += 26f;
+        var cb2 = MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.BeltSignalCountRemEnabled, "Count removals as consumption in statistics", 13);
+        y += 26f;
+        var cb3 = MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.BeltSignalCountRecipeEnabled, "Count all raws and intermediates in statistics", 13);
+        y += 26f;
+        var cb4 = MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.BeltSignalNumberAltFormat, "Belt signal alt format", 13);
         x += 180f;
         y += 6f;
         var tip1 = MyWindow.AddTipsButton(x, y, tab2, "Belt signal alt format", "Belt signal alt format tips", "belt-signal-alt-format-tips");
@@ -188,8 +194,10 @@ public static class UIConfigWindow
         void OnBeltSignalChanged()
         {
             var on = FactoryPatch.BeltSignalGeneratorEnabled.Value;
-            cb.gameObject.SetActive(on);
+            cb1.gameObject.SetActive(on);
             cb2.gameObject.SetActive(on);
+            cb3.gameObject.SetActive(on);
+            cb4.gameObject.SetActive(on);
             tip1.gameObject.SetActive(on);
         }
     }

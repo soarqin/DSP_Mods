@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
 using BepInEx.Configuration;
+using CommonAPI.Systems;
 using HarmonyLib;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UXAssist.Common;
 
 namespace UXAssist;
 
@@ -23,11 +25,23 @@ public static class FactoryPatch
     public static ConfigEntry<bool> QuickBuildAndDismantleLabsEnabled;
     public static ConfigEntry<bool> ProtectVeinsFromExhaustionEnabled;
     public static ConfigEntry<bool> DoNotRenderEntitiesEnabled;
+    public static ConfigEntry<bool> DragBuildPowerPolesEnabled;
+    public static ConfigEntry<bool> AllowOverflowInLogisticsEnabled;
+    private static PressKeyBind _doNotRenderEntitiesKey;
 
     private static Harmony _factoryPatch;
 
     public static void Init()
     {
+        _doNotRenderEntitiesKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
+            {
+                key = new CombineKey(0, 0, ECombineKeyAction.OnceClick, true),
+                conflictGroup = KeyBindConflict.MOVEMENT | KeyBindConflict.FLYING | KeyBindConflict.SAILING | KeyBindConflict.BUILD_MODE_1 | KeyBindConflict.KEYBOARD_KEYBIND,
+                name = "ToggleDoNotRenderEntities",
+                canOverride = true
+            }
+        );
+        I18N.Add("KEYToggleDoNotRenderEntities", "Toggle Do Not Render Factory Entities", "切换不渲染工厂建筑实体");
         UnlimitInteractiveEnabled.SettingChanged += (_, _) => UnlimitInteractive.Enable(UnlimitInteractiveEnabled.Value);
         RemoveSomeConditionEnabled.SettingChanged += (_, _) => RemoveSomeConditionBuild.Enable(RemoveSomeConditionEnabled.Value);
         NightLightEnabled.SettingChanged += (_, _) => NightLight.Enable(NightLightEnabled.Value);
@@ -40,6 +54,8 @@ public static class FactoryPatch
         QuickBuildAndDismantleLabsEnabled.SettingChanged += (_, _) => QuickBuildAndDismantleLab.Enable(QuickBuildAndDismantleLabsEnabled.Value);
         ProtectVeinsFromExhaustionEnabled.SettingChanged += (_, _) => ProtectVeinsFromExhaustion.Enable(ProtectVeinsFromExhaustionEnabled.Value);
         DoNotRenderEntitiesEnabled.SettingChanged += (_, _) => DoNotRenderEntities.Enable(DoNotRenderEntitiesEnabled.Value);
+        DragBuildPowerPolesEnabled.SettingChanged += (_, _) => DragBuildPowerPoles.Enable(DragBuildPowerPolesEnabled.Value);
+        AllowOverflowInLogisticsEnabled.SettingChanged += (_, _) => AllowOverflowInLogistics.Enable(AllowOverflowInLogisticsEnabled.Value);
         UnlimitInteractive.Enable(UnlimitInteractiveEnabled.Value);
         RemoveSomeConditionBuild.Enable(RemoveSomeConditionEnabled.Value);
         NightLight.Enable(NightLightEnabled.Value);
@@ -52,7 +68,8 @@ public static class FactoryPatch
         QuickBuildAndDismantleLab.Enable(QuickBuildAndDismantleLabsEnabled.Value);
         ProtectVeinsFromExhaustion.Enable(ProtectVeinsFromExhaustionEnabled.Value);
         DoNotRenderEntities.Enable(DoNotRenderEntitiesEnabled.Value);
-        DragBuildPowerPoles.Enable(true);
+        DragBuildPowerPoles.Enable(DragBuildPowerPolesEnabled.Value);
+        AllowOverflowInLogistics.Enable(AllowOverflowInLogisticsEnabled.Value);
 
         _factoryPatch ??= Harmony.CreateAndPatchAll(typeof(FactoryPatch));
     }
@@ -72,9 +89,16 @@ public static class FactoryPatch
         ProtectVeinsFromExhaustion.Enable(false);
         DoNotRenderEntities.Enable(false);
         DragBuildPowerPoles.Enable(false);
+        AllowOverflowInLogistics.Enable(false);
 
         _factoryPatch?.UnpatchSelf();
         _factoryPatch = null;
+    }
+
+    public static void OnUpdate()
+    {
+        if (_doNotRenderEntitiesKey.keyValue)
+            DoNotRenderEntitiesEnabled.Value = !DoNotRenderEntitiesEnabled.Value;
     }
 
     [HarmonyTranspiler]
@@ -871,19 +895,39 @@ public static class FactoryPatch
             int delta;
             if (UpdateKeyPressed(KeyCode.LeftArrow))
             {
-                delta = -10;
+                if (VFInput.control)
+                    delta = -100000;
+                else if (VFInput.alt)
+                    delta = -1000;
+                else
+                    delta = -10;
             }
             else if (UpdateKeyPressed(KeyCode.RightArrow))
             {
-                delta = 10;
+                if (VFInput.control)
+                    delta = 100000;
+                else if (VFInput.alt)
+                    delta = 1000;
+                else
+                    delta = 10;
             }
             else if (UpdateKeyPressed(KeyCode.DownArrow))
             {
-                delta = -100;
+                if (VFInput.control)
+                    delta = -1000000;
+                else if (VFInput.alt)
+                    delta = -10000;
+                else
+                    delta = -100;
             }
             else if (UpdateKeyPressed(KeyCode.UpArrow))
             {
-                delta = 100;
+                if (VFInput.control)
+                    delta = 1000000;
+                else if (VFInput.alt)
+                    delta = 10000;
+                else
+                    delta = 100;
             }
             else
             {
@@ -906,20 +950,26 @@ public static class FactoryPatch
                 }
                 else
                 {
-                    var modelProto = LDB.models.Select(stationStorage.stationWindow.factory.entityPool[station.entityId].modelIndex);
-                    var itemCountMax = 0;
-                    if (modelProto != null)
+                    int itemCountMax;
+                    if (AllowOverflowInLogisticsEnabled.Value)
                     {
-                        itemCountMax = modelProto.prefabDesc.stationMaxItemCount;
+                        itemCountMax = 1000000000;
                     }
-
-                    itemCountMax += station.isStellar ? GameMain.history.remoteStationExtraStorage : GameMain.history.localStationExtraStorage;
+                    else
+                    {
+                        var modelProto = LDB.models.Select(stationStorage.stationWindow.factory.entityPool[station.entityId].modelIndex);
+                        itemCountMax = 0;
+                        if (modelProto != null)
+                        {
+                            itemCountMax = modelProto.prefabDesc.stationMaxItemCount;
+                        }
+                        itemCountMax += station.isStellar ? GameMain.history.remoteStationExtraStorage : GameMain.history.localStationExtraStorage;
+                    }
                     if (newMax > itemCountMax)
                     {
                         newMax = itemCountMax;
                     }
                 }
-
                 storage.max = newMax;
                 _skipNextEvent = oldMax / 100 != newMax / 100;
                 break;
@@ -1490,11 +1540,18 @@ public static class FactoryPatch
         [HarmonyPrefix]
         [HarmonyPatch(typeof(ObjectRenderer), nameof(ObjectRenderer.Render))]
         [HarmonyPatch(typeof(DynamicRenderer), nameof(DynamicRenderer.Render))]
-        private static bool ObjectRenderer_Render_Prefix(GPUInstancingManager __instance)
+        private static bool ObjectRenderer_Render_Prefix()
         {
             return false;
         }
-        
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(LabRenderer), nameof(LabRenderer.Render))]
+        private static bool LabRenderer_Render_Prefix()
+        {
+            return false;
+        }
+
         [HarmonyPostfix]
         [HarmonyPatch(typeof(GPUInstancingManager), nameof(GPUInstancingManager.Render))]
         private static void FactoryModel_DrawInstancedBatches_Postfix(GPUInstancingManager __instance)
@@ -1523,6 +1580,8 @@ public static class FactoryPatch
                 new CodeMatch(OpCodes.Ldarg_0)
             ).Advance(8).Insert(
                 new CodeInstruction(OpCodes.Ldloc_S, 45),
+                new CodeInstruction(OpCodes.Ldloc_S, 47),
+                new CodeInstruction(OpCodes.Or),
                 new CodeInstruction(OpCodes.Brfalse, branch1)
             );
             return matcher.InstructionEnumeration();
@@ -1694,4 +1753,47 @@ public static class FactoryPatch
             return matcher.InstructionEnumeration();
         }
     }
+
+    private static class AllowOverflowInLogistics
+    {
+        private static Harmony _patch;
+        
+        public static void Enable(bool enable)
+        {
+            if (enable)
+            {
+                _patch ??= Harmony.CreateAndPatchAll(typeof(AllowOverflowInLogistics));
+                return;
+            }
+
+            _patch?.UnpatchSelf();
+            _patch = null;
+        }
+
+        // Do not check for overflow when try to send hand items into storages
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(UIStationStorage), nameof(UIStationStorage.OnItemIconMouseDown))]
+        private static IEnumerable<CodeInstruction> UIStationStorage_OnItemIconMouseDown_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Call, AccessTools.PropertyGetter(typeof(LDB), nameof(LDB.items))),
+                new CodeMatch(OpCodes.Ldarg_0)
+            );
+            var pos = matcher.Pos;
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Ldloc_S),
+                new CodeMatch(OpCodes.Stloc_S)
+            );
+            var inst = matcher.InstructionAt(1).Clone();
+            var pos2 = matcher.Pos + 2;
+            matcher.Start().Advance(pos).RemoveInstructions(pos2 - pos)
+                .Insert(
+                    new CodeInstruction(OpCodes.Ldloc_1),
+                    new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Player), nameof(Player.inhandItemCount))),
+                    inst
+                );
+            return matcher.InstructionEnumeration();
+        }
+    } 
 }

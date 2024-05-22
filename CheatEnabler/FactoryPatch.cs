@@ -17,6 +17,8 @@ public static class FactoryPatch
     public static ConfigEntry<bool> NoCollisionEnabled;
     public static ConfigEntry<bool> BeltSignalGeneratorEnabled;
     public static ConfigEntry<bool> BeltSignalNumberAltFormat;
+    public static ConfigEntry<bool> BeltSignalCountGenEnabled;
+    public static ConfigEntry<bool> BeltSignalCountRemEnabled;
     public static ConfigEntry<bool> BeltSignalCountRecipeEnabled;
     public static ConfigEntry<bool> RemovePowerSpaceLimitEnabled;
     public static ConfigEntry<bool> BoostWindPowerEnabled;
@@ -837,7 +839,7 @@ public static class FactoryPatch
                             int itemId;
                             if ((itemId = cargoPath.TryPickItem(belt.segIndex + belt.segPivotOffset - 5, 12, out var stack, out _)) > 0)
                             {
-                                consumeRegister[itemId] += stack;
+                                if (BeltSignalCountRemEnabled.Value) consumeRegister[itemId] += stack;
                             }
 
                             continue;
@@ -894,7 +896,7 @@ public static class FactoryPatch
                             var inc = beltSignal.Inc;
                             if (!cargoPath.TryInsertItem(belt.segIndex + belt.segPivotOffset, signalId, stack, inc)) continue;
                             if (hasSpeedLimit) beltSignal.Progress -= 3600;
-                            productRegister[signalId] += stack;
+                            if (BeltSignalCountGenEnabled.Value) productRegister[signalId] += stack;
                             if (!countRecipe) continue;
                             var sources = beltSignal.Sources;
                             if (sources == null) continue;
@@ -1275,5 +1277,4 @@ public static class FactoryPatch
             return matcher.InstructionEnumeration();
         }
     }
-
 }

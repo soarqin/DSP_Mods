@@ -4,6 +4,10 @@
 #### 添加一些作弊功能，同时屏蔽异常检测
 
 ## Changlog
+* 2.3.16
+  + Add 2 options to `Belt signal item generation`:
+    - `Count generations as production in statistics`
+    - `Count removals as consumption in statistics`
 * 2.3.15
   + New features:
     - `Instant teleport (like that in Sandbox mode)`
@@ -15,10 +19,10 @@
 * 2.3.13
   + Fix a bug that shortcuts are not working and have display issue on settings window. 
 * 2.3.12
-  + Add a shortcut to toggle `No collision`(Alt+W by default), you can modify the shortcut on system settings window.
+  + Add a shortcut to toggle `No collision`, you can modify the shortcut on system settings window.
   + Add realtime tips when toggling `No condition build` and `No collision` with shortcuts.
 * 2.3.11
-  + Add a shortcut to toggle `No condition build`(Alt+Q by default), you can modify the shortcut on system settings window. This depends on [UXAssist](https://dsp.thunderstore.io/package/soarqin/UXAssist) 1.0.15 or later.
+  + Add a shortcut to toggle `No condition build`, you can modify the shortcut on system settings window. This depends on [UXAssist](https://dsp.thunderstore.io/package/soarqin/UXAssist) 1.0.15 or later.
 * 2.3.10
   + Fix following functions not working in new game updates:
     - `Pump Anywhere`
@@ -113,6 +117,8 @@
     + Build without condition
     + No collision
     + Belt signal item generation
+      - Count generations as production in statistics
+      - Count removals as consumption in statistics
       - Count all raws and intermediates in statistics
       - Belt signal alt format
     + Remove space limit between wind turbines and solar panels
@@ -143,6 +149,10 @@
 * [Multifunction_mod](https://github.com/blacksnipebiu/Multifunction_mod): Some cheat functions
 
 ## 更新日志
+* 2.3.16
+  + 为`传送带信号物品生成`添加了两个选项：
+    - `统计信息里将生成计算为产物`
+    - `统计信息里将移除计算为消耗`
 * 2.3.15
   + 新功能：
     - `快速传送(和沙盒模式一样)`
@@ -252,6 +262,8 @@
     + 无条件建造
     + 无碰撞
     + 传送带信号物品生成
+      - 统计信息里将生成计算为产物
+      - 统计信息里将移除计算为消耗
       - 统计面板中计算所有原材料和中间产物
       - 传送带信号替换格式
     + 风力发电机和太阳能板无间距限制

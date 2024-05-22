@@ -76,6 +76,10 @@ public class UXAssist : BaseUnityPlugin
         FactoryPatch.ProtectVeinsFromExhaustion.KeepOilSpeed = Config.Bind("Factory", "KeepOilSpeed", 1.0f, new ConfigDescription("Keep minimal oil speed (< 0.1 to disable)", new AcceptableValueRange<float>(0.0f, 1.0f))).Value;
         FactoryPatch.DoNotRenderEntitiesEnabled = Config.Bind("Factory", "DoNotRenderEntities", false,
             "Do not render factory entities");
+        FactoryPatch.DragBuildPowerPolesEnabled = Config.Bind("Factory", "DragBuildPowerPoles", false,
+            "Drag building power poles in maximum connection range");
+        FactoryPatch.AllowOverflowInLogisticsEnabled = Config.Bind("Factory", "AllowOverflowInLogistics", false,
+            "Allow overflow in logistic stations");
         PlanetFunctions.OrbitalCollectorMaxBuildCount = Config.Bind("Factory", "OCMaxBuildCount", 0, "Maximum Orbital Collectors to build once, set to 0 to build as many as possible");
         PlayerPatch.EnhancedMechaForgeCountControlEnabled = Config.Bind("Player", "EnhancedMechaForgeCountControl", false,
             "Enhanced count control for hand-make, increases maximum of count to 1000, and you can hold Ctrl/Shift/Alt to change the count rapidly");
@@ -136,6 +140,7 @@ public class UXAssist : BaseUnityPlugin
         {
             ToggleConfigWindow();
         }
+        FactoryPatch.OnUpdate();
         PlayerPatch.OnUpdate();
     }
 
@@ -412,31 +417,5 @@ public class UXAssist : BaseUnityPlugin
     private static bool UIDFCommunicatorWindow_Determine_Prefix()
     {
         return false;
-    }
-    
-    // Do not check for overflow when try to send hand items into storages
-    [HarmonyTranspiler]
-    [HarmonyPatch(typeof(UIStationStorage), nameof(UIStationStorage.OnItemIconMouseDown))]
-    private static IEnumerable<CodeInstruction> UIStationStorage_OnItemIconMouseDown_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
-    {
-        var matcher = new CodeMatcher(instructions, generator);
-        matcher.MatchForward(false,
-            new CodeMatch(OpCodes.Call, AccessTools.PropertyGetter(typeof(LDB), nameof(LDB.items))),
-            new CodeMatch(OpCodes.Ldarg_0)
-        );
-        var pos = matcher.Pos;
-        matcher.MatchForward(false,
-            new CodeMatch(OpCodes.Ldloc_S),
-            new CodeMatch(OpCodes.Stloc_S)
-        );
-        var inst = matcher.InstructionAt(1).Clone();
-        var pos2 = matcher.Pos + 2;
-        matcher.Start().Advance(pos).RemoveInstructions(pos2 - pos)
-            .Insert(
-                new CodeInstruction(OpCodes.Ldloc_1),
-                new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Player), nameof(Player.inhandItemCount))),
-                inst
-            );
-        return matcher.InstructionEnumeration();
     }
 }
