@@ -1794,12 +1794,13 @@ public static class FactoryPatch
             );
             var inst = matcher.InstructionAt(1).Clone();
             var pos2 = matcher.Pos + 2;
-            matcher.Start().Advance(pos).RemoveInstructions(pos2 - pos)
-                .Insert(
-                    new CodeInstruction(OpCodes.Ldloc_1),
-                    new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Player), nameof(Player.inhandItemCount))),
-                    inst
-                );
+            matcher.Start().Advance(pos);
+            var labels = matcher.Labels;
+            matcher.RemoveInstructions(pos2 - pos).Insert(
+                new CodeInstruction(OpCodes.Ldloc_1).WithLabels(labels),
+                new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Player), nameof(Player.inhandItemCount))),
+                inst
+            );
             return matcher.InstructionEnumeration();
         }
 
