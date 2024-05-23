@@ -27,6 +27,7 @@ public static class FactoryPatch
     public static ConfigEntry<bool> DoNotRenderEntitiesEnabled;
     public static ConfigEntry<bool> DragBuildPowerPolesEnabled;
     public static ConfigEntry<bool> AllowOverflowInLogisticsEnabled;
+    public static ConfigEntry<bool> GreaterPowerUsageInLogisticsEnabled;
     private static PressKeyBind _doNotRenderEntitiesKey;
 
     private static Harmony _factoryPatch;
@@ -56,6 +57,7 @@ public static class FactoryPatch
         DoNotRenderEntitiesEnabled.SettingChanged += (_, _) => DoNotRenderEntities.Enable(DoNotRenderEntitiesEnabled.Value);
         DragBuildPowerPolesEnabled.SettingChanged += (_, _) => DragBuildPowerPoles.Enable(DragBuildPowerPolesEnabled.Value);
         AllowOverflowInLogisticsEnabled.SettingChanged += (_, _) => AllowOverflowInLogistics.Enable(AllowOverflowInLogisticsEnabled.Value);
+        GreaterPowerUsageInLogisticsEnabled.SettingChanged += (_, _) => LogisticsCapacityTweaks.Enable(LogisticsCapacityTweaksEnabled.Value);
         UnlimitInteractive.Enable(UnlimitInteractiveEnabled.Value);
         RemoveSomeConditionBuild.Enable(RemoveSomeConditionEnabled.Value);
         NightLight.Enable(NightLightEnabled.Value);
@@ -70,6 +72,7 @@ public static class FactoryPatch
         DoNotRenderEntities.Enable(DoNotRenderEntitiesEnabled.Value);
         DragBuildPowerPoles.Enable(DragBuildPowerPolesEnabled.Value);
         AllowOverflowInLogistics.Enable(AllowOverflowInLogisticsEnabled.Value);
+        GreaterPowerUsageInLogistics.Enable(GreaterPowerUsageInLogisticsEnabled.Value);
 
         _factoryPatch ??= Harmony.CreateAndPatchAll(typeof(FactoryPatch));
     }
@@ -90,6 +93,7 @@ public static class FactoryPatch
         DoNotRenderEntities.Enable(false);
         DragBuildPowerPoles.Enable(false);
         AllowOverflowInLogistics.Enable(false);
+        GreaterPowerUsageInLogistics.Enable(false);
 
         _factoryPatch?.UnpatchSelf();
         _factoryPatch = null;
@@ -884,47 +888,50 @@ public static class FactoryPatch
             return true;
         }
 
-        public static void OnUpdate()
+        public static void UpdateInput()
         {
             if (_lastKey != KeyCode.None && Input.GetKeyUp(_lastKey))
             {
                 _lastKey = KeyCode.None;
             }
 
-            if (!VFInput.noModifier) return;
+            if (VFInput.shift) return;
+            var ctrl = VFInput.control;
+            var alt = VFInput.alt;
+            if (ctrl && alt) return;
             int delta;
             if (UpdateKeyPressed(KeyCode.LeftArrow))
             {
-                if (VFInput.control)
+                if (ctrl)
                     delta = -100000;
-                else if (VFInput.alt)
+                else if (alt)
                     delta = -1000;
                 else
                     delta = -10;
             }
             else if (UpdateKeyPressed(KeyCode.RightArrow))
             {
-                if (VFInput.control)
+                if (ctrl)
                     delta = 100000;
-                else if (VFInput.alt)
+                else if (alt)
                     delta = 1000;
                 else
                     delta = 10;
             }
             else if (UpdateKeyPressed(KeyCode.DownArrow))
             {
-                if (VFInput.control)
+                if (ctrl)
                     delta = -1000000;
-                else if (VFInput.alt)
+                else if (alt)
                     delta = -10000;
                 else
                     delta = -100;
             }
             else if (UpdateKeyPressed(KeyCode.UpArrow))
             {
-                if (VFInput.control)
+                if (ctrl)
                     delta = 1000000;
-                else if (VFInput.alt)
+                else if (alt)
                     delta = 10000;
                 else
                     delta = 100;
@@ -953,7 +960,7 @@ public static class FactoryPatch
                     int itemCountMax;
                     if (AllowOverflowInLogisticsEnabled.Value)
                     {
-                        itemCountMax = 1000000000;
+                        itemCountMax = 90000000;
                     }
                     else
                     {
@@ -1795,5 +1802,44 @@ public static class FactoryPatch
                 );
             return matcher.InstructionEnumeration();
         }
-    } 
+
+        // Remove storage limit check
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(PlanetTransport), nameof(PlanetTransport.SetStationStorage))]
+        private static IEnumerable<CodeInstruction> PlanetTransport_SetStationStorage_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            matcher.MatchForward(false,
+                new CodeMatch(ci => ci.IsLdarg()),
+                new CodeMatch(ci => ci.IsLdloc()),
+                new CodeMatch(ci => ci.IsLdloc()),
+                new CodeMatch(OpCodes.Add),
+                new CodeMatch(ci => ci.Branches(out _)),
+                new CodeMatch(ci => ci.IsLdloc()),
+                new CodeMatch(ci => ci.IsLdloc()),
+                new CodeMatch(OpCodes.Add),
+                new CodeMatch(ci => ci.IsStarg())
+            );
+            var labels = matcher.Labels;
+            matcher.RemoveInstructions(9).Labels.AddRange(labels);
+            return matcher.InstructionEnumeration();
+        }
+    }
+
+    private static class GreaterPowerUsageInLogistics
+    {
+        private static Harmony _patch;
+        
+        public static void Enable(bool enable)
+        {
+            if (enable)
+            {
+                _patch ??= Harmony.CreateAndPatchAll(typeof(GreaterPowerUsageInLogistics));
+                return;
+            }
+
+            _patch?.UnpatchSelf();
+            _patch = null;
+        }
+    }
 }
