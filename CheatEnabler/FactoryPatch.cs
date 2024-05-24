@@ -1292,16 +1292,21 @@ public static class FactoryPatch
             if (enable)
             {
                 _patch ??= Harmony.CreateAndPatchAll(typeof(GreaterPowerUsageInLogistics));
-                return;
             }
-
-            _patch?.UnpatchSelf();
-            _patch = null;
+            else
+            {
+                _patch?.UnpatchSelf();
+                _patch = null;
+            }
+            var window = UIRoot.instance?.uiGame?.stationWindow;
+            if (window == null) return;
+            window._Close();
+            window.maxMiningSpeedSlider.maxValue = enable ? 27f : 20f;
         }
 
         [HarmonyTranspiler]
-        [HarmonyPatch(typeof(UIStationWindow), nameof(UIStationWindow._OnInit))]
-        private static IEnumerable<CodeInstruction> UIStationWindow__OnInit_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        [HarmonyPatch(typeof(UIStationWindow), nameof(UIStationWindow.OnStationIdChange))]
+        private static IEnumerable<CodeInstruction> UIStationWindow_OnStationIdChange_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
         {
             var matcher = new CodeMatcher(instructions, generator);
             matcher.Start().Insert(
@@ -1310,16 +1315,7 @@ public static class FactoryPatch
                 {
                     window.maxMiningSpeedSlider.maxValue = 27f;
                 })
-            );
-            return matcher.InstructionEnumeration();
-        }
-
-        [HarmonyTranspiler]
-        [HarmonyPatch(typeof(UIStationWindow), nameof(UIStationWindow.OnStationIdChange))]
-        private static IEnumerable<CodeInstruction> UIStationWindow_OnStationIdChange_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
-        {
-            var matcher = new CodeMatcher(instructions, generator);
-            matcher.MatchForward(false,
+            ).MatchForward(false,
                 new CodeMatch(OpCodes.Ldarg_0),
                 new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(UIStationWindow), nameof(UIStationWindow.maxChargePowerSlider))),
                 new CodeMatch(ci => ci.IsLdloc()),
@@ -1344,9 +1340,9 @@ public static class FactoryPatch
                     window.maxChargePowerSlider.maxValue = maxSliderValue + 9;
                     window.maxChargePowerSlider.minValue = maxWorkEnergy / 500000L;
                     if (workEnergyPerTick <= maxWorkEnergy)
-                        window.maxChargePowerSlider.value = workEnergyPerTick / 50000L;
+                        window.maxChargePowerSlider.Set(workEnergyPerTick / 50000L, false);
                     else
-                        window.maxChargePowerSlider.value = maxSliderValue + (workEnergyPerTick - 1) / maxWorkEnergy + 1;
+                        window.maxChargePowerSlider.Set(maxSliderValue + (workEnergyPerTick - 1) / maxWorkEnergy + 1, false);
                 })
             );
 

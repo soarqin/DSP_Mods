@@ -112,6 +112,7 @@ public static class UIConfigWindow
         x += 180f;
         y += 6f;
         var tip1 = MyWindow.AddTipsButton(x, y, tab2, "Belt signal alt format", "Belt signal alt format tips", "belt-signal-alt-format-tips");
+        x = 0f;
         y += 30f;
         MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.GreaterPowerUsageInLogisticsEnabled, "Increase maximum power usage in Logistic Stations and Advanced Mining Machines");
 

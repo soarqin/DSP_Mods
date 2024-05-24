@@ -1574,6 +1574,7 @@ public static class FactoryPatch
                 new CodeMatch(OpCodes.Ldc_I4_0),
                 new CodeMatch(OpCodes.Brtrue));
             var branch1 = (Label)matcher.Advance(1).Operand;
+            var branch2 = generator.DefineLabel();
             matcher.Start().MatchForward(false,
                 new CodeMatch(OpCodes.Call),
                 new CodeMatch(ci => ci.IsStloc()),
@@ -1584,12 +1585,16 @@ public static class FactoryPatch
                 new CodeMatch(ci => ci.IsLdloc()),
                 new CodeMatch(ci => ci.Branches(out _)),
                 new CodeMatch(OpCodes.Ldarg_0)
-            ).Advance(8).Insert(
+            ).Advance(8).InsertAndAdvance(
                 new CodeInstruction(OpCodes.Ldloc_S, 45),
-                new CodeInstruction(OpCodes.Ldloc_S, 47),
-                new CodeInstruction(OpCodes.Or),
+                new CodeInstruction(OpCodes.Brtrue, branch2),
+                new CodeInstruction(OpCodes.Ldarg_0),
+                new CodeInstruction(OpCodes.Ldloc_S, 33),
+                new CodeInstruction(OpCodes.Ldloc_S, 35),
+                Transpilers.EmitDelegate((RaycastLogic l, ColliderData[] colliderPool, int j) => l.factory.entityPool[colliderPool[j].objId].inserterId > 0),
                 new CodeInstruction(OpCodes.Brfalse, branch1)
             );
+            matcher.Labels.Add(branch2);
             return matcher.InstructionEnumeration();
         }
     }

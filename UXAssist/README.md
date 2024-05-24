@@ -4,6 +4,8 @@
 #### 一些提升用户体验的功能和补丁
 
 ## Changlog
+* 1.0.25
+  + Fix an issue that building entites can not be clicked through when `Do not render factory entities (except belts and sorters)` is enabled
 * 1.0.24
   + Changes to `Do not render factory entities (except belts and sorters)`
     - Add shortcut key in config panel to toggle this function
@@ -183,6 +185,8 @@
 * [CruiseAssist](https://dsp.thunderstore.io/package/tanu/CruiseAssist/) and its extension [AutoPilot](https://dsp.thunderstore.io/package/tanu/AutoPilot/): `Auto navigation on sailings` and `Auto-cruise` implementations
 
 ## 更新日志
+* 1.0.25
+  + 修复了`不渲染工厂建筑实体(除了传送带和分拣器)`启用时无法点穿工厂实体的问题
 * 1.0.24
   + `不渲染工厂建筑实体(除了传送带和分拣器)`的改动
     - 在配置面板中添加了一个快捷键来切换此功能
