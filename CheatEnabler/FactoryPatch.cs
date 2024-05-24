@@ -5,6 +5,7 @@ using BepInEx.Configuration;
 using CommonAPI.Systems;
 using HarmonyLib;
 using UnityEngine;
+using UnityEngine.UI;
 using UXAssist.Common;
 
 namespace CheatEnabler;
@@ -25,6 +26,7 @@ public static class FactoryPatch
     public static ConfigEntry<bool> BoostSolarPowerEnabled;
     public static ConfigEntry<bool> BoostFuelPowerEnabled;
     public static ConfigEntry<bool> BoostGeothermalPowerEnabled;
+    public static ConfigEntry<bool> GreaterPowerUsageInLogisticsEnabled;
 
     private static Harmony _factoryPatch;
     private static PressKeyBind _noConditionKey;
@@ -66,6 +68,7 @@ public static class FactoryPatch
         BoostSolarPowerEnabled.SettingChanged += (_, _) => BoostSolarPower.Enable(BoostSolarPowerEnabled.Value);
         BoostFuelPowerEnabled.SettingChanged += (_, _) => BoostFuelPower.Enable(BoostFuelPowerEnabled.Value);
         BoostGeothermalPowerEnabled.SettingChanged += (_, _) => BoostGeothermalPower.Enable(BoostGeothermalPowerEnabled.Value);
+        GreaterPowerUsageInLogisticsEnabled.SettingChanged += (_, _) => GreaterPowerUsageInLogistics.Enable(GreaterPowerUsageInLogisticsEnabled.Value);
         ImmediateBuild.Enable(ImmediateEnabled.Value);
         ArchitectMode.Enable(ArchitectModeEnabled.Value);
         NoConditionBuild.Enable(NoConditionEnabled.Value);
@@ -76,7 +79,24 @@ public static class FactoryPatch
         BoostSolarPower.Enable(BoostSolarPowerEnabled.Value);
         BoostFuelPower.Enable(BoostFuelPowerEnabled.Value);
         BoostGeothermalPower.Enable(BoostGeothermalPowerEnabled.Value);
+        GreaterPowerUsageInLogistics.Enable(GreaterPowerUsageInLogisticsEnabled.Value);
         _factoryPatch = Harmony.CreateAndPatchAll(typeof(FactoryPatch));
+    }
+
+    public static void Uninit()
+    {
+        _factoryPatch?.UnpatchSelf();
+        _factoryPatch = null;
+        ImmediateBuild.Enable(false);
+        ArchitectMode.Enable(false);
+        NoConditionBuild.Enable(false);
+        BeltSignalGenerator.Enable(false);
+        RemovePowerSpaceLimit.Enable(false);
+        BoostWindPower.Enable(false);
+        BoostSolarPower.Enable(false);
+        BoostFuelPower.Enable(false);
+        BoostGeothermalPower.Enable(false);
+        GreaterPowerUsageInLogistics.Enable(false);
     }
 
     public static void OnUpdate()
@@ -97,21 +117,6 @@ public static class FactoryPatch
                 UIRoot.instance.uiGame.generalTips.InvokeRealtimeTipAhead((NoCollisionEnabled.Value ? "NoCollisionOn" : "NoCollisionOff").Translate());
             }
         }
-    }
-
-    public static void Uninit()
-    {
-        _factoryPatch?.UnpatchSelf();
-        _factoryPatch = null;
-        ImmediateBuild.Enable(false);
-        ArchitectMode.Enable(false);
-        NoConditionBuild.Enable(false);
-        BeltSignalGenerator.Enable(false);
-        RemovePowerSpaceLimit.Enable(false);
-        BoostWindPower.Enable(false);
-        BoostSolarPower.Enable(false);
-        BoostFuelPower.Enable(false);
-        BoostGeothermalPower.Enable(false);
     }
 
     private static void NoCollisionValueChanged()
@@ -1273,6 +1278,163 @@ public static class FactoryPatch
                 // return 2000000000L
                 new CodeInstruction(OpCodes.Ldc_I8, 2000000000L),
                 new CodeInstruction(OpCodes.Ret)
+            );
+            return matcher.InstructionEnumeration();
+        }
+    }
+
+    private static class GreaterPowerUsageInLogistics
+    {
+        private static Harmony _patch;
+        
+        public static void Enable(bool enable)
+        {
+            if (enable)
+            {
+                _patch ??= Harmony.CreateAndPatchAll(typeof(GreaterPowerUsageInLogistics));
+                return;
+            }
+
+            _patch?.UnpatchSelf();
+            _patch = null;
+        }
+
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(UIStationWindow), nameof(UIStationWindow._OnInit))]
+        private static IEnumerable<CodeInstruction> UIStationWindow__OnInit_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            matcher.Start().Insert(
+                new CodeInstruction(OpCodes.Ldarg_0),
+                Transpilers.EmitDelegate((UIStationWindow window) =>
+                {
+                    window.maxMiningSpeedSlider.maxValue = 27f;
+                })
+            );
+            return matcher.InstructionEnumeration();
+        }
+
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(UIStationWindow), nameof(UIStationWindow.OnStationIdChange))]
+        private static IEnumerable<CodeInstruction> UIStationWindow_OnStationIdChange_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Ldarg_0),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(UIStationWindow), nameof(UIStationWindow.maxChargePowerSlider))),
+                new CodeMatch(ci => ci.IsLdloc()),
+                new CodeMatch(ci => ci.opcode == OpCodes.Ldc_I4 && ci.OperandIs(0xC350)),
+                new CodeMatch(OpCodes.Conv_I8)
+            );
+            var pos = matcher.Pos + 1;
+            matcher.Advance(5).MatchForward(false,
+                new CodeMatch(OpCodes.Conv_R4),
+                new CodeMatch(OpCodes.Callvirt, AccessTools.PropertySetter(typeof(Slider), nameof(Slider.value)))
+            );
+            var pos2 = matcher.Pos + 2;
+            matcher.Start().Advance(pos);
+            var ldvar = matcher.InstructionAt(1).Clone();
+            var locWorkEnergyPerTick = matcher.InstructionAt(-2).operand;
+            matcher.RemoveInstructions(pos2 - pos).InsertAndAdvance(
+                ldvar,
+                new CodeInstruction(OpCodes.Ldloc_S, locWorkEnergyPerTick),
+                Transpilers.EmitDelegate((UIStationWindow window, long maxWorkEnergy, long workEnergyPerTick) =>
+                {
+                    var maxSliderValue = maxWorkEnergy / 50000L;
+                    window.maxChargePowerSlider.maxValue = maxSliderValue + 9;
+                    window.maxChargePowerSlider.minValue = maxWorkEnergy / 500000L;
+                    if (workEnergyPerTick <= maxWorkEnergy)
+                        window.maxChargePowerSlider.value = workEnergyPerTick / 50000L;
+                    else
+                        window.maxChargePowerSlider.value = maxSliderValue + (workEnergyPerTick - 1) / maxWorkEnergy + 1;
+                })
+            );
+
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Ldarg_0),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(UIStationWindow), nameof(UIStationWindow.maxMiningSpeedSlider))),
+                new CodeMatch(OpCodes.Ldarg_0),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(UIStationWindow), nameof(UIStationWindow.factorySystem))),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(FactorySystem), nameof(FactorySystem.minerPool))),
+                new CodeMatch(ci => ci.IsLdloc()),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(StationComponent), nameof(StationComponent.minerId))),
+                new CodeMatch(OpCodes.Ldelema, typeof(MinerComponent)),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(MinerComponent), nameof(MinerComponent.speed)))
+            );
+            pos = matcher.Pos + 9;
+            matcher.Advance(5).MatchForward(false,
+                new CodeMatch(OpCodes.Conv_R4),
+                new CodeMatch(OpCodes.Callvirt, AccessTools.PropertySetter(typeof(Slider), nameof(Slider.value)))
+            );
+            pos2 = matcher.Pos;
+            matcher.Start().Advance(pos).RemoveInstructions(pos2 - pos).Insert(
+                Transpilers.EmitDelegate((int speed) =>
+                {
+                    if (speed <= 30000)
+                        return (speed - 10000) / 1000;
+                    return (speed - 30000) / 10000 + 20;
+                })
+            );
+            return matcher.InstructionEnumeration();
+        }
+
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(UIStationWindow), nameof(UIStationWindow.OnMaxMiningSpeedChange))]
+        private static IEnumerable<CodeInstruction> UIStationWindow_OnMaxMiningSpeedChange_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            matcher.MatchForward(false,
+                new CodeMatch(ci => ci.opcode == OpCodes.Ldc_I4 && ci.OperandIs(10000)),
+                new CodeMatch(OpCodes.Ldarg_1)
+            );
+            var pos = matcher.Pos;
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Stloc_1)
+            );
+            var pos2 = matcher.Pos;
+            matcher.Start().Advance(pos);
+            var labels = matcher.Labels;
+            matcher.RemoveInstructions(pos2 - pos);
+            matcher.Insert(
+                new CodeInstruction(OpCodes.Ldarg_1).WithLabels(labels),
+                Transpilers.EmitDelegate((float value) =>
+                {
+                    var intval = (int)(value + 0.5f);
+                    if (intval <= 20)
+                        return intval * 1000 + 10000;
+                    return (intval - 20) * 10000 + 30000;
+                })
+            );
+            return matcher.InstructionEnumeration();
+        }
+
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(UIStationWindow), nameof(UIStationWindow.OnMaxChargePowerSliderValueChange))]
+        private static IEnumerable<CodeInstruction> UIStationWindow_OnMaxChargePowerSliderValueChange_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Ldarg_0),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(UIStationWindow), nameof(UIStationWindow.factory))),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(PlanetFactory), nameof(PlanetFactory.powerSystem))),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(PowerSystem), nameof(PowerSystem.consumerPool)))
+            );
+            var labels = matcher.Labels;
+            matcher.Labels = null;
+            matcher.Insert(
+                new CodeInstruction(OpCodes.Ldarg_0).WithLabels(labels),
+                new CodeInstruction(OpCodes.Ldarg_1),
+                Transpilers.EmitDelegate((UIStationWindow window, float value) =>
+                {
+                    float prevMax = window.workEnergyPrefab * 5L / 50000L;
+                    if (value <= prevMax)
+                    {
+                        return value;
+                    }
+
+                    return prevMax * (value - prevMax + 1);
+                }),
+                new CodeInstruction(OpCodes.Starg_S, 1)
             );
             return matcher.InstructionEnumeration();
         }

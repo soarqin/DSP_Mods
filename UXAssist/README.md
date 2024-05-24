@@ -13,9 +13,6 @@
     - Allow overflow when trying to insert in-hand items
     - Allow `Enhanced control for logistic storage limits` to exceed tech capacity limits
     - Remove logistic strorage limit check on loading game
-  + New feature: `Increase maximum power usage in Logistic Stations and Advanced Mining Machines`
-    - Logistic Stations: Increased max charging power to 3GW(ILS) and 600MW(PLS) (10x of original)
-    - Advanced Mining Machines: Increased max mining speed to 1000%
 * 1.0.23
   + New features:
     - `Do not render factory entities (except belts and sorters)`
@@ -30,7 +27,7 @@
   + Fix a bug that stepped rotation is not working in `Off-grid building and stepped rotation`, which is caused by latest game update
   + Fix some issues in `Auto nativation` and `Auto-cruise`, now only boosts when core energy at least 10% and warps when core energy at least 50%
 * 1.0.20
-  + Fix a infinite-loop issue when `Quick build and dismantle stacking labs` and `No condition build` are both enabled
+  + Fix an infinite-loop issue when `Quick build and dismantle stacking labs` and `No condition build` are both enabled
   + Fix a crash caused by `Re-initialize planet` in combat mode
 * 1.0.19
   + New functions:
@@ -145,13 +142,11 @@
       - Close this function to resume mining and pumping, usually when you have enough level on `Veins Utilization`
     - Do not render factory entities (except belts and sorters)
       - This also makes players click though factory entities but belts and sorters
+    - Drag building power poles in maximum connection range
     - Allow overflow for Logistic Stations and Advanced Mining Machines
       - Allow overflow when trying to insert in-hand items
       - Allow `Enhanced control for logistic storage limits` to exceed tech capacity limits
       - Remove logistic strorage limit check on loading game
-    - Increase maximum power usage in Logistic Stations and Advanced Mining Machines
-      - Logistic Stations: Increased max charging power to 3GW(ILS) and 600MW(PLS) (10x of original)
-      - Advanced Mining Machines: Increased max mining speed to 1000%
     - Re-intialize planet (without reseting veins)
     - Quick dismantle all buildings (without drops)
     - Quick build Orbital Collectors
@@ -192,13 +187,11 @@
   + `不渲染工厂建筑实体(除了传送带和分拣器)`的改动
     - 在配置面板中添加了一个快捷键来切换此功能
     - 现在也可以点击到分拣器了
+  + 新功能：`拖动建造电线杆时自动使用最大连接距离间隔`
   + 新功能：`允许物流塔和大型采矿机物品溢出`
     - 当尝试塞入手中物品时允许溢出
     - 允许`物流塔存储数量限制控制改进`超过科技容量限制
     - 在加载游戏时移除物流塔容量限制检查
-  + 新功能：`提升物流塔和大型采矿机的最大功耗`
-    - 物流塔：将最大充电功率提高到3GW(星际物流塔)和600MW(行星物流塔)（原来的10倍）
-    - 大型采矿机：将最大采矿速度提高到1000%
 * 1.0.23
   + 新功能：
     - `不渲染工厂建筑实体(除了传送带和分拣器)`
@@ -329,13 +322,11 @@
       - 关闭此功能以恢复开采，一般是当你在`矿物利用`上有足够的等级时。
     - 不渲染工厂建筑实体(除了传送带和分拣器)
       - 这也使玩家可以点穿工厂实体直接点到传送带和分拣器
+    - 拖动建造电线杆时自动使用最大连接距离间隔
     - 允许物流塔和大型采矿机物品溢出
       - 当尝试塞入手中物品时允许溢出
       - 允许`物流塔存储数量限制控制改进`超过科技容量限制
       - 在加载游戏时移除物流塔容量限制检查
-    - 提升物流塔和大型采矿机的最大功耗
-      - 物流塔：将最大充电功率提高到3GW(星际物流塔)和600MW(行星物流塔)（原来的10倍）
-      - 大型采矿机：将最大采矿速度提高到1000%
     - 初始化本行星（不重置矿脉）
     - 快速拆除所有建筑（不掉落）
     - 快速建造轨道采集器

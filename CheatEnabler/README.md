@@ -8,6 +8,9 @@
   + Add 2 options to `Belt signal item generation`:
     - `Count generations as production in statistics`
     - `Count removals as consumption in statistics`
+  + New feature: `Increase maximum power usage in Logistic Stations and Advanced Mining Machines`
+    - Logistic Stations: Increased max charging power to 3GW(ILS) and 600MW(PLS) (10x of original)
+    - Advanced Mining Machines: Increased max mining speed to 1000%
 * 2.3.15
   + New features:
     - `Instant teleport (like that in Sandbox mode)`
@@ -38,7 +41,7 @@
 * 2.3.6
   + Support for UXAssist's new function within `Finish build immediately`.
   + Add a warning message when `Build without condition` is enabled.
-  + Fix a issue in `Finish build immediately` that some buildings are not finished immediately.
+  + Fix an issue in `Finish build immediately` that some buildings are not finished immediately.
 * 2.3.5
   + Fix another crash in `Skip bullet period`.
 * 2.3.4
@@ -121,6 +124,9 @@
       - Count removals as consumption in statistics
       - Count all raws and intermediates in statistics
       - Belt signal alt format
+    + Increase maximum power usage in Logistic Stations and Advanced Mining Machines
+      - Logistic Stations: Increased max charging power to 3GW(ILS) and 600MW(PLS) (10x of original)
+      - Advanced Mining Machines: Increased max mining speed to 1000%
     + Remove space limit between wind turbines and solar panels
     + Boost power generations for kinds of power generators
   + Planet:
@@ -153,6 +159,9 @@
   + 为`传送带信号物品生成`添加了两个选项：
     - `统计信息里将生成计算为产物`
     - `统计信息里将移除计算为消耗`
+  + 新功能：`提升物流塔和大型采矿机的最大功耗`
+    - 物流塔：将最大充电功率提高到3GW(星际物流塔)和600MW(行星物流塔)（原来的10倍）
+    - 大型采矿机：将最大采矿速度提高到1000%
 * 2.3.15
   + 新功能：
     - `快速传送(和沙盒模式一样)`
@@ -266,6 +275,9 @@
       - 统计信息里将移除计算为消耗
       - 统计面板中计算所有原材料和中间产物
       - 传送带信号替换格式
+    + 提升物流塔和大型采矿机的最大功耗
+      - 物流塔：将最大充电功率提高到3GW(星际物流塔)和600MW(行星物流塔)（原来的10倍）
+      - 大型采矿机：将最大采矿速度提高到1000%
     + 风力发电机和太阳能板无间距限制
     + 提升各种发电设备发电量
   + 行星：

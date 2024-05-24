@@ -44,6 +44,8 @@ public class CheatEnabler : BaseUnityPlugin
             "Boost fuel power");
         FactoryPatch.BoostGeothermalPowerEnabled = Config.Bind("Build", "BoostGeothermalPower", false,
             "Boost geothermal power");
+        FactoryPatch.GreaterPowerUsageInLogisticsEnabled = Config.Bind("Build", "GreaterPowerUsageInLogistics", false,
+            "Increase maximum power usage in Logistic Stations and Advanced Mining Machines");
         ResourcePatch.InfiniteResourceEnabled = Config.Bind("Planet", "AlwaysInfiniteResource", false,
             "always infinite natural resource");
         ResourcePatch.FastMiningEnabled = Config.Bind("Planet", "FastMining", false,

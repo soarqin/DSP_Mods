@@ -7,9 +7,7 @@ using CommonAPI.Systems;
 using HarmonyLib;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.UI;
 using UXAssist.Common;
-using OpCodes = System.Reflection.Emit.OpCodes;
 
 namespace UXAssist;
 
@@ -29,7 +27,6 @@ public static class FactoryPatch
     public static ConfigEntry<bool> DoNotRenderEntitiesEnabled;
     public static ConfigEntry<bool> DragBuildPowerPolesEnabled;
     public static ConfigEntry<bool> AllowOverflowInLogisticsEnabled;
-    public static ConfigEntry<bool> GreaterPowerUsageInLogisticsEnabled;
     private static PressKeyBind _doNotRenderEntitiesKey;
 
     private static Harmony _factoryPatch;
@@ -59,7 +56,7 @@ public static class FactoryPatch
         DoNotRenderEntitiesEnabled.SettingChanged += (_, _) => DoNotRenderEntities.Enable(DoNotRenderEntitiesEnabled.Value);
         DragBuildPowerPolesEnabled.SettingChanged += (_, _) => DragBuildPowerPoles.Enable(DragBuildPowerPolesEnabled.Value);
         AllowOverflowInLogisticsEnabled.SettingChanged += (_, _) => AllowOverflowInLogistics.Enable(AllowOverflowInLogisticsEnabled.Value);
-        GreaterPowerUsageInLogisticsEnabled.SettingChanged += (_, _) => LogisticsCapacityTweaks.Enable(LogisticsCapacityTweaksEnabled.Value);
+        LogisticsCapacityTweaksEnabled.SettingChanged += (_, _) => LogisticsCapacityTweaks.Enable(LogisticsCapacityTweaksEnabled.Value);
         UnlimitInteractive.Enable(UnlimitInteractiveEnabled.Value);
         RemoveSomeConditionBuild.Enable(RemoveSomeConditionEnabled.Value);
         NightLight.Enable(NightLightEnabled.Value);
@@ -74,7 +71,7 @@ public static class FactoryPatch
         DoNotRenderEntities.Enable(DoNotRenderEntitiesEnabled.Value);
         DragBuildPowerPoles.Enable(DragBuildPowerPolesEnabled.Value);
         AllowOverflowInLogistics.Enable(AllowOverflowInLogisticsEnabled.Value);
-        GreaterPowerUsageInLogistics.Enable(GreaterPowerUsageInLogisticsEnabled.Value);
+        LogisticsCapacityTweaks.Enable(LogisticsCapacityTweaksEnabled.Value);
 
         _factoryPatch ??= Harmony.CreateAndPatchAll(typeof(FactoryPatch));
     }
@@ -95,7 +92,7 @@ public static class FactoryPatch
         DoNotRenderEntities.Enable(false);
         DragBuildPowerPoles.Enable(false);
         AllowOverflowInLogistics.Enable(false);
-        GreaterPowerUsageInLogistics.Enable(false);
+        LogisticsCapacityTweaks.Enable(false);
 
         _factoryPatch?.UnpatchSelf();
         _factoryPatch = null;
@@ -1827,92 +1824,5 @@ public static class FactoryPatch
             matcher.RemoveInstructions(9).Labels.AddRange(labels);
             return matcher.InstructionEnumeration();
         }
-    }
-
-    private static class GreaterPowerUsageInLogistics
-    {
-        private static Harmony _patch;
-        
-        public static void Enable(bool enable)
-        {
-            if (enable)
-            {
-                _patch ??= Harmony.CreateAndPatchAll(typeof(GreaterPowerUsageInLogistics));
-                return;
-            }
-
-            _patch?.UnpatchSelf();
-            _patch = null;
-        }
-
-        [HarmonyTranspiler]
-        [HarmonyPatch(typeof(UIStationWindow), nameof(UIStationWindow.OnStationIdChange))]
-        private static IEnumerable<CodeInstruction> UIStationWindow_OnStationIdChange_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
-        {
-            var matcher = new CodeMatcher(instructions, generator);
-            matcher.MatchForward(false,
-                new CodeMatch(OpCodes.Ldarg_0),
-                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(UIStationWindow), nameof(UIStationWindow.maxChargePowerSlider))),
-                new CodeMatch(ci => ci.IsLdloc()),
-                new CodeMatch(ci => ci.opcode == OpCodes.Ldc_I4 && ci.OperandIs(0xC350)),
-                new CodeMatch(OpCodes.Conv_I8)
-            );
-            var pos = matcher.Pos + 1;
-            matcher.Advance(5).MatchForward(false,
-                new CodeMatch(OpCodes.Conv_R4),
-                new CodeMatch(OpCodes.Callvirt, AccessTools.PropertySetter(typeof(Slider), nameof(Slider.value)))
-            );
-            var pos2 = matcher.Pos + 2;
-            matcher.Start().Advance(pos);
-            var ldvar = matcher.InstructionAt(1).Clone();
-            var locWorkEnergyPerTick = matcher.InstructionAt(-2).operand;
-            matcher.RemoveInstructions(pos2 - pos).Insert(
-                ldvar,
-                new CodeInstruction(OpCodes.Ldloc_S, locWorkEnergyPerTick),
-                Transpilers.EmitDelegate((UIStationWindow window, long maxWorkEnergy, long workEnergyPerTick) =>
-                {
-                    var maxSliderValue = maxWorkEnergy / 50000L;
-                    window.maxChargePowerSlider.maxValue = maxSliderValue + 9;
-                    window.maxChargePowerSlider.minValue = maxWorkEnergy / 500000L;
-                    if (workEnergyPerTick <= maxWorkEnergy)
-                        window.maxChargePowerSlider.value = workEnergyPerTick / 50000L;
-                    else
-                    {
-                        window.maxChargePowerSlider.value = (workEnergyPerTick - 1) / maxWorkEnergy + 1;
-                    }
-                })
-            );
-            return matcher.InstructionEnumeration();
-        }
-    }
-
-    [HarmonyTranspiler]
-    [HarmonyPatch(typeof(UIStationWindow), nameof(UIStationWindow.OnMaxChargePowerSliderValueChange))]
-    private static IEnumerable<CodeInstruction> UIStationWindow_OnMaxChargePowerSliderValueChange_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
-    {
-        var matcher = new CodeMatcher(instructions, generator);
-        matcher.MatchForward(false,
-            new CodeMatch(OpCodes.Ldarg_0),
-            new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(UIStationWindow), nameof(UIStationWindow.factory))),
-            new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(PlanetFactory), nameof(PlanetFactory.powerSystem))),
-            new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(PowerSystem), nameof(PowerSystem.consumerPool)))
-        );
-        var labels = matcher.Labels;
-        matcher.Labels = null;
-        matcher.Insert(
-            new CodeInstruction(OpCodes.Ldarg_0).WithLabels(labels),
-            new CodeInstruction(OpCodes.Ldarg_1),
-            Transpilers.EmitDelegate((UIStationWindow window, float value) =>
-            {
-                float prevMax = window.workEnergyPrefab * 5L / 50000L;
-                if (value <= prevMax)
-                {
-                    return value;
-                }
-                return prevMax * (value - prevMax + 1);
-            }),
-            new CodeInstruction(OpCodes.Starg_S, 1)
-        );
-        return matcher.InstructionEnumeration();
     }
 }

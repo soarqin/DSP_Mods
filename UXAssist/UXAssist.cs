@@ -80,8 +80,6 @@ public class UXAssist : BaseUnityPlugin
             "Drag building power poles in maximum connection range");
         FactoryPatch.AllowOverflowInLogisticsEnabled = Config.Bind("Factory", "AllowOverflowInLogistics", false,
             "Allow overflow in logistic stations");
-        FactoryPatch.GreaterPowerUsageInLogisticsEnabled = Config.Bind("Factory", "GreaterPowerUsageInLogistics", false,
-            "Increase maximum power usage in Logistic Stations and Advanced Mining Machines");
         PlanetFunctions.OrbitalCollectorMaxBuildCount = Config.Bind("Factory", "OCMaxBuildCount", 0, "Maximum Orbital Collectors to build once, set to 0 to build as many as possible");
         PlayerPatch.EnhancedMechaForgeCountControlEnabled = Config.Bind("Player", "EnhancedMechaForgeCountControl", false,
             "Enhanced count control for hand-make, increases maximum of count to 1000, and you can hold Ctrl/Shift/Alt to change the count rapidly");
