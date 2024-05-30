@@ -85,7 +85,7 @@ public static class EpicDifficulty
     [HarmonyPatch(typeof(UIGalaxySelect), nameof(UIGalaxySelect._OnInit))]
     private static void PatchGalaxyUI_OnInit(UIGalaxySelect __instance)
     {
-        __instance.resourceMultiplierSlider.maxValue = 10f;
+        __instance.resourceMultiplierSlider.maxValue = 11f;
     }
 
     [HarmonyPrefix]
@@ -97,14 +97,15 @@ public static class EpicDifficulty
         {
             < 0.5f => ResourceMultiplier.Value,
             < 1.5f => 0.1f,
-            < 2.5f => 0.5f,
-            < 3.5f => 0.8f,
-            < 4.5f => 1f,
-            < 5.5f => 1.5f,
-            < 6.5f => 2f,
-            < 7.5f => 3f,
-            < 8.5f => 5f,
-            < 9.5f => 8f,
+            < 2.5f => 0.3f,
+            < 3.5f => 0.5f,
+            < 4.5f => 0.8f,
+            < 5.5f => 1f,
+            < 6.5f => 1.5f,
+            < 7.5f => 2f,
+            < 8.5f => 3f,
+            < 9.5f => 5f,
+            < 10.5f => 8f,
             _ => 100f
         };
         __instance.UpdateParametersUIDisplay();
@@ -121,15 +122,16 @@ public static class EpicDifficulty
         {
             < 0.09f => 0f,
             < 0.11f => 1f,
-            < 0.51f => 2f,
-            < 0.81f => 3f,
-            < 1.01f => 4f,
-            < 1.51f => 5f,
-            < 2.01f => 6f,
-            < 3.01f => 7f,
-            < 5.01f => 8f,
-            < 8.01f => 9f,
-            _ => 10f
+            < 0.31f => 2f,
+            < 0.51f => 3f,
+            < 0.81f => 4f,
+            < 1.01f => 5f,
+            < 1.51f => 6f,
+            < 2.01f => 7f,
+            < 3.01f => 8f,
+            < 5.01f => 9f,
+            < 8.01f => 10f,
+            _ => 11f
         };
         text = resourceMultiplier switch
         {

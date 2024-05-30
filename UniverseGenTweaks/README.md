@@ -4,6 +4,8 @@
 #### 宇宙生成参数调节
 
 ## Changelog
+* 1.2.7
+  * `Epic difficulty`: Fix compatibility for 0.10.30, with new resource multiplier 0.3x supported.
 * 1.2.6
   + Fix possible crash or wrong stars data when loading save file with changed generation settings but with `Enable more settings on UniverseGen` disabled on config window.
   + Larger maximum value in combat settings (except `Aggressiveness` and `Max Density`).
@@ -45,6 +47,8 @@
   * High luminosity for birth star
 
 ## 更新日志
+* 1.2.7
+  * `史诗难度`: 修复了对0.10.30版本的兼容性，支持新的资源倍率0.3x
 * 1.2.6
   + 修复了在存档中更改了生成参数但是在配置面板中禁用了`启用更多宇宙生成设置`时可能崩溃或者星系数据错误的问题
   + 在星系生成时的战斗设置面板上提升了各选项的最大值(`黑雾攻击性`和`最大黑雾密度`除外`)
