@@ -72,8 +72,8 @@ public class UXAssist : BaseUnityPlugin
             "Quick build and dismantle stacking labs");
         FactoryPatch.ProtectVeinsFromExhaustionEnabled = Config.Bind("Factory", "ProtectVeinsFromExhaustion", false,
             "Protect veins from exhaustion");
-        FactoryPatch.ProtectVeinsFromExhaustion.KeepVeinAmount = Config.Bind("Factory", "KeepVeinAmount", 100, new ConfigDescription("Keep veins amount (0 to disable)", new AcceptableValueRange<int>(0, 1000))).Value;
-        FactoryPatch.ProtectVeinsFromExhaustion.KeepOilSpeed = Config.Bind("Factory", "KeepOilSpeed", 1.0f, new ConfigDescription("Keep minimal oil speed (< 0.1 to disable)", new AcceptableValueRange<float>(0.0f, 1.0f))).Value;
+        FactoryPatch.ProtectVeinsFromExhaustion.KeepVeinAmount = Config.Bind("Factory", "KeepVeinAmount", 1000, new ConfigDescription("Keep veins amount (0 to disable)", new AcceptableValueRange<int>(0, 10000))).Value;
+        FactoryPatch.ProtectVeinsFromExhaustion.KeepOilSpeed = Config.Bind("Factory", "KeepOilSpeed", 1.0f, new ConfigDescription("Keep minimal oil speed (< 0.1 to disable)", new AcceptableValueRange<float>(0.0f, 10.0f))).Value;
         FactoryPatch.DoNotRenderEntitiesEnabled = Config.Bind("Factory", "DoNotRenderEntities", false,
             "Do not render factory entities");
         FactoryPatch.DragBuildPowerPolesEnabled = Config.Bind("Factory", "DragBuildPowerPoles", false,
@@ -92,6 +92,8 @@ public class UXAssist : BaseUnityPlugin
         PlayerPatch.AutoBoostEnabled = Config.Bind("Player", "AutoBoost", false,
             "Auto boost speed with auto-cruise enabled");
         PlayerPatch.DistanceToWarp = Config.Bind("Player", "DistanceToWarp", 5.0, "Distance to warp (in AU)");
+        TechPatch.SorterCargoStackingEnabled = Config.Bind("Tech", "SorterCargoStacking", false,
+            "Restore upgrades of `Sorter Cargo Stacking` on panel");
         DysonSpherePatch.StopEjectOnNodeCompleteEnabled = Config.Bind("DysonSphere", "StopEjectOnNodeComplete", false,
             "Stop ejectors when available nodes are all filled up");
         DysonSpherePatch.OnlyConstructNodesEnabled = Config.Bind("DysonSphere", "OnlyConstructNodes", false,
@@ -111,6 +113,7 @@ public class UXAssist : BaseUnityPlugin
         FactoryPatch.Init();
         PlanetPatch.Init();
         PlayerPatch.Init();
+        TechPatch.Init();
         DysonSpherePatch.Init();
 
         I18N.Apply();
@@ -119,6 +122,7 @@ public class UXAssist : BaseUnityPlugin
     private void OnDestroy()
     {
         DysonSpherePatch.Uninit();
+        TechPatch.Uninit();
         PlayerPatch.Uninit();
         PlanetPatch.Uninit();
         FactoryPatch.Uninit();

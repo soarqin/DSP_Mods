@@ -18,7 +18,7 @@ public static class UIConfigWindow
         I18N.Add("Planet/Factory", "Planet/Factory", "行星/工厂");
         I18N.Add("Player/Mecha", "Player/Mecha", "玩家/机甲");
         I18N.Add("Dyson Sphere", "Dyson Sphere", "戴森球");
-        I18N.Add("Combat", "Combat", "战斗");
+        I18N.Add("Tech/Combat", "Tech/Combat", "科研/战斗");
         I18N.Add("Enable game window resize", "Enable game window resize (maximum box and thick frame)", "可调整游戏窗口大小(可最大化和拖动边框)");
         I18N.Add("Remeber window position and size on last exit", "Remeber window position and size on last exit", "记住上次退出时的窗口位置和大小");
         /*
@@ -64,6 +64,8 @@ public static class UIConfigWindow
         I18N.Add("Click to dismantle selected layer", "Click to dismantle selected layer", "点击拆除对应的戴森壳");
         I18N.Add("Dismantle selected layer", "Dismantle selected layer", "拆除选中的戴森壳");
         I18N.Add("Dismantle selected layer Confirm", "This operation will dismantle selected layer, are you sure?", "此操作将会拆除选中的戴森壳，确定吗？");
+        I18N.Add("Restore upgrades of \"Sorter Cargo Stacking\" on panel", "Restore upgrades of \"Sorter Cargo Stacking\" on panel", "在升级面板上恢复\"分拣器货物叠加\"的升级");
+        I18N.Add("Set \"Sorter Cargo Stacking\" to unresearched state", "Set \"Sorter Cargo Stacking\" to unresearched state", "将\"分拣器货物叠加\"设为未研究状态");
         I18N.Add("Open Dark Fog Communicator", "Open Dark Fog Communicator", "打开黑雾通讯器");
         I18N.Apply();
         MyConfigWindow.OnUICreated += CreateUI;
@@ -237,10 +239,28 @@ public static class UIConfigWindow
         }
         _dysonTab = tab4;
         
-        var tab5 = wnd.AddTab(_windowTrans, "Combat");
+        var tab5 = wnd.AddTab(_windowTrans, "Tech/Combat");
         x = 10;
         y = 10;
-        wnd.AddButton(x, y, tab5, "Open Dark Fog Communicator", 16, "button-open-df-communicator", () =>
+        MyCheckBox.CreateCheckBox(x, y, tab5, TechPatch.SorterCargoStackingEnabled, "Restore upgrades of \"Sorter Cargo Stacking\" on panel");
+        y += 36f;
+        wnd.AddButton(x, y, 300f, tab5, "Set \"Sorter Cargo Stacking\" to unresearched state", 16, "button-remove-cargo-stacking", () =>
+        {
+            var history = GameMain.data?.history;
+            if (history == null) return;
+            history.inserterStackCountObsolete = 1;
+            for (var id = 3301; id <= 3305; id++)
+            {
+                history.techStates.TryGetValue(id, out var state);
+                if (!state.unlocked) continue;
+                state.unlocked = false;
+                state.hashUploaded = 0;
+                history.techStates[id] = state;
+            }
+        });
+        y += 36f;
+        y += 36f;
+        wnd.AddButton(x, y, 300f, tab5, "Open Dark Fog Communicator", 16, "button-open-df-communicator", () =>
         {
             if (!(GameMain.data?.gameDesc.isCombatMode ?? false)) return;
             var uiGame = UIRoot.instance.uiGame;

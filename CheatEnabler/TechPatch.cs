@@ -11,8 +11,7 @@ public static class TechPatch
 {
     public static ConfigEntry<bool> Enabled;
     private static Harmony _patch;
-    
-    
+
     public static void Init()
     {
         Enabled.SettingChanged += (_, _) => ValueChanged();
@@ -43,12 +42,11 @@ public static class TechPatch
         var history = GameMain.history;
         var techStates = history.techStates;
         var techID = techProto.ID;
-        if (techStates == null || !techStates.ContainsKey(techID))
+        if (techStates == null || !techStates.TryGetValue(techID, out var value))
         {
             return;
         }
 
-        var value = techStates[techID];
         if (value.unlocked)
         {
             return;

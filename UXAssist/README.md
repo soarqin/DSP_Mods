@@ -4,6 +4,13 @@
 #### 一些提升用户体验的功能和补丁
 
 ## Changlog
+* 1.0.26
+  + New features:
+    - Restore upgrades of `Sorter Cargo Stacking` on panel
+    - Set `Sorter Cargo Stacking` to unresearched state
+  + Changes to `Protect veins from exhaustion` configuration:
+    - The vein amount is protected at 1000 by default now
+    - The maximum vein amount is changed to 10000, and the maximum oil speed is changed to 10.0/s
 * 1.0.25
   + Fix an issue that building entites can not be clicked through when `Do not render factory entities (except belts and sorters)` is enabled
 * 1.0.24
@@ -169,6 +176,9 @@
     - Construct only nodes but frames
     - Re-initialize Dyson Spheres
     - Quick dismantle Dyson Shells
+  + Tech
+    - Restore upgrades of `Sorter Cargo Stacking` on panel
+    - Set `Sorter Cargo Stacking` to unresearched state
   + Combat
     - Open Dark Fog Communicator anywhere
 
@@ -185,6 +195,13 @@
 * [CruiseAssist](https://dsp.thunderstore.io/package/tanu/CruiseAssist/) and its extension [AutoPilot](https://dsp.thunderstore.io/package/tanu/AutoPilot/): `Auto navigation on sailings` and `Auto-cruise` implementations
 
 ## 更新日志
+* 1.0.26
+  + 新功能：
+    - 在升级面板上恢复`分拣器货物堆叠`的升级
+    - 将`分拣器货物堆叠`设为未研究状态
+  + `保护矿脉不会耗尽`配置的改动：
+    - 现在默认矿脉数量保护在1000
+    - 最大矿脉数量改为10000，最大采油速度改为10.0/s
 * 1.0.25
   + 修复了`不渲染工厂建筑实体(除了传送带和分拣器)`启用时无法点穿工厂实体的问题
 * 1.0.24
@@ -352,6 +369,9 @@
     - 只建造节点不建造框架
     - 初始化戴森球
     - 快速拆除戴森壳
+  + 科研
+    - 在升级面板上恢复`分拣器货物堆叠`的升级
+    - 将`分拣器货物堆叠`设为未研究状态
   + 战斗
     - 在任意位置打开黑雾通讯器
 
