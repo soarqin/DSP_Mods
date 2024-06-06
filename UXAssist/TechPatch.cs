@@ -85,7 +85,7 @@ public static class TechPatch
                 if (!_protoPatched) return;
                 foreach (var tp in techs.dataArray)
                 {
-                    if (tp.ID is >= 3301 and <= 3305)
+                    if (tp.ID is >= 3301 and <= 3306)
                     {
                         tp.IsObsolete = true;
                         continue;
