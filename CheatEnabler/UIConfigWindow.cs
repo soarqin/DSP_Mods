@@ -14,6 +14,7 @@ public static class UIConfigWindow
     {
         I18N.Add("Factory", "Factory", "工厂");
         I18N.Add("Planet", "Planet", "行星");
+        I18N.Add("Combat", "Combat", "战斗");
         I18N.Add("Enable Dev Shortcuts", "Enable Dev Shortcuts", "开发模式快捷键");
         I18N.Add("Disable Abnormal Checks", "Disable Abnormal Checks", "关闭数据异常检查");
         I18N.Add("Hotkey", "Hotkey", "快捷键");

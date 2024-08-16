@@ -4,6 +4,8 @@
 #### 添加一些作弊功能，同时屏蔽异常检测
 
 ## Changlog
+* 2.3.17
+  + Make compatible with game version 0.10.30.23292
 * 2.3.16
   + Add 2 options to `Belt signal item generation`:
     - `Count generations as production in statistics`
@@ -155,6 +157,8 @@
 * [Multifunction_mod](https://github.com/blacksnipebiu/Multifunction_mod): Some cheat functions
 
 ## 更新日志
+* 2.3.17
+  + 适配游戏版本0.10.30.23292
 * 2.3.16
   + 为`传送带信号物品生成`添加了两个选项：
     - `统计信息里将生成计算为产物`
