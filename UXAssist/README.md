@@ -173,7 +173,7 @@
         - It will speed down when approaching the target planet, to avoid overshooting
   + Dyson Sphere
     - Stop ejectors when available nodes are all filled up
-    - Construct only nodes but frames
+    - Construct only structure points but frames
     - Re-initialize Dyson Spheres
     - Quick dismantle Dyson Shells
   + Tech

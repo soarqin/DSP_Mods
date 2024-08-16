@@ -58,13 +58,14 @@ public static class UIConfigWindow
         I18N.Add("Maximum count to build", "Maximum count to build", "最大建造数量");
         I18N.Add("max", "max", "最大");
         I18N.Add("Stop ejectors when available nodes are all filled up", "Stop ejectors when available nodes are all filled up", "可用节点全部造完时停止弹射");
-        I18N.Add("Construct only nodes but frames", "Construct only nodes but frames", "只造节点不造框架");
+        I18N.Add("Construct only structure points but frames", "Construct only structure points but frames", "只造节点不造框架");
         I18N.Add("Initialize Dyson Sphere", "Initialize Dyson Sphere", "初始化戴森球");
         I18N.Add("Initialize Dyson Sphere Confirm", "This operation will destroy all layers on this dyson sphere, are you sure?", "此操作将会摧毁戴森球上的所有层级，确定吗？");
         I18N.Add("Click to dismantle selected layer", "Click to dismantle selected layer", "点击拆除对应的戴森壳");
         I18N.Add("Dismantle selected layer", "Dismantle selected layer", "拆除选中的戴森壳");
         I18N.Add("Dismantle selected layer Confirm", "This operation will dismantle selected layer, are you sure?", "此操作将会拆除选中的戴森壳，确定吗？");
         I18N.Add("Restore upgrades of \"Sorter Cargo Stacking\" on panel", "Restore upgrades of \"Sorter Cargo Stacking\" on panel", "在升级面板上恢复\"分拣器货物叠加\"的升级");
+        I18N.Add("Buy out techs with their prerequisites", "Buy out techs with their prerequisites", "购买科技也同时购买所有前置科技");
         I18N.Add("Set \"Sorter Cargo Stacking\" to unresearched state", "Set \"Sorter Cargo Stacking\" to unresearched state", "将\"分拣器货物叠加\"设为未研究状态");
         I18N.Add("Open Dark Fog Communicator", "Open Dark Fog Communicator", "打开黑雾通讯器");
         I18N.Apply();
@@ -258,6 +259,8 @@ public static class UIConfigWindow
                 history.techStates[id] = state;
             }
         });
+        y += 36f;
+        MyCheckBox.CreateCheckBox(x, y, tab5, TechPatch.BatchBuyoutTechEnabled, "Buy out techs with their prerequisites");
         y += 36f;
         y += 36f;
         wnd.AddButton(x, y, 300f, tab5, "Open Dark Fog Communicator", 16, "button-open-df-communicator", () =>

@@ -85,7 +85,7 @@
   + New function: `Remove some build conditions`
   + Fix compatibility with some mods
 * 2.2.2
-  + New function: `Assign game to currrnet account`
+  + New function: `Assign gamesave to currrnet account`
   + New subfunction: `Belt signal alt format`
   + Fix a crash on using `Initialize this Planet`
   + Fix belt build in `Finish build immediately`
@@ -115,7 +115,7 @@
     + Enable Dev Shortcuts (check config panel for usage)
     + Disable Abnormal Checks
     + Unlock techs with key-modifiers (Ctrl/Alt/Shift)
-    + Assign game to currrnet account
+    + Assign gamesave to currrnet account
   + Factory:
     + Finish build immediately
     + Architect mode (Infinite buildings)
@@ -238,7 +238,7 @@
   + 新功能：`移除部分不影响游戏逻辑的建造条件`
   + 修复了与一些mod的兼容性问题
 * 2.2.2
-  + 新功能：`将游戏绑定给当前账号`
+  + 新功能：`将游戏存档绑定给当前账号`
   + 新子功能：`传送带信号替换格式`
   + 修复了`初始化本行星`可能导致崩溃的问题
   + 修复了`建造秒完成`中传送带建造的问题
@@ -268,7 +268,7 @@
     + 启用开发模式快捷键(使用说明见设置面板)
     + 屏蔽异常检测
     + 使用组合键解锁科技（Ctrl/Alt/Shift）
-    + 将游戏绑定给当前账号
+    + 将游戏存档绑定给当前账号
   + 工厂：
     + 建造秒完成
     + 建筑师模式(无限建筑)

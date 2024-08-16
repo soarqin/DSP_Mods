@@ -37,9 +37,8 @@ public static class TechPatch
         }
     }
 
-    private static void UnlockTechRecursive([NotNull] TechProto techProto, int maxLevel = 10000)
+    private static void UnlockTechRecursive(GameHistoryData history, [NotNull] TechProto techProto, int maxLevel = 10000)
     {
-        var history = GameMain.history;
         var techStates = history.techStates;
         var techID = techProto.ID;
         if (techStates == null || !techStates.TryGetValue(techID, out var value))
@@ -58,19 +57,13 @@ public static class TechPatch
         {
             var preProto = LDB.techs.Select(preid);
             if (preProto != null)
-                UnlockTechRecursive(preProto, maxLevel);
+                UnlockTechRecursive(history, preProto, techProto.PreTechsMax ? 10000 : -1);
         }
-
-        var techQueue = history.techQueue;
-        if (techQueue != null)
+        foreach (var preid in techProto.PreTechsImplicit)
         {
-            for (var i = 0; i < techQueue.Length; i++)
-            {
-                if (techQueue[i] == techID)
-                {
-                    techQueue[i] = 0;
-                }
-            }
+            var preProto = LDB.techs.Select(preid);
+            if (preProto != null)
+                UnlockTechRecursive(history, preProto, techProto.PreTechsMax ? 10000 : -1);
         }
 
         if (value.curLevel < techProto.Level) value.curLevel = techProto.Level;
@@ -105,23 +98,37 @@ public static class TechPatch
 
     private static void OnClickTech(UITechNode node)
     {
+        var history = GameMain.history;
         if (VFInput.shift)
         {
             if (VFInput.alt) return;
             if (VFInput.control)
-                UnlockTechRecursive(node.techProto, -100);
+                UnlockTechRecursive(history, node.techProto, -100);
             else
-                UnlockTechRecursive(node.techProto, -1);
-            return;
+                UnlockTechRecursive(history, node.techProto, -1);
         }
-        if (VFInput.control)
+        else
         {
-            if (!VFInput.alt)
-                UnlockTechRecursive(node.techProto, -10);
+            if (VFInput.control)
+            {
+                if (!VFInput.alt)
+                    UnlockTechRecursive(history, node.techProto, -10);
+                else
+                    return;
+            }
+            else if (VFInput.alt)
+            {
+                UnlockTechRecursive(history, node.techProto);
+            }
+            else
+            {
+                return;
+            }
         }
-        else if (VFInput.alt)
+        history.VarifyTechQueue();
+        if (history.currentTech != history.techQueue[0])
         {
-            UnlockTechRecursive(node.techProto);
+            history.currentTech = history.techQueue[0];
         }
     }
 

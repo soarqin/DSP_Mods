@@ -2,6 +2,7 @@
 using System.Reflection.Emit;
 using BepInEx.Configuration;
 using HarmonyLib;
+using UXAssist.Common;
 
 namespace UXAssist;
 
@@ -13,6 +14,7 @@ public static class DysonSpherePatch
    
     public static void Init()
     {
+        I18N.Add("[UXAssist] No node to fill", "[UXAssist] No node to fill", "[UXAssist] 无可建造节点");
         _dysonSpherePatch ??= Harmony.CreateAndPatchAll(typeof(DysonSpherePatch));
         StopEjectOnNodeCompleteEnabled.SettingChanged += (_, _) => StopEjectOnNodeComplete.Enable(StopEjectOnNodeCompleteEnabled.Value);
         OnlyConstructNodesEnabled.SettingChanged += (_, _) => OnlyConstructNodes.Enable(OnlyConstructNodesEnabled.Value);
@@ -272,6 +274,35 @@ public static class DysonSpherePatch
             );
             return matcher.InstructionEnumeration();
         }
+        
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(UIEjectorWindow), nameof(UIEjectorWindow._OnUpdate))]
+        static IEnumerable<CodeInstruction> UIEjectorWindow__OnUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            var label1 = generator.DefineLabel();
+            var label2 = generator.DefineLabel();
+            matcher.MatchForward(false,
+                // this.stateText.text = "轨道未设置".Translate();
+                new CodeMatch(OpCodes.Ldstr, "待机"),
+                new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(Localization), nameof(Localization.Translate))),
+                new CodeMatch(OpCodes.Callvirt, AccessTools.PropertySetter(typeof(UnityEngine.UI.Text), nameof(UnityEngine.UI.Text.text)))
+            ).InsertAndAdvance(
+                // if (StopEjectOnNodeComplete.AnyNodeForAbsorb(this.starData.index))
+                new CodeInstruction(OpCodes.Ldarg_0),
+                new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(UIEjectorWindow), nameof(UIEjectorWindow.factorySystem))),
+                new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(FactorySystem), nameof(FactorySystem.planet))),
+                new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(PlanetData), nameof(PlanetData.star))),
+                new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(StarData), nameof(StarData.index))),
+                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(StopEjectOnNodeComplete), nameof(StopEjectOnNodeComplete.AnyNodeForAbsorb))),
+                new CodeInstruction(OpCodes.Brfalse, label1)
+            ).Advance(1).InsertAndAdvance(
+                new CodeInstruction(OpCodes.Br, label2),
+                new CodeInstruction(OpCodes.Ldstr, "[UXAssist] No node to fill").WithLabels(label1),
+                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(Localization), nameof(Localization.Translate)))
+            ).Labels.Add(label2);
+            return matcher.InstructionEnumeration();
+        }
     }
 
     private static class OnlyConstructNodes
@@ -303,7 +334,7 @@ public static class DysonSpherePatch
                 sphere.PickAutoNode();
             }
         }
-        
+
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(DysonNode), nameof(DysonNode.spReqOrder), MethodType.Getter)]
         private static IEnumerable<CodeInstruction> DysonNode_spReqOrder_Getter_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)

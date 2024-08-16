@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: d23f49d91cf565e4b8f304ace6dfb41d
+guid: f78dff977c5507b4aa577ce122093e4f
 TextureImporter:
   fileIDToRecycleName: {}
   externalObjects: {}
@@ -36,13 +36,13 @@ TextureImporter:
     mipBias: -100
     wrapU: 1
     wrapV: 1
-    wrapW: -1
+    wrapW: 1
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
   spriteMode: 1
   spriteExtrude: 1
-  spriteMeshType: 1
+  spriteMeshType: 0
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
   spritePixelsToUnits: 100
@@ -86,7 +86,7 @@ TextureImporter:
     outline: []
     physicsShape: []
     bones: []
-    spriteID: ca6712e3c671c7146b9c3e191b27c078
+    spriteID: 0233ce5e35582eb44980c656c30a6664
     vertices: []
     indices: 
     edges: []
@@ -95,5 +95,5 @@ TextureImporter:
   pSDRemoveMatte: 0
   pSDShowRemoveMatteOption: 0
   userData: 
-  assetBundleName: dustbin
+  assetBundleName: uxassist
   assetBundleVariant: assetbundle

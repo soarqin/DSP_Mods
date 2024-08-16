@@ -11,7 +11,7 @@ namespace UXAssist;
 public static class GamePatch
 {
     private const string GameWindowClass = "UnityWndClass";
-    private const string GameWindowTitle = "Dyson Sphere Program";
+    private static string _gameWindowTitle = "Dyson Sphere Program";
 
     public static ConfigEntry<bool> EnableWindowResizeEnabled;
     public static ConfigEntry<bool> LoadLastWindowRectEnabled;
@@ -22,6 +22,28 @@ public static class GamePatch
 
     public static void Init()
     {
+        // Get profile name from command line arguments, and set window title accordingly
+        var args = Environment.GetCommandLineArgs();
+        for (var i = 0; i < args.Length; i++)
+        {
+            if (args[i] != "--doorstop-target") continue;
+            var arg = args[i + 1];
+            const string doorstopPathSuffix = @"\BepInEx\core\BepInEx.Preloader.dll";
+            if (!arg.EndsWith(doorstopPathSuffix, StringComparison.OrdinalIgnoreCase))
+                break;
+            arg = arg.Substring(0, arg.Length - doorstopPathSuffix.Length);
+            const string profileSuffix = @"\profiles\";
+            var index = arg.LastIndexOf(profileSuffix, StringComparison.OrdinalIgnoreCase);
+            if (index < 0)
+                break;
+            arg = arg.Substring(index + profileSuffix.Length);
+            var wnd = WinApi.FindWindow(GameWindowClass, _gameWindowTitle);
+            if (wnd == IntPtr.Zero) return;
+            _gameWindowTitle = $"Dyson Sphere Program - {arg}";
+            WinApi.SetWindowText(wnd, _gameWindowTitle);
+            break;
+        }
+
         EnableWindowResizeEnabled.SettingChanged += (_, _) => EnableWindowResize.Enable(EnableWindowResizeEnabled.Value);
         LoadLastWindowRectEnabled.SettingChanged += (_, _) => LoadLastWindowRect.Enable(LoadLastWindowRectEnabled.Value);
         // AutoSaveOptEnabled.SettingChanged += (_, _) => AutoSaveOpt.Enable(AutoSaveOptEnabled.Value);
@@ -46,7 +68,7 @@ public static class GamePatch
     [HarmonyPrefix, HarmonyPatch(typeof(GameMain), nameof(GameMain.HandleApplicationQuit))]
     private static void GameMain_HandleApplicationQuit_Prefix()
     {
-        var wnd = WinApi.FindWindow(GameWindowClass, GameWindowTitle);
+        var wnd = WinApi.FindWindow(GameWindowClass, _gameWindowTitle);
         if (wnd == IntPtr.Zero) return;
         WinApi.GetWindowRect(wnd, out var rect);
         LastWindowRect.Value = new Vector4(rect.Left, rect.Top, Screen.width, Screen.height);
@@ -56,7 +78,7 @@ public static class GamePatch
     {
         public static void Enable(bool on)
         {
-            var wnd = WinApi.FindWindow(GameWindowClass, GameWindowTitle);
+            var wnd = WinApi.FindWindow(GameWindowClass, _gameWindowTitle);
             if (wnd == IntPtr.Zero) return;
             if (on)
                 WinApi.SetWindowLong(wnd, (int)WindowLongFlags.GWL_STYLE,
@@ -131,7 +153,7 @@ public static class GamePatch
         private static void MoveWindowPosition()
         {
             if (Screen.fullScreenMode is FullScreenMode.ExclusiveFullScreen or FullScreenMode.FullScreenWindow or FullScreenMode.MaximizedWindow || GameMain.isRunning) return;
-            var wnd = WinApi.FindWindow(GameWindowClass, GameWindowTitle);
+            var wnd = WinApi.FindWindow(GameWindowClass, _gameWindowTitle);
             if (wnd == IntPtr.Zero) return;
             var rect = LastWindowRect.Value;
             if (rect.z == 0f && rect.w == 0f) return;
@@ -166,7 +188,7 @@ public static class GamePatch
         {
             if (_loaded || Screen.fullScreenMode is FullScreenMode.ExclusiveFullScreen or FullScreenMode.FullScreenWindow or FullScreenMode.MaximizedWindow) return;
             _loaded = true;
-            var wnd = WinApi.FindWindow(GameWindowClass, GameWindowTitle);
+            var wnd = WinApi.FindWindow(GameWindowClass, _gameWindowTitle);
             if (wnd == IntPtr.Zero) return;
             var rect = LastWindowRect.Value;
             if (rect.z == 0f && rect.w == 0f) return;

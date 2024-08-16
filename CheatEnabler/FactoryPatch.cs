@@ -395,6 +395,7 @@ public static class FactoryPatch
             yield return new CodeInstruction(OpCodes.Ret);
         }
 
+        [HarmonyTranspiler, HarmonyPriority(Priority.First)]
         [HarmonyPatch(typeof(BuildTool_Path), nameof(BuildTool_Path.CheckBuildConditions))]
         private static IEnumerable<CodeInstruction> BuildTool_Path_CheckBuildConditions_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
         {
@@ -418,7 +419,7 @@ public static class FactoryPatch
                 new CodeMatch(ci => ci.IsLdloc()),
                 new CodeMatch(ci => ci.Branches(out _)),
                 new CodeMatch(OpCodes.Ldarg_0),
-                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(BuildTool), nameof(BuildTool_Path.waitForConfirm))),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(BuildTool_Path), nameof(BuildTool_Path.waitForConfirm))),
                 new CodeMatch(ci => ci.Branches(out _))
             );
             var operand = matcher.Operand;

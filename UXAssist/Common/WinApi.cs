@@ -74,6 +74,9 @@ public static class WinApi
     [DllImport("user32", ExactSpelling = true)]
     public static extern bool SetWindowPos(IntPtr hwnd, IntPtr hWndInsertAfter, int x, int y, int cx, int cy, int flags);
     
+    [DllImport("user32", CharSet = CharSet.Unicode)]
+    public static extern bool SetWindowText(IntPtr hwnd, string lpString);
+    
     [DllImport("user32", ExactSpelling = true)]
     public static extern bool MoveWindow(IntPtr hWnd, int x, int y, int nWidth, int nHeight, bool bRepaint);
 }
