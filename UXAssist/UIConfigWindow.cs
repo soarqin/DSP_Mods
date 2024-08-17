@@ -208,7 +208,7 @@ public static class UIConfigWindow
         y = 10f;
         MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.StopEjectOnNodeCompleteEnabled, "Stop ejectors when available nodes are all filled up");
         y += 36f;
-        MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.OnlyConstructNodesEnabled, "Construct only nodes but frames");
+        MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.OnlyConstructNodesEnabled, "Construct only structure points but frames");
         x = 400f;
         y = 10f;
         wnd.AddButton(x, y, tab4, "Initialize Dyson Sphere", 16, "init-dyson-sphere", () =>

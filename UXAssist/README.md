@@ -4,6 +4,8 @@
 #### 一些提升用户体验的功能和补丁
 
 ## Changlog
+* 1.1.2
+  + `Belt signals for buy out dark fog items automatically`: Always add belt signals to the panel to fix missing belt icons when disabled.
 * 1.1.1
   + Fix assetbundle loading issue
 * 1.1.0
@@ -225,6 +227,8 @@
 * [CruiseAssist](https://dsp.thunderstore.io/package/tanu/CruiseAssist/) and its extension [AutoPilot](https://dsp.thunderstore.io/package/tanu/AutoPilot/): `Auto navigation on sailings` and `Auto-cruise` implementations
 
 ## 更新日志
+* 1.1.2
+  + `用于自动购买黑雾物品的传送带信号`: 总是将传送带信号添加到面板，以修复禁用时传送带图标丢失的问题。
 * 1.1.1
   + 修复了资源包加载问题
 * 1.1.0

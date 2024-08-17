@@ -45,6 +45,8 @@ public static class FactoryPatch
             }
         );
         I18N.Add("KEYToggleDoNotRenderEntities", "Toggle Do Not Render Factory Entities", "切换不渲染工厂建筑实体");
+
+        BeltSignalsForBuyOut.InitPersist();
         UnlimitInteractiveEnabled.SettingChanged += (_, _) => UnlimitInteractive.Enable(UnlimitInteractiveEnabled.Value);
         RemoveSomeConditionEnabled.SettingChanged += (_, _) => RemoveSomeConditionBuild.Enable(RemoveSomeConditionEnabled.Value);
         NightLightEnabled.SettingChanged += (_, _) => NightLight.Enable(NightLightEnabled.Value);
@@ -99,6 +101,7 @@ public static class FactoryPatch
         AllowOverflowInLogistics.Enable(false);
         LogisticsCapacityTweaks.Enable(false);
         BeltSignalsForBuyOut.Enable(false);
+        BeltSignalsForBuyOut.UninitPersist();
 
         _factoryPatch?.UnpatchSelf();
         _factoryPatch = null;
@@ -169,15 +172,6 @@ public static class FactoryPatch
         );
         matcher.Repeat(m => m.SetAndAdvance(OpCodes.Ldc_I4, 900));
         return matcher.InstructionEnumeration();
-    }
-
-    [HarmonyPostfix, HarmonyPriority(Priority.Last)]
-    [HarmonyPatch(typeof(VFPreload), nameof(VFPreload.InvokeOnLoadWorkEnded))]
-    private static void VFPreload_InvokeOnLoadWorkEnded_Postfix()
-    {
-        if (BeltSignalsForBuyOut.Initialized) return;
-        BeltSignalsForBuyOut.Initialized = true;
-        if (BeltSignalsForBuyOutEnabled.Value) BeltSignalsForBuyOut.EnableBeltSignals();
     }
 
     public static class NightLight
@@ -1872,7 +1866,8 @@ public static class FactoryPatch
     private static class BeltSignalsForBuyOut
     {
         private static Harmony _patch;
-        public static bool Initialized;
+        private static Harmony _persistPatch;
+        private static bool _initialized;
         private static bool _loaded;
         private static AssetBundle _bundle;
         private static long _clusterSeedKey;
@@ -1882,23 +1877,33 @@ public static class FactoryPatch
         private static Dictionary<int, uint>[] _signalBelts = new Dictionary<int, uint>[64];
         private static readonly HashSet<int> SignalBeltFactoryIndices = [];
 
+        public static void InitPersist()
+        {
+            AddBeltSignalProtos();
+            _persistPatch = Harmony.CreateAndPatchAll(typeof(Persist));
+        }
+
+        public static void UninitPersist()
+        {
+            _persistPatch?.UnpatchSelf();
+            _persistPatch = null;
+        }
+
         public static void Enable(bool enable)
         {
             if (enable)
             {
                 _patch ??= Harmony.CreateAndPatchAll(typeof(BeltSignalsForBuyOut));
-                EnableBeltSignals();
                 return;
             }
 
             _patch?.UnpatchSelf();
             _patch = null;
-            DisableBeltSignals();
         }
 
-        public static void EnableBeltSignals()
+        private static void AddBeltSignalProtos()
         {
-            if (!Initialized || _loaded) return;
+            if (!_initialized || _loaded) return;
             var pluginfolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             _bundle = AssetBundle.LoadFromFile($"{pluginfolder}/uxassist.assetbundle");
             var signals = LDB._signals;
@@ -1975,9 +1980,9 @@ public static class FactoryPatch
             _loaded = true;
         }
 
-        private static void DisableBeltSignals()
+        private static void RemoveBeltSignalProtos()
         {
-            if (!Initialized || !_loaded) return;
+            if (!_initialized || !_loaded) return;
             var signals = LDB._signals;
             if (signals.dataIndices.TryGetValue(301, out var index))
             {
@@ -2022,7 +2027,7 @@ public static class FactoryPatch
             var signalBelts = GetOrCreateSignalBelts(factory);
             if (signalBelts.Count == 0)
                 SignalBeltFactoryIndices.Add(factory);
-            signalBelts.Add(beltId, signal);
+            signalBelts[beltId] = signal;
         }
 
         private static Dictionary<int, uint> GetOrCreateSignalBelts(int index)
@@ -2065,51 +2070,63 @@ public static class FactoryPatch
             signalBelts.Clear();
             SignalBeltFactoryIndices.Remove(factory);
         }
-        
-        [HarmonyPostfix]
-        [HarmonyPatch(typeof(DigitalSystem), MethodType.Constructor, typeof(PlanetData))]
-        private static void DigitalSystem_Constructor_Postfix(PlanetData _planet)
-        {
-            var player = GameMain.mainPlayer;
-            if (player == null) return;
-            var factory = _planet?.factory;
-            if (factory == null) return;
-            RemovePlanetSignalBelts(factory.index);
-        }
-        
-        [HarmonyPostfix]
-        [HarmonyPatch(typeof(GameMain), nameof(GameMain.Begin))]
-        private static void GameMain_Begin_Postfix()
-        {
-            _clusterSeedKey = GameMain.data.GetClusterSeedKey();
-            InitSignalBelts();
-        }
 
-        [HarmonyPrefix]
-        [HarmonyPatch(typeof(CargoTraffic), nameof(CargoTraffic.RemoveBeltComponent))]
-        public static void CargoTraffic_RemoveBeltComponent_Prefix(int id)
+        private static class Persist
         {
-            var planet = GameMain.localPlanet;
-            if (planet == null) return;
-            RemoveSignalBelt(planet.factoryIndex, id);
-        }
-
-        [HarmonyPostfix]
-        [HarmonyPatch(typeof(CargoTraffic), nameof(CargoTraffic.SetBeltSignalIcon))]
-        public static void CargoTraffic_SetBeltSignalIcon_Postfix(CargoTraffic __instance, int entityId, int signalId)
-        {
-            var planet = GameMain.localPlanet;
-            if (planet == null) return;
-            var factory = __instance.factory;
-            var factoryIndex = planet.factoryIndex;
-            var beltId = factory.entityPool[entityId].beltId;
-            if (signalId is < 301 or > 306)
+            [HarmonyPostfix, HarmonyPriority(Priority.Last)]
+            [HarmonyPatch(typeof(VFPreload), nameof(VFPreload.InvokeOnLoadWorkEnded))]
+            private static void VFPreload_InvokeOnLoadWorkEnded_Postfix()
             {
-                RemoveSignalBelt(factoryIndex, beltId);
+                if (BeltSignalsForBuyOut._initialized) return;
+                BeltSignalsForBuyOut._initialized = true;
+                BeltSignalsForBuyOut.AddBeltSignalProtos();
             }
-            else
+
+            [HarmonyPostfix]
+            [HarmonyPatch(typeof(DigitalSystem), MethodType.Constructor, typeof(PlanetData))]
+            private static void DigitalSystem_Constructor_Postfix(PlanetData _planet)
             {
-                SetSignalBelt(factoryIndex, beltId, (uint)signalId - 301U);
+                var player = GameMain.mainPlayer;
+                if (player == null) return;
+                var factory = _planet?.factory;
+                if (factory == null) return;
+                RemovePlanetSignalBelts(factory.index);
+            }
+
+            [HarmonyPostfix]
+            [HarmonyPatch(typeof(GameMain), nameof(GameMain.Begin))]
+            private static void GameMain_Begin_Postfix()
+            {
+                _clusterSeedKey = GameMain.data.GetClusterSeedKey();
+                InitSignalBelts();
+            }
+
+            [HarmonyPrefix]
+            [HarmonyPatch(typeof(CargoTraffic), nameof(CargoTraffic.RemoveBeltComponent))]
+            public static void CargoTraffic_RemoveBeltComponent_Prefix(int id)
+            {
+                var planet = GameMain.localPlanet;
+                if (planet == null) return;
+                RemoveSignalBelt(planet.factoryIndex, id);
+            }
+
+            [HarmonyPostfix]
+            [HarmonyPatch(typeof(CargoTraffic), nameof(CargoTraffic.SetBeltSignalIcon))]
+            public static void CargoTraffic_SetBeltSignalIcon_Postfix(CargoTraffic __instance, int entityId, int signalId)
+            {
+                var planet = GameMain.localPlanet;
+                if (planet == null) return;
+                var factory = __instance.factory;
+                var factoryIndex = planet.factoryIndex;
+                var beltId = factory.entityPool[entityId].beltId;
+                if (signalId is < 301 or > 306)
+                {
+                    RemoveSignalBelt(factoryIndex, beltId);
+                }
+                else
+                {
+                    SetSignalBelt(factoryIndex, beltId, (uint)signalId - 301U);
+                }
             }
         }
 
