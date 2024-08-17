@@ -4,6 +4,23 @@
 #### 一些提升用户体验的功能和补丁
 
 ## Changlog
+* 1.1.1
+  + Fix assetbundle loading issue
+* 1.1.0
+  + `Stop ejectors when available nodes are all filled up`: Show `No node to fill` on ejector panel when all dyson sphere nodes are filled up.
+  + Append mod profile name to game window title, if using mod managers (`Thunderstore Mod Manager` or `r2modman`).
+  + New features:
+    - `Buy out techs with their prerequisites`: This enables batch buying out techs with their prerequisites. Buy-out button is shown for all locked techs/upgrads.
+    - `Belt signals for buy out dark fog items automatically`, while enabled:
+      - 6 belt signals are added to the signal panel, which can be used to buy out dark fog items automatically.
+      - Generated items are stacked in 4 items.
+      - Exchange ratio is following the original game design, aka:
+        - 1 Metaverse = 20 Dark Fog Matrices
+        - 1 Metaverse = 60 Engery Shards
+        - 1 Metaverse = 30 Silicon-based Neurons
+        - 1 Metaverse = 30 Negentropy Singularities
+        - 1 Metaverse = 30 Matter Recombinators
+        - 1 Metaverse = 10 Core Elements
 * 1.0.26
   + New features:
     - Restore upgrades of `Sorter Cargo Stacking` on panel
@@ -91,7 +108,7 @@
   + New function: `Enhanced control for logistic storage limits`
 * 1.0.7
   + Fix a crash issue on choosing language other than English and Chinese
-  + Games saved in Peace-Mode after Dark-Forg update can also be loaded as Combat-Mode now.
+  + Games saved in Peace-Mode after Dark-Fog update can also be loaded as Combat-Mode now.
 * 1.0.6
   + Convert old saves to Combat-Mode on loading
 * 1.0.5
@@ -129,6 +146,7 @@
   + Increase maximum count of Metadata Instantiations to 20000 (from 2000)
   + Increase capacity of player order queue to 128 (from 16)
   + Enable `Hide UI` function(`F11` by default) while on Star Map view
+  + Append mod profile name to game window title, if using mod managers (`Thunderstore Mod Manager` or `r2modman`).
 * Features:
   + General 
     - Enable game window resize
@@ -159,6 +177,16 @@
     - Re-intialize planet (without reseting veins)
     - Quick dismantle all buildings (without drops)
     - Quick build Orbital Collectors
+    - Belt signals for buy out dark fog items automatically
+      - 6 belt signals are added to the signal panel, which can be used to buy out dark fog items automatically.
+      - Generated items are stacked in 4 items.
+      - Exchange ratio is following the original game design, aka:
+        - 1 Metaverse = 20 Dark Fog Matrices
+        - 1 Metaverse = 60 Engery Shards
+        - 1 Metaverse = 30 Silicon-based Neurons
+        - 1 Metaverse = 30 Negentropy Singularities
+        - 1 Metaverse = 30 Matter Recombinators
+        - 1 Metaverse = 10 Core Elements
   + Player/Mecha
     - Unlimited interactive range
     - Enable player actions in globe view
@@ -179,6 +207,8 @@
   + Tech
     - Restore upgrades of `Sorter Cargo Stacking` on panel
     - Set `Sorter Cargo Stacking` to unresearched state
+    - Buy out techs with their prerequisites
+      - This enables batch buying out techs with their prerequisites. Buy-out button is shown for all locked techs/upgrads.
   + Combat
     - Open Dark Fog Communicator anywhere
 
@@ -195,6 +225,23 @@
 * [CruiseAssist](https://dsp.thunderstore.io/package/tanu/CruiseAssist/) and its extension [AutoPilot](https://dsp.thunderstore.io/package/tanu/AutoPilot/): `Auto navigation on sailings` and `Auto-cruise` implementations
 
 ## 更新日志
+* 1.1.1
+  + 修复了资源包加载问题
+* 1.1.0
+  + `可用节点全部造完时停止弹射`: 当所有戴森球节点都造完时，在弹射器面板上显示`没有可建造节点`
+  + 如果使用mod管理器(`Thunderstore Mod Manager`或`r2modman`)启动游戏，在游戏窗口标题中追加mod配置档案名
+  + 新功能：
+    - `买断科技也同时买断所有前置科技`：可以批量买断科技及其所有前置科技。所有未解锁的科技/升级都会显示买断按钮。
+    - `用于自动购买黑雾物品的传送带信号`，启用时：
+      - 在信号面板上添加了6个传送带信号，可以用于自动购买黑雾道具。
+      - 生成的物品堆叠数为4。
+      - 兑换比率遵循原始游戏设计，即：
+        - 1个元宇宙 = 20个黑雾矩阵
+        - 1个元宇宙 = 60个能量碎片
+        - 1个元宇宙 = 30个硅基神经元
+        - 1个元宇宙 = 30个负熵奇点
+        - 1个元宇宙 = 30个物质重组器
+        - 1个元宇宙 = 10个核心素
 * 1.0.26
   + 新功能：
     - 在升级面板上恢复`分拣器货物堆叠`的升级
@@ -320,6 +367,7 @@
   + 将元数据提取的最大数量增加到20000(原来为2000)
   + 将玩家指令队列的容量增加到128(原来为16)
   + 在星图视图中启用`隐藏UI`功能(默认按键为`F11`)
+  + 如果使用mod管理器(`Thunderstore Mod Manager`或`r2modman`)启动游戏，在游戏窗口标题中追加mod配置档案名
 * 功能：
   + 通用
     - 可调整游戏窗口大小(可最大化和拖动边框)
@@ -351,6 +399,16 @@
     - 初始化本行星（不重置矿脉）
     - 快速拆除所有建筑（不掉落）
     - 快速建造轨道采集器
+    - 用于自动购买黑雾物品的传送带信号
+      - 在信号面板上添加了6个传送带信号，可以用于自动购买黑雾道具。
+      - 生成的物品堆叠数为4。
+      - 兑换比率遵循原始游戏设计，即：
+        - 1个元宇宙 = 20个黑雾矩阵
+        - 1个元宇宙 = 60个能量碎片
+        - 1个元宇宙 = 30个硅基神经元
+        - 1个元宇宙 = 30个负熵奇点
+        - 1个元宇宙 = 30个物质重组器
+        - 1个元宇宙 = 10个核心素
   + 玩家/机甲
     - 无限交互距离
     - 移除建造数量和范围限制
@@ -372,6 +430,8 @@
   + 科研
     - 在升级面板上恢复`分拣器货物堆叠`的升级
     - 将`分拣器货物堆叠`设为未研究状态
+    - 买断科技也同时买断所有前置科技
+      - 这使得可以批量买断科技及其所有前置科技。所有未解锁的科技/升级都会显示买断按钮。
   + 战斗
     - 在任意位置打开黑雾通讯器
 

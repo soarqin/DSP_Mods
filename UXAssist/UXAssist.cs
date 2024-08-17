@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection.Emit;
 using BepInEx;
 using BepInEx.Configuration;
@@ -10,13 +11,15 @@ using UnityEngine;
 using UnityEngine.UI;
 using UXAssist.Common;
 using UXAssist.UI;
+using crecheng.DSPModSave;
 
 namespace UXAssist;
 
 [BepInDependency(CommonAPIPlugin.GUID)]
+[BepInDependency(DSPModSavePlugin.MODGUID)]
 [CommonAPISubmoduleDependency(nameof(CustomKeyBindSystem))]
 [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
-public class UXAssist : BaseUnityPlugin
+public class UXAssist : BaseUnityPlugin, IModCanSave
 {
     public new static readonly BepInEx.Logging.ManualLogSource Logger =
         BepInEx.Logging.Logger.CreateLogSource(PluginInfo.PLUGIN_NAME);
@@ -26,6 +29,27 @@ public class UXAssist : BaseUnityPlugin
     private static Harmony _patch;
     private static bool _initialized;
     private static PressKeyBind _toggleKey;
+
+    #region IModCanSave
+    private const ushort ModSaveVersion = 1;
+
+    public void Export(BinaryWriter w)
+    {
+        w.Write(ModSaveVersion);
+        FactoryPatch.Export(w);
+    }
+
+    public void Import(BinaryReader r)
+    {
+        var version = r.ReadUInt16();
+        if (version <= 0) return;
+        FactoryPatch.Import(r);
+    }
+
+    public void IntoOtherSave()
+    {
+    }
+    #endregion
 
     private void Awake()
     {
@@ -80,6 +104,8 @@ public class UXAssist : BaseUnityPlugin
             "Drag building power poles in maximum connection range");
         FactoryPatch.AllowOverflowInLogisticsEnabled = Config.Bind("Factory", "AllowOverflowInLogistics", false,
             "Allow overflow in logistic stations");
+        FactoryPatch.BeltSignalsForBuyOutEnabled = Config.Bind("Factory", "BeltSignalsForBuyOut", false,
+            "Belt signals for buy out dark fog items automatically");
         PlanetFunctions.OrbitalCollectorMaxBuildCount = Config.Bind("Factory", "OCMaxBuildCount", 0, "Maximum Orbital Collectors to build once, set to 0 to build as many as possible");
         PlayerPatch.EnhancedMechaForgeCountControlEnabled = Config.Bind("Player", "EnhancedMechaForgeCountControl", false,
             "Enhanced count control for hand-make, increases maximum of count to 1000, and you can hold Ctrl/Shift/Alt to change the count rapidly");

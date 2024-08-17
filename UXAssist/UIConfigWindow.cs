@@ -45,6 +45,7 @@ public static class UIConfigWindow
         I18N.Add("Do not render factory entities", "Do not render factory entities (except belts and sorters)", "不渲染工厂建筑实体(除了传送带和分拣器)");
         I18N.Add("Drag building power poles in maximum connection range", "Drag building power poles in maximum connection range", "拖动建造电线杆时自动使用最大连接距离间隔");
         I18N.Add("Allow overflow for Logistic Stations and Advanced Mining Machines", "Allow overflow for Logistic Stations and Advanced Mining Machines", "允许物流站和大型采矿机物品溢出");
+        I18N.Add("Belt signals for buy out dark fog items automatically", "Belt signals for buy out dark fog items automatically", "用于自动购买黑雾物品的传送带信号");
         I18N.Add("Auto navigation on sailings", "Auto navigation on sailings", "宇宙航行时自动导航");
         I18N.Add("Enable auto-cruise", "Enable auto-cruise", "启用自动巡航");
         I18N.Add("Auto boost", "Auto boost", "自动加速");
@@ -129,6 +130,8 @@ public static class UIConfigWindow
         MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.AllowOverflowInLogisticsEnabled, "Allow overflow for Logistic Stations and Advanced Mining Machines");
         y += 36f;
         MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.DoNotRenderEntitiesEnabled, "Do not render factory entities");
+        y += 36f;
+        MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.BeltSignalsForBuyOutEnabled, "Belt signals for buy out dark fog items automatically");
         x = 400f;
         y = 10f;
         wnd.AddButton(x, y, tab2, "Initialize This Planet", 16, "button-init-planet", () =>
@@ -243,6 +246,8 @@ public static class UIConfigWindow
         var tab5 = wnd.AddTab(_windowTrans, "Tech/Combat");
         x = 10;
         y = 10;
+        MyCheckBox.CreateCheckBox(x, y, tab5, TechPatch.BatchBuyoutTechEnabled, "Buy out techs with their prerequisites");
+        y += 36f;
         MyCheckBox.CreateCheckBox(x, y, tab5, TechPatch.SorterCargoStackingEnabled, "Restore upgrades of \"Sorter Cargo Stacking\" on panel");
         y += 36f;
         wnd.AddButton(x, y, 300f, tab5, "Set \"Sorter Cargo Stacking\" to unresearched state", 16, "button-remove-cargo-stacking", () =>
@@ -259,8 +264,6 @@ public static class UIConfigWindow
                 history.techStates[id] = state;
             }
         });
-        y += 36f;
-        MyCheckBox.CreateCheckBox(x, y, tab5, TechPatch.BatchBuyoutTechEnabled, "Buy out techs with their prerequisites");
         y += 36f;
         y += 36f;
         wnd.AddButton(x, y, 300f, tab5, "Open Dark Fog Communicator", 16, "button-open-df-communicator", () =>

@@ -4,6 +4,12 @@
 #### 添加一些作弊功能，同时屏蔽异常检测
 
 ## Changlog
+* 2.3.18
+  + New features:
+    + `Teleport to outer space`, this will teleport you to the outer space which is 50 LYs far from the farthest star.
+    + `Teleport to selected astronomical`
+  + Fix logic of `Unlock techs with key-modifiers`.
+  + `No condition build` does not hide rotation info of belts now.
 * 2.3.17
   + Make compatible with game version 0.10.30.23292
 * 2.3.16
@@ -142,9 +148,11 @@
     + Skip absorption period
     + Quick absorb
     + Eject anyway
-  + Combat:
+  + Mecha/Combat:
     + Mecha and Drones/Fleets invicible
     + Buildings invicible
+    + Teleport to outer space
+    + Teleport to selected astronomical
 
 ## Notes
 * Please upgrade `BepInEx` 5.4.21 or later if using with [BlueprintTweaks](https://dsp.thunderstore.io/package/kremnev8/BlueprintTweaks/) to avoid possible conflicts.
@@ -157,6 +165,12 @@
 * [Multifunction_mod](https://github.com/blacksnipebiu/Multifunction_mod): Some cheat functions
 
 ## 更新日志
+* 2.3.18
+  + 新功能：
+    + `传送到外太空`，这会将你传送到距离最远星球50光年的外太空
+    + `传送到选中天体`
+  + 修复了`组合键解锁科技`的逻辑
+  + `无条件建造`现在不会隐藏传送带的旋转信息了
 * 2.3.17
   + 适配游戏版本0.10.30.23292
 * 2.3.16

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Reflection.Emit;
 using BepInEx.Configuration;
 using CommonAPI.Systems;
@@ -27,6 +29,7 @@ public static class FactoryPatch
     public static ConfigEntry<bool> DoNotRenderEntitiesEnabled;
     public static ConfigEntry<bool> DragBuildPowerPolesEnabled;
     public static ConfigEntry<bool> AllowOverflowInLogisticsEnabled;
+    public static ConfigEntry<bool> BeltSignalsForBuyOutEnabled;
     private static PressKeyBind _doNotRenderEntitiesKey;
 
     private static Harmony _factoryPatch;
@@ -57,6 +60,7 @@ public static class FactoryPatch
         DragBuildPowerPolesEnabled.SettingChanged += (_, _) => DragBuildPowerPoles.Enable(DragBuildPowerPolesEnabled.Value);
         AllowOverflowInLogisticsEnabled.SettingChanged += (_, _) => AllowOverflowInLogistics.Enable(AllowOverflowInLogisticsEnabled.Value);
         LogisticsCapacityTweaksEnabled.SettingChanged += (_, _) => LogisticsCapacityTweaks.Enable(LogisticsCapacityTweaksEnabled.Value);
+        BeltSignalsForBuyOutEnabled.SettingChanged += (_, _) => BeltSignalsForBuyOut.Enable(BeltSignalsForBuyOutEnabled.Value);
         UnlimitInteractive.Enable(UnlimitInteractiveEnabled.Value);
         RemoveSomeConditionBuild.Enable(RemoveSomeConditionEnabled.Value);
         NightLight.Enable(NightLightEnabled.Value);
@@ -72,6 +76,7 @@ public static class FactoryPatch
         DragBuildPowerPoles.Enable(DragBuildPowerPolesEnabled.Value);
         AllowOverflowInLogistics.Enable(AllowOverflowInLogisticsEnabled.Value);
         LogisticsCapacityTweaks.Enable(LogisticsCapacityTweaksEnabled.Value);
+        BeltSignalsForBuyOut.Enable(BeltSignalsForBuyOutEnabled.Value);
 
         _factoryPatch ??= Harmony.CreateAndPatchAll(typeof(FactoryPatch));
     }
@@ -93,6 +98,7 @@ public static class FactoryPatch
         DragBuildPowerPoles.Enable(false);
         AllowOverflowInLogistics.Enable(false);
         LogisticsCapacityTweaks.Enable(false);
+        BeltSignalsForBuyOut.Enable(false);
 
         _factoryPatch?.UnpatchSelf();
         _factoryPatch = null;
@@ -102,6 +108,20 @@ public static class FactoryPatch
     {
         if (_doNotRenderEntitiesKey.keyValue)
             DoNotRenderEntitiesEnabled.Value = !DoNotRenderEntitiesEnabled.Value;
+    }
+
+    public static void Export(BinaryWriter w)
+    {
+        var storage = BeltSignalsForBuyOut.DarkFogItemsInVoid;
+        for (var i = 0; i < 6; i++)
+            w.Write(storage[i]);
+    }
+
+    public static void Import(BinaryReader r)
+    {
+        var storage = BeltSignalsForBuyOut.DarkFogItemsInVoid;
+        for (var i = 0; i < 6; i++)
+            storage[i] = r.ReadInt32();
     }
 
     [HarmonyTranspiler]
@@ -149,6 +169,15 @@ public static class FactoryPatch
         );
         matcher.Repeat(m => m.SetAndAdvance(OpCodes.Ldc_I4, 900));
         return matcher.InstructionEnumeration();
+    }
+
+    [HarmonyPostfix, HarmonyPriority(Priority.Last)]
+    [HarmonyPatch(typeof(VFPreload), nameof(VFPreload.InvokeOnLoadWorkEnded))]
+    private static void VFPreload_InvokeOnLoadWorkEnded_Postfix()
+    {
+        if (BeltSignalsForBuyOut.Initialized) return;
+        BeltSignalsForBuyOut.Initialized = true;
+        if (BeltSignalsForBuyOutEnabled.Value) BeltSignalsForBuyOut.EnableBeltSignals();
     }
 
     public static class NightLight
@@ -969,13 +998,16 @@ public static class FactoryPatch
                         {
                             itemCountMax = modelProto.prefabDesc.stationMaxItemCount;
                         }
+
                         itemCountMax += station.isStellar ? GameMain.history.remoteStationExtraStorage : GameMain.history.localStationExtraStorage;
                     }
+
                     if (newMax > itemCountMax)
                     {
                         newMax = itemCountMax;
                     }
                 }
+
                 storage.max = newMax;
                 _skipNextEvent = oldMax / 100 != newMax / 100;
                 break;
@@ -1173,6 +1205,7 @@ public static class FactoryPatch
                 if (nid <= 0) break;
                 currLevel++;
             } while (true);
+
             while (currLevel < levelMax)
             {
                 click.UpdateRaycast();
@@ -1530,7 +1563,7 @@ public static class FactoryPatch
     private static class DoNotRenderEntities
     {
         private static Harmony _patch;
-        
+
         public static void Enable(bool enable)
         {
             if (enable)
@@ -1542,7 +1575,7 @@ public static class FactoryPatch
             _patch?.UnpatchSelf();
             _patch = null;
         }
-        
+
         [HarmonyPrefix]
         [HarmonyPatch(typeof(ObjectRenderer), nameof(ObjectRenderer.Render))]
         [HarmonyPatch(typeof(DynamicRenderer), nameof(DynamicRenderer.Render))]
@@ -1564,7 +1597,7 @@ public static class FactoryPatch
         {
             __instance.renderEntity = true;
         }
-        
+
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(RaycastLogic), nameof(RaycastLogic.GameTick))]
         private static IEnumerable<CodeInstruction> RaycastLogic_GameTick_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -1598,7 +1631,7 @@ public static class FactoryPatch
             return matcher.InstructionEnumeration();
         }
     }
-    
+
     private static class DragBuildPowerPoles
     {
         private static Harmony _patch;
@@ -1619,7 +1652,7 @@ public static class FactoryPatch
             _patch?.UnpatchSelf();
             _patch = null;
         }
-        
+
         private static bool IsPowerPole(int id)
         {
             return PowerPoleIds.Contains(id);
@@ -1654,8 +1687,10 @@ public static class FactoryPatch
                     powerPole.prefabDesc.dragBuild = OldDragBuild[i];
                     powerPole.prefabDesc.dragBuildDist = OldDragBuildDist[i];
                 }
+
                 i++;
             }
+
             OldDragBuild.Clear();
             OldDragBuildDist.Clear();
         }
@@ -1666,13 +1701,14 @@ public static class FactoryPatch
         {
             FixProto();
         }
+
         [HarmonyPostfix, HarmonyPriority(Priority.Last)]
         [HarmonyPatch(typeof(GameMain), nameof(GameMain.End))]
         private static void GameMain_End_Postfix()
         {
             UnfixProto();
         }
-        
+
         private static int PlanetGridSnapDotsNonAllocNotAligned(PlanetGrid planetGrid, Vector3 begin, Vector3 end, Vector2 interval, float yaw, float planetRadius, float gap, Vector3[] snaps)
         {
             begin = begin.normalized;
@@ -1695,6 +1731,7 @@ public static class FactoryPatch
                 finalCount++;
                 if (t > maxT) break;
             }
+
             return finalCount;
         }
 
@@ -1714,6 +1751,7 @@ public static class FactoryPatch
             {
                 snaps[num++] = aux.Snap(begin, false);
             }
+
             return num;
         }
 
@@ -1768,7 +1806,7 @@ public static class FactoryPatch
     private static class AllowOverflowInLogistics
     {
         private static Harmony _patch;
-        
+
         public static void Enable(bool enable)
         {
             if (enable)
@@ -1827,6 +1865,305 @@ public static class FactoryPatch
             );
             var labels = matcher.Labels;
             matcher.RemoveInstructions(9).Labels.AddRange(labels);
+            return matcher.InstructionEnumeration();
+        }
+    }
+
+    private static class BeltSignalsForBuyOut
+    {
+        private static Harmony _patch;
+        public static bool Initialized;
+        private static bool _loaded;
+        private static AssetBundle _bundle;
+        private static long _clusterSeedKey;
+        private static readonly int[] DarkFogItemIds = [5201, 5206, 5202, 5204, 5203, 5205];
+        private static readonly int[] DarkFogItemExchangeRate = [20, 60, 30, 30, 30, 10];
+        public static readonly int[] DarkFogItemsInVoid = [0, 0, 0, 0, 0, 0];
+        private static Dictionary<int, uint>[] _signalBelts = new Dictionary<int, uint>[64];
+        private static readonly HashSet<int> SignalBeltFactoryIndices = [];
+
+        public static void Enable(bool enable)
+        {
+            if (enable)
+            {
+                _patch ??= Harmony.CreateAndPatchAll(typeof(BeltSignalsForBuyOut));
+                EnableBeltSignals();
+                return;
+            }
+
+            _patch?.UnpatchSelf();
+            _patch = null;
+            DisableBeltSignals();
+        }
+
+        public static void EnableBeltSignals()
+        {
+            if (!Initialized || _loaded) return;
+            var pluginfolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            _bundle = AssetBundle.LoadFromFile($"{pluginfolder}/uxassist.assetbundle");
+            var signals = LDB._signals;
+            SignalProto[] protos =
+            [
+                new SignalProto
+                {
+                    ID = 301,
+                    Name = "存储单元",
+                    GridIndex = 3601,
+                    IconPath = "Assets/memory.png",
+                    _iconSprite = _bundle.LoadAsset<Sprite>("Assets/memory.png"),
+                    SID = ""
+                },
+                new SignalProto
+                {
+                    ID = 302,
+                    Name = "能量碎片",
+                    GridIndex = 3602,
+                    IconPath = "Assets/energy-fragment.png",
+                    _iconSprite = _bundle.LoadAsset<Sprite>("Assets/energy-fragment.png"),
+                    SID = ""
+                },
+                new SignalProto
+                {
+                    ID = 303,
+                    Name = "硅基神经元",
+                    GridIndex = 3603,
+                    IconPath = "Assets/silicon-neuron.png",
+                    _iconSprite = _bundle.LoadAsset<Sprite>("Assets/silicon-neuron.png"),
+                    SID = ""
+                },
+                new SignalProto
+                {
+                    ID = 304,
+                    Name = "负熵奇点",
+                    GridIndex = 3604,
+                    IconPath = "Assets/negentropy.png",
+                    _iconSprite = _bundle.LoadAsset<Sprite>("Assets/negentropy.png"),
+                    SID = ""
+                },
+                new SignalProto
+                {
+                    ID = 305,
+                    Name = "物质重组器",
+                    GridIndex = 3605,
+                    IconPath = "Assets/reassembler.png",
+                    _iconSprite = _bundle.LoadAsset<Sprite>("Assets/reassembler.png"),
+                    SID = ""
+                },
+                new SignalProto
+                {
+                    ID = 306,
+                    Name = "虚粒子",
+                    GridIndex = 3606,
+                    IconPath = "Assets/virtual-particle.png",
+                    _iconSprite = _bundle.LoadAsset<Sprite>("Assets/virtual-particle.png"),
+                    SID = ""
+                },
+            ];
+            foreach (var proto in protos)
+            {
+                proto.name = proto.Name.Translate();
+            }
+
+            var index = signals.dataArray.Length;
+            signals.dataArray = signals.dataArray.Concat(protos).ToArray();
+            foreach (var proto in protos)
+            {
+                signals.dataIndices[proto.ID] = index;
+                index++;
+            }
+
+            _loaded = true;
+        }
+
+        private static void DisableBeltSignals()
+        {
+            if (!Initialized || !_loaded) return;
+            var signals = LDB._signals;
+            if (signals.dataIndices.TryGetValue(301, out var index))
+            {
+                signals.dataArray = signals.dataArray.Take(index).Concat(signals.dataArray.Skip(index + 6)).ToArray();
+                for (var id = 301; id <= 306; id++)
+                    signals.dataIndices.Remove(id);
+                var len = signals.dataArray.Length;
+                for (; index < len; index++)
+                    signals.dataIndices[signals.dataArray[index].ID] = index;
+            }
+
+            _bundle.Unload(true);
+            _bundle = null;
+            _loaded = false;
+        }
+
+        private static void InitSignalBelts()
+        {
+            if (!GameMain.isRunning) return;
+
+            var factories = GameMain.data?.factories;
+            if (factories == null) return;
+            foreach (var factory in factories)
+            {
+                var entitySignPool = factory?.entitySignPool;
+                if (entitySignPool == null) continue;
+                var cargoTraffic = factory.cargoTraffic;
+                var beltPool = cargoTraffic.beltPool;
+                for (var i = cargoTraffic.beltCursor - 1; i > 0; i--)
+                {
+                    if (beltPool[i].id != i) continue;
+                    ref var signal = ref entitySignPool[beltPool[i].entityId];
+                    var signalId = signal.iconId0;
+                    if (signalId is < 301U or > 306U) continue;
+                    SetSignalBelt(factory.index, i, signalId - 301U);
+                }
+            }
+        }
+
+        private static void SetSignalBelt(int factory, int beltId, uint signal)
+        {
+            var signalBelts = GetOrCreateSignalBelts(factory);
+            if (signalBelts.Count == 0)
+                SignalBeltFactoryIndices.Add(factory);
+            signalBelts.Add(beltId, signal);
+        }
+
+        private static Dictionary<int, uint> GetOrCreateSignalBelts(int index)
+        {
+            Dictionary<int, uint> obj;
+            if (index < 0) return null;
+            if (index >= _signalBelts.Length)
+            {
+                Array.Resize(ref _signalBelts, index * 2);
+            }
+            else
+            {
+                obj = _signalBelts[index];
+                if (obj != null) return obj;
+            }
+
+            obj = new Dictionary<int, uint>();
+            _signalBelts[index] = obj;
+            return obj;
+        }
+        
+        private static Dictionary<int, uint> GetSignalBelts(int index)
+        {
+            return index >= 0 && index < _signalBelts.Length ? _signalBelts[index] : null;
+        }
+
+        private static void RemoveSignalBelt(int factory, int beltId)
+        {
+            var signalBelts = GetSignalBelts(factory);
+            if (signalBelts == null) return;
+            signalBelts.Remove(beltId);
+            if (signalBelts.Count == 0)
+                SignalBeltFactoryIndices.Remove(factory);
+        }
+
+        private static void RemovePlanetSignalBelts(int factory)
+        {
+            var signalBelts = GetSignalBelts(factory);
+            if (signalBelts == null) return;
+            signalBelts.Clear();
+            SignalBeltFactoryIndices.Remove(factory);
+        }
+        
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(DigitalSystem), MethodType.Constructor, typeof(PlanetData))]
+        private static void DigitalSystem_Constructor_Postfix(PlanetData _planet)
+        {
+            var player = GameMain.mainPlayer;
+            if (player == null) return;
+            var factory = _planet?.factory;
+            if (factory == null) return;
+            RemovePlanetSignalBelts(factory.index);
+        }
+        
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(GameMain), nameof(GameMain.Begin))]
+        private static void GameMain_Begin_Postfix()
+        {
+            _clusterSeedKey = GameMain.data.GetClusterSeedKey();
+            InitSignalBelts();
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(CargoTraffic), nameof(CargoTraffic.RemoveBeltComponent))]
+        public static void CargoTraffic_RemoveBeltComponent_Prefix(int id)
+        {
+            var planet = GameMain.localPlanet;
+            if (planet == null) return;
+            RemoveSignalBelt(planet.factoryIndex, id);
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(CargoTraffic), nameof(CargoTraffic.SetBeltSignalIcon))]
+        public static void CargoTraffic_SetBeltSignalIcon_Postfix(CargoTraffic __instance, int entityId, int signalId)
+        {
+            var planet = GameMain.localPlanet;
+            if (planet == null) return;
+            var factory = __instance.factory;
+            var factoryIndex = planet.factoryIndex;
+            var beltId = factory.entityPool[entityId].beltId;
+            if (signalId is < 301 or > 306)
+            {
+                RemoveSignalBelt(factoryIndex, beltId);
+            }
+            else
+            {
+                SetSignalBelt(factoryIndex, beltId, (uint)signalId - 301U);
+            }
+        }
+
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(GameData), "GameTick")]
+        public static IEnumerable<CodeInstruction> GameData_GameTick_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(PerformanceMonitor), nameof(PerformanceMonitor.EndSample)))
+            ).Advance(1).Insert(
+                Transpilers.EmitDelegate(() =>
+                {
+                    var factories = GameMain.data?.factories;
+                    if (factories == null) return;
+                    var propertySystem = DSPGame.propertySystem;
+                    foreach (var factoryIndex in SignalBeltFactoryIndices)
+                    {
+                        if (factoryIndex >= factories.Length) continue;
+                        var signalBelts = GetSignalBelts(factoryIndex);
+                        if (signalBelts == null) continue;
+                        var factory = factories[factoryIndex];
+                        if (factory == null) continue;
+                        var cargoTraffic = factory.cargoTraffic;
+                        foreach (var kvp in signalBelts)
+                        {
+                            ref var belt = ref cargoTraffic.beltPool[kvp.Key];
+                            var cargoPath = cargoTraffic.GetCargoPath(belt.segPathId);
+                            var itemIdx = kvp.Value;
+                            if (cargoPath == null) continue;
+                            var itemId = DarkFogItemIds[itemIdx];
+                            var consume = (byte)Math.Min(DarkFogItemsInVoid[itemIdx], 4);
+                            if (consume < 4)
+                            {
+                                var metaverse = propertySystem.GetItemAvaliableProperty(_clusterSeedKey, 6006);
+                                if (metaverse > 0)
+                                {
+                                    if (metaverse > 10)
+                                        metaverse = 10;
+                                    propertySystem.AddItemConsumption(_clusterSeedKey, 6006, metaverse);
+                                    var mainPlayer = GameMain.mainPlayer;
+                                    GameMain.history.AddPropertyItemConsumption(6006, metaverse, true);
+                                    var count = DarkFogItemExchangeRate[itemIdx] * metaverse;
+                                    DarkFogItemsInVoid[itemIdx] += count;
+                                    consume = (byte)Math.Min(DarkFogItemsInVoid[itemIdx], 4);
+                                    mainPlayer.mecha.AddProductionStat(itemId, count, mainPlayer.nearestFactory);
+                                }
+                            }
+                            if (consume > 0 && cargoPath.TryInsertItem(belt.segIndex + belt.segPivotOffset, itemId, consume, 0))
+                                DarkFogItemsInVoid[itemIdx] -= consume;
+                        }
+                    }
+                })
+            );
             return matcher.InstructionEnumeration();
         }
     }
