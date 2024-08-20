@@ -22,7 +22,7 @@
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
   </ItemGroup>
   
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(Configuration)' == 'Release'">
     <Exec Command="IF NOT EXIST ..\Dustbin\package\patchers (mkdir ..\Dustbin\package\patchers)&#xA;copy /y $(TargetPath) ..\Dustbin\package\patchers\" />
   </Target>
 </Project>

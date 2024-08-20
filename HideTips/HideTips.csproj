@@ -6,7 +6,7 @@
     <AssemblyName>HideTips</AssemblyName>
     <BepInExPluginGuid>org.soardev.hidetips</BepInExPluginGuid>
     <Description>DSP MOD - HideTips</Description>
-    <Version>1.0.3</Version>
+    <Version>1.0.4</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
     <RestoreAdditionalProjectSources>https://nuget.bepinex.dev/v3/index.json</RestoreAdditionalProjectSources>
@@ -23,7 +23,7 @@
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
   </ItemGroup>
   
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(Configuration)' == 'Release'">
     <Exec Command="del /F /Q package\$(ProjectName)-$(Version).zip&#xA;powershell Compress-Archive -Force -DestinationPath 'package/$(ProjectName)-$(Version).zip' -Path '$(TargetPath)', package/icon.png, package/manifest.json, README.md" />
   </Target>
 </Project>

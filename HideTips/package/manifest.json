@@ -1,6 +1,6 @@
 ﻿{
   "name": "HideTips",
-  "version_number": "1.0.3",
+  "version_number": "1.0.4",
   "website_url": "https://github.com/soarqin/DSP_Mods/tree/master/HideTips",
   "description": "Hide/Disable various tutorial tips/messages / 隐藏/屏蔽各种引导提示/消息",
   "dependencies": [

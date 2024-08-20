@@ -20,7 +20,7 @@ public class HideTips : BaseUnityPlugin
     private static bool _noResearchCompletionPopups = true;
     private static bool _noResearchCompletionTips;
     private static bool _skipPrologue = true;
-//    private static bool _hideMenuDemo;
+    // private static bool _hideMenuDemo;
 
     private static Harmony _patch;
 
@@ -34,7 +34,7 @@ public class HideTips : BaseUnityPlugin
         _noResearchCompletionPopups = Config.Bind("General", "NoResearchCompletionPopups", _noResearchCompletionPopups, "Disable Research Completion Popup Windows").Value;
         _noResearchCompletionTips = Config.Bind("General", "NoResearchCompletionTips", _noResearchCompletionTips, "Disable Research Completion Tips").Value;
         _skipPrologue = Config.Bind("General", "SkipPrologue", _skipPrologue, "Skip prologue for new game").Value;
-//        _hideMenuDemo = Config.Bind("General", "HideMenuDemo", _hideMenuDemo, "Disable title screen demo scene loading").Value;
+        // _hideMenuDemo = Config.Bind("General", "HideMenuDemo", _hideMenuDemo, "Disable title screen demo scene loading").Value;
         if (!_cfgEnabled) return;
         Harmony.CreateAndPatchAll(typeof(HideTips));
         /*
@@ -50,7 +50,7 @@ public class HideTips : BaseUnityPlugin
         _patch?.UnpatchSelf();
         _patch = null;
     }
-        
+
     [HarmonyPrefix]
     [HarmonyPatch(typeof(VFPreload), nameof(VFPreload.Start))]
     private static void VFPreload_Start_Prefix(VFPreload __instance)
@@ -59,7 +59,7 @@ public class HideTips : BaseUnityPlugin
     }
 
     [HarmonyPostfix]
-    [HarmonyPatch(typeof(UIBuildMenu), "_OnCreate")]
+    [HarmonyPatch(typeof(UIBuildMenu), nameof(UIBuildMenu._OnCreate))]
     private static void ClearRandReminderTips(UIBuildMenu __instance)
     {
         if (!_noRandomReminderTips) return;
@@ -70,48 +70,52 @@ public class HideTips : BaseUnityPlugin
                 randTip._Free();
             }
         }
+
         __instance.randRemindTips = Array.Empty<UIRandomTip>();
     }
 
     [HarmonyPostfix]
-    [HarmonyPatch(typeof(UIGameMenu), "_OnCreate")]
+    [HarmonyPatch(typeof(UIGameMenu), nameof(UIGameMenu._OnCreate))]
     private static void UIGameMenu__OnCreate_Postfix(UIGameMenu __instance)
     {
+        if (!_noRandomReminderTips) return;
         __instance.randTipButton0.pop = __instance.randTipButton0.popCount;
         __instance.randTipButton1.pop = __instance.randTipButton1.popCount;
         __instance.randTipButton2.pop = __instance.randTipButton2.popCount;
     }
 
     [HarmonyPrefix]
-    [HarmonyPatch(typeof(UITutorialTip), "PopupTutorialTip")]
-    private static bool UITutorialTip_PopupTutorialTip_Prefix()
+    [HarmonyPatch(typeof(UITutorialTip), nameof(UITutorialTip.PopupTutorialTip))]
+    private static bool UITutorialTip_PopupTutorialTip_Prefix(int tutorialId)
     {
-        return !_noTutorialTips;
+        if (!_noTutorialTips) return true;
+        GameMain.history.UnlockTutorial(tutorialId);
+        return false;
     }
 
     [HarmonyPrefix]
-    [HarmonyPatch(typeof(UIVariousPopupGroup), "CreateAchievementPopupCard")]
+    [HarmonyPatch(typeof(UIVariousPopupGroup), nameof(UIVariousPopupGroup.CreateAchievementPopupCard))]
     private static bool UIVariousPopupGroup_CreateAchievementPopupCard_Prefix()
     {
         return !_noAchievementCardPopups;
     }
 
     [HarmonyPrefix]
-    [HarmonyPatch(typeof(UIVariousPopupGroup), "CreateMilestonePopupCard")]
+    [HarmonyPatch(typeof(UIVariousPopupGroup), nameof(UIVariousPopupGroup.CreateMilestonePopupCard))]
     private static bool UIVariousPopupGroup_CreateMilestonePopupCard_Prefix()
     {
         return !_noMilestoneCardPopups;
     }
 
     [HarmonyPrefix]
-    [HarmonyPatch(typeof(UIResearchResultWindow), "SetTechId")]
+    [HarmonyPatch(typeof(UIResearchResultWindow), nameof(UIResearchResultWindow.SetTechId))]
     private static bool UIResearchResultWindow_SetTechId_Prefix()
     {
         return !_noResearchCompletionPopups;
     }
-    
+
     [HarmonyTranspiler]
-    [HarmonyPatch(typeof(UIGeneralTips), "OnTechUnlocked")]
+    [HarmonyPatch(typeof(UIGeneralTips), nameof(UIGeneralTips.OnTechUnlocked))]
     private static IEnumerable<CodeInstruction> UIGeneralTips_OnTechUnlocked_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
     {
         var matcher = new CodeMatcher(instructions, generator);
@@ -134,7 +138,7 @@ public class HideTips : BaseUnityPlugin
     }
 
     [HarmonyPrefix]
-    [HarmonyPatch(typeof(DSPGame), "StartGame", typeof(GameDesc))]
+    [HarmonyPatch(typeof(DSPGame), nameof(DSPGame.StartGame), typeof(GameDesc))]
     private static bool DSPGame_StartGame_Prefix(GameDesc _gameDesc)
     {
         if (!_skipPrologue) return true;
@@ -174,7 +178,7 @@ class HideMenuDemo
         GameMain.universeSimulator = UnityEngine.Object.Instantiate(Configs.builtin.universeSimulatorPrefab);
         GameMain.universeSimulator.spaceAudio = new GameObject("Space Audio")
         {
-            transform = 
+            transform =
             {
                 parent = GameMain.universeSimulator.transform
             }
@@ -182,7 +186,7 @@ class HideMenuDemo
         GameMain.Begin();
         return false;
     }
-    
+
     [HarmonyPriority(Priority.First), HarmonyPrefix]
     [HarmonyPatch(typeof(VFPreload), "IsMenuDemoLoaded")]
     private static bool VFPreload_IsMenuDemoLoaded_Prefix(ref bool __result)
@@ -190,7 +194,7 @@ class HideMenuDemo
         __result = true;
         return false;
     }
-    
+
     [HarmonyPriority(Priority.First), HarmonyPrefix]
     [HarmonyPatch(typeof(DSPGame), "LateUpdate")]
     [HarmonyPatch(typeof(GameMain), "LateUpdate")]

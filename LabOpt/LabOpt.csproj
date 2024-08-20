@@ -23,7 +23,7 @@
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
   </ItemGroup>
 
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(Configuration)' == 'Release'">
     <Exec Command="del /F /Q package\$(ProjectName)-$(Version).zip&#xA;IF NOT EXIST package\plugins (mkdir package\plugins)&#xA;copy /y $(TargetPath) package\plugins\&#xA;cd package&#xA;powershell Compress-Archive -Force -DestinationPath '$(ProjectName)-$(Version).zip' -Path patchers, plugins, icon.png, manifest.json, ../README.md" />
   </Target>
 </Project>
