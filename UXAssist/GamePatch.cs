@@ -380,8 +380,8 @@ public static class GamePatch
         {
             var matcher = new CodeMatcher(instructions, generator);
             matcher.Start().MatchForward(false,
-                new CodeMatch(instr => (instr.opcode == OpCodes.Ldc_I4 || instr.opcode == OpCodes.Ldc_I4_S) && instr.OperandIs(0x1B)),
-                new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(PerformanceMonitor), nameof(PerformanceMonitor.EndData)))
+                new CodeMatch(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Player), nameof(Player.mecha))),
+                new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(Mecha), nameof(Mecha.CheckCombatModuleDataIsValidPatch)))
             );
             matcher.Advance(2).Opcode = OpCodes.Brfalse;
             matcher.Insert(

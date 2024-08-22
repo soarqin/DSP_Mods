@@ -145,6 +145,7 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
         DysonSpherePatch.Init();
 
         I18N.Apply();
+        I18N.OnInitialized += RecreateConfigWindow;
     }
 
     private void OnDestroy()
@@ -198,6 +199,16 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
         {
             _configWin.Open();
         }
+    }
+
+    private static void RecreateConfigWindow()
+    {
+        if (!_configWinInitialized) return;
+        var wasActive = _configWin.active;
+        if (wasActive) _configWin._Close();
+        MyConfigWindow.DestroyInstance(_configWin);
+        _configWinInitialized = false;
+        if (wasActive) ToggleConfigWindow();
     }
 
     // Add config button to main menu

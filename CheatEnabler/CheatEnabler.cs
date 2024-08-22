@@ -81,6 +81,7 @@ public class CheatEnabler : BaseUnityPlugin
         FactoryPatch.Init();
         ResourcePatch.Init();
         PlanetPatch.Init();
+        PlayerFunctions.Init();
         PlayerPatch.Init();
         DysonSpherePatch.Init();
         CombatPatch.Init();
@@ -104,5 +105,4 @@ public class CheatEnabler : BaseUnityPlugin
         if (VFInput.inputing) return;
         FactoryPatch.OnUpdate();
     }
-
 }

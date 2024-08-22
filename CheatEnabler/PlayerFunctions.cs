@@ -1,10 +1,36 @@
 ﻿using System;
 using System.Linq;
+using UXAssist.Common;
 
 namespace CheatEnabler;
 
 public static class PlayerFunctions
 {
+    public static void Init()
+    {
+        I18N.Add("ClearAllMetadataConsumptionDetails",
+            """
+            Metadata consumption records of all gamesaves are about to be cleared.
+            You will gain following metadata back:
+            """,
+            """
+            所有存档的元数据消耗记录即将被清除，
+            此操作将返还以下元数据：
+            """);
+        I18N.Add("ClearCurrentMetadataConsumptionDetails",
+            """
+            Metadata consumption records of current gamesave are about to be cleared.
+            You will gain following metadata back:
+            """,
+            """
+            当前存档的元数据消耗记录即将被清除，
+            此操作将返还以下元数据：
+            """);
+        I18N.Add("NoMetadataConsumptionRecord",
+            "No metadata consumption records found.",
+            "未找到元数据消耗记录。");
+    }
+
     public static void TeleportToOuterSpace()
     {
         var maxSqrDistance = 0.0;
@@ -69,19 +95,31 @@ public static class PlayerFunctions
 
     public static void RemoveAllMetadataConsumptions()
     {
-        var propertySysten = DSPGame.propertySystem;
-        if (propertySysten == null) return;
-        PurgePropertySystem(propertySysten);
+        var propertySystem = DSPGame.propertySystem;
+        if (propertySystem == null) return;
+        PurgePropertySystem(propertySystem);
         var itemCnt = new int[6];
-        foreach (var cons in propertySysten.propertyDatas.SelectMany(data => data.totalConsumption.Where(cons => cons.id is >= 6001 and <= 6006)))
+        foreach (var cons in propertySystem.propertyDatas.SelectMany(data => data.totalConsumption.Where(cons => cons.id is >= 6001 and <= 6006)))
         {
             itemCnt[cons.id - 6001] += cons.count;
         }
 
-        if (itemCnt.All(cnt => cnt == 0)) return;
-        UIMessageBox.Show("Remove all metadata consumption records".Translate(), "".Translate(), "取消".Translate(), "确定".Translate(), 2, null, () =>
+        if (itemCnt.All(cnt => cnt == 0))
         {
-            foreach (var data in propertySysten.propertyDatas)
+            UIMessageBox.Show("Remove all metadata consumption records".Translate(), "NoMetadataConsumptionRecord".Translate(), "OK".Translate(), 0);
+            return;
+        }
+        var msg = "ClearAllMetadataConsumptionDetails".Translate();
+        for (var i = 0; i < 6; i++)
+        {
+            if (itemCnt[i] > 0)
+            {
+                msg += $"\n  {LDB.items.Select(i + 6001).propertyName} x{itemCnt[i]}";
+            }
+        }
+        UIMessageBox.Show("Remove all metadata consumption records".Translate(), msg, "取消".Translate(), "确定".Translate(), 2, null, () =>
+        {
+            foreach (var data in propertySystem.propertyDatas)
             {
                 for (var i = 0; i < data.totalConsumption.Count; i++)
                 {
@@ -90,11 +128,57 @@ public static class PlayerFunctions
                     data.totalConsumption[i] = new IDCNT(id, 0);
                 }
             }
+            PurgePropertySystem(propertySystem);
+            propertySystem.SaveToFile();
         });
     }
 
     public static void RemoveCurrentMetadataConsumptions()
     {
-        
+        var propertySystem = DSPGame.propertySystem;
+        if (propertySystem == null) return;
+        PurgePropertySystem(propertySystem);
+        var itemCnt = new int[6];
+        var seedKey = DSPGame.GameDesc.seedKey64;
+        var clusterPropertyData = propertySystem.propertyDatas.FirstOrDefault(cpd => cpd.seedKey == seedKey);
+        if (clusterPropertyData == null)
+        {
+            UIMessageBox.Show("Remove metadata consumption record in current game".Translate(), "NoMetadataConsumptionRecord".Translate(), "OK".Translate(), 0);
+            return;
+        }
+        foreach (var cons in clusterPropertyData.totalConsumption.Where(cons => cons.id is >= 6001 and <= 6006))
+        {
+            itemCnt[cons.id - 6001] += cons.count;
+        }
+
+        if (itemCnt.All(cnt => cnt == 0))
+        {
+            UIMessageBox.Show("Remove metadata consumption record in current game".Translate(), "NoMetadataConsumptionRecord".Translate(), "OK".Translate(), 0);
+            return;
+        }
+        var msg = "ClearCurrentMetadataConsumptionDetails".Translate();
+        for (var i = 0; i < 6; i++)
+        {
+            if (itemCnt[i] > 0)
+            {
+                msg += $"\n  {LDB.items.Select(i + 6001).propertyName} x{itemCnt[i]}";
+            }
+        }
+        UIMessageBox.Show("Remove metadata consumption record in current game".Translate(), msg, "取消".Translate(), "确定".Translate(), 2, null, () =>
+        {
+            for (var i = 0; i < clusterPropertyData.totalConsumption.Count; i++)
+            {
+                if (clusterPropertyData.totalConsumption[i].count == 0) continue;
+                var id = clusterPropertyData.totalConsumption[i].id;
+                clusterPropertyData.totalConsumption[i] = new IDCNT(id, 0);
+            }
+            PurgePropertySystem(propertySystem);
+            propertySystem.SaveToFile();
+        });
+    }
+
+    public static void ClearMetadataBanAchievements()
+    {
+        GameMain.history.hasUsedPropertyBanAchievement = false;
     }
 }

@@ -4,6 +4,11 @@
 #### 添加一些作弊功能，同时屏蔽异常检测
 
 ## Changlog
+* 2.3.19
+  + New features:
+    + `Remove all metadata consumption records`
+    + `Remove metadata consumption record in current game`
+    + `Clear metadata flag which bans achievements`
 * 2.3.18
   + New features:
     + `Teleport to outer space`, this will teleport you to the outer space which is 50 LYs far from the farthest star.
@@ -121,6 +126,9 @@
     + Enable Dev Shortcuts (check config panel for usage)
     + Disable Abnormal Checks
     + Unlock techs with key-modifiers (Ctrl/Alt/Shift)
+    + Remove all metadata consumption records
+    + Remove metadata consumption record in current game
+    + Clear metadata flag which bans achievements
     + Assign gamesave to currrnet account
   + Factory:
     + Finish build immediately
@@ -165,6 +173,11 @@
 * [Multifunction_mod](https://github.com/blacksnipebiu/Multifunction_mod): Some cheat functions
 
 ## 更新日志
+* 2.3.19
+  + 新功能：
+    + `移除所有元数据消耗记录`
+    + `移除当前存档的元数据消耗记录`
+    + `解除当前存档因使用元数据导致的成就限制`
 * 2.3.18
   + 新功能：
     + `传送到外太空`，这会将你传送到距离最远星球50光年的外太空
@@ -282,6 +295,9 @@
     + 启用开发模式快捷键(使用说明见设置面板)
     + 屏蔽异常检测
     + 使用组合键解锁科技（Ctrl/Alt/Shift）
+    + 移除所有元数据消耗记录
+    + 移除当前存档的元数据消耗记录
+    + 解除当前存档因使用元数据导致的成就限制
     + 将游戏存档绑定给当前账号
   + 工厂：
     + 建造秒完成

@@ -14,6 +14,11 @@ public class MyConfigWindow : MyWindowWithTabs
     {
         return MyWindowManager.CreateWindow<MyConfigWindow>("UXAConfigWindow", "UXAssist Config");
     }
+    
+    public static void DestroyInstance(MyConfigWindow win)
+    {
+        MyWindowManager.DestroyWindow(win);
+    }
 
     public override void _OnCreate()
     {
@@ -27,6 +32,7 @@ public class MyConfigWindow : MyWindowWithTabs
 
     public override void _OnDestroy()
     {
+        _windowTrans = null;
     }
 
     public override bool _OnInit()

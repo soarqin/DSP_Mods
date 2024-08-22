@@ -1,5 +1,6 @@
 ﻿using System;
 using BepInEx.Configuration;
+using UITools;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -57,6 +58,8 @@ public class MyCheckBox : MonoBehaviour
             cb.labelText = child.GetComponent<Text>();
             cb.labelText.fontSize = fontSize;
             cb.SetLabelText(label);
+            var width = cb.labelText.preferredWidth;
+            cb.labelText.rectTransform.sizeDelta = new Vector2(width, rect.sizeDelta.y);
         }
 
         //value

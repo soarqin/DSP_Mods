@@ -388,6 +388,14 @@ public static class MyWindowManager
         Windows.Add(win);
         return (T)win;
     }
+    
+    public static void DestroyWindow(ManualBehaviour win)
+    {
+        if (win == null) return;
+        Windows.Remove(win);
+        win._Free();
+        win._Destroy();
+    }
 
     /*
     public static void SetRect(ManualBehaviour win, RectTransform rect)
@@ -409,7 +417,7 @@ public static class MyWindowManager
         }
         */
 
-        [HarmonyPostfix, HarmonyPatch(typeof(UIRoot), "_OnDestroy")]
+        [HarmonyPostfix, HarmonyPatch(typeof(UIRoot), nameof(UIRoot._OnDestroy))]
         public static void UIRoot__OnDestroy_Postfix()
         {
             foreach (var win in Windows)
@@ -420,7 +428,7 @@ public static class MyWindowManager
             Windows.Clear();
         }
 
-        [HarmonyPostfix, HarmonyPatch(typeof(UIRoot), "_OnOpen")]
+        [HarmonyPostfix, HarmonyPatch(typeof(UIRoot), nameof(UIRoot._OnOpen))]
         public static void UIRoot__OnOpen_Postfix()
         {
             if (_initialized) return;
@@ -442,7 +450,7 @@ public static class MyWindowManager
         }
         */
 
-        [HarmonyPostfix, HarmonyPatch(typeof(UIRoot), "_OnUpdate")]
+        [HarmonyPostfix, HarmonyPatch(typeof(UIRoot), nameof(UIRoot._OnUpdate))]
         public static void UIRoot__OnUpdate_Postfix()
         {
             if (GameMain.isPaused || !GameMain.isRunning)
@@ -455,7 +463,7 @@ public static class MyWindowManager
             }
         }
 
-        [HarmonyPostfix, HarmonyPatch(typeof(UIGame), "ShutAllFunctionWindow")]
+        [HarmonyPostfix, HarmonyPatch(typeof(UIGame), nameof(UIGame.ShutAllFunctionWindow))]
         public static void UIGame_ShutAllFunctionWindow_Postfix()
         {
             foreach (var win in Windows)

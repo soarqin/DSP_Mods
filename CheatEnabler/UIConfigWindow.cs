@@ -9,6 +9,7 @@ public static class UIConfigWindow
     private static RectTransform _windowTrans;
 
     private static UIButton _resignGameBtn;
+    private static UIButton _clearBanBtn;
 
     public static void Init()
     {
@@ -26,9 +27,10 @@ public static class UIConfigWindow
         I18N.Add("Unlock Tech with Key-Modifiers Tips",
             "Click tech on tree while holding:\n  Shift: Tech level + 1\n  Ctrl: Tech level + 10\n  Ctrl + Shift: Tech level + 100\n  Alt: Tech level to MAX\n\nNote: all direct prerequisites will be unlocked as well.",
             "按住以下组合键点击科技树：\n  Shift：科技等级+1\n  Ctrl：科技等级+10\n  Ctrl+Shift：科技等级+100\n  Alt：科技等级升到最大\n\n注意：所有直接前置科技也会被解锁");
-        I18N.Add("Assign gamesave to current account", "Assign gamesave to current account", "将游戏存档绑定给当前账号");
         I18N.Add("Remove all metadata consumption records", "Remove all metadata consumption records", "移除所有元数据消耗记录");
-        I18N.Add("Remove metadata consumption record in current game", "Remove metadata consumption record in current game", "移除当前游戏的元数据消耗记录");
+        I18N.Add("Remove metadata consumption record in current game", "Remove metadata consumption record in current game", "移除当前存档的元数据消耗记录");
+        I18N.Add("Clear metadata flag which bans achievements", "Clear metadata flag which bans achievements in current game", "解除当前存档因使用元数据导致的成就限制");
+        I18N.Add("Assign gamesave to current account", "Assign gamesave to current account", "将游戏存档绑定给当前账号");
         I18N.Add("Finish build immediately", "Finish build immediately", "建造秒完成");
         I18N.Add("Architect mode", "Architect mode", "建筑师模式");
         I18N.Add("Build without condition", "Build without condition check", "无条件建造");
@@ -89,13 +91,16 @@ public static class UIConfigWindow
         x += 52f;
         y += 72f;
         MyWindow.AddTipsButton(x, y, tab1, "Unlock Tech with Key-Modifiers", "Unlock Tech with Key-Modifiers Tips", "unlock-tech-tips");
+        x = 0f;
+        y = 10f + 36f + 36f + 36f + 36f;
+        wnd.AddButton(x, y, 400f, tab1, "Remove all metadata consumption records", 16, "button-remove-all-metadata-consumption", PlayerFunctions.RemoveAllMetadataConsumptions);
+        y += 36f;
+        wnd.AddButton(x, y, 400f, tab1, "Remove metadata consumption record in current game", 16, "button-remove-current-metadata-consumption", PlayerFunctions.RemoveCurrentMetadataConsumptions);
+        y += 36f;
+        _clearBanBtn = wnd.AddButton(x, y, 400f, tab1, "Clear metadata flag which bans achievements", 16, "button-clear-ban-list", PlayerFunctions.ClearMetadataBanAchievements);
         x = 300f;
         y = 10f;
         _resignGameBtn = wnd.AddButton(x, y, 300f, tab1, "Assign gamesave to current account", 16, "resign-game-btn", () => { GameMain.data.account = AccountData.me; });
-        y += 36f;
-        wnd.AddButton(x, y, 300f, tab1, "Remove all metadata consumption records", 16, "button-remove-all-metadata-consumption", PlayerFunctions.RemoveAllMetadataConsumptions);
-        y += 36f;
-        wnd.AddButton(x, y, 300f, tab1, "Remove metadata consumption record in current game", 16, "button-remove-current-metadata-consumption", PlayerFunctions.RemoveCurrentMetadataConsumptions);
 
         var tab2 = wnd.AddTab(_windowTrans, "Factory");
         x = 0f;
@@ -222,13 +227,21 @@ public static class UIConfigWindow
 
     private static void UpdateUI()
     {
-        UpdateResignButton();
+        UpdateButtons();
     }
 
-    private static void UpdateResignButton()
+    private static void UpdateButtons()
     {
         var resignEnabled = GameMain.data.account != AccountData.me;
-        if (_resignGameBtn.gameObject.activeSelf == resignEnabled) return;
-        _resignGameBtn.gameObject.SetActive(resignEnabled);
+        if (_resignGameBtn.gameObject.activeSelf != resignEnabled)
+        {
+            _resignGameBtn.gameObject.SetActive(resignEnabled);
+        }
+
+        var banEnabled = GameMain.history.hasUsedPropertyBanAchievement;
+        if (_clearBanBtn.gameObject.activeSelf != banEnabled)
+        {
+            _clearBanBtn.gameObject.SetActive(banEnabled);
+        }
     }
 }

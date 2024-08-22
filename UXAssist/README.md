@@ -4,6 +4,10 @@
 #### 一些提升用户体验的功能和补丁
 
 ## Changlog
+* 1.1.3
+  + UI texts are updated following game settings now
+  + Fix hover area for checkboxes in config panel
+  + Fix an issue which makes `Convert Peace-Mode saves to Combat-Mode on loading` not working
 * 1.1.2
   + `Belt signals for buy out dark fog items automatically`: Always add belt signals to the panel to fix missing belt icons when disabled.
 * 1.1.1
@@ -227,6 +231,10 @@
 * [CruiseAssist](https://dsp.thunderstore.io/package/tanu/CruiseAssist/) and its extension [AutoPilot](https://dsp.thunderstore.io/package/tanu/AutoPilot/): `Auto navigation on sailings` and `Auto-cruise` implementations
 
 ## 更新日志
+* 1.1.3
+  + 界面文本现在完全跟随游戏语言设置改变
+  + 修复了配置面板中勾选框的鼠标悬停区域
+  + 修复了`加载和平模式存档时将其转换为战斗模式`不起作用的问题
 * 1.1.2
   + `用于自动购买黑雾物品的传送带信号`: 总是将传送带信号添加到面板，以修复禁用时传送带图标丢失的问题。
 * 1.1.1
