@@ -394,7 +394,7 @@ public static class FactoryPatch
                 new CodeMatch(OpCodes.Ldloc_S),
                 new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(BuildPreview), nameof(BuildPreview.desc))),
                 new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(PrefabDesc), nameof(PrefabDesc.isInserter))),
-                new CodeMatch(instr => instr.opcode == OpCodes.Brtrue || instr.opcode == OpCodes.Brtrue_S),
+                new CodeMatch(ci => ci.Branches(out _)),
                 new CodeMatch(OpCodes.Ldloca_S),
                 new CodeMatch(OpCodes.Call, AccessTools.PropertyGetter(typeof(Vector3), nameof(Vector3.magnitude)))
             );
@@ -422,12 +422,12 @@ public static class FactoryPatch
              * stfld	valuetype EBuildCondition BuildPreview::condition
              */
             matcher.MatchForward(false,
-                new CodeMatch(OpCodes.Ldloc_S),
-                new CodeMatch(OpCodes.Ldloc_S),
-                new CodeMatch(instr => instr.opcode == OpCodes.Brtrue_S || instr.opcode == OpCodes.Brtrue),
-                new CodeMatch(instr => instr.opcode == OpCodes.Ldc_I4_S && instr.OperandIs(19)),
-                new CodeMatch(instr => instr.opcode == OpCodes.Br_S || instr.opcode == OpCodes.Br),
-                new CodeMatch(instr => instr.opcode == OpCodes.Ldc_I4_S && instr.OperandIs(18)),
+                new CodeMatch(ci => ci.IsLdloc()),
+                new CodeMatch(ci => ci.IsLdloc()),
+                new CodeMatch(ci => ci.Branches(out _)),
+                new CodeMatch(ci => ci.opcode == OpCodes.Ldc_I4_S && ci.OperandIs((int)EBuildCondition.JointCannotLift)),
+                new CodeMatch(ci => ci.Branches(out _)),
+                new CodeMatch(ci => ci.opcode == OpCodes.Ldc_I4_S && ci.OperandIs((int)EBuildCondition.TooBendToLift)),
                 new CodeMatch(OpCodes.Stfld, AccessTools.Field(typeof(BuildPreview), nameof(BuildPreview.condition)))
             );
             if (matcher.IsValid)
@@ -449,7 +449,7 @@ public static class FactoryPatch
              */
             matcher.Start().MatchForward(false,
                 new CodeMatch(instr => instr.opcode == OpCodes.Ldloc_S || instr.opcode == OpCodes.Ldloc),
-                new CodeMatch(instr => (instr.opcode == OpCodes.Ldc_I4_S || instr.opcode == OpCodes.Ldc_I4) && Convert.ToInt64(instr.operand) is >= 16 and <= 20),
+                new CodeMatch(instr => (instr.opcode == OpCodes.Ldc_I4_S || instr.opcode == OpCodes.Ldc_I4) && Convert.ToInt64(instr.operand) is >= (int)EBuildCondition.TooSteep and <= (int)EBuildCondition.InputConflict),
                 new CodeMatch(OpCodes.Stfld, AccessTools.Field(typeof(BuildPreview), nameof(BuildPreview.condition)))
             );
             if (matcher.IsValid)
