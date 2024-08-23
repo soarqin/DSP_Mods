@@ -1,4 +1,6 @@
 ## Changlog
+* 1.1.5
+  + `Quick build and dismantle stacking labs`: works for storages and tanks now
 * 1.1.4
   + Fix `Remove some build conditions`
 * 1.1.3
@@ -140,6 +142,8 @@
 
 
 ## 更新日志
+* 1.1.5
+  + `快速建造和拆除堆叠研究站`：现在也支持储物仓和储液罐
 * 1.1.4
   + 修复了`移除部分不影响游戏逻辑的建造条件`
 * 1.1.3

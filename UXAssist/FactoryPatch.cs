@@ -1130,8 +1130,10 @@ public static class FactoryPatch
         {
             if (!VFInput._chainReaction) return true;
             var factory = dismantle.factory;
-            var prefDesc = dismantle.GetPrefabDesc(id);
-            if (!prefDesc.isLab) return true;
+            var proto = dismantle.GetItemProto(id);
+            var protoId = proto.ID;
+            var prefDesc = proto.prefabDesc;
+            if (!prefDesc.isLab && !prefDesc.isTank && (!prefDesc.isStorage || prefDesc.isBattleBase)) return true;
             factory.ReadObjectConn(id, 14, out _, out var nextId, out _);
             /* We keep last lab if selected lab is not the ground one */
             if (nextId > 0)
@@ -1140,11 +1142,13 @@ public static class FactoryPatch
                 {
                     factory.ReadObjectConn(nextId, 14, out _, out var nextNextId, out _);
                     if (nextNextId <= 0) break;
+                    var itemProto = dismantle.GetItemProto(nextId);
+                    if (itemProto.ID != protoId) break;
+                    var desc = itemProto.prefabDesc;
                     var pose = dismantle.GetObjectPose(nextId);
-                    var desc = dismantle.GetPrefabDesc(nextId);
                     var preview = new BuildPreview
                     {
-                        item = dismantle.GetItemProto(nextId),
+                        item = itemProto,
                         desc = desc,
                         lpos = pose.position,
                         lrot = pose.rotation,
@@ -1162,13 +1166,19 @@ public static class FactoryPatch
             nextId = id;
             while (true)
             {
-                factory.ReadObjectConn(nextId, 15, out _, out nextId, out _);
-                if (nextId <= 0) break;
+                factory.ReadObjectConn(nextId, 15, out _, out var nextId2, out _);
+                if (nextId2 <= 0)
+                {
+                    factory.ReadObjectConn(nextId, 13, out _, out nextId2, out _);
+                    if (nextId2 <= 0) break;
+                }
+                nextId = nextId2;
+                var itemProto = dismantle.GetItemProto(nextId);
+                var desc = itemProto.prefabDesc;
                 var pose = dismantle.GetObjectPose(nextId);
-                var desc = dismantle.GetPrefabDesc(nextId);
                 var preview = new BuildPreview
                 {
-                    item = dismantle.GetItemProto(nextId),
+                    item = itemProto,
                     desc = desc,
                     lpos = pose.position,
                     lrot = pose.rotation,
@@ -1188,8 +1198,8 @@ public static class FactoryPatch
         {
             if (!click.multiLevelCovering || !VFInput._chainReaction) return;
             var prefDesc = click.GetPrefabDesc(click.castObjectId);
-            if (!prefDesc.isLab) return;
-            var levelMax = GameMain.history.labLevel;
+            if (!prefDesc.isLab && !prefDesc.isTank && (!prefDesc.isStorage || prefDesc.isBattleBase)) return;
+            var levelMax = prefDesc.isLab ? GameMain.history.labLevel : GameMain.history.storageLevel;
             var factory = click.factory;
             var currLevel = 2;
             var nid = click.castObjectId;
