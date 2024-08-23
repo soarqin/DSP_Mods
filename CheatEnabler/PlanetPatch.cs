@@ -49,9 +49,9 @@ public static class PlanetPatch
         {
             var matcher = new CodeMatcher(instructions, generator);
             matcher.MatchForward(false,
-                new CodeMatch(instr => instr.opcode == OpCodes.Ldc_I4_S && instr.OperandIs(23))
+                new CodeMatch(instr => instr.opcode == OpCodes.Ldc_I4_S && instr.OperandIs((int)EBuildCondition.NeedWater))
             ).Advance(1).MatchForward(false,
-                new CodeMatch(instr => instr.opcode == OpCodes.Ldc_I4_S && instr.OperandIs(23))
+                new CodeMatch(instr => instr.opcode == OpCodes.Ldc_I4_S && instr.OperandIs((int)EBuildCondition.NeedWater))
             );
             matcher.Repeat(codeMatcher =>
             {
@@ -60,6 +60,7 @@ public static class PlanetPatch
             return matcher.InstructionEnumeration();
         }
     }
+
     private static class TerraformAnyway
     {
         private static Harmony _patch;
