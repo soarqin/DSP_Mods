@@ -26,7 +26,7 @@ public static class DevShortcuts
     }
 
     [HarmonyPostfix]
-    [HarmonyPatch(typeof(PlayerController), "Init")]
+    [HarmonyPatch(typeof(PlayerController), nameof(PlayerController.Init))]
     private static void PlayerController_Init_Postfix(PlayerController __instance)
     {
         var cnt = __instance.actions.Length;
@@ -44,7 +44,7 @@ public static class DevShortcuts
     }
 
     [HarmonyPostfix]
-    [HarmonyPatch(typeof(PlayerAction_Test), "GameTick")]
+    [HarmonyPatch(typeof(PlayerAction_Test), nameof(PlayerAction_Test.GameTick))]
     private static void PlayerAction_Test_GameTick_Postfix(PlayerAction_Test __instance)
     {
         __instance.Update();
@@ -80,6 +80,31 @@ public static class DevShortcuts
         matcher.RemoveInstructions(2);
         matcher.Opcode = OpCodes.Br;
         matcher.Labels = labels;
+        return matcher.InstructionEnumeration();
+    }
+    
+    [HarmonyTranspiler]
+    [HarmonyPatch(typeof(GameCamera), nameof(GameCamera.FrameLogic))]
+    private static IEnumerable<CodeInstruction> GameCamera_Logic_Transpiler(IEnumerable<CodeInstruction> instructions)
+    {
+        var matcher = new CodeMatcher(instructions);
+        matcher.MatchForward(false,
+            new CodeMatch(OpCodes.Ldarg_0),
+            new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(GameCamera), nameof(GameCamera.finalPoser))),
+            new CodeMatch(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(CameraPoser), nameof(CameraPoser.cameraPose)))
+        );
+        var labels = matcher.Labels;
+        matcher.Labels = null;
+        matcher.Insert(
+            new CodeInstruction(OpCodes.Ldarg_0).WithLabels(labels),
+            Transpilers.EmitDelegate((GameCamera camera) =>
+            {
+                if (PlayerAction_Test.lockCam)
+                {
+                    camera.finalPoser.cameraPose = PlayerAction_Test.camPose;
+                }
+            })
+        );
         return matcher.InstructionEnumeration();
     }
 }

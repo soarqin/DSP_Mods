@@ -1551,7 +1551,6 @@ public static class FactoryPatch
         
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(UIControlPanelStationStorage), nameof(UIControlPanelStationStorage.OnItemIconMouseDown))]
-        [HarmonyPatch(typeof(UIControlPanelStationStorage), nameof(UIControlPanelStationStorage.OnTakeBackButtonClick))]
         private static IEnumerable<CodeInstruction> UIControlPanelStationStorage_OnItemIconMouseDown_Transpiler(IEnumerable<CodeInstruction> instructions)
         {
             var matcher = new CodeMatcher(instructions);
@@ -1578,6 +1577,25 @@ public static class FactoryPatch
         }
         
         [HarmonyTranspiler]
+        [HarmonyPatch(typeof(UIControlPanelStationStorage), nameof(UIControlPanelStationStorage.OnTakeBackButtonClick))]
+        private static IEnumerable<CodeInstruction> UIControlPanelStationStorage_OnTakeBackButtonClick_Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var matcher = new CodeMatcher(instructions);
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Ldarg_0),
+                new CodeMatch(OpCodes.Call, AccessTools.PropertyGetter(typeof(UIControlPanelStationStorage), nameof(UIControlPanelStationStorage.isLocal))),
+                new CodeMatch(ci => ci.Branches(out _))
+            ).Repeat(
+                m =>
+                {
+                    var labels = m.Labels;
+                    m.RemoveInstructions(3).Labels.AddRange(labels);
+                }
+            );
+            return matcher.InstructionEnumeration();
+        }
+        
+        [HarmonyTranspiler]
         [HarmonyPatch(typeof(UIControlPanelVeinCollectorPanel), nameof(UIControlPanelVeinCollectorPanel.OnProductIconClick))]
         private static IEnumerable<CodeInstruction> UIControlPanelVeinCollectorPanel_OnProductIconClick_Transpiler(IEnumerable<CodeInstruction> instructions)
         {
@@ -1585,7 +1603,7 @@ public static class FactoryPatch
             Label? branch = null;
             matcher.MatchForward(false,
                 new CodeMatch(OpCodes.Ldarg_0),
-                new CodeMatch(OpCodes.Call, AccessTools.PropertyGetter(typeof(UIControlPanelVeinCollectorPanel), "isLocal")),
+                new CodeMatch(OpCodes.Call, AccessTools.PropertyGetter(typeof(UIControlPanelVeinCollectorPanel), nameof(UIControlPanelVeinCollectorPanel.isLocal))),
                 new CodeMatch(ci => ci.Branches(out branch))
             ).Repeat(
                 m =>
