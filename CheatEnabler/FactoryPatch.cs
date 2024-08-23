@@ -28,6 +28,7 @@ public static class FactoryPatch
     public static ConfigEntry<bool> BoostFuelPowerEnabled;
     public static ConfigEntry<bool> BoostGeothermalPowerEnabled;
     public static ConfigEntry<bool> GreaterPowerUsageInLogisticsEnabled;
+    public static ConfigEntry<bool> ControlPanelRemoteLogisticsEnabled;
 
     private static Harmony _factoryPatch;
     private static PressKeyBind _noConditionKey;
@@ -70,6 +71,7 @@ public static class FactoryPatch
         BoostFuelPowerEnabled.SettingChanged += (_, _) => BoostFuelPower.Enable(BoostFuelPowerEnabled.Value);
         BoostGeothermalPowerEnabled.SettingChanged += (_, _) => BoostGeothermalPower.Enable(BoostGeothermalPowerEnabled.Value);
         GreaterPowerUsageInLogisticsEnabled.SettingChanged += (_, _) => GreaterPowerUsageInLogistics.Enable(GreaterPowerUsageInLogisticsEnabled.Value);
+        ControlPanelRemoteLogisticsEnabled.SettingChanged += (_, _) => ControlPanelRemoteLogistics.Enable(ControlPanelRemoteLogisticsEnabled.Value);
         ImmediateBuild.Enable(ImmediateEnabled.Value);
         ArchitectMode.Enable(ArchitectModeEnabled.Value);
         NoConditionBuild.Enable(NoConditionEnabled.Value);
@@ -81,6 +83,7 @@ public static class FactoryPatch
         BoostFuelPower.Enable(BoostFuelPowerEnabled.Value);
         BoostGeothermalPower.Enable(BoostGeothermalPowerEnabled.Value);
         GreaterPowerUsageInLogistics.Enable(GreaterPowerUsageInLogisticsEnabled.Value);
+        ControlPanelRemoteLogistics.Enable(ControlPanelRemoteLogisticsEnabled.Value);
         _factoryPatch = Harmony.CreateAndPatchAll(typeof(FactoryPatch));
     }
 
@@ -98,6 +101,7 @@ public static class FactoryPatch
         BoostFuelPower.Enable(false);
         BoostGeothermalPower.Enable(false);
         GreaterPowerUsageInLogistics.Enable(false);
+        ControlPanelRemoteLogistics.Enable(false);
     }
 
     public static void OnUpdate()
@@ -1465,6 +1469,136 @@ public static class FactoryPatch
                     return prevMax * (value - prevMax + 1);
                 }),
                 new CodeInstruction(OpCodes.Starg_S, 1)
+            );
+            return matcher.InstructionEnumeration();
+        }
+    }
+
+    private static class ControlPanelRemoteLogistics
+    {
+        private static Harmony _patch;
+        
+        public static void Enable(bool enable)
+        {
+            if (enable)
+            {
+                _patch ??= Harmony.CreateAndPatchAll(typeof(ControlPanelRemoteLogistics));
+            }
+            else
+            {
+                _patch?.UnpatchSelf();
+                _patch = null;
+            }
+        }
+
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(UIControlPanelDispenserInspector), nameof(UIControlPanelDispenserInspector.OnItemIconMouseDown))]
+        [HarmonyPatch(typeof(UIControlPanelDispenserInspector), nameof(UIControlPanelDispenserInspector.OnHoldupItemClick))]
+        [HarmonyPatch(typeof(UIControlPanelDispenserInspector), nameof(UIControlPanelDispenserInspector.OnCourierIconClick))]
+        private static IEnumerable<CodeInstruction> UIControlPanelDispenserInspector_OnItemIconMouseDown_Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var matcher = new CodeMatcher(instructions);
+            Label? branch = null;
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Ldarg_0),
+                new CodeMatch(OpCodes.Call, AccessTools.PropertyGetter(typeof(UIControlPanelDispenserInspector), nameof(UIControlPanelDispenserInspector.isLocal))),
+                new CodeMatch(ci => ci.Branches(out branch))
+            ).Repeat(
+                m =>
+                {
+                    if (branch == null)
+                    {
+                        m.Advance(3);
+                        return;
+                    }
+                    var labels = m.Labels;
+                    m.RemoveInstructions(3).InsertAndAdvance(
+                        new CodeInstruction(OpCodes.Br, branch.Value).WithLabels(labels)
+                    );
+                }
+            );
+            return matcher.InstructionEnumeration();
+        }
+        
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(UIControlPanelStationInspector), nameof(UIControlPanelStationInspector.OnShipIconClick))]
+        [HarmonyPatch(typeof(UIControlPanelStationInspector), nameof(UIControlPanelStationInspector.OnWarperIconClick))]
+        [HarmonyPatch(typeof(UIControlPanelStationInspector), nameof(UIControlPanelStationInspector.OnDroneIconClick))]
+        private static IEnumerable<CodeInstruction> UIControlPanelStationInspector_OnShipIconClick_Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var matcher = new CodeMatcher(instructions);
+            Label? branch = null;
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Ldarg_0),
+                new CodeMatch(OpCodes.Call, AccessTools.PropertyGetter(typeof(UIControlPanelStationInspector), nameof(UIControlPanelStationInspector.isLocal))),
+                new CodeMatch(ci => ci.Branches(out branch))
+            ).Repeat(
+                m =>
+                {
+                    if (branch == null)
+                    {
+                        m.Advance(3);
+                        return;
+                    }
+                    var labels = m.Labels;
+                    m.RemoveInstructions(3).InsertAndAdvance(
+                        new CodeInstruction(OpCodes.Br, branch.Value).WithLabels(labels)
+                    );
+                }
+            );
+            return matcher.InstructionEnumeration();
+        }
+        
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(UIControlPanelStationStorage), nameof(UIControlPanelStationStorage.OnItemIconMouseDown))]
+        private static IEnumerable<CodeInstruction> UIControlPanelStationStorage_OnItemIconMouseDown_Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var matcher = new CodeMatcher(instructions);
+            Label? branch = null;
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Ldarg_0),
+                new CodeMatch(OpCodes.Call, AccessTools.PropertyGetter(typeof(UIControlPanelStationStorage), nameof(UIControlPanelStationStorage.isLocal))),
+                new CodeMatch(ci => ci.Branches(out branch))
+            ).Repeat(
+                m =>
+                {
+                    if (branch == null)
+                    {
+                        m.Advance(3);
+                        return;
+                    }
+                    var labels = m.Labels;
+                    m.RemoveInstructions(3).InsertAndAdvance(
+                        new CodeInstruction(OpCodes.Br, branch.Value).WithLabels(labels)
+                    );
+                }
+            );
+            return matcher.InstructionEnumeration();
+        }
+        
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(UIControlPanelVeinCollectorPanel), nameof(UIControlPanelVeinCollectorPanel.OnProductIconClick))]
+        private static IEnumerable<CodeInstruction> UIControlPanelVeinCollectorPanel_OnProductIconClick_Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var matcher = new CodeMatcher(instructions);
+            Label? branch = null;
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Ldarg_0),
+                new CodeMatch(OpCodes.Call, AccessTools.PropertyGetter(typeof(UIControlPanelVeinCollectorPanel), "isLocal")),
+                new CodeMatch(ci => ci.Branches(out branch))
+            ).Repeat(
+                m =>
+                {
+                    if (branch == null)
+                    {
+                        m.Advance(3);
+                        return;
+                    }
+                    var labels = m.Labels;
+                    m.RemoveInstructions(3).InsertAndAdvance(
+                        new CodeInstruction(OpCodes.Br, branch.Value).WithLabels(labels)
+                    );
+                }
             );
             return matcher.InstructionEnumeration();
         }

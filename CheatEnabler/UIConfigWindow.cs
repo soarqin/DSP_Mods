@@ -51,6 +51,7 @@ public static class UIConfigWindow
         I18N.Add("Boost fuel power 2", "(x20,000 for deuteron, x10,000 for antimatter)", "(氘核燃料棒x20,000，反物质燃料棒x10,000)");
         I18N.Add("Boost geothermal power", "Boost geothermal power(x50,000)", "提升地热发电(x50,000)");
         I18N.Add("Increase maximum power usage in Logistic Stations and Advanced Mining Machines", "Increase maximum power usage in Logistic Stations and Advanced Mining Machines", "提升物流塔和大型采矿机的最大功耗");
+        I18N.Add("Retrieve/Place items from/to remote planets on logistics control panel", "Retrieve/Place items from/to remote planets on logistics control panel", "在物流总控面板上可以从非本地行星取放物品");
         I18N.Add("Infinite Natural Resources", "Infinite natural resources", "自然资源采集不消耗");
         I18N.Add("Fast Mining", "Fast mining", "高速采集");
         I18N.Add("Pump Anywhere", "Pump anywhere", "平地抽水");
@@ -129,6 +130,8 @@ public static class UIConfigWindow
         x = 0f;
         y += 30f;
         MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.GreaterPowerUsageInLogisticsEnabled, "Increase maximum power usage in Logistic Stations and Advanced Mining Machines");
+        y += 36f;
+        MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.ControlPanelRemoteLogisticsEnabled, "Retrieve/Place items from/to remote planets on logistics control panel");
 
         FactoryPatch.BeltSignalGeneratorEnabled.SettingChanged += (_, _) =>
         {
