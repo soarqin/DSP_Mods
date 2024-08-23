@@ -1,4 +1,6 @@
 ## Changlog
+* 1.1.4
+  + Fix `Remove some build conditions`
 * 1.1.3
   + UI texts are updated following game settings now
   + Fix hover area for checkboxes in config panel
@@ -138,6 +140,8 @@
 
 
 ## 更新日志
+* 1.1.4
+  + 修复了`移除部分不影响游戏逻辑的建造条件`
 * 1.1.3
   + 界面文本现在完全跟随游戏语言设置改变
   + 修复了配置面板中勾选框的鼠标悬停区域

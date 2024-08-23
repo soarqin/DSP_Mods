@@ -1,4 +1,6 @@
 ## Changlog
+* 2.3.22
+    + Fix `Pump Anywhere`
 * 2.3.21
     + `Retrieve/Place items from/to remote planets on logistics control panel`: Items are put back to player's inventory when a slot is removed from the logistics station on remote planet.
     + `Dev Shortcuts`: Camera Pose related shortcurts are working now.
@@ -119,6 +121,8 @@
 
 
 ## 更新日志
+* 2.3.22
+    + 修复了`平地抽水`
 * 2.3.21
     + `在物流总控面板上可以从非本地行星取放物品`：当从非本地星球的物流站移除槽位时，物品会放回玩家的背包
     + `开发模式快捷键`：摄像机位(Pose)相关的快捷键现在生效了
