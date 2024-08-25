@@ -98,9 +98,13 @@ public static class DysonSpherePatch
             {
                 InitNodeForAbsorb();
                 _patch ??= Harmony.CreateAndPatchAll(typeof(StopEjectOnNodeComplete));
+                GameLogic.OnGameBegin += GameMain_Begin_Postfix;
+                GameLogic.OnGameEnd += GameMain_End_Postfix;
             }
             else
             {
+                GameLogic.OnGameEnd -= GameMain_End_Postfix;
+                GameLogic.OnGameBegin -= GameMain_Begin_Postfix;
                 _patch?.UnpatchSelf();
                 _patch = null;
                 _initialized = false;
@@ -173,15 +177,11 @@ public static class DysonSpherePatch
             return comp != null && comp.Count > 0;
         }
 
-        [HarmonyPostfix]
-        [HarmonyPatch(typeof(GameMain), nameof(GameMain.Begin))]
         private static void GameMain_Begin_Postfix()
         {
             InitNodeForAbsorb();
         }
 
-        [HarmonyPostfix]
-        [HarmonyPatch(typeof(GameMain), nameof(GameMain.End))]
         private static void GameMain_End_Postfix()
         {
             _initialized = false;

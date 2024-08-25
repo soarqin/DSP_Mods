@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection.Emit;
 using BepInEx.Configuration;
 using HarmonyLib;
+using UXAssist.Common;
 
 namespace CheatEnabler;
 
@@ -113,9 +114,11 @@ public static class DysonSpherePatch
                 UpdateSailLifeTime();
                 UpdateSailsCacheForThisGame();
                 _patch ??= Harmony.CreateAndPatchAll(typeof(SkipBulletPatch));
+                GameLogic.OnGameEnd += GameMain_Begin_Postfix;
             }
             else
             {
+                GameLogic.OnGameEnd -= GameMain_Begin_Postfix;
                 _patch?.UnpatchSelf();
                 _patch = null;
             }
@@ -151,8 +154,6 @@ public static class DysonSpherePatch
             _sailsCacheCapacity[index] = capacity;
         }
 
-        [HarmonyPostfix]
-        [HarmonyPatch(typeof(GameMain), nameof(GameMain.Begin))]
         private static void GameMain_Begin_Postfix()
         {
             UpdateSailsCacheForThisGame();

@@ -1648,11 +1648,15 @@ public static class FactoryPatch
             if (enable)
             {
                 _patch ??= Harmony.CreateAndPatchAll(typeof(DragBuildPowerPoles));
+                GameLogic.OnGameBegin += GameMain_Begin_Postfix;
+                GameLogic.OnGameEnd += GameMain_End_Postfix;
                 FixProto();
                 return;
             }
 
             UnfixProto();
+            GameLogic.OnGameEnd -= GameMain_End_Postfix;
+            GameLogic.OnGameBegin -= GameMain_Begin_Postfix;
             _patch?.UnpatchSelf();
             _patch = null;
         }
@@ -1699,15 +1703,11 @@ public static class FactoryPatch
             OldDragBuildDist.Clear();
         }
 
-        [HarmonyPostfix, HarmonyPriority(Priority.Last)]
-        [HarmonyPatch(typeof(GameMain), nameof(GameMain.Begin))]
         private static void GameMain_Begin_Postfix()
         {
             FixProto();
         }
 
-        [HarmonyPostfix, HarmonyPriority(Priority.Last)]
-        [HarmonyPatch(typeof(GameMain), nameof(GameMain.End))]
         private static void GameMain_End_Postfix()
         {
             UnfixProto();
@@ -1891,10 +1891,14 @@ public static class FactoryPatch
         {
             AddBeltSignalProtos();
             _persistPatch = Harmony.CreateAndPatchAll(typeof(Persist));
+            GameLogic.OnDataLoaded += Persist.VFPreload_InvokeOnLoadWorkEnded_Postfix;
+            GameLogic.OnGameBegin += Persist.GameMain_Begin_Postfix;
         }
 
         public static void UninitPersist()
         {
+            GameLogic.OnGameBegin -= Persist.GameMain_Begin_Postfix;
+            GameLogic.OnDataLoaded -= Persist.VFPreload_InvokeOnLoadWorkEnded_Postfix;
             _persistPatch?.UnpatchSelf();
             _persistPatch = null;
         }
@@ -2083,9 +2087,7 @@ public static class FactoryPatch
 
         private static class Persist
         {
-            [HarmonyPostfix, HarmonyPriority(Priority.Last)]
-            [HarmonyPatch(typeof(VFPreload), nameof(VFPreload.InvokeOnLoadWorkEnded))]
-            private static void VFPreload_InvokeOnLoadWorkEnded_Postfix()
+            public static void VFPreload_InvokeOnLoadWorkEnded_Postfix()
             {
                 if (BeltSignalsForBuyOut._initialized) return;
                 BeltSignalsForBuyOut._initialized = true;
@@ -2103,9 +2105,7 @@ public static class FactoryPatch
                 RemovePlanetSignalBelts(factory.index);
             }
 
-            [HarmonyPostfix]
-            [HarmonyPatch(typeof(GameMain), nameof(GameMain.Begin))]
-            private static void GameMain_Begin_Postfix()
+            public static void GameMain_Begin_Postfix()
             {
                 _clusterSeedKey = GameMain.data.GetClusterSeedKey();
                 InitSignalBelts();

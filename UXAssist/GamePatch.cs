@@ -76,11 +76,33 @@ public static class GamePatch
 
     private static class EnableWindowResize
     {
+        private static bool _enabled;
+        private static Harmony _patch;
         public static void Enable(bool on)
         {
             var wnd = WinApi.FindWindow(GameWindowClass, _gameWindowTitle);
             if (wnd == IntPtr.Zero) return;
+            _enabled = on;
             if (on)
+            {
+                WinApi.SetWindowLong(wnd, (int)WindowLongFlags.GWL_STYLE,
+                    WinApi.GetWindowLong(wnd, (int)WindowLongFlags.GWL_STYLE) | (int)WindowStyles.WS_THICKFRAME | (int)WindowStyles.WS_MAXIMIZEBOX);
+                _patch ??= Harmony.CreateAndPatchAll(typeof(EnableWindowResize));
+                return;
+            }
+            _patch?.UnpatchSelf();
+            _patch = null;
+            WinApi.SetWindowLong(wnd, (int)WindowLongFlags.GWL_STYLE,
+                WinApi.GetWindowLong(wnd, (int)WindowLongFlags.GWL_STYLE) & ~((int)WindowStyles.WS_THICKFRAME | (int)WindowStyles.WS_MAXIMIZEBOX));
+        }
+        
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(UIOptionWindow), nameof(UIOptionWindow.ApplyOptions))]
+        private static void UIOptionWindow_ApplyOptions_Postfix()
+        {
+            var wnd = WinApi.FindWindow(GameWindowClass, _gameWindowTitle);
+            if (wnd == IntPtr.Zero) return;
+            if (_enabled)
                 WinApi.SetWindowLong(wnd, (int)WindowLongFlags.GWL_STYLE,
                     WinApi.GetWindowLong(wnd, (int)WindowLongFlags.GWL_STYLE) | (int)WindowStyles.WS_THICKFRAME | (int)WindowStyles.WS_MAXIMIZEBOX);
             else
@@ -98,6 +120,7 @@ public static class GamePatch
             if (on)
             {
                 _patch ??= Harmony.CreateAndPatchAll(typeof(LoadLastWindowRect));
+                GameLogic.OnDataLoaded += VFPreload_InvokeOnLoadWorkEnded_Postfix;
                 if (Screen.fullScreenMode is not (FullScreenMode.ExclusiveFullScreen or FullScreenMode.FullScreenWindow or FullScreenMode.MaximizedWindow))
                 {
                     var rect = LastWindowRect.Value;
@@ -146,6 +169,7 @@ public static class GamePatch
                 MoveWindowPosition();
                 return;
             }
+            GameLogic.OnDataLoaded -= VFPreload_InvokeOnLoadWorkEnded_Postfix;
             _patch?.UnpatchSelf();
             _patch = null;
         }
@@ -182,8 +206,6 @@ public static class GamePatch
             MoveWindowPosition();
         }
 
-        [HarmonyPostfix]
-        [HarmonyPatch(typeof(VFPreload), "InvokeOnLoadWorkEnded")]
         private static void VFPreload_InvokeOnLoadWorkEnded_Postfix()
         {
             if (_loaded || Screen.fullScreenMode is FullScreenMode.ExclusiveFullScreen or FullScreenMode.FullScreenWindow or FullScreenMode.MaximizedWindow) return;
@@ -201,6 +223,35 @@ public static class GamePatch
             if (EnableWindowResizeEnabled.Value)
                 WinApi.SetWindowLong(wnd, (int)WindowLongFlags.GWL_STYLE,
                     WinApi.GetWindowLong(wnd, (int)WindowLongFlags.GWL_STYLE) | (int)WindowStyles.WS_THICKFRAME | (int)WindowStyles.WS_MAXIMIZEBOX);
+        }
+
+        private static GameOption _gameOption;
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(UIOptionWindow), nameof(UIOptionWindow._OnOpen))]
+        private static void UIOptionWindow__OnOpen_Postfix()
+        {
+            _gameOption = DSPGame.globalOption;
+        }
+        
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(GameOption), nameof(GameOption.Apply))]
+        private static IEnumerable<CodeInstruction> UIOptionWindow_ApplyOptions_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            var label1 = generator.DefineLabel();
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(Screen), nameof(Screen.SetResolution), [typeof(int), typeof(int), typeof(bool), typeof(int)]))
+            ).Advance(1).Labels.Add(label1);
+            matcher.Start().Insert(
+                Transpilers.EmitDelegate(() =>
+                    _gameOption.fullscreen == DSPGame.globalOption.fullscreen &&
+                    _gameOption.resolution.width == DSPGame.globalOption.resolution.width &&
+                    _gameOption.resolution.height == DSPGame.globalOption.resolution.height &&
+                    _gameOption.resolution.refreshRate == DSPGame.globalOption.resolution.refreshRate
+                ),
+                new CodeInstruction(OpCodes.Brtrue, label1)
+            );
+            return matcher.InstructionEnumeration();
         }
     }
 

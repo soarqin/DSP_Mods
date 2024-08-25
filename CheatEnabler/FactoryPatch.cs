@@ -85,10 +85,12 @@ public static class FactoryPatch
         GreaterPowerUsageInLogistics.Enable(GreaterPowerUsageInLogisticsEnabled.Value);
         ControlPanelRemoteLogistics.Enable(ControlPanelRemoteLogisticsEnabled.Value);
         _factoryPatch = Harmony.CreateAndPatchAll(typeof(FactoryPatch));
+        GameLogic.OnGameBegin += GameMain_Begin_Postfix_For_ImmBuild;
     }
 
     public static void Uninit()
     {
+        GameLogic.OnGameBegin -= GameMain_Begin_Postfix_For_ImmBuild;
         _factoryPatch?.UnpatchSelf();
         _factoryPatch = null;
         ImmediateBuild.Enable(false);
@@ -173,8 +175,6 @@ public static class FactoryPatch
         }
     }
 
-    [HarmonyPostfix]
-    [HarmonyPatch(typeof(GameMain), nameof(GameMain.Begin))]
     private static void GameMain_Begin_Postfix_For_ImmBuild()
     {
         var factory = GameMain.mainPlayer?.factory;
@@ -492,8 +492,10 @@ public static class FactoryPatch
             {
                 InitSignalBelts();
                 _beltSignalPatch ??= Harmony.CreateAndPatchAll(typeof(BeltSignalGenerator));
+                GameLogic.OnGameBegin += GameMain_Begin_Postfix;
                 return;
             }
+            GameLogic.OnGameBegin -= GameMain_Begin_Postfix;
             _beltSignalPatch?.UnpatchSelf();
             _beltSignalPatch = null;
             _initialized = false;
@@ -726,8 +728,6 @@ public static class FactoryPatch
             set.Remove(v);
         }
 
-        [HarmonyPostfix]
-        [HarmonyPatch(typeof(GameMain), nameof(GameMain.Begin))]
         private static void GameMain_Begin_Postfix()
         {
             if (BeltSignalGeneratorEnabled.Value) InitSignalBelts();

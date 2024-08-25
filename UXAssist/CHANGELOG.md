@@ -1,6 +1,8 @@
 ## Changlog
 * 1.1.5
   + `Quick build and dismantle stacking labs`: works for storages and tanks now
+  + `Enable game window resize`: Keep window resizable on applying game options.
+  + `Remember window position and size on last exit`: Do not resize window on applying game options if resolution related config entries are not changed.
   + Fix a crash when config panel is opened before game is fully loaded
 * 1.1.4
   + Fix `Remove some build conditions`
@@ -145,6 +147,8 @@
 ## 更新日志
 * 1.1.5
   + `快速建造和拆除堆叠研究站`：现在也支持储物仓和储液罐
+  + `允许调整游戏窗口大小`：在应用游戏选项时保持窗口可调整大小
+  + `记住上次退出时的窗口位置和大小`：如果分辨率相关的配置项未改变，则在应用游戏选项时不调整窗口大小
   + 修复了在游戏完全加载前打开配置面板可能导致的崩溃问题
 * 1.1.4
   + 修复了`移除部分不影响游戏逻辑的建造条件`

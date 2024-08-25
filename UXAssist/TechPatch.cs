@@ -40,8 +40,10 @@ public static class TechPatch
             if (on)
             {
                 _patch ??= Harmony.CreateAndPatchAll(typeof(SorterCargoStacking));
+                GameLogic.OnDataLoaded += VFPreload_InvokeOnLoadWorkEnded_Postfix;
                 return;
             }
+            GameLogic.OnDataLoaded -= VFPreload_InvokeOnLoadWorkEnded_Postfix;
             _patch?.UnpatchSelf();
             _patch = null;
         }
@@ -106,8 +108,6 @@ public static class TechPatch
             }
         }
 
-        [HarmonyPostfix, HarmonyPriority(Priority.Last)]
-        [HarmonyPatch(typeof(VFPreload), "InvokeOnLoadWorkEnded")]
         private static void VFPreload_InvokeOnLoadWorkEnded_Postfix()
         {
             TryPatchProto(true);

@@ -5,6 +5,6 @@
   "description": "Add various cheat functions while disabling abnormal determinants / 添加一些作弊功能，同时屏蔽异常检测",
   "dependencies": [
     "xiaoye97-BepInEx-5.4.17",
-    "soarqin-UXAssist-1.0.24"
+    "soarqin-UXAssist-1.1.5"
   ]
 }

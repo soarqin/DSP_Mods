@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using BepInEx.Configuration;
 using HarmonyLib;
+using UXAssist.Common;
 
 namespace UniverseGenTweaks;
 public static class BirthPlanetPatch
@@ -73,15 +74,16 @@ public static class BirthPlanetPatch
         HighLuminosityBirthStar.SettingChanged += (_, _) => PatchBirthThemeData();
         PatchBirthThemeData();
         _patch ??= Harmony.CreateAndPatchAll(typeof(BirthPlanetPatch));
+        GameLogic.OnDataLoaded += VFPreload_InvokeOnLoadWorkEnded_Postfix;
     }
 
     public static void Uninit()
     {
+        GameLogic.OnDataLoaded -= VFPreload_InvokeOnLoadWorkEnded_Postfix;
         _patch?.UnpatchSelf();
         _patch = null;
     }
 
-    [HarmonyPostfix, HarmonyPatch(typeof(VFPreload), "InvokeOnLoadWorkEnded")]
     private static void VFPreload_InvokeOnLoadWorkEnded_Postfix()
     {
         PatchBirthThemeData();
