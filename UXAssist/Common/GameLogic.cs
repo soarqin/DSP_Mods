@@ -12,7 +12,7 @@ public static class GameLogic
     
     public static void Init()
     {
-        _harmony = Harmony.CreateAndPatchAll(typeof(GameLogic));
+        _harmony ??= Harmony.CreateAndPatchAll(typeof(GameLogic));
     }
 
     public static void Uninit()
