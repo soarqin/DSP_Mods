@@ -4,6 +4,8 @@
   + New feature: `Logistics Control Panel Improvement`
     - Auto apply filter with item under mouse cursor while opening the panel
     - Quick-set item filter while right-clicking item icons in storage list on the panel
+  + New feature: `Dyson Sphere "Auto Fast Build" speed multiplier`
+    - Note: this only applies to `Dyson Sphere "Auto Fast Build"` in sandbox mode
   + `Quick build and dismantle stacking labs`: works for storages and tanks now
   + `Enable game window resize`: Keep window resizable on applying game options.
   + `Remember window position and size on last exit`: Do not resize window on applying game options if resolution related config entries are not changed.
@@ -154,6 +156,8 @@
   + 新功能：`物流控制面板改进`
     - 打开面板时自动将鼠标指向物品设为筛选条件
     - 在控制面板物流塔列表中右键点击物品图标快速设置为筛选条件
+  + 新功能：`戴森球自动快速建造速度倍率`
+    - 注意：这仅适用于沙盒模式下的`戴森球自动快速建造`功能 
   + `快速建造和拆除堆叠研究站`：现在也支持储物仓和储液罐
   + `允许调整游戏窗口大小`：在应用游戏选项时保持窗口可调整大小
   + `记住上次退出时的窗口位置和大小`：如果分辨率相关的配置项未改变，则在应用游戏选项时不调整窗口大小

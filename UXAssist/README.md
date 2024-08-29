@@ -76,6 +76,8 @@
     - Construct only structure points but frames
     - Re-initialize Dyson Spheres
     - Quick dismantle Dyson Shells
+    - Dyson Sphere "Auto Fast Build" speed multiplier
+      - Note: this only applies to `Dyson Sphere "Auto Fast Build"` in sandbox mode
   + Tech
     - Restore upgrades of `Sorter Cargo Stacking` on panel
     - Set `Sorter Cargo Stacking` to unresearched state
@@ -172,6 +174,8 @@
     - 只建造节点不建造框架
     - 初始化戴森球
     - 快速拆除戴森壳
+    - 戴森球自动快速建造速度倍率
+      - 注意：这仅适用于沙盒模式下的`戴森球自动快速建造`功能
   + 科研
     - 在升级面板上恢复`分拣器货物堆叠`的升级
     - 将`分拣器货物堆叠`设为未研究状态

@@ -1,6 +1,7 @@
 ﻿using System;
 using HarmonyLib;
 using System.Collections.Generic;
+using System.Globalization;
 using BepInEx.Configuration;
 using UnityEngine;
 using UnityEngine.Events;
@@ -11,7 +12,7 @@ namespace UXAssist.UI;
 
 // MyWindow modified from LSTM: https://github.com/hetima/DSP_LSTM/blob/main/LSTM/MyWindowCtl.cs
 
-public class MyWindow: ManualBehaviour
+public class MyWindow : ManualBehaviour
 {
     private readonly Dictionary<InputField, Tuple<UnityAction<string>, UnityAction<string>>> _inputFields = new();
     private readonly Dictionary<UIButton, UnityAction> _buttons = new();
@@ -41,7 +42,7 @@ public class MyWindow: ManualBehaviour
     }
 
     public void Close() => _Close();
-    
+
     public void SetTitle(string title)
     {
         var txt = gameObject.transform.Find("panel-bg/title-text")?.gameObject.GetComponent<Text>();
@@ -110,6 +111,7 @@ public class MyWindow: ManualBehaviour
             _maxX = Math.Max(_maxX, x + rect.sizeDelta.x);
             MaxY = Math.Max(MaxY, y + rect.sizeDelta.y);
         }
+
         return tipsButton;
     }
 
@@ -132,10 +134,12 @@ public class MyWindow: ManualBehaviour
             l.stringKey = text;
             l.translation = text.Translate();
         }
+
         if (t != null)
         {
             t.text = text.Translate();
         }
+
         t.fontSize = fontSize;
         btn.button.onClick.RemoveAllListeners();
         btn.tip = null;
@@ -146,6 +150,7 @@ public class MyWindow: ManualBehaviour
             if (onClick != null)
                 btn.button.onClick.AddListener(onClick);
         }
+
         _maxX = Math.Max(_maxX, x + rect.sizeDelta.x);
         MaxY = Math.Max(MaxY, y + rect.sizeDelta.y);
         return btn;
@@ -163,11 +168,13 @@ public class MyWindow: ManualBehaviour
             img.sprite = panel.buttonDefaultSprite;
             img.color = new Color(img.color.r, img.color.g, img.color.b, 13f / 255f);
         }
+
         img = btn.gameObject.transform.Find("frame")?.GetComponent<Image>();
         if (img != null)
         {
             img.color = new Color(img.color.r, img.color.g, img.color.b, 0f);
         }
+
         var rect = Util.NormalizeRectWithTopLeft(btn, x, y, parent);
         var t = btn.gameObject.transform.Find("Text")?.GetComponent<Text>();
         if (t != null)
@@ -175,12 +182,14 @@ public class MyWindow: ManualBehaviour
             t.text = text.Translate();
             t.fontSize = fontSize;
         }
+
         btn.button.onClick.RemoveAllListeners();
         _buttons[btn] = onClick;
         if (EventRegistered && onClick != null)
         {
             btn.button.onClick.AddListener(onClick);
         }
+
         _maxX = Math.Max(_maxX, x + rect.sizeDelta.x);
         MaxY = Math.Max(MaxY, y + rect.sizeDelta.y);
         return btn;
@@ -203,10 +212,90 @@ public class MyWindow: ManualBehaviour
             _maxX = Math.Max(_maxX, x + rect.sizeDelta.x);
             MaxY = Math.Max(MaxY, y + rect.sizeDelta.y);
         }
+
         return slider;
     }
 
-    public InputField AddInputField(float x, float y, RectTransform parent, string text = "", int fontSize = 16, string objName = "input", UnityAction<string> onChanged = null, UnityAction<string> onEditEnd = null)
+    public class ValueMapper<T>
+    {
+        public virtual int Min => 1;
+        public virtual int Max => 100;
+        public virtual int ValueToIndex(T value) => (int)Convert.ChangeType(value, typeof(int), CultureInfo.InvariantCulture);
+        public virtual T IndexToValue(int index) => (T)Convert.ChangeType(index, typeof(T), CultureInfo.InvariantCulture);
+
+        public virtual string FormatValue(string format, T value)
+        {
+            return string.Format($"{{0:{format}}}", value);
+        }
+    }
+
+    public MySlider AddSlider<T>(float x, float y, RectTransform parent, ConfigEntry<T> config, ValueMapper<T> valueMapper, string format = "G", float width = 0f)
+    {
+        var slider = MySlider.CreateSlider(x, y, parent, OnConfigValueChanged(config), valueMapper.Min, valueMapper.Max, format, width);
+        slider.SetLabelText(valueMapper.FormatValue(format, config.Value));
+        config.SettingChanged += (sender, args) =>
+        {
+            var index = OnConfigValueChanged(config);
+            slider.Value = index;
+        };
+        slider.OnValueChanged += () =>
+        {
+            var index = Mathf.RoundToInt(slider.Value);
+            config.Value = valueMapper.IndexToValue(index);
+            slider.SetLabelText(valueMapper.FormatValue(format, config.Value));
+        };
+
+        var rect = slider.rectTrans;
+        if (rect != null)
+        {
+            _maxX = Math.Max(_maxX, x + rect.sizeDelta.x);
+            MaxY = Math.Max(MaxY, y + rect.sizeDelta.y);
+        }
+
+        return slider;
+
+        int OnConfigValueChanged(ConfigEntry<T> conf)
+        {
+            var index = valueMapper.ValueToIndex(conf.Value);
+            if (index >= 0) return index;
+            index = ~index;
+            index = Math.Max(0, Math.Min(valueMapper.Max, index));
+            conf.Value = valueMapper.IndexToValue(index);
+            return index;
+        }
+    }
+
+    private class ArrayMapper<T> : ValueMapper<T>
+    {
+        private readonly T[] _values;
+
+        public ArrayMapper(T[] values)
+        {
+            Array.Sort(values);
+            _values = values;
+        }
+
+        public override int Min => 0;
+        public override int Max => _values.Length - 1;
+
+        public override int ValueToIndex(T value)
+        {
+            return Array.BinarySearch(_values, value);
+        }
+
+        public override T IndexToValue(int index)
+        {
+            return _values[index >= 0 && index < _values.Length ? index : 0];
+        }
+    }
+
+    public MySlider AddSlider<T>(float x, float y, RectTransform parent, ConfigEntry<T> config, T[] valueList, string format = "G", float width = 0f)
+    {
+        return AddSlider(x, y, parent, config, new ArrayMapper<T>(valueList), format, width);
+    }
+
+    public InputField AddInputField(float x, float y, RectTransform parent, string text = "", int fontSize = 16, string objName = "input", UnityAction<string> onChanged = null,
+        UnityAction<string> onEditEnd = null)
     {
         var stationWindow = UIRoot.instance.uiGame.stationWindow;
         //public InputField nameInput;
@@ -228,6 +317,7 @@ public class MyWindow: ManualBehaviour
             if (onEditEnd != null)
                 inputField.onEndEdit.AddListener(onEditEnd);
         }
+
         _maxX = Math.Max(_maxX, x + rect.sizeDelta.x);
         MaxY = Math.Max(MaxY, y + rect.sizeDelta.y);
         return inputField;
@@ -245,12 +335,14 @@ public class MyWindow: ManualBehaviour
             if (t.Value.Item2 != null)
                 inputField.onEndEdit.AddListener(t.Value.Item2);
         }
+
         foreach (var t in _buttons)
         {
             var btn = t.Key;
             if (t.Value != null)
                 btn.button.onClick.AddListener(t.Value);
         }
+
         EventRegistered = true;
     }
 
@@ -265,6 +357,7 @@ public class MyWindow: ManualBehaviour
             if (t.Value != null)
                 btn.button.onClick.RemoveListener(t.Value);
         }
+
         foreach (var t in _inputFields)
         {
             var inputField = t.Key;
@@ -290,7 +383,7 @@ public class MyWindowWithTabs : MyWindow
     {
         return true;
     }
-    
+
     private RectTransform AddTabInternal(float y, int index, RectTransform parent, string label)
     {
         var tab = new GameObject();
@@ -322,6 +415,7 @@ public class MyWindowWithTabs : MyWindow
         {
             btn.onClick += OnTabButtonClick;
         }
+
         MaxY = Math.Max(MaxY, y + TabHeight);
         return tabRect;
     }
@@ -358,6 +452,7 @@ public class MyWindowWithTabs : MyWindow
                 t.Item2.onClick += OnTabButtonClick;
             }
         }
+
         base._OnRegEvent();
     }
 
@@ -370,6 +465,7 @@ public class MyWindowWithTabs : MyWindow
                 t.Item2.onClick -= OnTabButtonClick;
             }
         }
+
         base._OnUnregEvent();
     }
 
@@ -385,6 +481,7 @@ public class MyWindowWithTabs : MyWindow
                 rectTransform.gameObject.SetActive(false);
                 continue;
             }
+
             btn.highlighted = true;
             rectTransform.gameObject.SetActive(true);
         }
@@ -401,13 +498,13 @@ public static class MyWindowManager
     {
         _patch ??= Harmony.CreateAndPatchAll(typeof(Patch));
     }
-    
+
     public static void Uninit()
     {
         _patch?.UnpatchSelf();
         _patch = null;
     }
-    
+
     public static T CreateWindow<T>(string name, string title = "") where T : MyWindow
     {
         var srcWin = UIRoot.instance.uiGame.tankWindow;
@@ -438,16 +535,17 @@ public static class MyWindowManager
             }
         }
 
-        win.SetTitle(title);            
+        win.SetTitle(title);
         win._Create();
         if (_initialized)
         {
             win._Init(win.data);
         }
+
         Windows.Add(win);
         return (T)win;
     }
-    
+
     public static void DestroyWindow(ManualBehaviour win)
     {
         if (win == null) return;
@@ -467,7 +565,6 @@ public static class MyWindowManager
 
     public static class Patch
     {
-
         /*
         //_Create -> _Init
         [HarmonyPostfix, HarmonyPatch(typeof(UIGame), "_OnCreate")]
@@ -484,6 +581,7 @@ public static class MyWindowManager
                 win._Free();
                 win._Destroy();
             }
+
             Windows.Clear();
         }
 
@@ -495,6 +593,7 @@ public static class MyWindowManager
             {
                 win._Init(win.data);
             }
+
             _initialized = true;
         }
 
@@ -516,6 +615,7 @@ public static class MyWindowManager
             {
                 return;
             }
+
             foreach (var win in Windows)
             {
                 win._Update();

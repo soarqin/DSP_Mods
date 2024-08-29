@@ -237,23 +237,18 @@ public static class UIConfigWindow
     private static void UpdateButtons()
     {
         var data = GameMain.data;
-        if (data != null)
+        if (data == null) return;
+        var resignEnabled = data.account != AccountData.me;
+        if (_resignGameBtn.gameObject.activeSelf != resignEnabled)
         {
-            var resignEnabled = data.account != AccountData.me;
-            if (_resignGameBtn.gameObject.activeSelf != resignEnabled)
-            {
-                _resignGameBtn.gameObject.SetActive(resignEnabled);
-            }
+            _resignGameBtn.gameObject.SetActive(resignEnabled);
         }
-
-        var history = GameMain.history;
-        if (history != null)
+        var history = data.history;
+        if (history == null) return;
+        var banEnabled = history.hasUsedPropertyBanAchievement;
+        if (_clearBanBtn.gameObject.activeSelf != banEnabled)
         {
-            var banEnabled = history.hasUsedPropertyBanAchievement;
-            if (_clearBanBtn.gameObject.activeSelf != banEnabled)
-            {
-                _clearBanBtn.gameObject.SetActive(banEnabled);
-            }
+            _clearBanBtn.gameObject.SetActive(banEnabled);
         }
     }
 }

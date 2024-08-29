@@ -67,6 +67,7 @@ public static class UIConfigWindow
         I18N.Add("Click to dismantle selected layer", "Click to dismantle selected layer", "点击拆除对应的戴森壳");
         I18N.Add("Dismantle selected layer", "Dismantle selected layer", "拆除选中的戴森壳");
         I18N.Add("Dismantle selected layer Confirm", "This operation will dismantle selected layer, are you sure?", "此操作将会拆除选中的戴森壳，确定吗？");
+        I18N.Add("Auto Fast Build Speed Multiplier", "Auto Fast Build Speed Multiplier", "自动快速建造速度倍率");
         I18N.Add("Restore upgrades of \"Sorter Cargo Stacking\" on panel", "Restore upgrades of \"Sorter Cargo Stacking\" on panel", "在升级面板上恢复\"分拣器货物叠加\"的升级");
         I18N.Add("Buy out techs with their prerequisites", "Buy out techs with their prerequisites", "购买科技也同时购买所有前置科技");
         I18N.Add("Set \"Sorter Cargo Stacking\" to unresearched state", "Set \"Sorter Cargo Stacking\" to unresearched state", "将\"分拣器货物叠加\"设为未研究状态");
@@ -76,6 +77,24 @@ public static class UIConfigWindow
         MyConfigWindow.OnUpdateUI += UpdateUI;
     }
 
+    private class OcMapper : MyWindow.ValueMapper<int>
+    {
+        public override int Min => 0;
+        public override int Max => 40;
+        public override string FormatValue(string format, int value)
+        {
+            return value == 0 ? "max".Translate() : base.FormatValue(format, value);
+        }
+    }
+    
+    private class DistanceMapper : MyWindow.ValueMapper<double>
+    {
+        public override int Min => 1;
+        public override int Max => 40;
+        public override double IndexToValue(int index) => index * 0.5;
+        public override int ValueToIndex(double value) => Mathf.RoundToInt((float)(value * 2.0));
+    }
+    
     private static void CreateUI(MyConfigWindow wnd, RectTransform trans)
     {
         _windowTrans = trans;
@@ -151,19 +170,7 @@ public static class UIConfigWindow
         y += 30f;
         wnd.AddText2(x, y, tab2, "Maximum count to build", 15, "text-oc-build-count");
         y += 24f;
-        var ocBuildSlider = wnd.AddSlider(x, y, tab2, PlanetFunctions.OrbitalCollectorMaxBuildCount.Value, 0f, 40f, "G", 200f);
-        if (PlanetFunctions.OrbitalCollectorMaxBuildCount.Value == 0)
-        {
-            ocBuildSlider.SetLabelText("max".Translate());
-        }
-        ocBuildSlider.OnValueChanged += () =>
-        {
-            PlanetFunctions.OrbitalCollectorMaxBuildCount.Value = Mathf.RoundToInt(ocBuildSlider.Value);
-            if (PlanetFunctions.OrbitalCollectorMaxBuildCount.Value == 0)
-            {
-                ocBuildSlider.SetLabelText("max".Translate());
-            }
-        };
+        wnd.AddSlider(x, y, tab2, PlanetFunctions.OrbitalCollectorMaxBuildCount, new OcMapper(), "G", 200f);
         x = 400f;
         y += 54f;
         wnd.AddCheckBox(x, y, tab2, LogisticsPatch.LogisticsCapacityTweaksEnabled, "Enhance control for logistic storage limits");
@@ -201,16 +208,8 @@ public static class UIConfigWindow
         y += 32f;
         wnd.AddText2(x, y, tab3, "Distance to use warp", 15, "text-distance-to-warp");
         y += 24f;
-        var distanceToWarp = wnd.AddSlider(x, y, tab3, (float)Math.Round(PlayerPatch.DistanceToWarp.Value * 2.0), 1f, 40f, "0.0", 200f);
-        if (PlanetFunctions.OrbitalCollectorMaxBuildCount.Value == 0)
-        {
-            distanceToWarp.SetLabelText(PlayerPatch.DistanceToWarp.Value.ToString("0.0"));
-        }
-        distanceToWarp.OnValueChanged += () =>
-        {
-            PlayerPatch.DistanceToWarp.Value = Math.Round(distanceToWarp.Value) * 0.5;
-            distanceToWarp.SetLabelText(PlayerPatch.DistanceToWarp.Value.ToString("0.0"));
-        };
+
+        wnd.AddSlider(x, y, tab3, PlayerPatch.DistanceToWarp, new DistanceMapper(), "0.0", 200f);
 
         var tab4 = wnd.AddTab(trans, "Dyson Sphere");
         x = 0f;
@@ -250,6 +249,12 @@ public static class UIConfigWindow
                 x += 40f;
             }
         }
+
+        x = 400f;
+        y += 36f;
+        wnd.AddText2(x, y, tab4, "Auto Fast Build Speed Multiplier", 15, "text-auto-fast-build-multiplier");
+        y += 24f;
+        wnd.AddSlider(x, y, tab4, DysonSpherePatch.AutoConstructMultiplier, [1, 2, 5, 10, 20, 50, 100], "0", 200f);
         _dysonTab = tab4;
         
         var tab5 = wnd.AddTab(_windowTrans, "Tech/Combat");

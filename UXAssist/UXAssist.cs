@@ -129,7 +129,7 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
             "Stop ejectors when available nodes are all filled up");
         DysonSpherePatch.OnlyConstructNodesEnabled = Config.Bind("DysonSphere", "OnlyConstructNodes", false,
             "Construct only nodes but frames");
-        DysonSpherePatch.AutoConstructMultiplier = Config.Bind("DysonSphere", "AutoConstructMultiplier", 10, "Dyson Sphere auto-construct speed multiplier");
+        DysonSpherePatch.AutoConstructMultiplier = Config.Bind("DysonSphere", "AutoConstructMultiplier", 1, "Dyson Sphere auto-construct speed multiplier");
 
         I18N.Init();
         I18N.Add("UXAssist Config", "UXAssist Config", "UX助手设置");
