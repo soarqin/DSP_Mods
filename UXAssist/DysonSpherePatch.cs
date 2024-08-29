@@ -10,6 +10,7 @@ public static class DysonSpherePatch
 {
     public static ConfigEntry<bool> StopEjectOnNodeCompleteEnabled;
     public static ConfigEntry<bool> OnlyConstructNodesEnabled;
+    public static ConfigEntry<int> AutoConstructMultiplier;
     private static Harmony _dysonSpherePatch;
    
     public static void Init()
@@ -56,6 +57,165 @@ public static class DysonSpherePatch
             ds.RemoveDysonRocket(id);
         }
         ds.RemoveLayer(index);
+    }
+    
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(DysonSphere), nameof(DysonSphere.AutoConstruct))]
+    private static bool DysonSphere_AutoConstruct_Prefix(DysonSphere __instance)
+    {
+        var totalCount = AutoConstructMultiplier.Value * 6;
+        var totalCount2 = AutoConstructMultiplier.Value * 6;
+        foreach (var dysonSphereLayer in __instance.layersIdBased)
+        {
+            if (dysonSphereLayer == null) continue;
+            int todoCount;
+            int[] productRegister;
+            for (var j = dysonSphereLayer.nodePool.Length - 1; j >= 0; j--)
+            {
+                var dysonNode = dysonSphereLayer.nodePool[j];
+                if (dysonNode == null || dysonNode.id != j) continue;
+                var count = dysonNode._spReq - dysonNode.spOrdered;
+                if (count > 0)
+                {
+
+                    if (count > totalCount)
+                    {
+                        count = totalCount;
+                        dysonNode.spOrdered += count;
+                    }
+                    else
+                    {
+                        dysonNode.spOrdered = dysonNode._spReq;
+                        __instance.RemoveAutoNode(dysonNode);
+                        __instance.PickAutoNode();
+                    }
+
+                    todoCount = count;
+                    if (dysonNode.sp < dysonNode.spMax)
+                    {
+                        if (dysonNode.sp + count > dysonNode.spMax)
+                        {
+                            var diff = dysonNode.spMax - dysonNode.sp;
+                            count -= diff;
+                            dysonNode.spOrdered -= diff;
+                            dysonNode._spReq -= diff;
+
+                            dysonNode.sp = dysonNode.spMax;
+                        }
+                        else
+                        {
+                            dysonNode.spOrdered -= count;
+                            dysonNode._spReq -= count;
+
+                            dysonNode.sp += count;
+                            count = 0;
+                        }
+
+                        __instance.UpdateProgress(dysonNode);
+                    }
+
+                    if (count > 0)
+                    {
+                        var frameCount = dysonNode.frames.Count;
+                        var frameIndex = dysonNode.frameTurn % frameCount;
+                        for (var i = frameCount; i > 0; i--)
+                        {
+                            var dysonFrame = dysonNode.frames[frameIndex];
+                            var spMax = dysonFrame.spMax >> 1;
+                            if (dysonFrame.nodeA == dysonNode && dysonFrame.spA < spMax)
+                            {
+                                if (dysonFrame.spA + count > spMax)
+                                {
+                                    var diff = spMax - dysonFrame.spA;
+                                    count -= diff;
+                                    dysonNode.spOrdered -= diff;
+                                    dysonNode._spReq -= diff;
+
+                                    dysonFrame.spA = spMax;
+                                    __instance.UpdateProgress(dysonFrame);
+                                }
+                                else
+                                {
+                                    dysonNode.spOrdered -= count;
+                                    dysonNode._spReq -= count;
+
+                                    dysonFrame.spA += count;
+                                    count = 0;
+                                    __instance.UpdateProgress(dysonFrame);
+                                    break;
+                                }
+                            }
+
+                            if (dysonFrame.nodeB == dysonNode && dysonFrame.spB < spMax)
+                            {
+                                if (dysonFrame.spB + count > spMax)
+                                {
+                                    var diff = spMax - dysonFrame.spB;
+                                    count -= diff;
+                                    dysonNode.spOrdered -= diff;
+                                    dysonNode._spReq -= diff;
+
+                                    dysonFrame.spB = spMax;
+                                    __instance.UpdateProgress(dysonFrame);
+                                }
+                                else
+                                {
+                                    dysonNode.spOrdered -= count;
+                                    dysonNode._spReq -= count;
+
+                                    dysonFrame.spB += count;
+                                    count = 0;
+                                    __instance.UpdateProgress(dysonFrame);
+                                    break;
+                                }
+                            }
+
+                            frameIndex = (frameIndex + 1) % frameCount;
+                        }
+                    }
+
+                    productRegister = __instance.productRegister;
+                    if (productRegister != null)
+                    {
+                        lock (productRegister)
+                        {
+                            productRegister[11902] += todoCount - count;
+                        }
+                    }
+                }
+
+                count = dysonNode._cpReq - dysonNode.cpOrdered;
+                if (count > totalCount2) count = totalCount2;
+                todoCount = count;
+                dysonNode.cpOrdered += count;
+                var shellCount = dysonNode.shells.Count;
+                var shellIndex = dysonNode.shellTurn % shellCount;
+                for (var i = shellCount; i > 0 && count > 0; i--)
+                {
+                    var dysonShell = dysonNode.shells[shellIndex];
+                    var nodeIndex = dysonShell.nodeIndexMap[dysonNode.id];
+                    var diff = (dysonShell.vertsqOffset[nodeIndex + 1] - dysonShell.vertsqOffset[nodeIndex]) * dysonShell.cpPerVertex - dysonShell.nodecps[nodeIndex];
+                    if (diff > count)
+                        diff = count;
+                    count -= diff;
+                    dysonNode.cpOrdered -= diff;
+                    dysonNode._cpReq -= diff;
+                    dysonShell.nodecps[nodeIndex] += diff;
+                    dysonShell.nodecps[dysonShell.nodecps.Length - 1] += diff;
+                    shellIndex = (shellIndex + 1) % shellCount;
+                }
+                productRegister = __instance.productRegister;
+                if (productRegister != null)
+                {
+                    lock (productRegister)
+                    {
+                        productRegister[11903] += todoCount - count;
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 
     [HarmonyTranspiler]
@@ -174,7 +334,7 @@ public static class DysonSpherePatch
         private static bool AnyNodeForAbsorb(int starIndex)
         {
             var comp = _nodeForAbsorb[starIndex];
-            return comp != null && comp.Count > 0;
+            return comp is { Count: > 0 };
         }
 
         private static void GameMain_Begin_Postfix()

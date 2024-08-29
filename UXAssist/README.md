@@ -1,6 +1,7 @@
 # UXAssist
 
 #### Some functions and patches for better user experience
+
 #### 一些提升用户体验的功能和补丁
 
 ## Usage
@@ -16,7 +17,7 @@
   + Enable `Hide UI` function(`F11` by default) while on Star Map view
   + Append mod profile name to game window title, if using mod managers (`Thunderstore Mod Manager` or `r2modman`).
 * Features:
-  + General 
+  + General
     - Enable game window resize
     - Remember window position and size on last exit
     - Convert Peace-Mode saves to Combat-Mode on loading
@@ -42,6 +43,9 @@
       - Allow overflow when trying to insert in-hand items
       - Allow `Enhanced control for logistic storage limits` to exceed tech capacity limits
       - Remove logistic strorage limit check on loading game
+    - Logistics Control Panel Improvement
+      - Auto apply filter with item under mouse cursor while opening the panel
+      - Quick-set item filter while right-clicking item icons in storage list on the panel
     - Re-intialize planet (without reseting veins)
     - Quick dismantle all buildings (without drops)
     - Quick build Orbital Collectors
@@ -81,17 +85,18 @@
     - Open Dark Fog Communicator anywhere
 
 ## Notes
+
 * Please upgrade `BepInEx` 5.4.21 or later if using with [BlueprintTweaks](https://dsp.thunderstore.io/package/kremnev8/BlueprintTweaks/) to avoid possible conflicts.
   + You can download `BepInEx` [here](https://github.com/bepinex/bepinex/releases/latest)(choose x64 edition).
   + If using with r2modman, you can upgrade `BepInEx` by clicking `Settings` -> `Browse profile folder`, then extract downloaded zip to the folder and overwrite existing files.
 
 ## CREDITS
+
 * [Dyson Sphere Program](https://store.steampowered.com/app/1366540): The great game
 * [Multifunction_mod](https://github.com/blacksnipebiu/Multifunction_mod): Some cheat functions
 * [LSTM](https://github.com/hetima/DSP_LSTM) & [PlanetFinder](https://github.com/hetima/DSP_PlanetFinder): UI implementations
 * [OffGridConstruction](https://github.com/Velociraptor115-DSPModding/OffGridConstruction): Off-grid building & stepped rotation implementations
 * [CruiseAssist](https://dsp.thunderstore.io/package/tanu/CruiseAssist/) and its extension [AutoPilot](https://dsp.thunderstore.io/package/tanu/AutoPilot/): `Auto navigation on sailings` and `Auto-cruise` implementations
-
 
 ## 使用说明
 
@@ -133,6 +138,9 @@
       - 当尝试塞入手中物品时允许溢出
       - 允许`物流塔存储数量限制控制改进`超过科技容量限制
       - 在加载游戏时移除物流塔容量限制检查
+    - 物流控制面板改进
+      - 打开面板时自动将鼠标指向物品设为筛选条件
+      - 在控制面板物流塔列表中右键点击物品图标快速设置为筛选条件
     - 初始化本行星（不重置矿脉）
     - 快速拆除所有建筑（不掉落）
     - 快速建造轨道采集器
@@ -173,11 +181,13 @@
     - 在任意位置打开黑雾通讯器
 
 ## 注意事项
+
 * 如果和[BlueprintTweaks](https://dsp.thunderstore.io/package/kremnev8/BlueprintTweaks/)一起使用，请升级`BepInEx`到5.4.21或更高版本，以避免可能的冲突。
   + 你可以在[这里](https://github.com/bepinex/bepinex/releases/latest)（选择x64版本）下载`BepInEx`。
   + 如果使用r2modman，你可以点击`Settings` -> `Browse profile folder`，然后将下载的zip解压到该文件夹并覆盖现有文件。
 
 ## 鸣谢
+
 * [戴森球计划](https://store.steampowered.com/app/1366540): 伟大的游戏
 * [BepInEx](https://bepinex.dev/): 基础模组框架
 * [LSTM](https://github.com/hetima/DSP_LSTM) & [PlanetFinder](https://github.com/hetima/DSP_PlanetFinder): UI实现

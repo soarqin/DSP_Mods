@@ -46,6 +46,8 @@ public static class UIConfigWindow
         I18N.Add("Drag building power poles in maximum connection range", "Drag building power poles in maximum connection range", "拖动建造电线杆时自动使用最大连接距离间隔");
         I18N.Add("Allow overflow for Logistic Stations and Advanced Mining Machines", "Allow overflow for Logistic Stations and Advanced Mining Machines", "允许物流站和大型采矿机物品溢出");
         I18N.Add("Belt signals for buy out dark fog items automatically", "Belt signals for buy out dark fog items automatically", "用于自动购买黑雾物品的传送带信号");
+        I18N.Add("Logistics Control Panel Improvement", "Logistics Control Panel Improvement", "物流控制面板改进");
+        I18N.Add("Logistics Control Panel Improvement tips", "Auto apply filter with item under mouse cursor while opening the panel\nQuick-set item filter while right-clicking item icons in storage list on the panel", "打开面板时自动将鼠标指向物品设为筛选条件\n在控制面板物流塔列表中右键点击物品图标快速设置为筛选条件");
         I18N.Add("Auto navigation on sailings", "Auto navigation on sailings", "宇宙航行时自动导航");
         I18N.Add("Enable auto-cruise", "Enable auto-cruise", "启用自动巡航");
         I18N.Add("Auto boost", "Auto boost", "自动加速");
@@ -81,57 +83,53 @@ public static class UIConfigWindow
         var tab1 = wnd.AddTab(trans, "General");
         var x = 0f;
         var y = 10f;
-        MyCheckBox.CreateCheckBox(x, y, tab1, GamePatch.EnableWindowResizeEnabled, "Enable game window resize");
+        wnd.AddCheckBox(x, y, tab1, GamePatch.EnableWindowResizeEnabled, "Enable game window resize");
         y += 36f;
-        MyCheckBox.CreateCheckBox(x, y, tab1, GamePatch.LoadLastWindowRectEnabled, "Remeber window position and size on last exit");
+        wnd.AddCheckBox(x, y, tab1, GamePatch.LoadLastWindowRectEnabled, "Remeber window position and size on last exit");
         y += 36f;
         /*
-        MyCheckBox.CreateCheckBox(x, y, tab1, GamePatch.AutoSaveOptEnabled, "Better auto-save mechanism");
+        wnd.AddCheckBox(x, y, tab1, GamePatch.AutoSaveOptEnabled, "Better auto-save mechanism");
         x = 200f;
         y += 6f;
-        MyWindow.AddTipsButton(x, y, tab1, "Better auto-save mechanism", "Better auto-save mechanism tips", "auto-save-opt-tips");
+        wnd.AddTipsButton2(x, y, tab1, "Better auto-save mechanism", "Better auto-save mechanism tips", "auto-save-opt-tips");
         x = 0f;
         y += 30f;
         */
-        MyCheckBox.CreateCheckBox(x, y, tab1, GamePatch.ConvertSavesFromPeaceEnabled, "Convert old saves to Combat Mode on loading");
+        wnd.AddCheckBox(x, y, tab1, GamePatch.ConvertSavesFromPeaceEnabled, "Convert old saves to Combat Mode on loading");
         var tab2 = wnd.AddTab(trans, "Planet/Factory");
         x = 0f;
         y = 10f;
-        MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.RemoveSomeConditionEnabled, "Remove some build conditions");
+        wnd.AddCheckBox(x, y, tab2, FactoryPatch.RemoveSomeConditionEnabled, "Remove some build conditions");
         y += 36f;
-        MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.RemoveBuildRangeLimitEnabled, "Remove build range limit");
+        wnd.AddCheckBox(x, y, tab2, FactoryPatch.RemoveBuildRangeLimitEnabled, "Remove build range limit");
         y += 36f;
-        MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.NightLightEnabled, "Night Light");
+        wnd.AddCheckBox(x, y, tab2, FactoryPatch.NightLightEnabled, "Night Light");
         y += 36f;
-        MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.LargerAreaForUpgradeAndDismantleEnabled, "Larger area for upgrade and dismantle");
+        wnd.AddCheckBox(x, y, tab2, FactoryPatch.LargerAreaForUpgradeAndDismantleEnabled, "Larger area for upgrade and dismantle");
         y += 36f;
-        MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.LargerAreaForTerraformEnabled, "Larger area for terraform");
+        wnd.AddCheckBox(x, y, tab2, FactoryPatch.LargerAreaForTerraformEnabled, "Larger area for terraform");
         y += 36f;
-        MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.OffGridBuildingEnabled, "Off-grid building and stepped rotation");
+        wnd.AddCheckBox(x, y, tab2, FactoryPatch.OffGridBuildingEnabled, "Off-grid building and stepped rotation");
         y += 36f;
-        MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.TreatStackingAsSingleEnabled, "Treat stack items as single in monitor components");
-        y += 36f;
-        MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.LogisticsCapacityTweaksEnabled, "Enhance control for logistic storage limits");
-        x = 270f;
+        var cb = wnd.AddCheckBox(x, y, tab2, FactoryPatch.TreatStackingAsSingleEnabled, "Treat stack items as single in monitor components");
+        x += cb.Width + 5f;
         y += 6f;
-        MyWindow.AddTipsButton(x, y, tab2, "Enhance control for logistic storage limits", "Enhance control for logistic storage limits tips", "enhanced-logistic-limit-tips");
+        wnd.AddTipsButton2(x, y, tab2, "Enhance control for logistic storage limits", "Enhance control for logistic storage limits tips", "enhanced-logistic-limit-tips");
         x = 0f;
         y += 30f;
-        MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.QuickBuildAndDismantleLabsEnabled, "Quick build and dismantle stacking labs");
+        wnd.AddCheckBox(x, y, tab2, FactoryPatch.QuickBuildAndDismantleLabsEnabled, "Quick build and dismantle stacking labs");
         y += 36f;
-        MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.ProtectVeinsFromExhaustionEnabled, "Protect veins from exhaustion");
-        x = 270f;
+        cb = wnd.AddCheckBox(x, y, tab2, FactoryPatch.ProtectVeinsFromExhaustionEnabled, "Protect veins from exhaustion");
+        x += cb.Width + 5f;
         y += 6f;
-        MyWindow.AddTipsButton(x, y, tab2, "Protect veins from exhaustion", "Protect veins from exhaustion tips", "protect-veins-tips");
+        wnd.AddTipsButton2(x, y, tab2, "Protect veins from exhaustion", "Protect veins from exhaustion tips", "protect-veins-tips");
         x = 0f;
         y += 30f;
-        MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.DragBuildPowerPolesEnabled, "Drag building power poles in maximum connection range");
+        wnd.AddCheckBox(x, y, tab2, FactoryPatch.DragBuildPowerPolesEnabled, "Drag building power poles in maximum connection range");
         y += 36f;
-        MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.AllowOverflowInLogisticsEnabled, "Allow overflow for Logistic Stations and Advanced Mining Machines");
+        wnd.AddCheckBox(x, y, tab2, FactoryPatch.DoNotRenderEntitiesEnabled, "Do not render factory entities");
         y += 36f;
-        MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.DoNotRenderEntitiesEnabled, "Do not render factory entities");
-        y += 36f;
-        MyCheckBox.CreateCheckBox(x, y, tab2, FactoryPatch.BeltSignalsForBuyOutEnabled, "Belt signals for buy out dark fog items automatically");
+        wnd.AddCheckBox(x, y, tab2, FactoryPatch.BeltSignalsForBuyOutEnabled, "Belt signals for buy out dark fog items automatically");
         x = 400f;
         y = 10f;
         wnd.AddButton(x, y, tab2, "Initialize This Planet", 16, "button-init-planet", () =>
@@ -151,9 +149,9 @@ public static class UIConfigWindow
         wnd.AddButton(x, y, 200, tab2, "Quick build Orbital Collectors", 16, "button-init-planet", PlanetFunctions.BuildOrbitalCollectors);
         x += 10f;
         y += 30f;
-        MyWindow.AddText(x, y, tab2, "Maximum count to build", 15, "text-oc-build-count");
+        wnd.AddText2(x, y, tab2, "Maximum count to build", 15, "text-oc-build-count");
         y += 24f;
-        var ocBuildSlider = MySlider.CreateSlider(x, y, tab2, PlanetFunctions.OrbitalCollectorMaxBuildCount.Value, 0f, 40f, "G", 200f);
+        var ocBuildSlider = wnd.AddSlider(x, y, tab2, PlanetFunctions.OrbitalCollectorMaxBuildCount.Value, 0f, 40f, "G", 200f);
         if (PlanetFunctions.OrbitalCollectorMaxBuildCount.Value == 0)
         {
             ocBuildSlider.SetLabelText("max".Translate());
@@ -166,33 +164,44 @@ public static class UIConfigWindow
                 ocBuildSlider.SetLabelText("max".Translate());
             }
         };
+        x = 400f;
+        y += 54f;
+        wnd.AddCheckBox(x, y, tab2, LogisticsPatch.LogisticsCapacityTweaksEnabled, "Enhance control for logistic storage limits");
+        y += 36f;
+        wnd.AddCheckBox(x, y, tab2, LogisticsPatch.AllowOverflowInLogisticsEnabled, "Allow overflow for Logistic Stations and Advanced Mining Machines");
+        y += 36f;
+        cb = wnd.AddCheckBox(x, y, tab2, LogisticsPatch.LogisticsConstrolPanelImprovementEnabled, "Logistics Control Panel Improvement");
+        x += cb.Width + 5f;
+        y += 6f;
+        wnd.AddTipsButton2(x, y, tab2, "Logistics Control Panel Improvement", "Logistics Control Panel Improvement tips", "lcp-improvement-tips");
+        // x -= 200f;
 
         var tab3 = wnd.AddTab(trans, "Player/Mecha");
         x = 0f;
         y = 10f;
-        MyCheckBox.CreateCheckBox(x, y, tab3, FactoryPatch.UnlimitInteractiveEnabled, "Unlimited interactive range");
+        wnd.AddCheckBox(x, y, tab3, FactoryPatch.UnlimitInteractiveEnabled, "Unlimited interactive range");
         y += 36f;
-        MyCheckBox.CreateCheckBox(x, y, tab3, PlanetPatch.PlayerActionsInGlobeViewEnabled, "Enable player actions in globe view");
+        wnd.AddCheckBox(x, y, tab3, PlanetPatch.PlayerActionsInGlobeViewEnabled, "Enable player actions in globe view");
         y += 36f;
-        MyCheckBox.CreateCheckBox(x, y, tab3, PlayerPatch.HideTipsForSandsChangesEnabled, "Hide tips for soil piles changes");
+        wnd.AddCheckBox(x, y, tab3, PlayerPatch.HideTipsForSandsChangesEnabled, "Hide tips for soil piles changes");
         y += 36f;
-        MyCheckBox.CreateCheckBox(x, y, tab3, PlayerPatch.EnhancedMechaForgeCountControlEnabled, "Enhanced count control for hand-make");
-        x = 270f;
+        cb = wnd.AddCheckBox(x, y, tab3, PlayerPatch.EnhancedMechaForgeCountControlEnabled, "Enhanced count control for hand-make");
+        x += cb.Width + 5f;
         y += 6f;
-        MyWindow.AddTipsButton(x, y, tab3, "Enhanced count control for hand-make", "Enhanced count control for hand-make tips", "enhanced-count-control-tips");
+        wnd.AddTipsButton2(x, y, tab3, "Enhanced count control for hand-make", "Enhanced count control for hand-make tips", "enhanced-count-control-tips");
         x = 0f;
         y += 30f;
-        MyCheckBox.CreateCheckBox(x, y, tab3, PlayerPatch.AutoNavigationEnabled, "Auto navigation on sailings");
+        wnd.AddCheckBox(x, y, tab3, PlayerPatch.AutoNavigationEnabled, "Auto navigation on sailings");
         x = 20f;
         y += 36f;
-        MyCheckBox.CreateCheckBox(x, y, tab3, PlayerPatch.AutoCruiseEnabled, "Enable auto-cruise", 14);
+        wnd.AddCheckBox(x, y, tab3, PlayerPatch.AutoCruiseEnabled, "Enable auto-cruise", 14);
         x = 10f;
         y += 32f;
-        MyCheckBox.CreateCheckBox(x, y, tab3, PlayerPatch.AutoBoostEnabled, "Auto boost", 15);
+        wnd.AddCheckBox(x, y, tab3, PlayerPatch.AutoBoostEnabled, "Auto boost", 15);
         y += 32f;
-        MyWindow.AddText(x, y, tab3, "Distance to use warp", 15, "text-distance-to-warp");
+        wnd.AddText2(x, y, tab3, "Distance to use warp", 15, "text-distance-to-warp");
         y += 24f;
-        var distanceToWarp = MySlider.CreateSlider(x, y, tab3, (float)Math.Round(PlayerPatch.DistanceToWarp.Value * 2.0), 1f, 40f, "0.0", 200f);
+        var distanceToWarp = wnd.AddSlider(x, y, tab3, (float)Math.Round(PlayerPatch.DistanceToWarp.Value * 2.0), 1f, 40f, "0.0", 200f);
         if (PlanetFunctions.OrbitalCollectorMaxBuildCount.Value == 0)
         {
             distanceToWarp.SetLabelText(PlayerPatch.DistanceToWarp.Value.ToString("0.0"));
@@ -206,9 +215,9 @@ public static class UIConfigWindow
         var tab4 = wnd.AddTab(trans, "Dyson Sphere");
         x = 0f;
         y = 10f;
-        MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.StopEjectOnNodeCompleteEnabled, "Stop ejectors when available nodes are all filled up");
+        wnd.AddCheckBox(x, y, tab4, DysonSpherePatch.StopEjectOnNodeCompleteEnabled, "Stop ejectors when available nodes are all filled up");
         y += 36f;
-        MyCheckBox.CreateCheckBox(x, y, tab4, DysonSpherePatch.OnlyConstructNodesEnabled, "Construct only structure points but frames");
+        wnd.AddCheckBox(x, y, tab4, DysonSpherePatch.OnlyConstructNodesEnabled, "Construct only structure points but frames");
         x = 400f;
         y = 10f;
         wnd.AddButton(x, y, tab4, "Initialize Dyson Sphere", 16, "init-dyson-sphere", () =>
@@ -218,7 +227,7 @@ public static class UIConfigWindow
             })
         );
         y += 36f;
-        MyWindow.AddText(x, y, tab4, "Click to dismantle selected layer", 16, "text-dismantle-layer");
+        wnd.AddText2(x, y, tab4, "Click to dismantle selected layer", 16, "text-dismantle-layer");
         y += 26f;
         for (var i = 0; i < 10; i++)
         {
@@ -246,9 +255,9 @@ public static class UIConfigWindow
         var tab5 = wnd.AddTab(_windowTrans, "Tech/Combat");
         x = 10;
         y = 10;
-        MyCheckBox.CreateCheckBox(x, y, tab5, TechPatch.BatchBuyoutTechEnabled, "Buy out techs with their prerequisites");
+        wnd.AddCheckBox(x, y, tab5, TechPatch.BatchBuyoutTechEnabled, "Buy out techs with their prerequisites");
         y += 36f;
-        MyCheckBox.CreateCheckBox(x, y, tab5, TechPatch.SorterCargoStackingEnabled, "Restore upgrades of \"Sorter Cargo Stacking\" on panel");
+        wnd.AddCheckBox(x, y, tab5, TechPatch.SorterCargoStackingEnabled, "Restore upgrades of \"Sorter Cargo Stacking\" on panel");
         y += 36f;
         wnd.AddButton(x, y, 300f, tab5, "Set \"Sorter Cargo Stacking\" to unresearched state", 16, "button-remove-cargo-stacking", () =>
         {

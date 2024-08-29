@@ -1,10 +1,11 @@
 ﻿{
   "name": "UXAssist",
-  "version_number": "1.1.4",
+  "version_number": "1.1.5",
   "website_url": "https://github.com/soarqin/DSP_Mods/tree/master/UXAssist",
   "description": "Some functions and patches for better user experience / 一些提升用户体验的功能和补丁",
   "dependencies": [
     "CommonAPI-CommonAPI-1.6.5",
+    "CommonAPI-DSPModSave-1.1.4",
     "xiaoye97-BepInEx-5.4.17"
   ]
 }

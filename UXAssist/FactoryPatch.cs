@@ -22,13 +22,11 @@ public static class FactoryPatch
     public static ConfigEntry<bool> LargerAreaForUpgradeAndDismantleEnabled;
     public static ConfigEntry<bool> LargerAreaForTerraformEnabled;
     public static ConfigEntry<bool> OffGridBuildingEnabled;
-    public static ConfigEntry<bool> LogisticsCapacityTweaksEnabled;
     public static ConfigEntry<bool> TreatStackingAsSingleEnabled;
     public static ConfigEntry<bool> QuickBuildAndDismantleLabsEnabled;
     public static ConfigEntry<bool> ProtectVeinsFromExhaustionEnabled;
     public static ConfigEntry<bool> DoNotRenderEntitiesEnabled;
     public static ConfigEntry<bool> DragBuildPowerPolesEnabled;
-    public static ConfigEntry<bool> AllowOverflowInLogisticsEnabled;
     public static ConfigEntry<bool> BeltSignalsForBuyOutEnabled;
     private static PressKeyBind _doNotRenderEntitiesKey;
 
@@ -54,14 +52,11 @@ public static class FactoryPatch
         LargerAreaForUpgradeAndDismantleEnabled.SettingChanged += (_, _) => LargerAreaForUpgradeAndDismantle.Enable(LargerAreaForUpgradeAndDismantleEnabled.Value);
         LargerAreaForTerraformEnabled.SettingChanged += (_, _) => LargerAreaForTerraform.Enable(LargerAreaForTerraformEnabled.Value);
         OffGridBuildingEnabled.SettingChanged += (_, _) => OffGridBuilding.Enable(OffGridBuildingEnabled.Value);
-        LogisticsCapacityTweaksEnabled.SettingChanged += (_, _) => LogisticsCapacityTweaks.Enable(LogisticsCapacityTweaksEnabled.Value);
         TreatStackingAsSingleEnabled.SettingChanged += (_, _) => TreatStackingAsSingle.Enable(TreatStackingAsSingleEnabled.Value);
         QuickBuildAndDismantleLabsEnabled.SettingChanged += (_, _) => QuickBuildAndDismantleLab.Enable(QuickBuildAndDismantleLabsEnabled.Value);
         ProtectVeinsFromExhaustionEnabled.SettingChanged += (_, _) => ProtectVeinsFromExhaustion.Enable(ProtectVeinsFromExhaustionEnabled.Value);
         DoNotRenderEntitiesEnabled.SettingChanged += (_, _) => DoNotRenderEntities.Enable(DoNotRenderEntitiesEnabled.Value);
         DragBuildPowerPolesEnabled.SettingChanged += (_, _) => DragBuildPowerPoles.Enable(DragBuildPowerPolesEnabled.Value);
-        AllowOverflowInLogisticsEnabled.SettingChanged += (_, _) => AllowOverflowInLogistics.Enable(AllowOverflowInLogisticsEnabled.Value);
-        LogisticsCapacityTweaksEnabled.SettingChanged += (_, _) => LogisticsCapacityTweaks.Enable(LogisticsCapacityTweaksEnabled.Value);
         BeltSignalsForBuyOutEnabled.SettingChanged += (_, _) => BeltSignalsForBuyOut.Enable(BeltSignalsForBuyOutEnabled.Value);
         UnlimitInteractive.Enable(UnlimitInteractiveEnabled.Value);
         RemoveSomeConditionBuild.Enable(RemoveSomeConditionEnabled.Value);
@@ -70,14 +65,11 @@ public static class FactoryPatch
         LargerAreaForUpgradeAndDismantle.Enable(LargerAreaForUpgradeAndDismantleEnabled.Value);
         LargerAreaForTerraform.Enable(LargerAreaForTerraformEnabled.Value);
         OffGridBuilding.Enable(OffGridBuildingEnabled.Value);
-        LogisticsCapacityTweaks.Enable(LogisticsCapacityTweaksEnabled.Value);
         TreatStackingAsSingle.Enable(TreatStackingAsSingleEnabled.Value);
         QuickBuildAndDismantleLab.Enable(QuickBuildAndDismantleLabsEnabled.Value);
         ProtectVeinsFromExhaustion.Enable(ProtectVeinsFromExhaustionEnabled.Value);
         DoNotRenderEntities.Enable(DoNotRenderEntitiesEnabled.Value);
         DragBuildPowerPoles.Enable(DragBuildPowerPolesEnabled.Value);
-        AllowOverflowInLogistics.Enable(AllowOverflowInLogisticsEnabled.Value);
-        LogisticsCapacityTweaks.Enable(LogisticsCapacityTweaksEnabled.Value);
         BeltSignalsForBuyOut.Enable(BeltSignalsForBuyOutEnabled.Value);
 
         _factoryPatch ??= Harmony.CreateAndPatchAll(typeof(FactoryPatch));
@@ -92,14 +84,11 @@ public static class FactoryPatch
         LargerAreaForUpgradeAndDismantle.Enable(false);
         LargerAreaForTerraform.Enable(false);
         OffGridBuilding.Enable(false);
-        LogisticsCapacityTweaks.Enable(false);
         TreatStackingAsSingle.Enable(false);
         QuickBuildAndDismantleLab.Enable(false);
         ProtectVeinsFromExhaustion.Enable(false);
         DoNotRenderEntities.Enable(false);
         DragBuildPowerPoles.Enable(false);
-        AllowOverflowInLogistics.Enable(false);
-        LogisticsCapacityTweaks.Enable(false);
         BeltSignalsForBuyOut.Enable(false);
         BeltSignalsForBuyOut.UninitPersist();
 
@@ -872,209 +861,7 @@ public static class FactoryPatch
             }
         }
     }
-
-    public static class LogisticsCapacityTweaks
-    {
-        private static Harmony _patch;
-
-        public static void Enable(bool enable)
-        {
-            if (enable)
-            {
-                _patch ??= Harmony.CreateAndPatchAll(typeof(LogisticsCapacityTweaks));
-                return;
-            }
-
-            _patch?.UnpatchSelf();
-            _patch = null;
-        }
-
-        private static KeyCode _lastKey = KeyCode.None;
-        private static long _nextKeyTick;
-        private static bool _skipNextEvent;
-
-        private static bool UpdateKeyPressed(KeyCode code)
-        {
-            if (!Input.GetKey(code))
-                return false;
-            if (code != _lastKey)
-            {
-                _lastKey = code;
-                _nextKeyTick = GameMain.instance.timei + 30;
-                return true;
-            }
-
-            var currTick = GameMain.instance.timei;
-            if (_nextKeyTick > currTick) return false;
-            _nextKeyTick = currTick + 4;
-            return true;
-        }
-
-        public static void UpdateInput()
-        {
-            if (_lastKey != KeyCode.None && Input.GetKeyUp(_lastKey))
-            {
-                _lastKey = KeyCode.None;
-            }
-
-            if (VFInput.shift) return;
-            var ctrl = VFInput.control;
-            var alt = VFInput.alt;
-            if (ctrl && alt) return;
-            int delta;
-            if (UpdateKeyPressed(KeyCode.LeftArrow))
-            {
-                if (ctrl)
-                    delta = -100000;
-                else if (alt)
-                    delta = -1000;
-                else
-                    delta = -10;
-            }
-            else if (UpdateKeyPressed(KeyCode.RightArrow))
-            {
-                if (ctrl)
-                    delta = 100000;
-                else if (alt)
-                    delta = 1000;
-                else
-                    delta = 10;
-            }
-            else if (UpdateKeyPressed(KeyCode.DownArrow))
-            {
-                if (ctrl)
-                    delta = -1000000;
-                else if (alt)
-                    delta = -10000;
-                else
-                    delta = -100;
-            }
-            else if (UpdateKeyPressed(KeyCode.UpArrow))
-            {
-                if (ctrl)
-                    delta = 1000000;
-                else if (alt)
-                    delta = 10000;
-                else
-                    delta = 100;
-            }
-            else
-            {
-                return;
-            }
-
-            var targets = new List<RaycastResult>();
-            EventSystem.current.RaycastAll(new PointerEventData(EventSystem.current) { position = Input.mousePosition }, targets);
-            foreach (var target in targets)
-            {
-                var stationStorage = target.gameObject.GetComponentInParent<UIStationStorage>();
-                if (stationStorage is null) continue;
-                var station = stationStorage.station;
-                ref var storage = ref station.storage[stationStorage.index];
-                var oldMax = storage.max;
-                var newMax = oldMax + delta;
-                if (newMax < 0)
-                {
-                    newMax = 0;
-                }
-                else
-                {
-                    int itemCountMax;
-                    if (AllowOverflowInLogisticsEnabled.Value)
-                    {
-                        itemCountMax = 90000000;
-                    }
-                    else
-                    {
-                        var modelProto = LDB.models.Select(stationStorage.stationWindow.factory.entityPool[station.entityId].modelIndex);
-                        itemCountMax = 0;
-                        if (modelProto != null)
-                        {
-                            itemCountMax = modelProto.prefabDesc.stationMaxItemCount;
-                        }
-
-                        itemCountMax += station.isStellar ? GameMain.history.remoteStationExtraStorage : GameMain.history.localStationExtraStorage;
-                    }
-
-                    if (newMax > itemCountMax)
-                    {
-                        newMax = itemCountMax;
-                    }
-                }
-
-                storage.max = newMax;
-                _skipNextEvent = oldMax / 100 != newMax / 100;
-                break;
-            }
-        }
-
-        [HarmonyPrefix]
-        [HarmonyPatch(typeof(UIStationStorage), nameof(UIStationStorage.OnMaxSliderValueChange))]
-        private static bool UIStationStorage_OnMaxSliderValueChange_Prefix()
-        {
-            if (!_skipNextEvent) return true;
-            _skipNextEvent = false;
-            return false;
-        }
-
-        [HarmonyPrefix]
-        [HarmonyPatch(typeof(PlanetTransport), nameof(PlanetTransport.OnTechFunctionUnlocked))]
-        private static bool PlanetTransport_OnTechFunctionUnlocked_Prefix(PlanetTransport __instance, int _funcId, double _valuelf, int _level)
-        {
-            switch (_funcId)
-            {
-                case 30:
-                {
-                    var stationPool = __instance.stationPool;
-                    var factory = __instance.factory;
-                    var history = GameMain.history;
-                    for (var i = __instance.stationCursor - 1; i > 0; i--)
-                    {
-                        if (stationPool[i] == null || stationPool[i].id != i || (stationPool[i].isStellar && !stationPool[i].isCollector && !stationPool[i].isVeinCollector)) continue;
-                        var modelIndex = factory.entityPool[stationPool[i].entityId].modelIndex;
-                        var maxCount = LDB.models.Select(modelIndex).prefabDesc.stationMaxItemCount;
-                        var oldMaxCount = maxCount + history.localStationExtraStorage - _valuelf;
-                        var intOldMaxCount = (int)Math.Round(oldMaxCount);
-                        var ratio = (maxCount + history.localStationExtraStorage) / oldMaxCount;
-                        var storage = stationPool[i].storage;
-                        for (var j = storage.Length - 1; j >= 0; j--)
-                        {
-                            if (storage[j].max + 10 < intOldMaxCount) continue;
-                            storage[j].max = Mathf.RoundToInt((float)(storage[j].max * ratio / 50.0)) * 50;
-                        }
-                    }
-
-                    break;
-                }
-                case 31:
-                {
-                    var stationPool = __instance.stationPool;
-                    var factory = __instance.factory;
-                    var history = GameMain.history;
-                    for (var i = __instance.stationCursor - 1; i > 0; i--)
-                    {
-                        if (stationPool[i] == null || stationPool[i].id != i || !stationPool[i].isStellar || stationPool[i].isCollector || stationPool[i].isVeinCollector) continue;
-                        var modelIndex = factory.entityPool[stationPool[i].entityId].modelIndex;
-                        var maxCount = LDB.models.Select(modelIndex).prefabDesc.stationMaxItemCount;
-                        var oldMaxCount = maxCount + history.remoteStationExtraStorage - _valuelf;
-                        var intOldMaxCount = (int)Math.Round(oldMaxCount);
-                        var ratio = (maxCount + history.remoteStationExtraStorage) / oldMaxCount;
-                        var storage = stationPool[i].storage;
-                        for (var j = storage.Length - 1; j >= 0; j--)
-                        {
-                            if (storage[j].max + 10 < intOldMaxCount) continue;
-                            storage[j].max = Mathf.RoundToInt((float)(storage[j].max * ratio / 100.0)) * 100;
-                        }
-                    }
-
-                    break;
-                }
-            }
-
-            return false;
-        }
-    }
-
+    
     public static class TreatStackingAsSingle
     {
         private static Harmony _patch;
@@ -1803,72 +1590,6 @@ public static class FactoryPatch
                 if (id != 2201 && id != 2202) return click.handPrefabDesc;
                 return LDB.items.Select(id ^ 3).prefabDesc;
             }));
-            return matcher.InstructionEnumeration();
-        }
-    }
-
-    private static class AllowOverflowInLogistics
-    {
-        private static Harmony _patch;
-
-        public static void Enable(bool enable)
-        {
-            if (enable)
-            {
-                _patch ??= Harmony.CreateAndPatchAll(typeof(AllowOverflowInLogistics));
-                return;
-            }
-
-            _patch?.UnpatchSelf();
-            _patch = null;
-        }
-
-        // Do not check for overflow when try to send hand items into storages
-        [HarmonyTranspiler]
-        [HarmonyPatch(typeof(UIStationStorage), nameof(UIStationStorage.OnItemIconMouseDown))]
-        private static IEnumerable<CodeInstruction> UIStationStorage_OnItemIconMouseDown_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
-        {
-            var matcher = new CodeMatcher(instructions, generator);
-            matcher.MatchForward(false,
-                new CodeMatch(OpCodes.Call, AccessTools.PropertyGetter(typeof(LDB), nameof(LDB.items))),
-                new CodeMatch(OpCodes.Ldarg_0)
-            );
-            var pos = matcher.Pos;
-            matcher.MatchForward(false,
-                new CodeMatch(OpCodes.Ldloc_S),
-                new CodeMatch(OpCodes.Stloc_S)
-            );
-            var inst = matcher.InstructionAt(1).Clone();
-            var pos2 = matcher.Pos + 2;
-            matcher.Start().Advance(pos);
-            var labels = matcher.Labels;
-            matcher.RemoveInstructions(pos2 - pos).Insert(
-                new CodeInstruction(OpCodes.Ldloc_1).WithLabels(labels),
-                new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Player), nameof(Player.inhandItemCount))),
-                inst
-            );
-            return matcher.InstructionEnumeration();
-        }
-
-        // Remove storage limit check
-        [HarmonyTranspiler]
-        [HarmonyPatch(typeof(PlanetTransport), nameof(PlanetTransport.SetStationStorage))]
-        private static IEnumerable<CodeInstruction> PlanetTransport_SetStationStorage_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
-        {
-            var matcher = new CodeMatcher(instructions, generator);
-            matcher.MatchForward(false,
-                new CodeMatch(ci => ci.IsLdarg()),
-                new CodeMatch(ci => ci.IsLdloc()),
-                new CodeMatch(ci => ci.IsLdloc()),
-                new CodeMatch(OpCodes.Add),
-                new CodeMatch(ci => ci.Branches(out _)),
-                new CodeMatch(ci => ci.IsLdloc()),
-                new CodeMatch(ci => ci.IsLdloc()),
-                new CodeMatch(OpCodes.Add),
-                new CodeMatch(ci => ci.IsStarg())
-            );
-            var labels = matcher.Labels;
-            matcher.RemoveInstructions(9).Labels.AddRange(labels);
             return matcher.InstructionEnumeration();
         }
     }

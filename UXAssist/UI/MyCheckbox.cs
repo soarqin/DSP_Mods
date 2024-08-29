@@ -59,7 +59,7 @@ public class MyCheckBox : MonoBehaviour
             cb.labelText.fontSize = fontSize;
             cb.SetLabelText(label);
             var width = cb.labelText.preferredWidth;
-            cb.labelText.rectTransform.sizeDelta = new Vector2(width, rect.sizeDelta.y);
+            cb.labelText.rectTransform.sizeDelta = new Vector2(width, cb.labelText.rectTransform.sizeDelta.y);
         }
 
         //value
@@ -86,4 +86,7 @@ public class MyCheckBox : MonoBehaviour
         checkImage.enabled = _checked;
         OnChecked?.Invoke();
     }
+
+    public float Width => rectTrans.sizeDelta.x + labelText.rectTransform.sizeDelta.x;
+    public float Height => Math.Max(rectTrans.sizeDelta.y, labelText.rectTransform.sizeDelta.y);
 }

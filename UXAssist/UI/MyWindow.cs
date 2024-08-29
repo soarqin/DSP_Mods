@@ -1,6 +1,7 @@
 ﻿using System;
 using HarmonyLib;
 using System.Collections.Generic;
+using BepInEx.Configuration;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -15,6 +16,13 @@ public class MyWindow: ManualBehaviour
     private readonly Dictionary<InputField, Tuple<UnityAction<string>, UnityAction<string>>> _inputFields = new();
     private readonly Dictionary<UIButton, UnityAction> _buttons = new();
     protected bool EventRegistered { get; private set; }
+    private float _maxX;
+    protected float MaxY;
+    protected const float TitleHeight = 48f;
+    protected const float TabWidth = 105f;
+    protected const float TabHeight = 27f;
+    protected const float Margin = 30f;
+    protected const float Spacing = 10f;
 
     public virtual void TryClose()
     {
@@ -43,6 +51,12 @@ public class MyWindow: ManualBehaviour
         }
     }
 
+    public void AutoFitWindowSize()
+    {
+        var trans = GetComponent<RectTransform>();
+        trans.sizeDelta = new Vector2(_maxX + Margin + TabWidth + Spacing + Margin, MaxY + TitleHeight + Margin);
+    }
+
     private static void AddElement(float x, float y, RectTransform rect, RectTransform parent = null)
     {
         if (rect != null)
@@ -60,14 +74,19 @@ public class MyWindow: ManualBehaviour
         txt.color = new Color(1f, 1f, 1f, 0.4f);
         txt.alignment = TextAnchor.MiddleLeft;
         txt.fontSize = fontSize;
-        if (txt.transform is RectTransform rect)
-        {
-            rect.sizeDelta = new Vector2(txt.preferredWidth + 40f, 30f);
-        }
+        txt.rectTransform.sizeDelta = new Vector2(txt.preferredWidth + 8f, txt.preferredHeight + 8f);
         AddElement(x, y, txt.rectTransform, parent);
         return txt;
     }
-    
+
+    public Text AddText2(float x, float y, RectTransform parent, string label, int fontSize = 14, string objName = "label")
+    {
+        var text = AddText(x, y, parent, label, fontSize, objName);
+        _maxX = Math.Max(_maxX, x + text.rectTransform.sizeDelta.x);
+        MaxY = Math.Max(MaxY, y + text.rectTransform.sizeDelta.y);
+        return text;
+    }
+
     public static UIButton AddTipsButton(float x, float y, RectTransform parent, string label, string tip, string content, string objName = "tips-button")
     {
         var src = UIRoot.instance.galaxySelect.sandboxToggle.gameObject.transform.parent.Find("tip-button");
@@ -80,6 +99,18 @@ public class MyWindow: ManualBehaviour
         btn.tips.tipText = tip;
         btn.UpdateTip();
         return btn;
+    }
+
+    public UIButton AddTipsButton2(float x, float y, RectTransform parent, string label, string tip, string content, string objName = "tips-button")
+    {
+        var tipsButton = AddTipsButton(x, y, parent, label, tip, content, objName);
+        var rect = tipsButton.transform as RectTransform;
+        if (rect != null)
+        {
+            _maxX = Math.Max(_maxX, x + rect.sizeDelta.x);
+            MaxY = Math.Max(MaxY, y + rect.sizeDelta.y);
+        }
+        return tipsButton;
     }
 
     public UIButton AddButton(float x, float y, RectTransform parent, string text = "", int fontSize = 16, string objName = "button", UnityAction onClick = null)
@@ -115,6 +146,8 @@ public class MyWindow: ManualBehaviour
             if (onClick != null)
                 btn.button.onClick.AddListener(onClick);
         }
+        _maxX = Math.Max(_maxX, x + rect.sizeDelta.x);
+        MaxY = Math.Max(MaxY, y + rect.sizeDelta.y);
         return btn;
     }
 
@@ -135,7 +168,7 @@ public class MyWindow: ManualBehaviour
         {
             img.color = new Color(img.color.r, img.color.g, img.color.b, 0f);
         }
-        Util.NormalizeRectWithTopLeft(btn, x, y, parent);
+        var rect = Util.NormalizeRectWithTopLeft(btn, x, y, parent);
         var t = btn.gameObject.transform.Find("Text")?.GetComponent<Text>();
         if (t != null)
         {
@@ -148,10 +181,32 @@ public class MyWindow: ManualBehaviour
         {
             btn.button.onClick.AddListener(onClick);
         }
+        _maxX = Math.Max(_maxX, x + rect.sizeDelta.x);
+        MaxY = Math.Max(MaxY, y + rect.sizeDelta.y);
         return btn;
     }
 
-    protected InputField AddInputField(float x, float y, RectTransform parent, string text = "", int fontSize = 16, string objName = "input", UnityAction<string> onChanged = null, UnityAction<string> onEditEnd = null)
+    public MyCheckBox AddCheckBox(float x, float y, RectTransform parent, ConfigEntry<bool> config, string label = "", int fontSize = 15)
+    {
+        var cb = MyCheckBox.CreateCheckBox(x, y, parent, config, label, fontSize);
+        _maxX = Math.Max(_maxX, x + cb.Width);
+        MaxY = Math.Max(MaxY, y + cb.Height);
+        return cb;
+    }
+
+    public MySlider AddSlider(float x, float y, RectTransform parent, float value, float minValue, float maxValue, string format = "G", float width = 0f)
+    {
+        var slider = MySlider.CreateSlider(x, y, parent, value, minValue, maxValue, format, width);
+        var rect = slider.rectTrans;
+        if (rect != null)
+        {
+            _maxX = Math.Max(_maxX, x + rect.sizeDelta.x);
+            MaxY = Math.Max(MaxY, y + rect.sizeDelta.y);
+        }
+        return slider;
+    }
+
+    public InputField AddInputField(float x, float y, RectTransform parent, string text = "", int fontSize = 16, string objName = "input", UnityAction<string> onChanged = null, UnityAction<string> onEditEnd = null)
     {
         var stationWindow = UIRoot.instance.uiGame.stationWindow;
         //public InputField nameInput;
@@ -173,6 +228,8 @@ public class MyWindow: ManualBehaviour
             if (onEditEnd != null)
                 inputField.onEndEdit.AddListener(onEditEnd);
         }
+        _maxX = Math.Max(_maxX, x + rect.sizeDelta.x);
+        MaxY = Math.Max(MaxY, y + rect.sizeDelta.y);
         return inputField;
     }
 
@@ -223,6 +280,7 @@ public class MyWindowWithTabs : MyWindow
 {
     private readonly List<Tuple<RectTransform, UIButton>> _tabs = [];
     private float _tabY = 54f;
+
     public override void TryClose()
     {
         _Close();
@@ -237,14 +295,14 @@ public class MyWindowWithTabs : MyWindow
     {
         var tab = new GameObject();
         var tabRect = tab.AddComponent<RectTransform>();
-        Util.NormalizeRectWithMargin(tabRect, 48f, 145f, 0f, 0f, parent);
+        Util.NormalizeRectWithMargin(tabRect, TitleHeight, Margin + TabWidth + Spacing, 0f, 0f, parent);
         tab.name = "tab-" + index;
         var swarmPanel = UIRoot.instance.uiGame.dysonEditor.controlPanel.hierarchy.swarmPanel;
         var src = swarmPanel.orbitButtons[0];
         var btn = Instantiate(src);
-        var btnRect = Util.NormalizeRectWithTopLeft(btn, 30, y, parent);
+        var btnRect = Util.NormalizeRectWithTopLeft(btn, Margin, y, parent);
         btn.name = "tab-btn-" + index;
-        btnRect.sizeDelta = new Vector2(105f, 27f);
+        btnRect.sizeDelta = new Vector2(TabWidth, TabHeight);
         btn.transform.Find("frame").gameObject.SetActive(false);
         if (btn.transitions.Length >= 3)
         {
@@ -264,6 +322,7 @@ public class MyWindowWithTabs : MyWindow
         {
             btn.onClick += OnTabButtonClick;
         }
+        MaxY = Math.Max(MaxY, y + TabHeight);
         return tabRect;
     }
 

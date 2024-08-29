@@ -89,8 +89,6 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
                 "Increase maximum area size for terraform to 30x30 (from 10x10)\nNote: this may impact game performance while using large area");
         FactoryPatch.OffGridBuildingEnabled = Config.Bind("Factory", "OffGridBuilding", false,
             "Enable off grid building and stepped rotation");
-        FactoryPatch.LogisticsCapacityTweaksEnabled = Config.Bind("Factory", "LogisticsCapacityTweaks", true,
-            "Logistics capacity related tweaks");
         FactoryPatch.TreatStackingAsSingleEnabled = Config.Bind("Factory", "TreatStackingAsSingle", false,
             "Treat stack items as single in monitor components");
         FactoryPatch.QuickBuildAndDismantleLabsEnabled = Config.Bind("Factory", "QuickBuildAndDismantleLab", false,
@@ -103,10 +101,14 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
             "Do not render factory entities");
         FactoryPatch.DragBuildPowerPolesEnabled = Config.Bind("Factory", "DragBuildPowerPoles", false,
             "Drag building power poles in maximum connection range");
-        FactoryPatch.AllowOverflowInLogisticsEnabled = Config.Bind("Factory", "AllowOverflowInLogistics", false,
-            "Allow overflow in logistic stations");
         FactoryPatch.BeltSignalsForBuyOutEnabled = Config.Bind("Factory", "BeltSignalsForBuyOut", false,
             "Belt signals for buy out dark fog items automatically");
+        LogisticsPatch.LogisticsCapacityTweaksEnabled = Config.Bind("Factory", "LogisticsCapacityTweaks", true,
+            "Logistics capacity related tweaks");
+        LogisticsPatch.AllowOverflowInLogisticsEnabled = Config.Bind("Factory", "AllowOverflowInLogistics", false,
+            "Allow overflow in logistic stations");
+        LogisticsPatch.LogisticsConstrolPanelImprovementEnabled = Config.Bind("Factory", "LogisticsConstrolPanelImprovement", false,
+            "Logistics control panel improvement");
         PlanetFunctions.OrbitalCollectorMaxBuildCount = Config.Bind("Factory", "OCMaxBuildCount", 0, "Maximum Orbital Collectors to build once, set to 0 to build as many as possible");
         PlayerPatch.EnhancedMechaForgeCountControlEnabled = Config.Bind("Player", "EnhancedMechaForgeCountControl", false,
             "Enhanced count control for hand-make, increases maximum of count to 1000, and you can hold Ctrl/Shift/Alt to change the count rapidly");
@@ -127,6 +129,7 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
             "Stop ejectors when available nodes are all filled up");
         DysonSpherePatch.OnlyConstructNodesEnabled = Config.Bind("DysonSphere", "OnlyConstructNodes", false,
             "Construct only nodes but frames");
+        DysonSpherePatch.AutoConstructMultiplier = Config.Bind("DysonSphere", "AutoConstructMultiplier", 10, "Dyson Sphere auto-construct speed multiplier");
 
         I18N.Init();
         I18N.Add("UXAssist Config", "UXAssist Config", "UX助手设置");
@@ -142,6 +145,7 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
         UIConfigWindow.Init();
         GamePatch.Init();
         FactoryPatch.Init();
+        LogisticsPatch.Init();
         PlanetPatch.Init();
         PlayerPatch.Init();
         TechPatch.Init();
@@ -173,7 +177,7 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
         if (VFInput.inputing) return;
         if (VFInput.onGUI)
         {
-            FactoryPatch.LogisticsCapacityTweaks.UpdateInput();
+            LogisticsPatch.LogisticsCapacityTweaks.UpdateInput();
         }
         if (_toggleKey.keyValue)
         {
@@ -261,8 +265,8 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
             if (panelButtonGo != null && btn != null)
             {
                 panelButtonGo.name = "open-uxassist-config";
-                rect.localScale = new Vector3(0.5f, 0.5f, 0.5f);
-                rect.anchoredPosition3D = new Vector3(128f, -105f, 0f);
+                rect.localScale = new Vector3(0.6f, 0.6f, 0.6f);
+                rect.anchoredPosition3D = new Vector3(64f, -5f, 0f);
                 b.onClick.RemoveAllListeners();
                 btn.onClick += _ => { ToggleConfigWindow(); };
                 btn.tips.tipTitle = "UXAssist Config";

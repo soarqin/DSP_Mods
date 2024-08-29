@@ -1,8 +1,13 @@
 ## Changlog
+
 * 1.1.5
+  + New feature: `Logistics Control Panel Improvement`
+    - Auto apply filter with item under mouse cursor while opening the panel
+    - Quick-set item filter while right-clicking item icons in storage list on the panel
   + `Quick build and dismantle stacking labs`: works for storages and tanks now
   + `Enable game window resize`: Keep window resizable on applying game options.
   + `Remember window position and size on last exit`: Do not resize window on applying game options if resolution related config entries are not changed.
+  + Auto resize panel to fit content, for better support of multilanguages and mods dependent on UX Assist config panel functions.
   + Fix a crash when config panel is opened before game is fully loaded
 * 1.1.4
   + Fix `Remove some build conditions`
@@ -76,7 +81,7 @@
   + Auto-cruise does not bypass dark-fog hives if they are targeted.
 * 1.0.17
   + New function: `Auto navigation on sailings`, which is inspired by [CruiseAssist](https://dsp.thunderstore.io/package/tanu/CruiseAssist/) and its extension [AutoPilot](https://dsp.thunderstore.io/package/tanu/AutoPilot/)
-    - It keeps Icarus on course to the target planet 
+    - It keeps Icarus on course to the target planet
     - It will try to bypass any obstacles(planets, stars or dark-fog hives) on the way
     - Furthermore, there is also a shortcut key which can be set in the system options window, which is used to toggle `Auto-cruise` that enables flying to targeted planets fully automatically.
       - Auto-cruise will start when you target a planet on star map
@@ -124,15 +129,15 @@
   + Sort blueprint structures before saving, to reduce generated blueprint data size a little.
 * 1.0.4
   + Add new function: `Off-grid building and stepped rotation`
-  + Fix an issue that window position not restored and can not be resized when function is enabled but game is started with different mod profiles.  
+  + Fix an issue that window position not restored and can not be resized when function is enabled but game is started with different mod profiles.
 * 1.0.3
-  + Add new function: `Quick build Orbital Collectors`. 
+  + Add new function: `Quick build Orbital Collectors`.
   + Add confirmation popup for `Re-intialize planet`, `Quick dismantle all buildings`, `Re-initialize Dyson Spheres` and `Quick dismantle Dyson Shells`.
   + Fix error on `Remove build count and range limit` when building a large amount of belts.
   + Fix an issue that window position not saved correctly when quit game without using in-game menu.
 * 1.0.2
   + Redesign config tabs, for clearer layout.
-  + Add 2 new options: 
+  + Add 2 new options:
     - Enable game window resize.
     - Remember window position and size on last exit.
 * 1.0.1
@@ -143,12 +148,16 @@
   + Initial release
   + Functions moved from [MechaDronesTweaks](https://dsp.thunderstore.io/package/soarqin/MechaDronesTweaks/) and [CheatEnabler](https://dsp.thunderstore.io/package/soarqin/CheatEnabler/)
 
-
 ## 更新日志
+
 * 1.1.5
+  + 新功能：`物流控制面板改进`
+    - 打开面板时自动将鼠标指向物品设为筛选条件
+    - 在控制面板物流塔列表中右键点击物品图标快速设置为筛选条件
   + `快速建造和拆除堆叠研究站`：现在也支持储物仓和储液罐
   + `允许调整游戏窗口大小`：在应用游戏选项时保持窗口可调整大小
   + `记住上次退出时的窗口位置和大小`：如果分辨率相关的配置项未改变，则在应用游戏选项时不调整窗口大小
+  + 自动调整面板大小适应内容，以更好地支持多语言和依赖于UX助手配置面板功能的mod
   + 修复了在游戏完全加载前打开配置面板可能导致的崩溃问题
 * 1.1.4
   + 修复了`移除部分不影响游戏逻辑的建造条件`
@@ -256,7 +265,7 @@
   + 修复了`物流塔存储数量限制控制改进`启用时可能导致的崩溃问题
 * 1.0.9
   + 新功能：`更好的自动保存机制`
-    - 自动存档会以星区地址和日期时间组合为文件名存储在'Save\AutoSaves'文件夹中 
+    - 自动存档会以星区地址和日期时间组合为文件名存储在'Save\AutoSaves'文件夹中
     - 注意：此功能会在保存/读取菜单按最后修改时间对存档进行排序，因此你不再需要[DSP_Save_Game_Sorter]了
 * 1.0.8
   + 新功能：`物流塔存储数量限制控制改进`

@@ -114,11 +114,11 @@ public static class DysonSpherePatch
                 UpdateSailLifeTime();
                 UpdateSailsCacheForThisGame();
                 _patch ??= Harmony.CreateAndPatchAll(typeof(SkipBulletPatch));
-                GameLogic.OnGameEnd += GameMain_Begin_Postfix;
+                GameLogic.OnGameBegin += GameMain_Begin_Postfix;
             }
             else
             {
-                GameLogic.OnGameEnd -= GameMain_Begin_Postfix;
+                GameLogic.OnGameBegin -= GameMain_Begin_Postfix;
                 _patch?.UnpatchSelf();
                 _patch = null;
             }
