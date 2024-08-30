@@ -233,12 +233,22 @@ public static class DysonSpherePatch
 
                     dysonNode.shellTurn = shellIndex;
 
+                    var solarSailCount = todoCount - count;
                     productRegister = __instance.productRegister;
                     if (productRegister != null)
                     {
                         lock (productRegister)
                         {
-                            productRegister[11903] += todoCount - count;
+                            productRegister[11901] += solarSailCount;
+                            productRegister[11903] += solarSailCount;
+                        }
+                    }
+                    var consumeRegister = __instance.consumeRegister;
+                    if (consumeRegister != null)
+                    {
+                        lock (consumeRegister)
+                        {
+                            consumeRegister[11901] += solarSailCount;
                         }
                     }
                 }

@@ -113,7 +113,19 @@ public static class DysonSphereFunctions
                 lock (productRegister)
                 {
                     if (rocketCount > 0) productRegister[11902] += rocketCount;
-                    if (solarSailCount > 0) productRegister[11903] += solarSailCount;
+                    if (solarSailCount > 0)
+                    {
+                        productRegister[11901] += solarSailCount;
+                        productRegister[11903] += solarSailCount;
+                    }
+                }
+            }
+            var consumeRegister = dysonSphere.consumeRegister;
+            if (consumeRegister != null)
+            {
+                lock (consumeRegister)
+                {
+                    if (solarSailCount > 0) consumeRegister[11901] += solarSailCount;
                 }
             }
         });
