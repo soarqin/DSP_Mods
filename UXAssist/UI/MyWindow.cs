@@ -14,9 +14,6 @@ namespace UXAssist.UI;
 
 public class MyWindow : ManualBehaviour
 {
-    private readonly Dictionary<InputField, Tuple<UnityAction<string>, UnityAction<string>>> _inputFields = new();
-    private readonly Dictionary<UIButton, UnityAction> _buttons = new();
-    protected bool EventRegistered { get; private set; }
     private float _maxX;
     protected float MaxY;
     protected const float TitleHeight = 48f;
@@ -141,15 +138,10 @@ public class MyWindow : ManualBehaviour
         }
 
         t.fontSize = fontSize;
-        btn.button.onClick.RemoveAllListeners();
         btn.tip = null;
         btn.tips = new UIButton.TipSettings();
-        _buttons[btn] = onClick;
-        if (EventRegistered)
-        {
-            if (onClick != null)
-                btn.button.onClick.AddListener(onClick);
-        }
+        btn.button.onClick.RemoveAllListeners();
+        if (onClick != null) btn.button.onClick.AddListener(onClick);
 
         _maxX = Math.Max(_maxX, x + rect.sizeDelta.x);
         MaxY = Math.Max(MaxY, y + rect.sizeDelta.y);
@@ -184,11 +176,7 @@ public class MyWindow : ManualBehaviour
         }
 
         btn.button.onClick.RemoveAllListeners();
-        _buttons[btn] = onClick;
-        if (EventRegistered && onClick != null)
-        {
-            btn.button.onClick.AddListener(onClick);
-        }
+        if (onClick != null) btn.button.onClick.AddListener(onClick);
 
         _maxX = Math.Max(_maxX, x + rect.sizeDelta.x);
         MaxY = Math.Max(MaxY, y + rect.sizeDelta.y);
@@ -305,67 +293,39 @@ public class MyWindow : ManualBehaviour
         inputField.GetComponent<Image>().color = new Color(1f, 1f, 1f, 0.05f);
         var rect = Util.NormalizeRectWithTopLeft(inputField, x, y, parent);
         rect.sizeDelta = new Vector2(210, rect.sizeDelta.y);
-        inputField.textComponent.text = text;
+        inputField.text = text;
         inputField.textComponent.fontSize = fontSize;
+
         inputField.onValueChanged.RemoveAllListeners();
+        if (onChanged != null) inputField.onValueChanged.AddListener(onChanged);
         inputField.onEndEdit.RemoveAllListeners();
-        _inputFields[inputField] = Tuple.Create(onChanged, onEditEnd);
-        if (EventRegistered)
-        {
-            if (onChanged != null)
-                inputField.onValueChanged.AddListener(onChanged);
-            if (onEditEnd != null)
-                inputField.onEndEdit.AddListener(onEditEnd);
-        }
+        if (onEditEnd != null) inputField.onEndEdit.AddListener(onEditEnd);
 
         _maxX = Math.Max(_maxX, x + rect.sizeDelta.x);
         MaxY = Math.Max(MaxY, y + rect.sizeDelta.y);
         return inputField;
     }
-
-    public override void _OnRegEvent()
+    
+    public InputField AddInputField(float x, float y, float width, RectTransform parent, ConfigEntry<string> config, int fontSize = 16, string objName = "input")
     {
-        base._OnRegEvent();
-        if (EventRegistered) return;
-        foreach (var t in _inputFields)
-        {
-            var inputField = t.Key;
-            if (t.Value.Item1 != null)
-                inputField.onValueChanged.AddListener(t.Value.Item1);
-            if (t.Value.Item2 != null)
-                inputField.onEndEdit.AddListener(t.Value.Item2);
-        }
+        var stationWindow = UIRoot.instance.uiGame.stationWindow;
+        //public InputField nameInput;
+        var inputField = Instantiate(stationWindow.nameInput);
+        inputField.gameObject.name = objName;
+        Destroy(inputField.GetComponent<UIButton>());
+        inputField.GetComponent<Image>().color = new Color(1f, 1f, 1f, 0.05f);
+        var rect = Util.NormalizeRectWithTopLeft(inputField, x, y, parent);
+        rect.sizeDelta = new Vector2(width, rect.sizeDelta.y);
+        inputField.text = config.Value;
+        inputField.textComponent.fontSize = fontSize;
 
-        foreach (var t in _buttons)
-        {
-            var btn = t.Key;
-            if (t.Value != null)
-                btn.button.onClick.AddListener(t.Value);
-        }
+        inputField.onValueChanged.RemoveAllListeners();
+        inputField.onEndEdit.RemoveAllListeners();
+        inputField.onEndEdit.AddListener(value => config.Value = value);
 
-        EventRegistered = true;
-    }
-
-    public override void _OnUnregEvent()
-    {
-        base._OnUnregEvent();
-        if (!EventRegistered) return;
-        EventRegistered = false;
-        foreach (var t in _buttons)
-        {
-            var btn = t.Key;
-            if (t.Value != null)
-                btn.button.onClick.RemoveListener(t.Value);
-        }
-
-        foreach (var t in _inputFields)
-        {
-            var inputField = t.Key;
-            if (t.Value.Item1 != null)
-                inputField.onValueChanged.RemoveListener(t.Value.Item1);
-            if (t.Value.Item2 != null)
-                inputField.onEndEdit.RemoveListener(t.Value.Item2);
-        }
+        _maxX = Math.Max(_maxX, x + rect.sizeDelta.x);
+        MaxY = Math.Max(MaxY, y + rect.sizeDelta.y);
+        return inputField;
     }
 }
 
@@ -411,10 +371,7 @@ public class MyWindowWithTabs : MyWindow
         btn.data = index;
 
         _tabs.Add(Tuple.Create(tabRect, btn));
-        if (EventRegistered)
-        {
-            btn.onClick += OnTabButtonClick;
-        }
+        btn.onClick += OnTabButtonClick;
 
         MaxY = Math.Max(MaxY, y + TabHeight);
         return tabRect;
@@ -441,32 +398,6 @@ public class MyWindowWithTabs : MyWindow
     {
         AddText(28, _tabY - 2, parent, label, 16, objName);
         _tabY += 28f;
-    }
-
-    public override void _OnRegEvent()
-    {
-        if (!EventRegistered)
-        {
-            foreach (var t in _tabs)
-            {
-                t.Item2.onClick += OnTabButtonClick;
-            }
-        }
-
-        base._OnRegEvent();
-    }
-
-    public override void _OnUnregEvent()
-    {
-        if (EventRegistered)
-        {
-            foreach (var t in _tabs)
-            {
-                t.Item2.onClick -= OnTabButtonClick;
-            }
-        }
-
-        base._OnUnregEvent();
     }
 
     protected void SetCurrentTab(int index) => OnTabButtonClick(index);
@@ -524,7 +455,7 @@ public static class MyWindowManager
             {
                 var btn = child.GetComponentInChildren<Button>();
                 //close-btn
-                if (btn != null)
+                if (btn)
                 {
                     btn.onClick.AddListener(win._Close);
                 }

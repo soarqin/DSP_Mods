@@ -28,7 +28,7 @@ public static class DysonSpherePatch
         _totalFrameSpInfo = AccessTools.Field(typeof(DysonSphereLayer), "totalFrameSP");
         _totalCpInfo = AccessTools.Field(typeof(DysonSphereLayer), "totalCP");
     }
-    
+
     public static void Uninit()
     {
         StopEjectOnNodeComplete.Enable(false);
@@ -62,6 +62,7 @@ public static class DysonSpherePatch
             if (pool[id].nodeLayerId != index) continue;
             ds.RemoveDysonRocket(id);
         }
+
         ds.RemoveLayer(index);
     }
 
@@ -69,9 +70,8 @@ public static class DysonSpherePatch
     [HarmonyPatch(typeof(DysonSwarm), nameof(DysonSwarm.AutoConstruct))]
     private static bool DysonSwarm_AutoConstruct_Prefix(DysonSwarm __instance)
     {
-        return false;
+        return __instance.dysonSphere.autoNodeCount == 0;
     }
-
 
     [HarmonyPrefix]
     [HarmonyPatch(typeof(DysonSphere), nameof(DysonSphere.AutoConstruct))]
@@ -85,160 +85,160 @@ public static class DysonSpherePatch
             {
                 var dysonNode = dysonSphereLayer.nodePool[j];
                 if (dysonNode == null || dysonNode.id != j) continue;
-                lock (dysonNode)
+                var count = dysonNode._spReq - dysonNode.spOrdered;
+                int todoCount;
+                int[] productRegister;
+                if (count > 0)
                 {
-                    var count = dysonNode._spReq - dysonNode.spOrdered;
-                    int todoCount;
-                    int[] productRegister;
-                    if (count > 0)
+                    if (count > totalCount)
                     {
-
-                        if (count > totalCount)
-                        {
-                            count = totalCount;
-                        }
-
-                        todoCount = count;
-                        if (dysonNode.sp < dysonNode.spMax)
-                        {
-                            int diff;
-                            if (dysonNode.sp + count > dysonNode.spMax)
-                            {
-                                diff = dysonNode.spMax - dysonNode.sp;
-                                count -= diff;
-                                dysonNode._spReq -= diff;
-
-                                dysonNode.sp = dysonNode.spMax;
-                            }
-                            else
-                            {
-                                diff = count;
-                                dysonNode._spReq -= diff;
-
-                                dysonNode.sp += diff;
-                                count = 0;
-                            }
-                            // Make compatible with DSPOptimizations
-                            if (_totalNodeSpInfo != null)
-                                _totalNodeSpInfo.SetValue(dysonSphereLayer, (long)_totalNodeSpInfo.GetValue(dysonSphereLayer) + diff - 1);
-                            __instance.UpdateProgress(dysonNode);
-                        }
-
-                        if (count > 0)
-                        {
-                            var frameCount = dysonNode.frames.Count;
-                            var frameIndex = dysonNode.frameTurn % frameCount;
-                            for (var i = frameCount; i > 0 && count > 0; i--)
-                            {
-                                var dysonFrame = dysonNode.frames[frameIndex];
-                                var spMax = dysonFrame.spMax >> 1;
-                                if (dysonFrame.nodeA == dysonNode && dysonFrame.spA < spMax)
-                                {
-                                    int diff;
-                                    if (dysonFrame.spA + count > spMax)
-                                    {
-                                        diff = spMax - dysonFrame.spA;
-                                        count -= diff;
-                                        dysonNode._spReq -= diff;
-
-                                        dysonFrame.spA = spMax;
-                                    }
-                                    else
-                                    {
-                                        diff = count;
-                                        dysonNode._spReq -= diff;
-
-                                        dysonFrame.spA += diff;
-                                        count = 0;
-                                    }
-                                    // Make compatible with DSPOptimizations
-                                    if (_totalFrameSpInfo != null)
-                                        _totalFrameSpInfo.SetValue(dysonSphereLayer, (long)_totalFrameSpInfo.GetValue(dysonSphereLayer) + diff - 1);
-                                    __instance.UpdateProgress(dysonFrame);
-                                }
-
-                                if (count > 0 && dysonFrame.nodeB == dysonNode && dysonFrame.spB < spMax)
-                                {
-                                    int diff;
-                                    if (dysonFrame.spB + count > spMax)
-                                    {
-                                        diff = spMax - dysonFrame.spB;
-                                        count -= diff;
-                                        dysonNode._spReq -= diff;
-
-                                        dysonFrame.spB = spMax;
-                                    }
-                                    else
-                                    {
-                                        diff = count;
-                                        dysonNode._spReq -= diff;
-
-                                        dysonFrame.spB += diff;
-                                        count = 0;
-                                    }
-                                    // Make compatible with DSPOptimizations
-                                    if (_totalFrameSpInfo != null)
-                                        _totalFrameSpInfo.SetValue(dysonSphereLayer, (long)_totalFrameSpInfo.GetValue(dysonSphereLayer) + diff - 1);
-                                    __instance.UpdateProgress(dysonFrame);
-                                }
-
-                                frameIndex = (frameIndex + 1) % frameCount;
-                            }
-                            dysonNode.frameTurn = frameIndex;
-                        }
-                        if (dysonNode.spOrdered >= dysonNode._spReq)
-                        {
-                            __instance.RemoveAutoNode(dysonNode);
-                            __instance.PickAutoNode();
-                        }
-                        productRegister = __instance.productRegister;
-                        if (productRegister != null)
-                        {
-                            lock (productRegister)
-                            {
-                                productRegister[11902] += todoCount - count;
-                            }
-                        }
+                        count = totalCount;
                     }
 
-                    count = dysonNode._cpReq - dysonNode.cpOrdered;
+                    todoCount = count;
+                    if (dysonNode.sp < dysonNode.spMax)
+                    {
+                        int diff;
+                        if (dysonNode.sp + count > dysonNode.spMax)
+                        {
+                            diff = dysonNode.spMax - dysonNode.sp;
+                            count -= diff;
+                            dysonNode._spReq -= diff;
+
+                            dysonNode.sp = dysonNode.spMax;
+                        }
+                        else
+                        {
+                            diff = count;
+                            dysonNode._spReq -= diff;
+
+                            dysonNode.sp += diff;
+                            count = 0;
+                        }
+
+                        // Make compatible with DSPOptimizations
+                        if (_totalNodeSpInfo != null)
+                            _totalNodeSpInfo.SetValue(dysonSphereLayer, (long)_totalNodeSpInfo.GetValue(dysonSphereLayer) + diff - 1);
+                        __instance.UpdateProgress(dysonNode);
+                    }
+
                     if (count > 0)
                     {
-                        if (count > totalCount) count = totalCount;
-                        todoCount = count;
-                        var shellCount = dysonNode.shells.Count;
-                        var shellIndex = dysonNode.shellTurn % shellCount;
-                        for (var i = shellCount; i > 0 && count > 0; i--)
+                        var frameCount = dysonNode.frames.Count;
+                        var frameIndex = dysonNode.frameTurn % frameCount;
+                        for (var i = frameCount; i > 0 && count > 0; i--)
                         {
-                            var dysonShell = dysonNode.shells[shellIndex];
-                            lock (dysonShell)
+                            var dysonFrame = dysonNode.frames[frameIndex];
+                            var spMax = dysonFrame.spMax >> 1;
+                            if (dysonFrame.nodeA == dysonNode && dysonFrame.spA < spMax)
                             {
-                                var nodeIndex = dysonShell.nodeIndexMap[dysonNode.id];
-                                var diff = (dysonShell.vertsqOffset[nodeIndex + 1] - dysonShell.vertsqOffset[nodeIndex]) * dysonShell.cpPerVertex - dysonShell.nodecps[nodeIndex];
-                                if (diff > count)
-                                    diff = count;
-                                count -= diff;
-                                dysonNode._cpReq -= diff;
-                                dysonShell.nodecps[nodeIndex] += diff;
-                                dysonShell.nodecps[dysonShell.nodecps.Length - 1] += diff;
-                                // Make compatible with DSPOptimizations
-                                if (_totalCpInfo != null)
+                                int diff;
+                                if (dysonFrame.spA + count > spMax)
                                 {
-                                    _totalCpInfo.SetValue(dysonSphereLayer, (long)_totalCpInfo.GetValue(dysonSphereLayer) + diff);
-                                    dysonShell.SetMaterialDynamicVars();
-                                }
-                            }
-                            shellIndex = (shellIndex + 1) % shellCount;
-                        }
-                        dysonNode.shellTurn = shellIndex;
+                                    diff = spMax - dysonFrame.spA;
+                                    count -= diff;
+                                    dysonNode._spReq -= diff;
 
-                        productRegister = __instance.productRegister;
-                        if (productRegister != null)
-                        {
-                            lock (productRegister)
-                            {
-                                productRegister[11903] += todoCount - count;
+                                    dysonFrame.spA = spMax;
+                                }
+                                else
+                                {
+                                    diff = count;
+                                    dysonNode._spReq -= diff;
+
+                                    dysonFrame.spA += diff;
+                                    count = 0;
+                                }
+
+                                // Make compatible with DSPOptimizations
+                                if (_totalFrameSpInfo != null)
+                                    _totalFrameSpInfo.SetValue(dysonSphereLayer, (long)_totalFrameSpInfo.GetValue(dysonSphereLayer) + diff - 1);
+                                __instance.UpdateProgress(dysonFrame);
                             }
+
+                            if (count > 0 && dysonFrame.nodeB == dysonNode && dysonFrame.spB < spMax)
+                            {
+                                int diff;
+                                if (dysonFrame.spB + count > spMax)
+                                {
+                                    diff = spMax - dysonFrame.spB;
+                                    count -= diff;
+                                    dysonNode._spReq -= diff;
+
+                                    dysonFrame.spB = spMax;
+                                }
+                                else
+                                {
+                                    diff = count;
+                                    dysonNode._spReq -= diff;
+
+                                    dysonFrame.spB += diff;
+                                    count = 0;
+                                }
+
+                                // Make compatible with DSPOptimizations
+                                if (_totalFrameSpInfo != null)
+                                    _totalFrameSpInfo.SetValue(dysonSphereLayer, (long)_totalFrameSpInfo.GetValue(dysonSphereLayer) + diff - 1);
+                                __instance.UpdateProgress(dysonFrame);
+                            }
+
+                            frameIndex = (frameIndex + 1) % frameCount;
+                        }
+
+                        dysonNode.frameTurn = frameIndex;
+                    }
+
+                    if (dysonNode.spOrdered >= dysonNode._spReq)
+                    {
+                        __instance.RemoveAutoNode(dysonNode);
+                        __instance.PickAutoNode();
+                    }
+
+                    productRegister = __instance.productRegister;
+                    if (productRegister != null)
+                    {
+                        lock (productRegister)
+                        {
+                            productRegister[11902] += todoCount - count;
+                        }
+                    }
+                }
+
+                count = dysonNode._cpReq - dysonNode.cpOrdered;
+                if (count > 0)
+                {
+                    if (count > totalCount) count = totalCount;
+                    todoCount = count;
+                    var shellCount = dysonNode.shells.Count;
+                    var shellIndex = dysonNode.shellTurn % shellCount;
+                    for (var i = shellCount; i > 0 && count > 0; i--)
+                    {
+                        var dysonShell = dysonNode.shells[shellIndex];
+                        var nodeIndex = dysonShell.nodeIndexMap[dysonNode.id];
+                        var diff = (dysonShell.vertsqOffset[nodeIndex + 1] - dysonShell.vertsqOffset[nodeIndex]) * dysonShell.cpPerVertex - dysonShell.nodecps[nodeIndex];
+                        if (diff > count)
+                            diff = count;
+                        count -= diff;
+                        dysonNode._cpReq -= diff;
+                        dysonShell.nodecps[nodeIndex] += diff;
+                        dysonShell.nodecps[dysonShell.nodecps.Length - 1] += diff;
+                        // Make compatible with DSPOptimizations
+                        if (_totalCpInfo != null)
+                        {
+                            _totalCpInfo.SetValue(dysonSphereLayer, (long)_totalCpInfo.GetValue(dysonSphereLayer) + diff);
+                            dysonShell.SetMaterialDynamicVars();
+                        }
+                        shellIndex = (shellIndex + 1) % shellCount;
+                    }
+
+                    dysonNode.shellTurn = shellIndex;
+
+                    productRegister = __instance.productRegister;
+                    if (productRegister != null)
+                    {
+                        lock (productRegister)
+                        {
+                            productRegister[11903] += todoCount - count;
                         }
                     }
                 }
@@ -329,6 +329,7 @@ public static class DysonSpherePatch
                     }
                 }
             }
+
             _initialized = true;
         }
 
@@ -464,7 +465,7 @@ public static class DysonSpherePatch
             );
             return matcher.InstructionEnumeration();
         }
-        
+
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(UIEjectorWindow), nameof(UIEjectorWindow._OnUpdate))]
         static IEnumerable<CodeInstruction> UIEjectorWindow__OnUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -498,7 +499,7 @@ public static class DysonSpherePatch
     private static class OnlyConstructNodes
     {
         private static Harmony _patch;
-        
+
         public static void Enable(bool on)
         {
             if (on)

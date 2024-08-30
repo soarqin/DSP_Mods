@@ -6,11 +6,13 @@
     - Quick-set item filter while right-clicking item icons in storage list on the panel
   + New feature: `Dyson Sphere "Auto Fast Build" speed multiplier`
     - Note: this only applies to `Dyson Sphere "Auto Fast Build"` in sandbox mode
+  + New feature: `Mod manager profile based save folder`
+    - Save files are stored in `Save\<ProfileName>` folder.
+    - Will use original save location if matching default profile name.
   + `Quick build and dismantle stacking labs`: works for storages and tanks now
   + `Enable game window resize`: Keep window resizable on applying game options.
   + `Remember window position and size on last exit`: Do not resize window on applying game options if resolution related config entries are not changed.
   + Auto resize panel to fit content, for better support of multilanguages and mods dependent on UX Assist config panel functions.
-  + Fix a crash when config panel is opened before game is fully loaded
 * 1.1.4
   + Fix `Remove some build conditions`
 * 1.1.3
@@ -157,12 +159,14 @@
     - 打开面板时自动将鼠标指向物品设为筛选条件
     - 在控制面板物流塔列表中右键点击物品图标快速设置为筛选条件
   + 新功能：`戴森球自动快速建造速度倍率`
-    - 注意：这仅适用于沙盒模式下的`戴森球自动快速建造`功能 
+    - 注意：这仅适用于沙盒模式下的`戴森球自动快速建造`功能
+  + 新功能：`基于mod管理器配置档案名的存档文件夹`
+    - 存档文件会存储在`Save\<ProfileName>`文件夹中
+    - 如果匹配默认配置档案名则使用原始存档位置
   + `快速建造和拆除堆叠研究站`：现在也支持储物仓和储液罐
   + `允许调整游戏窗口大小`：在应用游戏选项时保持窗口可调整大小
   + `记住上次退出时的窗口位置和大小`：如果分辨率相关的配置项未改变，则在应用游戏选项时不调整窗口大小
   + 自动调整面板大小适应内容，以更好地支持多语言和依赖于UX助手配置面板功能的mod
-  + 修复了在游戏完全加载前打开配置面板可能导致的崩溃问题
 * 1.1.4
   + 修复了`移除部分不影响游戏逻辑的建造条件`
 * 1.1.3

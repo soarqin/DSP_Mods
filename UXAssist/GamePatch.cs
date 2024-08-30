@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection.Emit;
 using BepInEx.Configuration;
 using HarmonyLib;
@@ -13,11 +14,15 @@ public static class GamePatch
     private const string GameWindowClass = "UnityWndClass";
     private static string _gameWindowTitle = "Dyson Sphere Program";
 
+    public static string ProfileName { get; private set; }
+
     public static ConfigEntry<bool> EnableWindowResizeEnabled;
     public static ConfigEntry<bool> LoadLastWindowRectEnabled;
     // public static ConfigEntry<bool> AutoSaveOptEnabled;
     public static ConfigEntry<bool> ConvertSavesFromPeaceEnabled;
     public static ConfigEntry<Vector4> LastWindowRect;
+    public static ConfigEntry<bool> ProfileBasedSaveFolderEnabled;
+    public static ConfigEntry<string> DefaultProfileName;
     private static Harmony _gamePatch;
 
     public static void Init()
@@ -39,6 +44,7 @@ public static class GamePatch
             arg = arg.Substring(index + profileSuffix.Length);
             var wnd = WinApi.FindWindow(GameWindowClass, _gameWindowTitle);
             if (wnd == IntPtr.Zero) return;
+            ProfileName = arg;
             _gameWindowTitle = $"Dyson Sphere Program - {arg}";
             WinApi.SetWindowText(wnd, _gameWindowTitle);
             break;
@@ -48,6 +54,14 @@ public static class GamePatch
         LoadLastWindowRectEnabled.SettingChanged += (_, _) => LoadLastWindowRect.Enable(LoadLastWindowRectEnabled.Value);
         // AutoSaveOptEnabled.SettingChanged += (_, _) => AutoSaveOpt.Enable(AutoSaveOptEnabled.Value);
         ConvertSavesFromPeaceEnabled.SettingChanged += (_, _) => ConvertSavesFromPeace.Enable(ConvertSavesFromPeaceEnabled.Value);
+        ProfileBasedSaveFolderEnabled.SettingChanged += (_, _) =>
+        {
+            RefreshSavePath();
+        };
+        DefaultProfileName.SettingChanged += (_, _) =>
+        {
+            RefreshSavePath();
+        };
         EnableWindowResize.Enable(EnableWindowResizeEnabled.Value);
         LoadLastWindowRect.Enable(LoadLastWindowRectEnabled.Value);
         // AutoSaveOpt.Enable(AutoSaveOptEnabled.Value);
@@ -63,6 +77,32 @@ public static class GamePatch
         ConvertSavesFromPeace.Enable(false);
         _gamePatch?.UnpatchSelf();
         _gamePatch = null;
+    }
+
+    private static void RefreshSavePath()
+    {
+        if (ProfileName == null) return;
+
+        if (UIRoot.instance.loadGameWindow.gameObject.activeSelf)
+        {
+            UIRoot.instance.loadGameWindow._Close();
+        }
+        if (UIRoot.instance.saveGameWindow.gameObject.activeSelf)
+        {
+            UIRoot.instance.saveGameWindow._Close();
+        }
+
+        string gameSavePath;
+        if (ProfileBasedSaveFolderEnabled.Value && string.Compare(DefaultProfileName.Value, ProfileName, StringComparison.OrdinalIgnoreCase) != 0)
+            gameSavePath = $"{GameConfig.overrideDocumentFolder}{GameConfig.gameName}/Save/{ProfileName}/";
+        else
+            gameSavePath = $"{GameConfig.overrideDocumentFolder}{GameConfig.gameName}/Save/";
+        if (string.Compare(GameConfig.gameSavePath, gameSavePath, StringComparison.OrdinalIgnoreCase) == 0) return;
+        GameConfig.gameSavePath = gameSavePath;
+        if (!Directory.Exists(GameConfig.gameSavePath))
+        {
+            Directory.CreateDirectory(GameConfig.gameSavePath);
+        }
     }
 
     [HarmonyPrefix, HarmonyPatch(typeof(GameMain), nameof(GameMain.HandleApplicationQuit))]
@@ -180,7 +220,7 @@ public static class GamePatch
             var wnd = WinApi.FindWindow(GameWindowClass, _gameWindowTitle);
             if (wnd == IntPtr.Zero) return;
             var rect = LastWindowRect.Value;
-            if (rect.z == 0f && rect.w == 0f) return;
+            if (rect is { z: 0f, w: 0f }) return;
             var x = Mathf.RoundToInt(rect.x);
             var y = Mathf.RoundToInt(rect.y);
             WinApi.SetWindowPos(wnd, IntPtr.Zero, x, y, 0, 0, 0x0235);
@@ -192,7 +232,7 @@ public static class GamePatch
         {
             if (fullscreenMode is FullScreenMode.ExclusiveFullScreen or FullScreenMode.FullScreenWindow or FullScreenMode.MaximizedWindow || GameMain.isRunning) return;
             var rect = LastWindowRect.Value;
-            if (rect.z == 0f && rect.w == 0f) return;
+            if (rect is { z: 0f, w: 0f }) return;
             var w = Mathf.RoundToInt(rect.z);
             var h = Mathf.RoundToInt(rect.w);
             width = w;
@@ -213,7 +253,7 @@ public static class GamePatch
             var wnd = WinApi.FindWindow(GameWindowClass, _gameWindowTitle);
             if (wnd == IntPtr.Zero) return;
             var rect = LastWindowRect.Value;
-            if (rect.z == 0f && rect.w == 0f) return;
+            if (rect is { z: 0f, w: 0f }) return;
             var x = Mathf.RoundToInt(rect.x);
             var y = Mathf.RoundToInt(rect.y);
             var w = Mathf.RoundToInt(rect.z);

@@ -86,6 +86,7 @@ public class CheatEnabler : BaseUnityPlugin
         PlayerFunctions.Init();
         PlayerPatch.Init();
         DysonSpherePatch.Init();
+        DysonSphereFunctions.Init();
         CombatPatch.Init();
     }
 

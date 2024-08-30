@@ -26,6 +26,9 @@ public static class UIConfigWindow
         I18N.Add("Better auto-save mechanism tips", "Auto saves are stored in 'Save\\AutoSaves' folder, filenames are combined with cluster address and date-time", "自动存档会以星区地址和日期时间组合为文件名存储在'Save\\AutoSaves'文件夹中");
         */
         I18N.Add("Convert old saves to Combat Mode on loading", "Convert old saves to Combat Mode on loading (Use settings in new game panel)", "读取旧档时转为战斗模式(使用新游戏面板的战斗难度设置)");
+        I18N.Add("Profile-based save folder", "Mod manager profile based save folder", "基于mod管理器配置档案名的存档文件夹");
+        I18N.Add("Profile-based save folder tips", "Save files are stored in 'Save\\<ProfileName>' folder.\nWill use original save location if matching default profile name", "存档文件会存储在'Save\\<ProfileName>'文件夹中\n如果匹配默认配置档案名则使用原始存档位置");
+        I18N.Add("Default profile name", "Default profile name", "默认配置档案名");
         I18N.Add("Unlimited interactive range", "Unlimited interactive range", "无限交互距离");
         I18N.Add("Night Light", "Sunlight at night", "夜间日光灯");
         I18N.Add("Remove some build conditions", "Remove some build conditions", "移除部分不影响游戏逻辑的建造条件");
@@ -97,6 +100,8 @@ public static class UIConfigWindow
     
     private static void CreateUI(MyConfigWindow wnd, RectTransform trans)
     {
+        MyCheckBox checkBoxForMeasureTipsPos;
+
         _windowTrans = trans;
         wnd.AddTabGroup(trans, "UXAssist", "tab-group-uxassist");
         var tab1 = wnd.AddTab(trans, "General");
@@ -105,16 +110,30 @@ public static class UIConfigWindow
         wnd.AddCheckBox(x, y, tab1, GamePatch.EnableWindowResizeEnabled, "Enable game window resize");
         y += 36f;
         wnd.AddCheckBox(x, y, tab1, GamePatch.LoadLastWindowRectEnabled, "Remeber window position and size on last exit");
-        y += 36f;
         /*
+        y += 30f;
         wnd.AddCheckBox(x, y, tab1, GamePatch.AutoSaveOptEnabled, "Better auto-save mechanism");
         x = 200f;
         y += 6f;
         wnd.AddTipsButton2(x, y, tab1, "Better auto-save mechanism", "Better auto-save mechanism tips", "auto-save-opt-tips");
         x = 0f;
-        y += 30f;
         */
+        y += 36f;
         wnd.AddCheckBox(x, y, tab1, GamePatch.ConvertSavesFromPeaceEnabled, "Convert old saves to Combat Mode on loading");
+        if (GamePatch.ProfileName != null)
+        {
+            y += 36f;
+            checkBoxForMeasureTipsPos = wnd.AddCheckBox(x, y, tab1, GamePatch.ProfileBasedSaveFolderEnabled, "Profile-based save folder");
+            x += checkBoxForMeasureTipsPos.Width + 5f;
+            y += 6f;
+            wnd.AddTipsButton2(x, y, tab1, "Profile-based save folder", "Profile-based save folder tips", "btn-profile-based-save-folder-tips");
+            x = 0;
+            y += 24f;
+            wnd.AddText2(x, y, tab1, "Default profile name", 15, "text-default-profile-name");
+            y += 24f;
+            wnd.AddInputField(x, y, 200f, tab1, GamePatch.DefaultProfileName, 15, "input-profile-save-folder");
+        }
+
         var tab2 = wnd.AddTab(trans, "Planet/Factory");
         x = 0f;
         y = 10f;
@@ -130,16 +149,16 @@ public static class UIConfigWindow
         y += 36f;
         wnd.AddCheckBox(x, y, tab2, FactoryPatch.OffGridBuildingEnabled, "Off-grid building and stepped rotation");
         y += 36f;
-        var cb = wnd.AddCheckBox(x, y, tab2, FactoryPatch.TreatStackingAsSingleEnabled, "Treat stack items as single in monitor components");
-        x += cb.Width + 5f;
+        checkBoxForMeasureTipsPos = wnd.AddCheckBox(x, y, tab2, FactoryPatch.TreatStackingAsSingleEnabled, "Treat stack items as single in monitor components");
+        x += checkBoxForMeasureTipsPos.Width + 5f;
         y += 6f;
         wnd.AddTipsButton2(x, y, tab2, "Enhance control for logistic storage limits", "Enhance control for logistic storage limits tips", "enhanced-logistic-limit-tips");
         x = 0f;
         y += 30f;
         wnd.AddCheckBox(x, y, tab2, FactoryPatch.QuickBuildAndDismantleLabsEnabled, "Quick build and dismantle stacking labs");
         y += 36f;
-        cb = wnd.AddCheckBox(x, y, tab2, FactoryPatch.ProtectVeinsFromExhaustionEnabled, "Protect veins from exhaustion");
-        x += cb.Width + 5f;
+        checkBoxForMeasureTipsPos = wnd.AddCheckBox(x, y, tab2, FactoryPatch.ProtectVeinsFromExhaustionEnabled, "Protect veins from exhaustion");
+        x += checkBoxForMeasureTipsPos.Width + 5f;
         y += 6f;
         wnd.AddTipsButton2(x, y, tab2, "Protect veins from exhaustion", "Protect veins from exhaustion tips", "protect-veins-tips");
         x = 0f;
@@ -177,8 +196,8 @@ public static class UIConfigWindow
         y += 36f;
         wnd.AddCheckBox(x, y, tab2, LogisticsPatch.AllowOverflowInLogisticsEnabled, "Allow overflow for Logistic Stations and Advanced Mining Machines");
         y += 36f;
-        cb = wnd.AddCheckBox(x, y, tab2, LogisticsPatch.LogisticsConstrolPanelImprovementEnabled, "Logistics Control Panel Improvement");
-        x += cb.Width + 5f;
+        checkBoxForMeasureTipsPos = wnd.AddCheckBox(x, y, tab2, LogisticsPatch.LogisticsConstrolPanelImprovementEnabled, "Logistics Control Panel Improvement");
+        x += checkBoxForMeasureTipsPos.Width + 5f;
         y += 6f;
         wnd.AddTipsButton2(x, y, tab2, "Logistics Control Panel Improvement", "Logistics Control Panel Improvement tips", "lcp-improvement-tips");
         // x -= 200f;
@@ -192,8 +211,8 @@ public static class UIConfigWindow
         y += 36f;
         wnd.AddCheckBox(x, y, tab3, PlayerPatch.HideTipsForSandsChangesEnabled, "Hide tips for soil piles changes");
         y += 36f;
-        cb = wnd.AddCheckBox(x, y, tab3, PlayerPatch.EnhancedMechaForgeCountControlEnabled, "Enhanced count control for hand-make");
-        x += cb.Width + 5f;
+        checkBoxForMeasureTipsPos = wnd.AddCheckBox(x, y, tab3, PlayerPatch.EnhancedMechaForgeCountControlEnabled, "Enhanced count control for hand-make");
+        x += checkBoxForMeasureTipsPos.Width + 5f;
         y += 6f;
         wnd.AddTipsButton2(x, y, tab3, "Enhanced count control for hand-make", "Enhanced count control for hand-make tips", "enhanced-count-control-tips");
         x = 0f;

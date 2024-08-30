@@ -21,6 +21,11 @@
     - Enable game window resize
     - Remember window position and size on last exit
     - Convert Peace-Mode saves to Combat-Mode on loading
+    - Mod manager profile based save folder
+      - Save files are stored in `Save\<ProfileName>` folder.
+      - Will use original save location if matching default profile name.
+    - Increase maximum count of Metadata Instantiations to 20000 (from 2000)
+    - Increase capacity of player order queue to 128 (from 16)
   + Planet/Factory
     - Sunlight at night
     - Remove some build conditions
@@ -117,6 +122,9 @@
     - 可调整游戏窗口大小(可最大化和拖动边框)
     - 记住上次退出时的窗口位置和大小
     - 在加载和平模式存档时将其转换为战斗模式
+    - 基于mod管理器配置档案名的存档文件夹
+      - 存档文件会存储在`Save\<ProfileName>`文件夹中
+      - 如果匹配默认配置档案名则使用原始存档位置
     - 将元数据提取的最大数量增加到20000(原来为2000)
     - 将玩家指令队列的容量增加到128(原来为16)
   + 行星/工厂

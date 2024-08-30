@@ -1,5 +1,10 @@
 ## Changlog
 
+* 2.3.24
+  + `Complete Dyson Sphere Shells instantly`: Fix a bug that may cause negative power in some cases
+* 2.3.23
+  + New feature: `Complete Dyson Sphere Shells instantly` 
+  + Fix a crash when config panel is opened before game is fully loaded
 * 2.3.22
   + Fix `Pump Anywhere`
 * 2.3.21
@@ -122,6 +127,11 @@
 
 ## 更新日志
 
+* 2.3.24
+  + `立即完成戴森壳建造`：修复了在某些情况下可能导致发电为负的问题
+* 2.3.23
+  + 新功能：`立即完成戴森壳建造`
+  + 修复了在游戏完全加载前打开配置面板可能导致的崩溃问题
 * 2.3.22
   + 修复了`平地抽水`
 * 2.3.21

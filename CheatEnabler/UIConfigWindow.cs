@@ -61,6 +61,7 @@ public static class UIConfigWindow
         I18N.Add("Eject anyway", "Eject anyway", "全球弹射");
         I18N.Add("Overclock Ejectors", "Overclock Ejectors (10x)", "高速弹射器(10倍射速)");
         I18N.Add("Overclock Silos", "Overclock Silos (10x)", "高速发射井(10倍射速)");
+        I18N.Add("Complete Dyson Sphere shells instantly", "Complete Dyson Sphere shells instantly", "立即完成戴森壳建造");
         I18N.Add("Terraform without enough soil piles", "Terraform without enough soil piles", "沙土不够时依然可以整改地形");
         I18N.Add("Instant teleport (like that in Sandbox mode)", "Instant teleport (like that in Sandbox mode)", "快速传送(和沙盒模式一样)");
         I18N.Add("Mecha and Drones/Fleets invicible", "Mecha and Drones/Fleets invicible", "机甲和战斗无人机无敌");
@@ -204,6 +205,9 @@ public static class UIConfigWindow
         wnd.AddCheckBox(x, y, tab4, DysonSpherePatch.OverclockEjectorEnabled, "Overclock Ejectors");
         y += 36f;
         wnd.AddCheckBox(x, y, tab4, DysonSpherePatch.OverclockSiloEnabled, "Overclock Silos");
+        x = 300f;
+        y = 10f;
+        wnd.AddButton(x, y, 300f, tab4, "Complete Dyson Sphere shells instantly", 16, "button-complete-dyson-sphere-shells-instantly", DysonSphereFunctions.CompleteShellsInstantly);
 
         var tab5 = wnd.AddTab(_windowTrans, "Mecha/Combat");
         x = 0f;

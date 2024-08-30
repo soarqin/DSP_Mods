@@ -67,6 +67,10 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
             "Load last window position and size when game starts");
         GamePatch.LastWindowRect = Config.Bind("Game", "LastWindowRect", new Vector4(0f, 0f, 0f, 0f),
             "Last window position and size");
+        GamePatch.ProfileBasedSaveFolderEnabled = Config.Bind("Game", "ProfileBasedSaveFolder", false,
+            "Profile-based save folder");
+        GamePatch.DefaultProfileName = Config.Bind("Game", "DefaultProfileName", "Default",
+            "Default profile name, used when profile-based save folder is enabled. Use original game save folder if matched");
         /*
         GamePatch.AutoSaveOptEnabled = Config.Bind("Game", "AutoSaveOpt", false,
             "Better auto-save mechanism");

@@ -43,6 +43,7 @@
     + Skip absorption period
     + Quick absorb
     + Eject anyway
+    + Complete Dyson Sphere Shells instantly
   + Mecha/Combat:
     + Mecha and Drones/Fleets invicible
     + Buildings invicible
@@ -100,6 +101,7 @@
     + 跳过吸收阶段
     + 快速吸收
     + 全球弹射
+    + 立即完成戴森壳建造
   + 战斗：
     + 机甲和战斗无人机无敌
     + 建筑无敌
