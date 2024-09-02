@@ -55,7 +55,7 @@ public static class GamePatch
         LoadLastWindowRectEnabled.SettingChanged += (_, _) => LoadLastWindowRect.Enable(LoadLastWindowRectEnabled.Value);
         MouseCursorScaleUpMultiplier.SettingChanged += (_, _) =>
         {
-            MouseCursorScaleUp.Enable(MouseCursorScaleUpMultiplier.Value > 1);
+            MouseCursorScaleUp.Enable(MouseCursorScaleUpMultiplier.Value > 1, true);
         };
         // AutoSaveOptEnabled.SettingChanged += (_, _) => AutoSaveOpt.Enable(AutoSaveOptEnabled.Value);
         ConvertSavesFromPeaceEnabled.SettingChanged += (_, _) => ConvertSavesFromPeace.Enable(ConvertSavesFromPeaceEnabled.Value);
@@ -69,7 +69,7 @@ public static class GamePatch
         };
         EnableWindowResize.Enable(EnableWindowResizeEnabled.Value);
         LoadLastWindowRect.Enable(LoadLastWindowRectEnabled.Value);
-        MouseCursorScaleUp.Enable(MouseCursorScaleUpMultiplier.Value > 1);
+        MouseCursorScaleUp.Enable(MouseCursorScaleUpMultiplier.Value > 1, false);
         // AutoSaveOpt.Enable(AutoSaveOptEnabled.Value);
         ConvertSavesFromPeace.Enable(ConvertSavesFromPeaceEnabled.Value);
         _gamePatch ??= Harmony.CreateAndPatchAll(typeof(GamePatch));
@@ -79,7 +79,7 @@ public static class GamePatch
     {
         LoadLastWindowRect.Enable(false);
         EnableWindowResize.Enable(false);
-        MouseCursorScaleUp.Enable(false);
+        MouseCursorScaleUp.Enable(false, false);
         // AutoSaveOpt.Enable(false);
         ConvertSavesFromPeace.Enable(false);
         _gamePatch?.UnpatchSelf();
@@ -500,11 +500,12 @@ public static class GamePatch
     {
         private static Harmony _patch;
 
-        public static void Enable(bool on)
+        public static void Enable(bool on, bool reload)
         {
             if (on)
             {
                 _patch ??= Harmony.CreateAndPatchAll(typeof(MouseCursorScaleUp));
+                if (!reload) return;
                 if (!UICursor.loaded) return;
                 UICursor.loaded = false;
                 UICursor.LoadCursors();
@@ -513,6 +514,7 @@ public static class GamePatch
 
             _patch?.UnpatchSelf();
             _patch = null;
+            if (!reload) return;
             if (!UICursor.loaded) return;
             UICursor.loaded = false;
             UICursor.LoadCursors();
@@ -524,20 +526,60 @@ public static class GamePatch
         {
             var matcher = new CodeMatcher(instructions, generator);
             matcher.Start().MatchForward(false,
+                new CodeMatch(OpCodes.Ldc_I4_S),
+                new CodeMatch(OpCodes.Newarr)
+            );
+            var startPos = matcher.Pos;
+            matcher.Advance(2).MatchForward(false,
+                new CodeMatch(OpCodes.Stsfld, AccessTools.Field(typeof(UICursor), nameof(UICursor.cursorTexs)))
+            );
+            var endPos = matcher.Pos + 1;
+            matcher.Start().Advance(startPos).RemoveInstructions(endPos - startPos);
+            matcher.InsertAndAdvance(
+                Transpilers.EmitDelegate(() =>
+                {
+                    var pluginfolder = Util.PluginFolder;
+                    UICursor.cursorTexs =
+                    [
+                        Util.LoadTexture($"{pluginfolder}/assets/cursor/cursor.png"),
+                        Util.LoadTexture($"{pluginfolder}/assets/cursor/cursor-transfer.png"),
+                        Util.LoadTexture($"{pluginfolder}/assets/cursor/cursor-target-in.png"),
+                        Util.LoadTexture($"{pluginfolder}/assets/cursor/cursor-target-out.png"),
+                        Util.LoadTexture($"{pluginfolder}/assets/cursor/cursor-target-a.png"),
+                        Util.LoadTexture($"{pluginfolder}/assets/cursor/cursor-target-b.png"),
+                        Util.LoadTexture($"{pluginfolder}/assets/cursor/cursor-ban.png"),
+                        Util.LoadTexture($"{pluginfolder}/assets/cursor/cursor-delete.png"),
+                        Util.LoadTexture($"{pluginfolder}/assets/cursor/cursor-reform.png"),
+                        Util.LoadTexture($"{pluginfolder}/assets/cursor/cursor-dyson-node-create.png"),
+                        Util.LoadTexture($"{pluginfolder}/assets/cursor/cursor-painter.png"),
+                        Util.LoadTexture($"{pluginfolder}/assets/cursor/cursor-eyedropper.png"),
+                        Util.LoadTexture($"{pluginfolder}/assets/cursor/cursor-eraser.png"),
+                        Util.LoadTexture($"{pluginfolder}/assets/cursor/cursor-upgrade.png"),
+                        Util.LoadTexture($"{pluginfolder}/assets/cursor/cursor-downgrade.png"),
+                        Util.LoadTexture($"{pluginfolder}/assets/cursor/cursor-blank.png"),
+                        Util.LoadTexture($"{pluginfolder}/assets/cursor/cursor-remove.png")
+                    ];
+                })
+            );
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Stsfld, AccessTools.Field(typeof(UICursor), nameof(UICursor.cursorHots))),
                 new CodeMatch(OpCodes.Ldc_I4_1),
                 new CodeMatch(OpCodes.Stsfld, AccessTools.Field(typeof(UICursor), nameof(UICursor.loaded)))
-            ).InsertAndAdvance(
+            ).Advance(1).InsertAndAdvance(
                 Transpilers.EmitDelegate(() =>
                 {
                     var multiplier = MouseCursorScaleUpMultiplier.Value;
-                    if (multiplier <= 1) return;
                     for (var i = 0; i < UICursor.cursorTexs.Length; i++)
                     {
                         var cursor = UICursor.cursorTexs[i];
                         if (cursor == null) continue;
-                        UICursor.cursorTexs[i] = ResizeTexture2D(cursor, cursor.width * multiplier, cursor.height * multiplier);
+                        var newWidth = 32 * multiplier;
+                        var newHeight = 32 * multiplier;
+                        if (cursor.width == newWidth && cursor.height == newHeight) continue;
+                        UICursor.cursorTexs[i] = ResizeTexture2D(cursor, 32 * multiplier, 32 * multiplier);
                     }
 
+                    if (multiplier <= 1) return;
                     for (var i = UICursor.cursorHots.Length - 1; i >= 0; i--)
                     {
                         UICursor.cursorHots[i] = new Vector2(UICursor.cursorHots[i].x * multiplier, UICursor.cursorHots[i].y * multiplier);
@@ -559,7 +601,7 @@ public static class GamePatch
                 RenderTexture.active = rt;
                 Graphics.Blit(texture2D, rt);
                 rt.ResolveAntiAliasedSurface();
-                var result = new Texture2D(targetWidth, targetHeight, texture2D.format, texture2D.mipmapCount > 1);
+                var result = new Texture2D(targetWidth, targetHeight, texture2D.format, false);
                 result.ReadPixels(new Rect(0, 0, targetWidth, targetHeight), 0, 0);
                 result.Apply();
                 RenderTexture.active = oldActive;
