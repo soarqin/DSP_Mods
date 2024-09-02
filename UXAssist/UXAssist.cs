@@ -161,12 +161,18 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
         I18N.OnInitialized += RecreateConfigWindow;
     }
 
+    private void Start()
+    {
+        LogisticsPatch.Start();
+    }
+
     private void OnDestroy()
     {
         DysonSpherePatch.Uninit();
         TechPatch.Uninit();
         PlayerPatch.Uninit();
         PlanetPatch.Uninit();
+        LogisticsPatch.Uninit();
         FactoryPatch.Uninit();
         GamePatch.Uninit();
         MyWindowManager.Uninit();
@@ -191,6 +197,7 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
         }
         FactoryPatch.OnUpdate();
         PlayerPatch.OnUpdate();
+        LogisticsPatch.OnUpdate();
     }
 
     private void LateUpdate()

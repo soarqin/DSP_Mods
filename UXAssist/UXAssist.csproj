@@ -27,6 +27,9 @@
     <EmbeddedResource Include="assets/signal/reassembler.png" />
     <EmbeddedResource Include="assets/signal/silicon-neuron.png" />
     <EmbeddedResource Include="assets/signal/virtual-particle.png" />
+    <EmbeddedResource Include="assets/icon/in.png" />
+    <EmbeddedResource Include="assets/icon/out.png" />
+    <EmbeddedResource Include="assets/icon/keep.png" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
