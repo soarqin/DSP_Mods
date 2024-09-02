@@ -115,6 +115,8 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
             "Allow overflow in logistic stations");
         LogisticsPatch.LogisticsConstrolPanelImprovementEnabled = Config.Bind("Factory", "LogisticsConstrolPanelImprovement", false,
             "Logistics control panel improvement");
+        LogisticsPatch.RealtimeLogisticsInfoPanelEnabled = Config.Bind("Factory", "RealtimeLogisticsInfoPanel", false,
+            "Realtime logistics info panel");
         PlanetFunctions.OrbitalCollectorMaxBuildCount = Config.Bind("Factory", "OCMaxBuildCount", 0, "Maximum Orbital Collectors to build once, set to 0 to build as many as possible");
         PlayerPatch.EnhancedMechaForgeCountControlEnabled = Config.Bind("Player", "EnhancedMechaForgeCountControl", false,
             "Enhanced count control for hand-make, increases maximum of count to 1000, and you can hold Ctrl/Shift/Alt to change the count rapidly");
