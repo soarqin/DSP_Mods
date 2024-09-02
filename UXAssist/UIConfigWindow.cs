@@ -1,5 +1,4 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 using UXAssist.UI;
 using UXAssist.Common;
 
@@ -21,6 +20,7 @@ public static class UIConfigWindow
         I18N.Add("Tech/Combat", "Tech/Combat", "科研/战斗");
         I18N.Add("Enable game window resize", "Enable game window resize (maximum box and thick frame)", "可调整游戏窗口大小(可最大化和拖动边框)");
         I18N.Add("Remeber window position and size on last exit", "Remeber window position and size on last exit", "记住上次退出时的窗口位置和大小");
+        I18N.Add("Mouse cursor scale up", "Mouse cursor scale up", "鼠标指针放大");
         /*
         I18N.Add("Better auto-save mechanism", "Better auto-save mechanism", "更好的自动存档机制");
         I18N.Add("Better auto-save mechanism tips", "Auto saves are stored in 'Save\\AutoSaves' folder, filenames are combined with cluster address and date-time", "自动存档会以星区地址和日期时间组合为文件名存储在'Save\\AutoSaves'文件夹中");
@@ -110,6 +110,11 @@ public static class UIConfigWindow
         wnd.AddCheckBox(x, y, tab1, GamePatch.EnableWindowResizeEnabled, "Enable game window resize");
         y += 36f;
         wnd.AddCheckBox(x, y, tab1, GamePatch.LoadLastWindowRectEnabled, "Remeber window position and size on last exit");
+        y += 36f;
+        var txt = wnd.AddText2(x, y, tab1, "Mouse cursor scale up", 15, "text-mouse-cursor-scale-up");
+        x += txt.preferredWidth + 5f;
+        wnd.AddSlider(x, y + 6f, tab1, GamePatch.MouseCursorScaleUpMultiplier, [1, 2, 3, 4], "0x", 100f);
+        x = 0f;
         /*
         y += 30f;
         wnd.AddCheckBox(x, y, tab1, GamePatch.AutoSaveOptEnabled, "Better auto-save mechanism");

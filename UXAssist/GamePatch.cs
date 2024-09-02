@@ -18,6 +18,7 @@ public static class GamePatch
 
     public static ConfigEntry<bool> EnableWindowResizeEnabled;
     public static ConfigEntry<bool> LoadLastWindowRectEnabled;
+    public static ConfigEntry<int> MouseCursorScaleUpMultiplier;
     // public static ConfigEntry<bool> AutoSaveOptEnabled;
     public static ConfigEntry<bool> ConvertSavesFromPeaceEnabled;
     public static ConfigEntry<Vector4> LastWindowRect;
@@ -29,7 +30,7 @@ public static class GamePatch
     {
         // Get profile name from command line arguments, and set window title accordingly
         var args = Environment.GetCommandLineArgs();
-        for (var i = 0; i < args.Length; i++)
+        for (var i = 0; i < args.Length - 1; i++)
         {
             if (args[i] != "--doorstop-target") continue;
             var arg = args[i + 1];
@@ -52,6 +53,10 @@ public static class GamePatch
 
         EnableWindowResizeEnabled.SettingChanged += (_, _) => EnableWindowResize.Enable(EnableWindowResizeEnabled.Value);
         LoadLastWindowRectEnabled.SettingChanged += (_, _) => LoadLastWindowRect.Enable(LoadLastWindowRectEnabled.Value);
+        MouseCursorScaleUpMultiplier.SettingChanged += (_, _) =>
+        {
+            MouseCursorScaleUp.Enable(MouseCursorScaleUpMultiplier.Value > 1);
+        };
         // AutoSaveOptEnabled.SettingChanged += (_, _) => AutoSaveOpt.Enable(AutoSaveOptEnabled.Value);
         ConvertSavesFromPeaceEnabled.SettingChanged += (_, _) => ConvertSavesFromPeace.Enable(ConvertSavesFromPeaceEnabled.Value);
         ProfileBasedSaveFolderEnabled.SettingChanged += (_, _) =>
@@ -64,6 +69,7 @@ public static class GamePatch
         };
         EnableWindowResize.Enable(EnableWindowResizeEnabled.Value);
         LoadLastWindowRect.Enable(LoadLastWindowRectEnabled.Value);
+        MouseCursorScaleUp.Enable(MouseCursorScaleUpMultiplier.Value > 1);
         // AutoSaveOpt.Enable(AutoSaveOptEnabled.Value);
         ConvertSavesFromPeace.Enable(ConvertSavesFromPeaceEnabled.Value);
         _gamePatch ??= Harmony.CreateAndPatchAll(typeof(GamePatch));
@@ -73,6 +79,7 @@ public static class GamePatch
     {
         LoadLastWindowRect.Enable(false);
         EnableWindowResize.Enable(false);
+        MouseCursorScaleUp.Enable(false);
         // AutoSaveOpt.Enable(false);
         ConvertSavesFromPeace.Enable(false);
         _gamePatch?.UnpatchSelf();
@@ -486,6 +493,91 @@ public static class GamePatch
         private static void GameData_Import_Postfix()
         {
             _needConvert = false;
+        }
+    }
+
+    private static class MouseCursorScaleUp
+    {
+        private static Harmony _patch;
+
+        public static void Enable(bool on)
+        {
+            if (on)
+            {
+                _patch ??= Harmony.CreateAndPatchAll(typeof(MouseCursorScaleUp));
+                if (!UICursor.loaded) return;
+                UICursor.loaded = false;
+                UICursor.LoadCursors();
+                return;
+            }
+
+            _patch?.UnpatchSelf();
+            _patch = null;
+            if (!UICursor.loaded) return;
+            UICursor.loaded = false;
+            UICursor.LoadCursors();
+        }
+        
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(UICursor), nameof(UICursor.LoadCursors))]
+        private static IEnumerable<CodeInstruction> UICursor_LoadCursors_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            matcher.Start().MatchForward(false,
+                new CodeMatch(OpCodes.Ldc_I4_1),
+                new CodeMatch(OpCodes.Stsfld, AccessTools.Field(typeof(UICursor), nameof(UICursor.loaded)))
+            ).InsertAndAdvance(
+                Transpilers.EmitDelegate(() =>
+                {
+                    var multiplier = MouseCursorScaleUpMultiplier.Value;
+                    if (multiplier <= 1) return;
+                    for (var i = 0; i < UICursor.cursorTexs.Length; i++)
+                    {
+                        var cursor = UICursor.cursorTexs[i];
+                        if (cursor == null) continue;
+                        UICursor.cursorTexs[i] = ResizeTexture2D(cursor, cursor.width * multiplier, cursor.height * multiplier);
+                    }
+
+                    for (var i = UICursor.cursorHots.Length - 1; i >= 0; i--)
+                    {
+                        UICursor.cursorHots[i] = new Vector2(UICursor.cursorHots[i].x * multiplier, UICursor.cursorHots[i].y * multiplier);
+                    }
+                })
+            ).MatchForward(false,
+                new CodeMatch(OpCodes.Ldc_I4_0),
+                new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(Cursor), nameof(Cursor.SetCursor), [typeof(Texture2D), typeof(Vector2), typeof(CursorMode)]))
+            ).SetInstruction(new CodeInstruction(OpCodes.Ldc_I4_1));
+            return matcher.InstructionEnumeration();
+
+            Texture2D ResizeTexture2D(Texture2D texture2D, int targetWidth, int targetHeight)
+            {
+                var oldActive = RenderTexture.active;
+                var rt = new RenderTexture(targetWidth, targetHeight, 32)
+                {
+                    antiAliasing = 8
+                };
+                RenderTexture.active = rt;
+                Graphics.Blit(texture2D, rt);
+                rt.ResolveAntiAliasedSurface();
+                var result = new Texture2D(targetWidth, targetHeight, texture2D.format, texture2D.mipmapCount > 1);
+                result.ReadPixels(new Rect(0, 0, targetWidth, targetHeight), 0, 0);
+                result.Apply();
+                RenderTexture.active = oldActive;
+                rt.Release();
+                return result;
+            }
+        }
+        
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(UICursor), nameof(UICursor.cursorIndexApply), MethodType.Setter)]
+        private static IEnumerable<CodeInstruction> UICursor_set_cursorIndexApply_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            matcher.Start().MatchForward(false,
+                new CodeMatch(OpCodes.Ldc_I4_0),
+                new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(Cursor), nameof(Cursor.SetCursor), [typeof(Texture2D), typeof(Vector2), typeof(CursorMode)]))
+            ).SetInstruction(new CodeInstruction(OpCodes.Ldc_I4_1));
+            return matcher.InstructionEnumeration();
         }
     }
 }

@@ -8,7 +8,6 @@ using BepInEx.Configuration;
 using CommonAPI.Systems;
 using HarmonyLib;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UXAssist.Common;
 
 namespace UXAssist;
@@ -1600,7 +1599,6 @@ public static class FactoryPatch
         private static Harmony _persistPatch;
         private static bool _initialized;
         private static bool _loaded;
-        private static AssetBundle _bundle;
         private static long _clusterSeedKey;
         private static readonly int[] DarkFogItemIds = [5201, 5206, 5202, 5204, 5203, 5205];
         private static readonly int[] DarkFogItemExchangeRate = [20, 60, 30, 30, 30, 10];
@@ -1639,8 +1637,7 @@ public static class FactoryPatch
         private static void AddBeltSignalProtos()
         {
             if (!_initialized || _loaded) return;
-            var pluginfolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            _bundle = AssetBundle.LoadFromFile($"{pluginfolder}/uxassist.assetbundle");
+            var pluginfolder = Util.PluginFolder;
             var signals = LDB._signals;
             SignalProto[] protos =
             [
@@ -1649,8 +1646,8 @@ public static class FactoryPatch
                     ID = 301,
                     Name = "存储单元",
                     GridIndex = 3601,
-                    IconPath = "Assets/memory.png",
-                    _iconSprite = _bundle.LoadAsset<Sprite>("Assets/memory.png"),
+                    IconPath = "assets/memory.png",
+                    _iconSprite = Util.LoadSprite($"{pluginfolder}/assets/memory.png"),
                     SID = ""
                 },
                 new SignalProto
@@ -1658,8 +1655,8 @@ public static class FactoryPatch
                     ID = 302,
                     Name = "能量碎片",
                     GridIndex = 3602,
-                    IconPath = "Assets/energy-fragment.png",
-                    _iconSprite = _bundle.LoadAsset<Sprite>("Assets/energy-fragment.png"),
+                    IconPath = "assets/energy-fragment.png",
+                    _iconSprite = Util.LoadSprite($"{pluginfolder}/assets/energy-fragment.png"),
                     SID = ""
                 },
                 new SignalProto
@@ -1667,8 +1664,8 @@ public static class FactoryPatch
                     ID = 303,
                     Name = "硅基神经元",
                     GridIndex = 3603,
-                    IconPath = "Assets/silicon-neuron.png",
-                    _iconSprite = _bundle.LoadAsset<Sprite>("Assets/silicon-neuron.png"),
+                    IconPath = "assets/silicon-neuron.png",
+                    _iconSprite = Util.LoadSprite($"{pluginfolder}/assets/silicon-neuron.png"),
                     SID = ""
                 },
                 new SignalProto
@@ -1677,7 +1674,7 @@ public static class FactoryPatch
                     Name = "负熵奇点",
                     GridIndex = 3604,
                     IconPath = "Assets/negentropy.png",
-                    _iconSprite = _bundle.LoadAsset<Sprite>("Assets/negentropy.png"),
+                    _iconSprite = Util.LoadSprite($"{pluginfolder}/assets/negentropy.png"),
                     SID = ""
                 },
                 new SignalProto
@@ -1685,8 +1682,8 @@ public static class FactoryPatch
                     ID = 305,
                     Name = "物质重组器",
                     GridIndex = 3605,
-                    IconPath = "Assets/reassembler.png",
-                    _iconSprite = _bundle.LoadAsset<Sprite>("Assets/reassembler.png"),
+                    IconPath = "assets/reassembler.png",
+                    _iconSprite = Util.LoadSprite($"{pluginfolder}/assets/reassembler.png"),
                     SID = ""
                 },
                 new SignalProto
@@ -1694,8 +1691,8 @@ public static class FactoryPatch
                     ID = 306,
                     Name = "虚粒子",
                     GridIndex = 3606,
-                    IconPath = "Assets/virtual-particle.png",
-                    _iconSprite = _bundle.LoadAsset<Sprite>("Assets/virtual-particle.png"),
+                    IconPath = "assets/virtual-particle.png",
+                    _iconSprite = Util.LoadSprite($"{pluginfolder}/assets/virtual-particle.png"),
                     SID = ""
                 },
             ];
@@ -1729,8 +1726,6 @@ public static class FactoryPatch
                     signals.dataIndices[signals.dataArray[index].ID] = index;
             }
 
-            _bundle.Unload(true);
-            _bundle = null;
             _loaded = false;
         }
 
