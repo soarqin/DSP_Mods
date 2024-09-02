@@ -480,6 +480,8 @@ public static class LogisticsPatch
     private static class RealtimeLogisticsInfoPanel
     {
         private static StationTip[] _stationTips = new StationTip[16];
+        private static StationTip[] _stationTipsRecycle = new StationTip[128];
+        private static int _stationTipsRecycleCount = 0;
         private static GameObject _stationTipRoot;
         private static GameObject _tipPrefab;
         private static readonly Color DemandColor = new(223.7f / 255, 139.6f / 255, 94f / 255);
@@ -805,6 +807,32 @@ public static class LogisticsPatch
                 _carrierIconTexts[index].gameObject.SetActive(true);
             }
         }
+        
+        private static void RecycleStationTips()
+        {
+            foreach (var stationTip in _stationTips)
+            {
+                if (!stationTip) continue;
+                stationTip.gameObject.SetActive(false);
+                if (_stationTipsRecycleCount < 128)
+                    _stationTipsRecycle[_stationTipsRecycleCount++] = stationTip;
+            }
+            Array.Clear(_stationTips, 0, _stationTips.Length);
+        }
+
+        private static StationTip AllocateStationTip()
+        {
+            if (_stationTipsRecycleCount > 0)
+            {
+                var result = _stationTipsRecycle[--_stationTipsRecycleCount];
+                _stationTipsRecycle[_stationTipsRecycleCount] = null;
+                return result;
+            }
+            var tempTip = UnityEngine.Object.Instantiate(_tipPrefab, _stationTipRoot.transform);
+            var stationTip = tempTip.AddComponent<StationTip>();
+            stationTip.InitStationTip();
+            return stationTip;
+        }
 
         public static void StationInfoPanelsUpdate()
         {
@@ -819,11 +847,7 @@ public static class LogisticsPatch
 
             if (_lastPlanet != localPlanet)
             {
-                foreach (var stationTip in _stationTips)
-                {
-                    stationTip?.gameObject.SetActive(false);
-                }
-
+                RecycleStationTips();
                 _lastPlanet = localPlanet;
             }
 
@@ -867,39 +891,35 @@ public static class LogisticsPatch
                     continue;
                 }
 
-                #if DEBUG
+#if DEBUG
                 if (i != stationComponent.id)
                 {
                     UXAssist.Logger.LogWarning($"Station index mismatch: {i} != {stationComponent.id}");
                     _stationTips[i]?.gameObject.SetActive(false);
                     continue;
                 }
-                #endif
+#endif
 
                 var stationTip = _stationTips[i];
                 if (!stationTip)
                 {
-                    var tempTip = UnityEngine.Object.Instantiate(_tipPrefab, _stationTipRoot.transform);
-                    stationTip = tempTip.AddComponent<StationTip>();
-                    stationTip.InitStationTip();
+                    stationTip = AllocateStationTip();
                     _stationTips[i] = stationTip;
                 }
 
                 var position = factory.entityPool[stationComponent.entityId].pos.normalized;
-                var storageNum = Math.Min(storageArray.Length, 5);
-                float tipWindowHeight = 40 * storageNum + 20;
                 if (stationComponent.isCollector)
                 {
-                    storageNum = 2;
                     position *= realRadius + 35;
-                    tipWindowHeight -= 20;
                 }
                 else if (stationComponent.isStellar)
                 {
                     position *= realRadius + 20;
                 }
                 else if (stationComponent.isVeinCollector)
-                    tipWindowHeight -= 20;
+                {
+                    position *= realRadius + 8;
+                }
                 else
                 {
                     position *= realRadius + 15;
@@ -917,6 +937,32 @@ public static class LogisticsPatch
                 {
                     stationTip.gameObject.SetActive(false);
                     continue;
+                }
+
+                int storageNum;
+                float tipWindowHeight;
+                if (stationComponent.isCollector)
+                {
+                    storageNum = 2;
+                    tipWindowHeight = 40 * storageNum;
+                }
+                else if (!stationComponent.isStellar)
+                {
+                    if (stationComponent.isVeinCollector)
+                    {
+                        storageNum = 1;
+                        tipWindowHeight = 40 * storageNum;
+                    }
+                    else
+                    {
+                        storageNum = Math.Min(storageArray.Length, 4);
+                        tipWindowHeight = 40 * storageNum + 20;
+                    }
+                }
+                else
+                {
+                    storageNum = Math.Min(storageArray.Length, 5);
+                    tipWindowHeight = 40 * storageNum + 20;
                 }
 
                 stationTip.gameObject.SetActive(true);
@@ -974,7 +1020,7 @@ public static class LogisticsPatch
                 if (magnitude < 50f)
                     localScaleMultiple = 1.5f;
                 else if (magnitude < 250f)
-                    localScaleMultiple = (float)(1.75f - magnitude * 0.005f);
+                    localScaleMultiple = 1.75f - magnitude * 0.005f;
                 else
                     localScaleMultiple = 0.5f;
                 stationTip.transform.localScale = Vector3.one * localScaleMultiple;
