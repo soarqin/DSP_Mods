@@ -47,6 +47,7 @@
   + Mecha/Combat:
     + Mecha and Drones/Fleets invicible
     + Buildings invicible
+    + Enable warp without space warpers
     + Teleport to outer space
     + Teleport to selected astronomical
 
@@ -102,9 +103,12 @@
     + 快速吸收
     + 全球弹射
     + 立即完成戴森壳建造
-  + 战斗：
+  + 机甲/战斗：
     + 机甲和战斗无人机无敌
     + 建筑无敌
+    + 无需空间翘曲器即可曲速飞行
+    + 传送到外太空
+    + 传送到选定的天体
 
 ## 注意事项
 * 如果和[BlueprintTweaks](https://dsp.thunderstore.io/package/kremnev8/BlueprintTweaks/)一起使用，请升级`BepInEx`到5.4.21或更高版本，以避免可能的冲突

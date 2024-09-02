@@ -58,6 +58,8 @@ public class CheatEnabler : BaseUnityPlugin
             "Can do terraform without enough soil piless");
         PlayerPatch.InstantTeleportEnabled = Config.Bind("Player", "InstantTeleport", false,
             "Enable instant teleport (like that in Sandbox mode)");
+        PlayerPatch.WarpWithoutSpaceWarpersEnabled = Config.Bind("Player", "WarpWithoutWarper", false,
+            "Enable warp without warper");
         DysonSpherePatch.SkipBulletEnabled = Config.Bind("DysonSphere", "SkipBullet", false,
             "Skip bullet");
         DysonSpherePatch.SkipAbsorbEnabled = Config.Bind("DysonSphere", "SkipAbsorb", false,

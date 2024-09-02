@@ -66,6 +66,7 @@ public static class UIConfigWindow
         I18N.Add("Instant teleport (like that in Sandbox mode)", "Instant teleport (like that in Sandbox mode)", "快速传送(和沙盒模式一样)");
         I18N.Add("Mecha and Drones/Fleets invicible", "Mecha and Drones/Fleets invicible", "机甲和战斗无人机无敌");
         I18N.Add("Buildings invicible", "Buildings invincible", "建筑无敌");
+        I18N.Add("Enable warp without space warpers", "Enable warp without space warpers", "无需空间翘曲器即可曲速飞行");
         I18N.Add("Teleport to outer space", "Teleport to outer space", "传送到外太空");
         I18N.Add("Teleport to selected astronomical", "Teleport to selected astronomical", "传送到选中的天体");
         I18N.Apply();
@@ -215,6 +216,8 @@ public static class UIConfigWindow
         wnd.AddCheckBox(x, y, tab5, CombatPatch.MechaInvincibleEnabled, "Mecha and Drones/Fleets invicible");
         y += 36f;
         wnd.AddCheckBox(x, y, tab5, CombatPatch.BuildingsInvincibleEnabled, "Buildings invicible");
+        y += 36f;
+        wnd.AddCheckBox(x, y, tab5, PlayerPatch.WarpWithoutSpaceWarpersEnabled, "Enable warp without space warpers");
         x = 400f;
         y = 10f;
         wnd.AddButton(x, y, 200f, tab5, "Teleport to outer space", 16, "button-teleport-to-outer-space", PlayerFunctions.TeleportToOuterSpace);

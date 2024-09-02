@@ -8,16 +8,20 @@ namespace CheatEnabler;
 public static class PlayerPatch
 {
     public static ConfigEntry<bool> InstantTeleportEnabled;
+    public static ConfigEntry<bool> WarpWithoutSpaceWarpersEnabled;
 
     public static void Init()
     {
         InstantTeleportEnabled.SettingChanged += (_, _) => InstantTeleport.Enable(InstantTeleportEnabled.Value);
+        WarpWithoutSpaceWarpersEnabled.SettingChanged += (_, _) => WarpWithoutSpaceWarpers.Enable(WarpWithoutSpaceWarpersEnabled.Value);
         InstantTeleport.Enable(InstantTeleportEnabled.Value);
+        WarpWithoutSpaceWarpers.Enable(WarpWithoutSpaceWarpersEnabled.Value);
     }
 
     public static void Uninit()
     {
         InstantTeleport.Enable(false);
+        WarpWithoutSpaceWarpers.Enable(false);
     }
 
     private static class InstantTeleport
@@ -55,6 +59,39 @@ public static class PlayerPatch
             );
             matcher.Repeat(cm => cm.SetAndAdvance(OpCodes.Ldc_I4_1, null));
             return matcher.InstructionEnumeration();
+        }
+    }
+
+    private static class WarpWithoutSpaceWarpers
+    {
+        private static Harmony _patch;
+
+        public static void Enable(bool on)
+        {
+            if (on)
+            {
+                _patch ??= Harmony.CreateAndPatchAll(typeof(WarpWithoutSpaceWarpers));
+            }
+            else
+            {
+                _patch?.UnpatchSelf();
+                _patch = null;
+            }
+        }
+        
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(Mecha), nameof(Mecha.HasWarper))]
+        private static bool Mecha_HasWarper_Prefix(ref bool __result)
+        {
+            __result = true;
+            return false;
+        }
+        
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(Mecha), nameof(Mecha.UseWarper))]
+        private static void Mecha_UseWarper_Postfix(ref bool __result)
+        {
+            __result = true;
         }
     }
 }

@@ -1,5 +1,7 @@
 ## Changlog
 
+* 2.3.25
+  + New feature: `Enable warp without space warpers` 
 * 2.3.24
   + `Complete Dyson Sphere Shells instantly`: Fix a bug that may cause negative power in some cases
 * 2.3.23
@@ -127,6 +129,8 @@
 
 ## 更新日志
 
+* 2.3.25
+  + 新功能：`无需空间翘曲器即可曲速飞行`
 * 2.3.24
   + `立即完成戴森壳建造`：修复了在某些情况下可能导致发电为负的问题
 * 2.3.23
