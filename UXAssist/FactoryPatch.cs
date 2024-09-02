@@ -1637,7 +1637,7 @@ public static class FactoryPatch
         private static void AddBeltSignalProtos()
         {
             if (!_initialized || _loaded) return;
-            var pluginfolder = Util.PluginFolder;
+            var assembly = Assembly.GetExecutingAssembly();
             var signals = LDB._signals;
             SignalProto[] protos =
             [
@@ -1647,7 +1647,7 @@ public static class FactoryPatch
                     Name = "存储单元",
                     GridIndex = 3601,
                     IconPath = "assets/signal/memory.png",
-                    _iconSprite = Util.LoadSprite($"{pluginfolder}/assets/signal/memory.png"),
+                    _iconSprite = Util.LoadEmbeddedSprite($"assets/signal/memory.png", assembly),
                     SID = ""
                 },
                 new SignalProto
@@ -1656,7 +1656,7 @@ public static class FactoryPatch
                     Name = "能量碎片",
                     GridIndex = 3602,
                     IconPath = "assets/signal/energy-fragment.png",
-                    _iconSprite = Util.LoadSprite($"{pluginfolder}/assets/signal/energy-fragment.png"),
+                    _iconSprite = Util.LoadEmbeddedSprite($"assets/signal/energy-fragment.png", assembly),
                     SID = ""
                 },
                 new SignalProto
@@ -1665,7 +1665,7 @@ public static class FactoryPatch
                     Name = "硅基神经元",
                     GridIndex = 3603,
                     IconPath = "assets/signal/silicon-neuron.png",
-                    _iconSprite = Util.LoadSprite($"{pluginfolder}/assets/signal/silicon-neuron.png"),
+                    _iconSprite = Util.LoadEmbeddedSprite($"assets/signal/silicon-neuron.png", assembly),
                     SID = ""
                 },
                 new SignalProto
@@ -1674,7 +1674,7 @@ public static class FactoryPatch
                     Name = "负熵奇点",
                     GridIndex = 3604,
                     IconPath = "assets/signal/negentropy.png",
-                    _iconSprite = Util.LoadSprite($"{pluginfolder}/assets/signal/negentropy.png"),
+                    _iconSprite = Util.LoadEmbeddedSprite($"assets/signal/negentropy.png", assembly),
                     SID = ""
                 },
                 new SignalProto
@@ -1683,7 +1683,7 @@ public static class FactoryPatch
                     Name = "物质重组器",
                     GridIndex = 3605,
                     IconPath = "assets/signal/reassembler.png",
-                    _iconSprite = Util.LoadSprite($"{pluginfolder}/assets/signal/reassembler.png"),
+                    _iconSprite = Util.LoadEmbeddedSprite($"assets/signal/reassembler.png", assembly),
                     SID = ""
                 },
                 new SignalProto
@@ -1692,7 +1692,7 @@ public static class FactoryPatch
                     Name = "虚粒子",
                     GridIndex = 3606,
                     IconPath = "assets/signal/virtual-particle.png",
-                    _iconSprite = Util.LoadSprite($"{pluginfolder}/assets/signal/virtual-particle.png"),
+                    _iconSprite = Util.LoadEmbeddedSprite($"assets/signal/virtual-particle.png", assembly),
                     SID = ""
                 },
             ];

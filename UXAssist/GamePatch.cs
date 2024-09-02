@@ -525,7 +525,8 @@ public static class GamePatch
         private static IEnumerable<CodeInstruction> UICursor_LoadCursors_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
         {
             var matcher = new CodeMatcher(instructions, generator);
-            matcher.Start().MatchForward(false,
+            /*
+            matcher.MatchForward(false,
                 new CodeMatch(OpCodes.Ldc_I4_S),
                 new CodeMatch(OpCodes.Newarr)
             );
@@ -561,6 +562,7 @@ public static class GamePatch
                     ];
                 })
             );
+            */
             matcher.MatchForward(false,
                 new CodeMatch(OpCodes.Stsfld, AccessTools.Field(typeof(UICursor), nameof(UICursor.cursorHots))),
                 new CodeMatch(OpCodes.Ldc_I4_1),
@@ -576,7 +578,7 @@ public static class GamePatch
                         var newWidth = 32 * multiplier;
                         var newHeight = 32 * multiplier;
                         if (cursor.width == newWidth && cursor.height == newHeight) continue;
-                        UICursor.cursorTexs[i] = ResizeTexture2D(cursor, 32 * multiplier, 32 * multiplier);
+                        UICursor.cursorTexs[i] = ResizeTexture2D(cursor, newWidth, newHeight);
                     }
 
                     if (multiplier <= 1) return;
@@ -603,6 +605,7 @@ public static class GamePatch
                 rt.ResolveAntiAliasedSurface();
                 var result = new Texture2D(targetWidth, targetHeight, texture2D.format, false);
                 result.ReadPixels(new Rect(0, 0, targetWidth, targetHeight), 0, 0);
+                result.filterMode = FilterMode.Trilinear;
                 result.Apply();
                 RenderTexture.active = oldActive;
                 rt.Release();

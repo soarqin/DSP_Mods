@@ -20,12 +20,20 @@
     <PackageReference Include="DysonSphereProgram.Modding.CommonAPI" Version="1.6.5" />
     <PackageReference Include="DysonSphereProgram.Modding.DSPModSave" Version="1.2" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="assets/signal/energy-fragment.png" />
+    <EmbeddedResource Include="assets/signal/memory.png" />
+    <EmbeddedResource Include="assets/signal/negentropy.png" />
+    <EmbeddedResource Include="assets/signal/reassembler.png" />
+    <EmbeddedResource Include="assets/signal/silicon-neuron.png" />
+    <EmbeddedResource Include="assets/signal/virtual-particle.png" />
+  </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(Configuration)' == 'Release'">
-    <Exec Command="del /F /Q package\$(ProjectName)-$(Version).zip&#xA;copy /y &quot;$(TargetPath)&quot; package\plugins\&#xA;powershell Compress-Archive -Force -DestinationPath 'package/$(ProjectName)-$(Version).zip' -Path package/plugins, package/icon.png, package/manifest.json, README.md, CHANGELOG.md" />
+    <Exec Command="del /F /Q package\$(ProjectName)-$(Version).zip&#xA;powershell Compress-Archive -Force -DestinationPath 'package/$(ProjectName)-$(Version).zip' -Path &quot;$(TargetPath)&quot;, package/icon.png, package/manifest.json, README.md, CHANGELOG.md" />
   </Target>
 </Project>
