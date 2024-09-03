@@ -13,6 +13,8 @@ using UXAssist.Common;
 
 namespace UXAssist;
 
+using StorageItemData = (int, int, ELogisticStorage, ELogisticStorage);
+
 public static class LogisticsPatch
 {
     public static ConfigEntry<bool> LogisticsCapacityTweaksEnabled;
@@ -484,10 +486,13 @@ public static class LogisticsPatch
         private static int _stationTipsRecycleCount;
         private static GameObject _stationTipRoot;
         private static GameObject _tipPrefab;
-        private static readonly Color DemandColor = new(223.7f / 255, 139.6f / 255, 94f / 255);
-        private static readonly Color SupplyColor = new(90f / 255, 208.5f / 255, 249f / 255);
+        private static readonly Color DemandColor = new(253f / 255, 150f / 255, 94f / 255);
+        private static readonly Color SupplyColor = new(97f / 255, 216f / 255, 255f / 255);
 
         private static PlanetData _lastPlanet;
+
+        private const int StorageSlotCount = 5;
+        private const int CarrierSlotCount = 3;
 
         private static readonly Sprite[] LogisticsExtraItemSprites =
         [
@@ -514,34 +519,21 @@ public static class LogisticsPatch
             UnityEngine.Object.Destroy(_stationTipRoot.GetComponent<UIVeinDetail>());
             _tipPrefab = UnityEngine.Object.Instantiate(GameObject.Find("UI Root/Overlay Canvas/In Game/Scene UIs/Vein Marks/vein-tip-prefab"), _stationTipRoot.transform);
             _tipPrefab.name = "tipPrefab";
+            var sliderBgPrefab = GameObject.Find("UI Root/Overlay Canvas/In Game/Windows/Station Window/storage-box-0/slider-bg");
             var image = _tipPrefab.GetComponent<Image>();
             image.sprite = GameObject.Find("UI Root/Overlay Canvas/In Game/Windows/Key Tips/tip-prefab").GetComponent<Image>().sprite;
             image.color = new Color(0, 0, 0, 0.8f);
             image.enabled = true;
             var rectTrans = (RectTransform)_tipPrefab.transform;
             rectTrans.localPosition = new Vector3(200f, 800f, 0);
-            rectTrans.sizeDelta = new Vector2(150, 160f);
+            rectTrans.sizeDelta = new Vector2(150f, 160f);
             rectTrans.pivot = new Vector2(0.5f, 0.5f);
             UnityEngine.Object.Destroy(_tipPrefab.GetComponent<UIVeinDetailNode>());
             var infoText = _tipPrefab.transform.Find("info-text").gameObject;
 
-            for (var index = 0; index < 5; ++index)
+            for (var index = 0; index < StorageSlotCount; ++index)
             {
-                var countText = UnityEngine.Object.Instantiate(infoText, Vector3.zero, Quaternion.identity, _tipPrefab.transform);
-                countText.name = "countText" + index;
                 var y = -5f - 35f * index;
-                var text = countText.GetComponent<Text>();
-                text.fontSize = 20;
-                text.text = "99999";
-                text.alignment = TextAnchor.MiddleRight;
-                rectTrans = (RectTransform)countText.transform;
-                rectTrans.sizeDelta = new Vector2(70f, 30f);
-                rectTrans.anchorMax = new Vector2(0f, 1f);
-                rectTrans.anchorMin = new Vector2(0f, 1f);
-                rectTrans.pivot = new Vector2(0f, 1f);
-                rectTrans.anchoredPosition3D = new Vector3(30f, y, 0);
-                UnityEngine.Object.Destroy(countText.GetComponent<Shadow>());
-
                 var iconTrans = _tipPrefab.transform.Find("icon");
                 var itemIcon = UnityEngine.Object.Instantiate(iconTrans.gameObject, new Vector3(0, 0, 0), Quaternion.identity, _tipPrefab.transform);
                 itemIcon.name = "icon" + index;
@@ -551,6 +543,52 @@ public static class LogisticsPatch
                 rectTrans.anchorMin = new Vector2(0f, 1f);
                 rectTrans.pivot = new Vector2(0f, 1f);
                 rectTrans.anchoredPosition3D = new Vector3(0, y, 0);
+
+                var sliderBg = UnityEngine.Object.Instantiate(sliderBgPrefab.gameObject, new Vector3(0, 0, 0), Quaternion.identity, _tipPrefab.transform);
+                sliderBg.name = "sliderBg" + index;
+                rectTrans = (RectTransform)sliderBg.transform;
+                rectTrans.sizeDelta = new Vector2(66f, 6f);
+                rectTrans.anchorMax = new Vector2(0f, 1f);
+                rectTrans.anchorMin = new Vector2(0f, 1f);
+                rectTrans.pivot = new Vector2(0f, 1f);
+                rectTrans.anchoredPosition3D = new Vector3(34f, y - 18f, 0f);
+                rectTrans = (RectTransform)sliderBg.transform.Find("current-fg").transform;
+                rectTrans.sizeDelta = new Vector2(32f, 4f);
+                rectTrans.anchorMax = new Vector2(0f, 1f);
+                rectTrans.anchorMin = new Vector2(0f, 1f);
+                rectTrans.pivot = new Vector2(0f, 1f);
+                rectTrans.localPosition = new Vector3(1f, -1f, 0f);
+                rectTrans = (RectTransform)sliderBg.transform.Find("ordered-fg").transform;
+                rectTrans.sizeDelta = new Vector2(32f, 4f);
+                rectTrans.anchorMax = new Vector2(0f, 1f);
+                rectTrans.anchorMin = new Vector2(0f, 1f);
+                rectTrans.pivot = new Vector2(0f, 1f);
+                rectTrans.localPosition = new Vector3(33f, -1f, 0f);
+                rectTrans = (RectTransform)sliderBg.transform.Find("max-fg").transform;
+                rectTrans.sizeDelta = new Vector2(64f, 4f);
+                rectTrans.anchorMax = new Vector2(0f, 1f);
+                rectTrans.anchorMin = new Vector2(0f, 1f);
+                rectTrans.pivot = new Vector2(0f, 1f);
+                rectTrans.localPosition = new Vector3(1f, -1f, 0f);
+                UnityEngine.Object.Destroy(sliderBg.GetComponent<Slider>());
+                UnityEngine.Object.Destroy(sliderBg.transform.Find("thumb").gameObject);
+                UnityEngine.Object.Destroy(sliderBg.transform.Find("speed-text").gameObject);
+                sliderBg.gameObject.SetActive(true);
+
+                var countText = UnityEngine.Object.Instantiate(infoText, Vector3.zero, Quaternion.identity, _tipPrefab.transform);
+                countText.name = "countText" + index;
+                var text = countText.GetComponent<Text>();
+                text.fontSize = 16;
+                text.text = "";
+                text.alignment = TextAnchor.UpperRight;
+                rectTrans = (RectTransform)countText.transform;
+                rectTrans.sizeDelta = new Vector2(70f, 20f);
+                rectTrans.anchorMax = new Vector2(0f, 1f);
+                rectTrans.anchorMin = new Vector2(0f, 1f);
+                rectTrans.pivot = new Vector2(0f, 1f);
+                rectTrans.anchoredPosition3D = new Vector3(30f, y, 0);
+                UnityEngine.Object.Destroy(countText.GetComponent<Shadow>());
+
                 var stateLocal = UnityEngine.Object.Instantiate(iconTrans.gameObject, new Vector3(0, 0, 0), Quaternion.identity, _tipPrefab.transform);
                 stateLocal.name = "iconLocal" + index;
                 stateLocal.GetComponent<Image>().material = null;
@@ -571,7 +609,7 @@ public static class LogisticsPatch
                 rectTrans.anchoredPosition3D = new Vector3(115f, y, 0);
             }
 
-            for (var i = 0; i < 3; i++)
+            for (var i = 0; i < CarrierSlotCount; i++)
             {
                 var iconObj = UnityEngine.Object.Instantiate(GameObject.Find("UI Root/Overlay Canvas/In Game/Top Tips/Entity Briefs/brief-info-top/brief-info/content/icons/icon"),
                     new Vector3(0, 0, 0), Quaternion.identity, _tipPrefab.transform);
@@ -587,7 +625,7 @@ public static class LogisticsPatch
                 rectTrans.anchorMax = new Vector2(0f, 1f);
                 rectTrans.anchorMin = new Vector2(0f, 1f);
                 rectTrans.pivot = new Vector2(0f, 1f);
-                rectTrans.anchoredPosition3D = new Vector3(17f + i * 40f, -180f, 0);
+                rectTrans.anchoredPosition3D = new Vector3(0f, -180f, 0);
 
                 var countText = UnityEngine.Object.Instantiate(infoText, Vector3.zero, Quaternion.identity, iconObj.transform);
                 UnityEngine.Object.Destroy(countText.GetComponent<Shadow>());
@@ -604,7 +642,7 @@ public static class LogisticsPatch
                 rectTrans.pivot = new Vector2(0f, 1f);
                 rectTrans.localPosition = new Vector3(0f, -18f, 0f);
 
-                if (i >= 2) continue;
+                if (i >= CarrierSlotCount - 1) continue;
 
                 countText = UnityEngine.Object.Instantiate(infoText, Vector3.zero, Quaternion.identity, iconObj.transform);
                 UnityEngine.Object.Destroy(countText.GetComponent<Shadow>());
@@ -647,10 +685,12 @@ public static class LogisticsPatch
             private Text[] _carrierIdleCountText;
 
             private GameObject _infoText;
+            private StationComponent _currentStation;
             private EStationTipLayout _layout = EStationTipLayout.None;
             private int _storageNum;
-            private static readonly Dictionary<int, Sprite> ItemSprites = new();
+            private readonly StorageItemData[] _storageItems = new StorageItemData[5];
 
+            private static readonly Dictionary<int, Sprite> ItemSprites = new();
             private static readonly Color[] StateColor = [Color.gray, SupplyColor, DemandColor];
 
             private static readonly Sprite[] StateSprite =
@@ -672,28 +712,29 @@ public static class LogisticsPatch
             public void InitStationTip()
             {
                 rectTransform = (RectTransform)transform;
-                _icons = new Transform[5];
-                _iconLocals = new Transform[5];
-                _iconRemotes = new Transform[5];
-                _iconsImage = new Image[5];
-                _iconLocalsImage = new Image[5];
-                _iconRemotesImage = new Image[5];
-                _countTexts = new Transform[5];
-                _countTextsText = new Text[5];
+                _icons = new Transform[StorageSlotCount];
+                _iconLocals = new Transform[StorageSlotCount];
+                _iconRemotes = new Transform[StorageSlotCount];
+                _iconsImage = new Image[StorageSlotCount];
+                _iconLocalsImage = new Image[StorageSlotCount];
+                _iconRemotesImage = new Image[StorageSlotCount];
+                _countTexts = new Transform[StorageSlotCount];
+                _countTextsText = new Text[StorageSlotCount];
                 _carrierIcons = new Transform[3];
                 _carrierTotalCountText = new Text[3];
                 _carrierIdleCountText = new Text[2];
 
                 _infoText = transform.Find("info-text").gameObject;
-                for (var i = 0; i < 3; i++)
+                for (var i = CarrierSlotCount - 1; i >= 0; i--)
                 {
                     _carrierIcons[i] = transform.Find("carrierIcon" + i);
+                    _carrierIcons[i].gameObject.SetActive(false);
                     _carrierTotalCountText[i] = _carrierIcons[i].Find("carrierTotalCountText").GetComponent<Text>();
-                    if (i >= 2) continue;
+                    if (i >= CarrierSlotCount - 1) continue;
                     _carrierIdleCountText[i] = _carrierIcons[i].Find("carrierIdleCountText").GetComponent<Text>();
                 }
 
-                for (var i = 0; i < 5; i++)
+                for (var i = StorageSlotCount - 1; i >= 0; i--)
                 {
                     _countTexts[i] = transform.Find("countText" + i);
                     _countTextsText[i] = _countTexts[i].GetComponent<Text>();
@@ -707,9 +748,32 @@ public static class LogisticsPatch
                     _icons[i].gameObject.SetActive(false);
                     _iconLocals[i].gameObject.SetActive(false);
                     _iconRemotes[i].gameObject.SetActive(false);
+                    _storageItems[i] = (-1, -1, ELogisticStorage.None, ELogisticStorage.None);
                 }
 
                 _infoText.SetActive(false);
+            }
+
+            public void ResetStationTip()
+            {
+                _currentStation = null;
+                _layout = EStationTipLayout.None;
+                for (var i = StorageSlotCount - 1; i >= 0; i--)
+                {
+                    _countTexts[i].gameObject.SetActive(false);
+                    _icons[i].gameObject.SetActive(false);
+                    _iconLocals[i].gameObject.SetActive(false);
+                    _iconRemotes[i].gameObject.SetActive(false);
+                    _storageItems[i] = (-1, -1, ELogisticStorage.None, ELogisticStorage.None);
+                    _countTextsText[i].color = StateColor[0];
+                    _iconLocalsImage[i].color = StateColor[0];
+                    _iconRemotesImage[i].color = StateColor[0];
+                }
+
+                for (var i = CarrierSlotCount - 1; i >= 0; i--)
+                {
+                    _carrierIcons[i].gameObject.SetActive(false);
+                }
             }
 
             private static Sprite GetItemSprite(int itemId)
@@ -721,142 +785,143 @@ public static class LogisticsPatch
                 return sprite;
             }
 
-            public void SetItem(int i, StationStore storage, bool isStellar, bool isCollector)
+            public void SetItem(int i, StationStore storage)
             {
+                var (oldItemId, oldItemCount, oldLocalState, oldRemoteState) = _storageItems[i];
                 var itemId = storage.itemId;
+                var itemCount = storage.count;
                 var icon = _icons[i];
                 var iconLocal = _iconLocals[i];
                 var iconRemote = _iconRemotes[i];
                 var countUIText = _countTextsText[i];
-                if (itemId <= 0)
+                if (oldItemCount != itemCount)
                 {
-                    icon.gameObject.SetActive(false);
-                    iconLocal.gameObject.SetActive(false);
-                    iconRemote.gameObject.SetActive(false);
-                    countUIText.color = Color.gray;
-                    countUIText.text = "—  ";
-                    return;
+                    _storageItems[i].Item2 = itemCount;
+                    countUIText.text = itemCount.ToString();
+                }
+                if (itemId != oldItemId)
+                {
+                    _storageItems[i].Item1 = itemId;
+                    if (itemId <= 0)
+                    {
+                        icon.gameObject.SetActive(false);
+                        iconLocal.gameObject.SetActive(false);
+                        iconRemote.gameObject.SetActive(false);
+                        countUIText.color = StateColor[0];
+                        countUIText.text = "—  ";
+                        return;
+                    }
+                    _iconsImage[i].sprite = GetItemSprite(itemId);
+                    icon.gameObject.SetActive(true);
                 }
 
-                _iconsImage[i].sprite = GetItemSprite(itemId);
-                icon.gameObject.SetActive(true);
-                countUIText.text = storage.count.ToString(CultureInfo.CurrentCulture);
-                if (isCollector) return;
-                var iconLocalImage = _iconLocalsImage[i];
-                var localLogic = storage.localLogic;
-                iconLocalImage.sprite = StateSprite[(int)localLogic];
-                iconLocalImage.color = StateColor[(int)localLogic];
-                iconLocal.gameObject.SetActive(true);
-                if (isStellar)
+                switch (_layout)
                 {
-                    var iconRemoteImage = _iconRemotesImage[i];
-                    var remoteLogic = storage.remoteLogic;
-                    iconRemoteImage.sprite = StateSprite[(int)remoteLogic];
-                    iconRemoteImage.color = StateColor[(int)remoteLogic];
-                    iconRemote.gameObject.SetActive(true);
-                    countUIText.color = iconRemoteImage.color;
-                }
-                else
-                {
-                    iconRemote.gameObject.SetActive(false);
-                    countUIText.color = iconLocalImage.color;
+                    case EStationTipLayout.InterstellarLogistics:
+                    {
+                        var localLogic = storage.localLogic;
+                        if (oldLocalState != localLogic)
+                        {
+                            _storageItems[i].Item3 = localLogic;
+                            var iconLocalImage = _iconLocalsImage[i];
+                            iconLocalImage.sprite = StateSprite[(int)localLogic];
+                            iconLocalImage.color = StateColor[(int)localLogic];
+                            iconLocal.gameObject.SetActive(true);
+                        }
+                        var remoteLogic = storage.remoteLogic;
+                        if (oldRemoteState != remoteLogic)
+                        {
+                            _storageItems[i].Item4 = remoteLogic;
+                            var iconRemoteImage = _iconRemotesImage[i];
+                            iconRemoteImage.sprite = StateSprite[(int)remoteLogic];
+                            iconRemoteImage.color = StateColor[(int)remoteLogic];
+                            iconRemote.gameObject.SetActive(true);
+                            countUIText.color = iconRemoteImage.color;
+                        }
+
+                        break;
+                    }
+                    case EStationTipLayout.VeinCollector:
+                    case EStationTipLayout.PlanetaryLogistics:
+                    {
+                        var localLogic = storage.localLogic;
+                        if (oldLocalState != localLogic)
+                        {
+                            _storageItems[i].Item3 = localLogic;
+                            var iconLocalImage = _iconLocalsImage[i];
+                            iconLocalImage.sprite = StateSprite[(int)localLogic];
+                            iconLocalImage.color = StateColor[(int)localLogic];
+                            iconLocal.gameObject.SetActive(true);
+                            countUIText.color = iconLocalImage.color;
+                        }
+                        iconRemote.gameObject.SetActive(false);
+                        break;
+                    }
+                    case EStationTipLayout.None:
+                    case EStationTipLayout.Collector:
+                    default:
+                        break;
                 }
             }
 
+            private static readonly bool[][] CarrierEnabled = [
+                [false, false, false],
+                [false, false, false],
+                [false, false, false],
+                [true, false, false],
+                [true, true, true],
+            ];
+            private static readonly int[] StorageNums = [0, 2, 1, 4, 5];
+            private static readonly float[] TipWindowWidths = [0f, 100f, 120f, 120f, 143f];
+            private static readonly float[] TipWindowExtraHeights = [0f, 5f, 5f, 40f, 40f];
+            private static readonly float[] CarrierPositionX = [5f, 45f, 108f];
+
             public void UpdateStationInfo(StationComponent stationComponent, PlanetFactory factory)
             {
+                if (_currentStation != stationComponent)
+                {
+                    _currentStation = stationComponent;
+                    var layout = stationComponent.isCollector ? EStationTipLayout.Collector :
+                        stationComponent.isVeinCollector ? EStationTipLayout.VeinCollector :
+                        stationComponent.isStellar ? EStationTipLayout.InterstellarLogistics : EStationTipLayout.PlanetaryLogistics;
+
+                    if (_layout != layout)
+                    {
+                        _layout = layout;
+                        for (var i = StorageSlotCount - 1; i >= 0; i--)
+                        {
+                            _iconLocals[i].gameObject.SetActive(false);
+                            _iconRemotes[i].gameObject.SetActive(false);
+                            _icons[i].gameObject.SetActive(false);
+                        }
+
+                        _storageNum = Math.Min(StorageNums[(int)layout], stationComponent.storage.Length);
+                        rectTransform.sizeDelta = new Vector2(TipWindowWidths[(int)layout], TipWindowExtraHeights[(int)layout] + 35f * _storageNum);
+                        for (var i = StorageSlotCount - 1; i >= 0; i--)
+                        {
+                            _countTexts[i].gameObject.SetActive(i < _storageNum);
+                        }
+
+                        for (var i = CarrierSlotCount - 1; i >= 0; i--)
+                        {
+                            var active = CarrierEnabled[(int)layout][i];
+                            _carrierIcons[i].gameObject.SetActive(active);
+                            if (!active) continue;
+                            var rectTrans = (RectTransform)_carrierIcons[i].transform;
+                            rectTrans.anchoredPosition3D = new Vector3(CarrierPositionX[i], -5f - 35f * _storageNum, 0);
+                        }
+                    }
+                }
+
                 var storageArray = stationComponent.storage;
-                EStationTipLayout layout;
-                if (stationComponent.isCollector)
-                {
-                    layout = EStationTipLayout.Collector;
-                }
-                else if (!stationComponent.isStellar)
-                {
-                    layout = stationComponent.isVeinCollector ? EStationTipLayout.VeinCollector : EStationTipLayout.PlanetaryLogistics;
-                }
-                else
-                {
-                    layout = EStationTipLayout.InterstellarLogistics;
-                }
-
-                if (layout != _layout)
-                {
-                    _layout = layout;
-                    for (var i = 5 - 1; i >= 0; i--)
-                    {
-                        _countTexts[i].gameObject.SetActive(false);
-                        _iconLocals[i].gameObject.SetActive(false);
-                        _iconRemotes[i].gameObject.SetActive(false);
-                        _icons[i].gameObject.SetActive(false);
-                    }
-
-                    for (var i = 2; i >= 0; i--)
-                    {
-                        _carrierIcons[i].gameObject.SetActive(false);
-                        _carrierTotalCountText[i].text = "";
-                        if (i < 2) _carrierIdleCountText[i].text = "";
-                    }
-
-                    var tipWindowWidth = 143f;
-                    var tipWindowHeight = 5f;
-                    switch (layout)
-                    {
-                        case EStationTipLayout.Collector:
-                            _storageNum = 2;
-                            tipWindowWidth = 100f;
-                            _carrierIcons[0].gameObject.SetActive(false);
-                            _carrierIcons[1].gameObject.SetActive(false);
-                            _carrierIcons[2].gameObject.SetActive(false);
-                            break;
-                        case EStationTipLayout.VeinCollector:
-                            _storageNum = 1;
-                            tipWindowWidth = 120f;
-                            _carrierIcons[0].gameObject.SetActive(false);
-                            _carrierIcons[1].gameObject.SetActive(false);
-                            _carrierIcons[2].gameObject.SetActive(false);
-                            break;
-                        case EStationTipLayout.PlanetaryLogistics:
-                            _storageNum = Math.Min(storageArray.Length, 4);
-                            tipWindowHeight += 35f;
-                            tipWindowWidth = 120f;
-                            _carrierIcons[0].gameObject.SetActive(true);
-                            _carrierIcons[1].gameObject.SetActive(false);
-                            _carrierIcons[2].gameObject.SetActive(false);
-                            break;
-                        case EStationTipLayout.InterstellarLogistics:
-                            _storageNum = Math.Min(storageArray.Length, 5);
-                            tipWindowHeight += 35f;
-                            _carrierIcons[0].gameObject.SetActive(true);
-                            _carrierIcons[1].gameObject.SetActive(true);
-                            _carrierIcons[2].gameObject.SetActive(true);
-                            break;
-                    }
-
-                    for (var i = _storageNum - 1; i >= 0; i--)
-                    {
-                        _countTexts[i].gameObject.SetActive(true);
-                    }
-
-                    rectTransform.sizeDelta = new Vector2(tipWindowWidth, tipWindowHeight + 35f * _storageNum);
-
-                    for (var i = 0; i < 3; i++)
-                    {
-                        var rectTrans = (RectTransform)_carrierIcons[i].transform;
-                        rectTrans.anchoredPosition3D = new Vector3(rectTrans.anchoredPosition3D.x, -5f - 35f * _storageNum, 0);
-                    }
-                }
-
-                var isStellar = stationComponent.isStellar;
-                var isCollector = stationComponent.isCollector;
                 for (var j = _storageNum - 1; j >= 0; j--)
                 {
                     var storage = storageArray[j];
-                    SetItem(j, storage, isStellar, isCollector);
+                    SetItem(j, storage);
                 }
 
                 int currentCount, totalCount;
-                switch (layout)
+                switch (_layout)
                 {
                     case EStationTipLayout.PlanetaryLogistics:
                         totalCount = stationComponent.idleDroneCount + stationComponent.workDroneCount;
@@ -876,6 +941,11 @@ public static class LogisticsPatch
                         currentCount = stationComponent.warperCount;
                         _carrierTotalCountText[2].text = currentCount.ToString();
                         break;
+                    case EStationTipLayout.None:
+                    case EStationTipLayout.Collector:
+                    case EStationTipLayout.VeinCollector:
+                    default:
+                        break;
                 }
             }
         }
@@ -885,9 +955,16 @@ public static class LogisticsPatch
             foreach (var stationTip in _stationTips)
             {
                 if (!stationTip) continue;
-                stationTip.gameObject.SetActive(false);
                 if (_stationTipsRecycleCount < 128)
+                {
+                    stationTip.ResetStationTip();
+                    stationTip.gameObject.SetActive(false);
                     StationTipsRecycle[_stationTipsRecycleCount++] = stationTip;
+                }
+                else
+                {
+                    UnityEngine.Object.Destroy(stationTip);
+                }
             }
 
             Array.Clear(_stationTips, 0, _stationTips.Length);
