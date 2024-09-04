@@ -49,6 +49,7 @@ public static class UIConfigWindow
         I18N.Add("Boost solar power", "Boost solar power(x100,000)", "提升太阳能发电(x100,000)");
         I18N.Add("Boost fuel power", "Boost fuel power(x50,000)", "提升燃料发电(x50,000)");
         I18N.Add("Boost fuel power 2", "(x20,000 for deuteron, x10,000 for antimatter)", "(氘核燃料棒x20,000，反物质燃料棒x10,000)");
+        I18N.Add("Wind Turbines do global power coverage", "Wind Turbines do global power coverage", "风力涡轮机供电覆盖全球");
         I18N.Add("Boost geothermal power", "Boost geothermal power(x50,000)", "提升地热发电(x50,000)");
         I18N.Add("Increase maximum power usage in Logistic Stations and Advanced Mining Machines", "Increase maximum power usage in Logistic Stations and Advanced Mining Machines", "提升物流塔和大型采矿机的最大功耗");
         I18N.Add("Retrieve/Place items from/to remote planets on logistics control panel", "Retrieve/Place items from/to remote planets on logistics control panel", "在物流总控面板上可以从非本地行星取放物品");
@@ -145,6 +146,8 @@ public static class UIConfigWindow
         y = 10f;
         wnd.AddCheckBox(x, y, tab2, FactoryPatch.RemovePowerSpaceLimitEnabled, "Remove power space limit");
         y += 36f;
+        wnd.AddCheckBox(x, y, tab2, FactoryPatch.WindTurbinesPowerGlobalCoverageEnabled, "Wind Turbines do global power coverage");
+        y += 36f;
         wnd.AddCheckBox(x, y, tab2, FactoryPatch.BoostWindPowerEnabled, "Boost wind power");
         y += 36f;
         wnd.AddCheckBox(x, y, tab2, FactoryPatch.BoostSolarPowerEnabled, "Boost solar power");
@@ -152,9 +155,8 @@ public static class UIConfigWindow
         wnd.AddCheckBox(x, y, tab2, FactoryPatch.BoostGeothermalPowerEnabled, "Boost geothermal power");
         y += 36f;
         wnd.AddCheckBox(x, y, tab2, FactoryPatch.BoostFuelPowerEnabled, "Boost fuel power");
-        x += 32f;
         y += 26f;
-        wnd.AddText2(x, y, tab2, "Boost fuel power 2", 13);
+        wnd.AddText2(x + 32f, y, tab2, "Boost fuel power 2", 13);
 
         // Planet Tab
         var tab3 = wnd.AddTab(_windowTrans, "Planet");

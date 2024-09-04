@@ -20,14 +20,15 @@ public static class UIConfigWindow
         I18N.Add("Tech/Combat", "Tech/Combat", "科研/战斗");
         I18N.Add("Enable game window resize", "Enable game window resize (maximum box and thick frame)", "可调整游戏窗口大小(可最大化和拖动边框)");
         I18N.Add("Remeber window position and size on last exit", "Remeber window position and size on last exit", "记住上次退出时的窗口位置和大小");
-        I18N.Add("Mouse cursor scale up", "Mouse cursor scale up", "鼠标指针放大");
+        I18N.Add("Scale up mouse cursor", "Scale up mouse cursor", "放大鼠标指针");
         /*
         I18N.Add("Better auto-save mechanism", "Better auto-save mechanism", "更好的自动存档机制");
         I18N.Add("Better auto-save mechanism tips", "Auto saves are stored in 'Save\\AutoSaves' folder, filenames are combined with cluster address and date-time", "自动存档会以星区地址和日期时间组合为文件名存储在'Save\\AutoSaves'文件夹中");
         */
         I18N.Add("Convert old saves to Combat Mode on loading", "Convert old saves to Combat Mode on loading (Use settings in new game panel)", "读取旧档时转为战斗模式(使用新游戏面板的战斗难度设置)");
         I18N.Add("Profile-based save folder", "Mod manager profile based save folder", "基于mod管理器配置档案名的存档文件夹");
-        I18N.Add("Profile-based save folder tips", "Save files are stored in 'Save\\<ProfileName>' folder.\nWill use original save location if matching default profile name", "存档文件会存储在'Save\\<ProfileName>'文件夹中\n如果匹配默认配置档案名则使用原始存档位置");
+        I18N.Add("Profile-based save folder tips", "Save files are stored in 'Save\\<ProfileName>' folder.\nWill use original save location if matching default profile name",
+            "存档文件会存储在'Save\\<ProfileName>'文件夹中\n如果匹配默认配置档案名则使用原始存档位置");
         I18N.Add("Default profile name", "Default profile name", "默认配置档案名");
         I18N.Add("Unlimited interactive range", "Unlimited interactive range", "无限交互距离");
         I18N.Add("Night Light", "Sunlight at night", "夜间日光灯");
@@ -39,18 +40,26 @@ public static class UIConfigWindow
         I18N.Add("Enable player actions in globe view", "Enable player actions in globe view", "在行星视图中允许玩家操作");
         I18N.Add("Hide tips for soil piles changes", "Hide tips for soil piles changes", "隐藏沙土数量变动的提示");
         I18N.Add("Enhance control for logistic storage limits", "Enhance control for logistic storage limits", "物流塔存储限制控制改进");
-        I18N.Add("Enhance control for logistic storage limits tips", "Logistic storage limits are not scaled on upgrading 'Logistics Carrier Capacity', if they are not set to maximum capacity.\nUse arrow keys to adjust logistic storage limits:\n  \u2190/\u2192: -/+10  \u2193\u2191: -/+100", "当升级'运输机舱扩容'时，不会对各种物流塔的存储限制按比例提升，除非设置为最大允许容量。\n你可以使用方向键微调物流塔存储限制：\n  \u2190\u2192: -/+10  \u2193\u2191: -/+100");
+        I18N.Add("Enhance control for logistic storage limits tips",
+            "Logistic storage limits are not scaled on upgrading 'Logistics Carrier Capacity', if they are not set to maximum capacity.\nUse arrow keys to adjust logistic storage limits:\n  \u2190/\u2192: -/+10  \u2193\u2191: -/+100",
+            "当升级'运输机舱扩容'时，不会对各种物流塔的存储限制按比例提升，除非设置为最大允许容量。\n你可以使用方向键微调物流塔存储限制：\n  \u2190\u2192: -/+10  \u2193\u2191: -/+100");
         I18N.Add("Enhanced count control for hand-make", "Enhanced count control for hand-make", "手动制造物品的数量控制改进");
         I18N.Add("Enhanced count control for hand-make tips", "Maximum count is increased to 1000.\nHold Ctrl/Shift/Alt to change the count rapidly.", "最大数量提升至1000\n按住Ctrl/Shift/Alt可快速改变数量");
         I18N.Add("Quick build and dismantle stacking labs", "Quick build and dismantle stacking labs/storages/tanks(hold shift)", "快速建造和拆除堆叠研究站/储物仓/储液罐(按住shift)");
         I18N.Add("Protect veins from exhaustion", "Protect veins from exhaustion", "保护矿脉不会耗尽");
-        I18N.Add("Protect veins from exhaustion tips", "By default, the vein amount is protected at 100, and oil speed is protected at 1.0/s, you can set them yourself in config file.\nWhen reach the protection value, veins/oils steeps will not be mined/extracted any longer.\nClose this function to resume mining and pumping, usually when you have enough level on `Veins Utilization`", "默认矿脉数量保护于剩余100，采油速保护于速度1.0/s，你可以在配置文件中自行设置。\n当达到保护值时，矿脉和油井将不再被开采。\n关闭此功能以恢复开采，一般是当你在`矿物利用`上有足够的等级时。\n");
+        I18N.Add("Protect veins from exhaustion tips",
+            "By default, the vein amount is protected at 100, and oil speed is protected at 1.0/s, you can set them yourself in config file.\nWhen reach the protection value, veins/oils steeps will not be mined/extracted any longer.\nClose this function to resume mining and pumping, usually when you have enough level on `Veins Utilization`",
+            "默认矿脉数量保护于剩余100，采油速保护于速度1.0/s，你可以在配置文件中自行设置。\n当达到保护值时，矿脉和油井将不再被开采。\n关闭此功能以恢复开采，一般是当你在`矿物利用`上有足够的等级时。\n");
         I18N.Add("Do not render factory entities", "Do not render factory entities (except belts and sorters)", "不渲染工厂建筑实体(除了传送带和分拣器)");
         I18N.Add("Drag building power poles in maximum connection range", "Drag building power poles in maximum connection range", "拖动建造电线杆时自动使用最大连接距离间隔");
         I18N.Add("Allow overflow for Logistic Stations and Advanced Mining Machines", "Allow overflow for Logistic Stations and Advanced Mining Machines", "允许物流站和大型采矿机物品溢出");
         I18N.Add("Belt signals for buy out dark fog items automatically", "Belt signals for buy out dark fog items automatically", "用于自动购买黑雾物品的传送带信号");
         I18N.Add("Logistics Control Panel Improvement", "Logistics Control Panel Improvement", "物流控制面板改进");
-        I18N.Add("Logistics Control Panel Improvement tips", "Auto apply filter with item under mouse cursor while opening the panel\nQuick-set item filter while right-clicking item icons in storage list on the panel", "打开面板时自动将鼠标指向物品设为筛选条件\n在控制面板物流塔列表中右键点击物品图标快速设置为筛选条件");
+        I18N.Add("Logistics Control Panel Improvement tips",
+            "Auto apply filter with item under mouse cursor while opening the panel\nQuick-set item filter while right-clicking item icons in storage list on the panel",
+            "打开面板时自动将鼠标指向物品设为筛选条件\n在控制面板物流塔列表中右键点击物品图标快速设置为筛选条件");
+        I18N.Add("Real-time logistic stations info panel", "Real-time logistic stations info panel", "物流运输站实时信息面板");
+        I18N.Add("Show status bars for storage items", "Show status bars for storage items", "显示存储物品状态条");
         I18N.Add("Auto navigation on sailings", "Auto navigation on sailings", "宇宙航行时自动导航");
         I18N.Add("Enable auto-cruise", "Enable auto-cruise", "启用自动巡航");
         I18N.Add("Auto boost", "Auto boost", "自动加速");
@@ -84,12 +93,13 @@ public static class UIConfigWindow
     {
         public override int Min => 0;
         public override int Max => 40;
+
         public override string FormatValue(string format, int value)
         {
             return value == 0 ? "max".Translate() : base.FormatValue(format, value);
         }
     }
-    
+
     private class DistanceMapper : MyWindow.ValueMapper<double>
     {
         public override int Min => 1;
@@ -97,7 +107,7 @@ public static class UIConfigWindow
         public override double IndexToValue(int index) => index * 0.5;
         public override int ValueToIndex(double value) => Mathf.RoundToInt((float)(value * 2.0));
     }
-    
+
     private static void CreateUI(MyConfigWindow wnd, RectTransform trans)
     {
         MyCheckBox checkBoxForMeasureTipsPos;
@@ -111,7 +121,7 @@ public static class UIConfigWindow
         y += 36f;
         wnd.AddCheckBox(x, y, tab1, GamePatch.LoadLastWindowRectEnabled, "Remeber window position and size on last exit");
         y += 36f;
-        var txt = wnd.AddText2(x, y, tab1, "Mouse cursor scale up", 15, "text-mouse-cursor-scale-up");
+        var txt = wnd.AddText2(x, y, tab1, "Scale up mouse cursor", 15, "text-scale-up-mouse-cursor");
         x += txt.preferredWidth + 5f;
         wnd.AddSlider(x, y + 6f, tab1, GamePatch.MouseCursorScaleUpMultiplier, [1, 2, 3, 4], "0x", 100f);
         x = 0f;
@@ -176,17 +186,13 @@ public static class UIConfigWindow
         x = 400f;
         y = 10f;
         wnd.AddButton(x, y, tab2, "Initialize This Planet", 16, "button-init-planet", () =>
-            UIMessageBox.Show("Initialize This Planet".Translate(), "Initialize This Planet Confirm".Translate(), "取消".Translate(), "确定".Translate(), 2, null, () =>
-            {
-                PlanetFunctions.RecreatePlanet(true);
-            })
+            UIMessageBox.Show("Initialize This Planet".Translate(), "Initialize This Planet Confirm".Translate(), "取消".Translate(), "确定".Translate(), 2, null,
+                () => { PlanetFunctions.RecreatePlanet(true); })
         );
         y += 36f;
         wnd.AddButton(x, y, tab2, "Dismantle All Buildings", 16, "button-dismantle-all", () =>
-            UIMessageBox.Show("Dismantle All Buildings".Translate(), "Dismantle All Buildings Confirm".Translate(), "取消".Translate(), "确定".Translate(), 2, null, () =>
-            {
-                PlanetFunctions.DismantleAll(false);
-            })
+            UIMessageBox.Show("Dismantle All Buildings".Translate(), "Dismantle All Buildings Confirm".Translate(), "取消".Translate(), "确定".Translate(), 2, null,
+                () => { PlanetFunctions.DismantleAll(false); })
         );
         y += 72f;
         wnd.AddButton(x, y, 200, tab2, "Quick build Orbital Collectors", 16, "button-init-planet", PlanetFunctions.BuildOrbitalCollectors);
@@ -202,10 +208,17 @@ public static class UIConfigWindow
         wnd.AddCheckBox(x, y, tab2, LogisticsPatch.AllowOverflowInLogisticsEnabled, "Allow overflow for Logistic Stations and Advanced Mining Machines");
         y += 36f;
         checkBoxForMeasureTipsPos = wnd.AddCheckBox(x, y, tab2, LogisticsPatch.LogisticsConstrolPanelImprovementEnabled, "Logistics Control Panel Improvement");
-        x += checkBoxForMeasureTipsPos.Width + 5f;
-        y += 6f;
-        wnd.AddTipsButton2(x, y, tab2, "Logistics Control Panel Improvement", "Logistics Control Panel Improvement tips", "lcp-improvement-tips");
-        // x -= 200f;
+        wnd.AddTipsButton2(x + checkBoxForMeasureTipsPos.Width + 5f, y + 6f, tab2, "Logistics Control Panel Improvement", "Logistics Control Panel Improvement tips", "lcp-improvement-tips");
+        y += 36f;
+        var cb0 = wnd.AddCheckBox(x, y, tab2, LogisticsPatch.RealtimeLogisticsInfoPanelEnabled, "Real-time logistic stations info panel");
+        var cb1 = wnd.AddCheckBox(x + 26f, y + 26f, tab2, LogisticsPatch.RealtimeLogisticsInfoPanelBarsEnabled, "Show status bars for storage items", 13);
+        if (AuxilaryfunctionWrapper.ShowStationInfo != null)
+        {
+            AuxilaryfunctionWrapper.ShowStationInfo.SettingChanged += (_, _) => { OnAuxilaryInfoPanelChanged(); };
+        }
+        LogisticsPatch.RealtimeLogisticsInfoPanelEnabled.SettingChanged += (_, _) => { OnRealtimeLogisticsInfoPanelChanged(); };
+        OnAuxilaryInfoPanelChanged();
+        OnRealtimeLogisticsInfoPanelChanged();
 
         var tab3 = wnd.AddTab(trans, "Player/Mecha");
         x = 0f;
@@ -224,15 +237,14 @@ public static class UIConfigWindow
         y += 30f;
         wnd.AddCheckBox(x, y, tab3, PlayerPatch.AutoNavigationEnabled, "Auto navigation on sailings");
         x = 20f;
-        y += 36f;
-        wnd.AddCheckBox(x, y, tab3, PlayerPatch.AutoCruiseEnabled, "Enable auto-cruise", 14);
+        y += 26f;
+        wnd.AddCheckBox(x, y, tab3, PlayerPatch.AutoCruiseEnabled, "Enable auto-cruise", 13);
         x = 10f;
-        y += 32f;
-        wnd.AddCheckBox(x, y, tab3, PlayerPatch.AutoBoostEnabled, "Auto boost", 15);
+        y += 26f;
+        wnd.AddCheckBox(x, y, tab3, PlayerPatch.AutoBoostEnabled, "Auto boost", 13);
         y += 32f;
         wnd.AddText2(x, y, tab3, "Distance to use warp", 15, "text-distance-to-warp");
         y += 24f;
-
         wnd.AddSlider(x, y, tab3, PlayerPatch.DistanceToWarp, new DistanceMapper(), "0.0", 200f);
 
         var tab4 = wnd.AddTab(trans, "Dyson Sphere");
@@ -244,10 +256,8 @@ public static class UIConfigWindow
         x = 400f;
         y = 10f;
         wnd.AddButton(x, y, tab4, "Initialize Dyson Sphere", 16, "init-dyson-sphere", () =>
-            UIMessageBox.Show("Initialize Dyson Sphere".Translate(), "Initialize Dyson Sphere Confirm".Translate(), "取消".Translate(), "确定".Translate(), 2, null, () =>
-            {
-                DysonSpherePatch.InitCurrentDysonSphere(-1);
-            })
+            UIMessageBox.Show("Initialize Dyson Sphere".Translate(), "Initialize Dyson Sphere Confirm".Translate(), "取消".Translate(), "确定".Translate(), 2, null,
+                () => { DysonSpherePatch.InitCurrentDysonSphere(-1); })
         );
         y += 36f;
         wnd.AddText2(x, y, tab4, "Click to dismantle selected layer", 16, "text-dismantle-layer");
@@ -256,10 +266,8 @@ public static class UIConfigWindow
         {
             var id = i + 1;
             var btn = wnd.AddFlatButton(x, y, tab4, id.ToString(), 12, "dismantle-layer-" + id, () =>
-                UIMessageBox.Show("Dismantle selected layer".Translate(), "Dismantle selected layer Confirm".Translate(), "取消".Translate(), "确定".Translate(), 2, null, () =>
-                {
-                    DysonSpherePatch.InitCurrentDysonSphere(id);
-                })
+                UIMessageBox.Show("Dismantle selected layer".Translate(), "Dismantle selected layer Confirm".Translate(), "取消".Translate(), "确定".Translate(), 2, null,
+                    () => { DysonSpherePatch.InitCurrentDysonSphere(id); })
             );
             ((RectTransform)btn.transform).sizeDelta = new Vector2(40f, 20f);
             DysonLayerBtn[i] = btn;
@@ -280,7 +288,7 @@ public static class UIConfigWindow
         y += 24f;
         wnd.AddSlider(x, y, tab4, DysonSpherePatch.AutoConstructMultiplier, [1, 2, 5, 10, 20, 50, 100], "0", 200f);
         _dysonTab = tab4;
-        
+
         var tab5 = wnd.AddTab(_windowTrans, "Tech/Combat");
         x = 10;
         y = 10;
@@ -312,6 +320,30 @@ public static class UIConfigWindow
             uiGame.CloseEnemyBriefInfo();
             uiGame.OpenCommunicatorWindow(5);
         });
+        return;
+
+        void OnAuxilaryInfoPanelChanged()
+        {
+            if (AuxilaryfunctionWrapper.ShowStationInfo == null)
+            {
+                cb0.gameObject.SetActive(true);
+                cb1.gameObject.SetActive(true);
+                return;
+            }
+            var on = !AuxilaryfunctionWrapper.ShowStationInfo.Value;
+            cb0.gameObject.SetActive(on);
+            cb1.gameObject.SetActive(on);
+            if (!on)
+            {
+                LogisticsPatch.RealtimeLogisticsInfoPanelEnabled.Value = false;
+            }
+        }
+
+        void OnRealtimeLogisticsInfoPanelChanged()
+        {
+            var on = LogisticsPatch.RealtimeLogisticsInfoPanelEnabled.Value;
+            cb1.gameObject.SetActive(on);
+        }
     }
 
     private static void UpdateUI()

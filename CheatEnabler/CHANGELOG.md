@@ -1,7 +1,9 @@
 ## Changlog
 
 * 2.3.25
-  + New feature: `Enable warp without space warpers` 
+  + New feature: `Enable warp without space warpers`
+  + New feature: `Wind Turbines do global power coverage`
+  + Fix an issue that `Complete Dyson Sphere Shells instantly` does not generate production records for solar sails.
 * 2.3.24
   + `Complete Dyson Sphere Shells instantly`: Fix a bug that may cause negative power in some cases
 * 2.3.23
@@ -131,6 +133,8 @@
 
 * 2.3.25
   + 新功能：`无需空间翘曲器即可曲速飞行`
+  + 新功能：`风力涡轮机供电覆盖全球`
+  + 修复了`立即完成戴森壳建造`未生成太阳帆生产记录的问题
 * 2.3.24
   + `立即完成戴森壳建造`：修复了在某些情况下可能导致发电为负的问题
 * 2.3.23

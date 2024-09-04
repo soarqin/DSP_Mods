@@ -44,6 +44,8 @@ public class CheatEnabler : BaseUnityPlugin
             "Boost fuel power");
         FactoryPatch.BoostGeothermalPowerEnabled = Config.Bind("Build", "BoostGeothermalPower", false,
             "Boost geothermal power");
+        FactoryPatch.WindTurbinesPowerGlobalCoverageEnabled = Config.Bind("Build", "PowerGlobalCoverage", false,
+            "Global power coverage");
         FactoryPatch.GreaterPowerUsageInLogisticsEnabled = Config.Bind("Build", "GreaterPowerUsageInLogistics", false,
             "Increase maximum power usage in Logistic Stations and Advanced Mining Machines");
         FactoryPatch.ControlPanelRemoteLogisticsEnabled = Config.Bind("Build", "ControlPanelRemoteLogistics", false,

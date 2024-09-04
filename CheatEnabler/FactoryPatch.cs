@@ -26,6 +26,7 @@ public static class FactoryPatch
     public static ConfigEntry<bool> BoostSolarPowerEnabled;
     public static ConfigEntry<bool> BoostFuelPowerEnabled;
     public static ConfigEntry<bool> BoostGeothermalPowerEnabled;
+    public static ConfigEntry<bool> WindTurbinesPowerGlobalCoverageEnabled;
     public static ConfigEntry<bool> GreaterPowerUsageInLogisticsEnabled;
     public static ConfigEntry<bool> ControlPanelRemoteLogisticsEnabled;
 
@@ -69,6 +70,7 @@ public static class FactoryPatch
         BoostSolarPowerEnabled.SettingChanged += (_, _) => BoostSolarPower.Enable(BoostSolarPowerEnabled.Value);
         BoostFuelPowerEnabled.SettingChanged += (_, _) => BoostFuelPower.Enable(BoostFuelPowerEnabled.Value);
         BoostGeothermalPowerEnabled.SettingChanged += (_, _) => BoostGeothermalPower.Enable(BoostGeothermalPowerEnabled.Value);
+        WindTurbinesPowerGlobalCoverageEnabled.SettingChanged += (_, _) => WindTurbinesPowerGlobalCoverage.Enable(WindTurbinesPowerGlobalCoverageEnabled.Value);
         GreaterPowerUsageInLogisticsEnabled.SettingChanged += (_, _) => GreaterPowerUsageInLogistics.Enable(GreaterPowerUsageInLogisticsEnabled.Value);
         ControlPanelRemoteLogisticsEnabled.SettingChanged += (_, _) => ControlPanelRemoteLogistics.Enable(ControlPanelRemoteLogisticsEnabled.Value);
         ImmediateBuild.Enable(ImmediateEnabled.Value);
@@ -85,6 +87,7 @@ public static class FactoryPatch
         ControlPanelRemoteLogistics.Enable(ControlPanelRemoteLogisticsEnabled.Value);
         _factoryPatch = Harmony.CreateAndPatchAll(typeof(FactoryPatch));
         GameLogic.OnGameBegin += GameMain_Begin_Postfix_For_ImmBuild;
+        GameLogic.OnDataLoaded += () => WindTurbinesPowerGlobalCoverage.Enable(WindTurbinesPowerGlobalCoverageEnabled.Value);
     }
 
     public static void Uninit()
@@ -101,6 +104,7 @@ public static class FactoryPatch
         BoostSolarPower.Enable(false);
         BoostFuelPower.Enable(false);
         BoostGeothermalPower.Enable(false);
+        WindTurbinesPowerGlobalCoverage.Enable(false);
         GreaterPowerUsageInLogistics.Enable(false);
         ControlPanelRemoteLogistics.Enable(false);
     }
@@ -1317,6 +1321,57 @@ public static class FactoryPatch
                 new CodeInstruction(OpCodes.Ret)
             );
             return matcher.InstructionEnumeration();
+        }
+    }
+
+    private static class WindTurbinesPowerGlobalCoverage
+    {
+        private static bool _patched;
+        private static PrefabDesc _prefabdesc;
+        private static float _oldCoverRadius;
+        private static float _oldConnectDistance;
+
+        public static void Enable(bool enable)
+        {
+            if (enable)
+            {
+                if (_patched) return;
+                _patched = true;
+                var itemProto = LDB.items.Select(2203);
+                _oldCoverRadius = itemProto.prefabDesc.powerCoverRadius;
+                _oldConnectDistance = itemProto.prefabDesc.powerConnectDistance;
+                itemProto.prefabDesc.powerCoverRadius = 500f;
+                itemProto.prefabDesc.powerConnectDistance = 500f;
+                _prefabdesc = itemProto.prefabDesc;
+            }
+            else
+            {
+                if (!_patched) return;
+                _patched = false;
+                _prefabdesc.powerCoverRadius = _oldCoverRadius;
+                _prefabdesc.powerConnectDistance = _oldConnectDistance;
+            }
+
+            foreach (var factory in GameMain.data.factories)
+            {
+                var powerSystem = factory?.powerSystem;
+                if (powerSystem == null) continue;
+                for (var i = powerSystem.nodeCursor - 1; i >= 0; i--)
+                {
+                    ref var node = ref powerSystem.nodePool[i];
+                    if (node.id != i) continue;
+                    ref var entity = ref factory.entityPool[node.entityId];
+                    if (entity.protoId != 2203) continue;
+                    powerSystem.OnNodeRemoving(i);
+                    node.connectDistance = _prefabdesc.powerConnectDistance;
+                    node.coverRadius = _prefabdesc.powerCoverRadius;
+                    powerSystem.OnNodeAdded(i);
+                }
+                if (factory.planet.factoryLoaded)
+                {
+                    factory.planet.factoryModel.RefreshPowerNodes();
+                }
+            }
         }
     }
 

@@ -31,6 +31,7 @@
       - Advanced Mining Machines: Increased max mining speed to 1000%
     + Retrieve/Place items from/to remote planets on logistics control panel
     + Remove space limit between wind turbines and solar panels
+    + Wind Turbines do global power coverage
     + Boost power generations for kinds of power generators
   + Planet:
     + Infinite Natural Resources
@@ -90,6 +91,7 @@
       - 大型采矿机：将最大采矿速度提高到1000%
     + 在物流总控面板上可以从非本地行星取放物品
     + 风力发电机和太阳能板无间距限制
+    + 风力涡轮机供电覆盖全球
     + 提升各种发电设备发电量
   + 行星：
     + 自然资源采集不消耗

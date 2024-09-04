@@ -1,5 +1,12 @@
 ## Changlog
 
+* 1.1.6
+  + New feature: `Scale up mouse cursor`
+    - Note: This will enable software cursor mode, which may cause mouse movement lag on heavy load.
+  + New feature: `Real-time logistic stations info panel`
+    - Note: This function will be hidden if you enabled `Show station info` in mod `Auxilaryfunction`. 
+  + Fix an issue that `Dyson Sphere "Auto Fast Build"` does not generate production records for solar sails.
+  + Remove use of AssetBundle, move all icons into `Assembly Resources`, for better flexibility.
 * 1.1.5
   + New feature: `Logistics Control Panel Improvement`
     - Auto apply filter with item under mouse cursor while opening the panel
@@ -154,6 +161,13 @@
 
 ## 更新日志
 
+* 1.1.6
+  + 新功能：`放大鼠标指针`
+    - 注意：这将启用软件指针模式，可能会在CPU负载较重时导致鼠标移动延迟
+  + 新功能：`物流运输站实时信息面板`
+    - 注意：如果你启用了`Auxilaryfunction`中的`展示物流站信息`，此功能将被隐藏
+  + 修复了`戴森球自动快速建造`未生成太阳帆生产记录的问题
+  + 移除了AssetBundle的使用，将所有图标移入`Assembly资源`，以获得更好的灵活性
 * 1.1.5
   + 新功能：`物流控制面板改进`
     - 打开面板时自动将鼠标指向物品设为筛选条件

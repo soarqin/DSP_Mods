@@ -21,6 +21,8 @@
     - Enable game window resize
     - Remember window position and size on last exit
     - Convert Peace-Mode saves to Combat-Mode on loading
+    - Scale up mouse cursor
+      - Note: This will enable software cursor mode, which may cause mouse movement lag on heavy load.
     - Mod manager profile based save folder
       - Save files are stored in `Save\<ProfileName>` folder.
       - Will use original save location if matching default profile name.
@@ -51,6 +53,7 @@
     - Logistics Control Panel Improvement
       - Auto apply filter with item under mouse cursor while opening the panel
       - Quick-set item filter while right-clicking item icons in storage list on the panel
+    - Real-time logistic stations info panel
     - Re-intialize planet (without reseting veins)
     - Quick dismantle all buildings (without drops)
     - Quick build Orbital Collectors
@@ -122,6 +125,8 @@
     - 可调整游戏窗口大小(可最大化和拖动边框)
     - 记住上次退出时的窗口位置和大小
     - 在加载和平模式存档时将其转换为战斗模式
+    - 放大鼠标指针
+      - 注意：这将启用软件指针模式，可能会在CPU负载较重时导致鼠标移动延迟
     - 基于mod管理器配置档案名的存档文件夹
       - 存档文件会存储在`Save\<ProfileName>`文件夹中
       - 如果匹配默认配置档案名则使用原始存档位置
@@ -151,6 +156,8 @@
     - 物流控制面板改进
       - 打开面板时自动将鼠标指向物品设为筛选条件
       - 在控制面板物流塔列表中右键点击物品图标快速设置为筛选条件
+    - 物流运输站实时信息面板
+      - 注意：如果你启用了`Auxilaryfunction`中的`展示物流站信息`，此功能将被隐藏
     - 初始化本行星（不重置矿脉）
     - 快速拆除所有建筑（不掉落）
     - 快速建造轨道采集器
