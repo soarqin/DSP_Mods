@@ -1330,6 +1330,8 @@ public static class FactoryPatch
         private static PrefabDesc _prefabdesc;
         private static float _oldCoverRadius;
         private static float _oldConnectDistance;
+        private const int WindTurbineId = 2203;
+        private const float WindTurbineNewCoverageDistance = 500f;
 
         public static void Enable(bool enable)
         {
@@ -1337,11 +1339,11 @@ public static class FactoryPatch
             {
                 if (_patched) return;
                 _patched = true;
-                var itemProto = LDB.items.Select(2203);
+                var itemProto = LDB.items.Select(WindTurbineId);
                 _oldCoverRadius = itemProto.prefabDesc.powerCoverRadius;
                 _oldConnectDistance = itemProto.prefabDesc.powerConnectDistance;
-                itemProto.prefabDesc.powerCoverRadius = 500f;
-                itemProto.prefabDesc.powerConnectDistance = 500f;
+                itemProto.prefabDesc.powerCoverRadius = WindTurbineNewCoverageDistance;
+                itemProto.prefabDesc.powerConnectDistance = WindTurbineNewCoverageDistance;
                 _prefabdesc = itemProto.prefabDesc;
             }
             else
@@ -1352,6 +1354,7 @@ public static class FactoryPatch
                 _prefabdesc.powerConnectDistance = _oldConnectDistance;
             }
 
+            // Iterate all factories and update wind turbines power nodes
             foreach (var factory in GameMain.data.factories)
             {
                 var powerSystem = factory?.powerSystem;
@@ -1361,12 +1364,16 @@ public static class FactoryPatch
                     ref var node = ref powerSystem.nodePool[i];
                     if (node.id != i) continue;
                     ref var entity = ref factory.entityPool[node.entityId];
-                    if (entity.protoId != 2203) continue;
+                    if (entity.protoId != WindTurbineId) continue;
+                    // Disconnect from power system
                     powerSystem.OnNodeRemoving(i);
+                    // Set new properties
                     node.connectDistance = _prefabdesc.powerConnectDistance;
                     node.coverRadius = _prefabdesc.powerCoverRadius;
+                    // Connect back to power system
                     powerSystem.OnNodeAdded(i);
                 }
+                // Refresh power nodes rendering if factory is loaded
                 if (factory.planet.factoryLoaded)
                 {
                     factory.planet.factoryModel.RefreshPowerNodes();
