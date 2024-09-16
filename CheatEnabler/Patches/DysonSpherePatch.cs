@@ -5,7 +5,7 @@ using BepInEx.Configuration;
 using HarmonyLib;
 using UXAssist.Common;
 
-namespace CheatEnabler;
+namespace CheatEnabler.Patches;
 
 public static class DysonSpherePatch
 {
@@ -82,12 +82,11 @@ public static class DysonSpherePatch
         return matcher.InstructionEnumeration();
     }
 
-    private static class SkipBulletPatch
+    private class SkipBulletPatch: PatchImpl<SkipBulletPatch>
     {
         private static long _sailLifeTime;
         private static DysonSailCache[][] _sailsCache;
         private static int[] _sailsCacheLen, _sailsCacheCapacity;
-        private static Harmony _patch;
         
         private struct DysonSailCache
         {
@@ -107,21 +106,16 @@ public static class DysonSpherePatch
             }
         }
 
-        public static void Enable(bool on)
+        protected override void OnEnable()
         {
-            if (on)
-            {
-                UpdateSailLifeTime();
-                UpdateSailsCacheForThisGame();
-                _patch ??= Harmony.CreateAndPatchAll(typeof(SkipBulletPatch));
-                GameLogic.OnGameBegin += GameMain_Begin_Postfix;
-            }
-            else
-            {
-                GameLogic.OnGameBegin -= GameMain_Begin_Postfix;
-                _patch?.UnpatchSelf();
-                _patch = null;
-            }
+            UpdateSailLifeTime();
+            UpdateSailsCacheForThisGame();
+            GameLogic.OnGameBegin += GameMain_Begin_Postfix;
+        }
+
+        protected override void OnDisable()
+        {
+            GameLogic.OnGameBegin -= GameMain_Begin_Postfix;
         }
 
         private static void UpdateSailLifeTime()
@@ -286,20 +280,16 @@ public static class DysonSpherePatch
         }
     }
     
-    private static class SkipAbsorbPatch
+    private class SkipAbsorbPatch: PatchImpl<SkipAbsorbPatch>
     {
-        private static Harmony _patch;
-
-        public static void Enable(bool on)
+        protected override void OnEnable()
         {
-            _instantAbsorb = SkipAbsorbEnabled.Value && QuickAbsorbEnabled.Value;
-            if (on)
-            {
-                _patch ??= Harmony.CreateAndPatchAll(typeof(SkipAbsorbPatch));
-                return;
-            }
-            _patch?.UnpatchSelf();
-            _patch = null;
+            _instantAbsorb = QuickAbsorbEnabled.Value;
+        }
+
+        protected override void OnDisable()
+        {
+            _instantAbsorb = false;
         }
 
         [HarmonyTranspiler]
@@ -342,23 +332,18 @@ public static class DysonSpherePatch
         }
     }
     
-    private static class QuickAbsorbPatch
+    private class QuickAbsorbPatch: PatchImpl<QuickAbsorbPatch>
     {
-        private static Harmony _patch;
-
-        public static void Enable(bool on)
+        protected override void OnEnable()
         {
-            _instantAbsorb = SkipAbsorbEnabled.Value && QuickAbsorbEnabled.Value;
-            if (on)
-            {
-                _patch ??= Harmony.CreateAndPatchAll(typeof(QuickAbsorbPatch));
-            }
-            else
-            {
-                _patch?.UnpatchSelf();
-                _patch = null;
-            }
+            _instantAbsorb = SkipAbsorbEnabled.Value;
         }
+
+        protected override void OnDisable()
+        {
+            _instantAbsorb = false;
+        }
+
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(DysonSphereLayer), nameof(DysonSphereLayer.GameTick))]
         private static IEnumerable<CodeInstruction> DysonSphereLayer_GameTick_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -398,22 +383,8 @@ public static class DysonSpherePatch
         }
     }
     
-    private static class EjectAnywayPatch
+    private class EjectAnywayPatch: PatchImpl<EjectAnywayPatch>
     {
-        private static Harmony _patch;
-
-        public static void Enable(bool on)
-        {
-            if (on)
-            {
-                _patch ??= Harmony.CreateAndPatchAll(typeof(EjectAnywayPatch));
-            }
-            else
-            {
-                _patch?.UnpatchSelf();
-                _patch = null;
-            }
-        }
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(EjectorComponent), nameof(EjectorComponent.InternalUpdate))]
         private static IEnumerable<CodeInstruction> EjectorComponent_InternalUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -443,23 +414,8 @@ public static class DysonSpherePatch
         }
     }
 
-    private static class OverclockEjector
+    private class OverclockEjector: PatchImpl<OverclockEjector>
     {
-        private static Harmony _patch;
-
-        public static void Enable(bool on)
-        {
-            if (on)
-            {
-                _patch ??= Harmony.CreateAndPatchAll(typeof(OverclockEjector));
-            }
-            else
-            {
-                _patch?.UnpatchSelf();
-                _patch = null;
-            }
-        }
-
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(EjectorComponent), nameof(EjectorComponent.InternalUpdate))]
         private static IEnumerable<CodeInstruction> EjectAndSiloComponent_InternalUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -511,22 +467,8 @@ public static class DysonSpherePatch
         }
     }
 
-    private static class OverclockSilo
+    private class OverclockSilo: PatchImpl<OverclockSilo>
     {
-        private static Harmony _patch;
-        public static void Enable(bool on)
-        {
-            if (on)
-            {
-                _patch ??= Harmony.CreateAndPatchAll(typeof(OverclockSilo));
-            }
-            else
-            {
-                _patch?.UnpatchSelf();
-                _patch = null;
-            }
-        }
-
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(SiloComponent), nameof(SiloComponent.InternalUpdate))]
         private static IEnumerable<CodeInstruction> EjectAndSiloComponent_InternalUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)

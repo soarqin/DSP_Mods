@@ -3,7 +3,7 @@ using System.Threading;
 using BepInEx.Configuration;
 using UnityEngine;
 
-namespace UXAssist;
+namespace UXAssist.Functions;
 
 public static class PlanetFunctions
 {

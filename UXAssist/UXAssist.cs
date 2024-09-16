@@ -1,17 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using System.Reflection.Emit;
 using BepInEx;
 using BepInEx.Configuration;
 using CommonAPI;
 using CommonAPI.Systems;
+using crecheng.DSPModSave;
 using HarmonyLib;
 using UnityEngine;
 using UnityEngine.UI;
 using UXAssist.Common;
+using UXAssist.Functions;
+using UXAssist.Patches;
 using UXAssist.UI;
-using crecheng.DSPModSave;
 
 namespace UXAssist;
 
@@ -30,6 +33,7 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
     private static Harmony _persistPatch;
     private static bool _initialized;
     private static PressKeyBind _toggleKey;
+    private static ConfigFile _dummyConfig;
 
     #region IModCanSave
     private const ushort ModSaveVersion = 1;
@@ -54,6 +58,10 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
 
     private void Awake()
     {
+        _dummyConfig = new ConfigFile(Path.Combine(Paths.ConfigPath, PluginInfo.PLUGIN_GUID + "_dummy.cfg"), false)
+        {
+            SaveOnConfigSet = false
+        };
         _toggleKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
         {
             key = new CombineKey((int)KeyCode.BackQuote, CombineKey.ALT_COMB, ECombineKeyAction.OnceClick, false),
@@ -79,6 +87,8 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
         */
         GamePatch.ConvertSavesFromPeaceEnabled = Config.Bind("Game", "ConvertSavesFromPeace", false,
             "Convert saves from Peace mode to Combat mode on save loading");
+        GamePatch.GameUpsFactor = _dummyConfig.Bind("Game", "GameUpsFactor", 1.0,
+            "Game UPS factor (1.0 for normal speed)");
         FactoryPatch.UnlimitInteractiveEnabled = Config.Bind("Factory", "UnlimitInteractive", false,
             "Unlimit interactive range");
         FactoryPatch.RemoveSomeConditionEnabled = Config.Bind("Factory", "RemoveSomeBuildConditionCheck", false,
@@ -140,49 +150,42 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
         DysonSpherePatch.OnlyConstructNodesEnabled = Config.Bind("DysonSphere", "OnlyConstructNodes", false,
             "Construct only nodes but frames");
         DysonSpherePatch.AutoConstructMultiplier = Config.Bind("DysonSphere", "AutoConstructMultiplier", 1, "Dyson Sphere auto-construct speed multiplier");
-
+        
         I18N.Init();
+    }
+
+    private void Start()
+    {
         I18N.Add("UXAssist Config", "UXAssist Config", "UX助手设置");
         I18N.Add("KEYOpenUXAssistConfigWindow", "Open UXAssist Config Window", "打开UX助手设置面板");
         I18N.Add("KEYToggleAutoCruise", "Toggle auto-cruise", "切换自动巡航");
 
         // UI Patch
-        _patch ??= Harmony.CreateAndPatchAll(typeof(UXAssist));
+        _patch ??= Harmony.CreateAndPatchAll(typeof(UXAssist), PluginInfo.PLUGIN_GUID);
         _persistPatch ??= Harmony.CreateAndPatchAll(typeof(Persist));
+
         GameLogic.Init();
         
         MyWindowManager.Init();
         UIConfigWindow.Init();
-        GamePatch.Init();
-        FactoryPatch.Init();
-        LogisticsPatch.Init();
-        PlanetPatch.Init();
-        PlayerPatch.Init();
-        TechPatch.Init();
-        DysonSpherePatch.Init();
+
+        Common.Util.GetTypesInNamespace(Assembly.GetExecutingAssembly(), "UXAssist.Patches")
+            .Do(type => type.GetMethod("Init")?.Invoke(null, null));
+
+        ModsCompat.AuxilaryfunctionWrapper.Init(_patch);
+        ModsCompat.BulletTimeWrapper.Init(_patch);
 
         I18N.Apply();
         I18N.OnInitialized += RecreateConfigWindow;
-        GameLogic.OnDataLoaded += () =>
-        {
-            AuxilaryfunctionWrapper.Init(_patch);
-        };
-    }
-
-    private void Start()
-    {
+        
         LogisticsPatch.Start();
     }
 
     private void OnDestroy()
     {
-        DysonSpherePatch.Uninit();
-        TechPatch.Uninit();
-        PlayerPatch.Uninit();
-        PlanetPatch.Uninit();
-        LogisticsPatch.Uninit();
-        FactoryPatch.Uninit();
-        GamePatch.Uninit();
+        Common.Util.GetTypesInNamespace(Assembly.GetExecutingAssembly(), "UXAssist.Patches")
+            .Do(type => type.GetMethod("Uninit")?.Invoke(null, null));
+
         MyWindowManager.Uninit();
 
         GameLogic.Uninit();

@@ -6,7 +6,7 @@ using HarmonyLib;
 using UnityEngine;
 using UXAssist.Common;
 
-namespace UXAssist;
+namespace UXAssist.Patches;
 
 public static class PlayerPatch
 {
@@ -52,23 +52,8 @@ public static class PlayerPatch
         AutoNavigation.Enable(false);
     }
 
-    private static class EnhancedMechaForgeCountControl
+    private class EnhancedMechaForgeCountControl: PatchImpl<EnhancedMechaForgeCountControl>
     {
-        private static Harmony _patch;
-        
-        public static void Enable(bool on)
-        {
-            if (on)
-            {
-                _patch ??= Harmony.CreateAndPatchAll(typeof(EnhancedMechaForgeCountControl));
-            }
-            else
-            {
-                _patch?.UnpatchSelf();
-                _patch = null;
-            }
-        }
-
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(UIReplicatorWindow), nameof(UIReplicatorWindow.OnOkButtonClick))]
         private static IEnumerable<CodeInstruction> UIReplicatorWindow_OnOkButtonClick_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -118,23 +103,8 @@ public static class PlayerPatch
         }
     }
 
-    private static class HideTipsForSandsChanges
+    private class HideTipsForSandsChanges: PatchImpl<HideTipsForSandsChanges>
     {
-        private static Harmony _patch;
-        
-        public static void Enable(bool on)
-        {
-            if (on)
-            {
-                _patch ??= Harmony.CreateAndPatchAll(typeof(HideTipsForSandsChanges));
-            }
-            else
-            {
-                _patch?.UnpatchSelf();
-                _patch = null;
-            }
-        }
-
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(Player), nameof(Player.SetSandCount))]
         private static IEnumerable<CodeInstruction> Player_SetSandCount_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -147,27 +117,12 @@ public static class PlayerPatch
         }
     }
 
-    public static class AutoNavigation
+    public class AutoNavigation: PatchImpl<AutoNavigation>
     {
-        private static Harmony _patch;
-
         private static bool _canUseWarper;
         private static int _indicatorAstroId;
         private static bool _speedUp;
         private static Vector3 _direction;
-        
-        public static void Enable(bool on)
-        {
-            if (on)
-            {
-                _patch ??= Harmony.CreateAndPatchAll(typeof(AutoNavigation));
-            }
-            else
-            {
-                _patch?.UnpatchSelf();
-                _patch = null;
-            }
-        }
 
         public static void ToggleAutoCruise()
         {

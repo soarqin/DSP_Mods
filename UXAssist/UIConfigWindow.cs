@@ -1,6 +1,8 @@
 ﻿using UnityEngine;
 using UXAssist.UI;
 using UXAssist.Common;
+using UXAssist.Functions;
+using UXAssist.Patches;
 
 namespace UXAssist;
 
@@ -30,6 +32,8 @@ public static class UIConfigWindow
         I18N.Add("Profile-based save folder tips", "Save files are stored in 'Save\\<ProfileName>' folder.\nWill use original save location if matching default profile name",
             "存档文件会存储在'Save\\<ProfileName>'文件夹中\n如果匹配默认配置档案名则使用原始存档位置");
         I18N.Add("Default profile name", "Default profile name", "默认配置档案名");
+        I18N.Add("Logical Frame Rate", "Logical Frame Rate", "逻辑帧倍率");
+        I18N.Add("Reset", "Reset", "重置");
         I18N.Add("Unlimited interactive range", "Unlimited interactive range", "无限交互距离");
         I18N.Add("Night Light", "Sunlight at night", "夜间日光灯");
         I18N.Add("Remove some build conditions", "Remove some build conditions", "移除部分不影响游戏逻辑的建造条件");
@@ -108,6 +112,14 @@ public static class UIConfigWindow
         public override int ValueToIndex(double value) => Mathf.RoundToInt((float)(value * 2.0));
     }
 
+    private class UpsMapper : MyWindow.ValueMapper<double>
+    {
+        public override int Min => 1;
+        public override int Max => 100;
+        public override double IndexToValue(int index) => index * 0.1;
+        public override int ValueToIndex(double value) => Mathf.RoundToInt((float)(value * 10.0));
+    }
+
     private static void CreateUI(MyConfigWindow wnd, RectTransform trans)
     {
         MyCheckBox checkBoxForMeasureTipsPos;
@@ -121,9 +133,9 @@ public static class UIConfigWindow
         y += 36f;
         wnd.AddCheckBox(x, y, tab1, GamePatch.LoadLastWindowRectEnabled, "Remeber window position and size on last exit");
         y += 36f;
-        var txt = wnd.AddText2(x, y, tab1, "Scale up mouse cursor", 15, "text-scale-up-mouse-cursor");
+        var txt = wnd.AddText2(x + 2f, y, tab1, "Scale up mouse cursor", 15, "text-scale-up-mouse-cursor");
         x += txt.preferredWidth + 5f;
-        wnd.AddSlider(x, y + 6f, tab1, GamePatch.MouseCursorScaleUpMultiplier, [1, 2, 3, 4], "0x", 100f);
+        wnd.AddSlider(x + 2f, y + 6f, tab1, GamePatch.MouseCursorScaleUpMultiplier, [1, 2, 3, 4], "0x", 100f);
         x = 0f;
         /*
         y += 30f;
@@ -147,6 +159,17 @@ public static class UIConfigWindow
             wnd.AddText2(x, y, tab1, "Default profile name", 15, "text-default-profile-name");
             y += 24f;
             wnd.AddInputField(x, y, 200f, tab1, GamePatch.DefaultProfileName, 15, "input-profile-save-folder");
+            y += 18f;
+        }
+
+        if (!ModsCompat.BulletTimeWrapper.HasBulletTime)
+        {
+            y += 36f;
+            txt = wnd.AddText2(x + 2f, y, tab1, "Logical Frame Rate", 15, "game-frame-rate");
+            x += txt.preferredWidth + 5f;
+            wnd.AddSlider(x + 2f, y + 6f, tab1, GamePatch.GameUpsFactor, new UpsMapper(), "0.0x", 200f);
+            var btn = wnd.AddFlatButton(x + 204f, y + 6f, tab1, "Reset", 13, "reset-game-frame-rate", () => GamePatch.GameUpsFactor.Value = 1.0f);
+            ((RectTransform)btn.transform).sizeDelta = new Vector2(40f, 20f);
         }
 
         var tab2 = wnd.AddTab(trans, "Planet/Factory");
@@ -212,13 +235,11 @@ public static class UIConfigWindow
         y += 36f;
         var cb0 = wnd.AddCheckBox(x, y, tab2, LogisticsPatch.RealtimeLogisticsInfoPanelEnabled, "Real-time logistic stations info panel");
         var cb1 = wnd.AddCheckBox(x + 26f, y + 26f, tab2, LogisticsPatch.RealtimeLogisticsInfoPanelBarsEnabled, "Show status bars for storage items", 13);
-        if (AuxilaryfunctionWrapper.ShowStationInfo != null)
+        if (ModsCompat.AuxilaryfunctionWrapper.ShowStationInfo != null)
         {
-            AuxilaryfunctionWrapper.ShowStationInfo.SettingChanged += (_, _) => { OnAuxilaryInfoPanelChanged(); };
+            ModsCompat.AuxilaryfunctionWrapper.ShowStationInfo.SettingChanged += (_, _) => { OnAuxilaryInfoPanelChanged(); };
         }
-        LogisticsPatch.RealtimeLogisticsInfoPanelEnabled.SettingChanged += (_, _) => { OnRealtimeLogisticsInfoPanelChanged(); };
         OnAuxilaryInfoPanelChanged();
-        OnRealtimeLogisticsInfoPanelChanged();
 
         var tab3 = wnd.AddTab(trans, "Player/Mecha");
         x = 0f;
@@ -324,25 +345,19 @@ public static class UIConfigWindow
 
         void OnAuxilaryInfoPanelChanged()
         {
-            if (AuxilaryfunctionWrapper.ShowStationInfo == null)
+            if (ModsCompat.AuxilaryfunctionWrapper.ShowStationInfo == null)
             {
                 cb0.gameObject.SetActive(true);
                 cb1.gameObject.SetActive(true);
                 return;
             }
-            var on = !AuxilaryfunctionWrapper.ShowStationInfo.Value;
+            var on = !ModsCompat.AuxilaryfunctionWrapper.ShowStationInfo.Value;
             cb0.gameObject.SetActive(on);
             cb1.gameObject.SetActive(on);
             if (!on)
             {
                 LogisticsPatch.RealtimeLogisticsInfoPanelEnabled.Value = false;
             }
-        }
-
-        void OnRealtimeLogisticsInfoPanelChanged()
-        {
-            var on = LogisticsPatch.RealtimeLogisticsInfoPanelEnabled.Value;
-            cb1.gameObject.SetActive(on);
         }
     }
 

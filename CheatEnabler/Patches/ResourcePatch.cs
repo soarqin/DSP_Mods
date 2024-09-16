@@ -2,8 +2,9 @@
 using System.Reflection.Emit;
 using BepInEx.Configuration;
 using HarmonyLib;
+using UXAssist.Common;
 
-namespace CheatEnabler;
+namespace CheatEnabler.Patches;
 
 public static class ResourcePatch
 {
@@ -24,23 +25,8 @@ public static class ResourcePatch
         FastMining.Enable(false);
     }
 
-    private static class InfiniteResource
+    private class InfiniteResource: PatchImpl<InfiniteResource>
     {
-        private static Harmony _patch;
-
-        public static void Enable(bool on)
-        {
-            if (on)
-            {
-                _patch ??= Harmony.CreateAndPatchAll(typeof(InfiniteResource));
-            }
-            else
-            {
-                _patch?.UnpatchSelf();
-                _patch = null;
-            }
-        }
-
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(FactorySystem), "GameTick", typeof(long), typeof(bool))]
         [HarmonyPatch(typeof(FactorySystem), "GameTick", typeof(long), typeof(bool), typeof(int), typeof(int), typeof(int))]
@@ -69,23 +55,8 @@ public static class ResourcePatch
         }
     }
 
-    private static class FastMining
+    private class FastMining: PatchImpl<FastMining>
     {
-        private static Harmony _patch;
-
-        public static void Enable(bool on)
-        {
-            if (on)
-            {
-                _patch ??= Harmony.CreateAndPatchAll(typeof(FastMining));
-            }
-            else
-            {
-                _patch?.UnpatchSelf();
-                _patch = null;
-            }
-        }
-
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(FactorySystem), "GameTick", typeof(long), typeof(bool))]
         [HarmonyPatch(typeof(FactorySystem), "GameTick", typeof(long), typeof(bool), typeof(int), typeof(int), typeof(int))]

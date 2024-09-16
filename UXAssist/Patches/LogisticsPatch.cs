@@ -10,7 +10,7 @@ using UnityEngine.Serialization;
 using UnityEngine.UI;
 using UXAssist.Common;
 
-namespace UXAssist;
+namespace UXAssist.Patches;
 
 public static class LogisticsPatch
 {
@@ -61,22 +61,8 @@ public static class LogisticsPatch
         }
     }
 
-    public static class LogisticsCapacityTweaks
+    public class LogisticsCapacityTweaks: PatchImpl<LogisticsCapacityTweaks>
     {
-        private static Harmony _patch;
-
-        public static void Enable(bool enable)
-        {
-            if (enable)
-            {
-                _patch ??= Harmony.CreateAndPatchAll(typeof(LogisticsCapacityTweaks));
-                return;
-            }
-
-            _patch?.UnpatchSelf();
-            _patch = null;
-        }
-
         private static KeyCode _lastKey = KeyCode.None;
         private static long _nextKeyTick;
         private static bool _skipNextEvent;
@@ -263,22 +249,8 @@ public static class LogisticsPatch
         }
     }
 
-    private static class AllowOverflowInLogistics
+    private class AllowOverflowInLogistics: PatchImpl<AllowOverflowInLogistics>
     {
-        private static Harmony _patch;
-
-        public static void Enable(bool enable)
-        {
-            if (enable)
-            {
-                _patch ??= Harmony.CreateAndPatchAll(typeof(AllowOverflowInLogistics));
-                return;
-            }
-
-            _patch?.UnpatchSelf();
-            _patch = null;
-        }
-
         // Do not check for overflow when try to send hand items into storages
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(UIStationStorage), nameof(UIStationStorage.OnItemIconMouseDown))]
@@ -329,22 +301,8 @@ public static class LogisticsPatch
         }
     }
 
-    private static class LogisticsConstrolPanelImprovement
+    private class LogisticsConstrolPanelImprovement: PatchImpl<LogisticsConstrolPanelImprovement>
     {
-        private static Harmony _patch;
-
-        public static void Enable(bool enable)
-        {
-            if (enable)
-            {
-                _patch ??= Harmony.CreateAndPatchAll(typeof(LogisticsConstrolPanelImprovement));
-                return;
-            }
-
-            _patch?.UnpatchSelf();
-            _patch = null;
-        }
-
         private static int ItemIdHintUnderMouse()
         {
             List<RaycastResult> targets = [];

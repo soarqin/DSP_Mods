@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Reflection.Emit;
 using BepInEx.Configuration;
 using HarmonyLib;
+using UXAssist.Common;
 
-namespace CheatEnabler;
+namespace CheatEnabler.Patches;
 public static class PlanetPatch
 {
     public static ConfigEntry<bool> WaterPumpAnywhereEnabled;
@@ -24,23 +25,8 @@ public static class PlanetPatch
         TerraformAnyway.Enable(false);
     }
 
-    private static class WaterPumperPatch
+    private class WaterPumperPatch: PatchImpl<WaterPumperPatch>
     {
-        private static Harmony _patch;
-
-        public static void Enable(bool on)
-        {
-            if (on)
-            {
-                _patch ??= Harmony.CreateAndPatchAll(typeof(WaterPumperPatch));
-            }
-            else
-            {
-                _patch?.UnpatchSelf();
-                _patch = null;
-            }
-        }
-
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(BuildTool_BlueprintPaste), nameof(BuildTool_BlueprintPaste.CheckBuildConditions))]
         [HarmonyPatch(typeof(BuildTool_Click), nameof(BuildTool_Click.CheckBuildConditions))]
@@ -61,23 +47,8 @@ public static class PlanetPatch
         }
     }
 
-    private static class TerraformAnyway
+    private class TerraformAnyway: PatchImpl<TerraformAnyway>
     {
-        private static Harmony _patch;
-        
-        public static void Enable(bool on)
-        {
-            if (on)
-            {
-                _patch ??= Harmony.CreateAndPatchAll(typeof(TerraformAnyway));
-            }
-            else
-            {
-                _patch?.UnpatchSelf();
-                _patch = null;
-            }
-        }
-
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(BuildTool_Reform), nameof(BuildTool_Reform.ReformAction))]
         private static IEnumerable<CodeInstruction> BuildTool_Reform_ReformAction_Patch(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -96,7 +67,7 @@ public static class PlanetPatch
                     new CodeMatch(OpCodes.Sub)
             ).Advance(2).InsertAndAdvance(
                 new CodeInstruction(OpCodes.Ldc_I8, 0L),
-                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(Math), "Max", new[] { typeof(long), typeof(long) }))
+                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(Math), "Max", [typeof(long), typeof(long)]))
             );
             return matcher.InstructionEnumeration();
         }

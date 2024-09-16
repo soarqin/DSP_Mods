@@ -225,6 +225,7 @@ public class MyWindow : ManualBehaviour
         {
             var index = OnConfigValueChanged(config);
             slider.Value = index;
+            slider.SetLabelText(valueMapper.FormatValue(format, config.Value));
         };
         slider.OnValueChanged += () =>
         {

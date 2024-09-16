@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using CheatEnabler.Functions;
+using CheatEnabler.Patches;
+using UnityEngine;
 using UXAssist.UI;
 using UXAssist.Common;
 
@@ -84,15 +86,15 @@ public static class UIConfigWindow
         wnd.AddSplitter(trans, 10f);
         wnd.AddTabGroup(trans, "Cheat Enabler", "tab-group-cheatenabler");
         var tab1 = wnd.AddTab(_windowTrans, "General");
-        var cb = wnd.AddCheckBox(x, y, tab1, DevShortcuts.Enabled, "Enable Dev Shortcuts");
+        var cb = wnd.AddCheckBox(x, y, tab1, GamePatch.DevShortcutsEnabled, "Enable Dev Shortcuts");
         x += cb.Width + 5f;
         y += 6f;
         wnd.AddTipsButton2(x, y, tab1, "Dev Shortcuts", "Dev Shortcuts Tips", "dev-shortcuts-tips");
         x = 0;
         y += 30f;
-        wnd.AddCheckBox(x, y, tab1, AbnormalDisabler.Enabled, "Disable Abnormal Checks");
+        wnd.AddCheckBox(x, y, tab1, GamePatch.AbnormalDisablerEnabled, "Disable Abnormal Checks");
         y += 36f;
-        cb = wnd.AddCheckBox(x, y, tab1, TechPatch.Enabled, "Unlock Tech with Key-Modifiers");
+        cb = wnd.AddCheckBox(x, y, tab1, GamePatch.UnlockTechEnabled, "Unlock Tech with Key-Modifiers");
         x += cb.Width + 5f;
         y += 6f;
         wnd.AddTipsButton2(x, y, tab1, "Unlock Tech with Key-Modifiers", "Unlock Tech with Key-Modifiers Tips", "unlock-tech-tips");

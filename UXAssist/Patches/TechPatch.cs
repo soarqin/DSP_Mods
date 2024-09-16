@@ -6,7 +6,7 @@ using HarmonyLib;
 using UnityEngine;
 using UXAssist.Common;
 
-namespace UXAssist;
+namespace UXAssist.Patches;
 
 public static class TechPatch
 {
@@ -28,23 +28,20 @@ public static class TechPatch
         SorterCargoStacking.Enable(false);
     }
     
-    private static class SorterCargoStacking
+    private class SorterCargoStacking: PatchImpl<SorterCargoStacking>
     {
-        private static Harmony _patch;
         private static bool _protoPatched;
         
-        public static void Enable(bool on)
+        protected override void OnEnable()
         {
-            TryPatchProto(on);
-            if (on)
-            {
-                _patch ??= Harmony.CreateAndPatchAll(typeof(SorterCargoStacking));
-                GameLogic.OnDataLoaded += VFPreload_InvokeOnLoadWorkEnded_Postfix;
-                return;
-            }
+            TryPatchProto(true);
+            GameLogic.OnDataLoaded += VFPreload_InvokeOnLoadWorkEnded_Postfix;
+        }
+        
+        protected override void OnDisable()
+        {
             GameLogic.OnDataLoaded -= VFPreload_InvokeOnLoadWorkEnded_Postfix;
-            _patch?.UnpatchSelf();
-            _patch = null;
+            TryPatchProto(false);
         }
 
         private static void TryPatchProto(bool on)
@@ -113,22 +110,8 @@ public static class TechPatch
         }
     }
 
-    private static class BatchBuyoutTech
+    private class BatchBuyoutTech: PatchImpl<BatchBuyoutTech>
     {
-        private static Harmony _patch;
-
-        public static void Enable(bool on)
-        {
-            if (on)
-            {
-                _patch ??= Harmony.CreateAndPatchAll(typeof(BatchBuyoutTech));
-                return;
-            }
-
-            _patch?.UnpatchSelf();
-            _patch = null;
-        }
-
         private static void GenerateTechList(GameHistoryData history, int techId, List<int> techIdList)
         {
             var techProto = LDB.techs.Select(techId);

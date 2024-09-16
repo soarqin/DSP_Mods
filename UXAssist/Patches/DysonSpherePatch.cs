@@ -5,7 +5,7 @@ using BepInEx.Configuration;
 using HarmonyLib;
 using UXAssist.Common;
 
-namespace UXAssist;
+namespace UXAssist.Patches;
 
 public static class DysonSpherePatch
 {
@@ -286,30 +286,24 @@ public static class DysonSpherePatch
         return matcher.InstructionEnumeration();
     }
 
-    private static class StopEjectOnNodeComplete
+    private class StopEjectOnNodeComplete: PatchImpl<StopEjectOnNodeComplete>
     {
-        private static Harmony _patch;
         private static HashSet<int>[] _nodeForAbsorb;
         private static bool _initialized;
 
-        public static void Enable(bool on)
+        protected override void OnEnable()
         {
-            if (on)
-            {
-                InitNodeForAbsorb();
-                _patch ??= Harmony.CreateAndPatchAll(typeof(StopEjectOnNodeComplete));
-                GameLogic.OnGameBegin += GameMain_Begin_Postfix;
-                GameLogic.OnGameEnd += GameMain_End_Postfix;
-            }
-            else
-            {
-                GameLogic.OnGameEnd -= GameMain_End_Postfix;
-                GameLogic.OnGameBegin -= GameMain_Begin_Postfix;
-                _patch?.UnpatchSelf();
-                _patch = null;
-                _initialized = false;
-                _nodeForAbsorb = null;
-            }
+            InitNodeForAbsorb();
+            GameLogic.OnGameBegin += GameMain_Begin_Postfix;
+            GameLogic.OnGameEnd += GameMain_End_Postfix;
+        }
+
+        protected override void OnDisable()
+        {
+            GameLogic.OnGameEnd -= GameMain_End_Postfix;
+            GameLogic.OnGameBegin -= GameMain_Begin_Postfix;
+            _initialized = false;
+            _nodeForAbsorb = null;
         }
 
         private static void InitNodeForAbsorb()
@@ -506,22 +500,10 @@ public static class DysonSpherePatch
         }
     }
 
-    private static class OnlyConstructNodes
+    private class OnlyConstructNodes: PatchImpl<OnlyConstructNodes>
     {
-        private static Harmony _patch;
-
-        public static void Enable(bool on)
+        protected override void OnEnable()
         {
-            if (on)
-            {
-                _patch ??= Harmony.CreateAndPatchAll(typeof(OnlyConstructNodes));
-            }
-            else
-            {
-                _patch?.UnpatchSelf();
-                _patch = null;
-            }
-
             var spheres = GameMain.data?.dysonSpheres;
             if (spheres == null) return;
             foreach (var sphere in spheres)

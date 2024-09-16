@@ -1,4 +1,6 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
+using System.Linq;
 using System.Reflection;
 using UnityEngine;
 
@@ -6,6 +8,11 @@ namespace UXAssist.Common;
 
 public static class Util
 {
+    public static Type[] GetTypesInNamespace(Assembly assembly, string nameSpace)
+    {
+        return assembly.GetTypes().Where(t => string.Equals(t.Namespace, nameSpace, StringComparison.Ordinal)).ToArray();
+    }
+
     public static byte[] LoadEmbeddedResource(string path, Assembly assembly = null)
     {
         if (assembly == null)

@@ -2,8 +2,9 @@
 using System.Reflection.Emit;
 using BepInEx.Configuration;
 using HarmonyLib;
+using UXAssist.Common;
 
-namespace UXAssist;
+namespace UXAssist.Patches;
 public static class PlanetPatch
 {
     public static ConfigEntry<bool> PlayerActionsInGlobeViewEnabled;
@@ -19,21 +20,8 @@ public static class PlanetPatch
         PlayerActionsInGlobeView.Enable(false);
     }
 
-    public static class PlayerActionsInGlobeView
+    public class PlayerActionsInGlobeView: PatchImpl<PlayerActionsInGlobeView>
     {
-        private static Harmony _patch;
-        
-        public static void Enable(bool on)
-        {
-            if (on)
-            {
-                _patch ??= Harmony.CreateAndPatchAll(typeof(PlayerActionsInGlobeView));
-                return;
-            }
-            _patch?.UnpatchSelf();
-            _patch = null;
-        }
-        
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(VFInput), nameof(VFInput.UpdateGameStates))]
         private static IEnumerable<CodeInstruction> VFInput_UpdateGameStates_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)

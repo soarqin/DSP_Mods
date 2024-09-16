@@ -3,8 +3,9 @@ using System.Reflection;
 using System.Reflection.Emit;
 using BepInEx.Configuration;
 using HarmonyLib;
+using UXAssist.Common;
 
-namespace CheatEnabler;
+namespace CheatEnabler.Patches;
 
 public static class CombatPatch
 {
@@ -25,23 +26,8 @@ public static class CombatPatch
         MechaInvincible.Enable(false);
     }
 
-    private static class MechaInvincible
+    private class MechaInvincible: PatchImpl<MechaInvincible>
     {
-        private static Harmony _patch;
-
-        public static void Enable(bool on)
-        {
-            if (on)
-            {
-                _patch ??= Harmony.CreateAndPatchAll(typeof(MechaInvincible));
-            }
-            else
-            {
-                _patch?.UnpatchSelf();
-                _patch = null;
-            }
-        }
-
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(Player), nameof(Player.invincible), MethodType.Getter)]
         private static IEnumerable<CodeInstruction> Player_get_invincible_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -75,23 +61,8 @@ public static class CombatPatch
         }
     }
 
-    private static class BuildingsInvincible
+    private class BuildingsInvincible: PatchImpl<BuildingsInvincible>
     {
-        private static Harmony _patch;
-        
-        public static void Enable(bool on)
-        {
-            if (on)
-            {
-                _patch ??= Harmony.CreateAndPatchAll(typeof(BuildingsInvincible));
-            }
-            else
-            {
-                _patch?.UnpatchSelf();
-                _patch = null;
-            }
-        }
-        
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(SkillSystem), nameof(SkillSystem.DamageGroundObjectByLocalCaster))]
         [HarmonyPatch(typeof(SkillSystem), nameof(SkillSystem.DamageGroundObjectByRemoteCaster))]

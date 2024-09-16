@@ -8,7 +8,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UXAssist.Common;
 
-namespace CheatEnabler;
+namespace CheatEnabler.Patches;
 
 public static class FactoryPatch
 {
@@ -224,9 +224,9 @@ public static class FactoryPatch
                 new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(ConfigEntry<bool>), nameof(ConfigEntry<bool>.Value))),
                 new CodeInstruction(OpCodes.Brfalse, label1),
                 new CodeInstruction(OpCodes.Ldstr, "Build without condition is enabled!"),
-                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(Localization), nameof(Localization.Translate), new[] { typeof(string) })),
+                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(Localization), nameof(Localization.Translate), [typeof(string)])),
                 new CodeInstruction(OpCodes.Ldstr, "\r\n"),
-                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(string), nameof(string.Concat), new[] { typeof(string), typeof(string) })),
+                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(string), nameof(string.Concat), [typeof(string), typeof(string)])),
                 new CodeInstruction(OpCodes.Call, AccessTools.PropertySetter(typeof(WarningSystem), nameof(WarningSystem.criticalWarningTexts)))
             );
             if (m.InstructionAt(2).opcode == OpCodes.Ret)
@@ -302,9 +302,9 @@ public static class FactoryPatch
             );
             return matcher.InstructionEnumeration();
         }
-        
+
         [HarmonyPostfix]
-        [HarmonyPatch(typeof(UXAssist.PlanetFunctions), nameof(UXAssist.PlanetFunctions.BuildOrbitalCollectors))]
+        [HarmonyPatch(typeof(UXAssist.Functions.PlanetFunctions), nameof(UXAssist.Functions.PlanetFunctions.BuildOrbitalCollectors))]
         private static void UXAssist_PlanetFunctions_BuildOrbitalCollectors_Postfix()
         {
             var factory = GameMain.mainPlayer?.factory;
@@ -315,33 +315,24 @@ public static class FactoryPatch
         }
     }
 
-    private static class ArchitectMode
+    private class ArchitectMode: PatchImpl<ArchitectMode>
     {
-        private static Harmony _patch;
         private static bool[] _canBuildItems;
 
-        public static void Enable(bool enable)
+        protected override void OnEnable()
         {
-            if (enable)
+            var factory = GameMain.mainPlayer?.factory;
+            if (factory != null)
             {
-                if (_patch != null) return;
-                var factory = GameMain.mainPlayer?.factory;
-                if (factory != null)
-                {
-                    ArrivePlanet(factory);
-                }
-                _patch = Harmony.CreateAndPatchAll(typeof(ArchitectMode));
-                return;
+                ArrivePlanet(factory);
             }
-            _patch?.UnpatchSelf();
-            _patch = null;
         }
 
         [HarmonyPrefix]
-        [HarmonyPatch(typeof(StorageComponent), nameof(StorageComponent.TakeTailItems), new[] { typeof(int), typeof(int), typeof(int), typeof(bool) },
-            new[] { ArgumentType.Ref, ArgumentType.Ref, ArgumentType.Out, ArgumentType.Normal })]
-        [HarmonyPatch(typeof(StorageComponent), nameof(StorageComponent.TakeTailItems), new[] { typeof(int), typeof(int), typeof(int[]), typeof(int), typeof(bool) },
-            new[] { ArgumentType.Ref, ArgumentType.Ref, ArgumentType.Normal, ArgumentType.Out, ArgumentType.Normal })]
+        [HarmonyPatch(typeof(StorageComponent), nameof(StorageComponent.TakeTailItems), [typeof(int), typeof(int), typeof(int), typeof(bool)],
+            [ArgumentType.Ref, ArgumentType.Ref, ArgumentType.Out, ArgumentType.Normal])]
+        [HarmonyPatch(typeof(StorageComponent), nameof(StorageComponent.TakeTailItems), [typeof(int), typeof(int), typeof(int[]), typeof(int), typeof(bool)],
+            [ArgumentType.Ref, ArgumentType.Ref, ArgumentType.Normal, ArgumentType.Out, ArgumentType.Normal])]
         public static bool TakeTailItemsPatch(StorageComponent __instance, int itemId)
         {
             if (__instance == null || __instance.id != GameMain.mainPlayer.package.id) return true;
@@ -1123,20 +1114,8 @@ public static class FactoryPatch
         /* END: Item sources calculation */
     }
 
-    private static class RemovePowerSpaceLimit
+    private class RemovePowerSpaceLimit: PatchImpl<RemovePowerSpaceLimit>
     {
-        private static Harmony _patch;
-        public static void Enable(bool enable)
-        {
-            if (enable)
-            {
-                _patch ??= Harmony.CreateAndPatchAll(typeof(RemovePowerSpaceLimit));
-                return;
-            }
-            _patch?.UnpatchSelf();
-            _patch = null;
-        }
-        
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(BuildTool_Click), nameof(BuildTool_Click.CheckBuildConditions))]
         [HarmonyPatch(typeof(BuildTool_BlueprintPaste), nameof(BuildTool_BlueprintPaste.CheckBuildConditions))]
@@ -1165,19 +1144,8 @@ public static class FactoryPatch
         }
     }
 
-    private static class BoostWindPower
+    private class BoostWindPower: PatchImpl<BoostWindPower>
     {
-        private static Harmony _patch;
-        public static void Enable(bool enable)
-        {
-            if (enable)
-            {
-                _patch ??= Harmony.CreateAndPatchAll(typeof(BoostWindPower));
-                return;
-            }
-            _patch?.UnpatchSelf();
-            _patch = null;
-        }
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(PowerGeneratorComponent), nameof(PowerGeneratorComponent.EnergyCap_Wind))]
         private static IEnumerable<CodeInstruction> PowerGeneratorComponent_EnergyCap_Wind_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -1201,19 +1169,8 @@ public static class FactoryPatch
         }
     }
     
-    private static class BoostSolarPower
+    private class BoostSolarPower: PatchImpl<BoostSolarPower>
     {
-        private static Harmony _patch;
-        public static void Enable(bool enable)
-        {
-            if (enable)
-            {
-                _patch ??= Harmony.CreateAndPatchAll(typeof(BoostSolarPower));
-                return;
-            }
-            _patch?.UnpatchSelf();
-            _patch = null;
-        }
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(PowerGeneratorComponent), nameof(PowerGeneratorComponent.EnergyCap_PV))]
         private static IEnumerable<CodeInstruction> PowerGeneratorComponent_EnergyCap_PV_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -1236,19 +1193,8 @@ public static class FactoryPatch
         }
     }
 
-    private static class BoostFuelPower
+    private class BoostFuelPower: PatchImpl<BoostFuelPower>
     {
-        private static Harmony _patch;
-        public static void Enable(bool enable)
-        {
-            if (enable)
-            {
-                _patch ??= Harmony.CreateAndPatchAll(typeof(BoostFuelPower));
-                return;
-            }
-            _patch?.UnpatchSelf();
-            _patch = null;
-        }
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(PowerGeneratorComponent), nameof(PowerGeneratorComponent.EnergyCap_Fuel))]
         private static IEnumerable<CodeInstruction> PowerGeneratorComponent_EnergyCap_Fuel_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -1288,19 +1234,8 @@ public static class FactoryPatch
         }
     }
 
-    private static class BoostGeothermalPower
+    private class BoostGeothermalPower: PatchImpl<BoostGeothermalPower>
     {
-        private static Harmony _patch;
-        public static void Enable(bool enable)
-        {
-            if (enable)
-            {
-                _patch ??= Harmony.CreateAndPatchAll(typeof(BoostGeothermalPower));
-                return;
-            }
-            _patch?.UnpatchSelf();
-            _patch = null;
-        }
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(PowerGeneratorComponent), nameof(PowerGeneratorComponent.EnergyCap_GTH))]
         private static IEnumerable<CodeInstruction> PowerGeneratorComponent_EnergyCap_GTH_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -1382,25 +1317,22 @@ public static class FactoryPatch
         }
     }
 
-    private static class GreaterPowerUsageInLogistics
+    private class GreaterPowerUsageInLogistics: PatchImpl<GreaterPowerUsageInLogistics>
     {
-        private static Harmony _patch;
-        
-        public static void Enable(bool enable)
+        protected override void OnEnable()
         {
-            if (enable)
-            {
-                _patch ??= Harmony.CreateAndPatchAll(typeof(GreaterPowerUsageInLogistics));
-            }
-            else
-            {
-                _patch?.UnpatchSelf();
-                _patch = null;
-            }
             var window = UIRoot.instance?.uiGame?.stationWindow;
             if (window == null) return;
             window._Close();
-            window.maxMiningSpeedSlider.maxValue = enable ? 27f : 20f;
+            window.maxMiningSpeedSlider.maxValue = 27f;
+        }
+
+        protected override void OnDisable()
+        {
+            var window = UIRoot.instance?.uiGame?.stationWindow;
+            if (window == null) return;
+            window._Close();
+            window.maxMiningSpeedSlider.maxValue = 20f;
         }
 
         [HarmonyTranspiler]
@@ -1535,23 +1467,8 @@ public static class FactoryPatch
         }
     }
 
-    private static class ControlPanelRemoteLogistics
+    private class ControlPanelRemoteLogistics: PatchImpl<ControlPanelRemoteLogistics>
     {
-        private static Harmony _patch;
-        
-        public static void Enable(bool enable)
-        {
-            if (enable)
-            {
-                _patch ??= Harmony.CreateAndPatchAll(typeof(ControlPanelRemoteLogistics));
-            }
-            else
-            {
-                _patch?.UnpatchSelf();
-                _patch = null;
-            }
-        }
-
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(UIControlPanelDispenserInspector), nameof(UIControlPanelDispenserInspector.OnItemIconMouseDown))]
         [HarmonyPatch(typeof(UIControlPanelDispenserInspector), nameof(UIControlPanelDispenserInspector.OnHoldupItemClick))]

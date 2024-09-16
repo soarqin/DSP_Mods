@@ -1,6 +1,6 @@
 ﻿using Random = UnityEngine.Random;
 
-namespace CheatEnabler;
+namespace CheatEnabler.Functions;
 public static class PlanetFunctions
 {
     public static void BuryAllVeins(bool bury)

@@ -2,8 +2,9 @@
 using System.Reflection.Emit;
 using BepInEx.Configuration;
 using HarmonyLib;
+using UXAssist.Common;
 
-namespace CheatEnabler;
+namespace CheatEnabler.Patches;
 
 public static class PlayerPatch
 {
@@ -24,23 +25,8 @@ public static class PlayerPatch
         WarpWithoutSpaceWarpers.Enable(false);
     }
 
-    private static class InstantTeleport
+    private class InstantTeleport: PatchImpl<InstantTeleport>
     {
-        private static Harmony _patch;
-
-        public static void Enable(bool on)
-        {
-            if (on)
-            {
-                _patch ??= Harmony.CreateAndPatchAll(typeof(InstantTeleport));
-            }
-            else
-            {
-                _patch?.UnpatchSelf();
-                _patch = null;
-            }
-        }
-
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(UIGlobemap), nameof(UIGlobemap._OnUpdate))]
         [HarmonyPatch(typeof(UIStarmap), nameof(UIStarmap.DoRightClickFastTravel))]
@@ -62,23 +48,8 @@ public static class PlayerPatch
         }
     }
 
-    private static class WarpWithoutSpaceWarpers
+    private class WarpWithoutSpaceWarpers: PatchImpl<WarpWithoutSpaceWarpers>
     {
-        private static Harmony _patch;
-
-        public static void Enable(bool on)
-        {
-            if (on)
-            {
-                _patch ??= Harmony.CreateAndPatchAll(typeof(WarpWithoutSpaceWarpers));
-            }
-            else
-            {
-                _patch?.UnpatchSelf();
-                _patch = null;
-            }
-        }
-        
         [HarmonyPrefix]
         [HarmonyPatch(typeof(Mecha), nameof(Mecha.HasWarper))]
         private static bool Mecha_HasWarper_Prefix(ref bool __result)

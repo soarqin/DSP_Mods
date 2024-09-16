@@ -1,7 +1,7 @@
 ﻿using HarmonyLib;
 using UXAssist.Common;
 
-namespace CheatEnabler;
+namespace CheatEnabler.Functions;
 
 public static class DysonSphereFunctions
 {
@@ -42,8 +42,8 @@ public static class DysonSphereFunctions
             var totalFrameSpInfo = AccessTools.Field(typeof(DysonSphereLayer), "totalFrameSP");
             var totalCpInfo = AccessTools.Field(typeof(DysonSphereLayer), "totalCP");
 
-            var rocketCount = 0;
-            var solarSailCount = 0;
+            var rocketCount = 0L;
+            var solarSailCount = 0L;
             foreach (var dysonSphereLayer in dysonSphere.layersIdBased)
             {
                 if (dysonSphereLayer == null) continue;
@@ -112,11 +112,24 @@ public static class DysonSphereFunctions
             {
                 lock (productRegister)
                 {
-                    if (rocketCount > 0) productRegister[11902] += rocketCount;
-                    if (solarSailCount > 0)
+                    var count = rocketCount;
+                    while (count > 0x40000000L)
                     {
-                        productRegister[11901] += solarSailCount;
-                        productRegister[11903] += solarSailCount;
+                        productRegister[11902] += 0x40000000;
+                        count -= 0x40000000;
+                    }
+                    if (count > 0L) productRegister[11902] += (int)count;
+                    count = solarSailCount;
+                    while (count > 0x40000000L)
+                    {
+                        productRegister[11901] += 0x40000000;
+                        productRegister[11903] += 0x40000000;
+                        count -= 0x40000000;
+                    }
+                    if (count > 0L)
+                    {
+                        productRegister[11901] += (int)count;
+                        productRegister[11903] += (int)count;
                     }
                 }
             }
@@ -125,7 +138,13 @@ public static class DysonSphereFunctions
             {
                 lock (consumeRegister)
                 {
-                    if (solarSailCount > 0) consumeRegister[11901] += solarSailCount;
+                    var count = solarSailCount;
+                    while (count > 0x40000000L)
+                    {
+                        consumeRegister[11901] += 0x40000000;
+                        count -= 0x40000000;
+                    }
+                    if (count > 0L) consumeRegister[11901] += (int)count;
                 }
             }
         });

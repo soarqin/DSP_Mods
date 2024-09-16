@@ -7,7 +7,7 @@ using HarmonyLib;
 using UnityEngine;
 using UXAssist.Common;
 
-namespace UXAssist;
+namespace UXAssist.Patches;
 
 public static class GamePatch
 {
@@ -24,6 +24,32 @@ public static class GamePatch
     public static ConfigEntry<Vector4> LastWindowRect;
     public static ConfigEntry<bool> ProfileBasedSaveFolderEnabled;
     public static ConfigEntry<string> DefaultProfileName;
+    public static ConfigEntry<double> GameUpsFactor;
+
+    private static bool _enableGameUpsFactor = true;
+    public static bool EnableGameUpsFactor
+    {
+        get => _enableGameUpsFactor;
+        set
+        {
+            _enableGameUpsFactor = value;
+            if (value)
+            {
+                var oldFixUps = FPSController.instance.fixUPS;
+                if (oldFixUps <= 1.0)
+                {
+                    GameUpsFactor.Value = 1.0;
+                    return;
+                }
+                GameUpsFactor.Value = Maths.Clamp(FPSController.instance.fixUPS / GameMain.tickPerSec, 0.1, 10.0);
+            }
+            else
+            {
+                GameUpsFactor.Value = 1.0;
+            }
+        }
+    }
+
     private static Harmony _gamePatch;
 
     public static void Init()
@@ -55,21 +81,27 @@ public static class GamePatch
         LoadLastWindowRectEnabled.SettingChanged += (_, _) => LoadLastWindowRect.Enable(LoadLastWindowRectEnabled.Value);
         MouseCursorScaleUpMultiplier.SettingChanged += (_, _) =>
         {
-            MouseCursorScaleUp.Enable(MouseCursorScaleUpMultiplier.Value > 1, true);
+            MouseCursorScaleUp.reload = true;
+            MouseCursorScaleUp.Enable(MouseCursorScaleUpMultiplier.Value > 1);
         };
         // AutoSaveOptEnabled.SettingChanged += (_, _) => AutoSaveOpt.Enable(AutoSaveOptEnabled.Value);
         ConvertSavesFromPeaceEnabled.SettingChanged += (_, _) => ConvertSavesFromPeace.Enable(ConvertSavesFromPeaceEnabled.Value);
-        ProfileBasedSaveFolderEnabled.SettingChanged += (_, _) =>
+        ProfileBasedSaveFolderEnabled.SettingChanged += (_, _) => RefreshSavePath();
+        DefaultProfileName.SettingChanged += (_, _) => RefreshSavePath();
+        GameUpsFactor.SettingChanged += (_, _) =>
         {
-            RefreshSavePath();
-        };
-        DefaultProfileName.SettingChanged += (_, _) =>
-        {
-            RefreshSavePath();
+            if (!EnableGameUpsFactor || GameUpsFactor.Value == 0.0) return;
+            if (Math.Abs(GameUpsFactor.Value - 1.0) < 0.001)
+            {
+                FPSController.SetFixUPS(0.0);
+                return;
+            }
+            FPSController.SetFixUPS(GameMain.tickPerSec * GameUpsFactor.Value);
         };
         EnableWindowResize.Enable(EnableWindowResizeEnabled.Value);
         LoadLastWindowRect.Enable(LoadLastWindowRectEnabled.Value);
-        MouseCursorScaleUp.Enable(MouseCursorScaleUpMultiplier.Value > 1, false);
+        MouseCursorScaleUp.reload = false;
+        MouseCursorScaleUp.Enable(MouseCursorScaleUpMultiplier.Value > 1);
         // AutoSaveOpt.Enable(AutoSaveOptEnabled.Value);
         ConvertSavesFromPeace.Enable(ConvertSavesFromPeaceEnabled.Value);
         _gamePatch ??= Harmony.CreateAndPatchAll(typeof(GamePatch));
@@ -79,7 +111,8 @@ public static class GamePatch
     {
         LoadLastWindowRect.Enable(false);
         EnableWindowResize.Enable(false);
-        MouseCursorScaleUp.Enable(false, false);
+        MouseCursorScaleUp.reload = false;
+        MouseCursorScaleUp.Enable(false);
         // AutoSaveOpt.Enable(false);
         ConvertSavesFromPeace.Enable(false);
         _gamePatch?.UnpatchSelf();
@@ -121,28 +154,36 @@ public static class GamePatch
         LastWindowRect.Value = new Vector4(rect.Left, rect.Top, Screen.width, Screen.height);
     }
 
-    private static class EnableWindowResize
+    private class EnableWindowResize: PatchImpl<EnableWindowResize>
     {
+
         private static bool _enabled;
-        private static Harmony _patch;
-        public static void Enable(bool on)
+
+        protected override void OnEnable()
         {
             var wnd = WinApi.FindWindow(GameWindowClass, _gameWindowTitle);
-            if (wnd == IntPtr.Zero) return;
-            _enabled = on;
-            if (on)
+            if (wnd == IntPtr.Zero)
             {
-                WinApi.SetWindowLong(wnd, (int)WindowLongFlags.GWL_STYLE,
-                    WinApi.GetWindowLong(wnd, (int)WindowLongFlags.GWL_STYLE) | (int)WindowStyles.WS_THICKFRAME | (int)WindowStyles.WS_MAXIMIZEBOX);
-                _patch ??= Harmony.CreateAndPatchAll(typeof(EnableWindowResize));
+                Enable(false);
                 return;
             }
-            _patch?.UnpatchSelf();
-            _patch = null;
+
+            _enabled = true;
+            WinApi.SetWindowLong(wnd, (int)WindowLongFlags.GWL_STYLE,
+                WinApi.GetWindowLong(wnd, (int)WindowLongFlags.GWL_STYLE) | (int)WindowStyles.WS_THICKFRAME | (int)WindowStyles.WS_MAXIMIZEBOX);
+        }
+
+        protected override void OnDisable()
+        {
+            var wnd = WinApi.FindWindow(GameWindowClass, _gameWindowTitle);
+            if (wnd == IntPtr.Zero)
+                return;
+
+            _enabled = false;
             WinApi.SetWindowLong(wnd, (int)WindowLongFlags.GWL_STYLE,
                 WinApi.GetWindowLong(wnd, (int)WindowLongFlags.GWL_STYLE) & ~((int)WindowStyles.WS_THICKFRAME | (int)WindowStyles.WS_MAXIMIZEBOX));
         }
-        
+
         [HarmonyPostfix]
         [HarmonyPatch(typeof(UIOptionWindow), nameof(UIOptionWindow.ApplyOptions))]
         private static void UIOptionWindow_ApplyOptions_Postfix()
@@ -158,67 +199,64 @@ public static class GamePatch
         }
     }
 
-    private static class LoadLastWindowRect
+    private class LoadLastWindowRect: PatchImpl<LoadLastWindowRect>
     {
-        private static Harmony _patch;
         private static bool _loaded;
-        public static void Enable(bool on)
+
+        protected override void OnEnable()
         {
-            if (on)
+            GameLogic.OnDataLoaded += VFPreload_InvokeOnLoadWorkEnded_Postfix;
+            if (Screen.fullScreenMode is not (FullScreenMode.ExclusiveFullScreen or FullScreenMode.FullScreenWindow or FullScreenMode.MaximizedWindow))
             {
-                _patch ??= Harmony.CreateAndPatchAll(typeof(LoadLastWindowRect));
-                GameLogic.OnDataLoaded += VFPreload_InvokeOnLoadWorkEnded_Postfix;
-                if (Screen.fullScreenMode is not (FullScreenMode.ExclusiveFullScreen or FullScreenMode.FullScreenWindow or FullScreenMode.MaximizedWindow))
+                var rect = LastWindowRect.Value;
+                var x = Mathf.RoundToInt(rect.x);
+                var y = Mathf.RoundToInt(rect.y);
+                var w = Mathf.RoundToInt(rect.z);
+                var h = Mathf.RoundToInt(rect.w);
+                var needFix = false;
+                if (w < 100)
                 {
-                    var rect = LastWindowRect.Value;
-                    var x = Mathf.RoundToInt(rect.x);
-                    var y = Mathf.RoundToInt(rect.y);
-                    var w = Mathf.RoundToInt(rect.z);
-                    var h = Mathf.RoundToInt(rect.w);
-                    var needFix = false;
-                    if (w < 100)
-                    {
-                        w = 1280;
-                        needFix = true;
-                    }
-                    if (h < 100)
-                    {
-                        h = 720;
-                        needFix = true;
-                    }
-                    var sw = Screen.currentResolution.width;
-                    var sh = Screen.currentResolution.height;
-                    if (x + w > sw)
-                    {
-                        x = sw - w;
-                        needFix = true;
-                    }
-                    if (y + h > sh)
-                    {
-                        y = sh - h;
-                        needFix = true;
-                    }
-                    if (x < 0)
-                    {
-                        x = 0;
-                        needFix = true;
-                    }
-                    if (y < 0)
-                    {
-                        y = 0;
-                        needFix = true;
-                    }
-                    if (needFix)
-                    {
-                        LastWindowRect.Value = new Vector4(x, y, w, h);
-                    }
+                    w = 1280;
+                    needFix = true;
                 }
-                MoveWindowPosition();
-                return;
+                if (h < 100)
+                {
+                    h = 720;
+                    needFix = true;
+                }
+                var sw = Screen.currentResolution.width;
+                var sh = Screen.currentResolution.height;
+                if (x + w > sw)
+                {
+                    x = sw - w;
+                    needFix = true;
+                }
+                if (y + h > sh)
+                {
+                    y = sh - h;
+                    needFix = true;
+                }
+                if (x < 0)
+                {
+                    x = 0;
+                    needFix = true;
+                }
+                if (y < 0)
+                {
+                    y = 0;
+                    needFix = true;
+                }
+                if (needFix)
+                {
+                    LastWindowRect.Value = new Vector4(x, y, w, h);
+                }
             }
+            MoveWindowPosition();
+        }
+
+        protected override void OnDisable()
+        {
             GameLogic.OnDataLoaded -= VFPreload_InvokeOnLoadWorkEnded_Postfix;
-            _patch?.UnpatchSelf();
-            _patch = null;
         }
 
         private static void MoveWindowPosition()
@@ -447,20 +485,9 @@ public static class GamePatch
     }
     */
 
-    private static class ConvertSavesFromPeace
+    private class ConvertSavesFromPeace: PatchImpl<ConvertSavesFromPeace>
     {
-        private static Harmony _patch;
         private static bool _needConvert;
-        public static void Enable(bool on)
-        {
-            if (on)
-            {
-                _patch ??= Harmony.CreateAndPatchAll(typeof(ConvertSavesFromPeace));
-                return;
-            }
-            _patch?.UnpatchSelf();
-            _patch = null;
-        }
         
         [HarmonyPostfix]
         [HarmonyPatch(typeof(GameDesc), nameof(GameDesc.Import))]
@@ -496,24 +523,20 @@ public static class GamePatch
         }
     }
 
-    private static class MouseCursorScaleUp
+    private class MouseCursorScaleUp: PatchImpl<MouseCursorScaleUp>
     {
-        private static Harmony _patch;
+        public static bool reload;
 
-        public static void Enable(bool on, bool reload)
+        protected override void OnEnable()
         {
-            if (on)
-            {
-                _patch ??= Harmony.CreateAndPatchAll(typeof(MouseCursorScaleUp));
-                if (!reload) return;
-                if (!UICursor.loaded) return;
-                UICursor.loaded = false;
-                UICursor.LoadCursors();
-                return;
-            }
+            if (!reload) return;
+            if (!UICursor.loaded) return;
+            UICursor.loaded = false;
+            UICursor.LoadCursors();
+        }
 
-            _patch?.UnpatchSelf();
-            _patch = null;
+        protected override void OnDisable()
+        {
             if (!reload) return;
             if (!UICursor.loaded) return;
             UICursor.loaded = false;

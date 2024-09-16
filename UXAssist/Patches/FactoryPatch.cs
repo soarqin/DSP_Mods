@@ -10,7 +10,7 @@ using HarmonyLib;
 using UnityEngine;
 using UXAssist.Common;
 
-namespace UXAssist;
+namespace UXAssist.Patches;
 
 public static class FactoryPatch
 {
@@ -162,9 +162,8 @@ public static class FactoryPatch
         return matcher.InstructionEnumeration();
     }
 
-    public static class NightLight
+    public class NightLight: PatchImpl<NightLight>
     {
-        private static Harmony _patch;
         private const float NightLightAngleX = -8;
         private const float NightLightAngleY = -2;
         public static bool Enabled;
@@ -173,25 +172,21 @@ public static class FactoryPatch
         private static AnimationState _sail;
         private static Light _sunlight;
 
-        public static void Enable(bool on)
+        protected override void OnEnable()
         {
-            if (on)
-            {
-                Enabled = _mechaOnEarth;
-                _patch ??= Harmony.CreateAndPatchAll(typeof(NightLight));
-                return;
-            }
-
+            Enabled = _mechaOnEarth;
+        }
+        
+        protected override void OnDisable()
+        {
             Enabled = false;
-            _patch?.UnpatchSelf();
-            _patch = null;
             if (_sunlight == null) return;
             _sunlight.transform.localEulerAngles = new Vector3(0f, 180f);
         }
 
         public static void LateUpdate()
         {
-            if (_patch == null) return;
+            if (!Enabled) return;
 
             switch (_nightlightInitialized)
             {
@@ -281,7 +276,7 @@ public static class FactoryPatch
                 new CodeMatch(OpCodes.Ldarg_0),
                 new CodeMatch(OpCodes.Call, AccessTools.PropertyGetter(typeof(Component), nameof(Component.transform)))
             ).InsertAndAdvance(
-                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(NightLight), nameof(NightLight.Enabled))),
+                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(NightLight), nameof(Enabled))),
                 new CodeInstruction(OpCodes.Brfalse_S, label1),
                 new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(GameMain), nameof(GameMain.mainPlayer))),
                 new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Player), nameof(Player.transform))),
@@ -307,7 +302,7 @@ public static class FactoryPatch
             matcher.MatchForward(false,
                 new CodeMatch(OpCodes.Stloc_1)
             ).Advance(1).InsertAndAdvance(
-                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(NightLight), nameof(NightLight.Enabled))),
+                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(NightLight), nameof(Enabled))),
                 new CodeInstruction(OpCodes.Brfalse_S, label1),
                 new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(GameMain), nameof(GameMain.mainPlayer))),
                 new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Player), nameof(Player.transform))),
@@ -323,22 +318,8 @@ public static class FactoryPatch
         }
     }
 
-    private static class UnlimitInteractive
+    private class UnlimitInteractive: PatchImpl<UnlimitInteractive>
     {
-        private static Harmony _patch;
-
-        public static void Enable(bool enable)
-        {
-            if (enable)
-            {
-                _patch ??= Harmony.CreateAndPatchAll(typeof(UnlimitInteractive));
-                return;
-            }
-
-            _patch?.UnpatchSelf();
-            _patch = null;
-        }
-
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(PlayerAction_Inspect), nameof(PlayerAction_Inspect.GetObjectSelectDistance))]
         private static IEnumerable<CodeInstruction> PlayerAction_Inspect_GetObjectSelectDistance_Transpiler(IEnumerable<CodeInstruction> instructions)
@@ -348,22 +329,8 @@ public static class FactoryPatch
         }
     }
 
-    private static class RemoveSomeConditionBuild
+    private class RemoveSomeConditionBuild: PatchImpl<RemoveSomeConditionBuild>
     {
-        private static Harmony _patch;
-
-        public static void Enable(bool on)
-        {
-            if (on)
-            {
-                _patch ??= Harmony.CreateAndPatchAll(typeof(RemoveSomeConditionBuild));
-                return;
-            }
-
-            _patch?.UnpatchSelf();
-            _patch = null;
-        }
-
         [HarmonyTranspiler, HarmonyPriority(Priority.First)]
         [HarmonyPatch(typeof(BuildTool_BlueprintPaste), nameof(BuildTool_BlueprintPaste.CheckBuildConditions))]
         [HarmonyPatch(typeof(BuildTool_Click), nameof(BuildTool_Click.CheckBuildConditions))]
@@ -459,26 +426,14 @@ public static class FactoryPatch
         }
     }
 
-    private static class RemoveBuildRangeLimit
+    private class RemoveBuildRangeLimit: PatchImpl<RemoveBuildRangeLimit>
     {
-        private static Harmony _patch;
-
-        public static void Enable(bool enable)
+        protected override void OnEnable()
         {
-            if (enable)
-            {
-                _patch ??= Harmony.CreateAndPatchAll(typeof(RemoveBuildRangeLimit));
-            }
-            else
-            {
-                _patch?.UnpatchSelf();
-                _patch = null;
-            }
-
             var controller = GameMain.mainPlayer?.controller;
             if (controller == null) return;
             controller.actionBuild?.clickTool?._OnInit();
-        }
+        } 
 
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(BuildTool_Click), nameof(BuildTool_Click._OnInit))]
@@ -522,22 +477,8 @@ public static class FactoryPatch
         }
     }
 
-    private static class LargerAreaForUpgradeAndDismantle
+    private class LargerAreaForUpgradeAndDismantle: PatchImpl<LargerAreaForUpgradeAndDismantle>
     {
-        private static Harmony _patch;
-
-        public static void Enable(bool enable)
-        {
-            if (enable)
-            {
-                _patch ??= Harmony.CreateAndPatchAll(typeof(LargerAreaForUpgradeAndDismantle));
-                return;
-            }
-
-            _patch?.UnpatchSelf();
-            _patch = null;
-        }
-
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(BuildTool_Dismantle), nameof(BuildTool_Dismantle.DeterminePreviews))]
         [HarmonyPatch(typeof(BuildTool_Upgrade), nameof(BuildTool_Upgrade.DeterminePreviews))]
@@ -552,22 +493,8 @@ public static class FactoryPatch
         }
     }
 
-    private static class LargerAreaForTerraform
+    private class LargerAreaForTerraform: PatchImpl<LargerAreaForTerraform>
     {
-        private static Harmony _patch;
-
-        public static void Enable(bool enable)
-        {
-            if (enable)
-            {
-                _patch ??= Harmony.CreateAndPatchAll(typeof(LargerAreaForTerraform));
-                return;
-            }
-
-            _patch?.UnpatchSelf();
-            _patch = null;
-        }
-
         [HarmonyTranspiler, HarmonyPatch(typeof(BuildTool_Reform), nameof(BuildTool_Reform.ReformAction))]
         private static IEnumerable<CodeInstruction> BuildTool_Reform_ReformAction_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
         {
@@ -586,22 +513,9 @@ public static class FactoryPatch
         }
     }
 
-    public static class OffGridBuilding
+    public class OffGridBuilding: PatchImpl<OffGridBuilding>
     {
-        private static Harmony _patch;
         private const float SteppedRotationDegrees = 15f;
-
-        public static void Enable(bool enable)
-        {
-            if (enable)
-            {
-                _patch ??= Harmony.CreateAndPatchAll(typeof(OffGridBuilding));
-                return;
-            }
-
-            _patch?.UnpatchSelf();
-            _patch = null;
-        }
 
         private static bool _initialized;
 
@@ -784,8 +698,8 @@ public static class FactoryPatch
             var jmp0 = generator.DefineLabel();
             var jmp1 = generator.DefineLabel();
             matcher.InsertAndAdvance(
-                new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(VFInput), nameof(VFInput._switchModelStyle))),
-                new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(VFInput.InputValue), nameof(VFInput.InputValue.pressing))),
+                new CodeInstruction(OpCodes.Ldc_I4, (int)KeyCode.LeftControl),
+                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(Input), nameof(Input.GetKeyInt))),
                 new CodeInstruction(OpCodes.Brfalse, jmp0),
                 new CodeInstruction(OpCodes.Ldarg_0),
                 new CodeInstruction(OpCodes.Ldarg_0),
@@ -836,7 +750,7 @@ public static class FactoryPatch
             matcher.InsertAndAdvance(
                 new CodeInstruction(OpCodes.Brfalse, existingEntryLabel),
                 new CodeInstruction(OpCodes.Ldarg_0),
-                CodeInstruction.Call(typeof(OffGridBuilding), nameof(OffGridBuilding.RotateStepped)),
+                CodeInstruction.Call(typeof(OffGridBuilding), nameof(RotateStepped)),
                 new CodeInstruction(OpCodes.Br, ifBlockExitLabel)
             );
 
@@ -861,22 +775,8 @@ public static class FactoryPatch
         }
     }
     
-    public static class TreatStackingAsSingle
+    public class TreatStackingAsSingle: PatchImpl<TreatStackingAsSingle>
     {
-        private static Harmony _patch;
-
-        public static void Enable(bool enable)
-        {
-            if (enable)
-            {
-                _patch ??= Harmony.CreateAndPatchAll(typeof(TreatStackingAsSingle));
-                return;
-            }
-
-            _patch?.UnpatchSelf();
-            _patch = null;
-        }
-
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(MonitorComponent), nameof(MonitorComponent.InternalUpdate))]
         private static IEnumerable<CodeInstruction> MonitorComponent_InternalUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -896,22 +796,8 @@ public static class FactoryPatch
         }
     }
 
-    private static class QuickBuildAndDismantleLab
+    private class QuickBuildAndDismantleLab: PatchImpl<QuickBuildAndDismantleLab>
     {
-        private static Harmony _patch;
-
-        public static void Enable(bool enable)
-        {
-            if (enable)
-            {
-                _patch ??= Harmony.CreateAndPatchAll(typeof(QuickBuildAndDismantleLab));
-                return;
-            }
-
-            _patch?.UnpatchSelf();
-            _patch = null;
-        }
-
         private static bool DetermineMoreLabsForDismantle(BuildTool dismantle, int id)
         {
             if (!VFInput._chainReaction) return true;
@@ -1056,25 +942,11 @@ public static class FactoryPatch
         }
     }
 
-    public static class ProtectVeinsFromExhaustion
+    public class ProtectVeinsFromExhaustion: PatchImpl<ProtectVeinsFromExhaustion>
     {
         public static int KeepVeinAmount = 100;
         public static float KeepOilSpeed = 1f;
-        private static int _keepOilAmount = Math.Max((int)(KeepOilSpeed / 0.00004f + 0.5f), 2500);
-
-        private static Harmony _patch;
-
-        public static void Enable(bool enable)
-        {
-            if (enable)
-            {
-                _patch ??= Harmony.CreateAndPatchAll(typeof(ProtectVeinsFromExhaustion));
-                return;
-            }
-
-            _patch?.UnpatchSelf();
-            _patch = null;
-        }
+        private static readonly int KeepOilAmount = Math.Max((int)(KeepOilSpeed / 0.00004f + 0.5f), 2500);
 
         [HarmonyPrefix]
         [HarmonyPatch(typeof(MinerComponent), nameof(MinerComponent.InternalUpdate))]
@@ -1243,10 +1115,10 @@ public static class FactoryPatch
                             __instance.productId = veinPool[veinId].productId;
                             times = __instance.time / __instance.period;
                             var outputCount = 0;
-                            if (miningRate > 0f && amount > _keepOilAmount)
+                            if (miningRate > 0f && amount > KeepOilAmount)
                             {
                                 var usedCount = 0;
-                                var maxAllowed = amount - _keepOilAmount;
+                                var maxAllowed = amount - KeepOilAmount;
                                 for (var j = 0; j < times; j++)
                                 {
                                     __instance.seed = (uint)((__instance.seed % 2147483646U + 1U) * 48271UL % 2147483647UL) - 1U;
@@ -1272,7 +1144,7 @@ public static class FactoryPatch
                                     }
                                 }
                             }
-                            else if (_keepOilAmount <= 2500)
+                            else if (KeepOilAmount <= 2500)
                             {
                                 outputCount = times;
                             }
@@ -1350,22 +1222,8 @@ public static class FactoryPatch
         }
     }
 
-    private static class DoNotRenderEntities
+    private class DoNotRenderEntities: PatchImpl<DoNotRenderEntities>
     {
-        private static Harmony _patch;
-
-        public static void Enable(bool enable)
-        {
-            if (enable)
-            {
-                _patch ??= Harmony.CreateAndPatchAll(typeof(DoNotRenderEntities));
-                return;
-            }
-
-            _patch?.UnpatchSelf();
-            _patch = null;
-        }
-
         [HarmonyPrefix]
         [HarmonyPatch(typeof(ObjectRenderer), nameof(ObjectRenderer.Render))]
         [HarmonyPatch(typeof(DynamicRenderer), nameof(DynamicRenderer.Render))]
@@ -1422,29 +1280,24 @@ public static class FactoryPatch
         }
     }
 
-    private static class DragBuildPowerPoles
+    private class DragBuildPowerPoles: PatchImpl<DragBuildPowerPoles>
     {
-        private static Harmony _patch;
         private static readonly List<bool> OldDragBuild = [];
         private static readonly List<Vector2> OldDragBuildDist = [];
         private static readonly int[] PowerPoleIds = [2201, 2202, 2212];
 
-        public static void Enable(bool enable)
+        protected override void OnEnable()
         {
-            if (enable)
-            {
-                _patch ??= Harmony.CreateAndPatchAll(typeof(DragBuildPowerPoles));
-                GameLogic.OnGameBegin += GameMain_Begin_Postfix;
-                GameLogic.OnGameEnd += GameMain_End_Postfix;
-                FixProto();
-                return;
-            }
-
+            GameLogic.OnGameBegin += GameMain_Begin_Postfix;
+            GameLogic.OnGameEnd += GameMain_End_Postfix;
+            FixProto();
+        }
+        
+        protected override void OnDisable()
+        {
             UnfixProto();
             GameLogic.OnGameEnd -= GameMain_End_Postfix;
             GameLogic.OnGameBegin -= GameMain_Begin_Postfix;
-            _patch?.UnpatchSelf();
-            _patch = null;
         }
 
         private static bool IsPowerPole(int id)
@@ -1471,7 +1324,7 @@ public static class FactoryPatch
 
         private static void UnfixProto()
         {
-            if (_patch == null || OldDragBuild.Count < 3 || DSPGame.IsMenuDemo) return;
+            if (GetPatch() == null || OldDragBuild.Count < 3 || DSPGame.IsMenuDemo) return;
             var i = 0;
             foreach (var id in PowerPoleIds)
             {
@@ -1593,10 +1446,8 @@ public static class FactoryPatch
         }
     }
 
-    private static class BeltSignalsForBuyOut
+    private class BeltSignalsForBuyOut: PatchImpl<BeltSignalsForBuyOut>
     {
-        private static Harmony _patch;
-        private static Harmony _persistPatch;
         private static bool _initialized;
         private static bool _loaded;
         private static long _clusterSeedKey;
@@ -1608,30 +1459,12 @@ public static class FactoryPatch
 
         public static void InitPersist()
         {
-            AddBeltSignalProtos();
-            _persistPatch = Harmony.CreateAndPatchAll(typeof(Persist));
-            GameLogic.OnDataLoaded += Persist.VFPreload_InvokeOnLoadWorkEnded_Postfix;
-            GameLogic.OnGameBegin += Persist.GameMain_Begin_Postfix;
+            Persist.Enable(true);
         }
 
         public static void UninitPersist()
         {
-            GameLogic.OnGameBegin -= Persist.GameMain_Begin_Postfix;
-            GameLogic.OnDataLoaded -= Persist.VFPreload_InvokeOnLoadWorkEnded_Postfix;
-            _persistPatch?.UnpatchSelf();
-            _persistPatch = null;
-        }
-
-        public static void Enable(bool enable)
-        {
-            if (enable)
-            {
-                _patch ??= Harmony.CreateAndPatchAll(typeof(BeltSignalsForBuyOut));
-                return;
-            }
-
-            _patch?.UnpatchSelf();
-            _patch = null;
+            Persist.Enable(false);
         }
 
         private static void AddBeltSignalProtos()
@@ -1801,13 +1634,26 @@ public static class FactoryPatch
             SignalBeltFactoryIndices.Remove(factory);
         }
 
-        private static class Persist
+        private class Persist: PatchImpl<Persist>
         {
+            protected override void OnEnable()
+            {
+                AddBeltSignalProtos();
+                GameLogic.OnDataLoaded += VFPreload_InvokeOnLoadWorkEnded_Postfix;
+                GameLogic.OnGameBegin += GameMain_Begin_Postfix;
+            }
+
+            protected override void OnDisable()
+            {
+                GameLogic.OnGameBegin -= GameMain_Begin_Postfix;
+                GameLogic.OnDataLoaded -= VFPreload_InvokeOnLoadWorkEnded_Postfix;
+            }
+
             public static void VFPreload_InvokeOnLoadWorkEnded_Postfix()
             {
-                if (BeltSignalsForBuyOut._initialized) return;
-                BeltSignalsForBuyOut._initialized = true;
-                BeltSignalsForBuyOut.AddBeltSignalProtos();
+                if (_initialized) return;
+                _initialized = true;
+                AddBeltSignalProtos();
             }
 
             [HarmonyPostfix]

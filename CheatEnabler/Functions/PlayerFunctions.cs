@@ -2,7 +2,7 @@
 using System.Linq;
 using UXAssist.Common;
 
-namespace CheatEnabler;
+namespace CheatEnabler.Functions;
 
 public static class PlayerFunctions
 {

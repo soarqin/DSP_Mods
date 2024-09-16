@@ -1,4 +1,9 @@
-﻿using BepInEx;
+﻿using System.Reflection;
+using BepInEx;
+using CheatEnabler.Functions;
+using CheatEnabler.Patches;
+using HarmonyLib;
+using UXAssist.Common;
 
 namespace CheatEnabler;
 
@@ -11,10 +16,10 @@ public class CheatEnabler : BaseUnityPlugin
 
     private void Awake()
     {
-        DevShortcuts.Enabled = Config.Bind("General", "DevShortcuts", false, "Enable DevMode shortcuts");
-        AbnormalDisabler.Enabled = Config.Bind("General", "DisableAbnormalChecks", false,
+        GamePatch.DevShortcutsEnabled = Config.Bind("General", "DevShortcuts", false, "Enable DevMode shortcuts");
+        GamePatch.AbnormalDisablerEnabled = Config.Bind("General", "DisableAbnormalChecks", false,
             "disable all abnormal checks");
-        TechPatch.Enabled = Config.Bind("General", "UnlockTech", false,
+        GamePatch.UnlockTechEnabled = Config.Bind("General", "UnlockTech", false,
             "Unlock clicked tech by holding key-modifilers(Shift/Alt/Ctrl)");
         FactoryPatch.ImmediateEnabled = Config.Bind("Build", "ImmediateBuild", false,
             "Build immediately");
@@ -78,33 +83,19 @@ public class CheatEnabler : BaseUnityPlugin
             "Mecha and Drones/Fleets invincible");
         CombatPatch.BuildingsInvincibleEnabled = Config.Bind("Battle", "BuildingsInvincible", false,
             "Buildings invincible");
-
+    }
+    private void Start() {
         UIConfigWindow.Init();
-
-        DevShortcuts.Init();
-        AbnormalDisabler.Init();
-        TechPatch.Init();
-        FactoryPatch.Init();
-        ResourcePatch.Init();
-        PlanetPatch.Init();
+        Util.GetTypesInNamespace(Assembly.GetExecutingAssembly(), "CheatEnabler.Patches")
+            .Do(type => type.GetMethod("Init")?.Invoke(null, null));
         PlayerFunctions.Init();
-        PlayerPatch.Init();
-        DysonSpherePatch.Init();
         DysonSphereFunctions.Init();
-        CombatPatch.Init();
     }
 
     private void OnDestroy()
     {
-        CombatPatch.Uninit();
-        DysonSpherePatch.Uninit();
-        PlayerPatch.Uninit();
-        PlanetPatch.Uninit();
-        ResourcePatch.Uninit();
-        FactoryPatch.Uninit();
-        TechPatch.Uninit();
-        AbnormalDisabler.Uninit();
-        DevShortcuts.Uninit();
+        Util.GetTypesInNamespace(Assembly.GetExecutingAssembly(), "CheatEnabler.Patches")
+            .Do(type => type.GetMethod("Uninit")?.Invoke(null, null));
     }
 
     private void Update()
