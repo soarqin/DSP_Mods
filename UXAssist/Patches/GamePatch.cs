@@ -9,7 +9,7 @@ using UXAssist.Common;
 
 namespace UXAssist.Patches;
 
-public static class GamePatch
+public class GamePatch: PatchImpl<GamePatch>
 {
     private const string GameWindowClass = "UnityWndClass";
     private static string _gameWindowTitle = "Dyson Sphere Program";
@@ -49,8 +49,6 @@ public static class GamePatch
             }
         }
     }
-
-    private static Harmony _gamePatch;
 
     public static void Init()
     {
@@ -104,19 +102,18 @@ public static class GamePatch
         MouseCursorScaleUp.Enable(MouseCursorScaleUpMultiplier.Value > 1);
         // AutoSaveOpt.Enable(AutoSaveOptEnabled.Value);
         ConvertSavesFromPeace.Enable(ConvertSavesFromPeaceEnabled.Value);
-        _gamePatch ??= Harmony.CreateAndPatchAll(typeof(GamePatch));
+        Enable(true);
     }
 
     public static void Uninit()
     {
+        Enable(false);
         LoadLastWindowRect.Enable(false);
         EnableWindowResize.Enable(false);
         MouseCursorScaleUp.reload = false;
         MouseCursorScaleUp.Enable(false);
         // AutoSaveOpt.Enable(false);
         ConvertSavesFromPeace.Enable(false);
-        _gamePatch?.UnpatchSelf();
-        _gamePatch = null;
     }
 
     private static void RefreshSavePath()
@@ -341,21 +338,11 @@ public static class GamePatch
     }
 
     /*
-    private static class AutoSaveOpt
+    private class AutoSaveOpt: PatchImpl<AutoSaveOpt>
     {
-        private static Harmony _patch;
-
-        public static void Enable(bool on)
+        protected override void OnEnable()
         {
-            if (on)
-            {
-                Directory.CreateDirectory(GameConfig.gameSaveFolder + "AutoSaves/");
-                _patch ??= Harmony.CreateAndPatchAll(typeof(AutoSaveOpt));
-                return;
-            }
-
-            _patch?.UnpatchSelf();
-            _patch = null;
+            Directory.CreateDirectory(GameConfig.gameSaveFolder + "AutoSaves/");
         }
 
         [HarmonyPrefix]

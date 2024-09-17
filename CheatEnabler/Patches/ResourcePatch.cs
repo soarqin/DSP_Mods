@@ -15,6 +15,10 @@ public static class ResourcePatch
     {
         InfiniteResourceEnabled.SettingChanged += (_, _) => InfiniteResource.Enable(InfiniteResourceEnabled.Value);
         FastMiningEnabled.SettingChanged += (_, _) => FastMining.Enable(FastMiningEnabled.Value);
+    }
+
+    public static void Start()
+    {
         InfiniteResource.Enable(InfiniteResourceEnabled.Value);
         FastMining.Enable(FastMiningEnabled.Value);
     }

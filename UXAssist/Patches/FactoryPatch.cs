@@ -12,7 +12,7 @@ using UXAssist.Common;
 
 namespace UXAssist.Patches;
 
-public static class FactoryPatch
+public class FactoryPatch: PatchImpl<FactoryPatch>
 {
     public static ConfigEntry<bool> UnlimitInteractiveEnabled;
     public static ConfigEntry<bool> RemoveSomeConditionEnabled;
@@ -28,8 +28,6 @@ public static class FactoryPatch
     public static ConfigEntry<bool> DragBuildPowerPolesEnabled;
     public static ConfigEntry<bool> BeltSignalsForBuyOutEnabled;
     private static PressKeyBind _doNotRenderEntitiesKey;
-
-    private static Harmony _factoryPatch;
 
     public static void Init()
     {
@@ -71,11 +69,13 @@ public static class FactoryPatch
         DragBuildPowerPoles.Enable(DragBuildPowerPolesEnabled.Value);
         BeltSignalsForBuyOut.Enable(BeltSignalsForBuyOutEnabled.Value);
 
-        _factoryPatch ??= Harmony.CreateAndPatchAll(typeof(FactoryPatch));
+        Enable(true);
     }
 
     public static void Uninit()
     {
+        Enable(false);
+
         RemoveSomeConditionBuild.Enable(false);
         UnlimitInteractive.Enable(false);
         NightLight.Enable(false);
@@ -90,9 +90,6 @@ public static class FactoryPatch
         DragBuildPowerPoles.Enable(false);
         BeltSignalsForBuyOut.Enable(false);
         BeltSignalsForBuyOut.UninitPersist();
-
-        _factoryPatch?.UnpatchSelf();
-        _factoryPatch = null;
     }
 
     public static void OnUpdate()
@@ -1324,7 +1321,7 @@ public static class FactoryPatch
 
         private static void UnfixProto()
         {
-            if (GetPatch() == null || OldDragBuild.Count < 3 || DSPGame.IsMenuDemo) return;
+            if (GetHarmony() == null || OldDragBuild.Count < 3 || DSPGame.IsMenuDemo) return;
             var i = 0;
             foreach (var id in PowerPoleIds)
             {

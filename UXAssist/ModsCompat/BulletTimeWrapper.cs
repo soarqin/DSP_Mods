@@ -35,7 +35,6 @@ public static class BulletTimeWrapper
         matcher.MatchForward(false,
             new CodeMatch(OpCodes.Ldstr, "Increase game speed (max 4x)")
         ).Set(OpCodes.Ldstr, "Increase game speed (max 10x)");
-        UXAssist.Logger.LogDebug($"Patched IngameUI.Init @ {matcher.Pos}");
         return matcher.InstructionEnumeration();
     }
 
@@ -45,7 +44,6 @@ public static class BulletTimeWrapper
         matcher.MatchForward(false,
             new CodeMatch(OpCodes.Ldc_R8, 240.0)
         ).Set(OpCodes.Ldc_R8, 600.0);
-        UXAssist.Logger.LogDebug($"Patched IngameUI.OnSpeedButtonClick @ {matcher.Pos}");
         return matcher.InstructionEnumeration();
     }
 

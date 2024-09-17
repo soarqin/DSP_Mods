@@ -15,6 +15,10 @@ public static class PlanetPatch
     {
         WaterPumpAnywhereEnabled.SettingChanged += (_, _) => WaterPumperPatch.Enable(WaterPumpAnywhereEnabled.Value);
         TerraformAnywayEnabled.SettingChanged += (_, _) => TerraformAnyway.Enable(TerraformAnywayEnabled.Value);
+    }
+
+    public static void Start()
+    {
         WaterPumperPatch.Enable(WaterPumpAnywhereEnabled.Value);
         TerraformAnyway.Enable(TerraformAnywayEnabled.Value);
     }

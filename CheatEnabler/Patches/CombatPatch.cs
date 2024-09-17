@@ -16,6 +16,10 @@ public static class CombatPatch
     {
         MechaInvincibleEnabled.SettingChanged += (_, _) => MechaInvincible.Enable(MechaInvincibleEnabled.Value);
         BuildingsInvincibleEnabled.SettingChanged += (_, _) => BuildingsInvincible.Enable(BuildingsInvincibleEnabled.Value);
+    }
+
+    public static void Start()
+    {
         MechaInvincible.Enable(MechaInvincibleEnabled.Value);
         BuildingsInvincible.Enable(BuildingsInvincibleEnabled.Value);
     }

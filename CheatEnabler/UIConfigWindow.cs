@@ -36,7 +36,6 @@ public static class UIConfigWindow
         I18N.Add("Finish build immediately", "Finish build immediately", "建造秒完成");
         I18N.Add("Architect mode", "Architect mode", "建筑师模式");
         I18N.Add("Build without condition", "Build without condition check", "无条件建造");
-        I18N.Add("Build without condition is enabled!", "!!Build without condition is enabled!!", "!!无条件建造已开启！！");
         I18N.Add("No collision", "No collision", "无碰撞");
         I18N.Add("Belt signal generator", "Belt signal generator", "传送带信号物品生成");
         I18N.Add("Belt signal alt format", "Belt signal alt format", "传送带信号替换格式");

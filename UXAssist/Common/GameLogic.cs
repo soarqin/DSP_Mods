@@ -3,23 +3,11 @@ using HarmonyLib;
 
 namespace UXAssist.Common;
 
-public static class GameLogic
+public class GameLogic: PatchImpl<GameLogic>
 {
-    private static Harmony _harmony;
     public static Action OnDataLoaded;
     public static Action OnGameBegin;
     public static Action OnGameEnd;
-    
-    public static void Init()
-    {
-        _harmony ??= Harmony.CreateAndPatchAll(typeof(GameLogic));
-    }
-
-    public static void Uninit()
-    {
-        _harmony?.UnpatchSelf();
-        _harmony = null;
-    }
     
     [HarmonyPostfix]
     [HarmonyPatch(typeof(VFPreload), nameof(VFPreload.InvokeOnLoadWorkEnded))]

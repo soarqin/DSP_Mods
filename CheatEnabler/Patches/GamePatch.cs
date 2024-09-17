@@ -19,6 +19,10 @@ public static class GamePatch
         DevShortcutsEnabled.SettingChanged += (_, _) => DevShortcuts.Enable(DevShortcutsEnabled.Value);
         AbnormalDisablerEnabled.SettingChanged += (_, _) => AbnormalDisabler.Enable(AbnormalDisablerEnabled.Value);
         UnlockTechEnabled.SettingChanged += (_, _) => UnlockTech.Enable(UnlockTechEnabled.Value);
+    }
+
+    public static void Start()
+    {
         DevShortcuts.Enable(DevShortcutsEnabled.Value);
         AbnormalDisabler.Enable(AbnormalDisablerEnabled.Value);
         UnlockTech.Enable(UnlockTechEnabled.Value);

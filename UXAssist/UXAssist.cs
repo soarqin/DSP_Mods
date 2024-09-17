@@ -29,11 +29,10 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
 
     private static bool _configWinInitialized;
     private static MyConfigWindow _configWin;
-    private static Harmony _patch;
-    private static Harmony _persistPatch;
     private static bool _initialized;
     private static PressKeyBind _toggleKey;
     private static ConfigFile _dummyConfig;
+    private Type[] _patches;
 
     #region IModCanSave
     private const ushort ModSaveVersion = 1;
@@ -152,47 +151,46 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
         DysonSpherePatch.AutoConstructMultiplier = Config.Bind("DysonSphere", "AutoConstructMultiplier", 1, "Dyson Sphere auto-construct speed multiplier");
         
         I18N.Init();
-    }
-
-    private void Start()
-    {
         I18N.Add("UXAssist Config", "UXAssist Config", "UX助手设置");
         I18N.Add("KEYOpenUXAssistConfigWindow", "Open UXAssist Config Window", "打开UX助手设置面板");
         I18N.Add("KEYToggleAutoCruise", "Toggle auto-cruise", "切换自动巡航");
 
-        // UI Patch
-        _patch ??= Harmony.CreateAndPatchAll(typeof(UXAssist), PluginInfo.PLUGIN_GUID);
-        _persistPatch ??= Harmony.CreateAndPatchAll(typeof(Persist));
+        // UI Patches
+        UIPatch.Enable(true);
 
-        GameLogic.Init();
+        // Persistant Patches
+        Persist.Enable(true);
+        GameLogic.Enable(true);
         
         MyWindowManager.Init();
         UIConfigWindow.Init();
 
-        Common.Util.GetTypesInNamespace(Assembly.GetExecutingAssembly(), "UXAssist.Patches")
-            .Do(type => type.GetMethod("Init")?.Invoke(null, null));
+        _patches = Common.Util.GetTypesInNamespace(Assembly.GetExecutingAssembly(), "UXAssist.Patches");
+        _patches?.Do(type => type.GetMethod("Init")?.Invoke(null, null));
 
-        ModsCompat.AuxilaryfunctionWrapper.Init(_patch);
-        ModsCompat.BulletTimeWrapper.Init(_patch);
+        var patch = UIPatch.GetHarmony();
+        ModsCompat.AuxilaryfunctionWrapper.Init(patch);
+        ModsCompat.BulletTimeWrapper.Init(patch);
 
         I18N.Apply();
         I18N.OnInitialized += RecreateConfigWindow;
-        
+    }
+
+    private void Start()
+    {
+        _patches?.Do(type => type.GetMethod("Start")?.Invoke(null, null));
         LogisticsPatch.Start();
     }
 
     private void OnDestroy()
     {
-        Common.Util.GetTypesInNamespace(Assembly.GetExecutingAssembly(), "UXAssist.Patches")
-            .Do(type => type.GetMethod("Uninit")?.Invoke(null, null));
+        _patches?.Do(type => type.GetMethod("Uninit")?.Invoke(null, null));
 
         MyWindowManager.Uninit();
 
-        GameLogic.Uninit();
-        _patch?.UnpatchSelf();
-        _patch = null;
-        _persistPatch?.UnpatchSelf();
-        _persistPatch = null;
+        GameLogic.Enable(false);
+        Persist.Enable(false);
+        UIPatch.Enable(false);
     }
 
     private void Update()
@@ -245,66 +243,90 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
         if (wasActive) ToggleConfigWindow();
     }
 
-    // Add config button to main menu
-    [HarmonyPostfix, HarmonyPatch(typeof(UIRoot), nameof(UIRoot.OpenMainMenuUI))]
-    public static void UIRoot_OpenMainMenuUI_Postfix()
+    [PatchImplGuid(PluginInfo.PLUGIN_GUID)]
+    private class UIPatch: PatchImpl<UIPatch>
     {
-        if (_initialized) return;
+        private static GameObject _buttonOnPlanetGlobe;
+
+        // Add config button to main menu
+        [HarmonyPostfix, HarmonyPatch(typeof(UIRoot), nameof(UIRoot.OpenMainMenuUI))]
+        public static void UIRoot_OpenMainMenuUI_Postfix()
         {
-            var mainMenu = UIRoot.instance.uiMainMenu;
-            var src = mainMenu.newGameButton;
-            var parent = src.transform.parent;
-            var btn = Instantiate(src, parent);
-            btn.name = "button-cheatenabler-config";
-            var l = btn.text.GetComponent<Localizer>();
-            if (l != null)
+            if (_initialized) return;
             {
-                l.stringKey = "UXAssist Config";
-                l.translation = "UXAssist Config".Translate();
+                var mainMenu = UIRoot.instance.uiMainMenu;
+                var src = mainMenu.newGameButton;
+                var parent = src.transform.parent;
+                var btn = Instantiate(src, parent);
+                btn.name = "button-cheatenabler-config";
+                var l = btn.text.GetComponent<Localizer>();
+                if (l != null)
+                {
+                    l.stringKey = "UXAssist Config";
+                    l.translation = "UXAssist Config".Translate();
+                }
+
+                btn.text.text = "UXAssist Config".Translate();
+                btn.text.fontSize = btn.text.fontSize * 7 / 8;
+                I18N.OnInitialized += () => { btn.text.text = "UXAssist Config".Translate(); };
+                var vec = ((RectTransform)mainMenu.exitButton.transform).anchoredPosition3D;
+                var vec2 = ((RectTransform)mainMenu.creditsButton.transform).anchoredPosition3D;
+                var transform1 = (RectTransform)btn.transform;
+                transform1.anchoredPosition3D = new Vector3(vec.x, vec.y + (vec.y - vec2.y) * 2, vec.z);
+                btn.button.onClick.RemoveAllListeners();
+                btn.button.onClick.AddListener(ToggleConfigWindow);
             }
-            btn.text.text = "UXAssist Config".Translate();
-            btn.text.fontSize = btn.text.fontSize * 7 / 8;
-            I18N.OnInitialized += () => { btn.text.text = "UXAssist Config".Translate(); };
-            var vec = ((RectTransform)mainMenu.exitButton.transform).anchoredPosition3D;
-            var vec2 = ((RectTransform)mainMenu.creditsButton.transform).anchoredPosition3D;
-            var transform1 = (RectTransform)btn.transform;
-            transform1.anchoredPosition3D = new Vector3(vec.x, vec.y + (vec.y - vec2.y) * 2, vec.z);
-            btn.button.onClick.RemoveAllListeners();
-            btn.button.onClick.AddListener(ToggleConfigWindow);
+            {
+                var panel = UIRoot.instance.uiGame.planetGlobe;
+                var src = panel.button2;
+                var sandboxMenu = UIRoot.instance.uiGame.sandboxMenu;
+                var icon = sandboxMenu.categoryButtons[6].transform.Find("icon")?.GetComponent<Image>()?.sprite;
+                var b = Instantiate(src, src.transform.parent);
+                _buttonOnPlanetGlobe = b.gameObject;
+                var rect = (RectTransform)_buttonOnPlanetGlobe.transform;
+                var btn = _buttonOnPlanetGlobe.GetComponent<UIButton>();
+                var img = _buttonOnPlanetGlobe.transform.Find("button-2/icon")?.GetComponent<Image>();
+                if (img != null)
+                {
+                    img.sprite = icon;
+                }
+
+                if (_buttonOnPlanetGlobe != null && btn != null)
+                {
+                    _buttonOnPlanetGlobe.name = "open-uxassist-config";
+                    rect.localScale = new Vector3(0.6f, 0.6f, 0.6f);
+                    rect.anchoredPosition3D = new Vector3(64f, -5f, 0f);
+                    b.onClick.RemoveAllListeners();
+                    btn.onClick += _ => { ToggleConfigWindow(); };
+                    btn.tips.tipTitle = "UXAssist Config";
+                    I18N.OnInitialized += () => { btn.tips.tipTitle = "UXAssist Config".Translate(); };
+                    btn.tips.tipText = null;
+                    btn.tips.corner = 9;
+                    btn.tips.offset = new Vector2(-20f, -20f);
+                    _buttonOnPlanetGlobe.SetActive(true);
+                }
+            }
+            _initialized = true;
         }
+        
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(UIPlanetGlobe), nameof(UIPlanetGlobe.DistributeButtons))]
+        private static void UIPlanetGlobe_DistributeButtons_Postfix(UIPlanetGlobe __instance)
         {
-            var panel = UIRoot.instance.uiGame.planetGlobe;
-            var src = panel.button2;
-            var sandboxMenu = UIRoot.instance.uiGame.sandboxMenu;
-            var icon = sandboxMenu.categoryButtons[6].transform.Find("icon")?.GetComponent<Image>()?.sprite;
-            var b = Instantiate(src, src.transform.parent);
-            var panelButtonGo = b.gameObject;
-            var rect = (RectTransform)panelButtonGo.transform;
-            var btn = panelButtonGo.GetComponent<UIButton>();
-            var img = panelButtonGo.transform.Find("button-2/icon")?.GetComponent<Image>();
-            if (img != null)
+            if (_buttonOnPlanetGlobe == null) return;
+            var rect = (RectTransform)_buttonOnPlanetGlobe.transform;
+            if (__instance.dysonSphereSystemUnlocked || __instance.logisticsSystemUnlocked)
             {
-                img.sprite = icon;
-            }
-            if (panelButtonGo != null && btn != null)
-            {
-                panelButtonGo.name = "open-uxassist-config";
-                rect.localScale = new Vector3(0.6f, 0.6f, 0.6f);
                 rect.anchoredPosition3D = new Vector3(64f, -5f, 0f);
-                b.onClick.RemoveAllListeners();
-                btn.onClick += _ => { ToggleConfigWindow(); };
-                btn.tips.tipTitle = "UXAssist Config";
-                I18N.OnInitialized += () => { btn.tips.tipTitle = "UXAssist Config".Translate(); };
-                btn.tips.tipText = null;
-                btn.tips.corner = 9;
-                btn.tips.offset = new Vector2(-20f, -20f);
-                panelButtonGo.SetActive(true);
+            }
+            else
+            {
+                rect.anchoredPosition3D = new Vector3(128f, -100f, 0f);
             }
         }
-        _initialized = true;
     }
 
-    private static class Persist
+    private class Persist: PatchImpl<Persist>
     {
         // Check for noModifier while pressing hotkeys on build bar
         [HarmonyTranspiler]

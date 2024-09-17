@@ -7,19 +7,18 @@ using UXAssist.Common;
 
 namespace UXAssist.Patches;
 
-public static class DysonSpherePatch
+public class DysonSpherePatch: PatchImpl<DysonSpherePatch>
 {
     public static ConfigEntry<bool> StopEjectOnNodeCompleteEnabled;
     public static ConfigEntry<bool> OnlyConstructNodesEnabled;
     public static ConfigEntry<int> AutoConstructMultiplier;
-    private static Harmony _dysonSpherePatch;
 
     private static FieldInfo _totalNodeSpInfo, _totalFrameSpInfo, _totalCpInfo;
 
     public static void Init()
     {
         I18N.Add("[UXAssist] No node to fill", "[UXAssist] No node to fill", "[UXAssist] 无可建造节点");
-        _dysonSpherePatch ??= Harmony.CreateAndPatchAll(typeof(DysonSpherePatch));
+        Enable(true);
         StopEjectOnNodeCompleteEnabled.SettingChanged += (_, _) => StopEjectOnNodeComplete.Enable(StopEjectOnNodeCompleteEnabled.Value);
         OnlyConstructNodesEnabled.SettingChanged += (_, _) => OnlyConstructNodes.Enable(OnlyConstructNodesEnabled.Value);
         StopEjectOnNodeComplete.Enable(StopEjectOnNodeCompleteEnabled.Value);
@@ -33,8 +32,7 @@ public static class DysonSpherePatch
     {
         StopEjectOnNodeComplete.Enable(false);
         OnlyConstructNodes.Enable(false);
-        _dysonSpherePatch?.UnpatchSelf();
-        _dysonSpherePatch = null;
+        Enable(false);
     }
 
     public static void InitCurrentDysonSphere(int index)

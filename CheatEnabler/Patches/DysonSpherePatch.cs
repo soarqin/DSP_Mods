@@ -7,7 +7,7 @@ using UXAssist.Common;
 
 namespace CheatEnabler.Patches;
 
-public static class DysonSpherePatch
+public class DysonSpherePatch: PatchImpl<DysonSpherePatch>
 {
     public static ConfigEntry<bool> SkipBulletEnabled;
     public static ConfigEntry<bool> SkipAbsorbEnabled;
@@ -17,8 +17,6 @@ public static class DysonSpherePatch
     public static ConfigEntry<bool> OverclockSiloEnabled;
     private static bool _instantAbsorb;
 
-    private static Harmony _dysonSpherePatch;
-   
     public static void Init()
     {
         SkipBulletEnabled.SettingChanged += (_, _) => SkipBulletPatch.Enable(SkipBulletEnabled.Value);
@@ -27,19 +25,22 @@ public static class DysonSpherePatch
         EjectAnywayEnabled.SettingChanged += (_, _) => EjectAnywayPatch.Enable(EjectAnywayEnabled.Value);
         OverclockEjectorEnabled.SettingChanged += (_, _) => OverclockEjector.Enable(OverclockEjectorEnabled.Value);
         OverclockSiloEnabled.SettingChanged += (_, _) => OverclockSilo.Enable(OverclockSiloEnabled.Value);
+    }
+
+    public static void Start()
+    {
         SkipBulletPatch.Enable(SkipBulletEnabled.Value);
         SkipAbsorbPatch.Enable(SkipAbsorbEnabled.Value);
         QuickAbsorbPatch.Enable(QuickAbsorbEnabled.Value);
         EjectAnywayPatch.Enable(EjectAnywayEnabled.Value);
         OverclockEjector.Enable(OverclockEjectorEnabled.Value);
         OverclockSilo.Enable(OverclockSiloEnabled.Value);
-        _dysonSpherePatch ??= Harmony.CreateAndPatchAll(typeof(DysonSpherePatch));
+        Enable(true);
     }
     
     public static void Uninit()
     {
-        _dysonSpherePatch?.UnpatchSelf();
-        _dysonSpherePatch = null;
+        Enable(false);
         SkipBulletPatch.Enable(false);
         SkipAbsorbPatch.Enable(false);
         QuickAbsorbPatch.Enable(false);

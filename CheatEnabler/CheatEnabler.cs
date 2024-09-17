@@ -1,6 +1,6 @@
-﻿using System.Reflection;
+﻿using System;
+using System.Reflection;
 using BepInEx;
-using CheatEnabler.Functions;
 using CheatEnabler.Patches;
 using HarmonyLib;
 using UXAssist.Common;
@@ -83,19 +83,22 @@ public class CheatEnabler : BaseUnityPlugin
             "Mecha and Drones/Fleets invincible");
         CombatPatch.BuildingsInvincibleEnabled = Config.Bind("Battle", "BuildingsInvincible", false,
             "Buildings invincible");
-    }
-    private void Start() {
         UIConfigWindow.Init();
-        Util.GetTypesInNamespace(Assembly.GetExecutingAssembly(), "CheatEnabler.Patches")
-            .Do(type => type.GetMethod("Init")?.Invoke(null, null));
-        PlayerFunctions.Init();
-        DysonSphereFunctions.Init();
+        _patches = Util.GetTypesFiltered(Assembly.GetExecutingAssembly(),
+            t => string.Equals(t.Namespace, "CheatEnabler.Patches", StringComparison.Ordinal) || string.Equals(t.Namespace, "CheatEnabler.Functions", StringComparison.Ordinal));
+        _patches?.Do(type => type.GetMethod("Init")?.Invoke(null, null));
+    }
+
+    private Type[] _patches;
+
+    private void Start()
+    {
+        _patches?.Do(type => type.GetMethod("Start")?.Invoke(null, null));
     }
 
     private void OnDestroy()
     {
-        Util.GetTypesInNamespace(Assembly.GetExecutingAssembly(), "CheatEnabler.Patches")
-            .Do(type => type.GetMethod("Uninit")?.Invoke(null, null));
+        _patches?.Do(type => type.GetMethod("Uninit")?.Invoke(null, null));
     }
 
     private void Update()

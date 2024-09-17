@@ -15,6 +15,10 @@ public static class PlayerPatch
     {
         InstantTeleportEnabled.SettingChanged += (_, _) => InstantTeleport.Enable(InstantTeleportEnabled.Value);
         WarpWithoutSpaceWarpersEnabled.SettingChanged += (_, _) => WarpWithoutSpaceWarpers.Enable(WarpWithoutSpaceWarpersEnabled.Value);
+    }
+
+    public static void Start()
+    {
         InstantTeleport.Enable(InstantTeleportEnabled.Value);
         WarpWithoutSpaceWarpers.Enable(WarpWithoutSpaceWarpersEnabled.Value);
     }

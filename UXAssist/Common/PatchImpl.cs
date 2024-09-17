@@ -1,6 +1,14 @@
-﻿using HarmonyLib;
+﻿using System;
+using System.Reflection;
+using HarmonyLib;
 
 namespace UXAssist.Common;
+
+[AttributeUsage(AttributeTargets.Class, Inherited = false)]
+public class PatchImplGuidAttribute(string guid) : Attribute
+{
+    public string Guid { get; } = guid;
+}
 
 public class PatchImpl<T> where T : new()
 {
@@ -17,7 +25,8 @@ public class PatchImpl<T> where T : new()
         }
         if (enable)
         {
-            thisInstance._patch ??= Harmony.CreateAndPatchAll(typeof(T));
+            var guid = typeof(T).GetCustomAttribute<PatchImplGuidAttribute>()?.Guid;
+            thisInstance._patch ??= Harmony.CreateAndPatchAll(typeof(T), guid);
             thisInstance.OnEnable();
             return;
         }
@@ -26,7 +35,7 @@ public class PatchImpl<T> where T : new()
         thisInstance._patch = null;
     }
 
-    protected static Harmony GetPatch() => (Instance as PatchImpl<T>)?._patch;
+    public static Harmony GetHarmony() => (Instance as PatchImpl<T>)?._patch;
 
     protected virtual void OnEnable() { }
     protected virtual void OnDisable() { }

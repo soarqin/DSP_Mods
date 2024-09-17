@@ -8,10 +8,12 @@ namespace UXAssist.Common;
 
 public static class Util
 {
-    public static Type[] GetTypesInNamespace(Assembly assembly, string nameSpace)
+    public static Type[] GetTypesFiltered(Assembly assembly, Func<Type, bool> predicate)
     {
-        return assembly.GetTypes().Where(t => string.Equals(t.Namespace, nameSpace, StringComparison.Ordinal)).ToArray();
+        return assembly.GetTypes().Where(predicate).ToArray();
     }
+
+    public static Type[] GetTypesInNamespace(Assembly assembly, string nameSpace) => GetTypesFiltered(assembly, t => string.Equals(t.Namespace, nameSpace, StringComparison.Ordinal));
 
     public static byte[] LoadEmbeddedResource(string path, Assembly assembly = null)
     {

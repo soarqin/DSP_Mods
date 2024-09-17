@@ -10,7 +10,7 @@ using UXAssist.Common;
 
 namespace CheatEnabler.Patches;
 
-public static class FactoryPatch
+public class FactoryPatch: PatchImpl<FactoryPatch>
 {
     public static ConfigEntry<bool> ImmediateEnabled;
     public static ConfigEntry<bool> ArchitectModeEnabled;
@@ -30,13 +30,11 @@ public static class FactoryPatch
     public static ConfigEntry<bool> GreaterPowerUsageInLogisticsEnabled;
     public static ConfigEntry<bool> ControlPanelRemoteLogisticsEnabled;
 
-    private static Harmony _factoryPatch;
     private static PressKeyBind _noConditionKey;
     private static PressKeyBind _noCollisionKey;
 
     public static void Init()
     {
-        if (_factoryPatch != null) return;
         _noConditionKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
             {
                 key = new CombineKey(0, 0, ECombineKeyAction.OnceClick, true),
@@ -55,10 +53,13 @@ public static class FactoryPatch
         );
         I18N.Add("KEYToggleNoCondition", "Toggle No Condition Build", "切换无条件建造");
         I18N.Add("KEYToggleNoCollision", "Toggle No Collision", "切换无碰撞");
-        I18N.Add("NoConditionOn", "No condition build is enabled!", "无条件建造已启用");
-        I18N.Add("NoConditionOff", "No condition build is disabled!", "无条件建造已禁用");
-        I18N.Add("NoCollisionOn", "No collision is enabled!", "无碰撞已启用");
-        I18N.Add("NoCollisionOff", "No collision is disabled!", "无碰撞已禁用");
+        I18N.Add("NoConditionOn", "No condition build is enabled!", "无条件建造已开启");
+        I18N.Add("NoConditionOff", "No condition build is disabled!", "无条件建造已关闭");
+        I18N.Add("NoCollisionOn", "No collision is enabled!", "无碰撞已开启");
+        I18N.Add("NoCollisionOff", "No collision is disabled!", "无碰撞已关闭");
+        I18N.Add("Build without condition is enabled!", "!!Build without condition is enabled!!", "！！无条件建造已开启！！");
+        I18N.Add("No collision is enabled!", "!!No collision is enabled!!", "！！无碰撞已开启！！");
+
         ImmediateEnabled.SettingChanged += (_, _) => ImmediateBuild.Enable(ImmediateEnabled.Value);
         ArchitectModeEnabled.SettingChanged += (_, _) => ArchitectMode.Enable(ArchitectModeEnabled.Value);
         NoConditionEnabled.SettingChanged += (_, _) => NoConditionBuild.Enable(NoConditionEnabled.Value);
@@ -73,6 +74,10 @@ public static class FactoryPatch
         WindTurbinesPowerGlobalCoverageEnabled.SettingChanged += (_, _) => WindTurbinesPowerGlobalCoverage.Enable(WindTurbinesPowerGlobalCoverageEnabled.Value);
         GreaterPowerUsageInLogisticsEnabled.SettingChanged += (_, _) => GreaterPowerUsageInLogistics.Enable(GreaterPowerUsageInLogisticsEnabled.Value);
         ControlPanelRemoteLogisticsEnabled.SettingChanged += (_, _) => ControlPanelRemoteLogistics.Enable(ControlPanelRemoteLogisticsEnabled.Value);
+    }
+
+    public static void Start()
+    {
         ImmediateBuild.Enable(ImmediateEnabled.Value);
         ArchitectMode.Enable(ArchitectModeEnabled.Value);
         NoConditionBuild.Enable(NoConditionEnabled.Value);
@@ -85,7 +90,7 @@ public static class FactoryPatch
         BoostGeothermalPower.Enable(BoostGeothermalPowerEnabled.Value);
         GreaterPowerUsageInLogistics.Enable(GreaterPowerUsageInLogisticsEnabled.Value);
         ControlPanelRemoteLogistics.Enable(ControlPanelRemoteLogisticsEnabled.Value);
-        _factoryPatch = Harmony.CreateAndPatchAll(typeof(FactoryPatch));
+        Enable(true);
         GameLogic.OnGameBegin += GameMain_Begin_Postfix_For_ImmBuild;
         GameLogic.OnDataLoaded += () => WindTurbinesPowerGlobalCoverage.Enable(WindTurbinesPowerGlobalCoverageEnabled.Value);
     }
@@ -93,8 +98,7 @@ public static class FactoryPatch
     public static void Uninit()
     {
         GameLogic.OnGameBegin -= GameMain_Begin_Postfix_For_ImmBuild;
-        _factoryPatch?.UnpatchSelf();
-        _factoryPatch = null;
+        Enable(false);
         ImmediateBuild.Enable(false);
         ArchitectMode.Enable(false);
         NoConditionBuild.Enable(false);
@@ -136,6 +140,7 @@ public static class FactoryPatch
         var obj = coll.gameObject;
         if (obj == null) return;
         obj.gameObject.SetActive(!NoCollisionEnabled.Value);
+        GameMain.data?.warningSystem?.UpdateCriticalWarningText();
     }
 
     public static void ArrivePlanet(PlanetFactory factory)
@@ -193,13 +198,23 @@ public static class FactoryPatch
     private static IEnumerable<CodeInstruction> WarningSystem_hasCriticalWarning_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
     {
         var matcher = new CodeMatcher(instructions, generator);
+        var label1 = generator.DefineLabel();
+        var label2 = generator.DefineLabel();
         matcher.End().MatchBack(false,
             new CodeMatch(OpCodes.Ret)
-        );
+        ).RemoveInstructions(1);
         matcher.InsertAndAdvance(
-            new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(FactoryPatch), nameof(NoConditionEnabled))),
+            new CodeInstruction(OpCodes.Brfalse, label1),
+            new CodeInstruction(OpCodes.Ldc_I4_1),
+            new CodeInstruction(OpCodes.Ret),
+            new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(FactoryPatch), nameof(NoConditionEnabled))).WithLabels(label1),
             new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(ConfigEntry<bool>), nameof(ConfigEntry<bool>.Value))),
-            new CodeInstruction(OpCodes.Or)
+            new CodeInstruction(OpCodes.Brfalse, label2),
+            new CodeInstruction(OpCodes.Ldc_I4_1),
+            new CodeInstruction(OpCodes.Ret),
+            new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(FactoryPatch), nameof(NoCollisionEnabled))).WithLabels(label2),
+            new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(ConfigEntry<bool>), nameof(ConfigEntry<bool>.Value))),
+            new CodeInstruction(OpCodes.Ret)
         );
         return matcher.InstructionEnumeration();
     }
@@ -211,61 +226,54 @@ public static class FactoryPatch
         var matcher = new CodeMatcher(instructions, generator);
         matcher.MatchForward(false,
             new CodeMatch(OpCodes.Ldarg_0),
-            new CodeMatch(OpCodes.Ldstr),
+            new CodeMatch(OpCodes.Ldstr, ""),
             new CodeMatch(OpCodes.Call, AccessTools.PropertySetter(typeof(WarningSystem), nameof(WarningSystem.criticalWarningTexts)))
         );
         matcher.Repeat(m =>
         {
             var label1 = generator.DefineLabel();
-            var label2 = generator.DefineLabel();
-            m.Advance(1).Labels.Add(label1);
-            m.InsertAndAdvance(
-                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(FactoryPatch), nameof(NoConditionEnabled))),
-                new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(ConfigEntry<bool>), nameof(ConfigEntry<bool>.Value))),
-                new CodeInstruction(OpCodes.Brfalse, label1),
-                new CodeInstruction(OpCodes.Ldstr, "Build without condition is enabled!"),
-                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(Localization), nameof(Localization.Translate), [typeof(string)])),
-                new CodeInstruction(OpCodes.Ldstr, "\r\n"),
-                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(string), nameof(string.Concat), [typeof(string), typeof(string)])),
-                new CodeInstruction(OpCodes.Call, AccessTools.PropertySetter(typeof(WarningSystem), nameof(WarningSystem.criticalWarningTexts)))
+            m.Advance(1).RemoveInstructions(2).InsertAndAdvance(
+                Transpilers.EmitDelegate((WarningSystem w) =>
+                    {
+                        if (NoConditionEnabled.Value)
+                        {
+                            CheatEnabler.Logger.LogDebug("A");
+                            w.criticalWarningTexts = "Build without condition is enabled!".Translate() + "\r\n";
+                        }
+                        else if (NoCollisionEnabled.Value)
+                        {
+                            CheatEnabler.Logger.LogDebug("B");
+                            w.criticalWarningTexts = "No collision is enabled!".Translate() + "\r\n";
+                        }
+                        CheatEnabler.Logger.LogDebug("C");
+                    }
+                )
             );
-            if (m.InstructionAt(2).opcode == OpCodes.Ret)
+            if (m.Opcode == OpCodes.Ret)
             {
                 m.InsertAndAdvance(
                     new CodeInstruction(OpCodes.Ldarg_0),
                     new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(WarningSystem), nameof(WarningSystem.onCriticalWarningTextChanged))),
-                    new CodeInstruction(OpCodes.Brfalse_S, label2),
+                    new CodeInstruction(OpCodes.Brfalse_S, label1),
                     new CodeInstruction(OpCodes.Ldarg_0),
                     new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(WarningSystem), nameof(WarningSystem.onCriticalWarningTextChanged))),
                     new CodeInstruction(OpCodes.Callvirt, AccessTools.Method(typeof(Action), nameof(Action.Invoke)))
                 );
+                m.Labels.Add(label1);
             }
-            m.InsertAndAdvance(
-                new CodeInstruction(OpCodes.Br, label2)
-            ).Advance(2).Labels.Add(label2);
         });
         return matcher.InstructionEnumeration();
     }
 
-    private static class ImmediateBuild
+    private class ImmediateBuild: PatchImpl<ImmediateBuild>
     {
-        private static Harmony _immediatePatch;
-
-        public static void Enable(bool enable)
+        protected override void OnEnable()
         {
-            if (enable)
+            var factory = GameMain.mainPlayer?.factory;
+            if (factory != null)
             {
-                if (_immediatePatch != null) return;
-                var factory = GameMain.mainPlayer?.factory;
-                if (factory != null)
-                {
-                    ArrivePlanet(factory);
-                }
-                _immediatePatch = Harmony.CreateAndPatchAll(typeof(ImmediateBuild));
-                return;
+                ArrivePlanet(factory);
             }
-            _immediatePatch?.UnpatchSelf();
-            _immediatePatch = null;
         }
 
         [HarmonyTranspiler]
@@ -369,19 +377,16 @@ public static class FactoryPatch
         }
     }
 
-    private static class NoConditionBuild
+    private class NoConditionBuild: PatchImpl<NoConditionBuild>
     {
-        private static Harmony _noConditionPatch;
-        public static void Enable(bool on)
+        protected override void OnEnable()
         {
             GameMain.data?.warningSystem?.UpdateCriticalWarningText();
-            if (on)
-            {
-                _noConditionPatch ??= Harmony.CreateAndPatchAll(typeof(NoConditionBuild));
-                return;
-            }
-            _noConditionPatch?.UnpatchSelf();
-            _noConditionPatch = null;
+        }
+
+        protected override void OnDisable()
+        {
+            GameMain.data?.warningSystem?.UpdateCriticalWarningText();
         }
 
         [HarmonyTranspiler, HarmonyPriority(Priority.Last)]
@@ -460,9 +465,8 @@ public static class FactoryPatch
         }
     }
 
-    public static class BeltSignalGenerator
+    public class BeltSignalGenerator: PatchImpl<BeltSignalGenerator>
     {
-        private static Harmony _beltSignalPatch;
         private static Dictionary<int, BeltSignal>[] _signalBelts;
         private static Dictionary<long, int> _portalFrom;
         private static Dictionary<int, HashSet<long>> _portalTo;
@@ -480,18 +484,15 @@ public static class FactoryPatch
             public float[] SourceProgress;
         }
 
-        public static void Enable(bool on)
+        protected override void OnEnable()
         {
-            if (on)
-            {
-                InitSignalBelts();
-                _beltSignalPatch ??= Harmony.CreateAndPatchAll(typeof(BeltSignalGenerator));
-                GameLogic.OnGameBegin += GameMain_Begin_Postfix;
-                return;
-            }
+            InitSignalBelts();
+            GameLogic.OnGameBegin += GameMain_Begin_Postfix;
+        }
+
+        protected override void OnDisable()
+        {
             GameLogic.OnGameBegin -= GameMain_Begin_Postfix;
-            _beltSignalPatch?.UnpatchSelf();
-            _beltSignalPatch = null;
             _initialized = false;
             _signalBelts = null;
             _signalBeltsCapacity = 0;
