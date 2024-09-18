@@ -55,6 +55,10 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
         DoNotRenderEntitiesEnabled.SettingChanged += (_, _) => DoNotRenderEntities.Enable(DoNotRenderEntitiesEnabled.Value);
         DragBuildPowerPolesEnabled.SettingChanged += (_, _) => DragBuildPowerPoles.Enable(DragBuildPowerPolesEnabled.Value);
         BeltSignalsForBuyOutEnabled.SettingChanged += (_, _) => BeltSignalsForBuyOut.Enable(BeltSignalsForBuyOutEnabled.Value);
+    }
+
+    public static void Start()
+    {
         UnlimitInteractive.Enable(UnlimitInteractiveEnabled.Value);
         RemoveSomeConditionBuild.Enable(RemoveSomeConditionEnabled.Value);
         NightLight.Enable(NightLightEnabled.Value);

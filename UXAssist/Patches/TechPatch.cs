@@ -18,10 +18,14 @@ public static class TechPatch
         I18N.Add("分拣器运货量", "Sorter Mk.III cargo stacking : ", "极速分拣器每次可运送 ");
         SorterCargoStackingEnabled.SettingChanged += (_, _) => SorterCargoStacking.Enable(SorterCargoStackingEnabled.Value);
         BatchBuyoutTechEnabled.SettingChanged += (_, _) => BatchBuyoutTech.Enable(BatchBuyoutTechEnabled.Value);
+    }
+
+    public static void Start()
+    {
         SorterCargoStacking.Enable(SorterCargoStackingEnabled.Value);
         BatchBuyoutTech.Enable(BatchBuyoutTechEnabled.Value);
     }
-    
+
     public static void Uninit()
     {
         BatchBuyoutTech.Enable(false);

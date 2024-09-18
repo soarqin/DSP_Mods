@@ -238,8 +238,8 @@ public static class UIConfigWindow
         if (ModsCompat.AuxilaryfunctionWrapper.ShowStationInfo != null)
         {
             ModsCompat.AuxilaryfunctionWrapper.ShowStationInfo.SettingChanged += (_, _) => { OnAuxilaryInfoPanelChanged(); };
+            OnAuxilaryInfoPanelChanged();
         }
-        OnAuxilaryInfoPanelChanged();
 
         var tab3 = wnd.AddTab(trans, "Player/Mecha");
         x = 0f;

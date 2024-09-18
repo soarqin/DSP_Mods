@@ -96,6 +96,10 @@ public class GamePatch: PatchImpl<GamePatch>
             }
             FPSController.SetFixUPS(GameMain.tickPerSec * GameUpsFactor.Value);
         };
+    }
+
+    public static void Start()
+    {
         EnableWindowResize.Enable(EnableWindowResizeEnabled.Value);
         LoadLastWindowRect.Enable(LoadLastWindowRectEnabled.Value);
         MouseCursorScaleUp.reload = false;

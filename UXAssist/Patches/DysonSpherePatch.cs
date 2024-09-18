@@ -21,11 +21,15 @@ public class DysonSpherePatch: PatchImpl<DysonSpherePatch>
         Enable(true);
         StopEjectOnNodeCompleteEnabled.SettingChanged += (_, _) => StopEjectOnNodeComplete.Enable(StopEjectOnNodeCompleteEnabled.Value);
         OnlyConstructNodesEnabled.SettingChanged += (_, _) => OnlyConstructNodes.Enable(OnlyConstructNodesEnabled.Value);
-        StopEjectOnNodeComplete.Enable(StopEjectOnNodeCompleteEnabled.Value);
-        OnlyConstructNodes.Enable(OnlyConstructNodesEnabled.Value);
         _totalNodeSpInfo = AccessTools.Field(typeof(DysonSphereLayer), "totalNodeSP");
         _totalFrameSpInfo = AccessTools.Field(typeof(DysonSphereLayer), "totalFrameSP");
         _totalCpInfo = AccessTools.Field(typeof(DysonSphereLayer), "totalCP");
+    }
+
+    public static void Start()
+    {
+        StopEjectOnNodeComplete.Enable(StopEjectOnNodeCompleteEnabled.Value);
+        OnlyConstructNodes.Enable(OnlyConstructNodesEnabled.Value);
     }
 
     public static void Uninit()

@@ -12,6 +12,10 @@ public static class PlanetPatch
     public static void Init()
     {
         PlayerActionsInGlobeViewEnabled.SettingChanged += (_, _) => PlayerActionsInGlobeView.Enable(PlayerActionsInGlobeViewEnabled.Value);
+    }
+
+    public static void Start()
+    {
         PlayerActionsInGlobeView.Enable(PlayerActionsInGlobeViewEnabled.Value);
     }
 

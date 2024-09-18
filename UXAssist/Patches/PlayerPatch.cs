@@ -20,12 +20,6 @@ public static class PlayerPatch
     
     public static void Init()
     {
-        EnhancedMechaForgeCountControlEnabled.SettingChanged += (_, _) => EnhancedMechaForgeCountControl.Enable(EnhancedMechaForgeCountControlEnabled.Value);
-        HideTipsForSandsChangesEnabled.SettingChanged += (_, _) => HideTipsForSandsChanges.Enable(HideTipsForSandsChangesEnabled.Value);
-        AutoNavigationEnabled.SettingChanged += (_, _) => AutoNavigation.Enable(AutoNavigationEnabled.Value);
-        EnhancedMechaForgeCountControl.Enable(EnhancedMechaForgeCountControlEnabled.Value);
-        HideTipsForSandsChanges.Enable(HideTipsForSandsChangesEnabled.Value);
-        AutoNavigation.Enable(AutoNavigationEnabled.Value);
         _autoDriveKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
         {
             key = new CombineKey(0, 0, ECombineKeyAction.OnceClick, true),
@@ -35,6 +29,16 @@ public static class PlayerPatch
         });
         I18N.Add("AutoCruiseOn", "Auto-cruise enabled", "已启用自动巡航");
         I18N.Add("AutoCruiseOff", "Auto-cruise disabled", "已禁用自动巡航");
+        EnhancedMechaForgeCountControlEnabled.SettingChanged += (_, _) => EnhancedMechaForgeCountControl.Enable(EnhancedMechaForgeCountControlEnabled.Value);
+        HideTipsForSandsChangesEnabled.SettingChanged += (_, _) => HideTipsForSandsChanges.Enable(HideTipsForSandsChangesEnabled.Value);
+        AutoNavigationEnabled.SettingChanged += (_, _) => AutoNavigation.Enable(AutoNavigationEnabled.Value);
+    }
+
+    public static void Start()
+    {
+        EnhancedMechaForgeCountControl.Enable(EnhancedMechaForgeCountControlEnabled.Value);
+        HideTipsForSandsChanges.Enable(HideTipsForSandsChangesEnabled.Value);
+        AutoNavigation.Enable(AutoNavigationEnabled.Value);
     }
 
     public static void OnUpdate()
