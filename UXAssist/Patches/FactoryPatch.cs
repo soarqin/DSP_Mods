@@ -28,6 +28,7 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
     public static ConfigEntry<bool> DragBuildPowerPolesEnabled;
     public static ConfigEntry<bool> BeltSignalsForBuyOutEnabled;
     private static PressKeyBind _doNotRenderEntitiesKey;
+    private static PressKeyBind _offgridfForPathsKey;
 
     public static void Init()
     {
@@ -40,6 +41,15 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
             }
         );
         I18N.Add("KEYToggleDoNotRenderEntities", "Toggle Do Not Render Factory Entities", "切换不渲染工厂建筑实体");
+        _offgridfForPathsKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
+            {
+                key = new CombineKey((int)KeyCode.LeftControl, 0, ECombineKeyAction.OnceClick, false),
+                conflictGroup = KeyBindConflict.MOVEMENT | KeyBindConflict.UI | KeyBindConflict.FLYING | KeyBindConflict.SAILING | KeyBindConflict.BUILD_MODE_1 | KeyBindConflict.KEYBOARD_KEYBIND,
+                name = "OffgridForPaths",
+                canOverride = true
+            }
+        );
+        I18N.Add("KEYOffgridForPaths", "Build belts offgrid", "脱离网格建造传送带");
 
         BeltSignalsForBuyOut.InitPersist();
         UnlimitInteractiveEnabled.SettingChanged += (_, _) => UnlimitInteractive.Enable(UnlimitInteractiveEnabled.Value);
@@ -699,8 +709,8 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
             var jmp0 = generator.DefineLabel();
             var jmp1 = generator.DefineLabel();
             matcher.InsertAndAdvance(
-                new CodeInstruction(OpCodes.Ldc_I4, (int)KeyCode.LeftControl),
-                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(Input), nameof(Input.GetKeyInt))),
+                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(FactoryPatch), nameof(_offgridfForPathsKey))),
+                new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(PressKeyBind), nameof(PressKeyBind.keyValue))),
                 new CodeInstruction(OpCodes.Brfalse, jmp0),
                 new CodeInstruction(OpCodes.Ldarg_0),
                 new CodeInstruction(OpCodes.Ldarg_0),
@@ -720,6 +730,7 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
             return matcher.InstructionEnumeration();
         }
 
+        /*
         public static IEnumerable<CodeInstruction> PatchToPerformSteppedRotate(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
         {
             var matcher = new CodeMatcher(instructions, generator);
@@ -774,6 +785,7 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
                 instance.yaw = Mathf.Round(instance.yaw / SteppedRotationDegrees) * SteppedRotationDegrees;
             }
         }
+        */
     }
     
     public class TreatStackingAsSingle: PatchImpl<TreatStackingAsSingle>

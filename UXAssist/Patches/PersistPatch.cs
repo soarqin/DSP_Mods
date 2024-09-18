@@ -94,22 +94,22 @@ public class PersistPatch : PatchImpl<PersistPatch>
         Array.Sort(buildings, (a, b) =>
         {
             var tmpItemId = a.itemId - b.itemId;
-            if (tmpItemId != 0)
-                return tmpItemId;
+            if (tmpItemId != 0) return tmpItemId;
+
             var tmpModelIndex = a.modelIndex - b.modelIndex;
-            if (tmpModelIndex != 0)
-                return tmpModelIndex;
+            if (tmpModelIndex != 0) return tmpModelIndex;
+
             var tmpRecipeId = a.recipeId - b.recipeId;
-            if (tmpRecipeId != 0)
-                return tmpRecipeId;
+            if (tmpRecipeId != 0) return tmpRecipeId;
+
             var tmpAreaIndex = a.areaIndex - b.areaIndex;
-            if (tmpAreaIndex != 0)
-                return tmpAreaIndex;
-            const double ky = 256.0;
-            const double kx = 1024.0;
-            var scorePosA = (a.localOffset_y * ky + a.localOffset_x) * kx + a.localOffset_z;
-            var scorePosB = (b.localOffset_y * ky + b.localOffset_x) * kx + b.localOffset_z;
-            return scorePosA < scorePosB ? 1 : -1;
+            if (tmpAreaIndex != 0) return tmpAreaIndex;
+
+            var sign = Math.Sign(b.localOffset_y - a.localOffset_y);
+            if (sign != 0) return sign;
+
+            sign = Math.Sign(b.localOffset_x - a.localOffset_x);
+            return sign != 0 ? sign : Math.Sign(b.localOffset_z - a.localOffset_z);
         });
         for (var i = buildings.Length - 1; i >= 0; i--)
         {
