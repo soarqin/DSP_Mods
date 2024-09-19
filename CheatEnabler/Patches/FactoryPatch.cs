@@ -237,15 +237,12 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
                     {
                         if (NoConditionEnabled.Value)
                         {
-                            CheatEnabler.Logger.LogDebug("A");
                             w.criticalWarningTexts = "Build without condition is enabled!".Translate() + "\r\n";
                         }
                         else if (NoCollisionEnabled.Value)
                         {
-                            CheatEnabler.Logger.LogDebug("B");
                             w.criticalWarningTexts = "No collision is enabled!".Translate() + "\r\n";
                         }
-                        CheatEnabler.Logger.LogDebug("C");
                     }
                 )
             );

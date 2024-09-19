@@ -26,6 +26,14 @@
     - Mod manager profile based save folder
       - Save files are stored in `Save\<ProfileName>` folder.
       - Will use original save location if matching default profile name.
+    - Logical Frame Rate
+      - This will change game running speed, down to 0.1x slower and up to 10x faster.
+      - A pair of shortcut keys (`-` and `+`) to change the logical frame rate by -0.5x and +0.5x.
+      - Note:
+        - High logical frame rate is not guaranteed to be stable, especially when factories are under heavy load.
+        - This will not affect some game animations.
+        - When set game speed in mod `Auxilaryfunction`, this feature will be disabled.
+        - When mod `BulletTime` is installed, this feature will be hidden, but patch `BulletTime`'s speed control, to make its maximum speed 10x.
     - Increase maximum count of Metadata Instantiations to 20000 (from 2000)
     - Increase capacity of player order queue to 128 (from 16)
   + Planet/Factory
@@ -34,6 +42,7 @@
     - Remove build count and range limit
     - Larger area for upgrade and dismantle(30x30 at max)
     - Larger area for terraform(30x30 at max)
+    - Off-grid building and stepped rotation
     - Treat stack items as single in monitor components
     - Enhanced control for logistic storage limits
       - Logistic storage limits are not scaled on upgrading `Logistics Carrier Capacity`, if they are not set to maximum capacity.
@@ -130,6 +139,14 @@
     - 基于mod管理器配置档案名的存档文件夹
       - 存档文件会存储在`Save\<ProfileName>`文件夹中
       - 如果匹配默认配置档案名则使用原始存档位置
+    - 逻辑帧倍率
+      - 这将改变游戏运行速度，最慢0.1倍，最快10倍
+      - 设置了一对快捷键(`-`和`+`)，可以-/+0.5倍改变逻辑帧倍率
+      - 注意：
+        - 高逻辑帧倍率不能保证稳定性，特别是在工厂负载较重时
+        - 这不会影响一些游戏动画
+        - 当在`Auxilaryfunction`mod中设置游戏速度时，此功能将被禁用
+        - 当安装了`BulletTime`mod时，此功能将被隐藏，但会对`BulletTime`的速度控制打补丁，使其最大速度变为10倍
     - 将元数据提取的最大数量增加到20000(原来为2000)
     - 将玩家指令队列的容量增加到128(原来为16)
   + 行星/工厂
@@ -137,6 +154,7 @@
     - 移除部分不影响游戏逻辑的建造条件
     - 范围升级和拆除的最大区域扩大(最大30x30)
     - 范围铺设地基的最大区域扩大(最大30x30)
+    - 脱离网格建造以及小角度旋转
     - 在流速计中将堆叠物品视为单个物品
     - 物流塔存储数量限制控制改进
       - 当升级`运输机舱扩容`时，不会对各种物流塔的存储限制按比例提升，除非设置为最大允许容量。

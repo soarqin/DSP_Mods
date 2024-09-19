@@ -43,7 +43,7 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
         I18N.Add("KEYToggleDoNotRenderEntities", "Toggle Do Not Render Factory Entities", "切换不渲染工厂建筑实体");
         _offgridfForPathsKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
             {
-                key = new CombineKey((int)KeyCode.LeftControl, 0, ECombineKeyAction.OnceClick, false),
+                key = new CombineKey(0, CombineKey.CTRL_COMB, ECombineKeyAction.OnceClick, false),
                 conflictGroup = KeyBindConflict.MOVEMENT | KeyBindConflict.UI | KeyBindConflict.FLYING | KeyBindConflict.SAILING | KeyBindConflict.BUILD_MODE_1 | KeyBindConflict.KEYBOARD_KEYBIND,
                 name = "OffgridForPaths",
                 canOverride = true
@@ -526,12 +526,11 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
 
     public class OffGridBuilding: PatchImpl<OffGridBuilding>
     {
-        private const float SteppedRotationDegrees = 15f;
+        // private const float SteppedRotationDegrees = 15f;
 
         private static bool _initialized;
 
-        [HarmonyPostfix, HarmonyPatch(typeof(UIRoot), "_OnOpen")]
-        public static void UIRoot__OnOpen_Postfix()
+        private static void SetupRichTextSupport()
         {
             if (_initialized) return;
             UIGeneralTips.instance.buildCursorTextComp.supportRichText = true;
@@ -575,6 +574,7 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
             var planet = __instance.planet;
             if (_lastPlanet != planet || _lastPos != preview.lpos)
             {
+                SetupRichTextSupport();
                 CalculateGridOffset(__instance.planet, preview.lpos, out var x, out var y, out var z);
                 _lastPlanet = planet;
                 _lastPos = preview.lpos;
@@ -605,6 +605,7 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
                         var planet = entityBriefInfo.factory.planet;
                         if (_lastPlanet != planet || _lastPos != entity.pos)
                         {
+                            SetupRichTextSupport();
                             CalculateGridOffset(planet, entity.pos, out var x, out var y, out var z);
                             _lastPlanet = planet;
                             _lastPos = entity.pos;
@@ -684,6 +685,13 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
 
             return matcher.InstructionEnumeration();
         }
+        
+        private static bool CheckOffgridForPathsKeyPressed()
+        {
+            ref var bind = ref _offgridfForPathsKey.defaultBind;
+            ref var key = ref VFInput.override_keys[bind.id];
+            return key.IsNull() ? bind.key.GetKey() : key.GetKey();
+        }
 
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(BuildTool_Path), nameof(BuildTool_Path.UpdateRaycast))]
@@ -709,8 +717,7 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
             var jmp0 = generator.DefineLabel();
             var jmp1 = generator.DefineLabel();
             matcher.InsertAndAdvance(
-                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(FactoryPatch), nameof(_offgridfForPathsKey))),
-                new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(PressKeyBind), nameof(PressKeyBind.keyValue))),
+                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(OffGridBuilding), nameof(CheckOffgridForPathsKeyPressed))),
                 new CodeInstruction(OpCodes.Brfalse, jmp0),
                 new CodeInstruction(OpCodes.Ldarg_0),
                 new CodeInstruction(OpCodes.Ldarg_0),
@@ -1662,7 +1669,7 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
                 GameLogic.OnDataLoaded -= VFPreload_InvokeOnLoadWorkEnded_Postfix;
             }
 
-            public static void VFPreload_InvokeOnLoadWorkEnded_Postfix()
+            private static void VFPreload_InvokeOnLoadWorkEnded_Postfix()
             {
                 if (_initialized) return;
                 _initialized = true;
@@ -1680,7 +1687,7 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
                 RemovePlanetSignalBelts(factory.index);
             }
 
-            public static void GameMain_Begin_Postfix()
+            private static void GameMain_Begin_Postfix()
             {
                 _clusterSeedKey = GameMain.data.GetClusterSeedKey();
                 InitSignalBelts();

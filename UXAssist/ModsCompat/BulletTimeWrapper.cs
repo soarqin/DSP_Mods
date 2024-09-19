@@ -15,7 +15,10 @@ public static class BulletTimeWrapper
     {
         HasBulletTime = BepInEx.Bootstrap.Chainloader.PluginInfos.TryGetValue(BulletTimeGuid, out var pluginInfo);
         if (!HasBulletTime) return;
+
         I18N.Add("Increase game speed (max 10x)", "Increase game speed (max 10x)", "提升游戏速度(最高10倍)");
+        I18N.Apply();
+
         var assembly = pluginInfo.Instance.GetType().Assembly;
         try
         {

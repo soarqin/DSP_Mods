@@ -1,5 +1,9 @@
 ## Changlog
 
+* 2.3.26
+  + Refactor codes to adapt to UXAssist 1.2.0
+    - You should update UXAssist to 1.2.0 or later before using this version.
+  + `Complete Dyson Sphere Shells instantly`: Fix possible wrong production records.
 * 2.3.25
   + New feature: `Enable warp without space warpers`
   + New feature: `Wind Turbines do global power coverage`
@@ -131,6 +135,10 @@
 
 ## 更新日志
 
+* 2.3.26
+  + 重构代码以适应UXAssist 1.2.0
+    - 在使用此版本之前，您应先更新UXAssist到1.2.0或更高版本。
+  + `立即完成戴森壳建造`：修复了可能导致错误的生产记录的问题
 * 2.3.25
   + 新功能：`无需空间翘曲器即可曲速飞行`
   + 新功能：`风力涡轮机供电覆盖全球`

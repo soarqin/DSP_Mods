@@ -1,5 +1,22 @@
 ## Changlog
 
+* 1.2.1
+  + `Off-grid building and stepped rotation`:
+    - Fix off-grid building's default shortcut key for belts
+    - Fix coordinate display issue
+* 1.2.0
+  + New feature: `Logical Frame Rate`
+    - This will change game running speed, down to 0.1x slower and up to 10x faster.
+    - A pair of shortcut keys (`-` and `+`) to change the logical frame rate by -0.5x and +0.5x.
+    - Note:
+      - High logical frame rate is not guaranteed to be stable, especially when factories are under heavy load. 
+      - This will not affect some game animations.
+      - When set game speed in mod `Auxilaryfunction`, this feature will be disabled.
+      - When mod `BulletTime` is installed, this feature will be hidden, but patch `BulletTime`'s speed control, to make its maximum speed 10x.
+  + `Off-grid building and stepped rotation`: Due to conflict with shortcut key in new game update, the shortcut key for belts is changed to `Ctrl` by default, and can be set in system options now.
+  + `Real-time logistic stations info panel`: Fix a crash issue.
+  + `Dyson Sphere "Auto Fast Build"`: Fix possible wrong production records.
+  + Codes refactored, for better maintainability.
 * 1.1.6
   + New feature: `Scale up mouse cursor`
     - Note: This will enable software cursor mode, which may cause mouse movement lag on heavy load.
@@ -161,6 +178,23 @@
 
 ## 更新日志
 
+* 1.2.1
+  + `脱离网格建造和小角度旋转`：
+    - 修复了传送带脱离网格建造的默认快捷键
+    - 修复了坐标显示问题
+* 1.2.0
+  + 新功能：`逻辑帧倍率`
+    - 这将改变游戏运行速度，最慢0.1倍，最快10倍
+    - 设置了一对快捷键(`-`和`+`)，可以-/+0.5倍改变逻辑帧倍率
+    - 注意：
+      - 高逻辑帧倍率不能保证稳定性，特别是在工厂负载较重时
+      - 这不会影响一些游戏动画
+      - 当在`Auxilaryfunction`mod中设置游戏速度时，此功能将被禁用
+      - 当安装了`BulletTime`mod时，此功能将被隐藏，但会对`BulletTime`的速度控制打补丁，使其最大速度变为10倍
+  + `脱离网格建造和小角度旋转`：由于与新游戏更新中的快捷键冲突，传送带脱离网格建造的快捷键默认更改为`Ctrl`，并且现在可以在系统选项中设置
+  + `物流运输站实时信息面板`：修复了一个崩溃问题
+  + `戴森球自动快速建造`：修复了可能出现的错误生产记录
+  + 代码重构，以获得更好的可维护性
 * 1.1.6
   + 新功能：`放大鼠标指针`
     - 注意：这将启用软件指针模式，可能会在CPU负载较重时导致鼠标移动延迟

@@ -837,7 +837,7 @@ public static class LogisticsPatch
                 stationTip.rectTransform.anchoredPosition = rectPoint;
                 stationTip.transform.localScale = Vector3.one * localScaleMultiple;
 
-                stationTip.UpdateStationInfo(stationComponent, factory);
+                stationTip.UpdateStationInfo(stationComponent);
             }
         }
         
@@ -867,7 +867,6 @@ public static class LogisticsPatch
             private Text[] _carrierIdleCountText;
 
             private GameObject _infoText;
-            private StationComponent _currentStation;
             private EStationTipLayout _layout = EStationTipLayout.None;
             private int _storageNum;
             private float _pixelPerItem;
@@ -964,7 +963,6 @@ public static class LogisticsPatch
 
             public void ResetStationTip()
             {
-                _currentStation = null;
                 _layout = EStationTipLayout.None;
                 for (var i = StorageSlotCount - 1; i >= 0; i--)
                 {
@@ -1178,55 +1176,52 @@ public static class LogisticsPatch
             private static readonly float[] TipWindowExtraHeights = [0f, 5f, 5f, 40f, 40f];
             private static readonly float[] CarrierPositionX = [5f, 35f, 85f];
 
-            public void UpdateStationInfo(StationComponent stationComponent, PlanetFactory factory)
+            public void UpdateStationInfo(StationComponent stationComponent)
             {
-                if (_currentStation != stationComponent)
+                var layout = stationComponent.isCollector ? EStationTipLayout.Collector :
+                    stationComponent.isVeinCollector ? EStationTipLayout.VeinCollector :
+                    stationComponent.isStellar ? EStationTipLayout.InterstellarLogistics : EStationTipLayout.PlanetaryLogistics;
+
+                if (_layout != layout)
                 {
-                    _currentStation = stationComponent;
-                    var layout = stationComponent.isCollector ? EStationTipLayout.Collector :
-                        stationComponent.isVeinCollector ? EStationTipLayout.VeinCollector :
-                        stationComponent.isStellar ? EStationTipLayout.InterstellarLogistics : EStationTipLayout.PlanetaryLogistics;
-
-                    if (_layout != layout)
+                    _layout = layout;
+                    for (var i = StorageSlotCount - 1; i >= 0; i--)
                     {
-                        _layout = layout;
-                        for (var i = StorageSlotCount - 1; i >= 0; i--)
+                        _iconLocals[i].gameObject.SetActive(false);
+                        _iconRemotes[i].gameObject.SetActive(false);
+                        _icons[i].gameObject.SetActive(false);
+                        switch (layout)
                         {
-                            _iconLocals[i].gameObject.SetActive(false);
-                            _iconRemotes[i].gameObject.SetActive(false);
-                            _icons[i].gameObject.SetActive(false);
-                            switch (layout)
-                            {
-                                case EStationTipLayout.PlanetaryLogistics:
-                                    var rectTrans = (RectTransform)_iconLocals[i].transform;
-                                    rectTrans.sizeDelta = new Vector2(20f, 20f);
-                                    rectTrans.anchoredPosition3D = new Vector3(100f, -5f - 35f * i - 5f, 0);
-                                    break;
-                                case EStationTipLayout.InterstellarLogistics:
-                                    rectTrans = (RectTransform)_iconLocals[i].transform;
-                                    rectTrans.sizeDelta = new Vector2(16f, 16f);
-                                    rectTrans.anchoredPosition3D = new Vector3(102f, -5f - 35f * i, 0);
-                                    break;
-                            }
+                            case EStationTipLayout.PlanetaryLogistics:
+                                var rectTrans = (RectTransform)_iconLocals[i].transform;
+                                rectTrans.sizeDelta = new Vector2(20f, 20f);
+                                rectTrans.anchoredPosition3D = new Vector3(100f, -5f - 35f * i - 5f, 0);
+                                break;
+                            case EStationTipLayout.InterstellarLogistics:
+                                rectTrans = (RectTransform)_iconLocals[i].transform;
+                                rectTrans.sizeDelta = new Vector2(16f, 16f);
+                                rectTrans.anchoredPosition3D = new Vector3(102f, -5f - 35f * i, 0);
+                                break;
                         }
-
-                        _storageNum = Math.Min(StorageNums[(int)layout], stationComponent.storage.Length);
-                        rectTransform.sizeDelta = new Vector2(TipWindowWidths[(int)layout], TipWindowExtraHeights[(int)layout] + 35f * _storageNum);
-                        for (var i = StorageSlotCount - 1; i >= 0; i--)
-                        {
-                            _countTexts[i].gameObject.SetActive(i < _storageNum);
-                        }
-
-                        for (var i = CarrierSlotCount - 1; i >= 0; i--)
-                        {
-                            var active = CarrierEnabled[(int)layout][i];
-                            _carrierIcons[i].gameObject.SetActive(active);
-                            if (!active) continue;
-                            var rectTrans = (RectTransform)_carrierIcons[i].transform;
-                            rectTrans.anchoredPosition3D = new Vector3(CarrierPositionX[i], -5f - 35f * _storageNum, 0);
-                        }
-                        _pixelPerItem = _layout == EStationTipLayout.InterstellarLogistics ? _remoteStoragePixelPerItem : _localStoragePixelPerItem;
                     }
+
+                    _storageNum = Math.Min(StorageNums[(int)layout], stationComponent.storage.Length);
+                    rectTransform.sizeDelta = new Vector2(TipWindowWidths[(int)layout], TipWindowExtraHeights[(int)layout] + 35f * _storageNum);
+                    for (var i = StorageSlotCount - 1; i >= 0; i--)
+                    {
+                        _countTexts[i].gameObject.SetActive(i < _storageNum);
+                    }
+
+                    for (var i = CarrierSlotCount - 1; i >= 0; i--)
+                    {
+                        var active = CarrierEnabled[(int)layout][i];
+                        _carrierIcons[i].gameObject.SetActive(active);
+                        if (!active) continue;
+                        var rectTrans = (RectTransform)_carrierIcons[i].transform;
+                        rectTrans.anchoredPosition3D = new Vector3(CarrierPositionX[i], -5f - 35f * _storageNum, 0);
+                    }
+
+                    _pixelPerItem = _layout == EStationTipLayout.InterstellarLogistics ? _remoteStoragePixelPerItem : _localStoragePixelPerItem;
                 }
 
                 var storageArray = stationComponent.storage;

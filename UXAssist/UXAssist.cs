@@ -166,10 +166,6 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
         _patches = Common.Util.GetTypesInNamespace(Assembly.GetExecutingAssembly(), "UXAssist.Patches");
         _patches?.Do(type => type.GetMethod("Init")?.Invoke(null, null));
 
-        var patch = UIPatch.GetHarmony();
-        ModsCompat.AuxilaryfunctionWrapper.Init(patch);
-        ModsCompat.BulletTimeWrapper.Init(patch);
-
         I18N.Apply();
         I18N.OnInitialized += RecreateConfigWindow;
     }
@@ -177,6 +173,9 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
     private void Start()
     {
         _patches?.Do(type => type.GetMethod("Start")?.Invoke(null, null));
+        var patch = UIPatch.GetHarmony();
+        ModsCompat.AuxilaryfunctionWrapper.Init(patch);
+        ModsCompat.BulletTimeWrapper.Init(patch);
     }
 
     private void OnDestroy()
@@ -200,6 +199,7 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
         {
             ToggleConfigWindow();
         }
+        GamePatch.OnUpdate();
         FactoryPatch.OnUpdate();
         PlayerPatch.OnUpdate();
         LogisticsPatch.OnUpdate();

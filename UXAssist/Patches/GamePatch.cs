@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection.Emit;
 using BepInEx.Configuration;
+using CommonAPI.Systems;
 using HarmonyLib;
 using UnityEngine;
 using UXAssist.Common;
@@ -26,6 +27,8 @@ public class GamePatch: PatchImpl<GamePatch>
     public static ConfigEntry<string> DefaultProfileName;
     public static ConfigEntry<double> GameUpsFactor;
 
+    private static PressKeyBind _speedDownKey;
+    private static PressKeyBind _speedUpKey;
     private static bool _enableGameUpsFactor = true;
     public static bool EnableGameUpsFactor
     {
@@ -52,6 +55,26 @@ public class GamePatch: PatchImpl<GamePatch>
 
     public static void Init()
     {
+        _speedDownKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
+            {
+                key = new CombineKey((int)KeyCode.KeypadMinus, 0, ECombineKeyAction.OnceClick, false),
+                conflictGroup = KeyBindConflict.MOVEMENT | KeyBindConflict.FLYING | KeyBindConflict.SAILING | KeyBindConflict.BUILD_MODE_1 | KeyBindConflict.KEYBOARD_KEYBIND,
+                name = "UPSSpeedDown",
+                canOverride = true
+            }
+        );
+        I18N.Add("KEYUPSSpeedDown", "Decrease logical frame rate", "降低逻辑帧率");
+        _speedUpKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
+            {
+                key = new CombineKey((int)KeyCode.KeypadPlus, 0, ECombineKeyAction.OnceClick, false),
+                conflictGroup = KeyBindConflict.MOVEMENT | KeyBindConflict.UI | KeyBindConflict.FLYING | KeyBindConflict.SAILING | KeyBindConflict.BUILD_MODE_1 | KeyBindConflict.KEYBOARD_KEYBIND,
+                name = "UPSSpeedUp",
+                canOverride = true
+            }
+        );
+        I18N.Add("KEYUPSSpeedUp", "Increase logical frame rate", "提升逻辑帧率");
+        I18N.Add("Logical frame rate: {0}x", "Logical frame rate: {0}x", "逻辑帧速率: {0}x");
+
         // Get profile name from command line arguments, and set window title accordingly
         var args = Environment.GetCommandLineArgs();
         for (var i = 0; i < args.Length - 1; i++)
@@ -118,6 +141,21 @@ public class GamePatch: PatchImpl<GamePatch>
         MouseCursorScaleUp.Enable(false);
         // AutoSaveOpt.Enable(false);
         ConvertSavesFromPeace.Enable(false);
+    }
+
+    public static void OnUpdate()
+    {
+        if (!_enableGameUpsFactor) return;
+        if (_speedDownKey.keyValue)
+        {
+            GameUpsFactor.Value = Maths.Clamp(Math.Round((GameUpsFactor.Value - 0.5) * 2.0) / 2.0, 0.1, 10.0);
+            UIRoot.instance.uiGame.generalTips.InvokeRealtimeTipAhead(string.Format("Logical frame rate: {0}x".Translate(), GameUpsFactor.Value));
+        }
+        if (_speedUpKey.keyValue)
+        {
+            GameUpsFactor.Value = Maths.Clamp(Math.Round((GameUpsFactor.Value + 0.5) * 2.0) / 2.0, 0.1, 10.0);
+            UIRoot.instance.uiGame.generalTips.InvokeRealtimeTipAhead(string.Format("Logical frame rate: {0}x".Translate(), GameUpsFactor.Value));
+        }
     }
 
     private static void RefreshSavePath()
