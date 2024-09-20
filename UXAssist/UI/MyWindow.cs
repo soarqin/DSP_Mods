@@ -6,6 +6,7 @@ using BepInEx.Configuration;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
+using UXAssist.Common;
 using Object = UnityEngine.Object;
 
 namespace UXAssist.UI;
@@ -420,21 +421,14 @@ public class MyWindowWithTabs : MyWindow
     }
 }
 
-public static class MyWindowManager
+public class MyWindowManager
 {
     private static readonly List<ManualBehaviour> Windows = new(4);
     private static bool _initialized;
-    private static Harmony _patch;
 
-    public static void Init()
+    public static void Enable(bool on)
     {
-        _patch ??= Harmony.CreateAndPatchAll(typeof(Patch));
-    }
-
-    public static void Uninit()
-    {
-        _patch?.UnpatchSelf();
-        _patch = null;
+        Patch.Enable(on);
     }
 
     public static T CreateWindow<T>(string name, string title = "") where T : MyWindow
@@ -495,8 +489,24 @@ public static class MyWindowManager
     }
     */
 
-    public static class Patch
+    public class Patch: PatchImpl<Patch>
     {
+        protected override void OnEnable()
+        {
+            InitAllWindows();
+        }
+
+        private static void InitAllWindows()
+        {
+            if (_initialized) return;
+            if (!UIRoot.instance) return;
+            foreach (var win in Windows)
+            {
+                win._Init(win.data);
+            }
+            _initialized = true;
+        }
+
         /*
         //_Create -> _Init
         [HarmonyPostfix, HarmonyPatch(typeof(UIGame), "_OnCreate")]
@@ -520,13 +530,7 @@ public static class MyWindowManager
         [HarmonyPostfix, HarmonyPatch(typeof(UIRoot), nameof(UIRoot._OnOpen))]
         public static void UIRoot__OnOpen_Postfix()
         {
-            if (_initialized) return;
-            foreach (var win in Windows)
-            {
-                win._Init(win.data);
-            }
-
-            _initialized = true;
+            InitAllWindows();
         }
 
         /*

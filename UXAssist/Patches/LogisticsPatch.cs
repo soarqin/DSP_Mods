@@ -397,7 +397,9 @@ public static class LogisticsPatch
             var storage = stationEntry.station?.storage;
             if (storage == null) return;
             var itemId = storage.Length > slot ? storage[slot].itemId : 0;
-            var controlPanelWindow = UIRoot.instance?.uiGame?.controlPanelWindow;
+            var uiRoot = UIRoot.instance;
+            if (!uiRoot) return;
+            var controlPanelWindow = uiRoot.uiGame?.controlPanelWindow;
             if (controlPanelWindow == null) return;
             var filterPanel = controlPanelWindow.filterPanel;
             if (filterPanel == null) return;
@@ -487,7 +489,8 @@ public static class LogisticsPatch
 
         public static void Enable(bool on)
         {
-            _stationTipRoot?.SetActive(on);
+            if (_stationTipRoot)
+                _stationTipRoot.SetActive(on);
         }
 
         public static void EnableBars(bool on)

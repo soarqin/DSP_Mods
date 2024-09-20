@@ -156,11 +156,8 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
         I18N.Add("KEYToggleAutoCruise", "Toggle auto-cruise", "切换自动巡航");
 
         // UI Patches
-        UIPatch.Enable(true);
-
         GameLogic.Enable(true);
         
-        MyWindowManager.Init();
         UIConfigWindow.Init();
 
         _patches = Common.Util.GetTypesInNamespace(Assembly.GetExecutingAssembly(), "UXAssist.Patches");
@@ -172,6 +169,9 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
 
     private void Start()
     {
+        MyWindowManager.Enable(true);
+        UIPatch.Enable(true);
+
         _patches?.Do(type => type.GetMethod("Start")?.Invoke(null, null));
         var patch = UIPatch.GetHarmony();
         ModsCompat.AuxilaryfunctionWrapper.Init(patch);
@@ -182,10 +182,9 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
     {
         _patches?.Do(type => type.GetMethod("Uninit")?.Invoke(null, null));
 
-        MyWindowManager.Uninit();
-
-        GameLogic.Enable(false);
         UIPatch.Enable(false);
+        MyWindowManager.Enable(false);
+        GameLogic.Enable(false);
     }
 
     private void Update()
@@ -244,13 +243,18 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
     {
         private static GameObject _buttonOnPlanetGlobe;
 
-        // Add config button to main menu
-        [HarmonyPostfix, HarmonyPatch(typeof(UIRoot), nameof(UIRoot.OpenMainMenuUI))]
-        public static void UIRoot_OpenMainMenuUI_Postfix()
+        protected override void OnEnable()
+        {
+            InitMenuButtons();
+        }
+
+        private static void InitMenuButtons()
         {
             if (_initialized) return;
+            var uiRoot = UIRoot.instance;
+            if (!uiRoot) return;
             {
-                var mainMenu = UIRoot.instance.uiMainMenu;
+                var mainMenu = uiRoot.uiMainMenu;
                 var src = mainMenu.newGameButton;
                 var parent = src.transform.parent;
                 var btn = Instantiate(src, parent);
@@ -273,9 +277,9 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
                 btn.button.onClick.AddListener(ToggleConfigWindow);
             }
             {
-                var panel = UIRoot.instance.uiGame.planetGlobe;
+                var panel = uiRoot.uiGame.planetGlobe;
                 var src = panel.button2;
-                var sandboxMenu = UIRoot.instance.uiGame.sandboxMenu;
+                var sandboxMenu = uiRoot.uiGame.sandboxMenu;
                 var icon = sandboxMenu.categoryButtons[6].transform.Find("icon")?.GetComponent<Image>()?.sprite;
                 var b = Instantiate(src, src.transform.parent);
                 _buttonOnPlanetGlobe = b.gameObject;
@@ -303,6 +307,13 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
                 }
             }
             _initialized = true;
+        }
+
+        // Add config button to main menu
+        [HarmonyPostfix, HarmonyPatch(typeof(UIRoot), nameof(UIRoot._OnOpen))]
+        public static void UIRoot__OnOpen_Postfix()
+        {
+            InitMenuButtons();
         }
         
         [HarmonyPostfix]
