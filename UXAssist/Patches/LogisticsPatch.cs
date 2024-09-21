@@ -460,8 +460,10 @@ public static class LogisticsPatch
         private static int _remoteStorageMax = 10000;
         private static int _localStorageExtra;
         private static int _remoteStorageExtra;
-        private static float _localStoragePixelPerItem = StorageSliderWidth / (_localStorageMax + _localStorageExtra);
-        private static float _remoteStoragePixelPerItem = StorageSliderWidth / (_remoteStorageMax + _remoteStorageExtra);
+        private static int _localStorageMaxTotal = _localStorageMax;
+        private static int _remoteStorageMaxTotal = _remoteStorageMax;
+        private static float _localStoragePixelPerItem = StorageSliderWidth / _localStorageMaxTotal;
+        private static float _remoteStoragePixelPerItem = StorageSliderWidth / _remoteStorageMaxTotal;
 
         private const int StorageSlotCount = 5;
         private const int CarrierSlotCount = 3;
@@ -475,8 +477,10 @@ public static class LogisticsPatch
             if (_remoteStorageExtra == history.remoteStationExtraStorage) return false;
             _localStorageExtra = history.localStationExtraStorage;
             _remoteStorageExtra = history.remoteStationExtraStorage;
-            _localStoragePixelPerItem = StorageSliderWidth / (_localStorageMax + _localStorageExtra);
-            _remoteStoragePixelPerItem = StorageSliderWidth / (_remoteStorageMax + _remoteStorageExtra);
+            _localStorageMaxTotal = _localStorageMax + _localStorageExtra;
+            _remoteStorageMaxTotal = _remoteStorageMax + _remoteStorageExtra;
+            _localStoragePixelPerItem = StorageSliderWidth / _localStorageMaxTotal;
+            _remoteStoragePixelPerItem = StorageSliderWidth / _remoteStorageMaxTotal;
             return true;
         }
 
@@ -1043,17 +1047,35 @@ public static class LogisticsPatch
                     _iconRemotes[i].gameObject.SetActive(CarrierEnabled[(int)_layout][1]);
                     _iconRemotesImage[i].sprite = StateSprite[(int)storageState.RemoteState];
                     _sliderBg[i].gameObject.SetActive(RealtimeLogisticsInfoPanelBarsEnabled.Value);
+                    switch (_layout)
+                    {
+                        case EStationTipLayout.InterstellarLogistics:
+                        {
+                            countUIText.color = _iconRemotesImage[i].color = StateColor[(int)storageState.RemoteState];
+                            break;
+                        }
+                        case EStationTipLayout.VeinCollector:
+                        case EStationTipLayout.PlanetaryLogistics:
+                        {
+                            countUIText.color = _iconLocalsImage[i].color = StateColor[(int)storageState.LocalState];
+                            break;
+                        }
+                        case EStationTipLayout.None:
+                        case EStationTipLayout.Collector:
+                        default:
+                            break;
+                    }
                 }
                 else if (itemId <= 0) return;
 
                 var barEnabled = RealtimeLogisticsInfoPanelBarsEnabled.Value;
                 var itemCount = storage.count;
-                var itemMax = storage.max;
+                var itemLimit = _layout == EStationTipLayout.InterstellarLogistics ? _remoteStorageMaxTotal : _localStorageMaxTotal;
                 if (storageState.ItemCount != itemCount)
                 {
                     storageState.ItemCount = itemCount;
                     countUIText.text = itemCount.ToString();
-                    if (itemCount > itemMax) itemCount = itemMax;
+                    if (itemCount > itemLimit) itemCount = itemLimit;
                     if (barEnabled)
                     {
                         if (itemCount == 0)
@@ -1080,7 +1102,7 @@ public static class LogisticsPatch
                         switch (itemOrdered)
                         {
                             case > 0:
-                                if (itemOrdered + itemCount > itemMax) itemOrdered = itemMax - itemCount;
+                                if (itemOrdered + itemCount > itemLimit) itemOrdered = itemLimit - itemCount;
                                 _sliderOrderedImage[i].color = OrderInColor;
                                 var rectTrans = (RectTransform)_sliderOrdered[i].transform;
                                 rectTrans.localPosition = new Vector3(
@@ -1111,6 +1133,7 @@ public static class LogisticsPatch
                         _sliderOrdered[i].gameObject.SetActive(itemOrdered != 0);
                     }
 
+                    var itemMax = storage.max;
                     if (storageState.ItemMax != itemMax)
                     {
                         storageState.ItemMax = itemMax;
@@ -1140,8 +1163,7 @@ public static class LogisticsPatch
                             storageState.RemoteState = remoteLogic;
                             var iconRemoteImage = _iconRemotesImage[i];
                             iconRemoteImage.sprite = StateSprite[(int)remoteLogic];
-                            iconRemoteImage.color = StateColor[(int)remoteLogic];
-                            countUIText.color = iconRemoteImage.color;
+                            countUIText.color = iconRemoteImage.color = StateColor[(int)remoteLogic];
                         }
 
                         break;
@@ -1155,8 +1177,7 @@ public static class LogisticsPatch
                             storageState.LocalState = localLogic;
                             var iconLocalImage = _iconLocalsImage[i];
                             iconLocalImage.sprite = StateSprite[(int)localLogic];
-                            iconLocalImage.color = StateColor[(int)localLogic];
-                            countUIText.color = iconLocalImage.color;
+                            countUIText.color = iconLocalImage.color = StateColor[(int)localLogic];
                         }
                         break;
                     }

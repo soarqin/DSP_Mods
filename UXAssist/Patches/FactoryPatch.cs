@@ -12,7 +12,7 @@ using UXAssist.Common;
 
 namespace UXAssist.Patches;
 
-public class FactoryPatch: PatchImpl<FactoryPatch>
+public class FactoryPatch : PatchImpl<FactoryPatch>
 {
     public static ConfigEntry<bool> UnlimitInteractiveEnabled;
     public static ConfigEntry<bool> RemoveSomeConditionEnabled;
@@ -173,113 +173,73 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
         return matcher.InstructionEnumeration();
     }
 
-    public class NightLight: PatchImpl<NightLight>
+    public class NightLight : PatchImpl<NightLight>
     {
         private const float NightLightAngleX = -8;
         private const float NightLightAngleY = -2;
-        public static bool Enabled;
         private static bool _nightlightInitialized;
         private static bool _mechaOnEarth;
         private static AnimationState _sail;
         private static Light _sunlight;
 
-        protected override void OnEnable()
-        {
-            Enabled = _mechaOnEarth;
-        }
-        
         protected override void OnDisable()
         {
-            Enabled = false;
-            if (_sunlight == null) return;
+            if (!_sunlight) return;
             _sunlight.transform.localEulerAngles = new Vector3(0f, 180f);
         }
 
-        public static void LateUpdate()
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(GameMain), nameof(GameMain.LateUpdate))]
+        public static void GameMain_LateUpdate_Postfix(GameMain __instance)
         {
-            if (!Enabled) return;
-
-            switch (_nightlightInitialized)
+            if (!_nightlightInitialized)
             {
-                case false:
-                    Ready();
-                    break;
-                case true:
-                    Go();
-                    break;
-            }
-        }
-
-        private static void Ready()
-        {
-            if (!GameMain.isRunning || !GameMain.mainPlayer.controller.model.gameObject.activeInHierarchy) return;
-            if (_sail == null)
-            {
-                _sail = GameMain.mainPlayer.animator.sails[GameMain.mainPlayer.animator.sailAnimIndex];
+                if (__instance.isMenuDemo || !__instance._running || !GameMain.mainPlayer.controller.model.gameObject.activeInHierarchy) return;
+                if (_sail == null) _sail = GameMain.mainPlayer.animator.sails[GameMain.mainPlayer.animator.sailAnimIndex];
+                _nightlightInitialized = true;
             }
 
-            _nightlightInitialized = true;
-        }
-
-        private static void Go()
-        {
-            if (!GameMain.isRunning)
+            if (_mechaOnEarth)
             {
-                End();
-                return;
-            }
+                if (__instance.isMenuDemo || !GameMain.isRunning)
+                {
+                    _mechaOnEarth = false;
+                    if (_sunlight != null)
+                    {
+                        _sunlight.transform.localEulerAngles = new Vector3(0f, 180f);
+                        _sunlight = null;
+                    }
 
-            if (_sail && _sail.enabled)
-            {
+                    _sail = null;
+                    _nightlightInitialized = false;
+                    return;
+                }
+
+                if (!_sail || !_sail.enabled) return;
                 _mechaOnEarth = false;
-                Enabled = false;
                 if (!_sunlight || !_sunlight.transform) return;
                 _sunlight.transform.localEulerAngles = new Vector3(0f, 180f);
                 _sunlight = null;
                 return;
             }
 
-            if (!_mechaOnEarth)
+            if (!_sunlight)
             {
-                if (!_sunlight)
-                {
-                    var simu = GameMain.universeSimulator;
-                    if (simu)
-                        _sunlight = simu.LocalStarSimulator()?.sunLight;
-                    if (!_sunlight) return;
-                }
-
-                _mechaOnEarth = true;
-                Enabled = NightLightEnabled.Value;
+                var simu = GameMain.universeSimulator;
+                if (simu) _sunlight = simu.LocalStarSimulator()?.sunLight;
+                if (!_sunlight) return;
             }
 
-            if (Enabled && _sunlight)
-            {
-                _sunlight.transform.rotation =
-                    Quaternion.LookRotation(-GameMain.mainPlayer.transform.up + GameMain.mainPlayer.transform.forward * NightLightAngleX / 10f +
-                                            GameMain.mainPlayer.transform.right * NightLightAngleY / 10f);
-            }
-        }
-
-        private static void End()
-        {
-            _mechaOnEarth = false;
-            Enabled = false;
-            if (_sunlight != null)
-            {
-                _sunlight.transform.localEulerAngles = new Vector3(0f, 180f);
-                _sunlight = null;
-            }
-
-            _sail = null;
-            _nightlightInitialized = false;
+            _mechaOnEarth = true;
+            if (_sunlight)
+                _sunlight.transform.rotation = Quaternion.LookRotation(-GameMain.mainPlayer.transform.up + GameMain.mainPlayer.transform.forward * NightLightAngleX / 10f +
+                                                                       GameMain.mainPlayer.transform.right * NightLightAngleY / 10f);
         }
 
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(StarSimulator), "LateUpdate")]
         private static IEnumerable<CodeInstruction> StarSimulator_LateUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
         {
-            // var vec = NightlightEnabled ? GameMain.mainPlayer.transform.up : __instance.transform.forward;
             var matcher = new CodeMatcher(instructions, generator);
             var label1 = generator.DefineLabel();
             var label2 = generator.DefineLabel();
@@ -287,7 +247,7 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
                 new CodeMatch(OpCodes.Ldarg_0),
                 new CodeMatch(OpCodes.Call, AccessTools.PropertyGetter(typeof(Component), nameof(Component.transform)))
             ).InsertAndAdvance(
-                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(NightLight), nameof(Enabled))),
+                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(NightLight), nameof(_mechaOnEarth))),
                 new CodeInstruction(OpCodes.Brfalse_S, label1),
                 new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(GameMain), nameof(GameMain.mainPlayer))),
                 new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Player), nameof(Player.transform))),
@@ -313,7 +273,7 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
             matcher.MatchForward(false,
                 new CodeMatch(OpCodes.Stloc_1)
             ).Advance(1).InsertAndAdvance(
-                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(NightLight), nameof(Enabled))),
+                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(NightLight), nameof(_mechaOnEarth))),
                 new CodeInstruction(OpCodes.Brfalse_S, label1),
                 new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(GameMain), nameof(GameMain.mainPlayer))),
                 new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Player), nameof(Player.transform))),
@@ -329,7 +289,7 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
         }
     }
 
-    private class UnlimitInteractive: PatchImpl<UnlimitInteractive>
+    private class UnlimitInteractive : PatchImpl<UnlimitInteractive>
     {
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(PlayerAction_Inspect), nameof(PlayerAction_Inspect.GetObjectSelectDistance))]
@@ -340,7 +300,7 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
         }
     }
 
-    private class RemoveSomeConditionBuild: PatchImpl<RemoveSomeConditionBuild>
+    private class RemoveSomeConditionBuild : PatchImpl<RemoveSomeConditionBuild>
     {
         [HarmonyTranspiler, HarmonyPriority(Priority.First)]
         [HarmonyPatch(typeof(BuildTool_BlueprintPaste), nameof(BuildTool_BlueprintPaste.CheckBuildConditions))]
@@ -415,7 +375,9 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
              */
             matcher.Start().MatchForward(false,
                 new CodeMatch(instr => instr.opcode == OpCodes.Ldloc_S || instr.opcode == OpCodes.Ldloc),
-                new CodeMatch(instr => (instr.opcode == OpCodes.Ldc_I4_S || instr.opcode == OpCodes.Ldc_I4) && Convert.ToInt64(instr.operand) is >= (int)EBuildCondition.TooSteep and <= (int)EBuildCondition.InputConflict),
+                new CodeMatch(instr =>
+                    (instr.opcode == OpCodes.Ldc_I4_S || instr.opcode == OpCodes.Ldc_I4) &&
+                    Convert.ToInt64(instr.operand) is >= (int)EBuildCondition.TooSteep and <= (int)EBuildCondition.InputConflict),
                 new CodeMatch(OpCodes.Stfld, AccessTools.Field(typeof(BuildPreview), nameof(BuildPreview.condition)))
             );
             if (matcher.IsValid)
@@ -437,14 +399,14 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
         }
     }
 
-    private class RemoveBuildRangeLimit: PatchImpl<RemoveBuildRangeLimit>
+    private class RemoveBuildRangeLimit : PatchImpl<RemoveBuildRangeLimit>
     {
         protected override void OnEnable()
         {
             var controller = GameMain.mainPlayer?.controller;
             if (controller == null) return;
             controller.actionBuild?.clickTool?._OnInit();
-        } 
+        }
 
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(BuildTool_Click), nameof(BuildTool_Click._OnInit))]
@@ -488,7 +450,7 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
         }
     }
 
-    private class LargerAreaForUpgradeAndDismantle: PatchImpl<LargerAreaForUpgradeAndDismantle>
+    private class LargerAreaForUpgradeAndDismantle : PatchImpl<LargerAreaForUpgradeAndDismantle>
     {
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(BuildTool_Dismantle), nameof(BuildTool_Dismantle.DeterminePreviews))]
@@ -504,7 +466,7 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
         }
     }
 
-    private class LargerAreaForTerraform: PatchImpl<LargerAreaForTerraform>
+    private class LargerAreaForTerraform : PatchImpl<LargerAreaForTerraform>
     {
         [HarmonyTranspiler, HarmonyPatch(typeof(BuildTool_Reform), nameof(BuildTool_Reform.ReformAction))]
         private static IEnumerable<CodeInstruction> BuildTool_Reform_ReformAction_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -524,7 +486,7 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
         }
     }
 
-    public class OffGridBuilding: PatchImpl<OffGridBuilding>
+    public class OffGridBuilding : PatchImpl<OffGridBuilding>
     {
         // private const float SteppedRotationDegrees = 15f;
 
@@ -685,7 +647,7 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
 
             return matcher.InstructionEnumeration();
         }
-        
+
         private static bool CheckOffgridForPathsKeyPressed()
         {
             ref var bind = ref _offgridfForPathsKey.defaultBind;
@@ -794,8 +756,8 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
         }
         */
     }
-    
-    public class TreatStackingAsSingle: PatchImpl<TreatStackingAsSingle>
+
+    public class TreatStackingAsSingle : PatchImpl<TreatStackingAsSingle>
     {
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(MonitorComponent), nameof(MonitorComponent.InternalUpdate))]
@@ -816,7 +778,7 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
         }
     }
 
-    private class QuickBuildAndDismantleLab: PatchImpl<QuickBuildAndDismantleLab>
+    private class QuickBuildAndDismantleLab : PatchImpl<QuickBuildAndDismantleLab>
     {
         private static bool DetermineMoreLabsForDismantle(BuildTool dismantle, int id)
         {
@@ -864,6 +826,7 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
                     factory.ReadObjectConn(nextId, 13, out _, out nextId2, out _);
                     if (nextId2 <= 0) break;
                 }
+
                 nextId = nextId2;
                 var itemProto = dismantle.GetItemProto(nextId);
                 var desc = itemProto.prefabDesc;
@@ -962,7 +925,7 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
         }
     }
 
-    public class ProtectVeinsFromExhaustion: PatchImpl<ProtectVeinsFromExhaustion>
+    public class ProtectVeinsFromExhaustion : PatchImpl<ProtectVeinsFromExhaustion>
     {
         public static int KeepVeinAmount = 100;
         public static float KeepOilSpeed = 1f;
@@ -1242,7 +1205,7 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
         }
     }
 
-    private class DoNotRenderEntities: PatchImpl<DoNotRenderEntities>
+    private class DoNotRenderEntities : PatchImpl<DoNotRenderEntities>
     {
         [HarmonyPrefix]
         [HarmonyPatch(typeof(ObjectRenderer), nameof(ObjectRenderer.Render))]
@@ -1300,7 +1263,7 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
         }
     }
 
-    private class DragBuildPowerPoles: PatchImpl<DragBuildPowerPoles>
+    private class DragBuildPowerPoles : PatchImpl<DragBuildPowerPoles>
     {
         private static readonly List<bool> OldDragBuild = [];
         private static readonly List<Vector2> OldDragBuildDist = [];
@@ -1312,7 +1275,7 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
             GameLogic.OnGameEnd += GameMain_End_Postfix;
             FixProto();
         }
-        
+
         protected override void OnDisable()
         {
             UnfixProto();
@@ -1466,7 +1429,7 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
         }
     }
 
-    private class BeltSignalsForBuyOut: PatchImpl<BeltSignalsForBuyOut>
+    private class BeltSignalsForBuyOut : PatchImpl<BeltSignalsForBuyOut>
     {
         private static bool _initialized;
         private static bool _loaded;
@@ -1631,7 +1594,7 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
             _signalBelts[index] = obj;
             return obj;
         }
-        
+
         private static Dictionary<int, uint> GetSignalBelts(int index)
         {
             return index >= 0 && index < _signalBelts.Length ? _signalBelts[index] : null;
@@ -1654,7 +1617,7 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
             SignalBeltFactoryIndices.Remove(factory);
         }
 
-        private class Persist: PatchImpl<Persist>
+        private class Persist : PatchImpl<Persist>
         {
             protected override void OnEnable()
             {
@@ -1767,6 +1730,7 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
                                     mainPlayer.mecha.AddProductionStat(itemId, count, mainPlayer.nearestFactory);
                                 }
                             }
+
                             if (consume > 0 && cargoPath.TryInsertItem(belt.segIndex + belt.segPivotOffset, itemId, consume, 0))
                                 DarkFogItemsInVoid[itemIdx] -= consume;
                         }

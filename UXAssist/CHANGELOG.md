@@ -1,5 +1,11 @@
 ## Changlog
 
+* 1.2.3
+  + `Real-time logistic stations info panel`: Fix bar length not match with item amount when item amount is more than capacity.
+  + `Sunlight at night`: Fix not working.
+* 1.2.2
+  + `Real-time logistic stations info panel`: Fix text color mismatch sometimes
+  + `Logical Frame Rate`: Set default shortcut key to `Ctrl`+`-/+` to avoid conflict with other shortcut keys
 * 1.2.1
   + `Off-grid building and stepped rotation`:
     - Fix off-grid building's default shortcut key for belts
@@ -17,6 +23,10 @@
   + `Real-time logistic stations info panel`: Fix a crash issue.
   + `Dyson Sphere "Auto Fast Build"`: Fix possible wrong production records.
   + Codes refactored, for better maintainability.
+
+<details>
+<summary>Older versions</summary>
+
 * 1.1.6
   + New feature: `Scale up mouse cursor`
     - Note: This will enable software cursor mode, which may cause mouse movement lag on heavy load.
@@ -31,7 +41,7 @@
   + New feature: `Dyson Sphere "Auto Fast Build" speed multiplier`
     - Note: this only applies to `Dyson Sphere "Auto Fast Build"` in sandbox mode
   + New feature: `Mod manager profile based save folder`
-    - Save files are stored in `Save\<ProfileName>` folder.
+    - Save files are stored in `Save\&lt;ProfileName&gt;` folder.
     - Will use original save location if matching default profile name.
   + `Quick build and dismantle stacking labs`: works for storages and tanks now
   + `Enable game window resize`: Keep window resizable on applying game options.
@@ -176,8 +186,16 @@
   + Initial release
   + Functions moved from [MechaDronesTweaks](https://dsp.thunderstore.io/package/soarqin/MechaDronesTweaks/) and [CheatEnabler](https://dsp.thunderstore.io/package/soarqin/CheatEnabler/)
 
+</details>
+
 ## 更新日志
 
+* 1.2.3
+  + `物流运输站实时信息面板`：修复了物品数量超过容量限制时条长度不匹配的问题
+  + `夜间日光灯`：修复了不起作用的问题
+* 1.2.2
+  + `物流运输站实时信息面板`：修复了文本颜色不匹配的问题
+  + `逻辑帧倍率`：将默认快捷键设置为`Ctrl`+`-/+`，以避免与其他快捷键冲突
 * 1.2.1
   + `脱离网格建造和小角度旋转`：
     - 修复了传送带脱离网格建造的默认快捷键
@@ -195,6 +213,10 @@
   + `物流运输站实时信息面板`：修复了一个崩溃问题
   + `戴森球自动快速建造`：修复了可能出现的错误生产记录
   + 代码重构，以获得更好的可维护性
+
+<details>
+<summary>更早的版本</summary>
+
 * 1.1.6
   + 新功能：`放大鼠标指针`
     - 注意：这将启用软件指针模式，可能会在CPU负载较重时导致鼠标移动延迟
@@ -209,7 +231,7 @@
   + 新功能：`戴森球自动快速建造速度倍率`
     - 注意：这仅适用于沙盒模式下的`戴森球自动快速建造`功能
   + 新功能：`基于mod管理器配置档案名的存档文件夹`
-    - 存档文件会存储在`Save\<ProfileName>`文件夹中
+    - 存档文件会存储在`Save\&lt;ProfileName&gt;`文件夹中
     - 如果匹配默认配置档案名则使用原始存档位置
   + `快速建造和拆除堆叠研究站`：现在也支持储物仓和储液罐
   + `允许调整游戏窗口大小`：在应用游戏选项时保持窗口可调整大小
@@ -353,3 +375,5 @@
 * 1.0.0
   + 初始版本
   + 从[MechaDronesTweaks](https://dsp.thunderstore.io/package/soarqin/MechaDronesTweaks/)和[CheatEnabler](https://dsp.thunderstore.io/package/soarqin/CheatEnabler/)移动了部分功能过来
+
+</details>

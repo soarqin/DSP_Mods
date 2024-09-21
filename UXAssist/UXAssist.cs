@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
-using System.Reflection.Emit;
 using BepInEx;
 using BepInEx.Configuration;
 using CommonAPI;
@@ -202,11 +200,6 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
         FactoryPatch.OnUpdate();
         PlayerPatch.OnUpdate();
         LogisticsPatch.OnUpdate();
-    }
-
-    private void LateUpdate()
-    {
-        FactoryPatch.NightLight.LateUpdate();
     }
 
     private static void ToggleConfigWindow()

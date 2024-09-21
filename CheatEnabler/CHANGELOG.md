@@ -8,6 +8,10 @@
   + New feature: `Enable warp without space warpers`
   + New feature: `Wind Turbines do global power coverage`
   + Fix an issue that `Complete Dyson Sphere Shells instantly` does not generate production records for solar sails.
+
+<details>
+<summary>Older versions</summary>
+
 * 2.3.24
   + `Complete Dyson Sphere Shells instantly`: Fix a bug that may cause negative power in some cases
 * 2.3.23
@@ -133,6 +137,8 @@
 * 1.0.0
   + Initial release
 
+</details>
+
 ## 更新日志
 
 * 2.3.26
@@ -143,7 +149,11 @@
   + 新功能：`无需空间翘曲器即可曲速飞行`
   + 新功能：`风力涡轮机供电覆盖全球`
   + 修复了`立即完成戴森壳建造`未生成太阳帆生产记录的问题
-* 2.3.24
+
+<details>
+<summary>更早的版本</summary>
+
+2.3.24
   + `立即完成戴森壳建造`：修复了在某些情况下可能导致发电为负的问题
 * 2.3.23
   + 新功能：`立即完成戴森壳建造`
@@ -267,3 +277,5 @@
   + 添加了很多功能
 * 1.0.0
   + 初始版本
+
+</details>

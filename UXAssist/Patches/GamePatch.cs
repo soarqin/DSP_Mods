@@ -57,7 +57,7 @@ public class GamePatch: PatchImpl<GamePatch>
     {
         _speedDownKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
             {
-                key = new CombineKey((int)KeyCode.KeypadMinus, 0, ECombineKeyAction.OnceClick, false),
+                key = new CombineKey((int)KeyCode.Minus, CombineKey.CTRL_COMB, ECombineKeyAction.OnceClick, false),
                 conflictGroup = KeyBindConflict.MOVEMENT | KeyBindConflict.FLYING | KeyBindConflict.SAILING | KeyBindConflict.BUILD_MODE_1 | KeyBindConflict.KEYBOARD_KEYBIND,
                 name = "UPSSpeedDown",
                 canOverride = true
@@ -66,7 +66,7 @@ public class GamePatch: PatchImpl<GamePatch>
         I18N.Add("KEYUPSSpeedDown", "Decrease logical frame rate", "降低逻辑帧率");
         _speedUpKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
             {
-                key = new CombineKey((int)KeyCode.KeypadPlus, 0, ECombineKeyAction.OnceClick, false),
+                key = new CombineKey((int)KeyCode.Equals, CombineKey.CTRL_COMB, ECombineKeyAction.OnceClick, false),
                 conflictGroup = KeyBindConflict.MOVEMENT | KeyBindConflict.UI | KeyBindConflict.FLYING | KeyBindConflict.SAILING | KeyBindConflict.BUILD_MODE_1 | KeyBindConflict.KEYBOARD_KEYBIND,
                 name = "UPSSpeedUp",
                 canOverride = true
