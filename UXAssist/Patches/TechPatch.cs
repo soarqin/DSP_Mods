@@ -381,12 +381,6 @@ public static class TechPatch
 
             void DoUnlockFuncInternal()
             {
-                UnlockTechRecursive(__instance.techProto, maxLevel);
-                history.VarifyTechQueue();
-                if (history.currentTech != history.techQueue[0])
-                {
-                    history.currentTech = history.techQueue[0];
-                }
                 var mainPlayer = GameMain.mainPlayer;
                 for (var i = 0; i < 6; i++)
                 {
@@ -397,6 +391,12 @@ public static class TechPatch
                     history.AddPropertyItemConsumption(itemId, itemCount, true);
                     mainPlayer.mecha.AddProductionStat(itemId, itemCount, mainPlayer.nearestFactory);
                     mainPlayer.mecha.AddConsumptionStat(itemId, itemCount, mainPlayer.nearestFactory);
+                }
+                UnlockTechRecursive(__instance.techProto, maxLevel);
+                history.VarifyTechQueue();
+                if (history.currentTech != history.techQueue[0])
+                {
+                    history.currentTech = history.techQueue[0];
                 }
             }
         }

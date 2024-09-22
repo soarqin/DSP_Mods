@@ -30,7 +30,7 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
     private static bool _initialized;
     private static PressKeyBind _toggleKey;
     private static ConfigFile _dummyConfig;
-    private Type[] _patches;
+    private Type[] _patches, _compats;
 
     #region IModCanSave
     private const ushort ModSaveVersion = 1;
@@ -160,6 +160,8 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
 
         _patches = Common.Util.GetTypesInNamespace(Assembly.GetExecutingAssembly(), "UXAssist.Patches");
         _patches?.Do(type => type.GetMethod("Init")?.Invoke(null, null));
+        _compats = Common.Util.GetTypesInNamespace(Assembly.GetExecutingAssembly(), "UXAssist.ModsCompat");
+        _compats?.Do(type => type.GetMethod("Init")?.Invoke(null, null));
 
         I18N.Apply();
         I18N.OnInitialized += RecreateConfigWindow;
@@ -171,9 +173,9 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
         UIPatch.Enable(true);
 
         _patches?.Do(type => type.GetMethod("Start")?.Invoke(null, null));
-        var patch = UIPatch.GetHarmony();
-        ModsCompat.AuxilaryfunctionWrapper.Init(patch);
-        ModsCompat.BulletTimeWrapper.Init(patch);
+
+        object[] parameters = [UIPatch.GetHarmony()];
+        _compats?.Do(type => type.GetMethod("Start")?.Invoke(null, parameters));
     }
 
     private void OnDestroy()

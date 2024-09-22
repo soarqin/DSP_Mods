@@ -10,45 +10,8 @@ public static class BulletTimeWrapper
     private const string BulletTimeGuid = "com.starfi5h.plugin.BulletTime";
     public static bool HasBulletTime;
 
-    public static void Init(Harmony harmony)
+    public static void Start(Harmony _)
     {
-        HasBulletTime = BepInEx.Bootstrap.Chainloader.PluginInfos.TryGetValue(BulletTimeGuid, out var pluginInfo);
-        if (!HasBulletTime) return;
-
-        I18N.Add("Increase game speed (max 10x)", "Increase game speed (max 10x)", "提升游戏速度(最高10倍)");
-        I18N.Apply();
-
-        var assembly = pluginInfo.Instance.GetType().Assembly;
-        try
-        {
-            var classType = assembly.GetType("BulletTime.IngameUI");
-            harmony.Patch(AccessTools.Method(classType, "Init"),
-                null, null, new HarmonyMethod(AccessTools.Method(typeof(BulletTimeWrapper), nameof(IngameUI_Init_Transpiler))));
-            harmony.Patch(AccessTools.Method(classType, "OnSpeedButtonClick"),
-                null, null, new HarmonyMethod(AccessTools.Method(typeof(BulletTimeWrapper), nameof(IngameUI_OnSpeedButtonClick_Transpiler))));
-        }
-        catch
-        {
-            UXAssist.Logger.LogWarning("Failed to patch BulletTime functions()");
-        }
+        HasBulletTime = BepInEx.Bootstrap.Chainloader.PluginInfos.TryGetValue(BulletTimeGuid, out var _);
     }
-
-    private static IEnumerable<CodeInstruction> IngameUI_Init_Transpiler(IEnumerable<CodeInstruction> instructions)
-    {
-        var matcher = new CodeMatcher(instructions);
-        matcher.MatchForward(false,
-            new CodeMatch(OpCodes.Ldstr, "Increase game speed (max 4x)")
-        ).Set(OpCodes.Ldstr, "Increase game speed (max 10x)");
-        return matcher.InstructionEnumeration();
-    }
-
-    private static IEnumerable<CodeInstruction> IngameUI_OnSpeedButtonClick_Transpiler(IEnumerable<CodeInstruction> instructions)
-    {
-        var matcher = new CodeMatcher(instructions);
-        matcher.MatchForward(false,
-            new CodeMatch(OpCodes.Ldc_R8, 240.0)
-        ).Set(OpCodes.Ldc_R8, 600.0);
-        return matcher.InstructionEnumeration();
-    }
-
 }

@@ -10,7 +10,7 @@ public static class AuxilaryfunctionWrapper
     private const string AuxilaryfunctionGuid = "cn.blacksnipe.dsp.Auxilaryfunction";
     public static ConfigEntry<bool> ShowStationInfo;
 
-    public static void Init(Harmony harmony)
+    public static void Start(Harmony harmony)
     {
         if (!BepInEx.Bootstrap.Chainloader.PluginInfos.TryGetValue(AuxilaryfunctionGuid, out var pluginInfo)) return;
         var assembly = pluginInfo.Instance.GetType().Assembly;
