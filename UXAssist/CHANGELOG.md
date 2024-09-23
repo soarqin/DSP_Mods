@@ -1,5 +1,7 @@
 ## Changlog
 
+* 1.2.5
+  + `Drag building power poles in maximum connection range`: Add a new config option to enable `Build Tesla Tower	and Wireless Power Tower alternately`
 * 1.2.4
   + `Sunlight at night`:
     - Fix flickering issue while mecha is sailing.
@@ -198,6 +200,8 @@
 
 ## 更新日志
 
+* 1.2.5
+  + `拖动建造电线杆时自动使用最大连接距离间隔`：添加一个新的设置项`交替建造电力感应塔和无线输电塔`
 * 1.2.4
   + `夜间日光灯`：
     - 修复了航行时闪烁的问题
