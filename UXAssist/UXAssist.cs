@@ -158,7 +158,8 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
         
         UIConfigWindow.Init();
 
-        _patches = Common.Util.GetTypesInNamespace(Assembly.GetExecutingAssembly(), "UXAssist.Patches");
+        _patches = Common.Util.GetTypesFiltered(Assembly.GetExecutingAssembly(),
+            t => string.Equals(t.Namespace, "UXAssist.Patches", StringComparison.Ordinal) || string.Equals(t.Namespace, "UXAssist.Functions", StringComparison.Ordinal));
         _patches?.Do(type => type.GetMethod("Init")?.Invoke(null, null));
         _compats = Common.Util.GetTypesInNamespace(Assembly.GetExecutingAssembly(), "UXAssist.ModsCompat");
         _compats?.Do(type => type.GetMethod("Init")?.Invoke(null, null));

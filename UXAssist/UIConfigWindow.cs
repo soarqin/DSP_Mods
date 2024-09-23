@@ -147,7 +147,7 @@ public static class UIConfigWindow
         */
         y += 36f;
         wnd.AddCheckBox(x, y, tab1, GamePatch.ConvertSavesFromPeaceEnabled, "Convert old saves to Combat Mode on loading");
-        if (GamePatch.ProfileName != null)
+        if (WindowFunctions.ProfileName != null)
         {
             y += 36f;
             checkBoxForMeasureTipsPos = wnd.AddCheckBox(x, y, tab1, GamePatch.ProfileBasedSaveFolderEnabled, "Profile-based save folder");
@@ -161,6 +161,10 @@ public static class UIConfigWindow
             wnd.AddInputField(x, y, 200f, tab1, GamePatch.DefaultProfileName, 15, "input-profile-save-folder");
             y += 18f;
         }
+
+        x = 400f;
+        y = 10f;
+        wnd.AddButton(x, y, tab1, "Show CPU Info", 16, "button-show-cpu-info", WindowFunctions.ShowCPUInfo);
 
         if (!ModsCompat.BulletTimeWrapper.HasBulletTime)
         {
@@ -351,6 +355,7 @@ public static class UIConfigWindow
                 cb1.gameObject.SetActive(true);
                 return;
             }
+
             var on = !ModsCompat.AuxilaryfunctionWrapper.ShowStationInfo.Value;
             cb0.gameObject.SetActive(on);
             cb1.gameObject.SetActive(on);

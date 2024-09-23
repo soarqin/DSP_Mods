@@ -12,11 +12,6 @@ namespace UXAssist.Patches;
 
 public class GamePatch: PatchImpl<GamePatch>
 {
-    private const string GameWindowClass = "UnityWndClass";
-    private static string _gameWindowTitle = "Dyson Sphere Program";
-
-    public static string ProfileName { get; private set; }
-
     public static ConfigEntry<bool> EnableWindowResizeEnabled;
     public static ConfigEntry<bool> LoadLastWindowRectEnabled;
     public static ConfigEntry<int> MouseCursorScaleUpMultiplier;
@@ -75,28 +70,7 @@ public class GamePatch: PatchImpl<GamePatch>
         I18N.Add("KEYUPSSpeedUp", "Increase logical frame rate", "提升逻辑帧率");
         I18N.Add("Logical frame rate: {0}x", "Logical frame rate: {0}x", "逻辑帧速率: {0}x");
 
-        // Get profile name from command line arguments, and set window title accordingly
-        var args = Environment.GetCommandLineArgs();
-        for (var i = 0; i < args.Length - 1; i++)
-        {
-            if (args[i] != "--doorstop-target") continue;
-            var arg = args[i + 1];
-            const string doorstopPathSuffix = @"\BepInEx\core\BepInEx.Preloader.dll";
-            if (!arg.EndsWith(doorstopPathSuffix, StringComparison.OrdinalIgnoreCase))
-                break;
-            arg = arg.Substring(0, arg.Length - doorstopPathSuffix.Length);
-            const string profileSuffix = @"\profiles\";
-            var index = arg.LastIndexOf(profileSuffix, StringComparison.OrdinalIgnoreCase);
-            if (index < 0)
-                break;
-            arg = arg.Substring(index + profileSuffix.Length);
-            var wnd = WinApi.FindWindow(GameWindowClass, _gameWindowTitle);
-            if (wnd == IntPtr.Zero) return;
-            ProfileName = arg;
-            _gameWindowTitle = $"Dyson Sphere Program - {arg}";
-            WinApi.SetWindowText(wnd, _gameWindowTitle);
-            break;
-        }
+        Functions.WindowFunctions.SetWindowTitle();
 
         EnableWindowResizeEnabled.SettingChanged += (_, _) => EnableWindowResize.Enable(EnableWindowResizeEnabled.Value);
         LoadLastWindowRectEnabled.SettingChanged += (_, _) => LoadLastWindowRect.Enable(LoadLastWindowRectEnabled.Value);
@@ -107,8 +81,8 @@ public class GamePatch: PatchImpl<GamePatch>
         };
         // AutoSaveOptEnabled.SettingChanged += (_, _) => AutoSaveOpt.Enable(AutoSaveOptEnabled.Value);
         ConvertSavesFromPeaceEnabled.SettingChanged += (_, _) => ConvertSavesFromPeace.Enable(ConvertSavesFromPeaceEnabled.Value);
-        ProfileBasedSaveFolderEnabled.SettingChanged += (_, _) => RefreshSavePath();
-        DefaultProfileName.SettingChanged += (_, _) => RefreshSavePath();
+        ProfileBasedSaveFolderEnabled.SettingChanged += (_, _) => Functions.WindowFunctions.RefreshSavePath();
+        DefaultProfileName.SettingChanged += (_, _) => Functions.WindowFunctions.RefreshSavePath();
         GameUpsFactor.SettingChanged += (_, _) =>
         {
             if (!EnableGameUpsFactor || GameUpsFactor.Value == 0.0) return;
@@ -158,36 +132,10 @@ public class GamePatch: PatchImpl<GamePatch>
         }
     }
 
-    private static void RefreshSavePath()
-    {
-        if (ProfileName == null) return;
-
-        if (UIRoot.instance.loadGameWindow.gameObject.activeSelf)
-        {
-            UIRoot.instance.loadGameWindow._Close();
-        }
-        if (UIRoot.instance.saveGameWindow.gameObject.activeSelf)
-        {
-            UIRoot.instance.saveGameWindow._Close();
-        }
-
-        string gameSavePath;
-        if (ProfileBasedSaveFolderEnabled.Value && string.Compare(DefaultProfileName.Value, ProfileName, StringComparison.OrdinalIgnoreCase) != 0)
-            gameSavePath = $"{GameConfig.overrideDocumentFolder}{GameConfig.gameName}/Save/{ProfileName}/";
-        else
-            gameSavePath = $"{GameConfig.overrideDocumentFolder}{GameConfig.gameName}/Save/";
-        if (string.Compare(GameConfig.gameSavePath, gameSavePath, StringComparison.OrdinalIgnoreCase) == 0) return;
-        GameConfig.gameSavePath = gameSavePath;
-        if (!Directory.Exists(GameConfig.gameSavePath))
-        {
-            Directory.CreateDirectory(GameConfig.gameSavePath);
-        }
-    }
-
     [HarmonyPrefix, HarmonyPatch(typeof(GameMain), nameof(GameMain.HandleApplicationQuit))]
     private static void GameMain_HandleApplicationQuit_Prefix()
     {
-        var wnd = WinApi.FindWindow(GameWindowClass, _gameWindowTitle);
+        var wnd = Functions.WindowFunctions.FindGameWindow();
         if (wnd == IntPtr.Zero) return;
         WinApi.GetWindowRect(wnd, out var rect);
         LastWindowRect.Value = new Vector4(rect.Left, rect.Top, Screen.width, Screen.height);
@@ -200,7 +148,7 @@ public class GamePatch: PatchImpl<GamePatch>
 
         protected override void OnEnable()
         {
-            var wnd = WinApi.FindWindow(GameWindowClass, _gameWindowTitle);
+            var wnd = Functions.WindowFunctions.FindGameWindow();
             if (wnd == IntPtr.Zero)
             {
                 Enable(false);
@@ -208,33 +156,33 @@ public class GamePatch: PatchImpl<GamePatch>
             }
 
             _enabled = true;
-            WinApi.SetWindowLong(wnd, (int)WindowLongFlags.GWL_STYLE,
-                WinApi.GetWindowLong(wnd, (int)WindowLongFlags.GWL_STYLE) | (int)WindowStyles.WS_THICKFRAME | (int)WindowStyles.WS_MAXIMIZEBOX);
+            WinApi.SetWindowLong(wnd, WinApi.GWL_STYLE,
+                WinApi.GetWindowLong(wnd, WinApi.GWL_STYLE) | WinApi.WS_THICKFRAME | WinApi.WS_MAXIMIZEBOX);
         }
 
         protected override void OnDisable()
         {
-            var wnd = WinApi.FindWindow(GameWindowClass, _gameWindowTitle);
+            var wnd = Functions.WindowFunctions.FindGameWindow();
             if (wnd == IntPtr.Zero)
                 return;
 
             _enabled = false;
-            WinApi.SetWindowLong(wnd, (int)WindowLongFlags.GWL_STYLE,
-                WinApi.GetWindowLong(wnd, (int)WindowLongFlags.GWL_STYLE) & ~((int)WindowStyles.WS_THICKFRAME | (int)WindowStyles.WS_MAXIMIZEBOX));
+            WinApi.SetWindowLong(wnd, WinApi.GWL_STYLE,
+                WinApi.GetWindowLong(wnd, WinApi.GWL_STYLE) & ~(WinApi.WS_THICKFRAME | WinApi.WS_MAXIMIZEBOX));
         }
 
         [HarmonyPostfix]
         [HarmonyPatch(typeof(UIOptionWindow), nameof(UIOptionWindow.ApplyOptions))]
         private static void UIOptionWindow_ApplyOptions_Postfix()
         {
-            var wnd = WinApi.FindWindow(GameWindowClass, _gameWindowTitle);
+            var wnd = Functions.WindowFunctions.FindGameWindow();
             if (wnd == IntPtr.Zero) return;
             if (_enabled)
-                WinApi.SetWindowLong(wnd, (int)WindowLongFlags.GWL_STYLE,
-                    WinApi.GetWindowLong(wnd, (int)WindowLongFlags.GWL_STYLE) | (int)WindowStyles.WS_THICKFRAME | (int)WindowStyles.WS_MAXIMIZEBOX);
+                WinApi.SetWindowLong(wnd, WinApi.GWL_STYLE,
+                    WinApi.GetWindowLong(wnd, WinApi.GWL_STYLE) | WinApi.WS_THICKFRAME | WinApi.WS_MAXIMIZEBOX);
             else
-                WinApi.SetWindowLong(wnd, (int)WindowLongFlags.GWL_STYLE,
-                    WinApi.GetWindowLong(wnd, (int)WindowLongFlags.GWL_STYLE) & ~((int)WindowStyles.WS_THICKFRAME | (int)WindowStyles.WS_MAXIMIZEBOX));
+                WinApi.SetWindowLong(wnd, WinApi.GWL_STYLE,
+                    WinApi.GetWindowLong(wnd, WinApi.GWL_STYLE) & ~(WinApi.WS_THICKFRAME | WinApi.WS_MAXIMIZEBOX));
         }
     }
 
@@ -301,7 +249,7 @@ public class GamePatch: PatchImpl<GamePatch>
         private static void MoveWindowPosition()
         {
             if (Screen.fullScreenMode is FullScreenMode.ExclusiveFullScreen or FullScreenMode.FullScreenWindow or FullScreenMode.MaximizedWindow || GameMain.isRunning) return;
-            var wnd = WinApi.FindWindow(GameWindowClass, _gameWindowTitle);
+            var wnd = Functions.WindowFunctions.FindGameWindow();
             if (wnd == IntPtr.Zero) return;
             var rect = LastWindowRect.Value;
             if (rect is { z: 0f, w: 0f }) return;
@@ -334,7 +282,7 @@ public class GamePatch: PatchImpl<GamePatch>
         {
             if (_loaded || Screen.fullScreenMode is FullScreenMode.ExclusiveFullScreen or FullScreenMode.FullScreenWindow or FullScreenMode.MaximizedWindow) return;
             _loaded = true;
-            var wnd = WinApi.FindWindow(GameWindowClass, _gameWindowTitle);
+            var wnd = Functions.WindowFunctions.FindGameWindow();
             if (wnd == IntPtr.Zero) return;
             var rect = LastWindowRect.Value;
             if (rect is { z: 0f, w: 0f }) return;
@@ -345,8 +293,8 @@ public class GamePatch: PatchImpl<GamePatch>
             Screen.SetResolution(w, h, false);
             WinApi.SetWindowPos(wnd, IntPtr.Zero, x, y, 0, 0, 0x0235);
             if (EnableWindowResizeEnabled.Value)
-                WinApi.SetWindowLong(wnd, (int)WindowLongFlags.GWL_STYLE,
-                    WinApi.GetWindowLong(wnd, (int)WindowLongFlags.GWL_STYLE) | (int)WindowStyles.WS_THICKFRAME | (int)WindowStyles.WS_MAXIMIZEBOX);
+                WinApi.SetWindowLong(wnd, WinApi.GWL_STYLE,
+                    WinApi.GetWindowLong(wnd, WinApi.GWL_STYLE) | WinApi.WS_THICKFRAME | WinApi.WS_MAXIMIZEBOX);
         }
 
         private static GameOption _gameOption;
