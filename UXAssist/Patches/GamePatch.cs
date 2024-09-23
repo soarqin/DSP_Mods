@@ -76,13 +76,13 @@ public class GamePatch: PatchImpl<GamePatch>
         LoadLastWindowRectEnabled.SettingChanged += (_, _) => LoadLastWindowRect.Enable(LoadLastWindowRectEnabled.Value);
         MouseCursorScaleUpMultiplier.SettingChanged += (_, _) =>
         {
-            MouseCursorScaleUp.reload = true;
+            MouseCursorScaleUp.NeedReloadCursors = true;
             MouseCursorScaleUp.Enable(MouseCursorScaleUpMultiplier.Value > 1);
         };
         // AutoSaveOptEnabled.SettingChanged += (_, _) => AutoSaveOpt.Enable(AutoSaveOptEnabled.Value);
         ConvertSavesFromPeaceEnabled.SettingChanged += (_, _) => ConvertSavesFromPeace.Enable(ConvertSavesFromPeaceEnabled.Value);
-        ProfileBasedSaveFolderEnabled.SettingChanged += (_, _) => Functions.WindowFunctions.RefreshSavePath();
-        DefaultProfileName.SettingChanged += (_, _) => Functions.WindowFunctions.RefreshSavePath();
+        ProfileBasedSaveFolderEnabled.SettingChanged += (_, _) => RefreshSavePath();
+        DefaultProfileName.SettingChanged += (_, _) => RefreshSavePath();
         GameUpsFactor.SettingChanged += (_, _) =>
         {
             if (!EnableGameUpsFactor || GameUpsFactor.Value == 0.0) return;
@@ -99,7 +99,7 @@ public class GamePatch: PatchImpl<GamePatch>
     {
         EnableWindowResize.Enable(EnableWindowResizeEnabled.Value);
         LoadLastWindowRect.Enable(LoadLastWindowRectEnabled.Value);
-        MouseCursorScaleUp.reload = false;
+        MouseCursorScaleUp.NeedReloadCursors = false;
         MouseCursorScaleUp.Enable(MouseCursorScaleUpMultiplier.Value > 1);
         // AutoSaveOpt.Enable(AutoSaveOptEnabled.Value);
         ConvertSavesFromPeace.Enable(ConvertSavesFromPeaceEnabled.Value);
@@ -111,7 +111,7 @@ public class GamePatch: PatchImpl<GamePatch>
         Enable(false);
         LoadLastWindowRect.Enable(false);
         EnableWindowResize.Enable(false);
-        MouseCursorScaleUp.reload = false;
+        MouseCursorScaleUp.NeedReloadCursors = false;
         MouseCursorScaleUp.Enable(false);
         // AutoSaveOpt.Enable(false);
         ConvertSavesFromPeace.Enable(false);
@@ -129,6 +129,33 @@ public class GamePatch: PatchImpl<GamePatch>
         {
             GameUpsFactor.Value = Maths.Clamp(Math.Round((GameUpsFactor.Value + 0.5) * 2.0) / 2.0, 0.1, 10.0);
             UIRoot.instance.uiGame.generalTips.InvokeRealtimeTipAhead(string.Format("Logical frame rate: {0}x".Translate(), GameUpsFactor.Value));
+        }
+    }
+
+    private static void RefreshSavePath()
+    {
+        var profileName = Functions.WindowFunctions.ProfileName;
+        if (profileName == null) return;
+
+        if (UIRoot.instance.loadGameWindow.gameObject.activeSelf)
+        {
+            UIRoot.instance.loadGameWindow._Close();
+        }
+        if (UIRoot.instance.saveGameWindow.gameObject.activeSelf)
+        {
+            UIRoot.instance.saveGameWindow._Close();
+        }
+
+        string gameSavePath;
+        if (ProfileBasedSaveFolderEnabled.Value && string.Compare(DefaultProfileName.Value, profileName, StringComparison.OrdinalIgnoreCase) != 0)
+            gameSavePath = $"{GameConfig.overrideDocumentFolder}{GameConfig.gameName}/Save/{profileName}/";
+        else
+            gameSavePath = $"{GameConfig.overrideDocumentFolder}{GameConfig.gameName}/Save/";
+        if (string.Compare(GameConfig.gameSavePath, gameSavePath, StringComparison.OrdinalIgnoreCase) == 0) return;
+        GameConfig.gameSavePath = gameSavePath;
+        if (!Directory.Exists(GameConfig.gameSavePath))
+        {
+            Directory.CreateDirectory(GameConfig.gameSavePath);
         }
     }
 
@@ -487,7 +514,7 @@ public class GamePatch: PatchImpl<GamePatch>
             );
             matcher.Advance(2).Opcode = OpCodes.Brfalse;
             matcher.Insert(
-                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(ConvertSavesFromPeace), nameof(ConvertSavesFromPeace._needConvert)))
+                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(ConvertSavesFromPeace), nameof(_needConvert)))
             );
             return matcher.InstructionEnumeration();
         }
@@ -500,13 +527,14 @@ public class GamePatch: PatchImpl<GamePatch>
         }
     }
 
+    [PatchSetCallbackFlag(PatchCallbackFlag.CallOnDisableAfterUnpatch)]
     private class MouseCursorScaleUp: PatchImpl<MouseCursorScaleUp>
     {
-        public static bool reload;
+        public static bool NeedReloadCursors;
 
         protected override void OnEnable()
         {
-            if (!reload) return;
+            if (!NeedReloadCursors) return;
             if (!UICursor.loaded) return;
             UICursor.loaded = false;
             UICursor.LoadCursors();
@@ -514,7 +542,7 @@ public class GamePatch: PatchImpl<GamePatch>
 
         protected override void OnDisable()
         {
-            if (!reload) return;
+            if (!NeedReloadCursors) return;
             if (!UICursor.loaded) return;
             UICursor.loaded = false;
             UICursor.LoadCursors();

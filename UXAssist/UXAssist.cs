@@ -92,6 +92,8 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
             "Remove part of build condition checks that does not affect game logic");
         FactoryPatch.NightLightEnabled = Config.Bind("Factory", "NightLight", false,
             "Night light");
+        FactoryPatch.NightLightAngleX = Config.Bind("Factory", "NightLightAngleX", -8f, "Night light angle X");
+        FactoryPatch.NightLightAngleY = Config.Bind("Factory", "NightLightAngleY", -2f, "Night light angle Y");
         PlanetPatch.PlayerActionsInGlobeViewEnabled = Config.Bind("Planet", "PlayerActionsInGlobeView", false,
             "Enable player actions in globe view");
         FactoryPatch.RemoveBuildRangeLimitEnabled = Config.Bind("Factory", "RemoveBuildRangeLimit", false,
@@ -234,7 +236,7 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
         if (wasActive) ToggleConfigWindow();
     }
 
-    [PatchImplGuid(PluginInfo.PLUGIN_GUID)]
+    [PatchGuid(PluginInfo.PLUGIN_GUID)]
     private class UIPatch: PatchImpl<UIPatch>
     {
         private static GameObject _buttonOnPlanetGlobe;

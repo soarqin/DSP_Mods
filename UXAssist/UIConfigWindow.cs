@@ -36,6 +36,7 @@ public static class UIConfigWindow
         I18N.Add("Reset", "Reset", "重置");
         I18N.Add("Unlimited interactive range", "Unlimited interactive range", "无限交互距离");
         I18N.Add("Night Light", "Sunlight at night", "夜间日光灯");
+        I18N.Add("Angle X:", "Angle X:", "入射角度X:");
         I18N.Add("Remove some build conditions", "Remove some build conditions", "移除部分不影响游戏逻辑的建造条件");
         I18N.Add("Remove build range limit", "Remove build count and range limit", "移除建造数量和距离限制");
         I18N.Add("Larger area for upgrade and dismantle", "Larger area for upgrade and dismantle", "范围升级和拆除的最大区域扩大");
@@ -104,6 +105,14 @@ public static class UIConfigWindow
         }
     }
 
+    private class AngleMapper : MyWindow.ValueMapper<float>
+    {
+        public override int Min => 0;
+        public override int Max => 20;
+        public override float IndexToValue(int index) => index - 10f;
+        public override int ValueToIndex(float value) => Mathf.RoundToInt(value + 10f);
+    }
+
     private class DistanceMapper : MyWindow.ValueMapper<double>
     {
         public override int Min => 1;
@@ -161,11 +170,11 @@ public static class UIConfigWindow
             wnd.AddInputField(x, y, 200f, tab1, GamePatch.DefaultProfileName, 15, "input-profile-save-folder");
             y += 18f;
         }
-
+        /*
         x = 400f;
         y = 10f;
         wnd.AddButton(x, y, tab1, "Show CPU Info", 16, "button-show-cpu-info", WindowFunctions.ShowCPUInfo);
-
+        */
         if (!ModsCompat.BulletTimeWrapper.HasBulletTime)
         {
             y += 36f;
@@ -183,7 +192,16 @@ public static class UIConfigWindow
         y += 36f;
         wnd.AddCheckBox(x, y, tab2, FactoryPatch.RemoveBuildRangeLimitEnabled, "Remove build range limit");
         y += 36f;
-        wnd.AddCheckBox(x, y, tab2, FactoryPatch.NightLightEnabled, "Night Light");
+        var cb = wnd.AddCheckBox(x, y, tab2, FactoryPatch.NightLightEnabled, "Night Light");
+        x += cb.Width + 5f + 10f;
+        txt = wnd.AddText2(x, y + 2, tab2, "Angle X:", 13, "text-nightlight-angle-x");
+        x += txt.preferredWidth + 5f;
+        wnd.AddSlider(x, y + 7, tab2, FactoryPatch.NightLightAngleX, new AngleMapper(), "0", 80f);
+        x += 90f;
+        txt = wnd.AddText2(x, y + 2, tab2, "Y:", 13, "text-nightlight-angle-y");
+        x += txt.preferredWidth + 5f;
+        wnd.AddSlider(x, y + 7, tab2, FactoryPatch.NightLightAngleY, new AngleMapper(), "0", 80f);
+        x = 0;
         y += 36f;
         wnd.AddCheckBox(x, y, tab2, FactoryPatch.LargerAreaForUpgradeAndDismantleEnabled, "Larger area for upgrade and dismantle");
         y += 36f;

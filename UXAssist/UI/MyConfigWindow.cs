@@ -22,6 +22,7 @@ public class MyConfigWindow : MyWindowWithTabs
 
     public override void _OnCreate()
     {
+        base._OnCreate();
         _windowTrans = GetComponent<RectTransform>();
         OnUICreated?.Invoke(this, _windowTrans);
         AutoFitWindowSize();
@@ -32,24 +33,14 @@ public class MyConfigWindow : MyWindowWithTabs
     public override void _OnDestroy()
     {
         _windowTrans = null;
+        base._OnDestroy();
     }
 
     public override bool _OnInit()
     {
+        if (!base._OnInit()) return false;
         _windowTrans.anchoredPosition = new Vector2(0, 0);
         return true;
-    }
-
-    public override void _OnFree()
-    {
-    }
-
-    public override void _OnOpen()
-    {
-    }
-
-    public override void _OnClose()
-    {
     }
 
     public override void _OnUpdate()

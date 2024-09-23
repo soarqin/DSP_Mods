@@ -31,7 +31,7 @@ public static class WindowFunctions
         switch (uMsg)
         {
             case WinApi.WM_ACTIVATE:
-                UXAssist.Logger.LogDebug($"Activate: {wParam.ToInt32()}, {lParam.ToInt32()}");
+                // UXAssist.Logger.LogDebug($"Activate: {wParam.ToInt32()}, {lParam.ToInt32()}");
                 // TODO: Set Priority like: WinApi.SetPriorityClass(WinApi.GetCurrentProcess(), 0x00000080);
                 break;
             case WinApi.WM_DESTROY:
@@ -41,9 +41,9 @@ public static class WindowFunctions
                 }
                 break;
         }
-
         return WinApi.CallWindowProc(_oldWndProc, hWnd, uMsg, wParam, lParam);
     }
+
     public static void ShowCPUInfo()
     {
         var details = WinApi.GetLogicalProcessorDetails();
@@ -51,7 +51,7 @@ public static class WindowFunctions
         var hybrid = details.HybridArchitecture;
         if (hybrid)
         {
-            msg += "\nP-Cores: {details.PerformanceCoreCount}\nE-Cores: {details.EfficiencyCoreCount}";
+            msg += $"\nP-Cores: {details.PerformanceCoreCount}\nE-Cores: {details.EfficiencyCoreCount}";
         }
 
         var handle = WinApi.GetCurrentProcess();
@@ -111,32 +111,6 @@ public static class WindowFunctions
             _gameWindowTitle = $"Dyson Sphere Program - {arg}";
             WinApi.SetWindowText(wnd, _gameWindowTitle);
             break;
-        }
-    }
-
-    public static void RefreshSavePath()
-    {
-        if (ProfileName == null) return;
-
-        if (UIRoot.instance.loadGameWindow.gameObject.activeSelf)
-        {
-            UIRoot.instance.loadGameWindow._Close();
-        }
-        if (UIRoot.instance.saveGameWindow.gameObject.activeSelf)
-        {
-            UIRoot.instance.saveGameWindow._Close();
-        }
-
-        string gameSavePath;
-        if (Patches.GamePatch.ProfileBasedSaveFolderEnabled.Value && string.Compare(Patches.GamePatch.DefaultProfileName.Value, ProfileName, StringComparison.OrdinalIgnoreCase) != 0)
-            gameSavePath = $"{GameConfig.overrideDocumentFolder}{GameConfig.gameName}/Save/{ProfileName}/";
-        else
-            gameSavePath = $"{GameConfig.overrideDocumentFolder}{GameConfig.gameName}/Save/";
-        if (string.Compare(GameConfig.gameSavePath, gameSavePath, StringComparison.OrdinalIgnoreCase) == 0) return;
-        GameConfig.gameSavePath = gameSavePath;
-        if (!Directory.Exists(GameConfig.gameSavePath))
-        {
-            Directory.CreateDirectory(GameConfig.gameSavePath);
         }
     }
 

@@ -10,6 +10,7 @@ namespace UXAssist.UI;
 public class MyKeyBinder : MonoBehaviour
 {
     private ConfigEntry<KeyboardShortcut> _config;
+    protected event Action OnFree;
 
     [SerializeField]
     public Text functionText;
@@ -42,6 +43,11 @@ public class MyKeyBinder : MonoBehaviour
     public UIButton setNoneKeyUIButton;
 
     private bool _nextNotOn;
+    
+    protected void OnDestroy()
+    {
+        OnFree?.Invoke();
+    }
 
     public static RectTransform CreateKeyBinder(float x, float y, RectTransform parent, ConfigEntry<KeyboardShortcut> config, string label = "", int fontSize = 17)
     {
@@ -82,10 +88,10 @@ public class MyKeyBinder : MonoBehaviour
         Destroy(uikeyEntry);
         kb.setNoneKeyUIButton.gameObject.SetActive(false);
 
+        EventHandler func = (_, _) => kb.SettingChanged();
         kb.SettingChanged();
-        config.SettingChanged += (_, _) => {
-            kb.SettingChanged();
-        };
+        config.SettingChanged += func;
+        kb.OnFree += () => config.SettingChanged -= func;
         kb.inputUIButton.onClick += kb.OnInputUIButtonClick;
         kb.setDefaultUIButton.onClick += kb.OnSetDefaultKeyClick;
         //kb.setNoneKeyUIButton.onClick += kb.OnSetNoneKeyClick;

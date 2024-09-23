@@ -22,6 +22,12 @@ public class MyWindow : ManualBehaviour
     protected const float TabHeight = 27f;
     protected const float Margin = 30f;
     protected const float Spacing = 10f;
+    protected event Action OnFree;
+
+    public override void _OnFree()
+    {
+        OnFree?.Invoke();
+    }
 
     public virtual void TryClose()
     {
@@ -222,12 +228,14 @@ public class MyWindow : ManualBehaviour
     {
         var slider = MySlider.CreateSlider(x, y, parent, OnConfigValueChanged(config), valueMapper.Min, valueMapper.Max, format, width);
         slider.SetLabelText(valueMapper.FormatValue(format, config.Value));
-        config.SettingChanged += (sender, args) =>
+        EventHandler func = (_, _) =>
         {
             var index = OnConfigValueChanged(config);
             slider.Value = index;
             slider.SetLabelText(valueMapper.FormatValue(format, config.Value));
         };
+        config.SettingChanged += func;
+        OnFree += () => config.SettingChanged -= func;
         slider.OnValueChanged += () =>
         {
             var index = Mathf.RoundToInt(slider.Value);

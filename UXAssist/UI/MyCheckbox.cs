@@ -13,8 +13,13 @@ public class MyCheckBox : MonoBehaviour
     public RectTransform rectTrans;
     public Text labelText;
     public event Action OnChecked;
+    protected event Action OnFree;
     private bool _checked;
-    private ConfigEntry<bool> _configAssigned;
+
+    protected void OnDestroy()
+    {
+        OnFree?.Invoke();
+    }
 
     public bool Checked
     {
@@ -29,9 +34,10 @@ public class MyCheckBox : MonoBehaviour
     public static MyCheckBox CreateCheckBox(float x, float y, RectTransform parent, ConfigEntry<bool> config, string label = "", int fontSize = 15)
     {
         var cb = CreateCheckBox(x, y, parent, config.Value, label, fontSize);
-        cb._configAssigned = config;
         cb.OnChecked += () => config.Value = !config.Value;
-        config.SettingChanged += (_, _) => cb.Checked = config.Value;
+        EventHandler func = (_, _) => cb.Checked = config.Value;
+        config.SettingChanged += func;
+        cb.OnFree += () => config.SettingChanged -= func;
         return cb;
     }
 

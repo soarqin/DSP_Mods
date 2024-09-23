@@ -1,5 +1,13 @@
 ## Changlog
 
+* 1.2.4
+  + `Sunlight at night`:
+    - Fix flickering issue while mecha is sailing.
+    - Can configure the light angles now.
+  + `Scale up mouse cursor`: Fix known issues.
+  + `Buy out techs with their prerequisites`: Fix a bug that warning popup from invalid data.
+  + Does not patch `BulletTime`'s speed control now, as `BulletTime` has been updated to support configurable maximum speed.
+  + Some minor fixes and tweaks.
 * 1.2.3
   + `Real-time logistic stations info panel`: Fix bar length not match with item amount when item amount is more than capacity.
   + `Sunlight at night`: Fix not working.
@@ -190,6 +198,14 @@
 
 ## 更新日志
 
+* 1.2.4
+  + `夜间日光灯`：
+    - 修复了航行时闪烁的问题
+    - 现在可以配置入射光线角度了
+  + `放大鼠标指针`：修复已知问题
+  + `买断科技也同时买断所有前置科技`：修复了数据错误警告弹窗的问题
+  + 不再对`BulletTime`的速度控制打补丁，因为`BulletTime`已更新支持可配置最大速度
+  + 一些小修复和调整
 * 1.2.3
   + `物流运输站实时信息面板`：修复了物品数量超过容量限制时条长度不匹配的问题
   + `夜间日光灯`：修复了不起作用的问题

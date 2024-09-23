@@ -17,6 +17,8 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
     public static ConfigEntry<bool> UnlimitInteractiveEnabled;
     public static ConfigEntry<bool> RemoveSomeConditionEnabled;
     public static ConfigEntry<bool> NightLightEnabled;
+    public static ConfigEntry<float> NightLightAngleX;
+    public static ConfigEntry<float> NightLightAngleY;
     public static ConfigEntry<bool> RemoveBuildRangeLimitEnabled;
     public static ConfigEntry<bool> LargerAreaForUpgradeAndDismantleEnabled;
     public static ConfigEntry<bool> LargerAreaForTerraformEnabled;
@@ -55,6 +57,8 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         UnlimitInteractiveEnabled.SettingChanged += (_, _) => UnlimitInteractive.Enable(UnlimitInteractiveEnabled.Value);
         RemoveSomeConditionEnabled.SettingChanged += (_, _) => RemoveSomeConditionBuild.Enable(RemoveSomeConditionEnabled.Value);
         NightLightEnabled.SettingChanged += (_, _) => NightLight.Enable(NightLightEnabled.Value);
+        NightLightAngleX.SettingChanged += (_, _) => NightLight.UpdateSunlightAngle();
+        NightLightAngleY.SettingChanged += (_, _) => NightLight.UpdateSunlightAngle();
         RemoveBuildRangeLimitEnabled.SettingChanged += (_, _) => RemoveBuildRangeLimit.Enable(RemoveBuildRangeLimitEnabled.Value);
         LargerAreaForUpgradeAndDismantleEnabled.SettingChanged += (_, _) => LargerAreaForUpgradeAndDismantle.Enable(LargerAreaForUpgradeAndDismantleEnabled.Value);
         LargerAreaForTerraformEnabled.SettingChanged += (_, _) => LargerAreaForTerraform.Enable(LargerAreaForTerraformEnabled.Value);
@@ -175,8 +179,6 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
 
     public class NightLight : PatchImpl<NightLight>
     {
-        private const float NightLightAngleX = -8;
-        private const float NightLightAngleY = -2;
         private static bool _nightlightInitialized;
         private static bool _mechaOnEarth;
         private static AnimationState _sail;
@@ -186,6 +188,13 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         {
             if (!_sunlight) return;
             _sunlight.transform.localEulerAngles = new Vector3(0f, 180f);
+        }
+
+        public static void UpdateSunlightAngle()
+        {
+            if (!_sunlight) return;
+            _sunlight.transform.rotation = Quaternion.LookRotation(-GameMain.mainPlayer.transform.up + GameMain.mainPlayer.transform.forward * NightLightAngleX.Value / 10f +
+                                                                   GameMain.mainPlayer.transform.right * NightLightAngleY.Value / 10f);
         }
 
         [HarmonyPostfix]
@@ -217,12 +226,13 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
 
                 if (!_sail || !_sail.enabled) return;
                 _mechaOnEarth = false;
-                if (!_sunlight || !_sunlight.transform) return;
+                if (!_sunlight) return;
                 _sunlight.transform.localEulerAngles = new Vector3(0f, 180f);
                 _sunlight = null;
                 return;
             }
 
+            if (_sail && _sail.enabled) return;
             if (!_sunlight)
             {
                 var simu = GameMain.universeSimulator;
@@ -231,9 +241,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             }
 
             _mechaOnEarth = true;
-            if (_sunlight)
-                _sunlight.transform.rotation = Quaternion.LookRotation(-GameMain.mainPlayer.transform.up + GameMain.mainPlayer.transform.forward * NightLightAngleX / 10f +
-                                                                       GameMain.mainPlayer.transform.right * NightLightAngleY / 10f);
+            UpdateSunlightAngle();
         }
 
         [HarmonyTranspiler]
