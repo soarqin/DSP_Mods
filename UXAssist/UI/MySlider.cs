@@ -8,12 +8,31 @@ namespace UXAssist.UI;
 
 public class MySlider : MonoBehaviour
 {
-    public Slider slider;
     public RectTransform rectTrans;
+    public Slider slider;
+    public RectTransform handleSlideArea;
     public Text labelText;
     public string labelFormat;
     public event Action OnValueChanged;
     private float _value;
+    
+    public void SetEnable(bool on)
+    {
+        lock (this)
+        {
+            if (slider) slider.interactable = on;
+        }
+    }
+
+    public MySlider MakeHandleSmaller(float deltaX = 10f, float deltaY = 0f)
+    {
+        var oldSize = slider.handleRect.sizeDelta;
+        slider.handleRect.sizeDelta = new Vector2(oldSize.x - deltaX, oldSize.y - deltaY);
+        handleSlideArea.offsetMin = new Vector2(handleSlideArea.offsetMin.x - deltaX / 2, handleSlideArea.offsetMin.y);
+        handleSlideArea.offsetMax = new Vector2(handleSlideArea.offsetMax.x + deltaX / 2, handleSlideArea.offsetMax.y);
+        return this;
+    }
+
     public float Value
     {
         get => _value;
@@ -48,7 +67,7 @@ public class MySlider : MonoBehaviour
         sl.slider.onValueChanged.RemoveAllListeners();
         sl.slider.onValueChanged.AddListener(sl.SliderChanged);
         sl.labelText = sl.slider.handleRect.Find("Text")?.GetComponent<Text>();
-        if (sl.labelText != null)
+        if (sl.labelText)
         {
             sl.labelText.fontSize = 14;
             if (sl.labelText.transform is RectTransform rectTrans)
@@ -57,6 +76,8 @@ public class MySlider : MonoBehaviour
             }
         }
         sl.labelFormat = format;
+        
+        sl.handleSlideArea = sl.transform.Find("Handle Slide Area")?.GetComponent<RectTransform>();
 
         var bg = sl.slider.transform.Find("Background")?.GetComponent<Image>();
         if (bg != null)

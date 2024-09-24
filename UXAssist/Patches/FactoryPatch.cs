@@ -28,6 +28,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
     public static ConfigEntry<bool> ProtectVeinsFromExhaustionEnabled;
     public static ConfigEntry<bool> DoNotRenderEntitiesEnabled;
     public static ConfigEntry<bool> DragBuildPowerPolesEnabled;
+    public static ConfigEntry<bool> DragBuildPowerPolesAlternatelyEnabled;
     public static ConfigEntry<bool> BeltSignalsForBuyOutEnabled;
     private static PressKeyBind _doNotRenderEntitiesKey;
     private static PressKeyBind _offgridfForPathsKey;
@@ -68,6 +69,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         ProtectVeinsFromExhaustionEnabled.SettingChanged += (_, _) => ProtectVeinsFromExhaustion.Enable(ProtectVeinsFromExhaustionEnabled.Value);
         DoNotRenderEntitiesEnabled.SettingChanged += (_, _) => DoNotRenderEntities.Enable(DoNotRenderEntitiesEnabled.Value);
         DragBuildPowerPolesEnabled.SettingChanged += (_, _) => DragBuildPowerPoles.Enable(DragBuildPowerPolesEnabled.Value);
+        DragBuildPowerPolesAlternatelyEnabled.SettingChanged += (_, _) => DragBuildPowerPoles.AlternatelyChanged();
         BeltSignalsForBuyOutEnabled.SettingChanged += (_, _) => BeltSignalsForBuyOut.Enable(BeltSignalsForBuyOutEnabled.Value);
     }
 
@@ -1291,6 +1293,12 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             GameLogic.OnGameBegin -= GameMain_Begin_Postfix;
         }
 
+        public static void AlternatelyChanged()
+        {
+            UnfixProto();
+            FixProto();
+        }
+
         private static bool IsPowerPole(int id)
         {
             return PowerPoleIds.Contains(id);
@@ -1308,7 +1316,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                 OldDragBuild.Add(powerPole.prefabDesc.dragBuild);
                 OldDragBuildDist.Add(powerPole.prefabDesc.dragBuildDist);
                 powerPole.prefabDesc.dragBuild = true;
-                var distance = (id == 2201 ? LDB.items.Select(2202) : powerPole).prefabDesc.powerConnectDistance - 0.72f;
+                var distance = (id == 2201 && DragBuildPowerPolesAlternatelyEnabled.Value ? LDB.items.Select(2202) : powerPole).prefabDesc.powerConnectDistance - 0.72f;
                 powerPole.prefabDesc.dragBuildDist = new Vector2(distance, distance);
             }
         }
@@ -1422,13 +1430,13 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                 new CodeMatch(OpCodes.Stfld, AccessTools.Field(typeof(BuildPreview), nameof(BuildPreview.desc)))
             ).Advance(2).InsertAndAdvance(new CodeInstruction(OpCodes.Ldloc_S, 6)).SetInstructionAndAdvance(Transpilers.EmitDelegate((BuildTool_Click click, int i) =>
             {
-                if ((i & 1) == 0) return click.handItem;
+                if (!DragBuildPowerPolesAlternatelyEnabled.Value || (i & 1) == 0) return click.handItem;
                 var id = click.handItem.ID;
                 if (id != 2201 && id != 2202) return click.handItem;
                 return LDB.items.Select(id ^ 3);
             })).Advance(3).InsertAndAdvance(new CodeInstruction(OpCodes.Ldloc_S, 6)).SetInstructionAndAdvance(Transpilers.EmitDelegate((BuildTool_Click click, int i) =>
             {
-                if ((i & 1) == 0) return click.handPrefabDesc;
+                if (!DragBuildPowerPolesAlternatelyEnabled.Value || (i & 1) == 0) return click.handPrefabDesc;
                 var id = click.handItem.ID;
                 if (id != 2201 && id != 2202) return click.handPrefabDesc;
                 return LDB.items.Select(id ^ 3).prefabDesc;

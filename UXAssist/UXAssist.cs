@@ -116,6 +116,8 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
             "Do not render factory entities");
         FactoryPatch.DragBuildPowerPolesEnabled = Config.Bind("Factory", "DragBuildPowerPoles", false,
             "Drag building power poles in maximum connection range");
+        FactoryPatch.DragBuildPowerPolesAlternatelyEnabled = Config.Bind("Factory", "DragBuildPowerPolesAlternately", true,
+            "Build Tesla Tower and Wireless Power Tower alternately");
         FactoryPatch.BeltSignalsForBuyOutEnabled = Config.Bind("Factory", "BeltSignalsForBuyOut", false,
             "Belt signals for buy out dark fog items automatically");
         LogisticsPatch.LogisticsCapacityTweaksEnabled = Config.Bind("Factory", "LogisticsCapacityTweaks", true,

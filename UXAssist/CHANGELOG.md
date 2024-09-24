@@ -1,7 +1,7 @@
 ## Changlog
 
 * 1.2.5
-  + `Drag building power poles in maximum connection range`: Add a new config option to enable `Build Tesla Tower	and Wireless Power Tower alternately`
+  + `Drag building power poles in maximum connection range`: Add a new config option `Build Tesla Tower and Wireless Power Tower alternately`
 * 1.2.4
   + `Sunlight at night`:
     - Fix flickering issue while mecha is sailing.

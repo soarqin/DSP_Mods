@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
+using UnityEngine.UI;
 using UXAssist.UI;
 using UXAssist.Common;
 using UXAssist.Functions;
@@ -57,6 +59,7 @@ public static class UIConfigWindow
             "默认矿脉数量保护于剩余100，采油速保护于速度1.0/s，你可以在配置文件中自行设置。\n当达到保护值时，矿脉和油井将不再被开采。\n关闭此功能以恢复开采，一般是当你在`矿物利用`上有足够的等级时。\n");
         I18N.Add("Do not render factory entities", "Do not render factory entities (except belts and sorters)", "不渲染工厂建筑实体(除了传送带和分拣器)");
         I18N.Add("Drag building power poles in maximum connection range", "Drag building power poles in maximum connection range", "拖动建造电线杆时自动使用最大连接距离间隔");
+        I18N.Add("Build Tesla Tower and Wireless Power Tower alternately", "Build Tesla Tower and Wireless Power Tower alternately", "交替建造电力感应塔和无线输电塔");
         I18N.Add("Allow overflow for Logistic Stations and Advanced Mining Machines", "Allow overflow for Logistic Stations and Advanced Mining Machines", "允许物流站和大型采矿机物品溢出");
         I18N.Add("Belt signals for buy out dark fog items automatically", "Belt signals for buy out dark fog items automatically", "用于自动购买黑雾物品的传送带信号");
         I18N.Add("Logistics Control Panel Improvement", "Logistics Control Panel Improvement", "物流控制面板改进");
@@ -131,8 +134,6 @@ public static class UIConfigWindow
 
     private static void CreateUI(MyConfigWindow wnd, RectTransform trans)
     {
-        MyCheckBox checkBoxForMeasureTipsPos;
-
         _windowTrans = trans;
         wnd.AddTabGroup(trans, "UXAssist", "tab-group-uxassist");
         var tab1 = wnd.AddTab(trans, "General");
@@ -143,9 +144,7 @@ public static class UIConfigWindow
         wnd.AddCheckBox(x, y, tab1, GamePatch.LoadLastWindowRectEnabled, "Remeber window position and size on last exit");
         y += 36f;
         var txt = wnd.AddText2(x + 2f, y, tab1, "Scale up mouse cursor", 15, "text-scale-up-mouse-cursor");
-        x += txt.preferredWidth + 5f;
-        wnd.AddSlider(x + 2f, y + 6f, tab1, GamePatch.MouseCursorScaleUpMultiplier, [1, 2, 3, 4], "0x", 100f);
-        x = 0f;
+        wnd.AddSlider(x + txt.preferredWidth + 7f, y + 6f, tab1, GamePatch.MouseCursorScaleUpMultiplier, [1, 2, 3, 4], "0x", 100f);
         /*
         y += 30f;
         wnd.AddCheckBox(x, y, tab1, GamePatch.AutoSaveOptEnabled, "Better auto-save mechanism");
@@ -156,15 +155,15 @@ public static class UIConfigWindow
         */
         y += 36f;
         wnd.AddCheckBox(x, y, tab1, GamePatch.ConvertSavesFromPeaceEnabled, "Convert old saves to Combat Mode on loading");
+
+        MyCheckBox checkBoxForMeasureTextWidth;
         if (WindowFunctions.ProfileName != null)
         {
             y += 36f;
-            checkBoxForMeasureTipsPos = wnd.AddCheckBox(x, y, tab1, GamePatch.ProfileBasedSaveFolderEnabled, "Profile-based save folder");
-            x += checkBoxForMeasureTipsPos.Width + 5f;
-            y += 6f;
-            wnd.AddTipsButton2(x, y, tab1, "Profile-based save folder", "Profile-based save folder tips", "btn-profile-based-save-folder-tips");
+            checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab1, GamePatch.ProfileBasedSaveFolderEnabled, "Profile-based save folder");
+            wnd.AddTipsButton2(checkBoxForMeasureTextWidth.Width + 5f, y + 6f, tab1, "Profile-based save folder", "Profile-based save folder tips", "btn-profile-based-save-folder-tips");
             x = 0;
-            y += 24f;
+            y += 30f;
             wnd.AddText2(x, y, tab1, "Default profile name", 15, "text-default-profile-name");
             y += 24f;
             wnd.AddInputField(x, y, 200f, tab1, GamePatch.DefaultProfileName, 15, "input-profile-save-folder");
@@ -179,9 +178,9 @@ public static class UIConfigWindow
         {
             y += 36f;
             txt = wnd.AddText2(x + 2f, y, tab1, "Logical Frame Rate", 15, "game-frame-rate");
-            x += txt.preferredWidth + 5f;
-            wnd.AddSlider(x + 2f, y + 6f, tab1, GamePatch.GameUpsFactor, new UpsMapper(), "0.0x", 200f);
-            var btn = wnd.AddFlatButton(x + 204f, y + 6f, tab1, "Reset", 13, "reset-game-frame-rate", () => GamePatch.GameUpsFactor.Value = 1.0f);
+            x += txt.preferredWidth + 7f;
+            wnd.AddSlider(x, y + 6f, tab1, GamePatch.GameUpsFactor, new UpsMapper(), "0.0x", 100f).MakeHandleSmaller();
+            var btn = wnd.AddFlatButton(x + 104f, y + 6f, tab1, "Reset", 13, "reset-game-frame-rate", () => GamePatch.GameUpsFactor.Value = 1.0f);
             ((RectTransform)btn.transform).sizeDelta = new Vector2(40f, 20f);
         }
 
@@ -192,15 +191,14 @@ public static class UIConfigWindow
         y += 36f;
         wnd.AddCheckBox(x, y, tab2, FactoryPatch.RemoveBuildRangeLimitEnabled, "Remove build range limit");
         y += 36f;
-        var cb = wnd.AddCheckBox(x, y, tab2, FactoryPatch.NightLightEnabled, "Night Light");
-        x += cb.Width + 5f + 10f;
-        txt = wnd.AddText2(x, y + 2, tab2, "Angle X:", 13, "text-nightlight-angle-x");
+        checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab2, FactoryPatch.NightLightEnabled, "Night Light");
+        x += checkBoxForMeasureTextWidth.Width + 5f + 10f;
+        txt = wnd.AddText2(x, y + 2f, tab2, "Angle X:", 13, "text-nightlight-angle-x");
         x += txt.preferredWidth + 5f;
-        wnd.AddSlider(x, y + 7, tab2, FactoryPatch.NightLightAngleX, new AngleMapper(), "0", 80f);
-        x += 90f;
-        txt = wnd.AddText2(x, y + 2, tab2, "Y:", 13, "text-nightlight-angle-y");
-        x += txt.preferredWidth + 5f;
-        wnd.AddSlider(x, y + 7, tab2, FactoryPatch.NightLightAngleY, new AngleMapper(), "0", 80f);
+        wnd.AddSlider(x, y + 7f, tab2, FactoryPatch.NightLightAngleX, new AngleMapper(), "0", 60f).MakeHandleSmaller();
+        x += 70f;
+        txt = wnd.AddText2(x, y + 2f, tab2, "Y:", 13, "text-nightlight-angle-y");
+        wnd.AddSlider(x + txt.preferredWidth + 5f, y + 7f, tab2, FactoryPatch.NightLightAngleY, new AngleMapper(), "0", 60f).MakeHandleSmaller();
         x = 0;
         y += 36f;
         wnd.AddCheckBox(x, y, tab2, FactoryPatch.LargerAreaForUpgradeAndDismantleEnabled, "Larger area for upgrade and dismantle");
@@ -209,21 +207,22 @@ public static class UIConfigWindow
         y += 36f;
         wnd.AddCheckBox(x, y, tab2, FactoryPatch.OffGridBuildingEnabled, "Off-grid building and stepped rotation");
         y += 36f;
-        checkBoxForMeasureTipsPos = wnd.AddCheckBox(x, y, tab2, FactoryPatch.TreatStackingAsSingleEnabled, "Treat stack items as single in monitor components");
-        x += checkBoxForMeasureTipsPos.Width + 5f;
-        y += 6f;
-        wnd.AddTipsButton2(x, y, tab2, "Enhance control for logistic storage limits", "Enhance control for logistic storage limits tips", "enhanced-logistic-limit-tips");
-        x = 0f;
-        y += 30f;
+        checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab2, FactoryPatch.TreatStackingAsSingleEnabled, "Treat stack items as single in monitor components");
+        wnd.AddTipsButton2(x + checkBoxForMeasureTextWidth.Width + 5f, y + 6f, tab2, "Enhance control for logistic storage limits", "Enhance control for logistic storage limits tips", "enhanced-logistic-limit-tips");
+        y += 36f;
         wnd.AddCheckBox(x, y, tab2, FactoryPatch.QuickBuildAndDismantleLabsEnabled, "Quick build and dismantle stacking labs");
         y += 36f;
-        checkBoxForMeasureTipsPos = wnd.AddCheckBox(x, y, tab2, FactoryPatch.ProtectVeinsFromExhaustionEnabled, "Protect veins from exhaustion");
-        x += checkBoxForMeasureTipsPos.Width + 5f;
-        y += 6f;
-        wnd.AddTipsButton2(x, y, tab2, "Protect veins from exhaustion", "Protect veins from exhaustion tips", "protect-veins-tips");
-        x = 0f;
-        y += 30f;
+        checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab2, FactoryPatch.ProtectVeinsFromExhaustionEnabled, "Protect veins from exhaustion");
+        wnd.AddTipsButton2(x + checkBoxForMeasureTextWidth.Width + 5f, y + 6f, tab2, "Protect veins from exhaustion", "Protect veins from exhaustion tips", "protect-veins-tips");
+        y += 36f;
         wnd.AddCheckBox(x, y, tab2, FactoryPatch.DragBuildPowerPolesEnabled, "Drag building power poles in maximum connection range");
+        y += 36f;
+        var alternatelyCheckBox = wnd.AddCheckBox(x + 20f, y, tab2, FactoryPatch.DragBuildPowerPolesAlternatelyEnabled, "Build Tesla Tower and Wireless Power Tower alternately", 13);
+        EventHandler alternatelyCheckBoxChanged = (_, _) => { alternatelyCheckBox.SetEnable(FactoryPatch.DragBuildPowerPolesEnabled.Value); };
+        FactoryPatch.DragBuildPowerPolesEnabled.SettingChanged += alternatelyCheckBoxChanged;
+        wnd.OnFree += () => { FactoryPatch.DragBuildPowerPolesEnabled.SettingChanged -= alternatelyCheckBoxChanged; };
+        alternatelyCheckBoxChanged(null, null);
+
         y += 36f;
         wnd.AddCheckBox(x, y, tab2, FactoryPatch.DoNotRenderEntitiesEnabled, "Do not render factory entities");
         y += 36f;
@@ -241,27 +240,47 @@ public static class UIConfigWindow
         );
         y += 72f;
         wnd.AddButton(x, y, 200, tab2, "Quick build Orbital Collectors", 16, "button-init-planet", PlanetFunctions.BuildOrbitalCollectors);
-        x += 10f;
         y += 30f;
-        wnd.AddText2(x, y, tab2, "Maximum count to build", 15, "text-oc-build-count");
+        wnd.AddText2(x + 10f, y, tab2, "Maximum count to build", 15, "text-oc-build-count");
         y += 24f;
-        wnd.AddSlider(x, y, tab2, PlanetFunctions.OrbitalCollectorMaxBuildCount, new OcMapper(), "G", 200f);
+        wnd.AddSlider(x + 10f, y, tab2, PlanetFunctions.OrbitalCollectorMaxBuildCount, new OcMapper(), "G", 200f);
         x = 400f;
         y += 54f;
         wnd.AddCheckBox(x, y, tab2, LogisticsPatch.LogisticsCapacityTweaksEnabled, "Enhance control for logistic storage limits");
         y += 36f;
         wnd.AddCheckBox(x, y, tab2, LogisticsPatch.AllowOverflowInLogisticsEnabled, "Allow overflow for Logistic Stations and Advanced Mining Machines");
         y += 36f;
-        checkBoxForMeasureTipsPos = wnd.AddCheckBox(x, y, tab2, LogisticsPatch.LogisticsConstrolPanelImprovementEnabled, "Logistics Control Panel Improvement");
-        wnd.AddTipsButton2(x + checkBoxForMeasureTipsPos.Width + 5f, y + 6f, tab2, "Logistics Control Panel Improvement", "Logistics Control Panel Improvement tips", "lcp-improvement-tips");
+        checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab2, LogisticsPatch.LogisticsConstrolPanelImprovementEnabled, "Logistics Control Panel Improvement");
+        wnd.AddTipsButton2(x + checkBoxForMeasureTextWidth.Width + 5f, y + 6f, tab2, "Logistics Control Panel Improvement", "Logistics Control Panel Improvement tips", "lcp-improvement-tips");
         y += 36f;
         var cb0 = wnd.AddCheckBox(x, y, tab2, LogisticsPatch.RealtimeLogisticsInfoPanelEnabled, "Real-time logistic stations info panel");
-        var cb1 = wnd.AddCheckBox(x + 26f, y + 26f, tab2, LogisticsPatch.RealtimeLogisticsInfoPanelBarsEnabled, "Show status bars for storage items", 13);
+        y += 36f;
+        var cb1 = wnd.AddCheckBox(x + 20f, y, tab2, LogisticsPatch.RealtimeLogisticsInfoPanelBarsEnabled, "Show status bars for storage items", 13);
+        EventHandler anySettingsChanged = (_, _) =>
+        {
+            if (ModsCompat.AuxilaryfunctionWrapper.ShowStationInfo == null)
+            {
+                cb0.SetEnable(true);
+                cb1.SetEnable(LogisticsPatch.RealtimeLogisticsInfoPanelEnabled.Value);
+                return;
+            }
+
+            var on = !ModsCompat.AuxilaryfunctionWrapper.ShowStationInfo.Value;
+            cb0.SetEnable(on);
+            cb1.SetEnable(on & LogisticsPatch.RealtimeLogisticsInfoPanelEnabled.Value);
+            if (!on)
+            {
+                LogisticsPatch.RealtimeLogisticsInfoPanelEnabled.Value = false;
+            }
+        };
         if (ModsCompat.AuxilaryfunctionWrapper.ShowStationInfo != null)
         {
-            ModsCompat.AuxilaryfunctionWrapper.ShowStationInfo.SettingChanged += (_, _) => { OnAuxilaryInfoPanelChanged(); };
-            OnAuxilaryInfoPanelChanged();
+            ModsCompat.AuxilaryfunctionWrapper.ShowStationInfo.SettingChanged += anySettingsChanged;
+            wnd.OnFree += () => { ModsCompat.AuxilaryfunctionWrapper.ShowStationInfo.SettingChanged -= anySettingsChanged; };
         }
+        LogisticsPatch.RealtimeLogisticsInfoPanelEnabled.SettingChanged += anySettingsChanged;
+        wnd.OnFree += () => { LogisticsPatch.RealtimeLogisticsInfoPanelEnabled.SettingChanged -= anySettingsChanged; };
+        anySettingsChanged(null, null);
 
         var tab3 = wnd.AddTab(trans, "Player/Mecha");
         x = 0f;
@@ -272,23 +291,26 @@ public static class UIConfigWindow
         y += 36f;
         wnd.AddCheckBox(x, y, tab3, PlayerPatch.HideTipsForSandsChangesEnabled, "Hide tips for soil piles changes");
         y += 36f;
-        checkBoxForMeasureTipsPos = wnd.AddCheckBox(x, y, tab3, PlayerPatch.EnhancedMechaForgeCountControlEnabled, "Enhanced count control for hand-make");
-        x += checkBoxForMeasureTipsPos.Width + 5f;
-        y += 6f;
-        wnd.AddTipsButton2(x, y, tab3, "Enhanced count control for hand-make", "Enhanced count control for hand-make tips", "enhanced-count-control-tips");
-        x = 0f;
-        y += 30f;
+        checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab3, PlayerPatch.EnhancedMechaForgeCountControlEnabled, "Enhanced count control for hand-make");
+        wnd.AddTipsButton2(x + checkBoxForMeasureTextWidth.Width + 5f, y + 6f, tab3, "Enhanced count control for hand-make", "Enhanced count control for hand-make tips", "enhanced-count-control-tips");
+        y += 36f;
         wnd.AddCheckBox(x, y, tab3, PlayerPatch.AutoNavigationEnabled, "Auto navigation on sailings");
-        x = 20f;
         y += 26f;
-        wnd.AddCheckBox(x, y, tab3, PlayerPatch.AutoCruiseEnabled, "Enable auto-cruise", 13);
-        x = 10f;
+        var navcb1 = wnd.AddCheckBox(x + 20f, y, tab3, PlayerPatch.AutoCruiseEnabled, "Enable auto-cruise", 13);
         y += 26f;
-        wnd.AddCheckBox(x, y, tab3, PlayerPatch.AutoBoostEnabled, "Auto boost", 13);
+        var navcb2 = wnd.AddCheckBox(x + 20f, y, tab3, PlayerPatch.AutoBoostEnabled, "Auto boost", 13);
         y += 32f;
-        wnd.AddText2(x, y, tab3, "Distance to use warp", 15, "text-distance-to-warp");
-        y += 24f;
-        wnd.AddSlider(x, y, tab3, PlayerPatch.DistanceToWarp, new DistanceMapper(), "0.0", 200f);
+        txt = wnd.AddText2(x + 20f, y, tab3, "Distance to use warp", 15, "text-distance-to-warp");
+        var navSlider = wnd.AddSlider(x + 20f + txt.preferredWidth + 5f, y + 6f, tab3, PlayerPatch.DistanceToWarp, new DistanceMapper(), "0.0", 100f);
+        EventHandler navSettingChanged = (_, _) =>
+        {
+            navcb1.SetEnable(PlayerPatch.AutoNavigationEnabled.Value);
+            navcb2.SetEnable(PlayerPatch.AutoNavigationEnabled.Value);
+            navSlider.SetEnable(PlayerPatch.AutoNavigationEnabled.Value);
+        };
+        PlayerPatch.AutoNavigationEnabled.SettingChanged += navSettingChanged;
+        wnd.OnFree += () => { PlayerPatch.AutoNavigationEnabled.SettingChanged -= navSettingChanged; };
+        navSettingChanged(null, null);
 
         var tab4 = wnd.AddTab(trans, "Dyson Sphere");
         x = 0f;
@@ -364,24 +386,6 @@ public static class UIConfigWindow
             uiGame.OpenCommunicatorWindow(5);
         });
         return;
-
-        void OnAuxilaryInfoPanelChanged()
-        {
-            if (ModsCompat.AuxilaryfunctionWrapper.ShowStationInfo == null)
-            {
-                cb0.gameObject.SetActive(true);
-                cb1.gameObject.SetActive(true);
-                return;
-            }
-
-            var on = !ModsCompat.AuxilaryfunctionWrapper.ShowStationInfo.Value;
-            cb0.gameObject.SetActive(on);
-            cb1.gameObject.SetActive(on);
-            if (!on)
-            {
-                LogisticsPatch.RealtimeLogisticsInfoPanelEnabled.Value = false;
-            }
-        }
     }
 
     private static void UpdateUI()

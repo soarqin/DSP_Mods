@@ -8,14 +8,19 @@ namespace UXAssist.UI;
 // MyCheckBox modified from LSTM: https://github.com/hetima/DSP_LSTM/blob/main/LSTM/MyCheckBox.cs
 public class MyCheckBox : MonoBehaviour
 {
-    public UIButton uiButton;
-    public Image checkImage;
     public RectTransform rectTrans;
+    public UIButton uiButton;
+    public Image boxImage;
+    public Image checkImage;
     public Text labelText;
     public event Action OnChecked;
     protected event Action OnFree;
     private bool _checked;
 
+    private static readonly Color BoxColor = new Color(1f, 1f, 1f, 100f / 255f);
+    private static readonly Color CheckColor = new Color(1f, 1f, 1f, 1f);
+    private static readonly Color TextColor = new Color(178f / 255f, 178f / 255f, 178f / 255f, 168f / 255f);
+    
     protected void OnDestroy()
     {
         OnFree?.Invoke();
@@ -28,6 +33,23 @@ public class MyCheckBox : MonoBehaviour
         {
             _checked = value;
             checkImage.enabled = value;
+        }
+    }
+
+    public void SetEnable(bool on)
+    {
+        if (uiButton) uiButton.enabled = on;
+        if (on)
+        {
+            if (boxImage) boxImage.color = BoxColor;
+            if (checkImage) checkImage.color = CheckColor;
+            if (labelText) labelText.color = TextColor;
+        }
+        else
+        {
+            if (boxImage) boxImage.color = BoxColor.RGBMultiplied(0.5f);
+            if (checkImage) checkImage.color = CheckColor.RGBMultiplied(0.5f);
+            if (labelText) labelText.color = TextColor.RGBMultiplied(0.5f);
         }
     }
 
@@ -54,6 +76,7 @@ public class MyCheckBox : MonoBehaviour
 
         cb.rectTrans = rect;
         cb.uiButton = go.GetComponent<UIButton>();
+        cb.boxImage = go.transform.GetComponent<Image>();
         cb.checkImage = go.transform.Find("checked")?.GetComponent<Image>();
 
         var child = go.transform.Find("text");

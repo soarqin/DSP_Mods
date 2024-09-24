@@ -22,7 +22,7 @@ public class MyWindow : ManualBehaviour
     protected const float TabHeight = 27f;
     protected const float Margin = 30f;
     protected const float Spacing = 10f;
-    protected event Action OnFree;
+    public event Action OnFree;
 
     public override void _OnFree()
     {

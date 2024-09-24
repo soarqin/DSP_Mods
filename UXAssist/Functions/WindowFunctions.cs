@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
-using System.IO;
 using System.Runtime.InteropServices;
+using UnityEngine;
 using UXAssist.Common;
 
 namespace UXAssist.Functions;
@@ -16,14 +16,18 @@ public static class WindowFunctions
     private static IntPtr _oldWndProc = IntPtr.Zero;
     private static IntPtr _gameWindowHandle = IntPtr.Zero;
 
+    private static bool _gameLoaded;
+
     public static void Start()
     {
+        GameLogic.OnDataLoaded += () => { _gameLoaded = true; };
         var wndProc = new WinApi.WndProc(GameWndProc);
         var gameWnd = FindGameWindow();
         if (gameWnd != IntPtr.Zero)
         {
             _oldWndProc = WinApi.SetWindowLongPtr(gameWnd, WinApi.GWLP_WNDPROC, Marshal.GetFunctionPointerForDelegate(wndProc));
         }
+        Patches.GamePatch.LoadLastWindowRect.MoveWindowPosition(true);
     }
 
     private static IntPtr GameWndProc(IntPtr hWnd, uint uMsg, IntPtr wParam, IntPtr lParam)
@@ -39,6 +43,40 @@ public static class WindowFunctions
                 {
                     WinApi.SetWindowLongPtr(_gameWindowHandle, WinApi.GWLP_WNDPROC, _oldWndProc);
                 }
+                break;
+            case WinApi.WM_SYSCOMMAND:
+                switch ((long)wParam & 0xFFF0L)
+                {
+                    case WinApi.SC_MOVE:
+                        if (!_gameLoaded) return (IntPtr)1L;
+                        break;
+                }
+                break;
+            case WinApi.WM_MOVING:
+                if (_gameLoaded) break;
+                var rect = Patches.GamePatch.LastWindowRect.Value;
+                if (rect is { z: 0f, w: 0f }) break;
+                var x = Mathf.RoundToInt(rect.x);
+                var y = Mathf.RoundToInt(rect.y);
+                var rect2 = Marshal.PtrToStructure<WinApi.Rect>(lParam);
+                rect2.Left = x;
+                rect2.Top = y;
+                Marshal.StructureToPtr(rect2, lParam, false);
+                break;
+            case WinApi.WM_SIZING:
+                if (_gameLoaded) break;
+                rect = Patches.GamePatch.LastWindowRect.Value;
+                if (rect is { z: 0f, w: 0f }) break;
+                x = Mathf.RoundToInt(rect.x);
+                y = Mathf.RoundToInt(rect.y);
+                var w = Mathf.RoundToInt(rect.z);
+                var h = Mathf.RoundToInt(rect.w);
+                rect2 = Marshal.PtrToStructure<WinApi.Rect>(lParam);
+                rect2.Left = x;
+                rect2.Top = y;
+                rect2.Right = x + w;
+                rect2.Bottom = y + h;
+                Marshal.StructureToPtr(rect2, lParam, false);
                 break;
         }
         return WinApi.CallWindowProc(_oldWndProc, hWnd, uMsg, wParam, lParam);

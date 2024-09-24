@@ -64,7 +64,10 @@ public static class WinApi
     public const int WM_ENABLE = 0x000A;
     public const int WM_CLOSE = 0x0010;
     public const int WM_QUIT = 0x0012;
+    public const int WM_SYSCOMMAND = 0x0112;
     public const int WM_SIZING = 0x0214;
+    public const int WM_MOVING = 0x0216;
+    public const long SC_MOVE = 0xF010L;
 
     #endregion
 
@@ -83,6 +86,8 @@ public static class WinApi
     }
 
     #endregion
+
+    #region Functions
 
     public delegate IntPtr WndProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
 
@@ -128,6 +133,8 @@ public static class WinApi
     
     [DllImport("user32", CharSet = CharSet.Unicode)]
     public static extern IntPtr CallWindowProc(IntPtr lpPrevWndFunc, IntPtr hWnd, uint uMsg, IntPtr wParam, IntPtr lParam);
+
+    #endregion
 
     #region GetLogicalProcessorInformation
 

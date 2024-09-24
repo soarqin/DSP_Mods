@@ -213,7 +213,7 @@ public class GamePatch: PatchImpl<GamePatch>
         }
     }
 
-    private class LoadLastWindowRect: PatchImpl<LoadLastWindowRect>
+    public class LoadLastWindowRect: PatchImpl<LoadLastWindowRect>
     {
         private static bool _loaded;
 
@@ -273,7 +273,7 @@ public class GamePatch: PatchImpl<GamePatch>
             GameLogic.OnDataLoaded -= VFPreload_InvokeOnLoadWorkEnded_Postfix;
         }
 
-        private static void MoveWindowPosition()
+        public static void MoveWindowPosition(bool setResolution = false)
         {
             if (Screen.fullScreenMode is FullScreenMode.ExclusiveFullScreen or FullScreenMode.FullScreenWindow or FullScreenMode.MaximizedWindow || GameMain.isRunning) return;
             var wnd = Functions.WindowFunctions.FindGameWindow();
@@ -282,6 +282,12 @@ public class GamePatch: PatchImpl<GamePatch>
             if (rect is { z: 0f, w: 0f }) return;
             var x = Mathf.RoundToInt(rect.x);
             var y = Mathf.RoundToInt(rect.y);
+            if (setResolution)
+            {
+                var w = Mathf.RoundToInt(rect.z);
+                var h = Mathf.RoundToInt(rect.w);
+                Screen.SetResolution(w, h, false);
+            }
             WinApi.SetWindowPos(wnd, IntPtr.Zero, x, y, 0, 0, 0x0235);
         }
 
