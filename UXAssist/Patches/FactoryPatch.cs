@@ -8,6 +8,7 @@ using BepInEx.Configuration;
 using CommonAPI.Systems;
 using HarmonyLib;
 using UnityEngine;
+using UnityEngine.UI;
 using UXAssist.Common;
 
 namespace UXAssist.Patches;
@@ -566,7 +567,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             matcher.MatchForward(false,
                 new CodeMatch(OpCodes.Ldarg_0),
                 new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(UIEntityBriefInfo), nameof(UIEntityBriefInfo.entityNameText))),
-                new CodeMatch(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(UnityEngine.UI.Text), nameof(UnityEngine.UI.Text.preferredWidth)))
+                new CodeMatch(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Text), nameof(Text.preferredWidth)))
             );
             matcher.InsertAndAdvance(
                 new CodeInstruction(OpCodes.Ldarg_0),
@@ -1479,7 +1480,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                     Name = "存储单元",
                     GridIndex = 3601,
                     IconPath = "assets/signal/memory.png",
-                    _iconSprite = Util.LoadEmbeddedSprite($"assets/signal/memory.png", assembly),
+                    _iconSprite = Util.LoadEmbeddedSprite("assets/signal/memory.png", assembly),
                     SID = ""
                 },
                 new SignalProto
@@ -1488,7 +1489,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                     Name = "能量碎片",
                     GridIndex = 3602,
                     IconPath = "assets/signal/energy-fragment.png",
-                    _iconSprite = Util.LoadEmbeddedSprite($"assets/signal/energy-fragment.png", assembly),
+                    _iconSprite = Util.LoadEmbeddedSprite("assets/signal/energy-fragment.png", assembly),
                     SID = ""
                 },
                 new SignalProto
@@ -1497,7 +1498,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                     Name = "硅基神经元",
                     GridIndex = 3603,
                     IconPath = "assets/signal/silicon-neuron.png",
-                    _iconSprite = Util.LoadEmbeddedSprite($"assets/signal/silicon-neuron.png", assembly),
+                    _iconSprite = Util.LoadEmbeddedSprite("assets/signal/silicon-neuron.png", assembly),
                     SID = ""
                 },
                 new SignalProto
@@ -1506,7 +1507,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                     Name = "负熵奇点",
                     GridIndex = 3604,
                     IconPath = "assets/signal/negentropy.png",
-                    _iconSprite = Util.LoadEmbeddedSprite($"assets/signal/negentropy.png", assembly),
+                    _iconSprite = Util.LoadEmbeddedSprite("assets/signal/negentropy.png", assembly),
                     SID = ""
                 },
                 new SignalProto
@@ -1515,7 +1516,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                     Name = "物质重组器",
                     GridIndex = 3605,
                     IconPath = "assets/signal/reassembler.png",
-                    _iconSprite = Util.LoadEmbeddedSprite($"assets/signal/reassembler.png", assembly),
+                    _iconSprite = Util.LoadEmbeddedSprite("assets/signal/reassembler.png", assembly),
                     SID = ""
                 },
                 new SignalProto
@@ -1524,7 +1525,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                     Name = "虚粒子",
                     GridIndex = 3606,
                     IconPath = "assets/signal/virtual-particle.png",
-                    _iconSprite = Util.LoadEmbeddedSprite($"assets/signal/virtual-particle.png", assembly),
+                    _iconSprite = Util.LoadEmbeddedSprite("assets/signal/virtual-particle.png", assembly),
                     SID = ""
                 },
             ];

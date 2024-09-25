@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using System.Security.Cryptography;
 using BepInEx.Configuration;
 using UnityEngine;
 using UnityEngine.UI;

@@ -7,6 +7,7 @@ using CommonAPI.Systems;
 using HarmonyLib;
 using UnityEngine;
 using UXAssist.Common;
+using UXAssist.Functions;
 
 namespace UXAssist.Patches;
 
@@ -70,7 +71,7 @@ public class GamePatch: PatchImpl<GamePatch>
         I18N.Add("KEYUPSSpeedUp", "Increase logical frame rate", "提升逻辑帧率");
         I18N.Add("Logical frame rate: {0}x", "Logical frame rate: {0}x", "逻辑帧速率: {0}x");
 
-        Functions.WindowFunctions.SetWindowTitle();
+        WindowFunctions.SetWindowTitle();
 
         EnableWindowResizeEnabled.SettingChanged += (_, _) => EnableWindowResize.Enable(EnableWindowResizeEnabled.Value);
         LoadLastWindowRectEnabled.SettingChanged += (_, _) => LoadLastWindowRect.Enable(LoadLastWindowRectEnabled.Value);
@@ -134,7 +135,7 @@ public class GamePatch: PatchImpl<GamePatch>
 
     private static void RefreshSavePath()
     {
-        var profileName = Functions.WindowFunctions.ProfileName;
+        var profileName = WindowFunctions.ProfileName;
         if (profileName == null) return;
 
         if (UIRoot.instance.loadGameWindow.gameObject.activeSelf)
@@ -162,7 +163,7 @@ public class GamePatch: PatchImpl<GamePatch>
     [HarmonyPrefix, HarmonyPatch(typeof(GameMain), nameof(GameMain.HandleApplicationQuit))]
     private static void GameMain_HandleApplicationQuit_Prefix()
     {
-        var wnd = Functions.WindowFunctions.FindGameWindow();
+        var wnd = WindowFunctions.FindGameWindow();
         if (wnd == IntPtr.Zero) return;
         WinApi.GetWindowRect(wnd, out var rect);
         LastWindowRect.Value = new Vector4(rect.Left, rect.Top, Screen.width, Screen.height);
@@ -175,7 +176,7 @@ public class GamePatch: PatchImpl<GamePatch>
 
         protected override void OnEnable()
         {
-            var wnd = Functions.WindowFunctions.FindGameWindow();
+            var wnd = WindowFunctions.FindGameWindow();
             if (wnd == IntPtr.Zero)
             {
                 Enable(false);
@@ -189,7 +190,7 @@ public class GamePatch: PatchImpl<GamePatch>
 
         protected override void OnDisable()
         {
-            var wnd = Functions.WindowFunctions.FindGameWindow();
+            var wnd = WindowFunctions.FindGameWindow();
             if (wnd == IntPtr.Zero)
                 return;
 
@@ -202,7 +203,7 @@ public class GamePatch: PatchImpl<GamePatch>
         [HarmonyPatch(typeof(UIOptionWindow), nameof(UIOptionWindow.ApplyOptions))]
         private static void UIOptionWindow_ApplyOptions_Postfix()
         {
-            var wnd = Functions.WindowFunctions.FindGameWindow();
+            var wnd = WindowFunctions.FindGameWindow();
             if (wnd == IntPtr.Zero) return;
             if (_enabled)
                 WinApi.SetWindowLong(wnd, WinApi.GWL_STYLE,
@@ -276,7 +277,7 @@ public class GamePatch: PatchImpl<GamePatch>
         public static void MoveWindowPosition(bool setResolution = false)
         {
             if (Screen.fullScreenMode is FullScreenMode.ExclusiveFullScreen or FullScreenMode.FullScreenWindow or FullScreenMode.MaximizedWindow || GameMain.isRunning) return;
-            var wnd = Functions.WindowFunctions.FindGameWindow();
+            var wnd = WindowFunctions.FindGameWindow();
             if (wnd == IntPtr.Zero) return;
             var rect = LastWindowRect.Value;
             if (rect is { z: 0f, w: 0f }) return;
@@ -315,7 +316,7 @@ public class GamePatch: PatchImpl<GamePatch>
         {
             if (_loaded || Screen.fullScreenMode is FullScreenMode.ExclusiveFullScreen or FullScreenMode.FullScreenWindow or FullScreenMode.MaximizedWindow) return;
             _loaded = true;
-            var wnd = Functions.WindowFunctions.FindGameWindow();
+            var wnd = WindowFunctions.FindGameWindow();
             if (wnd == IntPtr.Zero) return;
             var rect = LastWindowRect.Value;
             if (rect is { z: 0f, w: 0f }) return;

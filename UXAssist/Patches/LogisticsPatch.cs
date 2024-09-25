@@ -9,6 +9,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
 using UXAssist.Common;
+using Object = UnityEngine.Object;
 
 namespace UXAssist.Patches;
 
@@ -524,11 +525,11 @@ public static class LogisticsPatch
 
         public static void InitGUI()
         {
-            _stationTipRoot = UnityEngine.Object.Instantiate(GameObject.Find("UI Root/Overlay Canvas/In Game/Scene UIs/Vein Marks"),
+            _stationTipRoot = Object.Instantiate(GameObject.Find("UI Root/Overlay Canvas/In Game/Scene UIs/Vein Marks"),
                 GameObject.Find("UI Root/Overlay Canvas/In Game/Scene UIs").transform);
             _stationTipRoot.name = "stationTip";
-            UnityEngine.Object.Destroy(_stationTipRoot.GetComponent<UIVeinDetail>());
-            _tipPrefab = UnityEngine.Object.Instantiate(GameObject.Find("UI Root/Overlay Canvas/In Game/Scene UIs/Vein Marks/vein-tip-prefab"), _stationTipRoot.transform);
+            Object.Destroy(_stationTipRoot.GetComponent<UIVeinDetail>());
+            _tipPrefab = Object.Instantiate(GameObject.Find("UI Root/Overlay Canvas/In Game/Scene UIs/Vein Marks/vein-tip-prefab"), _stationTipRoot.transform);
             _tipPrefab.name = "tipPrefab";
             var sliderBgPrefab = GameObject.Find("UI Root/Overlay Canvas/In Game/Windows/Station Window/storage-box-0/slider-bg");
             var image = _tipPrefab.GetComponent<Image>();
@@ -539,14 +540,14 @@ public static class LogisticsPatch
             rectTrans.localPosition = new Vector3(200f, 800f, 0);
             rectTrans.sizeDelta = new Vector2(150f, 160f);
             rectTrans.pivot = new Vector2(0.5f, 0.5f);
-            UnityEngine.Object.Destroy(_tipPrefab.GetComponent<UIVeinDetailNode>());
+            Object.Destroy(_tipPrefab.GetComponent<UIVeinDetailNode>());
             var infoText = _tipPrefab.transform.Find("info-text").gameObject;
 
             for (var index = 0; index < StorageSlotCount; ++index)
             {
                 var y = -5f - 35f * index;
                 var iconTrans = _tipPrefab.transform.Find("icon");
-                var itemIcon = UnityEngine.Object.Instantiate(iconTrans.gameObject, new Vector3(0, 0, 0), Quaternion.identity, _tipPrefab.transform);
+                var itemIcon = Object.Instantiate(iconTrans.gameObject, new Vector3(0, 0, 0), Quaternion.identity, _tipPrefab.transform);
                 itemIcon.name = "icon" + index;
                 rectTrans = (RectTransform)itemIcon.transform;
                 rectTrans.sizeDelta = new Vector2(30f, 30f);
@@ -555,7 +556,7 @@ public static class LogisticsPatch
                 rectTrans.pivot = new Vector2(0f, 1f);
                 rectTrans.anchoredPosition3D = new Vector3(0, y, 0);
 
-                var sliderBg = UnityEngine.Object.Instantiate(sliderBgPrefab.gameObject, new Vector3(0, 0, 0), Quaternion.identity, _tipPrefab.transform);
+                var sliderBg = Object.Instantiate(sliderBgPrefab.gameObject, new Vector3(0, 0, 0), Quaternion.identity, _tipPrefab.transform);
                 sliderBg.name = "sliderBg" + index;
                 rectTrans = (RectTransform)sliderBg.transform;
                 rectTrans.sizeDelta = new Vector2(StorageSliderWidth, StorageSliderHeight);
@@ -583,12 +584,12 @@ public static class LogisticsPatch
                 rectTrans.localPosition = new Vector3(0f, 0f, 0f);
                 image = rectTrans.GetComponent<Image>();
                 image.color = new Color(image.color.r, image.color.g, image.color.b, 0.15f);
-                UnityEngine.Object.Destroy(sliderBg.GetComponent<Slider>());
-                UnityEngine.Object.Destroy(sliderBg.transform.Find("thumb").gameObject);
-                UnityEngine.Object.Destroy(sliderBg.transform.Find("speed-text").gameObject);
+                Object.Destroy(sliderBg.GetComponent<Slider>());
+                Object.Destroy(sliderBg.transform.Find("thumb").gameObject);
+                Object.Destroy(sliderBg.transform.Find("speed-text").gameObject);
                 sliderBg.gameObject.SetActive(false);
 
-                var countText = UnityEngine.Object.Instantiate(infoText, Vector3.zero, Quaternion.identity, _tipPrefab.transform);
+                var countText = Object.Instantiate(infoText, Vector3.zero, Quaternion.identity, _tipPrefab.transform);
                 countText.name = "countText" + index;
                 var text = countText.GetComponent<Text>();
                 text.fontSize = 18;
@@ -600,9 +601,9 @@ public static class LogisticsPatch
                 rectTrans.anchorMin = new Vector2(0f, 1f);
                 rectTrans.pivot = new Vector2(0f, 1f);
                 rectTrans.anchoredPosition3D = new Vector3(30f, y, 0);
-                UnityEngine.Object.Destroy(countText.GetComponent<Shadow>());
+                Object.Destroy(countText.GetComponent<Shadow>());
 
-                var stateLocal = UnityEngine.Object.Instantiate(iconTrans.gameObject, new Vector3(0, 0, 0), Quaternion.identity, _tipPrefab.transform);
+                var stateLocal = Object.Instantiate(iconTrans.gameObject, new Vector3(0, 0, 0), Quaternion.identity, _tipPrefab.transform);
                 stateLocal.name = "iconLocal" + index;
                 stateLocal.GetComponent<Image>().material = null;
                 rectTrans = (RectTransform)stateLocal.transform;
@@ -611,7 +612,7 @@ public static class LogisticsPatch
                 rectTrans.anchorMin = new Vector2(0f, 1f);
                 rectTrans.pivot = new Vector2(0f, 1f);
                 rectTrans.anchoredPosition3D = new Vector3(102f, y, 0);
-                var stateRemote = UnityEngine.Object.Instantiate(iconTrans.gameObject, new Vector3(0, 0, 0), Quaternion.identity, _tipPrefab.transform);
+                var stateRemote = Object.Instantiate(iconTrans.gameObject, new Vector3(0, 0, 0), Quaternion.identity, _tipPrefab.transform);
                 stateRemote.name = "iconRemote" + index;
                 stateRemote.GetComponent<Image>().material = null;
                 rectTrans = (RectTransform)stateRemote.transform;
@@ -624,12 +625,12 @@ public static class LogisticsPatch
 
             for (var i = 0; i < CarrierSlotCount; i++)
             {
-                var iconObj = UnityEngine.Object.Instantiate(GameObject.Find("UI Root/Overlay Canvas/In Game/Top Tips/Entity Briefs/brief-info-top/brief-info/content/icons/icon"),
+                var iconObj = Object.Instantiate(GameObject.Find("UI Root/Overlay Canvas/In Game/Top Tips/Entity Briefs/brief-info-top/brief-info/content/icons/icon"),
                     new Vector3(0, 0, 0), Quaternion.identity, _tipPrefab.transform);
-                UnityEngine.Object.Destroy(iconObj.transform.Find("count-text").gameObject);
-                UnityEngine.Object.Destroy(iconObj.transform.Find("bg").gameObject);
-                UnityEngine.Object.Destroy(iconObj.transform.Find("inc").gameObject);
-                UnityEngine.Object.Destroy(iconObj.GetComponent<UIIconCountInc>());
+                Object.Destroy(iconObj.transform.Find("count-text").gameObject);
+                Object.Destroy(iconObj.transform.Find("bg").gameObject);
+                Object.Destroy(iconObj.transform.Find("inc").gameObject);
+                Object.Destroy(iconObj.GetComponent<UIIconCountInc>());
 
                 iconObj.name = "carrierIcon" + i;
                 iconObj.GetComponent<Image>().sprite = LogisticsExtraItemSprites[i];
@@ -640,8 +641,8 @@ public static class LogisticsPatch
                 rectTrans.pivot = new Vector2(0f, 1f);
                 rectTrans.anchoredPosition3D = new Vector3(0f, -180f, 0);
 
-                var countText = UnityEngine.Object.Instantiate(infoText, Vector3.zero, Quaternion.identity, iconObj.transform);
-                UnityEngine.Object.Destroy(countText.GetComponent<Shadow>());
+                var countText = Object.Instantiate(infoText, Vector3.zero, Quaternion.identity, iconObj.transform);
+                Object.Destroy(countText.GetComponent<Shadow>());
                 countText.name = "carrierTotalCountText";
                 var text = countText.GetComponent<Text>();
                 text.fontSize = 22;
@@ -657,8 +658,8 @@ public static class LogisticsPatch
 
                 if (i >= CarrierSlotCount - 1) continue;
 
-                countText = UnityEngine.Object.Instantiate(infoText, Vector3.zero, Quaternion.identity, iconObj.transform);
-                UnityEngine.Object.Destroy(countText.GetComponent<Shadow>());
+                countText = Object.Instantiate(infoText, Vector3.zero, Quaternion.identity, iconObj.transform);
+                Object.Destroy(countText.GetComponent<Shadow>());
 
                 countText.name = "carrierIdleCountText";
                 text = countText.GetComponent<Text>();
@@ -691,7 +692,7 @@ public static class LogisticsPatch
                 }
                 else
                 {
-                    UnityEngine.Object.Destroy(stationTip);
+                    Object.Destroy(stationTip);
                 }
             }
 
@@ -707,7 +708,7 @@ public static class LogisticsPatch
                 return result;
             }
 
-            var tempTip = UnityEngine.Object.Instantiate(_tipPrefab, _stationTipRoot.transform);
+            var tempTip = Object.Instantiate(_tipPrefab, _stationTipRoot.transform);
             var stationTip = tempTip.AddComponent<StationTip>();
             stationTip.InitStationTip();
             return stationTip;

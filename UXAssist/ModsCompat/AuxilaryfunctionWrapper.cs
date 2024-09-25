@@ -1,4 +1,5 @@
 ﻿using System;
+using BepInEx.Bootstrap;
 using BepInEx.Configuration;
 using HarmonyLib;
 using UXAssist.Patches;
@@ -12,7 +13,7 @@ public static class AuxilaryfunctionWrapper
 
     public static void Start(Harmony harmony)
     {
-        if (!BepInEx.Bootstrap.Chainloader.PluginInfos.TryGetValue(AuxilaryfunctionGuid, out var pluginInfo)) return;
+        if (!Chainloader.PluginInfos.TryGetValue(AuxilaryfunctionGuid, out var pluginInfo)) return;
         var assembly = pluginInfo.Instance.GetType().Assembly;
         try
         {

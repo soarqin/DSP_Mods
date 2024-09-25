@@ -1,9 +1,10 @@
 ﻿using System;
 using UnityEngine;
-using UXAssist.UI;
 using UXAssist.Common;
 using UXAssist.Functions;
+using UXAssist.ModsCompat;
 using UXAssist.Patches;
+using UXAssist.UI;
 
 namespace UXAssist;
 
@@ -47,7 +48,8 @@ public static class UIConfigWindow
         I18N.Add("First 8 CPUs", "First 8 CPUs", "前8个CPU");
         I18N.Add("First CPU only", "First CPU only", "仅第一个CPU");
         I18N.Add("All P-Cores", "All P-Cores", "所有性能(P)核心");
-        I18N.Add("All E-Cores", "All E-Cores", "所有效率(E)核心");
+        I18N.Add("All E-Cores", "All E-Cores", "所有能效(E)核心");
+        I18N.Add("CPU Info", "CPU Info", "CPU信息");
         I18N.Add("Unlimited interactive range", "Unlimited interactive range", "无限交互距离");
         I18N.Add("Night Light", "Sunlight at night", "夜间日光灯");
         I18N.Add("Angle X:", "Angle X:", "入射角度X:");
@@ -179,12 +181,7 @@ public static class UIConfigWindow
             wnd.AddInputField(x + 2f, y, 200f, tab1, GamePatch.DefaultProfileName, 15, "input-profile-save-folder");
             y += 18f;
         }
-        /*
-        x = 400f;
-        y = 10f;
-        wnd.AddButton(x, y, tab1, "Show CPU Info", 16, "button-show-cpu-info", WindowFunctions.ShowCPUInfo);
-        */
-        if (!ModsCompat.BulletTimeWrapper.HasBulletTime)
+        if (!BulletTimeWrapper.HasBulletTime)
         {
             y += 36f;
             txt = wnd.AddText2(x + 2f, y, tab1, "Logical Frame Rate", 15, "game-frame-rate");
@@ -213,6 +210,8 @@ public static class UIConfigWindow
         affinities[2] = details.ThreadCount > 16 ? "First 8 CPUs" : "First CPU only";
         y += 36f;
         wnd.AddComboBox(x + 2f, y, tab1, "Enabled CPUs").WithItems(affinities).WithSize(200f, 0f).WithConfigEntry(WindowFunctions.ProcessAffinity);
+        y += 36f;
+        ((RectTransform)wnd.AddButton(x, y, tab1, "CPU Info", 16, "button-show-cpu-info", WindowFunctions.ShowCPUInfo).transform).sizeDelta = new Vector2(100f, 25f);
 
         var tab2 = wnd.AddTab(trans, "Planet/Factory");
         x = 0f;
@@ -288,14 +287,14 @@ public static class UIConfigWindow
         var cb1 = wnd.AddCheckBox(x + 20f, y, tab2, LogisticsPatch.RealtimeLogisticsInfoPanelBarsEnabled, "Show status bars for storage items", 13);
         EventHandler anySettingsChanged = (_, _) =>
         {
-            if (ModsCompat.AuxilaryfunctionWrapper.ShowStationInfo == null)
+            if (AuxilaryfunctionWrapper.ShowStationInfo == null)
             {
                 cb0.SetEnable(true);
                 cb1.SetEnable(LogisticsPatch.RealtimeLogisticsInfoPanelEnabled.Value);
                 return;
             }
 
-            var on = !ModsCompat.AuxilaryfunctionWrapper.ShowStationInfo.Value;
+            var on = !AuxilaryfunctionWrapper.ShowStationInfo.Value;
             cb0.SetEnable(on);
             cb1.SetEnable(on & LogisticsPatch.RealtimeLogisticsInfoPanelEnabled.Value);
             if (!on)
@@ -303,10 +302,10 @@ public static class UIConfigWindow
                 LogisticsPatch.RealtimeLogisticsInfoPanelEnabled.Value = false;
             }
         };
-        if (ModsCompat.AuxilaryfunctionWrapper.ShowStationInfo != null)
+        if (AuxilaryfunctionWrapper.ShowStationInfo != null)
         {
-            ModsCompat.AuxilaryfunctionWrapper.ShowStationInfo.SettingChanged += anySettingsChanged;
-            wnd.OnFree += () => { ModsCompat.AuxilaryfunctionWrapper.ShowStationInfo.SettingChanged -= anySettingsChanged; };
+            AuxilaryfunctionWrapper.ShowStationInfo.SettingChanged += anySettingsChanged;
+            wnd.OnFree += () => { AuxilaryfunctionWrapper.ShowStationInfo.SettingChanged -= anySettingsChanged; };
         }
         LogisticsPatch.RealtimeLogisticsInfoPanelEnabled.SettingChanged += anySettingsChanged;
         wnd.OnFree += () => { LogisticsPatch.RealtimeLogisticsInfoPanelEnabled.SettingChanged -= anySettingsChanged; };
@@ -415,7 +414,6 @@ public static class UIConfigWindow
             uiGame.CloseEnemyBriefInfo();
             uiGame.OpenCommunicatorWindow(5);
         });
-        return;
     }
 
     private static void UpdateUI()

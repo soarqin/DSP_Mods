@@ -1,9 +1,9 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Runtime.InteropServices;
 using BepInEx.Configuration;
 using UnityEngine;
 using UXAssist.Common;
+using UXAssist.Patches;
 
 namespace UXAssist.Functions;
 
@@ -33,6 +33,11 @@ public static class WindowFunctions
 
     public static void Init()
     {
+        I18N.Add("Cores: {0}\nThreads: {1}", "Cores: {0}\nThreads: {1}", "内核数: {0}\n线程数: {1}");
+        I18N.Add("\nP-Cores: {0}\nE-Cores: {1}", "\nP-Cores: {0}\nE-Cores: {1}", "\n性能核心: {0}\n能效核心: {1}");
+        I18N.Add("\nPriority: {0}", "\nProcess priority: {0}", "\n进程优先级: {0}");
+        I18N.Add("\nEnabled CPUs: ", "\nEnabled CPUs: ", "\n使用的CPU: ");
+        I18N.Add("Unknown", "Unknown", "未知");
         ProcessorDetails = WinApi.GetLogicalProcessorDetails();
     }
 
@@ -45,7 +50,7 @@ public static class WindowFunctions
         {
             _oldWndProc = WinApi.SetWindowLongPtr(gameWnd, WinApi.GWLP_WNDPROC, Marshal.GetFunctionPointerForDelegate(wndProc));
         }
-        Patches.GamePatch.LoadLastWindowRect.MoveWindowPosition(true);
+        GamePatch.LoadLastWindowRect.MoveWindowPosition(true);
 
         ProcessPriority.SettingChanged += (_, _) => WinApi.SetPriorityClass(WinApi.GetCurrentProcess(), ProrityFlags[ProcessPriority.Value]);
         WinApi.SetPriorityClass(WinApi.GetCurrentProcess(), ProrityFlags[ProcessPriority.Value]);
@@ -104,7 +109,7 @@ public static class WindowFunctions
                 break;
             case WinApi.WM_MOVING:
                 if (_gameLoaded) break;
-                var rect = Patches.GamePatch.LastWindowRect.Value;
+                var rect = GamePatch.LastWindowRect.Value;
                 if (rect is { z: 0f, w: 0f }) break;
                 var x = Mathf.RoundToInt(rect.x);
                 var y = Mathf.RoundToInt(rect.y);
@@ -115,7 +120,7 @@ public static class WindowFunctions
                 break;
             case WinApi.WM_SIZING:
                 if (_gameLoaded) break;
-                rect = Patches.GamePatch.LastWindowRect.Value;
+                rect = GamePatch.LastWindowRect.Value;
                 if (rect is { z: 0f, w: 0f }) break;
                 x = Mathf.RoundToInt(rect.x);
                 y = Mathf.RoundToInt(rect.y);
@@ -132,25 +137,38 @@ public static class WindowFunctions
         return WinApi.CallWindowProc(_oldWndProc, hWnd, uMsg, wParam, lParam);
     }
 
+    private static string GetPriorityName(int priority)
+    {
+        return priority switch
+        {
+            WinApi.HIGH_PRIORITY_CLASS => "High".Translate(),
+            WinApi.ABOVE_NORMAL_PRIORITY_CLASS => "Above Normal".Translate(),
+            WinApi.NORMAL_PRIORITY_CLASS => "Normal".Translate(),
+            WinApi.BELOW_NORMAL_PRIORITY_CLASS => "Below Normal".Translate(),
+            WinApi.IDLE_PRIORITY_CLASS => "Idle".Translate(),
+            _ => "Unknown".Translate()
+        };
+    }
+
     public static void ShowCPUInfo()
     {
-        var details = WinApi.GetLogicalProcessorDetails();
-        var msg = $"Cores: {details.CoreCount}\nThreads: {details.ThreadCount}";
+        var details = ProcessorDetails;
+        var msg = string.Format("Cores: {0}\nThreads: {1}".Translate(), details.CoreCount, details.ThreadCount);
         var hybrid = details.HybridArchitecture;
         if (hybrid)
         {
-            msg += $"\nP-Cores: {details.PerformanceCoreCount}\nE-Cores: {details.EfficiencyCoreCount}";
+            msg += string.Format("\nP-Cores: {0}\nE-Cores: {1}".Translate(), details.PerformanceCoreCount, details.EfficiencyCoreCount);
         }
 
         var handle = WinApi.GetCurrentProcess();
-        var prio = (ProcessPriorityClass)WinApi.GetPriorityClass(handle);
-        msg += $"\nPriority: {prio}";
+        var prio = GetPriorityName(WinApi.GetPriorityClass(handle));
+        msg += string.Format("\nPriority: {0}".Translate(), prio);
 
         var aff = 0UL;
         if (WinApi.GetProcessAffinityMask(handle, out var processMask, out var systemMask))
-            aff = (ulong)processMask & (ulong)systemMask;
+            aff = processMask & systemMask;
 
-        msg += $"\nEnabled CPUs: ";
+        msg += "\nEnabled CPUs: ".Translate();
         var first = true;
         for (var i = 0; aff != 0UL; i++)
         {
@@ -173,7 +191,7 @@ public static class WindowFunctions
             aff >>= 1;
         }
 
-        UIMessageBox.Show("CPU Info".Translate(), msg, "OK".Translate(), -1);
+        UIMessageBox.Show("CPU Info".Translate(), msg, "确定".Translate(), -1);
     }
 
     public static void SetWindowTitle()

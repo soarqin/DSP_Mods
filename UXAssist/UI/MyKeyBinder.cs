@@ -112,7 +112,7 @@ public class MyKeyBinder : MonoBehaviour
             setTheKeyToggle.isOn = false;
             Reset();
         }
-        else if (!this.inputUIButton.highlighted)
+        else if (!inputUIButton.highlighted)
         {
             setTheKeyToggle.isOn = false;
             Reset();
@@ -173,7 +173,7 @@ public class MyKeyBinder : MonoBehaviour
         {
             if (Input.GetKey(modKey))
             {
-                mod += "+" + modKey.ToString();
+                mod += "+" + modKey;
             }
         }
 

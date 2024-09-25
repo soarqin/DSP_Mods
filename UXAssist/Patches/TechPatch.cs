@@ -312,7 +312,7 @@ public static class TechPatch
             }
             if (!enough)
             {
-                UIRealtimeTip.Popup("元数据不足".Translate(), true, 0);
+                UIRealtimeTip.Popup("元数据不足".Translate());
                 return false;
             }
 

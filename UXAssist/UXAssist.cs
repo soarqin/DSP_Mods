@@ -3,6 +3,7 @@ using System.IO;
 using System.Reflection;
 using BepInEx;
 using BepInEx.Configuration;
+using BepInEx.Logging;
 using CommonAPI;
 using CommonAPI.Systems;
 using crecheng.DSPModSave;
@@ -13,6 +14,7 @@ using UXAssist.Common;
 using UXAssist.Functions;
 using UXAssist.Patches;
 using UXAssist.UI;
+using Util = UXAssist.Common.Util;
 
 namespace UXAssist;
 
@@ -22,7 +24,7 @@ namespace UXAssist;
 [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
 public class UXAssist : BaseUnityPlugin, IModCanSave
 {
-    public new static readonly BepInEx.Logging.ManualLogSource Logger =
+    public new static readonly ManualLogSource Logger =
         BepInEx.Logging.Logger.CreateLogSource(PluginInfo.PLUGIN_NAME);
 
     private static bool _configWinInitialized;
@@ -171,10 +173,10 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
         
         UIConfigWindow.Init();
 
-        _patches = Common.Util.GetTypesFiltered(Assembly.GetExecutingAssembly(),
+        _patches = Util.GetTypesFiltered(Assembly.GetExecutingAssembly(),
             t => string.Equals(t.Namespace, "UXAssist.Patches", StringComparison.Ordinal) || string.Equals(t.Namespace, "UXAssist.Functions", StringComparison.Ordinal));
         _patches?.Do(type => type.GetMethod("Init")?.Invoke(null, null));
-        _compats = Common.Util.GetTypesInNamespace(Assembly.GetExecutingAssembly(), "UXAssist.ModsCompat");
+        _compats = Util.GetTypesInNamespace(Assembly.GetExecutingAssembly(), "UXAssist.ModsCompat");
         _compats?.Do(type => type.GetMethod("Init")?.Invoke(null, null));
 
         I18N.Apply();

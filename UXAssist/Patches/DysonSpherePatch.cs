@@ -3,6 +3,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using BepInEx.Configuration;
 using HarmonyLib;
+using UnityEngine.UI;
 using UXAssist.Common;
 
 namespace UXAssist.Patches;
@@ -428,7 +429,7 @@ public class DysonSpherePatch: PatchImpl<DysonSpherePatch>
                 new CodeInstruction(OpCodes.Ldarg_2),
                 new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(DysonSwarm), nameof(DysonSwarm.starData))),
                 new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(StarData), nameof(StarData.index))),
-                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(StopEjectOnNodeComplete), nameof(StopEjectOnNodeComplete.AnyNodeForAbsorb))),
+                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(StopEjectOnNodeComplete), nameof(AnyNodeForAbsorb))),
                 new CodeInstruction(OpCodes.And)
             );
             return matcher.InstructionEnumeration();
@@ -446,7 +447,7 @@ public class DysonSpherePatch: PatchImpl<DysonSpherePatch>
             matcher.Labels = [];
             matcher.Insert(
                 new CodeInstruction(OpCodes.Ldarg_0).WithLabels(labels),
-                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(StopEjectOnNodeComplete), nameof(StopEjectOnNodeComplete.UpdateNodeForAbsorbOnSpChange)))
+                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(StopEjectOnNodeComplete), nameof(UpdateNodeForAbsorbOnSpChange)))
             );
             return matcher.InstructionEnumeration();
         }
@@ -467,7 +468,7 @@ public class DysonSpherePatch: PatchImpl<DysonSpherePatch>
                 new CodeMatch(OpCodes.Stfld, AccessTools.Field(typeof(DysonNode), nameof(DysonNode._cpReq)))
             ).Advance(6).Insert(
                 new CodeInstruction(OpCodes.Ldarg_0),
-                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(StopEjectOnNodeComplete), nameof(StopEjectOnNodeComplete.UpdateNodeForAbsorbOnCpChange)))
+                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(StopEjectOnNodeComplete), nameof(UpdateNodeForAbsorbOnCpChange)))
             );
             return matcher.InstructionEnumeration();
         }
@@ -483,7 +484,7 @@ public class DysonSpherePatch: PatchImpl<DysonSpherePatch>
                 // this.stateText.text = "轨道未设置".Translate();
                 new CodeMatch(OpCodes.Ldstr, "待机"),
                 new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(Localization), nameof(Localization.Translate))),
-                new CodeMatch(OpCodes.Callvirt, AccessTools.PropertySetter(typeof(UnityEngine.UI.Text), nameof(UnityEngine.UI.Text.text)))
+                new CodeMatch(OpCodes.Callvirt, AccessTools.PropertySetter(typeof(Text), nameof(Text.text)))
             ).InsertAndAdvance(
                 // if (StopEjectOnNodeComplete.AnyNodeForAbsorb(this.starData.index))
                 new CodeInstruction(OpCodes.Ldarg_0),
@@ -491,7 +492,7 @@ public class DysonSpherePatch: PatchImpl<DysonSpherePatch>
                 new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(FactorySystem), nameof(FactorySystem.planet))),
                 new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(PlanetData), nameof(PlanetData.star))),
                 new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(StarData), nameof(StarData.index))),
-                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(StopEjectOnNodeComplete), nameof(StopEjectOnNodeComplete.AnyNodeForAbsorb))),
+                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(StopEjectOnNodeComplete), nameof(AnyNodeForAbsorb))),
                 new CodeInstruction(OpCodes.Brfalse, label1)
             ).Advance(1).InsertAndAdvance(
                 new CodeInstruction(OpCodes.Br, label2),
