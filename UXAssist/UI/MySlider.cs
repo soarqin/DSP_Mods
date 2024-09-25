@@ -14,36 +14,13 @@ public class MySlider : MonoBehaviour
     public Text labelText;
     public string labelFormat;
     public event Action OnValueChanged;
-    private float _value;
-    
-    public void SetEnable(bool on)
-    {
-        lock (this)
-        {
-            if (slider) slider.interactable = on;
-        }
-    }
-
-    public MySlider MakeHandleSmaller(float deltaX = 10f, float deltaY = 0f)
-    {
-        var oldSize = slider.handleRect.sizeDelta;
-        slider.handleRect.sizeDelta = new Vector2(oldSize.x - deltaX, oldSize.y - deltaY);
-        handleSlideArea.offsetMin = new Vector2(handleSlideArea.offsetMin.x - deltaX / 2, handleSlideArea.offsetMin.y);
-        handleSlideArea.offsetMax = new Vector2(handleSlideArea.offsetMax.x + deltaX / 2, handleSlideArea.offsetMax.y);
-        return this;
-    }
-
-    public float Value
-    {
-        get => _value;
-        set
-        {
-            _value = value;
-            OnValueSet();
-        }
-    }
 
     public static MySlider CreateSlider(float x, float y, RectTransform parent, float value, float minValue, float maxValue, string format = "G", float width = 0f)
+    {
+        return CreateSlider(x, y, parent, width).WithLabelFormat(format).WithMinMaxValue(minValue, maxValue).WithValue(value);
+    }
+
+    public static MySlider CreateSlider(float x, float y, RectTransform parent, float width = 0f)
     {
         var optionWindow = UIRoot.instance.optionWindow;
         var src = optionWindow.audioVolumeComp;
@@ -53,7 +30,6 @@ public class MySlider : MonoBehaviour
         go.name = "my-slider";
         go.SetActive(true);
         var sl = go.AddComponent<MySlider>();
-        sl._value = value;
         var rect = Util.NormalizeRectWithTopLeft(sl, x, y, parent);
         sl.rectTrans = rect;
         if (width > 0)
@@ -62,10 +38,11 @@ public class MySlider : MonoBehaviour
         }
 
         sl.slider = go.GetComponent<Slider>();
-        sl.slider.minValue = minValue;
-        sl.slider.maxValue = maxValue;
+        sl.slider.minValue = 0f;
+        sl.slider.maxValue = 100f;
         sl.slider.onValueChanged.RemoveAllListeners();
         sl.slider.onValueChanged.AddListener(sl.SliderChanged);
+        sl.Value = 0f;
         sl.labelText = sl.slider.handleRect.Find("Text")?.GetComponent<Text>();
         if (sl.labelText)
         {
@@ -75,7 +52,7 @@ public class MySlider : MonoBehaviour
                 rectTrans.sizeDelta = new Vector2(22f, 22f);
             }
         }
-        sl.labelFormat = format;
+        sl.labelFormat = "G";
         
         sl.handleSlideArea = sl.transform.Find("Handle Slide Area")?.GetComponent<RectTransform>();
 
@@ -89,35 +66,72 @@ public class MySlider : MonoBehaviour
         {
             fill.color = new Color(1f, 1f, 1f, 0.28f);
         }
-        sl.OnValueSet();
         sl.UpdateLabel();
 
         return sl;
     }
-    public void OnValueSet()
+
+    public void SetEnable(bool on)
     {
         lock (this)
         {
-            var sliderVal = _value;
+            if (slider) slider.interactable = on;
+        }
+    }
+
+    public float Value
+    {
+        get => slider.value;
+        set
+        {
+            var sliderVal = value;
             if (sliderVal.Equals(slider.value)) return;
             if (sliderVal > slider.maxValue)
             {
-                _value = sliderVal = slider.maxValue;
+                sliderVal = slider.maxValue;
             }
             else if (sliderVal < slider.minValue)
             {
-                _value = sliderVal = slider.minValue;
+                sliderVal = slider.minValue;
             }
 
             slider.value = sliderVal;
             UpdateLabel();
         }
     }
+
+    public MySlider WithValue(float value)
+    {
+        Value = value;
+        return this;
+    }
+    
+    public MySlider WithMinMaxValue(float min, float max)
+    {
+        slider.minValue = min;
+        slider.maxValue = max;
+        return this;
+    }
+    
+    public MySlider WithLabelFormat(string format)
+    {
+        if (format == labelFormat) return this;
+        labelFormat = format;
+        UpdateLabel();
+        return this;
+    }
+
+    public MySlider WithEnable(bool on)
+    {
+        SetEnable(on);
+        return this;
+    }
+
     public void UpdateLabel()
     {
         if (labelText != null)
         {
-            labelText.text = _value.ToString(labelFormat);
+            labelText.text = slider.value.ToString(labelFormat);
         }
     }
 
@@ -129,13 +143,19 @@ public class MySlider : MonoBehaviour
         }
     }
 
+    public MySlider WithSmallerHandle(float deltaX = 10f, float deltaY = 0f)
+    {
+        var oldSize = slider.handleRect.sizeDelta;
+        slider.handleRect.sizeDelta = new Vector2(oldSize.x - deltaX, oldSize.y - deltaY);
+        handleSlideArea.offsetMin = new Vector2(handleSlideArea.offsetMin.x - deltaX / 2, handleSlideArea.offsetMin.y);
+        handleSlideArea.offsetMax = new Vector2(handleSlideArea.offsetMax.x + deltaX / 2, handleSlideArea.offsetMax.y);
+        return this;
+    }
+
     public void SliderChanged(float val)
     {
         lock (this)
         {
-            var newVal = Mathf.Round(slider.value);
-            if (_value.Equals(newVal)) return;
-            _value = newVal;
             UpdateLabel();
             OnValueChanged?.Invoke();
         }

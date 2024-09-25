@@ -34,6 +34,8 @@
         - This will not affect some game animations.
         - When set game speed in mod `Auxilaryfunction`, this feature will be disabled.
         - When mod `BulletTime` is installed, this feature will be hidden, but patch `BulletTime`'s speed control, to make its maximum speed 10x.
+    - Set process priority
+    - Set enabled CPU threads
     - Increase maximum count of Metadata Instantiations to 20000 (from 2000)
     - Increase capacity of player order queue to 128 (from 16)
   + Planet/Factory
@@ -147,6 +149,8 @@
         - 这不会影响一些游戏动画
         - 当在`Auxilaryfunction`mod中设置游戏速度时，此功能将被禁用
         - 当安装了`BulletTime`mod时，此功能将被隐藏，但会对`BulletTime`的速度控制打补丁，使其最大速度变为10倍
+    - 设置进程优先级
+    - 设置使用的CPU线程
     - 将元数据提取的最大数量增加到20000(原来为2000)
     - 将玩家指令队列的容量增加到128(原来为16)
   + 行星/工厂

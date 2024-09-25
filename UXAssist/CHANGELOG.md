@@ -1,6 +1,8 @@
 ## Changlog
 
 * 1.2.5
+  + New feature: `Set process priority`
+  + New feature: `Set enabled CPU threads`
   + `Drag building power poles in maximum connection range`: Add a new config option `Build Tesla Tower and Wireless Power Tower alternately`
 * 1.2.4
   + `Sunlight at night`:
@@ -201,6 +203,8 @@
 ## 更新日志
 
 * 1.2.5
+  + 新功能：`设置进程优先级`
+  + 新功能：`设置使用的CPU线程`
   + `拖动建造电线杆时自动使用最大连接距离间隔`：添加一个新的设置项`交替建造电力感应塔和无线输电塔`
 * 1.2.4
   + `夜间日光灯`：

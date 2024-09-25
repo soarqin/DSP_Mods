@@ -86,6 +86,15 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
             "Convert saves from Peace mode to Combat mode on save loading");
         GamePatch.GameUpsFactor = _dummyConfig.Bind("Game", "GameUpsFactor", 1.0,
             "Game UPS factor (1.0 for normal speed)");
+        WindowFunctions.ProcessPriority = Config.Bind("Game", "ProcessPriority", 2,
+            new ConfigDescription("Game process priority\n  0: High  1: Above Normal  2: Normal  3: Below Normal  4: Idle", new AcceptableValueRange<int>(0, 4)));
+        WindowFunctions.ProcessAffinity = Config.Bind("Game", "CPUAffinity", -1,
+            new ConfigDescription("""
+                                  Game process CPU affinity
+                                    0: All  1: First-half CPUs  2. First 8 CPUs (if total CPUs are greater than 16)
+                                    3. All Performance Cores(If Intel 13th or greater)  4. All Efficiency Cores(If Intel 13th or greater)
+                                  """, new AcceptableValueRange<int>(0, 4)));
+
         FactoryPatch.UnlimitInteractiveEnabled = Config.Bind("Factory", "UnlimitInteractive", false,
             "Unlimit interactive range");
         FactoryPatch.RemoveSomeConditionEnabled = Config.Bind("Factory", "RemoveSomeBuildConditionCheck", false,
@@ -174,6 +183,7 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
 
     private void Start()
     {
+        MyWindowManager.InitBaseObjects();
         MyWindowManager.Enable(true);
         UIPatch.Enable(true);
 

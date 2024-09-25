@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using BepInEx.Configuration;
 using UnityEngine;
 using UXAssist.Common;
 
@@ -17,6 +18,23 @@ public static class WindowFunctions
     private static IntPtr _gameWindowHandle = IntPtr.Zero;
 
     private static bool _gameLoaded;
+    public static WinApi.LogicalProcessorDetails ProcessorDetails { get; private set; }
+
+    public static ConfigEntry<int> ProcessPriority;
+    public static ConfigEntry<int> ProcessAffinity;
+
+    private static readonly int[] ProrityFlags = [
+        WinApi.HIGH_PRIORITY_CLASS,
+        WinApi.ABOVE_NORMAL_PRIORITY_CLASS,
+        WinApi.NORMAL_PRIORITY_CLASS,
+        WinApi.BELOW_NORMAL_PRIORITY_CLASS,
+        WinApi.IDLE_PRIORITY_CLASS
+    ];
+
+    public static void Init()
+    {
+        ProcessorDetails = WinApi.GetLogicalProcessorDetails();
+    }
 
     public static void Start()
     {
@@ -28,6 +46,39 @@ public static class WindowFunctions
             _oldWndProc = WinApi.SetWindowLongPtr(gameWnd, WinApi.GWLP_WNDPROC, Marshal.GetFunctionPointerForDelegate(wndProc));
         }
         Patches.GamePatch.LoadLastWindowRect.MoveWindowPosition(true);
+
+        ProcessPriority.SettingChanged += (_, _) => WinApi.SetPriorityClass(WinApi.GetCurrentProcess(), ProrityFlags[ProcessPriority.Value]);
+        WinApi.SetPriorityClass(WinApi.GetCurrentProcess(), ProrityFlags[ProcessPriority.Value]);
+        ProcessAffinity.SettingChanged += (_, _) => UpdateAffinity();
+        UpdateAffinity();
+        return;
+
+        void UpdateAffinity()
+        {
+            var process = WinApi.GetCurrentProcess();
+            if (!WinApi.GetProcessAffinityMask(process, out _, out var systemMask))
+            {
+                systemMask = ulong.MaxValue;
+            }
+            switch (ProcessAffinity.Value)
+            {
+                case 0:
+                    WinApi.SetProcessAffinityMask(process, systemMask);
+                    break;
+                case 1:
+                    WinApi.SetProcessAffinityMask(process, systemMask & ((1UL << (ProcessorDetails.ThreadCount / 2)) - 1UL));
+                    break;
+                case 2:
+                    WinApi.SetProcessAffinityMask(process, systemMask & (ProcessorDetails.ThreadCount > 16 ? 0xFFUL : 1UL));
+                    break;
+                case 3:
+                    WinApi.SetProcessAffinityMask(process, systemMask & ProcessorDetails.PerformanceCoreMask);
+                    break;
+                case 4:
+                    WinApi.SetProcessAffinityMask(process, systemMask & ProcessorDetails.EfficiencyCoreMask);
+                    break;
+            }
+        }
     }
 
     private static IntPtr GameWndProc(IntPtr hWnd, uint uMsg, IntPtr wParam, IntPtr lParam)
@@ -35,8 +86,7 @@ public static class WindowFunctions
         switch (uMsg)
         {
             case WinApi.WM_ACTIVATE:
-                // UXAssist.Logger.LogDebug($"Activate: {wParam.ToInt32()}, {lParam.ToInt32()}");
-                // TODO: Set Priority like: WinApi.SetPriorityClass(WinApi.GetCurrentProcess(), 0x00000080);
+                WinApi.SetPriorityClass(WinApi.GetCurrentProcess(), ProrityFlags[ProcessPriority.Value]);
                 break;
             case WinApi.WM_DESTROY:
                 if (_oldWndProc != IntPtr.Zero && _gameWindowHandle != IntPtr.Zero)

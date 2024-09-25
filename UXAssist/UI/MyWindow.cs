@@ -7,7 +7,6 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
 using UXAssist.Common;
-using Object = UnityEngine.Object;
 
 namespace UXAssist.UI;
 
@@ -23,6 +22,46 @@ public class MyWindow : ManualBehaviour
     protected const float Margin = 30f;
     protected const float Spacing = 10f;
     public event Action OnFree;
+    private static GameObject _baseObject;
+
+    public static void InitBaseObject()
+    {
+        if (_baseObject) return;
+        var go = Instantiate(UIRoot.instance.uiGame.tankWindow.gameObject);
+        go.SetActive(false);
+        go.name = "my-window";
+        Destroy(go.GetComponent<UITankWindow>());
+        for (var i = 0; i < go.transform.childCount; i++)
+        {
+            var child = go.transform.GetChild(i).gameObject;
+            if (child.name != "panel-bg" && child.name != "shadow" && child.name != "panel-bg")
+            {
+                Destroy(child);
+            }
+        }
+
+        _baseObject = go;
+    }
+    
+    public static T Create<T>(string name, string title = "") where T : MyWindow
+    {
+        var go = Instantiate(_baseObject, UIRoot.instance.uiGame.transform.parent);
+        go.name = name;
+        go.SetActive(false);
+        MyWindow win = go.AddComponent<T>();
+        if (!win) return null;
+
+        var btn = go.transform.Find("panel-bg")?.gameObject.GetComponentInChildren<Button>();
+        if (btn) btn.onClick.AddListener(win._Close);
+
+        win.SetTitle(title);
+        win._Create();
+        if (MyWindowManager.Initialized)
+        {
+            win._Init(win.data);
+        }
+        return (T)win;
+    }
 
     public override void _OnFree()
     {
@@ -196,6 +235,14 @@ public class MyWindow : ManualBehaviour
         _maxX = Math.Max(_maxX, x + cb.Width);
         MaxY = Math.Max(MaxY, y + cb.Height);
         return cb;
+    }
+    
+    public MyComboBox AddComboBox(float x, float y, RectTransform parent, string label = "", int fontSize = 15)
+    {
+        var comboBox = MyComboBox.CreateComboBox(x, y, parent).WithPrompt(label).WithFontSize(fontSize);
+        _maxX = Math.Max(_maxX, x + comboBox.Width);
+        MaxY = Math.Max(MaxY, y + comboBox.Height);
+        return comboBox;
     }
 
     public MySlider AddSlider(float x, float y, RectTransform parent, float value, float minValue, float maxValue, string format = "G", float width = 0f)
@@ -429,55 +476,29 @@ public class MyWindowWithTabs : MyWindow
     }
 }
 
-public class MyWindowManager
+public abstract class MyWindowManager
 {
     private static readonly List<ManualBehaviour> Windows = new(4);
-    private static bool _initialized;
+
+    public static bool Initialized { get; private set; }
 
     public static void Enable(bool on)
     {
         Patch.Enable(on);
     }
 
+    public static void InitBaseObjects()
+    {
+        MyWindow.InitBaseObject();
+        MyCheckBox.InitBaseObject();
+        MyComboBox.InitBaseObject();
+    }
+
     public static T CreateWindow<T>(string name, string title = "") where T : MyWindow
     {
-        var srcWin = UIRoot.instance.uiGame.tankWindow;
-        var src = srcWin.gameObject;
-        var go = Object.Instantiate(src, UIRoot.instance.uiGame.transform.parent);
-        go.name = name;
-        go.SetActive(false);
-        Object.Destroy(go.GetComponent<UITankWindow>());
-        var win = go.AddComponent<T>() as MyWindow;
-        if (win == null)
-            return null;
-
-        for (var i = 0; i < go.transform.childCount; i++)
-        {
-            var child = go.transform.GetChild(i).gameObject;
-            if (child.name == "panel-bg")
-            {
-                var btn = child.GetComponentInChildren<Button>();
-                //close-btn
-                if (btn)
-                {
-                    btn.onClick.AddListener(win._Close);
-                }
-            }
-            else if (child.name != "shadow" && child.name != "panel-bg")
-            {
-                Object.Destroy(child);
-            }
-        }
-
-        win.SetTitle(title);
-        win._Create();
-        if (_initialized)
-        {
-            win._Init(win.data);
-        }
-
-        Windows.Add(win);
-        return (T)win;
+        var win = MyWindow.Create<T>(name, title);
+        if (win) Windows.Add(win);
+        return win;
     }
 
     public static void DestroyWindow(ManualBehaviour win)
@@ -506,13 +527,13 @@ public class MyWindowManager
 
         private static void InitAllWindows()
         {
-            if (_initialized) return;
+            if (Initialized) return;
             if (!UIRoot.instance) return;
             foreach (var win in Windows)
             {
                 win._Init(win.data);
             }
-            _initialized = true;
+            Initialized = true;
         }
 
         /*

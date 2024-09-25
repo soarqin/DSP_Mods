@@ -1,6 +1,5 @@
 ﻿using System;
 using UnityEngine;
-using UnityEngine.UI;
 using UXAssist.UI;
 using UXAssist.Common;
 using UXAssist.Functions;
@@ -36,6 +35,19 @@ public static class UIConfigWindow
         I18N.Add("Default profile name", "Default profile name", "默认配置档案名");
         I18N.Add("Logical Frame Rate", "Logical Frame Rate", "逻辑帧倍率");
         I18N.Add("Reset", "Reset", "重置");
+        I18N.Add("Process priority", "Process priority", "进程优先级");
+        I18N.Add("High", "High", "高");
+        I18N.Add("Above Normal", "Above Normal", "高于正常");
+        I18N.Add("Normal", "Normal", "正常");
+        I18N.Add("Below Normal", "Below Normal", "低于正常");
+        I18N.Add("Idle", "Idle", "空闲");
+        I18N.Add("Enabled CPUs", "Enabled CPU Threads", "使用CPU线程");
+        I18N.Add("All CPUs", "All CPUs", "所有CPU");
+        I18N.Add("First {0} CPUs", "First {0} CPUs", "前{0}个CPU");
+        I18N.Add("First 8 CPUs", "First 8 CPUs", "前8个CPU");
+        I18N.Add("First CPU only", "First CPU only", "仅第一个CPU");
+        I18N.Add("All P-Cores", "All P-Cores", "所有性能(P)核心");
+        I18N.Add("All E-Cores", "All E-Cores", "所有效率(E)核心");
         I18N.Add("Unlimited interactive range", "Unlimited interactive range", "无限交互距离");
         I18N.Add("Night Light", "Sunlight at night", "夜间日光灯");
         I18N.Add("Angle X:", "Angle X:", "入射角度X:");
@@ -155,18 +167,16 @@ public static class UIConfigWindow
         */
         y += 36f;
         wnd.AddCheckBox(x, y, tab1, GamePatch.ConvertSavesFromPeaceEnabled, "Convert old saves to Combat Mode on loading");
-
         MyCheckBox checkBoxForMeasureTextWidth;
         if (WindowFunctions.ProfileName != null)
         {
             y += 36f;
             checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab1, GamePatch.ProfileBasedSaveFolderEnabled, "Profile-based save folder");
             wnd.AddTipsButton2(checkBoxForMeasureTextWidth.Width + 5f, y + 6f, tab1, "Profile-based save folder", "Profile-based save folder tips", "btn-profile-based-save-folder-tips");
-            x = 0;
             y += 30f;
-            wnd.AddText2(x, y, tab1, "Default profile name", 15, "text-default-profile-name");
+            wnd.AddText2(x + 2f, y, tab1, "Default profile name", 15, "text-default-profile-name");
             y += 24f;
-            wnd.AddInputField(x, y, 200f, tab1, GamePatch.DefaultProfileName, 15, "input-profile-save-folder");
+            wnd.AddInputField(x + 2f, y, 200f, tab1, GamePatch.DefaultProfileName, 15, "input-profile-save-folder");
             y += 18f;
         }
         /*
@@ -179,10 +189,30 @@ public static class UIConfigWindow
             y += 36f;
             txt = wnd.AddText2(x + 2f, y, tab1, "Logical Frame Rate", 15, "game-frame-rate");
             x += txt.preferredWidth + 7f;
-            wnd.AddSlider(x, y + 6f, tab1, GamePatch.GameUpsFactor, new UpsMapper(), "0.0x", 100f).MakeHandleSmaller();
+            wnd.AddSlider(x, y + 6f, tab1, GamePatch.GameUpsFactor, new UpsMapper(), "0.0x", 100f).WithSmallerHandle();
             var btn = wnd.AddFlatButton(x + 104f, y + 6f, tab1, "Reset", 13, "reset-game-frame-rate", () => GamePatch.GameUpsFactor.Value = 1.0f);
             ((RectTransform)btn.transform).sizeDelta = new Vector2(40f, 20f);
+            x = 0f;
         }
+        y += 36f;
+        wnd.AddComboBox(x + 2f, y, tab1, "Process priority").WithItems("High", "Above Normal", "Normal", "Below Normal", "Idle").WithSize(100f, 0f).WithConfigEntry(WindowFunctions.ProcessPriority);
+        var details = WindowFunctions.ProcessorDetails;
+        string[] affinities;
+        if (details.HybridArchitecture)
+        {
+            affinities = new string[5];
+            affinities[3] = "All P-Cores";
+            affinities[4] = "All E-Cores";
+        }
+        else
+        {
+            affinities = new string[3];
+        }
+        affinities[0] = "All CPUs";
+        affinities[1] = string.Format("First {0} CPUs".Translate(), details.ThreadCount / 2);
+        affinities[2] = details.ThreadCount > 16 ? "First 8 CPUs" : "First CPU only";
+        y += 36f;
+        wnd.AddComboBox(x + 2f, y, tab1, "Enabled CPUs").WithItems(affinities).WithSize(200f, 0f).WithConfigEntry(WindowFunctions.ProcessAffinity);
 
         var tab2 = wnd.AddTab(trans, "Planet/Factory");
         x = 0f;
@@ -195,10 +225,10 @@ public static class UIConfigWindow
         x += checkBoxForMeasureTextWidth.Width + 5f + 10f;
         txt = wnd.AddText2(x, y + 2f, tab2, "Angle X:", 13, "text-nightlight-angle-x");
         x += txt.preferredWidth + 5f;
-        wnd.AddSlider(x, y + 7f, tab2, FactoryPatch.NightLightAngleX, new AngleMapper(), "0", 60f).MakeHandleSmaller();
+        wnd.AddSlider(x, y + 7f, tab2, FactoryPatch.NightLightAngleX, new AngleMapper(), "0", 60f).WithSmallerHandle();
         x += 70f;
         txt = wnd.AddText2(x, y + 2f, tab2, "Y:", 13, "text-nightlight-angle-y");
-        wnd.AddSlider(x + txt.preferredWidth + 5f, y + 7f, tab2, FactoryPatch.NightLightAngleY, new AngleMapper(), "0", 60f).MakeHandleSmaller();
+        wnd.AddSlider(x + txt.preferredWidth + 5f, y + 7f, tab2, FactoryPatch.NightLightAngleY, new AngleMapper(), "0", 60f).WithSmallerHandle();
         x = 0;
         y += 36f;
         wnd.AddCheckBox(x, y, tab2, FactoryPatch.LargerAreaForUpgradeAndDismantleEnabled, "Larger area for upgrade and dismantle");

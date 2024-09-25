@@ -52,6 +52,16 @@ public static class WinApi
 
     #endregion
 
+    #region Priorities
+
+    public const int HIGH_PRIORITY_CLASS = 0x00000080;
+    public const int ABOVE_NORMAL_PRIORITY_CLASS = 0x00008000;
+    public const int NORMAL_PRIORITY_CLASS = 0x00000020;
+    public const int BELOW_NORMAL_PRIORITY_CLASS = 0x00004000;
+    public const int IDLE_PRIORITY_CLASS = 0x00000040;
+
+    #endregion
+
     #region Messages
 
     public const int WM_CREATE = 0x0001;
@@ -113,13 +123,13 @@ public static class WinApi
     public static extern bool MoveWindow(IntPtr hWnd, int x, int y, int nWidth, int nHeight, bool bRepaint);
 
     [DllImport("kernel32", ExactSpelling = true, SetLastError = true)]
-    public static extern bool GetProcessAffinityMask(IntPtr hProcess, out IntPtr lpProcessAffinityMask, out IntPtr lpSystemAffinityMask);
+    public static extern bool GetProcessAffinityMask(IntPtr hProcess, out ulong lpProcessAffinityMask, out ulong lpSystemAffinityMask);
     
     [DllImport("kernel32", ExactSpelling = true, SetLastError = true)]
     public static extern IntPtr GetCurrentProcess();
 
     [DllImport("kernel32", ExactSpelling = true, SetLastError = true)]
-    public static extern bool SetProcessAffinityMask(IntPtr hProcess, IntPtr dwProcessAffinityMask);
+    public static extern bool SetProcessAffinityMask(IntPtr hProcess, ulong dwProcessAffinityMask);
     
     // GetPriorityClass and SetPriorityClass
     [DllImport("kernel32", ExactSpelling = true, SetLastError = true)]

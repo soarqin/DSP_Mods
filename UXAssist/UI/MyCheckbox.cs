@@ -14,16 +14,78 @@ public class MyCheckBox : MonoBehaviour
     public Image checkImage;
     public Text labelText;
     public event Action OnChecked;
-    protected event Action OnFree;
     private bool _checked;
+
+    private static GameObject _baseObject;
 
     private static readonly Color BoxColor = new Color(1f, 1f, 1f, 100f / 255f);
     private static readonly Color CheckColor = new Color(1f, 1f, 1f, 1f);
     private static readonly Color TextColor = new Color(178f / 255f, 178f / 255f, 178f / 255f, 168f / 255f);
     
+    public static void InitBaseObject()
+    {
+        if (_baseObject) return;
+        var go = Instantiate(UIRoot.instance.uiGame.buildMenu.uxFacilityCheck.gameObject);
+        go.name = "my-checkbox";
+        go.SetActive(false);
+        var comp = go.transform.Find("text");
+        if (comp)
+        {
+            var txt = comp.GetComponent<Text>();
+            if (txt) txt.text = "";
+            var localizer = comp.GetComponent<Localizer>();
+            if (localizer) DestroyImmediate(localizer);
+        }
+        _baseObject = go;
+    }
+
     protected void OnDestroy()
     {
-        OnFree?.Invoke();
+        _config.SettingChanged -= _configChanged;
+    }
+
+    public static MyCheckBox CreateCheckBox(float x, float y, RectTransform parent, ConfigEntry<bool> config, string label = "", int fontSize = 15)
+    {
+        return CreateCheckBox(x, y, parent, config.Value, label, fontSize).WithConfigEntry(config);
+    }
+
+    public static MyCheckBox CreateCheckBox(float x, float y, RectTransform parent, bool check, string label = "", int fontSize = 15)
+    {
+        return CreateCheckBox(x, y, parent, fontSize).WithCheck(check).WithLabelText(label);
+    }
+
+    public static MyCheckBox CreateCheckBox(float x, float y, RectTransform parent, int fontSize = 15)
+    {
+        var go = Instantiate(_baseObject);
+        go.name = "my-checkbox";
+        go.SetActive(true);
+        var cb = go.AddComponent<MyCheckBox>();
+        var rect = Util.NormalizeRectWithTopLeft(cb, x, y, parent);
+
+        cb.rectTrans = rect;
+        cb.uiButton = go.GetComponent<UIButton>();
+        cb.boxImage = go.transform.GetComponent<Image>();
+        cb.checkImage = go.transform.Find("checked")?.GetComponent<Image>();
+
+        var child = go.transform.Find("text");
+        if (child != null)
+        {
+            cb.labelText = child.GetComponent<Text>();
+            if (cb.labelText)
+            {
+                cb.labelText.text = "";
+                cb.labelText.fontSize = fontSize;
+                cb.UpdateLabelTextWidth();
+            }
+        }
+
+        cb.uiButton.onClick += cb.OnClick;
+        return cb;
+    }
+    
+    private void UpdateLabelTextWidth()
+    {
+        if (labelText) labelText.rectTransform.sizeDelta = new Vector2(labelText.preferredWidth, labelText.rectTransform.sizeDelta.y);
     }
 
     public bool Checked
@@ -33,6 +95,15 @@ public class MyCheckBox : MonoBehaviour
         {
             _checked = value;
             checkImage.enabled = value;
+        }
+    }
+
+    public void SetLabelText(string val)
+    {
+        if (labelText != null)
+        {
+            labelText.text = val.Translate();
+            UpdateLabelTextWidth();
         }
     }
 
@@ -53,59 +124,43 @@ public class MyCheckBox : MonoBehaviour
         }
     }
 
-    public static MyCheckBox CreateCheckBox(float x, float y, RectTransform parent, ConfigEntry<bool> config, string label = "", int fontSize = 15)
+    private EventHandler _configChanged;
+    private Action _checkedChanged;
+    private ConfigEntry<bool> _config;
+    public void SetConfigEntry(ConfigEntry<bool> config)
     {
-        var cb = CreateCheckBox(x, y, parent, config.Value, label, fontSize);
-        cb.OnChecked += () => config.Value = !config.Value;
-        EventHandler func = (_, _) => cb.Checked = config.Value;
-        config.SettingChanged += func;
-        cb.OnFree += () => config.SettingChanged -= func;
-        return cb;
+        if (_checkedChanged != null) OnChecked -= _checkedChanged;
+        if (_configChanged != null) config.SettingChanged -= _configChanged;
+
+        _config = config;
+        _checkedChanged = () => config.Value = !config.Value;
+        OnChecked += _checkedChanged;
+        _configChanged = (_, _) => Checked = config.Value;
+        config.SettingChanged += _configChanged;
     }
 
-    public static MyCheckBox CreateCheckBox(float x, float y, RectTransform parent, bool check, string label = "", int fontSize = 15)
+    public MyCheckBox WithLabelText(string val)
     {
-        var buildMenu = UIRoot.instance.uiGame.buildMenu;
-        var src = buildMenu.uxFacilityCheck;
-
-        var go = Instantiate(src.gameObject);
-        go.name = "my-checkbox";
-        var cb = go.AddComponent<MyCheckBox>();
-        cb._checked = check;
-        var rect = Util.NormalizeRectWithTopLeft(cb, x, y, parent);
-
-        cb.rectTrans = rect;
-        cb.uiButton = go.GetComponent<UIButton>();
-        cb.boxImage = go.transform.GetComponent<Image>();
-        cb.checkImage = go.transform.Find("checked")?.GetComponent<Image>();
-
-        var child = go.transform.Find("text");
-        if (child != null)
-        {
-            DestroyImmediate(child.GetComponent<Localizer>());
-            cb.labelText = child.GetComponent<Text>();
-            cb.labelText.fontSize = fontSize;
-            cb.SetLabelText(label);
-            var width = cb.labelText.preferredWidth;
-            cb.labelText.rectTransform.sizeDelta = new Vector2(width, cb.labelText.rectTransform.sizeDelta.y);
-        }
-
-        //value
-        cb.uiButton.onClick += cb.OnClick;
-        if (cb.checkImage != null)
-        {
-            cb.checkImage.enabled = check;
-        }
-
-        return cb;
+        SetLabelText(val);
+        return this;
     }
 
-    public void SetLabelText(string val)
+    public MyCheckBox WithCheck(bool check)
     {
-        if (labelText != null)
-        {
-            labelText.text = val.Translate();
-        }
+        Checked = check;
+        return this;
+    }
+    
+    public MyCheckBox WithEnable(bool on)
+    {
+        SetEnable(on);
+        return this;
+    }
+
+    public MyCheckBox WithConfigEntry(ConfigEntry<bool> config)
+    {
+        SetConfigEntry(config);
+        return this;
     }
 
     public void OnClick(int obj)
