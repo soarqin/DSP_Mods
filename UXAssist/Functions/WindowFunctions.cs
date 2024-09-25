@@ -33,7 +33,7 @@ public static class WindowFunctions
 
     public static void Init()
     {
-        I18N.Add("Cores: {0}\nThreads: {1}", "Cores: {0}\nThreads: {1}", "内核数: {0}\n线程数: {1}");
+        I18N.Add("Cores: {0}\nThreads: {1}", "Cores: {0}\nThreads: {1}", "核心数: {0}\n线程数: {1}");
         I18N.Add("\nP-Cores: {0}\nE-Cores: {1}", "\nP-Cores: {0}\nE-Cores: {1}", "\n性能核心: {0}\n能效核心: {1}");
         I18N.Add("\nPriority: {0}", "\nProcess priority: {0}", "\n进程优先级: {0}");
         I18N.Add("\nEnabled CPUs: ", "\nEnabled CPUs: ", "\n使用的CPU: ");
