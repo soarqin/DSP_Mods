@@ -39,6 +39,7 @@ public static class WindowFunctions
         I18N.Add("\nEnabled CPUs: ", "\nEnabled CPUs: ", "\n使用的CPU: ");
         I18N.Add("Unknown", "Unknown", "未知");
         ProcessorDetails = WinApi.GetLogicalProcessorDetails();
+        SetWindowTitle();
     }
 
     public static void Start()
@@ -50,7 +51,8 @@ public static class WindowFunctions
         {
             _oldWndProc = WinApi.SetWindowLongPtr(gameWnd, WinApi.GWLP_WNDPROC, Marshal.GetFunctionPointerForDelegate(wndProc));
         }
-        GamePatch.LoadLastWindowRect.MoveWindowPosition(true);
+        if (GamePatch.LoadLastWindowRectEnabled.Value)
+            GamePatch.LoadLastWindowRect.MoveWindowPosition(true);
 
         ProcessPriority.SettingChanged += (_, _) => WinApi.SetPriorityClass(WinApi.GetCurrentProcess(), ProrityFlags[ProcessPriority.Value]);
         WinApi.SetPriorityClass(WinApi.GetCurrentProcess(), ProrityFlags[ProcessPriority.Value]);
@@ -103,12 +105,12 @@ public static class WindowFunctions
                 switch ((long)wParam & 0xFFF0L)
                 {
                     case WinApi.SC_MOVE:
-                        if (!_gameLoaded) return (IntPtr)1L;
+                        if (GamePatch.LoadLastWindowRectEnabled.Value && !_gameLoaded) return (IntPtr)1L;
                         break;
                 }
                 break;
             case WinApi.WM_MOVING:
-                if (_gameLoaded) break;
+                if (!GamePatch.LoadLastWindowRectEnabled.Value || _gameLoaded) break;
                 var rect = GamePatch.LastWindowRect.Value;
                 if (rect is { z: 0f, w: 0f }) break;
                 var x = Mathf.RoundToInt(rect.x);
@@ -119,7 +121,7 @@ public static class WindowFunctions
                 Marshal.StructureToPtr(rect2, lParam, false);
                 break;
             case WinApi.WM_SIZING:
-                if (_gameLoaded) break;
+                if (!GamePatch.LoadLastWindowRectEnabled.Value || _gameLoaded) break;
                 rect = GamePatch.LastWindowRect.Value;
                 if (rect is { z: 0f, w: 0f }) break;
                 x = Mathf.RoundToInt(rect.x);

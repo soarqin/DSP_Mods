@@ -11,11 +11,13 @@ using UXAssist.Functions;
 
 namespace UXAssist.Patches;
 
-public class GamePatch: PatchImpl<GamePatch>
+public class GamePatch : PatchImpl<GamePatch>
 {
     public static ConfigEntry<bool> EnableWindowResizeEnabled;
     public static ConfigEntry<bool> LoadLastWindowRectEnabled;
+
     public static ConfigEntry<int> MouseCursorScaleUpMultiplier;
+
     // public static ConfigEntry<bool> AutoSaveOptEnabled;
     public static ConfigEntry<bool> ConvertSavesFromPeaceEnabled;
     public static ConfigEntry<Vector4> LastWindowRect;
@@ -26,6 +28,7 @@ public class GamePatch: PatchImpl<GamePatch>
     private static PressKeyBind _speedDownKey;
     private static PressKeyBind _speedUpKey;
     private static bool _enableGameUpsFactor = true;
+
     public static bool EnableGameUpsFactor
     {
         get => _enableGameUpsFactor;
@@ -40,6 +43,7 @@ public class GamePatch: PatchImpl<GamePatch>
                     GameUpsFactor.Value = 1.0;
                     return;
                 }
+
                 GameUpsFactor.Value = Maths.Clamp(FPSController.instance.fixUPS / GameMain.tickPerSec, 0.1, 10.0);
             }
             else
@@ -71,8 +75,6 @@ public class GamePatch: PatchImpl<GamePatch>
         I18N.Add("KEYUPSSpeedUp", "Increase logical frame rate", "提升逻辑帧率");
         I18N.Add("Logical frame rate: {0}x", "Logical frame rate: {0}x", "逻辑帧速率: {0}x");
 
-        WindowFunctions.SetWindowTitle();
-
         EnableWindowResizeEnabled.SettingChanged += (_, _) => EnableWindowResize.Enable(EnableWindowResizeEnabled.Value);
         LoadLastWindowRectEnabled.SettingChanged += (_, _) => LoadLastWindowRect.Enable(LoadLastWindowRectEnabled.Value);
         MouseCursorScaleUpMultiplier.SettingChanged += (_, _) =>
@@ -92,6 +94,7 @@ public class GamePatch: PatchImpl<GamePatch>
                 FPSController.SetFixUPS(0.0);
                 return;
             }
+
             FPSController.SetFixUPS(GameMain.tickPerSec * GameUpsFactor.Value);
         };
     }
@@ -126,6 +129,7 @@ public class GamePatch: PatchImpl<GamePatch>
             GameUpsFactor.Value = Maths.Clamp(Math.Round((GameUpsFactor.Value - 0.5) * 2.0) / 2.0, 0.1, 10.0);
             UIRoot.instance.uiGame.generalTips.InvokeRealtimeTipAhead(string.Format("Logical frame rate: {0}x".Translate(), GameUpsFactor.Value));
         }
+
         if (_speedUpKey.keyValue)
         {
             GameUpsFactor.Value = Maths.Clamp(Math.Round((GameUpsFactor.Value + 0.5) * 2.0) / 2.0, 0.1, 10.0);
@@ -142,6 +146,7 @@ public class GamePatch: PatchImpl<GamePatch>
         {
             UIRoot.instance.loadGameWindow._Close();
         }
+
         if (UIRoot.instance.saveGameWindow.gameObject.activeSelf)
         {
             UIRoot.instance.saveGameWindow._Close();
@@ -166,12 +171,11 @@ public class GamePatch: PatchImpl<GamePatch>
         var wnd = WindowFunctions.FindGameWindow();
         if (wnd == IntPtr.Zero) return;
         WinApi.GetWindowRect(wnd, out var rect);
-        LastWindowRect.Value = new Vector4(rect.Left, rect.Top, Screen.width, Screen.height);
+        LastWindowRect.Value = new Vector4(rect.Left < 20 - Screen.width ? 0 : rect.Left, rect.Top < 20 - Screen.height ? 0 : rect.Top, Screen.width, Screen.height);
     }
 
-    private class EnableWindowResize: PatchImpl<EnableWindowResize>
+    private class EnableWindowResize : PatchImpl<EnableWindowResize>
     {
-
         private static bool _enabled;
 
         protected override void OnEnable()
@@ -214,7 +218,7 @@ public class GamePatch: PatchImpl<GamePatch>
         }
     }
 
-    public class LoadLastWindowRect: PatchImpl<LoadLastWindowRect>
+    public class LoadLastWindowRect : PatchImpl<LoadLastWindowRect>
     {
         private static bool _loaded;
 
@@ -234,11 +238,13 @@ public class GamePatch: PatchImpl<GamePatch>
                     w = 1280;
                     needFix = true;
                 }
+
                 if (h < 100)
                 {
                     h = 720;
                     needFix = true;
                 }
+
                 var sw = Screen.currentResolution.width;
                 var sh = Screen.currentResolution.height;
                 if (x + w > sw)
@@ -246,26 +252,31 @@ public class GamePatch: PatchImpl<GamePatch>
                     x = sw - w;
                     needFix = true;
                 }
+
                 if (y + h > sh)
                 {
                     y = sh - h;
                     needFix = true;
                 }
+
                 if (x < 0)
                 {
                     x = 0;
                     needFix = true;
                 }
+
                 if (y < 0)
                 {
                     y = 0;
                     needFix = true;
                 }
+
                 if (needFix)
                 {
                     LastWindowRect.Value = new Vector4(x, y, w, h);
                 }
             }
+
             MoveWindowPosition();
         }
 
@@ -289,6 +300,7 @@ public class GamePatch: PatchImpl<GamePatch>
                 var h = Mathf.RoundToInt(rect.w);
                 Screen.SetResolution(w, h, false);
             }
+
             WinApi.SetWindowPos(wnd, IntPtr.Zero, x, y, 0, 0, 0x0235);
         }
 
@@ -332,13 +344,14 @@ public class GamePatch: PatchImpl<GamePatch>
         }
 
         private static GameOption _gameOption;
+
         [HarmonyPostfix]
         [HarmonyPatch(typeof(UIOptionWindow), nameof(UIOptionWindow._OnOpen))]
         private static void UIOptionWindow__OnOpen_Postfix()
         {
             _gameOption = DSPGame.globalOption;
         }
-        
+
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(GameOption), nameof(GameOption.Apply))]
         private static IEnumerable<CodeInstruction> UIOptionWindow_ApplyOptions_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -496,10 +509,10 @@ public class GamePatch: PatchImpl<GamePatch>
     }
     */
 
-    private class ConvertSavesFromPeace: PatchImpl<ConvertSavesFromPeace>
+    private class ConvertSavesFromPeace : PatchImpl<ConvertSavesFromPeace>
     {
         private static bool _needConvert;
-        
+
         [HarmonyPostfix]
         [HarmonyPatch(typeof(GameDesc), nameof(GameDesc.Import))]
         private static void GameDesc_Import_Postfix(GameDesc __instance)
@@ -509,7 +522,7 @@ public class GamePatch: PatchImpl<GamePatch>
             __instance.isPeaceMode = false;
             _needConvert = true;
         }
-        
+
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(GameData), nameof(GameData.Import))]
         private static IEnumerable<CodeInstruction> GameData_Import_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -535,7 +548,7 @@ public class GamePatch: PatchImpl<GamePatch>
     }
 
     [PatchSetCallbackFlag(PatchCallbackFlag.CallOnDisableAfterUnpatch)]
-    private class MouseCursorScaleUp: PatchImpl<MouseCursorScaleUp>
+    private class MouseCursorScaleUp : PatchImpl<MouseCursorScaleUp>
     {
         public static bool NeedReloadCursors;
 
@@ -554,7 +567,7 @@ public class GamePatch: PatchImpl<GamePatch>
             UICursor.loaded = false;
             UICursor.LoadCursors();
         }
-        
+
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(UICursor), nameof(UICursor.LoadCursors))]
         private static IEnumerable<CodeInstruction> UICursor_LoadCursors_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -647,7 +660,7 @@ public class GamePatch: PatchImpl<GamePatch>
                 return result;
             }
         }
-        
+
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(UICursor), nameof(UICursor.cursorIndexApply), MethodType.Setter)]
         private static IEnumerable<CodeInstruction> UICursor_set_cursorIndexApply_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)

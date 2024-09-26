@@ -1,5 +1,9 @@
 ## Changlog
 
+* 1.2.6
+  + `Remember window position and size on last exit`
+    - Fix a bug that window position is restored even the option is disabled.
+    - Fix a bug that the last window position is wrongly remembere when game is closed at minimized state.
 * 1.2.5
   + New feature: `Set process priority`
   + New feature: `Set enabled CPU threads`
@@ -202,6 +206,10 @@
 
 ## 更新日志
 
+* 1.2.6
+  + `记住上次退出时的窗口位置和大小`
+    - 修复了即使选项被禁用也恢复窗口位置的问题
+    - 修复了窗口最小化时关闭游戏导致窗口位置被错误记录的问题
 * 1.2.5
   + 新功能：`设置进程优先级`
   + 新功能：`设置使用的CPU线程`
