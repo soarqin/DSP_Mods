@@ -1,5 +1,9 @@
 ## Changlog
 
+* 1.2.8
+  + `Real-time logistic stations info panel`: Fix a bug that item status bar appears unexpectedly.
+* 1.2.7
+  + Fix some minor issues
 * 1.2.6
   + `Remember window position and size on last exit`
     - Fix a bug that window position is restored even the option is disabled.
@@ -206,6 +210,10 @@
 
 ## 更新日志
 
+* 1.2.8
+  + `物流运输站实时信息面板`：修复了一个物品状态条意外显示的问题
+* 1.2.7
+  + 修复了一些小问题
 * 1.2.6
   + `记住上次退出时的窗口位置和大小`
     - 修复了即使选项被禁用也恢复窗口位置的问题

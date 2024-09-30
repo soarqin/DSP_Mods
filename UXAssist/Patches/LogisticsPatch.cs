@@ -1020,7 +1020,7 @@ public static class LogisticsPatch
                 return sprite;
             }
 
-            public void SetItem(int i, StationStore storage)
+            public void SetItem(int i, StationStore storage, bool barEnabled)
             {
                 ref var storageState = ref _storageItems[i];
                 var countUIText = _countTextsText[i];
@@ -1047,7 +1047,7 @@ public static class LogisticsPatch
                     _iconLocalsImage[i].sprite = StateSprite[(int)storageState.LocalState];
                     _iconRemotes[i].gameObject.SetActive(CarrierEnabled[(int)_layout][1]);
                     _iconRemotesImage[i].sprite = StateSprite[(int)storageState.RemoteState];
-                    _sliderBg[i].gameObject.SetActive(RealtimeLogisticsInfoPanelBarsEnabled.Value);
+                    _sliderBg[i].gameObject.SetActive(barEnabled);
                     switch (_layout)
                     {
                         case EStationTipLayout.InterstellarLogistics:
@@ -1069,7 +1069,6 @@ public static class LogisticsPatch
                 }
                 else if (itemId <= 0) return;
 
-                var barEnabled = RealtimeLogisticsInfoPanelBarsEnabled.Value;
                 var itemCount = storage.count;
                 var itemLimit = _layout == EStationTipLayout.InterstellarLogistics ? _remoteStorageMaxTotal : _localStorageMaxTotal;
                 if (storageState.ItemCount != itemCount)
@@ -1229,6 +1228,10 @@ public static class LogisticsPatch
                                 break;
                         }
                     }
+                    for (var i = _storageNum; i < StorageSlotCount; i++)
+                    {
+                        _sliderBg[i].gameObject.SetActive(false);
+                    }
 
                     _storageNum = Math.Min(StorageNums[(int)layout], stationComponent.storage.Length);
                     rectTransform.sizeDelta = new Vector2(TipWindowWidths[(int)layout], TipWindowExtraHeights[(int)layout] + 35f * _storageNum);
@@ -1250,10 +1253,11 @@ public static class LogisticsPatch
                 }
 
                 var storageArray = stationComponent.storage;
+                var barEnabled = RealtimeLogisticsInfoPanelBarsEnabled.Value;
                 for (var j = _storageNum - 1; j >= 0; j--)
                 {
                     var storage = storageArray[j];
-                    SetItem(j, storage);
+                    SetItem(j, storage, barEnabled);
                 }
 
                 int currentCount, totalCount;
@@ -1289,8 +1293,11 @@ public static class LogisticsPatch
             {
                 for (var i = _storageNum - 1; i >= 0; i--)
                 {
-                    var bg = _sliderBg[i];
-                    bg.gameObject.SetActive(on && _storageItems[i].ItemId > 0);
+                    _sliderBg[i].gameObject.SetActive(on && _storageItems[i].ItemId > 0);
+                }
+                for (var i = _storageNum; i < StorageSlotCount; i++)
+                {
+                    _sliderBg[i].gameObject.SetActive(false);
                 }
             }
         }
