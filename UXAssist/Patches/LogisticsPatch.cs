@@ -1230,6 +1230,10 @@ public static class LogisticsPatch
                     }
                     for (var i = _storageNum; i < StorageSlotCount; i++)
                     {
+                        _iconLocals[i].gameObject.SetActive(false);
+                        _iconRemotes[i].gameObject.SetActive(false);
+                        _icons[i].gameObject.SetActive(false);
+                        _countTexts[i].gameObject.SetActive(false);
                         _sliderBg[i].gameObject.SetActive(false);
                     }
 
@@ -1252,20 +1256,22 @@ public static class LogisticsPatch
                     _pixelPerItem = _layout == EStationTipLayout.InterstellarLogistics ? _remoteStoragePixelPerItem : _localStoragePixelPerItem;
                 }
 
-                var storageArray = stationComponent.storage;
-                var barEnabled = RealtimeLogisticsInfoPanelBarsEnabled.Value;
-                for (var j = _storageNum - 1; j >= 0; j--)
+                if (_storageNum > 0)
                 {
-                    var storage = storageArray[j];
-                    SetItem(j, storage, barEnabled);
+                    var storageArray = stationComponent.storage;
+                    var barEnabled = RealtimeLogisticsInfoPanelBarsEnabled.Value;
+                    for (var j = _storageNum - 1; j >= 0; j--)
+                    {
+                        var storage = storageArray[j];
+                        SetItem(j, storage, barEnabled);
+                    }
                 }
 
-                int currentCount, totalCount;
                 switch (_layout)
                 {
                     case EStationTipLayout.PlanetaryLogistics:
-                        totalCount = stationComponent.idleDroneCount + stationComponent.workDroneCount;
-                        currentCount = stationComponent.idleDroneCount;
+                        var totalCount = stationComponent.idleDroneCount + stationComponent.workDroneCount;
+                        var currentCount = stationComponent.idleDroneCount;
                         _carrierIdleCountText[0].text = currentCount.ToString();
                         _carrierTotalCountText[0].text = totalCount.ToString();
                         break;
