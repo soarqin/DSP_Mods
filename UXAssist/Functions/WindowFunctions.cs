@@ -23,7 +23,8 @@ public static class WindowFunctions
     public static ConfigEntry<int> ProcessPriority;
     public static ConfigEntry<int> ProcessAffinity;
 
-    private static readonly int[] ProrityFlags = [
+    private static readonly int[] ProrityFlags =
+    [
         WinApi.HIGH_PRIORITY_CLASS,
         WinApi.ABOVE_NORMAL_PRIORITY_CLASS,
         WinApi.NORMAL_PRIORITY_CLASS,
@@ -44,13 +45,14 @@ public static class WindowFunctions
 
     public static void Start()
     {
-        GameLogic.OnDataLoaded += () => { _gameLoaded = true; };
+        GameLogic.OnDataLoaded += OnDataLoaded;
         var wndProc = new WinApi.WndProc(GameWndProc);
         var gameWnd = FindGameWindow();
         if (gameWnd != IntPtr.Zero)
         {
             _oldWndProc = WinApi.SetWindowLongPtr(gameWnd, WinApi.GWLP_WNDPROC, Marshal.GetFunctionPointerForDelegate(wndProc));
         }
+
         if (GamePatch.LoadLastWindowRectEnabled.Value)
             GamePatch.LoadLastWindowRect.MoveWindowPosition(true);
 
@@ -67,6 +69,7 @@ public static class WindowFunctions
             {
                 systemMask = ulong.MaxValue;
             }
+
             switch (ProcessAffinity.Value)
             {
                 case 0:
@@ -86,6 +89,16 @@ public static class WindowFunctions
                     break;
             }
         }
+    }
+
+    public static void Uninit()
+    {
+        GameLogic.OnDataLoaded -= OnDataLoaded;
+    }
+
+    private static void OnDataLoaded()
+    {
+        _gameLoaded = true;
     }
 
     private static IntPtr GameWndProc(IntPtr hWnd, uint uMsg, IntPtr wParam, IntPtr lParam)

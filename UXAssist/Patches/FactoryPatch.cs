@@ -31,8 +31,12 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
     public static ConfigEntry<bool> DragBuildPowerPolesEnabled;
     public static ConfigEntry<bool> DragBuildPowerPolesAlternatelyEnabled;
     public static ConfigEntry<bool> BeltSignalsForBuyOutEnabled;
+    public static ConfigEntry<bool> TankFastFillInAndTakeOutEnabled;
+    public static ConfigEntry<int> TankFastFillInAndTakeOutMultiplier;
     private static PressKeyBind _doNotRenderEntitiesKey;
     private static PressKeyBind _offgridfForPathsKey;
+
+    private static int _tankFastFillInAndTakeOutMultiplierRealValue = 2;
 
     public static void Init()
     {
@@ -72,6 +76,8 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         DragBuildPowerPolesEnabled.SettingChanged += (_, _) => DragBuildPowerPoles.Enable(DragBuildPowerPolesEnabled.Value);
         DragBuildPowerPolesAlternatelyEnabled.SettingChanged += (_, _) => DragBuildPowerPoles.AlternatelyChanged();
         BeltSignalsForBuyOutEnabled.SettingChanged += (_, _) => BeltSignalsForBuyOut.Enable(BeltSignalsForBuyOutEnabled.Value);
+        TankFastFillInAndTakeOutEnabled.SettingChanged += (_, _) => TankFastFillInAndTakeOut.Enable(TankFastFillInAndTakeOutEnabled.Value);
+        TankFastFillInAndTakeOutMultiplier.SettingChanged += (_, _) => { UpdateTankFastFillInAndTakeOutMultiplierRealValue(); };
     }
 
     public static void Start()
@@ -89,28 +95,37 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         DoNotRenderEntities.Enable(DoNotRenderEntitiesEnabled.Value);
         DragBuildPowerPoles.Enable(DragBuildPowerPolesEnabled.Value);
         BeltSignalsForBuyOut.Enable(BeltSignalsForBuyOutEnabled.Value);
+        TankFastFillInAndTakeOut.Enable(TankFastFillInAndTakeOutEnabled.Value);
 
         Enable(true);
+        UpdateTankFastFillInAndTakeOutMultiplierRealValue();
     }
 
     public static void Uninit()
     {
         Enable(false);
 
+        TankFastFillInAndTakeOut.Enable(false);
+        BeltSignalsForBuyOut.Enable(false);
+        DragBuildPowerPoles.Enable(false);
+        DoNotRenderEntities.Enable(false);
+        ProtectVeinsFromExhaustion.Enable(false);
+        QuickBuildAndDismantleLab.Enable(false);
+        TreatStackingAsSingle.Enable(false);
+        OffGridBuilding.Enable(false);
+        LargerAreaForTerraform.Enable(false);
+        LargerAreaForUpgradeAndDismantle.Enable(false);
+        RemoveBuildRangeLimit.Enable(false);
+        NightLight.Enable(false);
         RemoveSomeConditionBuild.Enable(false);
         UnlimitInteractive.Enable(false);
-        NightLight.Enable(false);
-        RemoveBuildRangeLimit.Enable(false);
-        LargerAreaForUpgradeAndDismantle.Enable(false);
-        LargerAreaForTerraform.Enable(false);
-        OffGridBuilding.Enable(false);
-        TreatStackingAsSingle.Enable(false);
-        QuickBuildAndDismantleLab.Enable(false);
-        ProtectVeinsFromExhaustion.Enable(false);
-        DoNotRenderEntities.Enable(false);
-        DragBuildPowerPoles.Enable(false);
-        BeltSignalsForBuyOut.Enable(false);
+        
         BeltSignalsForBuyOut.UninitPersist();
+    }
+
+    private static void UpdateTankFastFillInAndTakeOutMultiplierRealValue()
+    {
+        _tankFastFillInAndTakeOutMultiplierRealValue = Mathf.Max(1, TankFastFillInAndTakeOutMultiplier.Value) * 2;
     }
 
     public static void OnUpdate()
@@ -1754,6 +1769,77 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                     }
                 })
             );
+            return matcher.InstructionEnumeration();
+        }
+    }
+
+    private class TankFastFillInAndTakeOut : PatchImpl<TankFastFillInAndTakeOut>
+    {
+        private static int GetRealCount()
+        {
+            return _tankFastFillInAndTakeOutMultiplierRealValue;
+        }
+
+        private static int MultiplierWithCountCheck(int count)
+        {
+            return Math.Min(count, _tankFastFillInAndTakeOutMultiplierRealValue);
+        }
+        
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(PlanetFactory), nameof(PlanetFactory.EntityFastFillIn))]
+        private static IEnumerable<CodeInstruction> PlanetFactory_EntityFastFillIn_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            matcher.MatchForward(false,
+                new CodeMatch(ci => ci.IsStloc()),
+                new CodeMatch(OpCodes.Ldc_I4_2),
+                new CodeMatch(ci => ci.IsStloc())
+            ).Advance(1).RemoveInstruction().InsertAndAdvance(Transpilers.EmitDelegate(GetRealCount)).MatchForward(false,
+                new CodeMatch(OpCodes.Ldc_I4_1),
+                new CodeMatch(ci => ci.Branches(out _)),
+                new CodeMatch(OpCodes.Ldc_I4_1),
+                new CodeMatch(ci => ci.Branches(out _)),
+                new CodeMatch(OpCodes.Ldc_I4_2),
+                new CodeMatch(ci => ci.IsStloc())
+            ).RemoveInstructions(5).Insert(Transpilers.EmitDelegate(MultiplierWithCountCheck));
+            return matcher.InstructionEnumeration();
+        }
+        
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(PlanetFactory), nameof(PlanetFactory.EntityFastTakeOut))]
+        private static IEnumerable<CodeInstruction> PlanetFactory_EntityFastTakeOut_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            matcher.MatchForward(false,
+                new CodeMatch(ci => ci.IsLdloc()),
+                new CodeMatch(OpCodes.Ldc_I4_2),
+                new CodeMatch(OpCodes.Ldc_I4_0),
+                new CodeMatch(ci => ci.opcode == OpCodes.Ldloca || ci.opcode == OpCodes.Ldloca_S)
+            ).Advance(1).RemoveInstruction().InsertAndAdvance(Transpilers.EmitDelegate(GetRealCount)).MatchForward(false,
+                new CodeMatch(OpCodes.Ldc_I4_1),
+                new CodeMatch(ci => ci.opcode == OpCodes.Bgt || ci.opcode == OpCodes.Bgt_S),
+                new CodeMatch(OpCodes.Ldc_I4_1),
+                new CodeMatch(ci => ci.opcode == OpCodes.Br || ci.opcode == OpCodes.Br_S),
+                new CodeMatch(OpCodes.Ldc_I4_2),
+                new CodeMatch(ci => ci.IsLdloc())
+            ).RemoveInstructions(5).Insert(Transpilers.EmitDelegate(MultiplierWithCountCheck));
+            return matcher.InstructionEnumeration();
+        }
+        
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(UITankWindow), nameof(UITankWindow._OnUpdate))]
+        private static IEnumerable<CodeInstruction> UITankWindow__OnUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Ldc_I4_1),
+                new CodeMatch(ci => ci.opcode == OpCodes.Bgt || ci.opcode == OpCodes.Bgt_S),
+                new CodeMatch(OpCodes.Ldc_I4_1),
+                new CodeMatch(ci => ci.opcode == OpCodes.Br || ci.opcode == OpCodes.Br_S),
+                new CodeMatch(OpCodes.Ldc_I4_2),
+                new CodeMatch(ci => ci.IsStloc())
+            );
+            matcher.Repeat(m => m.RemoveInstructions(5).InsertAndAdvance(Transpilers.EmitDelegate(MultiplierWithCountCheck)));
             return matcher.InstructionEnumeration();
         }
     }

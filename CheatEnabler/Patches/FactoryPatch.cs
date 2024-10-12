@@ -92,11 +92,12 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
         ControlPanelRemoteLogistics.Enable(ControlPanelRemoteLogisticsEnabled.Value);
         Enable(true);
         GameLogic.OnGameBegin += GameMain_Begin_Postfix_For_ImmBuild;
-        GameLogic.OnDataLoaded += () => WindTurbinesPowerGlobalCoverage.Enable(WindTurbinesPowerGlobalCoverageEnabled.Value);
+        GameLogic.OnDataLoaded += OnDataLoaded;
     }
 
     public static void Uninit()
     {
+        GameLogic.OnDataLoaded -= OnDataLoaded;
         GameLogic.OnGameBegin -= GameMain_Begin_Postfix_For_ImmBuild;
         Enable(false);
         ImmediateBuild.Enable(false);
@@ -112,6 +113,8 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
         GreaterPowerUsageInLogistics.Enable(false);
         ControlPanelRemoteLogistics.Enable(false);
     }
+
+    private static void OnDataLoaded() => WindTurbinesPowerGlobalCoverage.Enable(WindTurbinesPowerGlobalCoverageEnabled.Value);
 
     public static void OnUpdate()
     {

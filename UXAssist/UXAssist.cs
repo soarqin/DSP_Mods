@@ -131,6 +131,9 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
             "Build Tesla Tower and Wireless Power Tower alternately");
         FactoryPatch.BeltSignalsForBuyOutEnabled = Config.Bind("Factory", "BeltSignalsForBuyOut", false,
             "Belt signals for buy out dark fog items automatically");
+        FactoryPatch.TankFastFillInAndTakeOutEnabled = Config.Bind("Factory", "TankFastFillInAndTakeOut", false,
+            "Fast fill in to and take out from tanks");
+        FactoryPatch.TankFastFillInAndTakeOutMultiplier = Config.Bind("Factory", "TankFastFillInAndTakeOutMultiplier", 1000, "Speed multiplier for fast filling in to and takeing out from tanks");
         LogisticsPatch.LogisticsCapacityTweaksEnabled = Config.Bind("Factory", "LogisticsCapacityTweaks", true,
             "Logistics capacity related tweaks");
         LogisticsPatch.AllowOverflowInLogisticsEnabled = Config.Bind("Factory", "AllowOverflowInLogistics", false,

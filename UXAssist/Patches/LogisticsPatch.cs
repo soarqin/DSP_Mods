@@ -28,9 +28,6 @@ public static class LogisticsPatch
         LogisticsConstrolPanelImprovementEnabled.SettingChanged += (_, _) => LogisticsConstrolPanelImprovement.Enable(LogisticsConstrolPanelImprovementEnabled.Value);
         RealtimeLogisticsInfoPanelEnabled.SettingChanged += (_, _) => RealtimeLogisticsInfoPanel.Enable(RealtimeLogisticsInfoPanelEnabled.Value);
         RealtimeLogisticsInfoPanelBarsEnabled.SettingChanged += (_, _) => RealtimeLogisticsInfoPanel.EnableBars(RealtimeLogisticsInfoPanelBarsEnabled.Value);
-
-        GameLogic.OnGameBegin += RealtimeLogisticsInfoPanel.OnGameBegin;
-        GameLogic.OnDataLoaded += RealtimeLogisticsInfoPanel.OnDataLoaded;
     }
 
     public static void Start()
@@ -41,6 +38,9 @@ public static class LogisticsPatch
         RealtimeLogisticsInfoPanel.Enable(RealtimeLogisticsInfoPanelEnabled.Value);
         RealtimeLogisticsInfoPanel.EnableBars(RealtimeLogisticsInfoPanelBarsEnabled.Value);
         RealtimeLogisticsInfoPanel.InitGUI();
+
+        GameLogic.OnGameBegin += RealtimeLogisticsInfoPanel.OnGameBegin;
+        GameLogic.OnDataLoaded += RealtimeLogisticsInfoPanel.OnDataLoaded;
     }
 
     public static void Uninit()

@@ -67,6 +67,8 @@ public static class UIConfigWindow
         I18N.Add("Enhanced count control for hand-make", "Enhanced count control for hand-make", "手动制造物品的数量控制改进");
         I18N.Add("Enhanced count control for hand-make tips", "Maximum count is increased to 1000.\nHold Ctrl/Shift/Alt to change the count rapidly.", "最大数量提升至1000\n按住Ctrl/Shift/Alt可快速改变数量");
         I18N.Add("Quick build and dismantle stacking labs", "Quick build and dismantle stacking labs/storages/tanks(hold shift)", "快速建造和拆除堆叠研究站/储物仓/储液罐(按住shift)");
+        I18N.Add("Fast fill in to and take out from tanks", "Fast fill in to and take out from tanks", "储液罐快速注入和抽取液体");
+        I18N.Add("Speed Ratio", "Speed Ratio", "速度倍率");
         I18N.Add("Protect veins from exhaustion", "Protect veins from exhaustion", "保护矿脉不会耗尽");
         I18N.Add("Protect veins from exhaustion tips",
             "By default, the vein amount is protected at 100, and oil speed is protected at 1.0/s, you can set them yourself in config file.\nWhen reach the protection value, veins/oils steeps will not be mined/extracted any longer.\nClose this function to resume mining and pumping, usually when you have enough level on `Veins Utilization`",
@@ -240,6 +242,20 @@ public static class UIConfigWindow
         wnd.AddTipsButton2(x + checkBoxForMeasureTextWidth.Width + 5f, y + 6f, tab2, "Enhance control for logistic storage limits", "Enhance control for logistic storage limits tips", "enhanced-logistic-limit-tips");
         y += 36f;
         wnd.AddCheckBox(x, y, tab2, FactoryPatch.QuickBuildAndDismantleLabsEnabled, "Quick build and dismantle stacking labs");
+        y += 36f;
+        var cb = wnd.AddCheckBox(x, y, tab2, FactoryPatch.TankFastFillInAndTakeOutEnabled, "Fast fill in to and take out from tanks");
+        x += cb.Width + 5f;
+        txt = wnd.AddText2(x, y + 2f, tab2, "Speed Ratio", 13, "text-tank-fast-fill-speed-ratio");
+        var tankSlider = wnd.AddSlider(x + txt.preferredWidth + 5f, y + 7f, tab2, FactoryPatch.TankFastFillInAndTakeOutMultiplier, [2, 5, 10, 20, 50, 100, 500, 1000], "G", 100f).WithSmallerHandle();
+        EventHandler tankSettingChanged = (_, _) =>
+        {
+            tankSlider.SetEnable(FactoryPatch.TankFastFillInAndTakeOutEnabled.Value);
+        };
+        FactoryPatch.TankFastFillInAndTakeOutEnabled.SettingChanged += tankSettingChanged;
+        wnd.OnFree += () => { FactoryPatch.TankFastFillInAndTakeOutEnabled.SettingChanged -= tankSettingChanged; };
+        tankSettingChanged(null, null);
+        
+        x = 0;
         y += 36f;
         checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab2, FactoryPatch.ProtectVeinsFromExhaustionEnabled, "Protect veins from exhaustion");
         wnd.AddTipsButton2(x + checkBoxForMeasureTextWidth.Width + 5f, y + 6f, tab2, "Protect veins from exhaustion", "Protect veins from exhaustion tips", "protect-veins-tips");
