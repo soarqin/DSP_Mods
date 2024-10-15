@@ -12,6 +12,7 @@ public static class UIConfigWindow
 {
     private static RectTransform _windowTrans;
     private static RectTransform _dysonTab;
+    private static UIButton _dysonInitBtn;
     private static readonly UIButton[] DysonLayerBtn = new UIButton[10];
 
     public static void Init()
@@ -365,9 +366,9 @@ public static class UIConfigWindow
         wnd.AddCheckBox(x, y, tab4, DysonSpherePatch.OnlyConstructNodesEnabled, "Construct only structure points but frames");
         x = 400f;
         y = 10f;
-        wnd.AddButton(x, y, tab4, "Initialize Dyson Sphere", 16, "init-dyson-sphere", () =>
+        _dysonInitBtn = wnd.AddButton(x, y, tab4, "Initialize Dyson Sphere", 16, "init-dyson-sphere", () =>
             UIMessageBox.Show("Initialize Dyson Sphere".Translate(), "Initialize Dyson Sphere Confirm".Translate(), "取消".Translate(), "确定".Translate(), 2, null,
-                () => { DysonSpherePatch.InitCurrentDysonSphere(-1); })
+                () => { DysonSphereFunctions.InitCurrentDysonLayer(null, -1); })
         );
         y += 36f;
         wnd.AddText2(x, y, tab4, "Click to dismantle selected layer", 16, "text-dismantle-layer");
@@ -376,8 +377,11 @@ public static class UIConfigWindow
         {
             var id = i + 1;
             var btn = wnd.AddFlatButton(x, y, tab4, id.ToString(), 12, "dismantle-layer-" + id, () =>
-                UIMessageBox.Show("Dismantle selected layer".Translate(), "Dismantle selected layer Confirm".Translate(), "取消".Translate(), "确定".Translate(), 2, null,
-                    () => { DysonSpherePatch.InitCurrentDysonSphere(id); })
+                {
+                    var star = DysonSphereFunctions.CurrentStarForDysonSystem();
+                    UIMessageBox.Show("Dismantle selected layer".Translate(), "Dismantle selected layer Confirm".Translate(), "取消".Translate(), "确定".Translate(), 2, null,
+                        () => { DysonSphereFunctions.InitCurrentDysonLayer(star, id); });
+                }
             );
             ((RectTransform)btn.transform).sizeDelta = new Vector2(40f, 20f);
             DysonLayerBtn[i] = btn;
@@ -440,26 +444,22 @@ public static class UIConfigWindow
     private static void UpdateDysonShells()
     {
         if (!_dysonTab.gameObject.activeSelf) return;
-        var star = GameMain.localStar;
-        if (star != null)
+        var star = DysonSphereFunctions.CurrentStarForDysonSystem();
+        if (star == null)
         {
-            var dysonSpheres = GameMain.data?.dysonSpheres;
-            if (dysonSpheres?[star.index] != null)
+            for (var i = 0; i < 10; i++)
             {
-                var ds = dysonSpheres[star.index];
-                for (var i = 1; i <= 10; i++)
-                {
-                    var layer = ds.layersIdBased[i];
-                    DysonLayerBtn[i - 1].button.interactable = layer != null && layer.id == i;
-                }
-
-                return;
+                DysonLayerBtn[i].button.interactable = false;
             }
+            return;
         }
-
-        for (var i = 0; i < 10; i++)
+        var dysonSpheres = GameMain.data?.dysonSpheres;
+        if (dysonSpheres?[star.index] == null) return;
+        var ds = dysonSpheres[star.index];
+        for (var i = 1; i <= 10; i++)
         {
-            DysonLayerBtn[i].button.interactable = false;
+            var layer = ds.layersIdBased[i];
+            DysonLayerBtn[i - 1].button.interactable = layer != null && layer.id == i;
         }
     }
 }
