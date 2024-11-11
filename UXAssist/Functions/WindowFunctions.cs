@@ -226,7 +226,7 @@ public static class WindowFunctions
             if (index < 0)
                 break;
             arg = arg.Substring(index + profileSuffix.Length);
-            var wnd = WinApi.FindWindow(GameWindowClass, _gameWindowTitle);
+            var wnd = FindGameWindow();
             if (wnd == IntPtr.Zero) return;
             ProfileName = arg;
             _gameWindowTitle = $"Dyson Sphere Program - {arg}";
@@ -237,8 +237,19 @@ public static class WindowFunctions
 
     public static IntPtr FindGameWindow()
     {
-        if (_gameWindowHandle == IntPtr.Zero)
-            _gameWindowHandle = WinApi.FindWindow(GameWindowClass, _gameWindowTitle);
+        if (_gameWindowHandle != IntPtr.Zero)
+            return _gameWindowHandle;
+        var wnd = IntPtr.Zero;
+        while (true)
+        {
+            wnd = WinApi.FindWindowEx(IntPtr.Zero, wnd, GameWindowClass, _gameWindowTitle);
+            if (wnd == IntPtr.Zero)
+                return IntPtr.Zero;
+            WinApi.GetWindowThreadProcessId(wnd, out var pid);
+            if (pid == WinApi.GetCurrentProcessId())
+                break;
+        }
+        _gameWindowHandle = wnd;
         return _gameWindowHandle;
     }
 }
