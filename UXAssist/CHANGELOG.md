@@ -1,6 +1,12 @@
 ## Changlog
 
 * 1.2.8
+  + New feature: `Fast fill in to and take out from tanks`
+    - You can set multiplier for tanks' operation speed
+    - This affects manually fill in to and/or take out from tanks, as well as transfer from upper to lower level.
+  + Fixes to `Append mod profile name to game window title`:
+    - Fix a bug that window title is not set correctly when multiple instance is launched.
+    - Fix a bug that window title is not set correctly if BepInEx debug console is enabled.
   + `Real-time logistic stations info panel`: Fix a bug that item status bar appears unexpectedly.
 * 1.2.7
   + Fix some minor issues
@@ -12,6 +18,10 @@
   + New feature: `Set process priority`
   + New feature: `Set enabled CPU threads`
   + `Drag building power poles in maximum connection range`: Add a new config option `Build Tesla Tower and Wireless Power Tower alternately`
+
+<details>
+<summary>Older versions</summary>
+
 * 1.2.4
   + `Sunlight at night`:
     - Fix flickering issue while mecha is sailing.
@@ -35,7 +45,7 @@
     - This will change game running speed, down to 0.1x slower and up to 10x faster.
     - A pair of shortcut keys (`-` and `+`) to change the logical frame rate by -0.5x and +0.5x.
     - Note:
-      - High logical frame rate is not guaranteed to be stable, especially when factories are under heavy load. 
+      - High logical frame rate is not guaranteed to be stable, especially when factories are under heavy load.
       - This will not affect some game animations.
       - When set game speed in mod `Auxilaryfunction`, this feature will be disabled.
       - When mod `BulletTime` is installed, this feature will be hidden, but patch `BulletTime`'s speed control, to make its maximum speed 10x.
@@ -43,10 +53,6 @@
   + `Real-time logistic stations info panel`: Fix a crash issue.
   + `Dyson Sphere "Auto Fast Build"`: Fix possible wrong production records.
   + Codes refactored, for better maintainability.
-
-<details>
-<summary>Older versions</summary>
-
 * 1.1.6
   + New feature: `Scale up mouse cursor`
     - Note: This will enable software cursor mode, which may cause mouse movement lag on heavy load.
@@ -211,6 +217,12 @@
 ## 更新日志
 
 * 1.2.8
+  + 新功能：`储液罐快速注入和抽取液体`
+    - 你可以设置储液罐操作速度的倍率
+    - 影响手动注入和抽取，以及从储液罐上层传输到下层的速度
+  + 在游戏窗口标题中追加mod配置档案名的修复：
+    - 修复了多实例启动时窗口标题未正确设置的问题
+    - 修复了启用BepInEx调试控制台时窗口标题未正确设置的问题 
   + `物流运输站实时信息面板`：修复了一个物品状态条意外显示的问题
 * 1.2.7
   + 修复了一些小问题
@@ -222,6 +234,10 @@
   + 新功能：`设置进程优先级`
   + 新功能：`设置使用的CPU线程`
   + `拖动建造电线杆时自动使用最大连接距离间隔`：添加一个新的设置项`交替建造电力感应塔和无线输电塔`
+
+<details>
+<summary>更早的版本</summary>
+
 * 1.2.4
   + `夜间日光灯`：
     - 修复了航行时闪烁的问题
@@ -253,10 +269,6 @@
   + `物流运输站实时信息面板`：修复了一个崩溃问题
   + `戴森球自动快速建造`：修复了可能出现的错误生产记录
   + 代码重构，以获得更好的可维护性
-
-<details>
-<summary>更早的版本</summary>
-
 * 1.1.6
   + 新功能：`放大鼠标指针`
     - 注意：这将启用软件指针模式，可能会在CPU负载较重时导致鼠标移动延迟

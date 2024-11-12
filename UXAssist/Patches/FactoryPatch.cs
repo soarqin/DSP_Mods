@@ -1203,7 +1203,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                     break;
             }
 
-            if (__instance.productCount > 0 && __instance.insertTarget > 0 && __instance.productId > 0)
+            if (__instance is { productCount: > 0, insertTarget: > 0, productId: > 0 })
             {
                 var multiplier = 36000000.0 / __instance.period * miningSpeed;
                 if (__instance.type == EMinerType.Vein)
@@ -1220,7 +1220,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                 var stack = __instance.productCount < count ? __instance.productCount : count;
                 var outputCount = factory.InsertInto(__instance.insertTarget, 0, __instance.productId, (byte)stack, 0, out _);
                 __instance.productCount -= outputCount;
-                if (__instance.productCount == 0 && __instance.type == EMinerType.Vein)
+                if (__instance is { productCount: 0, type: EMinerType.Vein })
                 {
                     __instance.productId = 0;
                 }
@@ -1775,16 +1775,12 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
 
     private class TankFastFillInAndTakeOut : PatchImpl<TankFastFillInAndTakeOut>
     {
-        private static int GetRealCount()
-        {
-            return _tankFastFillInAndTakeOutMultiplierRealValue;
-        }
-
-        private static int MultiplierWithCountCheck(int count)
-        {
-            return Math.Min(count, _tankFastFillInAndTakeOutMultiplierRealValue);
-        }
-        
+        private static readonly CodeInstruction[] MultiplierWithCountCheck = [
+            new(OpCodes.Ldsfld, AccessTools.Field(typeof(FactoryPatch), nameof(_tankFastFillInAndTakeOutMultiplierRealValue))),
+            new(OpCodes.Call, AccessTools.Method(typeof(Math), nameof(Math.Min), [typeof(int), typeof(int)]))
+        ];
+        private static readonly CodeInstruction GetRealCount = new(OpCodes.Ldsfld, AccessTools.Field(typeof(FactoryPatch), nameof(_tankFastFillInAndTakeOutMultiplierRealValue)));
+       
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(PlanetFactory), nameof(PlanetFactory.EntityFastFillIn))]
         private static IEnumerable<CodeInstruction> PlanetFactory_EntityFastFillIn_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -1794,14 +1790,14 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                 new CodeMatch(ci => ci.IsStloc()),
                 new CodeMatch(OpCodes.Ldc_I4_2),
                 new CodeMatch(ci => ci.IsStloc())
-            ).Advance(1).RemoveInstruction().InsertAndAdvance(Transpilers.EmitDelegate(GetRealCount)).MatchForward(false,
+            ).Advance(1).RemoveInstruction().InsertAndAdvance(GetRealCount).MatchForward(false,
                 new CodeMatch(OpCodes.Ldc_I4_1),
                 new CodeMatch(ci => ci.Branches(out _)),
                 new CodeMatch(OpCodes.Ldc_I4_1),
                 new CodeMatch(ci => ci.Branches(out _)),
                 new CodeMatch(OpCodes.Ldc_I4_2),
                 new CodeMatch(ci => ci.IsStloc())
-            ).RemoveInstructions(5).Insert(Transpilers.EmitDelegate(MultiplierWithCountCheck));
+            ).RemoveInstructions(5).Insert(MultiplierWithCountCheck);
             return matcher.InstructionEnumeration();
         }
         
@@ -1815,14 +1811,14 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                 new CodeMatch(OpCodes.Ldc_I4_2),
                 new CodeMatch(OpCodes.Ldc_I4_0),
                 new CodeMatch(ci => ci.opcode == OpCodes.Ldloca || ci.opcode == OpCodes.Ldloca_S)
-            ).Advance(1).RemoveInstruction().InsertAndAdvance(Transpilers.EmitDelegate(GetRealCount)).MatchForward(false,
+            ).Advance(1).RemoveInstruction().InsertAndAdvance(GetRealCount).MatchForward(false,
                 new CodeMatch(OpCodes.Ldc_I4_1),
                 new CodeMatch(ci => ci.opcode == OpCodes.Bgt || ci.opcode == OpCodes.Bgt_S),
                 new CodeMatch(OpCodes.Ldc_I4_1),
                 new CodeMatch(ci => ci.opcode == OpCodes.Br || ci.opcode == OpCodes.Br_S),
                 new CodeMatch(OpCodes.Ldc_I4_2),
                 new CodeMatch(ci => ci.IsLdloc())
-            ).RemoveInstructions(5).Insert(Transpilers.EmitDelegate(MultiplierWithCountCheck));
+            ).RemoveInstructions(5).Insert(MultiplierWithCountCheck);
             return matcher.InstructionEnumeration();
         }
         
@@ -1839,8 +1835,44 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                 new CodeMatch(OpCodes.Ldc_I4_2),
                 new CodeMatch(ci => ci.IsStloc())
             );
-            matcher.Repeat(m => m.RemoveInstructions(5).InsertAndAdvance(Transpilers.EmitDelegate(MultiplierWithCountCheck)));
+            matcher.Repeat(m => m.RemoveInstructions(5).InsertAndAdvance(MultiplierWithCountCheck));
             return matcher.InstructionEnumeration();
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(TankComponent), nameof(TankComponent.TickOutput))]
+        private static bool TankComponent_TickOutput_Prefix(ref TankComponent __instance, PlanetFactory factory)
+        {
+            if (!__instance.outputSwitch || __instance.fluidCount <= 0)
+                return false;
+            var lastTankId = __instance.lastTankId;
+            if (lastTankId <= 0)
+                return false;
+            var factoryStorage = factory.factoryStorage;
+            ref var tankComponent = ref factoryStorage.tankPool[lastTankId];
+            if (!tankComponent.inputSwitch || (tankComponent.fluidId > 0 && tankComponent.fluidId != __instance.fluidId))
+                return false;
+            var left = tankComponent.fluidCapacity - tankComponent.fluidCount;
+            if (left <= 0)
+                return false;
+            if (tankComponent.fluidId == 0)
+                tankComponent.fluidId = __instance.fluidId;
+            var takeOut = Math.Min(left, _tankFastFillInAndTakeOutMultiplierRealValue);
+            if (takeOut >= __instance.fluidCount)
+            {
+                tankComponent.fluidCount += __instance.fluidCount;
+                tankComponent.fluidInc += __instance.fluidInc;
+                __instance.fluidId = 0;
+                __instance.fluidCount = 0;
+                __instance.fluidInc = 0;
+            }
+            else
+            {
+                var takeInc = __instance.split_inc(ref __instance.fluidCount, ref __instance.fluidInc, takeOut);
+                tankComponent.fluidCount += takeOut;
+                tankComponent.fluidInc += takeInc;
+            }
+            return false;
         }
     }
 }
