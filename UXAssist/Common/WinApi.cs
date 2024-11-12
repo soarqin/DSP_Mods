@@ -136,6 +136,9 @@ public static class WinApi
 
     [DllImport("kernel32", ExactSpelling = true)]
     public static extern int GetCurrentProcessId();
+    
+    [DllImport("kernel32", ExactSpelling = true)]
+    public static extern IntPtr GetConsoleWindow();
 
     [DllImport("kernel32", ExactSpelling = true, SetLastError = true)]
     public static extern bool SetProcessAffinityMask(IntPtr hProcess, ulong dwProcessAffinityMask);

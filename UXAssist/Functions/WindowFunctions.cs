@@ -240,13 +240,17 @@ public static class WindowFunctions
         if (_gameWindowHandle != IntPtr.Zero)
             return _gameWindowHandle;
         var wnd = IntPtr.Zero;
+        var consoleWnd = WinApi.GetConsoleWindow();
+        var currentProcessId = WinApi.GetCurrentProcessId();
         while (true)
         {
             wnd = WinApi.FindWindowEx(IntPtr.Zero, wnd, GameWindowClass, _gameWindowTitle);
             if (wnd == IntPtr.Zero)
                 return IntPtr.Zero;
+            if (wnd == consoleWnd)
+                continue;
             WinApi.GetWindowThreadProcessId(wnd, out var pid);
-            if (pid == WinApi.GetCurrentProcessId())
+            if (pid == currentProcessId)
                 break;
         }
         _gameWindowHandle = wnd;
