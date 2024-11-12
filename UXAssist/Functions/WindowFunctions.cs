@@ -113,6 +113,7 @@ public static class WindowFunctions
                 {
                     WinApi.SetWindowLongPtr(_gameWindowHandle, WinApi.GWLP_WNDPROC, _oldWndProc);
                 }
+
                 break;
             case WinApi.WM_SYSCOMMAND:
                 switch ((long)wParam & 0xFFF0L)
@@ -121,6 +122,7 @@ public static class WindowFunctions
                         if (GamePatch.LoadLastWindowRectEnabled.Value && !_gameLoaded) return (IntPtr)1L;
                         break;
                 }
+
                 break;
             case WinApi.WM_MOVING:
                 if (!GamePatch.LoadLastWindowRectEnabled.Value || _gameLoaded) break;
@@ -149,6 +151,7 @@ public static class WindowFunctions
                 Marshal.StructureToPtr(rect2, lParam, false);
                 break;
         }
+
         return WinApi.CallWindowProc(_oldWndProc, hWnd, uMsg, wParam, lParam);
     }
 
@@ -253,6 +256,7 @@ public static class WindowFunctions
             if (pid == currentProcessId)
                 break;
         }
+
         _gameWindowHandle = wnd;
         return _gameWindowHandle;
     }

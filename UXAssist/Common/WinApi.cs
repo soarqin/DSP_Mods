@@ -136,7 +136,7 @@ public static class WinApi
 
     [DllImport("kernel32", ExactSpelling = true)]
     public static extern int GetCurrentProcessId();
-    
+
     [DllImport("kernel32", ExactSpelling = true)]
     public static extern IntPtr GetConsoleWindow();
 
@@ -204,16 +204,11 @@ public static class WinApi
     [StructLayout(LayoutKind.Explicit)]
     public struct SYSTEM_LOGICAL_PROCESSOR_INFORMATION_UNION
     {
-        [FieldOffset(0)]
-        public PROCESSORCORE ProcessorCore;
-        [FieldOffset(0)]
-        public NUMANODE NumaNode;
-        [FieldOffset(0)]
-        public CACHE_DESCRIPTOR Cache;
-        [FieldOffset(0)]
-        private UInt64 Reserved1;
-        [FieldOffset(8)]
-        private UInt64 Reserved2;
+        [FieldOffset(0)] public PROCESSORCORE ProcessorCore;
+        [FieldOffset(0)] public NUMANODE NumaNode;
+        [FieldOffset(0)] public CACHE_DESCRIPTOR Cache;
+        [FieldOffset(0)] private UInt64 Reserved1;
+        [FieldOffset(8)] private UInt64 Reserved2;
     }
 
     public struct SYSTEM_LOGICAL_PROCESSOR_INFORMATION
@@ -223,7 +218,7 @@ public static class WinApi
         public SYSTEM_LOGICAL_PROCESSOR_INFORMATION_UNION ProcessorInformation;
     }
 
-    [DllImport(@"kernel32", SetLastError=true)]
+    [DllImport(@"kernel32", SetLastError = true)]
     private static extern bool GetLogicalProcessorInformation(
         IntPtr buffer,
         ref uint returnLength
@@ -264,12 +259,12 @@ public static class WinApi
                 result.ThreadCount += tcount;
                 if (tcount > 1)
                 {
-                    result.PerformanceCoreCount ++;
+                    result.PerformanceCoreCount++;
                     result.PerformanceCoreMask |= (ulong)buffer.ProcessorMask;
                 }
                 else
                 {
-                    result.EfficiencyCoreCount ++;
+                    result.EfficiencyCoreCount++;
                     result.EfficiencyCoreMask |= (ulong)buffer.ProcessorMask;
                 }
             }
@@ -278,6 +273,7 @@ public static class WinApi
         {
             Marshal.FreeHGlobal(ptr);
         }
+
         return result;
 
         int CountBitsSet(ulong mask)
@@ -288,6 +284,7 @@ public static class WinApi
                 mask &= mask - 1;
                 count++;
             }
+
             return count;
         }
     }
