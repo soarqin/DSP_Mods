@@ -974,7 +974,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                 return false;
             }
 
-            var consumeCount = 0U;
+            var res = 0U;
             int veinId;
             int times;
             switch (__instance.type)
@@ -986,7 +986,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                     if (__instance.time <= __instance.period)
                     {
                         __instance.time += (int)(power * __instance.speedDamper * __instance.speed * miningSpeed * __instance.veinCount);
-                        consumeCount = 1U;
+                        res = 1U;
                     }
 
                     if (__instance.time < __instance.period)
@@ -1120,58 +1120,67 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                         if (__instance.time < __instance.period)
                         {
                             __instance.time += (int)(power * __instance.speedDamper * __instance.speed * miningSpeed * workCount + 0.5f);
-                            consumeCount = 1U;
+                            res = 1U;
                         }
 
                         if (__instance.time >= __instance.period && __instance.productCount < 50)
                         {
                             __instance.productId = veinPool[veinId].productId;
                             times = __instance.time / __instance.period;
+                            if (times <= 0) break;
                             var outputCount = 0;
-                            if (miningRate > 0f && amount > _keepOilAmount)
+                            if (miningRate > 0f)
                             {
-                                var usedCount = 0;
-                                var maxAllowed = amount - _keepOilAmount;
-                                for (var j = 0; j < times; j++)
+                                if (amount > _keepOilAmount)
                                 {
-                                    __instance.seed = (uint)((__instance.seed % 2147483646U + 1U) * 48271UL % 2147483647UL) - 1U;
-                                    usedCount += __instance.seed / 2147483646.0 < miningRate ? 1 : 0;
-                                    outputCount++;
+                                    var usedCount = 0;
+                                    var maxAllowed = amount - _keepOilAmount;
+                                    for (var j = 0; j < times; j++)
+                                    {
+                                        __instance.seed = (uint)((__instance.seed % 2147483646U + 1U) * 48271UL % 2147483647UL) - 1U;
+                                        usedCount += __instance.seed / 2147483646.0 < miningRate ? 1 : 0;
+                                        outputCount++;
+                                    }
+
+                                    if (usedCount > 0)
+                                    {
+                                        if (usedCount > maxAllowed)
+                                        {
+                                            usedCount = maxAllowed;
+                                        }
+
+                                        amount = veinPool[veinId].amount -= usedCount;
+                                        var veinGroups = factory.veinGroups;
+                                        var groupIndex = veinPool[veinId].groupIndex;
+                                        veinGroups[groupIndex].amount -= usedCount;
+                                        factory.veinAnimPool[veinId].time = amount >= 25000 ? 0f : 1f - amount * VeinData.oilSpeedMultiplier;
+                                        if (amount <= 2500)
+                                        {
+                                            factory.NotifyVeinExhausted((int)veinPool[veinId].type, veinPool[veinId].pos);
+                                        }
+                                    }
                                 }
-
-                                if (usedCount > 0)
+                                else if (_keepOilAmount <= 2500)
                                 {
-                                    if (usedCount > maxAllowed)
-                                    {
-                                        usedCount = maxAllowed;
-                                    }
-
-                                    amount = veinPool[veinId].amount -= usedCount;
-                                    var veinGroups = factory.veinGroups;
-                                    var groupIndex = veinPool[veinId].groupIndex;
-                                    veinGroups[groupIndex].amount -= usedCount;
-                                    factory.veinAnimPool[veinId].time = amount >= 25000 ? 0f : 1f - amount * VeinData.oilSpeedMultiplier;
-                                    if (amount <= 2500)
-                                    {
-                                        factory.NotifyVeinExhausted((int)veinPool[veinId].type, veinPool[veinId].pos);
-                                    }
+                                    outputCount = times;
+                                }
+                                else
+                                {
+                                    break;
                                 }
                             }
-                            else if (_keepOilAmount <= 2500)
+                            else
                             {
                                 outputCount = times;
                             }
 
-                            if (outputCount > 0)
+                            __instance.productCount += outputCount;
+                            lock (productRegister)
                             {
-                                __instance.productCount += outputCount;
-                                lock (productRegister)
-                                {
-                                    productRegister[__instance.productId] += outputCount;
-                                }
-
-                                __instance.time -= __instance.period * outputCount;
+                                productRegister[__instance.productId] += outputCount;
                             }
+
+                            __instance.time -= __instance.period * outputCount;
                         }
                     }
 
@@ -1181,7 +1190,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                     if (__instance.time < __instance.period)
                     {
                         __instance.time += (int)(power * __instance.speedDamper * __instance.speed * miningSpeed);
-                        consumeCount = 1U;
+                        res = 1U;
                     }
 
                     if (__instance.time < __instance.period) break;
@@ -1230,7 +1239,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                 }
             }
 
-            __result = consumeCount;
+            __result = res;
             return false;
         }
     }
