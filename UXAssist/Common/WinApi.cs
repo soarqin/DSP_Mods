@@ -158,10 +158,10 @@ public static class WinApi
 
     #endregion
 
-    #region GetLogicalProcessorInformation
+    #region GetLogicalProcessorInformationEx
 
     [Flags]
-    public enum LOGICAL_PROCESSOR_RELATIONSHIP
+    private enum LOGICAL_PROCESSOR_RELATIONSHIP
     {
         RelationProcessorCore,
         RelationNumaNode,
@@ -171,55 +171,43 @@ public static class WinApi
         RelationAll = 0xffff
     }
 
-    [StructLayout(LayoutKind.Sequential)]
-    public struct PROCESSORCORE
+    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    private struct GROUP_AFFINITY
+    {
+        public nuint Mask;
+        public ushort Group;
+        public ushort Reserved0;
+        public ushort Reserved1;
+        public ushort Reserved3;
+    }
+    
+    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    private struct PROCESSOR_RELATIONSHIP
     {
         public byte Flags;
+        public byte EfficiencyClass;
+        public ushort Reserved0;
+        public uint Reserved1;
+        public uint Reserved2;
+        public uint Reserved3;
+        public uint Reserved4;
+        public ushort Reserved5;
+        public ushort GroupCount;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1)]
+        public GROUP_AFFINITY[] GroupMask;
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    public struct NUMANODE
+    private struct SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX
     {
-        public uint NodeNumber;
-    }
-
-    public enum PROCESSOR_CACHE_TYPE
-    {
-        CacheUnified,
-        CacheInstruction,
-        CacheData,
-        CacheTrace
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    public struct CACHE_DESCRIPTOR
-    {
-        public byte Level;
-        public byte Associativity;
-        public ushort LineSize;
-        public uint Size;
-        public PROCESSOR_CACHE_TYPE Type;
-    }
-
-    [StructLayout(LayoutKind.Explicit)]
-    public struct SYSTEM_LOGICAL_PROCESSOR_INFORMATION_UNION
-    {
-        [FieldOffset(0)] public PROCESSORCORE ProcessorCore;
-        [FieldOffset(0)] public NUMANODE NumaNode;
-        [FieldOffset(0)] public CACHE_DESCRIPTOR Cache;
-        [FieldOffset(0)] private UInt64 Reserved1;
-        [FieldOffset(8)] private UInt64 Reserved2;
-    }
-
-    public struct SYSTEM_LOGICAL_PROCESSOR_INFORMATION
-    {
-        public UIntPtr ProcessorMask;
         public LOGICAL_PROCESSOR_RELATIONSHIP Relationship;
-        public SYSTEM_LOGICAL_PROCESSOR_INFORMATION_UNION ProcessorInformation;
+        public uint Size;
+        public PROCESSOR_RELATIONSHIP Processor;
     }
-
-    [DllImport(@"kernel32", SetLastError = true)]
-    private static extern bool GetLogicalProcessorInformation(
+    
+    [DllImport("kernel32", SetLastError = true)]
+    private static extern bool GetLogicalProcessorInformationEx(
+        LOGICAL_PROCESSOR_RELATIONSHIP relationshipType,
         IntPtr buffer,
         ref uint returnLength
     );
@@ -238,34 +226,35 @@ public static class WinApi
     public static LogicalProcessorDetails GetLogicalProcessorDetails()
     {
         uint returnLength = 0;
-        GetLogicalProcessorInformation(IntPtr.Zero, ref returnLength);
+        GetLogicalProcessorInformationEx(LOGICAL_PROCESSOR_RELATIONSHIP.RelationProcessorCore, IntPtr.Zero, ref returnLength);
         var result = new LogicalProcessorDetails();
         if (Marshal.GetLastWin32Error() != ERROR_INSUFFICIENT_BUFFER) return result;
         var ptr = Marshal.AllocHGlobal((int)returnLength);
         try
         {
-            if (!GetLogicalProcessorInformation(ptr, ref returnLength))
+            if (!GetLogicalProcessorInformationEx(LOGICAL_PROCESSOR_RELATIONSHIP.RelationProcessorCore, ptr, ref returnLength))
                 return result;
-            var size = Marshal.SizeOf(typeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION));
-            var len = (int)returnLength / size;
+            uint offset = 0;
             var item = ptr;
-            for (var i = 0; i < len; i++)
+            while (offset < returnLength)
             {
-                var buffer = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION)Marshal.PtrToStructure(item, typeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION));
-                item += size;
+                var buffer = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX)Marshal.PtrToStructure(item, typeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX));
+                offset += buffer.Size;
+                item += (int)buffer.Size;
                 if (buffer.Relationship != LOGICAL_PROCESSOR_RELATIONSHIP.RelationProcessorCore) continue;
                 result.CoreCount++;
-                var tcount = CountBitsSet((ulong)buffer.ProcessorMask);
+                var mask = buffer.Processor.GroupMask[0].Mask;
+                var tcount = CountBitsSet(mask);
                 result.ThreadCount += tcount;
-                if (tcount > 1)
+                if (buffer.Processor.EfficiencyClass > 0)
                 {
                     result.PerformanceCoreCount++;
-                    result.PerformanceCoreMask |= (ulong)buffer.ProcessorMask;
+                    result.PerformanceCoreMask |= mask;
                 }
                 else
                 {
                     result.EfficiencyCoreCount++;
-                    result.EfficiencyCoreMask |= (ulong)buffer.ProcessorMask;
+                    result.EfficiencyCoreMask |= mask;
                 }
             }
         }
