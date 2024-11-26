@@ -1,5 +1,10 @@
 ## Changlog
 
+* 1.2.9
+  + `Protect veins from exhaustion`:
+    - Fix a bug that vein protection causes crashes (#50).
+    - Fix a bug that minimum oil speed in config is not working (#50).
+    - Fix a bug that oil is not extracted when vein protection is enabled in infinite resource mode (#52).
 * 1.2.8
   + New feature: `Fast fill in to and take out from tanks`
     - You can set multiplier for tanks' operation speed
@@ -216,6 +221,11 @@
 
 ## 更新日志
 
+* 1.2.9
+  + `保护矿脉不会耗尽`：
+    - 修复了矿脉保护导致崩溃的问题(#50)
+    - 修复了配置中的最小采油速度不起作用的问题(#50)
+    - 修复了无限资源模式下油井保护导致无法采油的问题(#52)
 * 1.2.8
   + 新功能：`储液罐快速注入和抽取液体`
     - 你可以设置储液罐操作速度的倍率
