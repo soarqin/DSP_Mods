@@ -60,6 +60,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         I18N.Add("KEYOffgridForPaths", "Build belts offgrid", "脱离网格建造传送带");
 
         BeltSignalsForBuyOut.InitPersist();
+        ProtectVeinsFromExhaustion.InitConfig();
         UnlimitInteractiveEnabled.SettingChanged += (_, _) => UnlimitInteractive.Enable(UnlimitInteractiveEnabled.Value);
         RemoveSomeConditionEnabled.SettingChanged += (_, _) => RemoveSomeConditionBuild.Enable(RemoveSomeConditionEnabled.Value);
         NightLightEnabled.SettingChanged += (_, _) => NightLight.Enable(NightLightEnabled.Value);
@@ -955,7 +956,12 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
     {
         public static int KeepVeinAmount = 100;
         public static float KeepOilSpeed = 1f;
-        private static readonly int KeepOilAmount = Math.Max((int)(KeepOilSpeed / 0.00004f + 0.5f), 2500);
+        private static int _keepOilAmount;
+
+        public static void InitConfig()
+        {
+            _keepOilAmount = Math.Max((int)(KeepOilSpeed / 0.00004f + 0.5f), 2500);
+        }
 
         [HarmonyPrefix]
         [HarmonyPatch(typeof(MinerComponent), nameof(MinerComponent.InternalUpdate))]
@@ -1059,8 +1065,6 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                                             factory.RemoveVeinWithComponents(veinId);
                                             factory.RecalculateVeinGroup(groupIndex);
                                             factory.NotifyVeinExhausted(venType, pos);
-                                            __instance.RemoveVeinFromArray(__instance.currentVeinIndex);
-                                            __instance.GetMinimumVeinAmount(factory, veinPool);
                                         }
                                         else
                                         {
@@ -1124,10 +1128,10 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                             __instance.productId = veinPool[veinId].productId;
                             times = __instance.time / __instance.period;
                             var outputCount = 0;
-                            if (miningRate > 0f && amount > KeepOilAmount)
+                            if (miningRate > 0f && amount > _keepOilAmount)
                             {
                                 var usedCount = 0;
-                                var maxAllowed = amount - KeepOilAmount;
+                                var maxAllowed = amount - _keepOilAmount;
                                 for (var j = 0; j < times; j++)
                                 {
                                     __instance.seed = (uint)((__instance.seed % 2147483646U + 1U) * 48271UL % 2147483647UL) - 1U;
@@ -1153,7 +1157,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                                     }
                                 }
                             }
-                            else if (KeepOilAmount <= 2500)
+                            else if (_keepOilAmount <= 2500)
                             {
                                 outputCount = times;
                             }
