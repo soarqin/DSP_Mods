@@ -1,5 +1,8 @@
 ## Changlog
 
+* 1.2.10
+  + `Set enabled CPU threads`: Fix hybrid-architect check for CPUs without hyper-threading
+  + `Re-initialize Dyson Spheres` and `Quick dismantle Dyson Shells`: Fix possible crashes and a display issue, while Dyson Sphere panel is actived. 
 * 1.2.9
   + `Protect veins from exhaustion`:
     - Fix a bug that vein protection causes crashes (#50).
@@ -221,6 +224,9 @@
 
 ## 更新日志
 
+* 1.2.10
+  + `设置使用的CPU线程`：修复了对没有超线程的CPU的大小核检查
+  + `初始化戴森球`和`快速拆除戴森壳`：修复了在戴森球面板激活时可能导致崩溃的问题，以及显示错误的问题。
 * 1.2.9
   + `保护矿脉不会耗尽`：
     - 修复了矿脉保护导致崩溃的问题(#50)
