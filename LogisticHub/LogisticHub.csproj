@@ -3,13 +3,14 @@
 
   <PropertyGroup>
     <TargetFramework>net472</TargetFramework>
-    <AssemblyName>LogisticMiner</AssemblyName>
-    <BepInExPluginGuid>org.soardev.logisticminer</BepInExPluginGuid>
-    <Description>DSP MOD - LogisticMiner</Description>
-    <Version>0.2.0</Version>
+    <BepInExPluginGuid>org.soardev.logistichub</BepInExPluginGuid>
+    <Description>DSP MOD - LogisticHub</Description>
+    <Version>0.1.0</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
     <RestoreAdditionalProjectSources>https://nuget.bepinex.dev/v3/index.json</RestoreAdditionalProjectSources>
+    <PackageId>LogisticHub</PackageId>
+    <RootNamespace>LogisticHub</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,12 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="Assembly-CSharp">
-      <HintPath>..\AssemblyFromGame\Assembly-CSharp.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.UI">
-      <HintPath>..\AssemblyFromGame\UnityEngine.UI.dll</HintPath>
-    </Reference>
+    <ProjectReference Include="..\UXAssist\UXAssist.csproj" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">

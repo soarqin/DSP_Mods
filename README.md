@@ -9,10 +9,10 @@ Add various cheat functions while disabling abnormal determinants
 
 Moved [to another repo](https://github.com/soarqin/DSP_Mods_TO/tree/master/CompressSave)
 
-## [LogisticMiner](LogisticMiner)
+## [LogisticHub](LogisticHub)
 
-Logistic Storages can mine all ores/water on current planet
-物流塔可以采集当前星球的全部矿产(以及水)
+Cheat functions for Logistic Storages, make them mine resources on the planet and exchange items from certain buildings
+物流塔作弊功能，使其可以在星球上采矿并与特定建筑物交换物品
 
 ## [HideTips](HideTips)
 

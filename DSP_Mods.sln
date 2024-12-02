@@ -4,7 +4,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UXAssist", "UXAssist\UXAssi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CheatEnabler", "CheatEnabler\CheatEnabler.csproj", "{F9F16B62-D1D3-466B-BE22-E64B9EA957C2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LogisticMiner", "LogisticMiner\LogisticMiner.csproj", "{7149D717-C913-4153-9425-38CB9D087F83}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LogisticHub", "LogisticHub\LogisticHub.csproj", "{7149D717-C913-4153-9425-38CB9D087F83}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HideTips", "HideTips\HideTips.csproj", "{4EABD71D-477F-448B-801B-48F8745A3FA7}"
 EndProject
