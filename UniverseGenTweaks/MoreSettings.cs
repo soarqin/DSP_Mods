@@ -308,7 +308,7 @@ public class MoreSettings
     }
 
     [HarmonyPrefix]
-    [HarmonyPatch(typeof(UIGalaxySelect), nameof(UIGalaxySelect.EnterGame))]
+    [HarmonyPatch(typeof(UIGalaxySelect), nameof(UIGalaxySelect.ApplySetting))]
     private static void UIGalaxySelect_EnterGame_Prefix()
     {
         _gameMinDist = _minDist;
