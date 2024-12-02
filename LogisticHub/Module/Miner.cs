@@ -1,25 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
-using BepInEx;
 using BepInEx.Configuration;
 using HarmonyLib;
+using UXAssist.Common;
 using Random = UnityEngine.Random;
 
-namespace LogisticMiner;
+namespace LogisticHub.Module;
 
-[BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
-public class LogisticMiner : BaseUnityPlugin
+public class Miner: PatchImpl<Miner>
 {
-    private new static readonly BepInEx.Logging.ManualLogSource Logger =
-        BepInEx.Logging.Logger.CreateLogSource(PluginInfo.PLUGIN_NAME);
-
-    private static long _oreEnergyConsume = 2000000;
-    private static long _oilEnergyConsume = 3600000;
-    private static long _waterEnergyConsume = 20000000;
-    private static int _waterSpeed = 100;
-    private static int _miningScale;
-    private static int _fuelIlsSlot = 3;
-    private static int _fuelPlsSlot = 2;
+    public static ConfigEntry<bool> Enabled;
+    public static ConfigEntry<long> OreEnergyConsume;
+    public static ConfigEntry<long> OilEnergyConsume;
+    public static ConfigEntry<long> WaterEnergyConsume;
+    public static ConfigEntry<int> WaterSpeed;
+    public static ConfigEntry<int> MiningScale;
+    public static ConfigEntry<int> FuelIlsSlot;
+    public static ConfigEntry<int> FuelPlsSlot;
 
     private static float _frame;
     private static float _miningCostRateByTech;
@@ -34,33 +31,15 @@ public class LogisticMiner : BaseUnityPlugin
     private static readonly Dictionary<int, VeinCacheData> PlanetVeinCacheData = new();
     private static readonly Dictionary<int, (long, bool)> Fuels = new();
 
-    private bool _cfgEnabled = true;
-
-    private void Awake()
+    public static void Init()
     {
-        _cfgEnabled = Config.Bind("General", "Enabled", _cfgEnabled, "enable/disable this plugin").Value;
-        _oreEnergyConsume = Config.Bind("General", "EnergyConsumptionForOre", _oreEnergyConsume / 2000,
-            "Energy consumption for each ore vein group(in kW)").Value * 2000;
-        _oilEnergyConsume = Config.Bind("General", "EnergyConsumptionForOil", _oilEnergyConsume / 2000,
-            "Energy consumption for each oil seep(in kW)").Value * 2000;
-        _waterEnergyConsume = Config.Bind("General", "EnergyConsumptionForWater", _waterEnergyConsume / 2000,
-            "Energy consumption for water slot(in kW)").Value * 2000;
-        _waterSpeed = Config.Bind("General", "WaterMiningSpeed", _waterSpeed,
-            "Water mining speed (count per second)").Value;
-        _miningScale = Config.Bind("General", "MiningScale", _miningScale,
-                "0 for Auto(which means having researched makes mining scale 300, otherwise 100). Mining scale(in percents) for slots below half of slot limits, and the scale reduces to 100% smoothly till reach full. Please note that the power consumption increases by the square of the scale which is the same as Advanced Mining Machine")
-            .Value;
-        _fuelIlsSlot = Config.Bind("General", "ILSFuelSlot", _fuelIlsSlot + 1,
-                new ConfigDescription("Fuel slot for ILS, set to 0 to disable",
-                    new AcceptableValueRange<int>(0, 5), Array.Empty<object>()))
-            .Value - 1;
-        _fuelPlsSlot = Config.Bind("General", "PLSFuelSlot", _fuelPlsSlot + 1,
-                new ConfigDescription("Fuel slot for PLS, set to 0 to disable",
-                    new AcceptableValueRange<int>(0, 4), Array.Empty<object>()))
-            .Value - 1;
-        if (!_cfgEnabled) return;
+        Enable(Enabled.Value);
+        Enabled.SettingChanged += (_, _) => Enable(Enabled.Value);
+    }
 
-        Harmony.CreateAndPatchAll(typeof(LogisticMiner));
+    public static void Uninit()
+    {
+        Enable(false);
     }
 
     private static int SplitIncLevel(ref int n, ref int m, int p)
@@ -102,7 +81,7 @@ public class LogisticMiner : BaseUnityPlugin
     [HarmonyPatch(typeof(DSPGame), "StartGame", typeof(string))]
     private static void OnGameStart()
     {
-        Logger.LogInfo("Game Start");
+        LogisticHub.Logger.LogInfo("Game Start");
         PlanetVeinCacheData.Clear();
         Fuels.Clear();
         foreach (var data in LDB.items.dataArray)
@@ -175,12 +154,12 @@ public class LogisticMiner : BaseUnityPlugin
     }
 
     [HarmonyPostfix]
-    [HarmonyPatch(typeof(PlanetFactory), "Init")]
-    [HarmonyPatch(typeof(PlanetFactory), "RecalculateVeinGroup")]
-    [HarmonyPatch(typeof(PlanetFactory), "RecalculateAllVeinGroups")]
-    private static void NeedRecalcVeins(PlanetFactory __instance)
+    [HarmonyPatch(typeof(PlanetFactory), nameof(PlanetFactory.Init))]
+    [HarmonyPatch(typeof(PlanetFactory), nameof(PlanetFactory.RecalculateVeinGroup))]
+    [HarmonyPatch(typeof(PlanetFactory), nameof(PlanetFactory.RecalculateAllVeinGroups))]
+    private static void NeedRecalcVeins(PlanetFactory instance)
     {
-        RecalcVeins(__instance);
+        RecalcVeins(instance);
     }
 
     private static void RecalcVeins(PlanetFactory factory)
@@ -205,11 +184,11 @@ public class LogisticMiner : BaseUnityPlugin
 
     [HarmonyPostfix]
     [HarmonyPatch(typeof(FactorySystem), "CheckBeforeGameTick")]
-    private static void FactorySystemLogisticMiner(FactorySystem __instance)
+    private static void FactorySystemLogisticMiner(FactorySystem instance)
     {
         if (_miningSpeedScaleLong <= 0)
             return;
-        var factory = __instance.factory;
+        var factory = instance.factory;
         var planetId = factory.planetId;
         lock (PlanetVeinCacheData)
         {
@@ -227,9 +206,9 @@ public class LogisticMiner : BaseUnityPlugin
                 return;
             }
 
-            var planetTransport = __instance.planet.factory.transport;
+            var planetTransport = instance.planet.factory.transport;
             var factoryProductionStat =
-                GameMain.statistics.production.factoryStatPool[__instance.factory.index];
+                GameMain.statistics.production.factoryStatPool[instance.factory.index];
             var productRegister = factoryProductionStat?.productRegister;
             PerformanceMonitor.BeginSample(ECpuWorkEntry.Miner);
             do
@@ -251,12 +230,12 @@ public class LogisticMiner : BaseUnityPlugin
                             continue;
 
                         var isVein = vcd.HasVein(stationStore.itemId);
-                        var isVeinOrWater = isVein || stationStore.itemId == __instance.planet.waterItemId;
+                        var isVeinOrWater = isVein || stationStore.itemId == instance.planet.waterItemId;
                         if (!isVeinOrWater) continue;
                         int amount;
                         long energyConsume;
                         isCollecting = true;
-                        var miningScale = _miningScale;
+                        var miningScale = MiningScale.Value;
                         if (miningScale == 0)
                         {
                             miningScale = _advancedMiningMachineUnlocked ? 300 : 100;
@@ -282,7 +261,7 @@ public class LogisticMiner : BaseUnityPlugin
                         }
                         else
                         {
-                            energyConsume = (_waterEnergyConsume * miningScale * miningScale + 9999L) / 100L /
+                            energyConsume = (WaterEnergyConsume.Value * miningScale * miningScale + 9999L) / 100L /
                                             _miningSpeedScaleLong;
                             if (stationComponent.energy < energyConsume)
                             {
@@ -290,7 +269,7 @@ public class LogisticMiner : BaseUnityPlugin
                                 continue;
                             }
 
-                            amount = _waterSpeed * miningScale / 100;
+                            amount = WaterSpeed.Value * miningScale / 100;
                         }
 
                         if (amount <= 0) continue;
@@ -301,7 +280,7 @@ public class LogisticMiner : BaseUnityPlugin
                     }
 
                     if (!isCollecting || stationComponent.energy * 2 >= stationComponent.energyMax) continue;
-                    var index = stationComponent.isStellar ? _fuelIlsSlot : _fuelPlsSlot;
+                    var index = (stationComponent.isStellar ? FuelIlsSlot.Value : FuelPlsSlot.Value) - 1;
                     if (index < 0 || index >= storage.Length)
                         continue;
                     var fuelCount = storage[index].count;
@@ -342,8 +321,8 @@ public class LogisticMiner : BaseUnityPlugin
     {
         public float FrameNext;
 
-        /* stores list of indices to veinData, with an extra INT which indicates cout of veinGroups at last */
-        private Dictionary<int, List<int>> _veins = new();
+        /* [0] indicates cout of veinGroups, [1..Last] store list of indices to VeinData*/
+        private readonly Dictionary<int, List<int>> _veins = new();
         private int _mineIndex = -1;
 
         public bool HasVein(int productId)
@@ -353,7 +332,7 @@ public class LogisticMiner : BaseUnityPlugin
 
         public void GenVeins(PlanetFactory factory)
         {
-            _veins = new Dictionary<int, List<int>>();
+            _veins.Clear();
             var veinPool = factory.veinPool;
             var vg = new Dictionary<int, HashSet<int>>();
             for (var i = 0; i < veinPool.Length; i++)
@@ -366,7 +345,7 @@ public class LogisticMiner : BaseUnityPlugin
                 }
                 else
                 {
-                    _veins.Add(productId, [i]);
+                    _veins.Add(productId, [0, i]);
                 }
 
                 if (vg.TryGetValue(productId, out var hs))
@@ -381,12 +360,11 @@ public class LogisticMiner : BaseUnityPlugin
 
             foreach (var pair in vg)
             {
-                _veins[pair.Key].Add(pair.Value.Count);
+                _veins[pair.Key][0] = pair.Value.Count;
             }
         }
 
-        public (int, long) Mine(PlanetFactory factory, int productId, int percent, long miningSpeedScale,
-            long energyMax)
+        public (int, long) Mine(PlanetFactory factory, int productId, int percent, long miningSpeedScale, long energyMax)
         {
             if (!_veins.TryGetValue(productId, out var veins))
             {
@@ -401,15 +379,14 @@ public class LogisticMiner : BaseUnityPlugin
             /* if is Oil */
             if (productId == 1007)
             {
-                energy = (_oilEnergyConsume * length * percent * percent + 9999L) / 100L / miningSpeedScale;
+                energy = (OilEnergyConsume.Value * length * percent * percent + 9999L) / 100L / miningSpeedScale;
                 if (energy > energyMax)
                     return (-1, -1L);
-                float countf = 0f;
+                var countf = 0f;
                 var veinsPool = factory.veinPool;
-                for (var i = 0; i < length; i++)
+                for (var i = length; i > 0; i--)
                 {
-                    ref var vd = ref veinsPool[veins[i]];
-                    countf += vd.amount * 4 * VeinData.oilSpeedMultiplier;
+                    countf += veinsPool[veins[i]].amount * 4 * VeinData.oilSpeedMultiplier;
                 }
 
                 count = ((int)countf * percent + 99) / 100;
@@ -423,7 +400,7 @@ public class LogisticMiner : BaseUnityPlugin
                 count = (length * percent + 99) / 100;
                 if (count == 0)
                     return (-1, -1L);
-                energy = (_oreEnergyConsume * veins[length] * percent * percent + 9999L) / 100L / miningSpeedScale;
+                energy = (OreEnergyConsume.Value * veins[0] * percent * percent + 9999L) / 100L / miningSpeedScale;
                 if (energy > energyMax)
                     return (-1, -1L);
                 barrier = _miningCostBarrier;
@@ -434,7 +411,7 @@ public class LogisticMiner : BaseUnityPlugin
             var total = 0;
             for (; count > 0; count--)
             {
-                _mineIndex = (_mineIndex + 1) % length;
+                _mineIndex = _mineIndex % length + 1;
                 var index = veins[_mineIndex];
                 ref var vd = ref veinsData[index];
                 int groupIndex;
