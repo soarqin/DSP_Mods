@@ -1,0 +1,10 @@
+﻿{
+  "name": "LogisticHub",
+  "version_number": "0.1.0",
+  "website_url": "https://github.com/soarqin/DSP_Mods/tree/master/LogisticHub",
+  "description": "Cheat functions to Logistic Storages which make them miner and items hub / 物流塔作弊功能，使其成为矿机和物品枢纽",
+  "dependencies": [
+    "xiaoye97-BepInEx-5.4.17",
+    "soarqin-UXAssist-1.2.0"
+  ]
+}
