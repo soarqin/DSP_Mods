@@ -69,14 +69,15 @@ public class PersistPatch : PatchImpl<PersistPatch>
     {
         var matcher = new CodeMatcher(instructions, generator);
         matcher.MatchForward(false,
-            new CodeMatch(OpCodes.Ldloc_2),
+            new CodeMatch(ci => ci.opcode == OpCodes.Ldloc || ci.opcode == OpCodes.Ldloc_S),
             new CodeMatch(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Component), nameof(Component.gameObject))),
             new CodeMatch(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(GameObject), nameof(GameObject.activeSelf)))
         );
+        var ldLocOpr = matcher.Operand;
         var labels = matcher.Labels;
         matcher.Labels = null;
         matcher.Insert(
-            new CodeInstruction(OpCodes.Ldloc_2).WithLabels(labels),
+            new CodeInstruction(OpCodes.Ldloc_S, ldLocOpr).WithLabels(labels),
             new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Component), nameof(Component.transform))),
             new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Transform), nameof(Transform.parent))),
             new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Transform), nameof(Transform.parent))),

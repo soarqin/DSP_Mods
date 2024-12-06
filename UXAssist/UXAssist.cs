@@ -273,7 +273,7 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
                 var src = mainMenu.newGameButton;
                 var parent = src.transform.parent;
                 var btn = Instantiate(src, parent);
-                btn.name = "button-cheatenabler-config";
+                btn.name = "button-uxassist-config";
                 var l = btn.text.GetComponent<Localizer>();
                 if (l != null)
                 {
