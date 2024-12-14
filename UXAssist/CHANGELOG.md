@@ -1,5 +1,8 @@
 ## Changlog
 
+* 1.2.11
+  + `Construct only structure points but frames`: Fix a bug that frames are still not constructed when this function is disabled.
+  + Fix an issue caused by game update: tips are not shown when mouse hovering on tips button.
 * 1.2.10
   + `Set enabled CPU threads`: Fix hybrid-architect check for CPUs without hyper-threading
   + `Re-initialize Dyson Spheres` and `Quick dismantle Dyson Shells`: Fix possible crashes and a display issue, while Dyson Sphere panel is actived. 
@@ -224,6 +227,9 @@
 
 ## 更新日志
 
+* 1.2.11
+  + `只建造节点不建造框架`：修复了关闭此功能时框架不进行建造的问题
+  + 修复了游戏更新导致的提示按钮鼠标悬停时不显示提示文字的问题
 * 1.2.10
   + `设置使用的CPU线程`：修复了对没有超线程的CPU的大小核检查
   + `初始化戴森球`和`快速拆除戴森壳`：修复了在戴森球面板激活时可能导致崩溃的问题，以及显示错误的问题。
