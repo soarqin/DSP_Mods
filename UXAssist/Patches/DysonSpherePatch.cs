@@ -478,6 +478,16 @@ public class DysonSpherePatch: PatchImpl<DysonSpherePatch>
     {
         protected override void OnEnable()
         {
+            RecheckDysonSphereAutoNodes();
+        }
+        
+        protected override void OnDisable()
+        {
+            RecheckDysonSphereAutoNodes();
+        }
+
+        private static void RecheckDysonSphereAutoNodes()
+        {
             var spheres = GameMain.data?.dysonSpheres;
             if (spheres == null) return;
             foreach (var sphere in spheres)
