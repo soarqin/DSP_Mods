@@ -474,6 +474,7 @@ public class DysonSpherePatch: PatchImpl<DysonSpherePatch>
         }
     }
 
+    [PatchSetCallbackFlag(PatchCallbackFlag.CallOnDisableAfterUnpatch)]
     private class OnlyConstructNodes: PatchImpl<OnlyConstructNodes>
     {
         protected override void OnEnable()
