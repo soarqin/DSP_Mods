@@ -741,7 +741,7 @@ public static class LogisticsPatch
 
             var factory = localPlanet.factory;
             var transport = factory?.transport;
-            if (transport == null || transport.stationCursor == 0 || (UIGame.viewMode != EViewMode.Normal && UIGame.viewMode != EViewMode.Globe))
+            if (transport is not { stationCursor: > 1 } || (UIGame.viewMode != EViewMode.Normal && UIGame.viewMode != EViewMode.Globe))
             {
                 if (_stationTipRoot.activeSelf)
                 {
