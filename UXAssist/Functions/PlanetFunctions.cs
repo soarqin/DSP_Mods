@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Threading;
 using BepInEx.Configuration;
 using UnityEngine;
@@ -112,7 +113,7 @@ public static class PlanetFunctions
         {
             foreach (var sc in stationPool)
             {
-                if (sc == null || sc.id <= 0) continue;
+                if (sc is not { id: > 0 }) continue;
                 sc.storage = new StationStore[sc.storage.Length];
                 sc.needs = new int[sc.needs.Length];
                 int protoId = factory.entityPool[sc.entityId].protoId;
@@ -175,6 +176,13 @@ public static class PlanetFunctions
         factory.factoryStorage = new FactoryStorage(planet);
         factory.powerSystem = new PowerSystem(planet);
         factory.constructionSystem = new ConstructionSystem(planet);
+        factory.InitVeinHashAddress();
+        factory.RecalculateAllVeinGroups();
+        factory.InitVegeHashAddress();
+        factory.ruinCursor = 1;
+        factory.ruinRecycleCursor = 0;
+        factory.ruinCapacity = 0;
+        factory.SetRuinCapacity(isCombatMode ? 1024 : 32);
         factory.factorySystem = new FactorySystem(planet);
         factory.enemySystem = new EnemyDFGroundSystem(planet);
         factory.combatGroundSystem = new CombatGroundSystem(planet);
@@ -182,6 +190,15 @@ public static class PlanetFunctions
         factory.planetATField = new PlanetATField(planet);
         factory.transport = new PlanetTransport(GameMain.data, planet);
         factory.transport.Init();
+        var mem = new MemoryStream();
+        var writer = new BinaryWriter(mem);
+        factory.platformSystem.Export(writer);
+        factory.platformSystem = new PlatformSystem(planet, true);
+        mem.Position = 0;
+        var reader = new BinaryReader(mem);
+        factory.platformSystem.Import(reader);
+        mem.Close();
+        mem.Dispose();
         factory.digitalSystem = new DigitalSystem(planet);
 
         //GameMain.data.statistics.production.CreateFactoryStat(index);
