@@ -1384,14 +1384,22 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         {
             begin = begin.normalized;
             end = end.normalized;
-            var intervalAll = interval.x;
-            var radTotal = Mathf.Acos(Vector3.Dot(begin, end));
-            var distTotal = radTotal * planetRadius;
+            var finalCount = 1;
             var ignoreGrid = VFInput._ignoreGrid;
+            if (ignoreGrid)
+                snaps[0] = begin;
+            else
+                snaps[0] = planetGrid.SnapTo(begin);
+            var dot = Vector3.Dot(begin, end);
+            if (dot is > 0.999999f or < -0.999999f)
+                return 1;
+            var distTotal = Mathf.Acos(dot) * planetRadius;
 
-            var maxCount = snaps.Length;
-            var finalCount = 0;
+            var intervalAll = interval.x;
             var maxT = 1f - intervalAll * 0.5f / distTotal;
+            if (maxT < 0f)
+                return 1;
+            var maxCount = snaps.Length;
             while (finalCount < maxCount)
             {
                 var t = finalCount * intervalAll / distTotal;

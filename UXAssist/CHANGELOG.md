@@ -1,7 +1,9 @@
 ## Changlog
 
-* 1.2.11
+* 1.2.12
   + `Construct only structure points but frames`: Fix a bug that frames are still not constructed when this function is disabled.
+  + `Drag building power poles in maximum connection range`: Fix a bug that single power pole cannot be placed at some positions.
+* 1.2.11
   + Fix an issue caused by game update: tips are not shown when mouse hovering on tips button.
 * 1.2.10
   + `Set enabled CPU threads`: Fix hybrid-architect check for CPUs without hyper-threading
@@ -227,8 +229,10 @@
 
 ## 更新日志
 
-* 1.2.11
+* 1.2.12
   + `只建造节点不建造框架`：修复了关闭此功能时框架不进行建造的问题
+  + `拖动建造电线杆时自动使用最大连接距离间隔`：修复了某些位置无法放置单个电线杆的问题
+* 1.2.11
   + 修复了游戏更新导致的提示按钮鼠标悬停时不显示提示文字的问题
 * 1.2.10
   + `设置使用的CPU线程`：修复了对没有超线程的CPU的大小核检查
