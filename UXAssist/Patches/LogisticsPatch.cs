@@ -306,6 +306,8 @@ public static class LogisticsPatch
     {
         private static int ItemIdHintUnderMouse()
         {
+            var itemId = GameMain.data.mainPlayer.inhandItemId;
+            if (itemId > 0) return itemId;
             List<RaycastResult> targets = [];
             var pointer = new PointerEventData(EventSystem.current)
             {

@@ -291,7 +291,7 @@ public static class UIConfigWindow
         wnd.AddSlider(x + 10f, y, tab2, PlanetFunctions.OrbitalCollectorMaxBuildCount, new OcMapper(), "G", 200f);
         x = 400f;
         y += 54f;
-        wnd.AddCheckBox(x, y, tab2, LogisticsPatch.LogisticsCapacityTweaksEnabled, "Enhance control for logistic storage limits");
+        checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab2, LogisticsPatch.LogisticsCapacityTweaksEnabled, "Enhance control for logistic storage limits");
         wnd.AddTipsButton2(x + checkBoxForMeasureTextWidth.Width + 5f, y + 6f, tab2, "Enhance control for logistic storage limits", "Enhance control for logistic storage limits tips", "enhanced-logistic-limit-tips");
         y += 36f;
         wnd.AddCheckBox(x, y, tab2, LogisticsPatch.AllowOverflowInLogisticsEnabled, "Allow overflow for Logistic Stations and Advanced Mining Machines");
