@@ -849,21 +849,33 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
         public static void ProcessBeltSignals()
         {
             if (!_initialized) return;
-            var factories = GameMain.data?.factories;
+            var data =  GameMain.data;
+            var factories = data?.factories;
             if (factories == null) return;
             PerformanceMonitor.BeginSample(ECpuWorkEntry.Belt);
-            foreach (var factory in factories)
+            for (var index = data.factoryCount - 1; index >= 0; index--)
             {
+                var factory = factories[index];
                 if (factory == null) continue;
-                var belts = GetSignalBelts(factory.index);
+                var belts = GetSignalBelts(index);
                 if (belts == null || belts.Count == 0) continue;
-                var factoryProductionStat = GameMain.statistics.production.factoryStatPool[factory.index];
+                var factoryProductionStat = GameMain.statistics.production.factoryStatPool[index];
                 var productRegister = factoryProductionStat.productRegister;
                 var consumeRegister = factoryProductionStat.consumeRegister;
                 var countRecipe = BeltSignalCountRecipeEnabled.Value;
                 var cargoTraffic = factory.cargoTraffic;
+                var beltCount = cargoTraffic.beltCursor;
+                List<int> beltsToRemove = null;
                 foreach (var pair in belts)
                 {
+                    if (pair.Key >= beltCount)
+                    {
+                        if (beltsToRemove == null)
+                            beltsToRemove = [pair.Key];
+                        else
+                            beltsToRemove.Add(pair.Key);
+                        continue;
+                    }
                     var beltSignal = pair.Value;
                     var signalId = beltSignal.SignalId;
                     switch (signalId)
@@ -960,6 +972,11 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
                             continue;
                         }
                     }
+                }
+                if (beltsToRemove == null) continue;
+                foreach (var beltId in beltsToRemove)
+                {
+                    belts.Remove(beltId);
                 }
             }
 

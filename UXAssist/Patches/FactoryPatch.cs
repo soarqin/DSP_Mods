@@ -1750,17 +1750,36 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                 {
                     var factories = GameMain.data?.factories;
                     if (factories == null) return;
+                    var factoriesCount = factories.Length;
                     var propertySystem = DSPGame.propertySystem;
+                    List<int> factoriesToRemove = null;
                     foreach (var factoryIndex in SignalBeltFactoryIndices)
                     {
-                        if (factoryIndex >= factories.Length) continue;
+                        if (factoryIndex >= factoriesCount)
+                        {
+                            if (factoriesToRemove == null)
+                                factoriesToRemove = [factoryIndex];
+                            else
+                                factoriesToRemove.Add(factoryIndex);
+                            continue;
+                        }
                         var signalBelts = GetSignalBelts(factoryIndex);
                         if (signalBelts == null) continue;
                         var factory = factories[factoryIndex];
                         if (factory == null) continue;
                         var cargoTraffic = factory.cargoTraffic;
+                        var beltCount = cargoTraffic.beltCursor;
+                        List<int> beltsToRemove = null;
                         foreach (var kvp in signalBelts)
                         {
+                            if (kvp.Key >= beltCount)
+                            {
+                                if (beltsToRemove == null)
+                                    beltsToRemove = [kvp.Key];
+                                else
+                                    beltsToRemove.Add(kvp.Key);
+                                continue;
+                            }
                             ref var belt = ref cargoTraffic.beltPool[kvp.Key];
                             var cargoPath = cargoTraffic.GetCargoPath(belt.segPathId);
                             var itemIdx = kvp.Value;
@@ -1787,6 +1806,19 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                             if (consume > 0 && cargoPath.TryInsertItem(belt.segIndex + belt.segPivotOffset, itemId, consume, 0))
                                 DarkFogItemsInVoid[itemIdx] -= consume;
                         }
+                        if (beltsToRemove == null) continue;
+                        foreach (var beltId in beltsToRemove)
+                            signalBelts.Remove(beltId);
+                        if (signalBelts.Count > 0) continue;
+                        if (factoriesToRemove == null)
+                            factoriesToRemove = [factoryIndex];
+                        else
+                            factoriesToRemove.Add(factoryIndex);
+                    }
+                    if (factoriesToRemove == null) return;
+                    foreach (var factoryIndex in factoriesToRemove)
+                    {
+                        RemovePlanetSignalBelts(factoryIndex);
                     }
                 })
             );

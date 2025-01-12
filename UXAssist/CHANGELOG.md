@@ -1,5 +1,9 @@
 ## Changlog
 
+* 1.2.13
+  + `Belt signals for buy out dark fog items automatically`: Fix possible crashes.
+  + `Logistics Control Panel Improvement`: Auto apply filter with in-hand item now.
+  + Fix an alignment issue on UI panel.
 * 1.2.12
   + `Construct only structure points but frames`: Fix a bug that frames are still not constructed when this function is disabled.
   + `Drag building power poles in maximum connection range`: Fix a bug that single power pole cannot be placed at some positions.
@@ -229,6 +233,10 @@
 
 ## 更新日志
 
+* 1.2.13
+  + `用于自动购买黑雾物品的传送带信号`：修复了可能导致崩溃的问题
+  + `物流控制面板改进`：现在也自动将拿着的物品设为筛选条件
+  + 修复了UI面板上的对齐问题
 * 1.2.12
   + `只建造节点不建造框架`：修复了关闭此功能时框架不进行建造的问题
   + `拖动建造电线杆时自动使用最大连接距离间隔`：修复了某些位置无法放置单个电线杆的问题
