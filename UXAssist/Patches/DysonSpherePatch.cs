@@ -389,19 +389,35 @@ public class DysonSpherePatch: PatchImpl<DysonSpherePatch>
         {
             var matcher = new CodeMatcher(instructions, generator);
             matcher.MatchForward(false,
-                // if (this.orbitId == 0
+                // if (this.runtimeOrbitId == 0
                 new CodeMatch(OpCodes.Ldarg_0),
-                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(EjectorComponent), nameof(EjectorComponent.orbitId))),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(EjectorComponent), nameof(EjectorComponent.runtimeOrbitId))),
                 new CodeMatch(OpCodes.Brtrue)
-            ).Advance(2).Insert(
+            ).Advance(2).InsertAndAdvance(
                 // || !StopEjectOnNodeComplete.AnyNodeForAbsorb(this.starData.index))
                 new CodeInstruction(OpCodes.Ldc_I4_0),
                 new CodeInstruction(OpCodes.Cgt),
-                new CodeInstruction(OpCodes.Ldarg_2),
+                new CodeInstruction(OpCodes.Ldarg_3),
                 new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(DysonSwarm), nameof(DysonSwarm.starData))),
                 new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(StarData), nameof(StarData.index))),
                 new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(StopEjectOnNodeComplete), nameof(AnyNodeForAbsorb))),
                 new CodeInstruction(OpCodes.And)
+            );
+
+            // Do not search for next orbit if runtimeOrbitId is not 0 (which means nodes are completed)
+            Label? jmpTarget = null;
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Ldarg_0),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(EjectorComponent), nameof(EjectorComponent.autoOrbit))),
+                new CodeMatch(ci => ci.Branches(out jmpTarget))
+            );
+            if (jmpTarget == null) return matcher.InstructionEnumeration();
+            var labels = matcher.Labels;
+            matcher.Labels = null;
+            matcher.Insert(
+                new CodeInstruction(OpCodes.Ldarg_0).WithLabels(labels),
+                new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(EjectorComponent), nameof(EjectorComponent.runtimeOrbitId))),
+                new CodeInstruction(OpCodes.Brtrue, jmpTarget.Value)
             );
             return matcher.InstructionEnumeration();
         }

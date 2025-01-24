@@ -1,5 +1,8 @@
 ## Changlog
 
+* 1.2.14
+  + Fix an issue that an unexpected menu icon is shown in the top-right corner of the config panel.
+  + `Stop ejectors when available nodes are all filled up`: Fix compatibility with `Dyson Sphere Program v0.10.32.25496`.
 * 1.2.13
   + `Belt signals for buy out dark fog items automatically`: Fix possible crashes.
   + `Logistics Control Panel Improvement`: Auto apply filter with in-hand item now.
@@ -12,6 +15,10 @@
 * 1.2.10
   + `Set enabled CPU threads`: Fix hybrid-architect check for CPUs without hyper-threading
   + `Re-initialize Dyson Spheres` and `Quick dismantle Dyson Shells`: Fix possible crashes and a display issue, while Dyson Sphere panel is actived. 
+
+<details>
+<summary>Older versions</summary>
+
 * 1.2.9
   + `Protect veins from exhaustion`:
     - Fix a bug that vein protection causes crashes (#50).
@@ -35,10 +42,6 @@
   + New feature: `Set process priority`
   + New feature: `Set enabled CPU threads`
   + `Drag building power poles in maximum connection range`: Add a new config option `Build Tesla Tower and Wireless Power Tower alternately`
-
-<details>
-<summary>Older versions</summary>
-
 * 1.2.4
   + `Sunlight at night`:
     - Fix flickering issue while mecha is sailing.
@@ -233,6 +236,9 @@
 
 ## 更新日志
 
+* 1.2.14
+  + 修正设置窗口右上角多出一个菜单图标的问题
+  + `当可用节点全部造完时停止弹射`：修复了与`戴森球计划 v0.10.32.25496`的兼容性
 * 1.2.13
   + `用于自动购买黑雾物品的传送带信号`：修复了可能导致崩溃的问题
   + `物流控制面板改进`：现在也自动将拿着的物品设为筛选条件
@@ -245,6 +251,10 @@
 * 1.2.10
   + `设置使用的CPU线程`：修复了对没有超线程的CPU的大小核检查
   + `初始化戴森球`和`快速拆除戴森壳`：修复了在戴森球面板激活时可能导致崩溃的问题，以及显示错误的问题。
+
+<details>
+<summary>Older versions</summary>
+
 * 1.2.9
   + `保护矿脉不会耗尽`：
     - 修复了矿脉保护导致崩溃的问题(#50)
@@ -268,10 +278,6 @@
   + 新功能：`设置进程优先级`
   + 新功能：`设置使用的CPU线程`
   + `拖动建造电线杆时自动使用最大连接距离间隔`：添加一个新的设置项`交替建造电力感应塔和无线输电塔`
-
-<details>
-<summary>更早的版本</summary>
-
 * 1.2.4
   + `夜间日光灯`：
     - 修复了航行时闪烁的问题

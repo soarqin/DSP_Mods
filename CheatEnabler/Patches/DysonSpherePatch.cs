@@ -179,11 +179,11 @@ public class DysonSpherePatch: PatchImpl<DysonSpherePatch>
             ).Advance(1);
             var end = matcher.Pos;
             matcher.Start().Advance(start).RemoveInstructions(end - start).Insert(
-                new CodeInstruction(OpCodes.Ldarg_2),
+                new CodeInstruction(OpCodes.Ldarg_3),
                 new CodeInstruction(OpCodes.Ldarg_0),
                 new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(EjectorComponent), nameof(EjectorComponent.orbitId))),
-                new CodeInstruction(OpCodes.Ldloc_S, 8),
-                new CodeInstruction(OpCodes.Ldloc_S, 10),
+                new CodeInstruction(OpCodes.Ldloc_S, 9),
+                new CodeInstruction(OpCodes.Ldloc_S, 11),
                 new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(SkipBulletPatch), nameof(SkipBulletPatch.AddDysonSail)))
             );
             return matcher.InstructionEnumeration();
@@ -391,26 +391,25 @@ public class DysonSpherePatch: PatchImpl<DysonSpherePatch>
         private static IEnumerable<CodeInstruction> EjectorComponent_InternalUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
         {
             var matcher = new CodeMatcher(instructions, generator);
-            matcher.MatchForward(false,
+            matcher.End().MatchBack(false,
                 new CodeMatch(instr => instr.opcode == OpCodes.Ldc_R8 && Math.Abs((double)instr.operand - 0.08715574) < 0.00000001)
             );
             var start = matcher.Pos - 3;
             matcher.MatchForward(false,
-                new CodeMatch(OpCodes.And)
-            ).Advance(1).MatchForward(false,
-                new CodeMatch(OpCodes.And)
+                new CodeMatch(OpCodes.Ldarg_0),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(EjectorComponent), nameof(EjectorComponent.bulletCount)))
             );
-            var end = matcher.Pos - 2;
-            /* Remove angle checking codes, then add:
-             *   V_13 = this.bulletCount > 0;
-             */
-            matcher.Start().Advance(start).RemoveInstructions(end - start).Insert(
-                new CodeInstruction(OpCodes.Ldarg_0),
-                new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(EjectorComponent), nameof(EjectorComponent.bulletCount))),
-                new CodeInstruction(OpCodes.Ldc_I4_0),
-                new CodeInstruction(OpCodes.Cgt),
-                new CodeInstruction(OpCodes.Stloc_S, 13)
+            var end = matcher.Pos;
+            matcher.Start().Advance(start).RemoveInstructions(end - start).MatchForward(false,
+                new CodeMatch(ci => ci.IsStloc())
+            ).Advance(1);
+            start = matcher.Pos;
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Ldarg_0),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(EjectorComponent), nameof(EjectorComponent.autoOrbit)))
             );
+            end = matcher.Pos;
+            matcher.Start().Advance(start).RemoveInstructions(end - start);
             return matcher.InstructionEnumeration();
         }
     }
@@ -419,7 +418,7 @@ public class DysonSpherePatch: PatchImpl<DysonSpherePatch>
     {
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(EjectorComponent), nameof(EjectorComponent.InternalUpdate))]
-        private static IEnumerable<CodeInstruction> EjectAndSiloComponent_InternalUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        private static IEnumerable<CodeInstruction> EjectComponent_InternalUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
         {
             var matcher = new CodeMatcher(instructions, generator);
             /* Add a multiply to ejector speed */
@@ -472,7 +471,7 @@ public class DysonSpherePatch: PatchImpl<DysonSpherePatch>
     {
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(SiloComponent), nameof(SiloComponent.InternalUpdate))]
-        private static IEnumerable<CodeInstruction> EjectAndSiloComponent_InternalUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        private static IEnumerable<CodeInstruction> SiloComponent_InternalUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
         {
             var matcher = new CodeMatcher(instructions, generator);
             /* Add a multiply to ejector speed */

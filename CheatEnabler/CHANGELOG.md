@@ -1,5 +1,7 @@
 ## Changlog
 
+* 2.3.27
+  + `Skip bullet period` & `Eject anyway`: Fix compatibility with `Dyson Sphere Program v0.10.32.25496`.
 * 2.3.26
   + Refactor codes to adapt to UXAssist 1.2.0
     - You should update UXAssist to 1.2.0 or later before using this version.
@@ -141,6 +143,8 @@
 
 ## 更新日志
 
+* 2.3.27
+  + `跳过子弹阶段`和`全球弹射`：修复了与`戴森球计划 v0.10.32.25496`的兼容性
 * 2.3.26
   + 重构代码以适应UXAssist 1.2.0
     - 在使用此版本之前，您应先更新UXAssist到1.2.0或更高版本。
@@ -153,7 +157,7 @@
 <details>
 <summary>更早的版本</summary>
 
-2.3.24
+* 2.3.24
   + `立即完成戴森壳建造`：修复了在某些情况下可能导致发电为负的问题
 * 2.3.23
   + 新功能：`立即完成戴森壳建造`

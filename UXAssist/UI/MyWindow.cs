@@ -27,14 +27,14 @@ public class MyWindow : ManualBehaviour
     public static void InitBaseObject()
     {
         if (_baseObject) return;
-        var go = Instantiate(UIRoot.instance.uiGame.tankWindow.gameObject);
+        var go = Instantiate(UIRoot.instance.uiGame.inserterWindow.gameObject);
         go.SetActive(false);
         go.name = "my-window";
         Destroy(go.GetComponent<UITankWindow>());
         for (var i = 0; i < go.transform.childCount; i++)
         {
             var child = go.transform.GetChild(i).gameObject;
-            if (child.name != "panel-bg" && child.name != "shadow" && child.name != "panel-bg")
+            if (child.name != "panel-bg" && child.name != "shadow")
             {
                 Destroy(child);
             }
