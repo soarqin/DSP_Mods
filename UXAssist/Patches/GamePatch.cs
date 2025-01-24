@@ -171,7 +171,7 @@ public class GamePatch : PatchImpl<GamePatch>
         var wnd = WindowFunctions.FindGameWindow();
         if (wnd == IntPtr.Zero) return;
         WinApi.GetWindowRect(wnd, out var rect);
-        LastWindowRect.Value = new Vector4(rect.Left < 20 - Screen.width ? 0 : rect.Left, rect.Top < 20 - Screen.height ? 0 : rect.Top, Screen.width, Screen.height);
+        LastWindowRect.Value = new Vector4(rect.Left, rect.Top, Screen.width, Screen.height);
     }
 
     private class EnableWindowResize : PatchImpl<EnableWindowResize>
@@ -245,32 +245,15 @@ public class GamePatch : PatchImpl<GamePatch>
                     needFix = true;
                 }
 
-                var sw = Screen.currentResolution.width;
-                var sh = Screen.currentResolution.height;
-                if (x + w > sw)
-                {
-                    x = sw - w;
-                    needFix = true;
-                }
-
-                if (y + h > sh)
-                {
-                    y = sh - h;
-                    needFix = true;
-                }
-
-                if (x < 0)
+                var rc = new WinApi.Rect {Left = x, Top = y, Right = x + w, Bottom = y + h};
+                if (WinApi.MonitorFromRect(ref rc, 0) == IntPtr.Zero)
                 {
                     x = 0;
-                    needFix = true;
-                }
-
-                if (y < 0)
-                {
                     y = 0;
+                    w = 1280;
+                    h = 720;
                     needFix = true;
                 }
-
                 if (needFix)
                 {
                     LastWindowRect.Value = new Vector4(x, y, w, h);

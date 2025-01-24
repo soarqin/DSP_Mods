@@ -127,6 +127,9 @@ public static class WinApi
 
     [DllImport("user32", ExactSpelling = true)]
     public static extern bool MoveWindow(IntPtr hWnd, int x, int y, int nWidth, int nHeight, bool bRepaint);
+    
+    [DllImport("user32", ExactSpelling = true)]
+    public static extern IntPtr MonitorFromRect([In] ref Rect lpRect, uint dwFlags);
 
     [DllImport("kernel32", ExactSpelling = true, SetLastError = true)]
     public static extern bool GetProcessAffinityMask(IntPtr hProcess, out ulong lpProcessAffinityMask, out ulong lpSystemAffinityMask);
