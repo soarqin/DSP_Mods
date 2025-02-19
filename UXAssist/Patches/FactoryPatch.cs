@@ -614,7 +614,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             Label? thisElseBlockEntryLabel = null;
 
             matcher.MatchForward(false,
-                new CodeMatch(ci => ci.Calls(AccessTools.PropertyGetter(typeof(VFInput), nameof(VFInput._ignoreGrid)))),
+                new CodeMatch(ci => ci.Calls(AccessTools.PropertyGetter(typeof(VFInput), nameof(VFInput._switchGridSnap)))),
                 new CodeMatch(ci => ci.Branches(out thisElseBlockEntryLabel)),
                 new CodeMatch(ci => ci.IsLdarg()),
                 new CodeMatch(OpCodes.Ldfld),
@@ -668,7 +668,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
 
             matcher.Advance(1);
             matcher.Insert(
-                new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(VFInput), nameof(VFInput._ignoreGrid))),
+                new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(VFInput), nameof(VFInput._switchGridSnap))),
                 new CodeInstruction(OpCodes.Brtrue, exitLabel)
             );
 
@@ -696,7 +696,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                 new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(BuildTool_Path), nameof(BuildTool_Path.castGroundPos))),
                 new CodeMatch(OpCodes.Ldarg_0),
                 new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(BuildTool_Path), nameof(BuildTool_Path.castTerrain))),
-                new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(PlanetAuxData), nameof(PlanetAuxData.Snap))),
+                new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(PlanetAuxData), nameof(PlanetAuxData.Snap), [typeof(Vector3), typeof(bool)])),
                 new CodeMatch(OpCodes.Stfld, AccessTools.Field(typeof(BuildTool_Path), nameof(BuildTool_Path.castGroundPosSnapped)))
             );
 
@@ -1385,7 +1385,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             begin = begin.normalized;
             end = end.normalized;
             var finalCount = 1;
-            var ignoreGrid = VFInput._ignoreGrid;
+            var ignoreGrid = VFInput._switchGridSnap;
             if (ignoreGrid)
                 snaps[0] = begin;
             else

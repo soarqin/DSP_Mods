@@ -143,8 +143,8 @@ public static class LogisticsPatch
             foreach (var target in targets)
             {
                 var stationStorage = target.gameObject.GetComponentInParent<UIStationStorage>();
-                if (stationStorage is null) continue;
-                var station = stationStorage.station;
+                var station = stationStorage?.station;
+                if (station?.storage is null) continue;
                 ref var storage = ref station.storage[stationStorage.index];
                 var oldMax = storage.max;
                 var newMax = oldMax + delta;
@@ -161,13 +161,10 @@ public static class LogisticsPatch
                     }
                     else
                     {
-                        var modelProto = LDB.models.Select(stationStorage.stationWindow.factory.entityPool[station.entityId].modelIndex);
-                        itemCountMax = 0;
-                        if (modelProto != null)
-                        {
-                            itemCountMax = modelProto.prefabDesc.stationMaxItemCount;
-                        }
-
+                        var factory = stationStorage.stationWindow?.factory;
+                        if (factory == null || station.entityId <= 0 || station.entityId >= factory.entityCursor) continue;
+                        var modelProto = LDB.models.Select(factory.entityPool[station.entityId].modelIndex);
+                        itemCountMax = modelProto == null ? 0 : modelProto.prefabDesc.stationMaxItemCount;
                         itemCountMax += station.isStellar ? GameMain.history.remoteStationExtraStorage : GameMain.history.localStationExtraStorage;
                     }
 

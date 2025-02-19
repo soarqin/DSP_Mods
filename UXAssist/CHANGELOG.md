@@ -1,5 +1,8 @@
 ## Changlog
 
+* 1.2.15
+  + `Off-grid building and stepped rotation`: Fix compatibility with DSP 0.10.32.25682. (#57)
+  + `Enhanced control for logistic storage limits`: Try to fix possible crash. (#54)
 * 1.2.14
   + Fix an issue that an unexpected menu icon is shown in the top-right corner of the config panel.
   + `Stop ejectors when available nodes are all filled up`: Fix compatibility with `Dyson Sphere Program v0.10.32.25496`.
@@ -236,6 +239,9 @@
 
 ## 更新日志
 
+* 1.2.15
+  + `脱离网格建造和小角度旋转`：修复了与0.10.32.25682的兼容性 (#57)
+  + `物流塔存储数量限制控制改进`：修复了可能导致崩溃的问题 (#54)
 * 1.2.14
   + 修正设置窗口右上角多出一个菜单图标的问题
   + `当可用节点全部造完时停止弹射`：修复了与`戴森球计划 v0.10.32.25496`的兼容性
