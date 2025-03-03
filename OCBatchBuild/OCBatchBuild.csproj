@@ -24,6 +24,6 @@
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(Configuration)' == 'Release'">
-    <Exec Command="del /F /Q package\$(ProjectName)-$(Version).zip&#xA;powershell Compress-Archive -Force -DestinationPath 'package/$(ProjectName)-$(Version).zip' -Path '$(TargetPath)', package/icon.png, package/manifest.json, README.md" />
+    <Exec Command="powershell Compress-Archive -Force -DestinationPath 'package/$(ProjectName)-$(Version).zip' -Path '$(TargetPath)', package/icon.png, package/manifest.json, README.md" />
   </Target>
 </Project>
