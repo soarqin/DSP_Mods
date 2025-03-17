@@ -45,6 +45,9 @@
     - Larger area for upgrade and dismantle(30x30 at max)
     - Larger area for terraform(30x30 at max)
     - Off-grid building and stepped rotation
+    - Cut conveyor belt
+      - Press shortcut key to cut conveyor belt under cursor.
+      - The default shortcut key is Alt+X, you can set it in system options panel.
     - Treat stack items as single in monitor components
     - Enhanced control for logistic storage limits
       - Logistic storage limits are not scaled on upgrading `Logistics Carrier Capacity`, if they are not set to maximum capacity.
@@ -162,6 +165,9 @@
     - 范围升级和拆除的最大区域扩大(最大30x30)
     - 范围铺设地基的最大区域扩大(最大30x30)
     - 脱离网格建造以及小角度旋转
+    - 切割传送带
+      - 按快捷键切割光标位置的传送带
+      - 默认快捷键是Alt+X，可以在系统选项面板中设置
     - 在流速计中将堆叠物品视为单个物品
     - 物流塔存储数量限制控制改进
       - 当升级`运输机舱扩容`时，不会对各种物流塔的存储限制按比例提升，除非设置为最大允许容量。

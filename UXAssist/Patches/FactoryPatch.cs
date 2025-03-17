@@ -33,8 +33,10 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
     public static ConfigEntry<bool> BeltSignalsForBuyOutEnabled;
     public static ConfigEntry<bool> TankFastFillInAndTakeOutEnabled;
     public static ConfigEntry<int> TankFastFillInAndTakeOutMultiplier;
+    public static ConfigEntry<bool> CutConveyorBeltEnabled;
     private static PressKeyBind _doNotRenderEntitiesKey;
     private static PressKeyBind _offgridfForPathsKey;
+    private static PressKeyBind _cutConveyorBeltKey;
 
     private static int _tankFastFillInAndTakeOutMultiplierRealValue = 2;
 
@@ -51,13 +53,21 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         I18N.Add("KEYToggleDoNotRenderEntities", "Toggle Do Not Render Factory Entities", "切换不渲染工厂建筑实体");
         _offgridfForPathsKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
             {
-                key = new CombineKey(0, CombineKey.CTRL_COMB, ECombineKeyAction.OnceClick, false),
+                key = new CombineKey(0, 0, ECombineKeyAction.OnceClick, false),
                 conflictGroup = KeyBindConflict.MOVEMENT | KeyBindConflict.UI | KeyBindConflict.FLYING | KeyBindConflict.SAILING | KeyBindConflict.BUILD_MODE_1 | KeyBindConflict.KEYBOARD_KEYBIND,
                 name = "OffgridForPaths",
                 canOverride = true
             }
         );
         I18N.Add("KEYOffgridForPaths", "Build belts offgrid", "脱离网格建造传送带");
+        _cutConveyorBeltKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
+            {
+                key = new CombineKey((int)KeyCode.X, CombineKey.ALT_COMB, ECombineKeyAction.OnceClick, false),
+                name = "CutConveyorBelt",
+                canOverride = true
+            }
+        );
+        I18N.Add("KEYCutConveyorBelt", "Cut conveyor belt", "切割传送带");
 
         BeltSignalsForBuyOut.InitPersist();
         ProtectVeinsFromExhaustion.InitConfig();
@@ -79,6 +89,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         BeltSignalsForBuyOutEnabled.SettingChanged += (_, _) => BeltSignalsForBuyOut.Enable(BeltSignalsForBuyOutEnabled.Value);
         TankFastFillInAndTakeOutEnabled.SettingChanged += (_, _) => TankFastFillInAndTakeOut.Enable(TankFastFillInAndTakeOutEnabled.Value);
         TankFastFillInAndTakeOutMultiplier.SettingChanged += (_, _) => { UpdateTankFastFillInAndTakeOutMultiplierRealValue(); };
+        CutConveyorBeltEnabled.SettingChanged += (_, _) => CutConveyorBelt.Enable(CutConveyorBeltEnabled.Value);
     }
 
     public static void Start()
@@ -97,6 +108,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         DragBuildPowerPoles.Enable(DragBuildPowerPolesEnabled.Value);
         BeltSignalsForBuyOut.Enable(BeltSignalsForBuyOutEnabled.Value);
         TankFastFillInAndTakeOut.Enable(TankFastFillInAndTakeOutEnabled.Value);
+        CutConveyorBelt.Enable(CutConveyorBeltEnabled.Value);
 
         Enable(true);
         UpdateTankFastFillInAndTakeOutMultiplierRealValue();
@@ -106,6 +118,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
     {
         Enable(false);
 
+        CutConveyorBelt.Enable(false);
         TankFastFillInAndTakeOut.Enable(false);
         BeltSignalsForBuyOut.Enable(false);
         DragBuildPowerPoles.Enable(false);
@@ -1926,6 +1939,25 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                 tankComponent.fluidInc += takeInc;
             }
             return false;
+        }
+    }
+
+    private class CutConveyorBelt : PatchImpl<CutConveyorBelt>
+    {
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(PlayerController), nameof(PlayerController.GameTick))]
+        private static void PlayerController_GameTick_Postfix(PlayerController __instance)
+        {
+            if (DSPGame.IsMenuDemo) return;
+            if (!_cutConveyorBeltKey.keyValue) return;
+            var raycast = __instance.cmd.raycast;
+            if (raycast == null) return;
+            if (raycast.castEntity.id <= 0) return;
+            int beltId;
+            if ((beltId = raycast.castEntity.beltId) <= 0) return;
+            var cargoTraffic = raycast.planet.factory.cargoTraffic;
+            Functions.FactoryFunctions.CutConveyorBelt(cargoTraffic, beltId);
         }
     }
 }

@@ -70,6 +70,7 @@ public static class UIConfigWindow
         I18N.Add("Quick build and dismantle stacking labs", "Quick build and dismantle stacking labs/storages/tanks(hold shift)", "快速建造和拆除堆叠研究站/储物仓/储液罐(按住shift)");
         I18N.Add("Fast fill in to and take out from tanks", "Fast fill in to and take out from tanks", "储液罐快速注入和抽取液体");
         I18N.Add("Speed Ratio", "Speed Ratio", "速度倍率");
+        I18N.Add("Cut conveyor belt (with shortcut key)", "Cut conveyor belt (with shortcut key)", "切割传送带(使用快捷键)");
         I18N.Add("Protect veins from exhaustion", "Protect veins from exhaustion", "保护矿脉不会耗尽");
         I18N.Add("Protect veins from exhaustion tips",
             "By default, the vein amount is protected at 100, and oil speed is protected at 1.0/s, you can set them yourself in config file.\nWhen reach the protection value, veins/oils steeps will not be mined/extracted any longer.\nClose this function to resume mining and pumping, usually when you have enough level on `Veins Utilization`",
@@ -238,6 +239,8 @@ public static class UIConfigWindow
         wnd.AddCheckBox(x, y, tab2, FactoryPatch.LargerAreaForTerraformEnabled, "Larger area for terraform");
         y += 36f;
         wnd.AddCheckBox(x, y, tab2, FactoryPatch.OffGridBuildingEnabled, "Off-grid building and stepped rotation");
+        y += 36f;
+        wnd.AddCheckBox(x, y, tab2, FactoryPatch.CutConveyorBeltEnabled, "Cut conveyor belt (with shortcut key)");
         y += 36f;
         checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab2, FactoryPatch.TreatStackingAsSingleEnabled, "Treat stack items as single in monitor components");
         y += 36f;

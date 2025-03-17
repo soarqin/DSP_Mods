@@ -134,6 +134,8 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
         FactoryPatch.TankFastFillInAndTakeOutEnabled = Config.Bind("Factory", "TankFastFillInAndTakeOut", false,
             "Fast fill in to and take out from tanks");
         FactoryPatch.TankFastFillInAndTakeOutMultiplier = Config.Bind("Factory", "TankFastFillInAndTakeOutMultiplier", 1000, "Speed multiplier for fast filling in to and takeing out from tanks");
+        FactoryPatch.CutConveyorBeltEnabled = Config.Bind("Factory", "CutConveyorBeltShortcut", false,
+            "Cut conveyor belt (with shortcut key)");
         LogisticsPatch.LogisticsCapacityTweaksEnabled = Config.Bind("Factory", "LogisticsCapacityTweaks", true,
             "Logistics capacity related tweaks");
         LogisticsPatch.AllowOverflowInLogisticsEnabled = Config.Bind("Factory", "AllowOverflowInLogistics", false,
