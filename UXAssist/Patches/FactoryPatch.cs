@@ -53,7 +53,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         I18N.Add("KEYToggleDoNotRenderEntities", "Toggle Do Not Render Factory Entities", "切换不渲染工厂建筑实体");
         _offgridfForPathsKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
             {
-                key = new CombineKey(0, 0, ECombineKeyAction.OnceClick, false),
+                key = new CombineKey(0, 0, ECombineKeyAction.OnceClick, true),
                 conflictGroup = KeyBindConflict.MOVEMENT | KeyBindConflict.UI | KeyBindConflict.FLYING | KeyBindConflict.SAILING | KeyBindConflict.BUILD_MODE_1 | KeyBindConflict.KEYBOARD_KEYBIND,
                 name = "OffgridForPaths",
                 canOverride = true
@@ -63,6 +63,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         _cutConveyorBeltKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
             {
                 key = new CombineKey((int)KeyCode.X, CombineKey.ALT_COMB, ECombineKeyAction.OnceClick, false),
+                conflictGroup = KeyBindConflict.MOVEMENT | KeyBindConflict.FLYING | KeyBindConflict.SAILING | KeyBindConflict.BUILD_MODE_1 | KeyBindConflict.KEYBOARD_KEYBIND,
                 name = "CutConveyorBelt",
                 canOverride = true
             }
