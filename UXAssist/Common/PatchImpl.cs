@@ -13,9 +13,9 @@ public class PatchGuidAttribute(string guid) : Attribute
 
 public enum PatchCallbackFlag
 {
-    // OnEnable() is called After patch is applied by default, set this flag to call it before patch is applied
+    // By default, OnEnable() is called After patch applied, set this flag to call it before patch is applied
     CallOnEnableBeforePatch,
-    // OnDisable() is called Before patch is removed by default, set this flag to call it after patch is removed
+    // By default, OnDisable() is called Before patch removed, set this flag to call it after patch is removed
     CallOnDisableAfterUnpatch,
 }
 

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection.Emit;
+using System.Xml;
 using BepInEx.Configuration;
 using CommonAPI.Systems;
 using HarmonyLib;
@@ -86,7 +87,7 @@ public class GamePatch : PatchImpl<GamePatch>
         // AutoSaveOptEnabled.SettingChanged += (_, _) => AutoSaveOpt.Enable(AutoSaveOptEnabled.Value);
         ConvertSavesFromPeaceEnabled.SettingChanged += (_, _) => ConvertSavesFromPeace.Enable(ConvertSavesFromPeaceEnabled.Value);
         ProfileBasedSaveFolderEnabled.SettingChanged += (_, _) => RefreshSavePath();
-        ProfileBasedOptionEnabled.SettingChanged += (_, _) => RefreshSavePath();
+        ProfileBasedOptionEnabled.SettingChanged += (_, _) => ProfileBasedOption.Enable(ProfileBasedOptionEnabled.Value);
         DefaultProfileName.SettingChanged += (_, _) => RefreshSavePath();
         GameUpsFactor.SettingChanged += (_, _) =>
         {
@@ -99,11 +100,12 @@ public class GamePatch : PatchImpl<GamePatch>
 
             FPSController.SetFixUPS(GameMain.tickPerSec * GameUpsFactor.Value);
         };
-        RefreshSavePath();
+        ProfileBasedOption.Enable(ProfileBasedOptionEnabled.Value);
     }
 
     public static void Start()
     {
+        RefreshSavePath();
         EnableWindowResize.Enable(EnableWindowResizeEnabled.Value);
         LoadLastWindowRect.Enable(LoadLastWindowRectEnabled.Value);
         MouseCursorScaleUp.NeedReloadCursors = false;
@@ -172,21 +174,6 @@ public class GamePatch : PatchImpl<GamePatch>
         {
             Directory.CreateDirectory(GameConfig.gameSavePath);
         }
-
-        string optionPath;
-        if (ProfileBasedOptionEnabled.Value && string.Compare(DefaultProfileName.Value, profileName, StringComparison.OrdinalIgnoreCase) != 0)
-        {
-            var path = $"{GameConfig.gameDocumentFolder}Option";
-            if (!Directory.Exists(path))
-            {
-                Directory.CreateDirectory(path);
-            }
-            optionPath = $"{path}/{profileName}.xml";
-        }
-        else
-            optionPath = $"{GameConfig.gameDocumentFolder}options.xml";
-        if (string.Compare(GameConfig.gameXMLOption, optionPath, StringComparison.OrdinalIgnoreCase) == 0) return;
-        GameConfig.gameXMLOption = optionPath;
     }
 
     [HarmonyPrefix, HarmonyPatch(typeof(GameMain), nameof(GameMain.HandleApplicationQuit))]
@@ -551,6 +538,80 @@ public class GamePatch : PatchImpl<GamePatch>
         private static void GameData_Import_Postfix()
         {
             _needConvert = false;
+        }
+    }
+
+    private class ProfileBasedOption : PatchImpl<ProfileBasedOption>
+    {
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(GameOption), nameof(GameOption.LoadGlobal))]
+        private static bool GameOption_LoadGlobal_Prefix(ref GameOption __instance)
+        {
+            UXAssist.Logger.LogDebug("Loading global option");
+            var profileName = WindowFunctions.ProfileName;
+            if (profileName == null)
+            {
+                // We should initialize WindowFunctions before using WindowFunctions.ProfileName
+                WindowFunctions.Init();
+                profileName = WindowFunctions.ProfileName;
+                if (profileName == null) return true;
+            }
+            if (string.Compare(DefaultProfileName.Value, profileName, StringComparison.OrdinalIgnoreCase) == 0) return true;
+            var optionPath = $"{GameConfig.gameDocumentFolder}Option/{profileName}.xml";
+            if (File.Exists(optionPath))
+            {
+                try
+                {
+                    __instance.ImportXML(optionPath);
+                    return false;
+                }
+                catch
+                {
+                }
+            }
+            var gameXMLOptionPath = GameConfig.gameXMLOptionPath;
+            if (File.Exists(gameXMLOptionPath))
+            {
+                try
+                {
+                    __instance.ImportXML(gameXMLOptionPath);
+                    return false;
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogException(ex);
+                }
+            }
+            GameOption.newlyCreated = true;
+            __instance.SetDefault();
+            return false;
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(GameOption), nameof(GameOption.SaveGlobal))]
+        private static bool GameOption_SaveGlobal_Prefix(ref GameOption __instance)
+        {
+            var profileName = WindowFunctions.ProfileName;
+            if (profileName == null) return true;
+            if (string.Compare(DefaultProfileName.Value, profileName, StringComparison.OrdinalIgnoreCase) == 0) return true;
+            var path = $"{GameConfig.gameDocumentFolder}Option";
+            if (!Directory.Exists(path))
+            {
+                Directory.CreateDirectory(path);
+            }
+            try
+            {
+                using FileStream fileStream = new($"{path}/{profileName}.xml", FileMode.Create, FileAccess.Write, FileShare.None);
+                using XmlTextWriter xmlTextWriter = new(fileStream, Console.OutputEncoding);
+                xmlTextWriter.Formatting = Formatting.Indented;
+                __instance.ExportXML(xmlTextWriter);
+                xmlTextWriter.Close();
+            }
+            catch (Exception ex)
+            {
+                Debug.LogException(ex);
+            }
+            return false;
         }
     }
 

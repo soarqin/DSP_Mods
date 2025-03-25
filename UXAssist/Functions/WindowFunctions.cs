@@ -221,7 +221,8 @@ public static class WindowFunctions
         var args = Environment.GetCommandLineArgs();
         for (var i = 0; i < args.Length - 1; i++)
         {
-            if (args[i] != "--doorstop-target") continue;
+            // Doorstop 3.x and 4.x use different arguments to pass the target assembly path
+            if (args[i] != "--doorstop-target" && args[i] != "--doorstop-target-assembly") continue;
             var arg = args[i + 1];
             const string doorstopPathSuffix = @"\BepInEx\core\BepInEx.Preloader.dll";
             if (!arg.EndsWith(doorstopPathSuffix, StringComparison.OrdinalIgnoreCase))

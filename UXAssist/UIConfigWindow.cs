@@ -35,8 +35,8 @@ public static class UIConfigWindow
         I18N.Add("Profile-based save folder tips", "Save files are stored in 'Save\\<ProfileName>' folder.\nWill use original save location if matching default profile name",
             "存档文件会存储在'Save\\<ProfileName>'文件夹中\n如果匹配默认配置档案名则使用原始存档位置");
         I18N.Add("Profile-based option", "Mod manager profile based option", "基于mod管理器配置档案名的选项设置");
-        I18N.Add("Profile-based option tips", "Options are stored in 'Option\\<ProfileName>.xml'.\nWill use original save location if matching default profile name",
-            "配置选项会存储在'Option\\<ProfileName>.xml'里\n如果匹配默认配置档案名则使用原始存档位置");
+        I18N.Add("Profile-based option tips", "Options are stored in 'Option\\<ProfileName>.xml'.\nWill use original location if matching default profile name",
+            "配置选项会存储在'Option\\<ProfileName>.xml'里\n如果匹配默认配置档案名则使用原始位置");
         I18N.Add("Default profile name", "Default profile name", "默认配置档案名");
         I18N.Add("Logical Frame Rate", "Logical Frame Rate", "逻辑帧倍率");
         I18N.Add("Reset", "Reset", "重置");
