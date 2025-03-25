@@ -34,6 +34,9 @@ public static class UIConfigWindow
         I18N.Add("Profile-based save folder", "Mod manager profile based save folder", "基于mod管理器配置档案名的存档文件夹");
         I18N.Add("Profile-based save folder tips", "Save files are stored in 'Save\\<ProfileName>' folder.\nWill use original save location if matching default profile name",
             "存档文件会存储在'Save\\<ProfileName>'文件夹中\n如果匹配默认配置档案名则使用原始存档位置");
+        I18N.Add("Profile-based option", "Mod manager profile based option", "基于mod管理器配置档案名的选项设置");
+        I18N.Add("Profile-based option tips", "Options are stored in 'Option\\<ProfileName>.xml'.\nWill use original save location if matching default profile name",
+            "配置选项会存储在'Option\\<ProfileName>.xml'里\n如果匹配默认配置档案名则使用原始存档位置");
         I18N.Add("Default profile name", "Default profile name", "默认配置档案名");
         I18N.Add("Logical Frame Rate", "Logical Frame Rate", "逻辑帧倍率");
         I18N.Add("Reset", "Reset", "重置");
@@ -179,7 +182,10 @@ public static class UIConfigWindow
             y += 36f;
             checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab1, GamePatch.ProfileBasedSaveFolderEnabled, "Profile-based save folder");
             wnd.AddTipsButton2(checkBoxForMeasureTextWidth.Width + 5f, y + 6f, tab1, "Profile-based save folder", "Profile-based save folder tips", "btn-profile-based-save-folder-tips");
-            y += 30f;
+            y += 36f;
+            checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab1, GamePatch.ProfileBasedOptionEnabled, "Profile-based option");
+            wnd.AddTipsButton2(checkBoxForMeasureTextWidth.Width + 5f, y + 6f, tab1, "Profile-based option", "Profile-based option tips", "btn-profile-based-option-tips");
+            y += 36f;
             wnd.AddText2(x + 2f, y, tab1, "Default profile name", 15, "text-default-profile-name");
             y += 24f;
             wnd.AddInputField(x + 2f, y, 200f, tab1, GamePatch.DefaultProfileName, 15, "input-profile-save-folder");

@@ -22,6 +22,7 @@ public class GamePatch : PatchImpl<GamePatch>
     public static ConfigEntry<bool> ConvertSavesFromPeaceEnabled;
     public static ConfigEntry<Vector4> LastWindowRect;
     public static ConfigEntry<bool> ProfileBasedSaveFolderEnabled;
+    public static ConfigEntry<bool> ProfileBasedOptionEnabled;
     public static ConfigEntry<string> DefaultProfileName;
     public static ConfigEntry<double> GameUpsFactor;
 
@@ -85,6 +86,7 @@ public class GamePatch : PatchImpl<GamePatch>
         // AutoSaveOptEnabled.SettingChanged += (_, _) => AutoSaveOpt.Enable(AutoSaveOptEnabled.Value);
         ConvertSavesFromPeaceEnabled.SettingChanged += (_, _) => ConvertSavesFromPeace.Enable(ConvertSavesFromPeaceEnabled.Value);
         ProfileBasedSaveFolderEnabled.SettingChanged += (_, _) => RefreshSavePath();
+        ProfileBasedOptionEnabled.SettingChanged += (_, _) => RefreshSavePath();
         DefaultProfileName.SettingChanged += (_, _) => RefreshSavePath();
         GameUpsFactor.SettingChanged += (_, _) =>
         {
@@ -97,6 +99,7 @@ public class GamePatch : PatchImpl<GamePatch>
 
             FPSController.SetFixUPS(GameMain.tickPerSec * GameUpsFactor.Value);
         };
+        RefreshSavePath();
     }
 
     public static void Start()
@@ -140,7 +143,13 @@ public class GamePatch : PatchImpl<GamePatch>
     private static void RefreshSavePath()
     {
         var profileName = WindowFunctions.ProfileName;
-        if (profileName == null) return;
+        if (profileName == null)
+        {
+            // We should initialize WindowFunctions before using WindowFunctions.ProfileName
+            WindowFunctions.Init();
+            profileName = WindowFunctions.ProfileName;
+            if (profileName == null) return;
+        }
 
         if (UIRoot.instance.loadGameWindow.gameObject.activeSelf)
         {
@@ -154,15 +163,30 @@ public class GamePatch : PatchImpl<GamePatch>
 
         string gameSavePath;
         if (ProfileBasedSaveFolderEnabled.Value && string.Compare(DefaultProfileName.Value, profileName, StringComparison.OrdinalIgnoreCase) != 0)
-            gameSavePath = $"{GameConfig.overrideDocumentFolder}{GameConfig.gameName}/Save/{profileName}/";
+            gameSavePath = $"{GameConfig.gameDocumentFolder}Save/{profileName}/";
         else
-            gameSavePath = $"{GameConfig.overrideDocumentFolder}{GameConfig.gameName}/Save/";
+            gameSavePath = $"{GameConfig.gameDocumentFolder}Save/";
         if (string.Compare(GameConfig.gameSavePath, gameSavePath, StringComparison.OrdinalIgnoreCase) == 0) return;
         GameConfig.gameSavePath = gameSavePath;
         if (!Directory.Exists(GameConfig.gameSavePath))
         {
             Directory.CreateDirectory(GameConfig.gameSavePath);
         }
+
+        string optionPath;
+        if (ProfileBasedOptionEnabled.Value && string.Compare(DefaultProfileName.Value, profileName, StringComparison.OrdinalIgnoreCase) != 0)
+        {
+            var path = $"{GameConfig.gameDocumentFolder}Option";
+            if (!Directory.Exists(path))
+            {
+                Directory.CreateDirectory(path);
+            }
+            optionPath = $"{path}/{profileName}.xml";
+        }
+        else
+            optionPath = $"{GameConfig.gameDocumentFolder}options.xml";
+        if (string.Compare(GameConfig.gameXMLOption, optionPath, StringComparison.OrdinalIgnoreCase) == 0) return;
+        GameConfig.gameXMLOption = optionPath;
     }
 
     [HarmonyPrefix, HarmonyPatch(typeof(GameMain), nameof(GameMain.HandleApplicationQuit))]

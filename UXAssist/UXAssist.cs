@@ -78,6 +78,8 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
             "Mouse cursor scale up multiplier");
         GamePatch.ProfileBasedSaveFolderEnabled = Config.Bind("Game", "ProfileBasedSaveFolder", false,
             "Profile-based save folder");
+        GamePatch.ProfileBasedOptionEnabled = Config.Bind("Game", "ProfileBasedOption", false,
+            "Profile-based option");
         GamePatch.DefaultProfileName = Config.Bind("Game", "DefaultProfileName", "Default",
             "Default profile name, used when profile-based save folder is enabled. Use original game save folder if matched");
         /*
