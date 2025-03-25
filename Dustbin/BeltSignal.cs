@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -14,7 +13,6 @@ public static class BeltSignal
     private static HashSet<int>[] _signalBelts;
     private static int _signalBeltsCapacity;
     private static bool _initialized;
-    private static AssetBundle _bundle;
     private static Harmony _patch;
 
     public static void Enable(bool on)
@@ -33,13 +31,40 @@ public static class BeltSignal
         }
     }
 
+    private static byte[] LoadEmbeddedResource(string path, Assembly assembly = null)
+    {
+        if (assembly == null)
+        {
+            assembly = Assembly.GetCallingAssembly();
+        }
+        var info = assembly.GetName();
+        var name = info.Name;
+        using var stream = assembly.GetManifestResourceStream($"{name}.{path.Replace('/', '.')}")!;
+        var buffer = new byte[stream.Length];
+        _ = stream.Read(buffer, 0, buffer.Length);
+        return buffer;
+    }
+
+    private static Texture2D LoadEmbeddedTexture(string path, Assembly assembly = null)
+    {
+        var fileData = LoadEmbeddedResource(path, assembly);
+        var tex = new Texture2D(2, 2);
+        tex.LoadImage(fileData);
+        return tex;
+    }
+    
+    private static Sprite LoadEmbeddedSprite(string path, Assembly assembly = null)
+    {
+        var tex = LoadEmbeddedTexture(path, assembly);
+        return Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
+    }
+
     [HarmonyPostfix, HarmonyPriority(Priority.Last)]
     [HarmonyPatch(typeof(VFPreload), "InvokeOnLoadWorkEnded")]
     private static void VFPreload_InvokeOnLoadWorkEnded_Postfix()
     {
         if (_initialized) return;
-        var pluginfolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-        _bundle = AssetBundle.LoadFromFile($"{pluginfolder}/dustbin.assetbundle");
+        var assembly = Assembly.GetExecutingAssembly();
         var signals = LDB._signals;
         var index = signals.dataArray.Length;
         var p = new SignalProto
@@ -48,7 +73,7 @@ public static class BeltSignal
             Name = "DUSTBIN",
             GridIndex = 3110,
             IconPath = "Assets/signal-410.png",
-            _iconSprite = _bundle.LoadAsset<Sprite>("Assets/signal-410.png"),
+            _iconSprite = LoadEmbeddedSprite("assets/icon/signal-410.png", assembly),
             SID = ""
         };
         p.name = p.Name.Translate();

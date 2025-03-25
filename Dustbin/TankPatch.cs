@@ -183,94 +183,68 @@ public static class TankPatch
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void TankComponentUpdateBelt(ref TankComponent thisTank, int belt, bool isOutput, ref CargoTraffic cargoTraffic, ref TankComponent[] tankPool)
     {
-        switch (isOutput)
+        if (isOutput)
         {
-            case true when thisTank.outputSwitch:
+            if (thisTank.outputSwitch)
             {
                 if (thisTank.fluidId <= 0 || thisTank.fluidCount <= 0) return;
                 var inc = thisTank.fluidInc == 0 ? 0 : thisTank.fluidInc / thisTank.fluidCount;
                 if (!cargoTraffic.TryInsertItemAtHead(belt, thisTank.fluidId, 1, (byte)inc)) return;
                 thisTank.fluidCount--;
                 thisTank.fluidInc -= inc;
-                return;
             }
-            case false when thisTank.inputSwitch:
+        }
+        else
+        {
+            if (thisTank.inputSwitch)
             {
                 byte stack;
                 byte inc;
-                switch (thisTank.fluidId)
+                var thisFluidId = thisTank.fluidId;
+                if (thisTank.fluidCount <= 0)
                 {
-                    case > 0 when thisTank.fluidCount < thisTank.fluidCapacity && cargoTraffic.TryPickItemAtRear(belt, thisTank.fluidId, null, out stack, out inc) > 0 &&
-                                  !thisTank.IsDustbin:
-                        thisTank.fluidCount += stack;
-                        thisTank.fluidInc += inc;
-                        return;
-                    case 0:
-                    {
-                        var count = cargoTraffic.TryPickItemAtRear(belt, 0, ItemProto.fluids, out stack, out inc);
-                        if (count <= 0 || thisTank.IsDustbin) return;
-                        thisTank.fluidId = count;
-                        thisTank.fluidCount += stack;
-                        thisTank.fluidInc += inc;
-                        return;
-                    }
+                    var fluidId = cargoTraffic.TryPickItemAtRear(belt, 0, ItemProto.fluids, out stack, out inc);
+                    if (fluidId <= 0 || thisTank.IsDustbin) return;
+                    thisTank.fluidId = fluidId;
+                    thisTank.fluidCount = stack;
+                    thisTank.fluidInc = inc;
+                    return;
                 }
-
-                if (thisTank.fluidCount < thisTank.fluidCapacity || cargoTraffic.GetItemIdAtRear(belt) != thisTank.fluidId || thisTank.nextTankId <= 0) return;
-                ref var targetTank = ref tankPool[thisTank.nextTankId];
-                while (targetTank.fluidCount >= targetTank.fluidCapacity)
+                if (thisTank.fluidCount < thisTank.fluidCapacity || thisTank.IsDustbin)
                 {
-                    ref var lastTank = ref tankPool[targetTank.lastTankId];
-                    if (targetTank.fluidId != lastTank.fluidId)
+                    if (cargoTraffic.GetItemIdAtRear(belt) != thisFluidId || thisTank.nextTankId <= 0) return;
+                    if (cargoTraffic.TryPickItemAtRear(belt, thisFluidId, null, out stack, out inc) <= 0 || thisTank.IsDustbin) return;
+                    thisTank.fluidCount += stack;
+                    thisTank.fluidInc += inc;
+                    return;
+                }
+                if (thisTank.nextTankId <= 0) return;
+                ref var targetTank = ref tankPool[thisTank.nextTankId];
+                while (true)
+                {
+                    if (targetTank.fluidCount < targetTank.fluidCapacity || targetTank.IsDustbin)
                     {
-                        if (lastTank.id == thisTank.id || targetTank.fluidCount >= targetTank.fluidCapacity) return;
-                        targetTank = ref lastTank;
+                        if (!targetTank.inputSwitch) return;
+                        var targetFluidId = targetTank.fluidId;
+                        if (targetFluidId != 0 && targetFluidId != thisFluidId) return;
                         break;
                     }
-
-                    if (!targetTank.inputSwitch)
-                    {
-                        if (lastTank.id == thisTank.id || targetTank.fluidCount >= targetTank.fluidCapacity) return;
-                        targetTank = ref lastTank;
-                        break;
-                    }
-
-                    if (targetTank.nextTankId <= 0)
-                    {
-                        break;
-                    }
-
+                    if (targetTank.nextTankId <= 0) return;
                     targetTank = ref tankPool[targetTank.nextTankId];
                 }
 
-                ref var lastTank2 = ref tankPool[targetTank.lastTankId];
-                if (!targetTank.inputSwitch)
+                if (cargoTraffic.TryPickItemAtRear(belt, thisFluidId, null, out stack, out inc) <= 0 || targetTank.IsDustbin) return;
+                if (targetTank.fluidCount <= 0)
                 {
-                    targetTank = ref lastTank2;
+                    targetTank.fluidId = thisFluidId;
+                    targetTank.fluidCount = stack;
+                    targetTank.fluidInc = inc;
                 }
                 else
                 {
-                    var fluidId = targetTank.fluidId;
-                    if (fluidId != 0 && fluidId != lastTank2.fluidId)
-                    {
-                        if (lastTank2.id == thisTank.id || targetTank.fluidCount >= targetTank.fluidCapacity) return;
-                        targetTank = ref lastTank2;
-                    }
-                    else if (!lastTank2.outputSwitch)
-                    {
-                        return;
-                    }
+                    targetTank.fluidCount += stack;
+                    targetTank.fluidInc += inc;
                 }
-
-                if (cargoTraffic.TryPickItemAtRear(belt, thisTank.fluidId, null, out stack, out inc) <= 0 || targetTank.IsDustbin) return;
-                if (targetTank.fluidCount == 0)
-                {
-                    targetTank.fluidId = thisTank.fluidId;
-                }
-
-                targetTank.fluidCount += stack;
-                targetTank.fluidInc += inc;
-                return;
             }
         }
     }
