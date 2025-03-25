@@ -63,6 +63,8 @@ public class CheatEnabler : BaseUnityPlugin
             "Can pump water anywhere (while water type is not None)");
         PlanetPatch.TerraformAnywayEnabled = Config.Bind("Planet", "TerraformAnyway", false,
             "Can do terraform without enough soil piless");
+        PlayerPatch.InstantHandCraftEnabled = Config.Bind("Player", "InstantHandCraft", false,
+            "Enable instant hand-craft");
         PlayerPatch.InstantTeleportEnabled = Config.Bind("Player", "InstantTeleport", false,
             "Enable instant teleport (like that in Sandbox mode)");
         PlayerPatch.WarpWithoutSpaceWarpersEnabled = Config.Bind("Player", "WarpWithoutWarper", false,

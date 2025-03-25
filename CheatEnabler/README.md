@@ -34,6 +34,7 @@
     + Wind Turbines do global power coverage
     + Boost power generations for kinds of power generators
   + Planet:
+    + Instant hand-craft
     + Infinite Natural Resources
     + Fast Mining
     + Pump Anywhere
@@ -94,6 +95,7 @@
     + 风力涡轮机供电覆盖全球
     + 提升各种发电设备发电量
   + 行星：
+    + 快速手动制造
     + 自然资源采集不消耗
     + 高速采集
     + 平地抽水

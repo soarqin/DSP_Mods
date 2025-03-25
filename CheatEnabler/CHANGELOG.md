@@ -1,5 +1,8 @@
 ## Changlog
 
+* 2.3.28
+  + New feature: `Instant hand-craft`.
+  + Fix some panels' display while `Infinite Natural Resources` is enabled.
 * 2.3.27
   + `Skip bullet period` & `Eject anyway`: Fix compatibility with `Dyson Sphere Program v0.10.32.25496`.
 * 2.3.26
@@ -143,6 +146,9 @@
 
 ## 更新日志
 
+* 2.3.28
+  + 新功能：`快速手动制造`
+  + 修复了启用`自然资源采集不消耗`时部分面板的显示问题
 * 2.3.27
   + `跳过子弹阶段`和`全球弹射`：修复了与`戴森球计划 v0.10.32.25496`的兼容性
 * 2.3.26

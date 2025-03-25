@@ -8,25 +8,39 @@ namespace CheatEnabler.Patches;
 
 public static class PlayerPatch
 {
+    public static ConfigEntry<bool> InstantHandCraftEnabled;
     public static ConfigEntry<bool> InstantTeleportEnabled;
     public static ConfigEntry<bool> WarpWithoutSpaceWarpersEnabled;
 
     public static void Init()
     {
+        InstantHandCraftEnabled.SettingChanged += (_, _) => InstantHandCraft.Enable(InstantHandCraftEnabled.Value);
         InstantTeleportEnabled.SettingChanged += (_, _) => InstantTeleport.Enable(InstantTeleportEnabled.Value);
         WarpWithoutSpaceWarpersEnabled.SettingChanged += (_, _) => WarpWithoutSpaceWarpers.Enable(WarpWithoutSpaceWarpersEnabled.Value);
     }
 
     public static void Start()
     {
+        InstantHandCraft.Enable(InstantHandCraftEnabled.Value);
         InstantTeleport.Enable(InstantTeleportEnabled.Value);
         WarpWithoutSpaceWarpers.Enable(WarpWithoutSpaceWarpersEnabled.Value);
     }
 
     public static void Uninit()
     {
+        InstantHandCraft.Enable(false);
         InstantTeleport.Enable(false);
         WarpWithoutSpaceWarpers.Enable(false);
+    }
+
+    private class InstantHandCraft: PatchImpl<InstantHandCraft>
+    {
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(ForgeTask), MethodType.Constructor, typeof(int), typeof(int))]
+        private static void ForgeTask_Ctor_Postfix(ForgeTask __instance)
+        {
+            __instance.tickSpend = 0;
+        }
     }
 
     private class InstantTeleport: PatchImpl<InstantTeleport>
