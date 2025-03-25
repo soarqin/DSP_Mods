@@ -32,18 +32,18 @@ public static class ResourcePatch
     private class InfiniteResource: PatchImpl<InfiniteResource>
     {
         [HarmonyTranspiler]
-        [HarmonyPatch(typeof(FactorySystem), "GameTick", typeof(long), typeof(bool))]
-        [HarmonyPatch(typeof(FactorySystem), "GameTick", typeof(long), typeof(bool), typeof(int), typeof(int), typeof(int))]
-        [HarmonyPatch(typeof(ItemProto), "GetPropValue")]
-        [HarmonyPatch(typeof(PlanetTransport), "GameTick")]
-        [HarmonyPatch(typeof(UIMinerWindow), "_OnUpdate")]
-        [HarmonyPatch(typeof(UIMiningUpgradeLabel), "Update")]
-        [HarmonyPatch(typeof(UIPlanetDetail), "OnPlanetDataSet")]
-        [HarmonyPatch(typeof(UIPlanetDetail), "RefreshDynamicProperties")]
-        [HarmonyPatch(typeof(UIStarDetail), "OnStarDataSet")]
-        [HarmonyPatch(typeof(UIStarDetail), "RefreshDynamicProperties")]
-        [HarmonyPatch(typeof(UIStationStorage), "RefreshValues")]
-        [HarmonyPatch(typeof(UIVeinCollectorPanel), "_OnUpdate")]
+        [HarmonyPatch(typeof(FactorySystem), nameof(FactorySystem.GameTick), typeof(long), typeof(bool))]
+        [HarmonyPatch(typeof(FactorySystem), nameof(FactorySystem.GameTick), typeof(long), typeof(bool), typeof(int), typeof(int), typeof(int))]
+        [HarmonyPatch(typeof(ItemProto), nameof(ItemProto.GetPropValue))]
+        [HarmonyPatch(typeof(PlanetTransport), nameof(PlanetTransport.GameTick))]
+        [HarmonyPatch(typeof(UIChartAstroResource), nameof(UIChartAstroResource.CalculateMaxAmount))]
+        [HarmonyPatch(typeof(UIChartVeinGroup), nameof(UIChartVeinGroup.CalculateMaxAmount))]
+        [HarmonyPatch(typeof(UIControlPanelAdvancedMinerEntry), nameof(UIControlPanelAdvancedMinerEntry._OnUpdate))]
+        [HarmonyPatch(typeof(UIControlPanelVeinCollectorPanel), nameof(UIControlPanelVeinCollectorPanel._OnUpdate))]
+        [HarmonyPatch(typeof(UIMinerWindow), nameof(UIMinerWindow._OnUpdate))]
+        [HarmonyPatch(typeof(UIMiningUpgradeLabel), nameof(UIMiningUpgradeLabel.Update))]
+        [HarmonyPatch(typeof(UIStationStorage), nameof(UIStationStorage.RefreshValues))]
+        [HarmonyPatch(typeof(UIVeinCollectorPanel), nameof(UIVeinCollectorPanel._OnUpdate))]
         private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
         {
             var matcher = new CodeMatcher(instructions, generator);
