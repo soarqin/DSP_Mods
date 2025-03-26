@@ -96,14 +96,14 @@ public static class StoragePatch
     }
 
     [HarmonyPrefix]
-    [HarmonyPatch(typeof(GameMain), "Start")]
+    [HarmonyPatch(typeof(GameMain), nameof(GameMain.Start))]
     private static void GameMain_Start_Prefix()
     {
         Reset();
     }
 
     [HarmonyPostfix]
-    [HarmonyPatch(typeof(UIStorageWindow), "_OnCreate")]
+    [HarmonyPatch(typeof(UIStorageWindow), nameof(UIStorageWindow._OnCreate))]
     private static void UIStorageWindow__OnCreate_Postfix(UIStorageWindow __instance)
     {
         _storageDustbinCheckBox = UI.MyCheckBox.CreateCheckBox(false, __instance.transform, 50f, 50f, Localization.CurrentLanguageLCID == Localization.LCID_ZHCN ? "垃圾桶" : "Dustbin");
@@ -123,7 +123,7 @@ public static class StoragePatch
     }
 
     [HarmonyPostfix]
-    [HarmonyPatch(typeof(UIStorageWindow), "_OnUpdate")]
+    [HarmonyPatch(typeof(UIStorageWindow), nameof(UIStorageWindow._OnUpdate))]
     private static void UIStorageWindow__OnUpdate_Postfix(UIStorageWindow __instance)
     {
         var storageId = __instance.storageId;
@@ -141,7 +141,7 @@ public static class StoragePatch
     
     /* Adopt fix from starfi5h's NebulaCompatiblilityAssist */
     [HarmonyPostfix]
-    [HarmonyPatch(typeof(UIStorageGrid), "OnStorageSizeChanged")]
+    [HarmonyPatch(typeof(UIStorageGrid), nameof(UIStorageGrid.OnStorageSizeChanged))]
     private static void UIStorageGrid_OnStorageSizeChanged_Postfix()
     {
         // Due to storage window is empty when open in client, the size will change after receiving data from host
@@ -149,8 +149,8 @@ public static class StoragePatch
     }
 
     [HarmonyTranspiler]
-    [HarmonyPatch(typeof(StorageComponent), "AddItem", new[] { typeof(int), typeof(int), typeof(int), typeof(int), typeof(bool) },
-        new[] { ArgumentType.Normal, ArgumentType.Normal, ArgumentType.Normal, ArgumentType.Out, ArgumentType.Normal })]
+    [HarmonyPatch(typeof(StorageComponent), nameof(StorageComponent.AddItem), [typeof(int), typeof(int), typeof(int), typeof(int), typeof(bool)],
+        [ArgumentType.Normal, ArgumentType.Normal, ArgumentType.Normal, ArgumentType.Out, ArgumentType.Normal])]
     private static IEnumerable<CodeInstruction> StorageComponent_AddItem_HarmonyTranspiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
     {
         var matcher = new CodeMatcher(instructions, generator);
@@ -172,7 +172,7 @@ public static class StoragePatch
 
     /* We keep this to make MOD compatible with older version */
     [HarmonyPostfix]
-    [HarmonyPatch(typeof(StorageComponent), "Import")]
+    [HarmonyPatch(typeof(StorageComponent), nameof(StorageComponent.Import))]
     private static void StorageComponent_Import_Postfix(StorageComponent __instance)
     {
         if (__instance.bans >= 0)

@@ -60,7 +60,7 @@ public static class BeltSignal
     }
 
     [HarmonyPostfix, HarmonyPriority(Priority.Last)]
-    [HarmonyPatch(typeof(VFPreload), "InvokeOnLoadWorkEnded")]
+    [HarmonyPatch(typeof(VFPreload), nameof(VFPreload.InvokeOnLoadWorkEnded))]
     private static void VFPreload_InvokeOnLoadWorkEnded_Postfix()
     {
         if (_initialized) return;
@@ -198,7 +198,7 @@ public static class BeltSignal
     }
 
     [HarmonyTranspiler]
-    [HarmonyPatch(typeof(GameData), "GameTick")]
+    [HarmonyPatch(typeof(GameData), nameof(GameData.GameTick))]
     public static IEnumerable<CodeInstruction> GameData_GameTick_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
     {
         var matcher = new CodeMatcher(instructions, generator);

@@ -100,14 +100,14 @@ public static class TankPatch
     }
 
     [HarmonyPrefix]
-    [HarmonyPatch(typeof(GameMain), "Start")]
+    [HarmonyPatch(typeof(GameMain), nameof(GameMain.Start))]
     private static void GameMain_Start_Prefix()
     {
         Reset();
     }
 
     [HarmonyPostfix]
-    [HarmonyPatch(typeof(UITankWindow), "_OnCreate")]
+    [HarmonyPatch(typeof(UITankWindow), nameof(UITankWindow._OnCreate))]
     private static void UITankWindow__OnCreate_Postfix(UITankWindow __instance)
     {
         _tankDustbinCheckBox = UI.MyCheckBox.CreateCheckBox(false, __instance.transform, 120f, 20f, Localization.CurrentLanguageLCID == Localization.LCID_ZHCN ? "垃圾桶" : "Dustbin");
@@ -127,7 +127,7 @@ public static class TankPatch
     }
 
     [HarmonyPostfix]
-    [HarmonyPatch(typeof(UITankWindow), "_OnUpdate")]
+    [HarmonyPatch(typeof(UITankWindow), nameof(UITankWindow._OnUpdate))]
     private static void UITankWindow__OnUpdate_Postfix(UITankWindow __instance)
     {
         var tankId = __instance.tankId;
@@ -142,7 +142,7 @@ public static class TankPatch
     }
 
     [HarmonyPrefix]
-    [HarmonyPatch(typeof(TankComponent), "GameTick")]
+    [HarmonyPatch(typeof(TankComponent), nameof(TankComponent.GameTick))]
     private static bool TankComponent_GameTick_Prefix(ref TankComponent __instance, PlanetFactory factory)
     {
         if (__instance.fluidInc < 0)
