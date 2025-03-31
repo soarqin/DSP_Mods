@@ -4,6 +4,9 @@
   + New feature: `Cut conveyor belt`
     - Press shortcut key to cut conveyor belt under cursor.
     - The default shortcut key is Alt+X, you can set it in system options panel.
+  + New feature: `Profile based option`
+    - Option file is stored as `Options\<ProfileName>.xml`.
+  + Fix compatibility with game update 0.10.32.25779
 * 1.2.15
   + `Off-grid building and stepped rotation`: Fix compatibility with DSP 0.10.32.25682. (#57)
   + `Enhanced control for logistic storage limits`: Try to fix possible crash. (#54)
@@ -247,6 +250,9 @@
   + 新功能：`切割传送带`
     - 按快捷键切割光标位置的传送带
     - 默认快捷键是Alt+X，可以在系统选项面板中设置
+  + 新功能：`基于mod管理器配置档案名`
+    - 选项文件存储在`Options\<ProfileName>.xml`中
+  + 修复了与游戏更新0.10.32.25779的兼容性
 * 1.2.15
   + `脱离网格建造和小角度旋转`：修复了与0.10.32.25682的兼容性 (#57)
   + `物流塔存储数量限制控制改进`：修复了可能导致崩溃的问题 (#54)

@@ -1041,36 +1041,35 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                                 {
                                     var usedCount = 0;
                                     var maxAllowed = amount - KeepVeinAmount;
-                                    if (miningRate < 0.99999f)
+                                    var add = miningRate * (double)times;
+                                    __instance.costFrac += add;
+                                    var estimateUses = (int)__instance.costFrac;
+                                    if (estimateUses < maxAllowed)
                                     {
-                                        for (var i = 0; i < times; i++)
-                                        {
-                                            __instance.seed = (uint)((__instance.seed % 2147483646U + 1U) * 48271UL % 2147483647UL) - 1U;
-                                            usedCount += __instance.seed / 2147483646.0 < miningRate ? 1 : 0;
-                                            outputCount++;
-                                            if (usedCount == maxAllowed)
-                                            {
-                                                break;
-                                            }
-                                        }
+                                        outputCount = times;
+                                        usedCount = estimateUses;
+                                        __instance.costFrac -= estimateUses;
                                     }
                                     else
                                     {
-                                        outputCount = times > maxAllowed ? maxAllowed : times;
-                                        usedCount = outputCount;
+                                        usedCount = maxAllowed;
+                                        var oldFrac = __instance.costFrac - add;
+                                        var ratio = (usedCount - oldFrac) / add;
+                                        var realCost = times * ratio;
+                                        outputCount = (int)(Math.Ceiling(realCost) + 0.01);
+                                        __instance.costFrac = miningRate * (outputCount - realCost);
                                     }
-
                                     if (usedCount > 0)
                                     {
                                         var groupIndex = (int)veinPool[veinId].groupIndex;
-                                        amount = veinPool[veinId].amount -= usedCount;
+                                        amount -= usedCount;
                                         if (amount < __instance.minimumVeinAmount)
                                         {
                                             __instance.minimumVeinAmount = amount;
                                         }
 
                                         var veinGroups = factory.veinGroups;
-                                        veinGroups[groupIndex].amount -= usedCount;
+                                        veinGroups[groupIndex].amount = amount;
                                         factory.veinAnimPool[veinId].time = amount >= 20000 ? 0f : 1f - 0.00005f;
                                         if (amount <= 0)
                                         {
@@ -1149,13 +1148,24 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                                 {
                                     var usedCount = 0;
                                     var maxAllowed = amount - _keepOilAmount;
-                                    for (var j = 0; j < times; j++)
+                                    var add = miningRate * (double)times;
+                                    __instance.costFrac += add;
+                                    var estimateUses = (int)__instance.costFrac;
+                                    if (estimateUses < maxAllowed)
                                     {
-                                        __instance.seed = (uint)((__instance.seed % 2147483646U + 1U) * 48271UL % 2147483647UL) - 1U;
-                                        usedCount += __instance.seed / 2147483646.0 < miningRate ? 1 : 0;
-                                        outputCount++;
+                                        outputCount = times;
+                                        usedCount = estimateUses;
+                                        __instance.costFrac -= estimateUses;
                                     }
-
+                                    else
+                                    {
+                                        usedCount = maxAllowed;
+                                        var oldFrac = __instance.costFrac - add;
+                                        var ratio = (usedCount - oldFrac) / add;
+                                        var realCost = times * ratio;
+                                        outputCount = (int)(Math.Ceiling(realCost) + 0.01);
+                                        __instance.costFrac = miningRate * (outputCount - realCost);
+                                    }
                                     if (usedCount > 0)
                                     {
                                         if (usedCount > maxAllowed)

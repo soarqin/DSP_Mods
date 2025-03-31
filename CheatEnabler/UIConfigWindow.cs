@@ -65,7 +65,7 @@ public static class UIConfigWindow
         I18N.Add("Overclock Silos", "Overclock Silos (10x)", "高速发射井(10倍射速)");
         I18N.Add("Complete Dyson Sphere shells instantly", "Complete Dyson Sphere shells instantly", "立即完成戴森壳建造");
         I18N.Add("Terraform without enough soil piles", "Terraform without enough soil piles", "沙土不够时依然可以整改地形");
-        I18N.Add("Instant hand craft", "Instant hand-craft", "快速手动制造");
+        I18N.Add("Instant hand-craft", "Instant hand-craft", "快速手动制造");
         I18N.Add("Instant teleport (like that in Sandbox mode)", "Instant teleport (like that in Sandbox mode)", "快速传送(和沙盒模式一样)");
         I18N.Add("Mecha and Drones/Fleets invicible", "Mecha and Drones/Fleets invicible", "机甲和战斗无人机无敌");
         I18N.Add("Buildings invicible", "Buildings invincible", "建筑无敌");

@@ -1,5 +1,7 @@
 ## Changlog
 
+* 2.3.29
+  + Fix compatibility with game update 0.10.32.25779
 * 2.3.28
   + New feature: `Instant hand-craft`.
   + Fix some panels' display while `Infinite Natural Resources` is enabled.
@@ -146,6 +148,8 @@
 
 ## 更新日志
 
+* 2.3.29
+  + 修复了与游戏更新0.10.32.25779的兼容性
 * 2.3.28
   + 新功能：`快速手动制造`
   + 修复了启用`自然资源采集不消耗`时部分面板的显示问题

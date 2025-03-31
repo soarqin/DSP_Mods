@@ -26,6 +26,8 @@
     - Mod manager profile based save folder
       - Save files are stored in `Save\<ProfileName>` folder.
       - Will use original save location if matching default profile name.
+    - Mod manager profile based option
+      - Option file is stored as `Options\<ProfileName>.xml`.
     - Logical Frame Rate
       - This will change game running speed, down to 0.1x slower and up to 10x faster.
       - A pair of shortcut keys (`-` and `+`) to change the logical frame rate by -0.5x and +0.5x.
@@ -147,6 +149,8 @@
     - 基于mod管理器配置档案名的存档文件夹
       - 存档文件会存储在`Save\<ProfileName>`文件夹中
       - 如果匹配默认配置档案名则使用原始存档位置
+    - 基于mod管理器配置档案名的选项文件
+      - 选项文件存储为`Options\<ProfileName>.xml`
     - 逻辑帧倍率
       - 这将改变游戏运行速度，最慢0.1倍，最快10倍
       - 设置了一对快捷键(`-`和`+`)，可以-/+0.5倍改变逻辑帧倍率

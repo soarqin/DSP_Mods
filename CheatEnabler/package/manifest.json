@@ -1,6 +1,6 @@
 ﻿{
   "name": "CheatEnabler",
-  "version_number": "2.3.28",
+  "version_number": "2.3.29",
   "website_url": "https://github.com/soarqin/DSP_Mods/tree/master/CheatEnabler",
   "description": "Add various cheat functions while disabling abnormal determinants / 添加一些作弊功能，同时屏蔽异常检测",
   "dependencies": [
