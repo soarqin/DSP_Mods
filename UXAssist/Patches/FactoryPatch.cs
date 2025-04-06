@@ -1063,13 +1063,13 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                                     {
                                         var groupIndex = (int)veinPool[veinId].groupIndex;
                                         amount -= usedCount;
+                                        veinPool[veinId].amount = amount;
                                         if (amount < __instance.minimumVeinAmount)
                                         {
                                             __instance.minimumVeinAmount = amount;
                                         }
 
-                                        var veinGroups = factory.veinGroups;
-                                        veinGroups[groupIndex].amount = amount;
+                                        factory.veinGroups[groupIndex].amount -= usedCount;
                                         factory.veinAnimPool[veinId].time = amount >= 20000 ? 0f : 1f - 0.00005f;
                                         if (amount <= 0)
                                         {
@@ -1173,10 +1173,10 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                                             usedCount = maxAllowed;
                                         }
 
-                                        amount = veinPool[veinId].amount -= usedCount;
-                                        var veinGroups = factory.veinGroups;
+                                        amount -= usedCount;
+                                        veinPool[veinId].amount = amount;
                                         var groupIndex = veinPool[veinId].groupIndex;
-                                        veinGroups[groupIndex].amount -= usedCount;
+                                        factory.veinGroups[groupIndex].amount -= usedCount;
                                         factory.veinAnimPool[veinId].time = amount >= 25000 ? 0f : 1f - amount * VeinData.oilSpeedMultiplier;
                                         if (amount <= 2500)
                                         {

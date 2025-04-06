@@ -5,7 +5,7 @@
     <TargetFramework>net472</TargetFramework>
     <BepInExPluginGuid>org.soardev.cheatenabler</BepInExPluginGuid>
     <Description>DSP MOD - CheatEnabler</Description>
-    <Version>2.3.28</Version>
+    <Version>2.3.29</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
     <PackageId>CheatEnabler</PackageId>
@@ -23,6 +23,17 @@
   <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
   </ItemGroup>
+
+<!--
+  <ItemGroup>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>..\AssemblyFromGame\Assembly-CSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>..\AssemblyFromGame\UnityEngine.UI.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+-->
 
   <ItemGroup>
     <ProjectReference Include="..\UXAssist\UXAssist.csproj" />

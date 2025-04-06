@@ -1,5 +1,7 @@
 ## Changlog
 
+* 1.2.17
+  + Fix wrong implementation of `Protect veins from exhaustion` which causes wrong display of vein stats and veins not consumed.
 * 1.2.16
   + New feature: `Cut conveyor belt`
     - Press shortcut key to cut conveyor belt under cursor.
@@ -246,6 +248,8 @@
 
 ## 更新日志
 
+* 1.2.17
+  + 修复了`保护矿脉不会耗尽`导致矿脉状态显示错误和矿脉未被消耗的错误实现
 * 1.2.16
   + 新功能：`切割传送带`
     - 按快捷键切割光标位置的传送带

@@ -4,7 +4,7 @@
     <TargetFramework>net472</TargetFramework>
     <BepInExPluginGuid>org.soardev.uxassist</BepInExPluginGuid>
     <Description>DSP MOD - UXAssist</Description>
-    <Version>1.2.16</Version>
+    <Version>1.2.17</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
     <PackageId>UXAssist</PackageId>
@@ -20,6 +20,18 @@
     <PackageReference Include="DysonSphereProgram.Modding.CommonAPI" Version="1.6.5" />
     <PackageReference Include="DysonSphereProgram.Modding.DSPModSave" Version="1.*" />
   </ItemGroup>
+
+<!--
+  <ItemGroup>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>..\AssemblyFromGame\Assembly-CSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>..\AssemblyFromGame\UnityEngine.UI.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+-->
+
   <ItemGroup>
     <EmbeddedResource Include="assets/signal/energy-fragment.png" />
     <EmbeddedResource Include="assets/signal/memory.png" />
