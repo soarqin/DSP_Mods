@@ -134,7 +134,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         NightLight.Enable(false);
         RemoveSomeConditionBuild.Enable(false);
         UnlimitInteractive.Enable(false);
-        
+
         BeltSignalsForBuyOut.UninitPersist();
     }
 
@@ -994,12 +994,13 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             switch (__instance.type)
             {
                 case EMinerType.Vein:
-                    if (__instance.veinCount <= 0)
+                    var veinCount = __instance.veinCount;
+                    if (veinCount <= 0)
                         break;
 
                     if (__instance.time <= __instance.period)
                     {
-                        __instance.time += (int)(power * __instance.speedDamper * __instance.speed * miningSpeed * __instance.veinCount);
+                        __instance.time += (int)(power * __instance.speedDamper * __instance.speed * miningSpeed * veinCount);
                         res = 1U;
                     }
 
@@ -1008,23 +1009,16 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                         break;
                     }
 
-                    veinId = __instance.veins[__instance.currentVeinIndex];
+                    var currentVeinIndex = __instance.currentVeinIndex;
+                    veinId = __instance.veins[currentVeinIndex];
                     lock (veinPool)
                     {
                         if (veinPool[veinId].id == 0)
                         {
-                            __instance.RemoveVeinFromArray(__instance.currentVeinIndex);
+                            __instance.RemoveVeinFromArray(currentVeinIndex);
                             __instance.GetMinimumVeinAmount(factory, veinPool);
-                            if (__instance.veinCount > 1)
-                            {
-                                __instance.currentVeinIndex %= __instance.veinCount;
-                            }
-                            else
-                            {
-                                __instance.currentVeinIndex = 0;
-                            }
-
-                            __instance.time += (int)(power * __instance.speedDamper * __instance.speed * miningSpeed * __instance.veinCount);
+                            veinCount = __instance.veinCount;
+                            __instance.currentVeinIndex = veinCount > 1 ? currentVeinIndex % veinCount : 0;
                             __result = 0U;
                             return false;
                         }
@@ -1035,9 +1029,9 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                             times = __instance.time / __instance.period;
                             var outputCount = 0;
                             var amount = veinPool[veinId].amount;
-                            if (amount > KeepVeinAmount)
+                            if (miningRate > 0f)
                             {
-                                if (miningRate > 0f)
+                                if (amount > KeepVeinAmount)
                                 {
                                     var usedCount = 0;
                                     var maxAllowed = amount - KeepVeinAmount;
@@ -1078,45 +1072,43 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                                             factory.RemoveVeinWithComponents(veinId);
                                             factory.RecalculateVeinGroup(groupIndex);
                                             factory.NotifyVeinExhausted(venType, pos);
+                                            veinCount = __instance.veinCount;
                                         }
                                         else
                                         {
-                                            __instance.currentVeinIndex++;
+                                            currentVeinIndex++;
                                         }
                                     }
                                 }
                                 else
                                 {
-                                    outputCount = times;
+                                    if (amount <= 0)
+                                    {
+                                        __instance.RemoveVeinFromArray(currentVeinIndex);
+                                        __instance.GetMinimumVeinAmount(factory, veinPool);
+                                        veinCount = __instance.veinCount;
+                                    }
+                                    else
+                                    {
+                                        currentVeinIndex++;
+                                    }
+                                    __instance.currentVeinIndex = veinCount > 1 ? currentVeinIndex % veinCount : 0;
+                                    break;
                                 }
-
-                                __instance.productCount += outputCount;
-                                lock (productRegister)
-                                {
-                                    productRegister[__instance.productId] += outputCount;
-                                    factory.AddMiningFlagUnsafe(veinPool[veinId].type);
-                                    factory.AddVeinMiningFlagUnsafe(veinPool[veinId].type);
-                                }
-                            }
-                            else if (amount <= 0)
-                            {
-                                __instance.RemoveVeinFromArray(__instance.currentVeinIndex);
-                                __instance.GetMinimumVeinAmount(factory, veinPool);
                             }
                             else
                             {
-                                __instance.currentVeinIndex++;
+                                outputCount = times;
                             }
-
+                            __instance.productCount += outputCount;
+                            lock (productRegister)
+                            {
+                                productRegister[__instance.productId] += outputCount;
+                                factory.AddMiningFlagUnsafe(veinPool[veinId].type);
+                                factory.AddVeinMiningFlagUnsafe(veinPool[veinId].type);
+                            }
                             __instance.time -= __instance.period * outputCount;
-                            if (__instance.veinCount > 1)
-                            {
-                                __instance.currentVeinIndex %= __instance.veinCount;
-                            }
-                            else
-                            {
-                                __instance.currentVeinIndex = 0;
-                            }
+                            __instance.currentVeinIndex = veinCount > 1 ? currentVeinIndex % veinCount : 0;
                         }
                     }
 
@@ -1857,7 +1849,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             new(OpCodes.Call, AccessTools.Method(typeof(Math), nameof(Math.Min), [typeof(int), typeof(int)]))
         ];
         private static readonly CodeInstruction GetRealCount = new(OpCodes.Ldsfld, AccessTools.Field(typeof(FactoryPatch), nameof(_tankFastFillInAndTakeOutMultiplierRealValue)));
-       
+
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(PlanetFactory), nameof(PlanetFactory.EntityFastFillIn))]
         private static IEnumerable<CodeInstruction> PlanetFactory_EntityFastFillIn_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -1877,7 +1869,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             ).RemoveInstructions(5).Insert(MultiplierWithCountCheck);
             return matcher.InstructionEnumeration();
         }
-        
+
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(PlanetFactory), nameof(PlanetFactory.EntityFastTakeOut))]
         private static IEnumerable<CodeInstruction> PlanetFactory_EntityFastTakeOut_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -1898,7 +1890,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             ).RemoveInstructions(5).Insert(MultiplierWithCountCheck);
             return matcher.InstructionEnumeration();
         }
-        
+
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(UITankWindow), nameof(UITankWindow._OnUpdate))]
         private static IEnumerable<CodeInstruction> UITankWindow__OnUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
