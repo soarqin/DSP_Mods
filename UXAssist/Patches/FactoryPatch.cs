@@ -216,11 +216,35 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         private static bool _mechaOnEarth;
         private static AnimationState _sail;
         private static Light _sunlight;
+        private static StarData _lastStar;
+
+        protected override void OnEnable()
+        {
+            GameLogic.OnGameEnd += GameMain_End_Postfix;
+        }
 
         protected override void OnDisable()
         {
-            if (!_sunlight) return;
-            _sunlight.transform.localEulerAngles = new Vector3(0f, 180f);
+            if (_sunlight)
+            {
+                _sunlight.transform.localEulerAngles = new Vector3(0f, 180f);
+                _sunlight = null;
+            }
+            _lastStar = null;
+            _sail = null;
+            _nightlightInitialized = false;
+        }
+        
+        private static void GameMain_End_Postfix()
+        {
+            if (_sunlight)
+            {
+                _sunlight.transform.localEulerAngles = new Vector3(0f, 180f);
+                _sunlight = null;
+            }
+            _lastStar = null;
+            _sail = null;
+            _nightlightInitialized = false;
         }
 
         public static void UpdateSunlightAngle()
@@ -234,46 +258,38 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         [HarmonyPatch(typeof(GameMain), nameof(GameMain.LateUpdate))]
         public static void GameMain_LateUpdate_Postfix(GameMain __instance)
         {
+            if (__instance.isMenuDemo || !__instance._running) return;
+
             if (!_nightlightInitialized)
             {
-                if (__instance.isMenuDemo || !__instance._running || !GameMain.mainPlayer.controller.model.gameObject.activeInHierarchy) return;
+                if (!GameMain.mainPlayer.controller.model.gameObject.activeInHierarchy) return;
                 if (_sail == null) _sail = GameMain.mainPlayer.animator.sails[GameMain.mainPlayer.animator.sailAnimIndex];
                 _nightlightInitialized = true;
             }
 
+            var sailing = _sail && _sail.enabled;
             if (_mechaOnEarth)
             {
-                if (__instance.isMenuDemo || !GameMain.isRunning)
+                if (sailing)
                 {
                     _mechaOnEarth = false;
-                    if (_sunlight != null)
-                    {
-                        _sunlight.transform.localEulerAngles = new Vector3(0f, 180f);
-                        _sunlight = null;
-                    }
-
-                    _sail = null;
-                    _nightlightInitialized = false;
-                    return;
+                    if (!_sunlight) return;
+                    _sunlight.transform.localEulerAngles = new Vector3(0f, 180f);
+                    _sunlight = null;
                 }
-
-                if (!_sail || !_sail.enabled) return;
-                _mechaOnEarth = false;
-                if (!_sunlight) return;
-                _sunlight.transform.localEulerAngles = new Vector3(0f, 180f);
-                _sunlight = null;
-                return;
             }
-
-            if (_sail && _sail.enabled) return;
-            if (!_sunlight)
+            else
             {
-                var simu = GameMain.universeSimulator;
-                if (simu) _sunlight = simu.LocalStarSimulator()?.sunLight;
-                if (!_sunlight) return;
+                if (sailing) return;
+                var localStar = GameMain.localStar;
+                if (!_sunlight || _lastStar != localStar)
+                {
+                    _sunlight = GameMain.universeSimulator?.LocalStarSimulator()?.sunLight;
+                    if (!_sunlight) return;
+                    _lastStar = localStar;
+                }
+                _mechaOnEarth = true;
             }
-
-            _mechaOnEarth = true;
             UpdateSunlightAngle();
         }
 
