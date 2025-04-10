@@ -1,5 +1,8 @@
 ## Changlog
 
+* 1.2.18
+  + `Protect veins from exhaustion`: Optimized implementation, now veins will not be protected once you have upgrade `Veins Utilization` to level 390+, while the cost rate becomes absolute 0.
+  + `Night Sunlight`: Fix bugs that sunlight angle is not updated as expected.
 * 1.2.17
   + Fix wrong implementation of `Protect veins from exhaustion` which causes wrong display of vein stats and veins not consumed.
 * 1.2.16
@@ -9,16 +12,16 @@
   + New feature: `Profile based option`
     - Option file is stored as `Options\<ProfileName>.xml`.
   + Fix compatibility with game update 0.10.32.25779
+
+<details>
+<summary>Older versions</summary>
+
 * 1.2.15
   + `Off-grid building and stepped rotation`: Fix compatibility with DSP 0.10.32.25682. (#57)
   + `Enhanced control for logistic storage limits`: Try to fix possible crash. (#54)
 * 1.2.14
   + Fix an issue that an unexpected menu icon is shown in the top-right corner of the config panel.
   + `Stop ejectors when available nodes are all filled up`: Fix compatibility with `Dyson Sphere Program v0.10.32.25496`.
-
-<details>
-<summary>Older versions</summary>
-
 * 1.2.13
   + `Belt signals for buy out dark fog items automatically`: Fix possible crashes.
   + `Logistics Control Panel Improvement`: Auto apply filter with in-hand item now.
@@ -248,6 +251,9 @@
 
 ## 更新日志
 
+* 1.2.18
+  + `保护矿脉不会耗尽`：优化实现，当`矿物利用`升级到390级以上时消耗速度变为0时，矿脉将不再被保护。
+  + `夜间日光灯`：修复了光照角度未正确更新的问题。
 * 1.2.17
   + 修复了`保护矿脉不会耗尽`导致矿脉状态显示错误和矿脉未被消耗的错误实现
 * 1.2.16
@@ -257,16 +263,16 @@
   + 新功能：`基于mod管理器配置档案名`
     - 选项文件存储在`Options\<ProfileName>.xml`中
   + 修复了与游戏更新0.10.32.25779的兼容性
+
+<details>
+<summary>Older versions</summary>
+
 * 1.2.15
   + `脱离网格建造和小角度旋转`：修复了与0.10.32.25682的兼容性 (#57)
   + `物流塔存储数量限制控制改进`：修复了可能导致崩溃的问题 (#54)
 * 1.2.14
   + 修正设置窗口右上角多出一个菜单图标的问题
   + `当可用节点全部造完时停止弹射`：修复了与`戴森球计划 v0.10.32.25496`的兼容性
-
-<details>
-<summary>Older versions</summary>
-
 * 1.2.13
   + `用于自动购买黑雾物品的传送带信号`：修复了可能导致崩溃的问题
   + `物流控制面板改进`：现在也自动将拿着的物品设为筛选条件
