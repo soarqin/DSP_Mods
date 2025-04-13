@@ -138,6 +138,11 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
         FactoryPatch.TankFastFillInAndTakeOutMultiplier = Config.Bind("Factory", "TankFastFillInAndTakeOutMultiplier", 1000, "Speed multiplier for fast filling in to and takeing out from tanks");
         FactoryPatch.CutConveyorBeltEnabled = Config.Bind("Factory", "CutConveyorBeltShortcut", false,
             "Cut conveyor belt (with shortcut key)");
+        FactoryPatch.TweakBuildingBufferEnabled = Config.Bind("Factory", "TweakBuildingBuffer", false,
+            "Tweak buffer count for assemblers and power generators");
+        FactoryPatch.AssemblerBufferTimeMultiplier = Config.Bind("Factory", "AssemblerBufferTimeMultiplier", 4, new ConfigDescription("Assembler buffer time multiplier in seconds", new AcceptableValueRange<int>(2, 10)));
+        FactoryPatch.AssemblerBufferMininumMultiplier = Config.Bind("Factory", "AssemblerBufferMininumMultiplier", 4, new ConfigDescription("Assembler buffer minimum multiplier", new AcceptableValueRange<int>(2, 10)));
+        FactoryPatch.ReceiverBufferCount = Config.Bind("Factory", "ReceiverBufferCount", 1, new ConfigDescription("Ray Receiver Graviton Lens buffer count", new AcceptableValueRange<int>(1, 20)));
         LogisticsPatch.LogisticsCapacityTweaksEnabled = Config.Bind("Factory", "LogisticsCapacityTweaks", true,
             "Logistics capacity related tweaks");
         LogisticsPatch.AllowOverflowInLogisticsEnabled = Config.Bind("Factory", "AllowOverflowInLogistics", false,
@@ -169,15 +174,14 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
         DysonSpherePatch.OnlyConstructNodesEnabled = Config.Bind("DysonSphere", "OnlyConstructNodes", false,
             "Construct only nodes but frames");
         DysonSpherePatch.AutoConstructMultiplier = Config.Bind("DysonSphere", "AutoConstructMultiplier", 1, "Dyson Sphere auto-construct speed multiplier");
-        
+
         I18N.Init();
         I18N.Add("UXAssist Config", "UXAssist Config", "UX助手设置");
         I18N.Add("KEYOpenUXAssistConfigWindow", "Open UXAssist Config Window", "打开UX助手设置面板");
-        I18N.Add("KEYToggleAutoCruise", "Toggle auto-cruise", "切换自动巡航");
 
         // UI Patches
         GameLogic.Enable(true);
-        
+
         UIConfigWindow.Init();
 
         _patches = Util.GetTypesFiltered(Assembly.GetExecutingAssembly(),
@@ -334,7 +338,7 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
         {
             InitMenuButtons();
         }
-        
+
         [HarmonyPostfix]
         [HarmonyPatch(typeof(UIPlanetGlobe), nameof(UIPlanetGlobe.DistributeButtons))]
         private static void UIPlanetGlobe_DistributeButtons_Postfix(UIPlanetGlobe __instance)

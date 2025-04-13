@@ -27,25 +27,27 @@ public class PatchSetCallbackFlagAttribute(PatchCallbackFlag flag) : Attribute
 
 public class PatchImpl<T> where T : PatchImpl<T>, new()
 {
-    private static T Instance { get; } = new();
-    
-    private Harmony _patch;
+    protected static T Instance { get; } = new();
+
+    protected Harmony _patch;
 
     public static void Enable(bool enable)
     {
         var thisInstance = Instance;
         if (enable)
         {
+            if (thisInstance._patch != null) return;
             var guid = typeof(T).GetCustomAttribute<PatchGuidAttribute>()?.Guid ?? $"PatchImpl.{typeof(T).FullName ?? typeof(T).ToString()}";
             var callOnEnableBefore = typeof(T).GetCustomAttributes<PatchSetCallbackFlagAttribute>().Any(n => n.Flag == PatchCallbackFlag.CallOnEnableBeforePatch);
             if (callOnEnableBefore) thisInstance.OnEnable();
-            thisInstance._patch ??= Harmony.CreateAndPatchAll(typeof(T), guid);
+            thisInstance._patch = Harmony.CreateAndPatchAll(typeof(T), guid);
             if (!callOnEnableBefore) thisInstance.OnEnable();
             return;
         }
+        if (thisInstance._patch == null) return;
         var callOnDisableAfter = typeof(T).GetCustomAttributes<PatchSetCallbackFlagAttribute>().Any(n => n.Flag == PatchCallbackFlag.CallOnDisableAfterUnpatch);
         if (!callOnDisableAfter) thisInstance.OnDisable();
-        thisInstance._patch?.UnpatchSelf();
+        thisInstance._patch.UnpatchSelf();
         thisInstance._patch = null;
         if (callOnDisableAfter) thisInstance.OnDisable();
     }

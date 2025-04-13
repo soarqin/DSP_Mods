@@ -89,6 +89,10 @@ public static class UIConfigWindow
             "打开面板时自动将鼠标指向物品设为筛选条件\n在控制面板物流塔列表中右键点击物品图标快速设置为筛选条件");
         I18N.Add("Real-time logistic stations info panel", "Real-time logistic stations info panel", "物流运输站实时信息面板");
         I18N.Add("Show status bars for storage items", "Show status bars for storage items", "显示存储物品状态条");
+        I18N.Add("Tweak building buffers", "Tweak building buffers", "调整建筑输入缓冲");
+        I18N.Add("Assembler buffer time multiplier(in seconds)", "Assembler buffer time multiplier(in seconds)", "工厂配方缓冲时间倍率(秒)");
+        I18N.Add("Assembler buffer minimum multiplier", "Assembler buffer minimum multiplier", "工厂配方缓冲最小倍率");
+        I18N.Add("Ray Receiver Graviton Lens buffer count", "Ray Receiver Graviton Lens buffer count", "射线接收器透镜缓冲数量");
         I18N.Add("Auto navigation on sailings", "Auto navigation on sailings", "宇宙航行时自动导航");
         I18N.Add("Enable auto-cruise", "Enable auto-cruise", "启用自动巡航");
         I18N.Add("Auto boost", "Auto boost", "自动加速");
@@ -251,32 +255,43 @@ public static class UIConfigWindow
         checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab2, FactoryPatch.TreatStackingAsSingleEnabled, "Treat stack items as single in monitor components");
         y += 36f;
         wnd.AddCheckBox(x, y, tab2, FactoryPatch.QuickBuildAndDismantleLabsEnabled, "Quick build and dismantle stacking labs");
-        y += 36f;
-        var cb = wnd.AddCheckBox(x, y, tab2, FactoryPatch.TankFastFillInAndTakeOutEnabled, "Fast fill in to and take out from tanks");
-        x += cb.Width + 5f;
-        txt = wnd.AddText2(x, y + 2f, tab2, "Speed Ratio", 13, "text-tank-fast-fill-speed-ratio");
-        var tankSlider = wnd.AddSlider(x + txt.preferredWidth + 5f, y + 7f, tab2, FactoryPatch.TankFastFillInAndTakeOutMultiplier, [2, 5, 10, 20, 50, 100, 500, 1000], "G", 100f).WithSmallerHandle();
-        EventHandler tankSettingChanged = (_, _) =>
+
         {
-            tankSlider.SetEnable(FactoryPatch.TankFastFillInAndTakeOutEnabled.Value);
-        };
-        FactoryPatch.TankFastFillInAndTakeOutEnabled.SettingChanged += tankSettingChanged;
-        wnd.OnFree += () => { FactoryPatch.TankFastFillInAndTakeOutEnabled.SettingChanged -= tankSettingChanged; };
-        tankSettingChanged(null, null);
-        
-        x = 0;
+            y += 36f;
+            wnd.AddCheckBox(x, y, tab2, FactoryPatch.DragBuildPowerPolesEnabled, "Drag building power poles in maximum connection range");
+            y += 30f;
+            var alternatelyCheckBox = wnd.AddCheckBox(x + 20f, y, tab2, FactoryPatch.DragBuildPowerPolesAlternatelyEnabled, "Build Tesla Tower and Wireless Power Tower alternately", 13);
+            FactoryPatch.DragBuildPowerPolesEnabled.SettingChanged += AlternatelyCheckBoxChanged;
+            wnd.OnFree += () => { FactoryPatch.DragBuildPowerPolesEnabled.SettingChanged -= AlternatelyCheckBoxChanged; };
+            AlternatelyCheckBoxChanged(null, null);
+
+            void AlternatelyCheckBoxChanged(object o, EventArgs e)
+            {
+                alternatelyCheckBox.SetEnable(FactoryPatch.DragBuildPowerPolesEnabled.Value);
+            }
+        }
+
         y += 36f;
         checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab2, FactoryPatch.ProtectVeinsFromExhaustionEnabled, "Protect veins from exhaustion");
         wnd.AddTipsButton2(x + checkBoxForMeasureTextWidth.Width + 5f, y + 6f, tab2, "Protect veins from exhaustion", "Protect veins from exhaustion tips", "protect-veins-tips");
-        y += 36f;
-        wnd.AddCheckBox(x, y, tab2, FactoryPatch.DragBuildPowerPolesEnabled, "Drag building power poles in maximum connection range");
-        y += 36f;
-        var alternatelyCheckBox = wnd.AddCheckBox(x + 20f, y, tab2, FactoryPatch.DragBuildPowerPolesAlternatelyEnabled, "Build Tesla Tower and Wireless Power Tower alternately", 13);
-        EventHandler alternatelyCheckBoxChanged = (_, _) => { alternatelyCheckBox.SetEnable(FactoryPatch.DragBuildPowerPolesEnabled.Value); };
-        FactoryPatch.DragBuildPowerPolesEnabled.SettingChanged += alternatelyCheckBoxChanged;
-        wnd.OnFree += () => { FactoryPatch.DragBuildPowerPolesEnabled.SettingChanged -= alternatelyCheckBoxChanged; };
-        alternatelyCheckBoxChanged(null, null);
 
+        {
+            y += 36f;
+            var cb = wnd.AddCheckBox(x, y, tab2, FactoryPatch.TankFastFillInAndTakeOutEnabled, "Fast fill in to and take out from tanks");
+            x += cb.Width + 5f;
+            txt = wnd.AddText2(x, y + 2f, tab2, "Speed Ratio", 13, "text-tank-fast-fill-speed-ratio");
+            var tankSlider = wnd.AddSlider(x + txt.preferredWidth + 5f, y + 7f, tab2, FactoryPatch.TankFastFillInAndTakeOutMultiplier, [2, 5, 10, 20, 50, 100, 500, 1000], "G", 100f).WithSmallerHandle();
+            FactoryPatch.TankFastFillInAndTakeOutEnabled.SettingChanged += TankSettingChanged;
+            wnd.OnFree += () => { FactoryPatch.TankFastFillInAndTakeOutEnabled.SettingChanged -= TankSettingChanged; };
+            TankSettingChanged(null, null);
+
+            void TankSettingChanged(object o, EventArgs e)
+            {
+                tankSlider.SetEnable(FactoryPatch.TankFastFillInAndTakeOutEnabled.Value);
+            }
+        }
+
+        x = 0;
         y += 36f;
         wnd.AddCheckBox(x, y, tab2, FactoryPatch.DoNotRenderEntitiesEnabled, "Do not render factory entities");
         y += 36f;
@@ -307,35 +322,70 @@ public static class UIConfigWindow
         y += 36f;
         checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab2, LogisticsPatch.LogisticsConstrolPanelImprovementEnabled, "Logistics Control Panel Improvement");
         wnd.AddTipsButton2(x + checkBoxForMeasureTextWidth.Width + 5f, y + 6f, tab2, "Logistics Control Panel Improvement", "Logistics Control Panel Improvement tips", "lcp-improvement-tips");
-        y += 36f;
-        var cb0 = wnd.AddCheckBox(x, y, tab2, LogisticsPatch.RealtimeLogisticsInfoPanelEnabled, "Real-time logistic stations info panel");
-        y += 36f;
-        var cb1 = wnd.AddCheckBox(x + 20f, y, tab2, LogisticsPatch.RealtimeLogisticsInfoPanelBarsEnabled, "Show status bars for storage items", 13);
-        EventHandler anySettingsChanged = (_, _) =>
-        {
-            if (AuxilaryfunctionWrapper.ShowStationInfo == null)
-            {
-                cb0.SetEnable(true);
-                cb1.SetEnable(LogisticsPatch.RealtimeLogisticsInfoPanelEnabled.Value);
-                return;
-            }
 
-            var on = !AuxilaryfunctionWrapper.ShowStationInfo.Value;
-            cb0.SetEnable(on);
-            cb1.SetEnable(on & LogisticsPatch.RealtimeLogisticsInfoPanelEnabled.Value);
-            if (!on)
-            {
-                LogisticsPatch.RealtimeLogisticsInfoPanelEnabled.Value = false;
-            }
-        };
-        if (AuxilaryfunctionWrapper.ShowStationInfo != null)
         {
-            AuxilaryfunctionWrapper.ShowStationInfo.SettingChanged += anySettingsChanged;
-            wnd.OnFree += () => { AuxilaryfunctionWrapper.ShowStationInfo.SettingChanged -= anySettingsChanged; };
+            y += 36f;
+            var realtimeLogisticsInfoPanelCheckBox = wnd.AddCheckBox(x, y, tab2, LogisticsPatch.RealtimeLogisticsInfoPanelEnabled, "Real-time logistic stations info panel");
+            y += 30f;
+            var realtimeLogisticsInfoPanelBarsCheckBox = wnd.AddCheckBox(x + 20f, y, tab2, LogisticsPatch.RealtimeLogisticsInfoPanelBarsEnabled, "Show status bars for storage items", 13);
+            if (AuxilaryfunctionWrapper.ShowStationInfo != null)
+            {
+                AuxilaryfunctionWrapper.ShowStationInfo.SettingChanged += RealtimeLogisticsInfoPanelChanged;
+                wnd.OnFree += () => { AuxilaryfunctionWrapper.ShowStationInfo.SettingChanged -= RealtimeLogisticsInfoPanelChanged; };
+            }
+            LogisticsPatch.RealtimeLogisticsInfoPanelEnabled.SettingChanged += RealtimeLogisticsInfoPanelChanged;
+            wnd.OnFree += () => { LogisticsPatch.RealtimeLogisticsInfoPanelEnabled.SettingChanged -= RealtimeLogisticsInfoPanelChanged; };
+            RealtimeLogisticsInfoPanelChanged(null, null);
+
+            void RealtimeLogisticsInfoPanelChanged(object o, EventArgs e)
+            {
+                if (AuxilaryfunctionWrapper.ShowStationInfo == null)
+                {
+                    realtimeLogisticsInfoPanelCheckBox.SetEnable(true);
+                    realtimeLogisticsInfoPanelBarsCheckBox.SetEnable(LogisticsPatch.RealtimeLogisticsInfoPanelEnabled.Value);
+                    return;
+                }
+
+                var on = !AuxilaryfunctionWrapper.ShowStationInfo.Value;
+                realtimeLogisticsInfoPanelCheckBox.SetEnable(on);
+                realtimeLogisticsInfoPanelBarsCheckBox.SetEnable(on & LogisticsPatch.RealtimeLogisticsInfoPanelEnabled.Value);
+                if (!on)
+                {
+                    LogisticsPatch.RealtimeLogisticsInfoPanelEnabled.Value = false;
+                }
+            }
         }
-        LogisticsPatch.RealtimeLogisticsInfoPanelEnabled.SettingChanged += anySettingsChanged;
-        wnd.OnFree += () => { LogisticsPatch.RealtimeLogisticsInfoPanelEnabled.SettingChanged -= anySettingsChanged; };
-        anySettingsChanged(null, null);
+
+        {
+            y += 36f;
+            wnd.AddCheckBox(x, y, tab2, FactoryPatch.TweakBuildingBufferEnabled, "Tweak building buffers");
+            y += 30f;
+            txt = wnd.AddText2(x + 20f, y, tab2, "Assembler buffer time multiplier(in seconds)", 13);
+            var nx1 = txt.preferredWidth + 5f;
+            y += 30f;
+            txt = wnd.AddText2(x + 20f, y, tab2, "Assembler buffer minimum multiplier", 13);
+            var nx2 = txt.preferredWidth + 5f;
+            y += 30f;
+            txt = wnd.AddText2(x + 20f, y, tab2, "Ray Receiver Graviton Lens buffer count", 13);
+            var nx3 = txt.preferredWidth + 5f;
+            y -= 60f;
+            var mx = Mathf.Max(nx1, nx2, nx3) + 20f;
+            var assemblerBufferTimeMultiplierSlider = wnd.AddSlider(x + mx, y + 5f, tab2, FactoryPatch.AssemblerBufferTimeMultiplier, new MyWindow.RangeValueMapper<int>(2, 10), "0", 80f).WithSmallerHandle();
+            y += 30f;
+            var assemblerBufferMininumMultiplierSlider = wnd.AddSlider(x + mx, y + 5f, tab2, FactoryPatch.AssemblerBufferMininumMultiplier, new MyWindow.RangeValueMapper<int>(2, 10), "0", 80f).WithSmallerHandle();
+            y += 30f;
+            var receiverBufferCountSlider = wnd.AddSlider(x + mx, y + 5f, tab2, FactoryPatch.ReceiverBufferCount, new MyWindow.RangeValueMapper<int>(1, 20), "0", 80f).WithSmallerHandle();
+            FactoryPatch.TweakBuildingBufferEnabled.SettingChanged += TweakBuildingBufferChanged;
+            wnd.OnFree += () => { FactoryPatch.TweakBuildingBufferEnabled.SettingChanged -= TweakBuildingBufferChanged; };
+            TweakBuildingBufferChanged(null, null);
+
+            void TweakBuildingBufferChanged(object o, EventArgs e)
+            {
+                assemblerBufferTimeMultiplierSlider.SetEnable(FactoryPatch.TweakBuildingBufferEnabled.Value);
+                assemblerBufferMininumMultiplierSlider.SetEnable(FactoryPatch.TweakBuildingBufferEnabled.Value);
+                receiverBufferCountSlider.SetEnable(FactoryPatch.TweakBuildingBufferEnabled.Value);
+            }
+        }
 
         var tab3 = wnd.AddTab(trans, "Player/Mecha");
         x = 0f;
@@ -348,24 +398,28 @@ public static class UIConfigWindow
         y += 36f;
         checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab3, PlayerPatch.EnhancedMechaForgeCountControlEnabled, "Enhanced count control for hand-make");
         wnd.AddTipsButton2(x + checkBoxForMeasureTextWidth.Width + 5f, y + 6f, tab3, "Enhanced count control for hand-make", "Enhanced count control for hand-make tips", "enhanced-count-control-tips");
-        y += 36f;
-        wnd.AddCheckBox(x, y, tab3, PlayerPatch.AutoNavigationEnabled, "Auto navigation on sailings");
-        y += 26f;
-        var navcb1 = wnd.AddCheckBox(x + 20f, y, tab3, PlayerPatch.AutoCruiseEnabled, "Enable auto-cruise", 13);
-        y += 26f;
-        var navcb2 = wnd.AddCheckBox(x + 20f, y, tab3, PlayerPatch.AutoBoostEnabled, "Auto boost", 13);
-        y += 32f;
-        txt = wnd.AddText2(x + 20f, y, tab3, "Distance to use warp", 15, "text-distance-to-warp");
-        var navSlider = wnd.AddSlider(x + 20f + txt.preferredWidth + 5f, y + 6f, tab3, PlayerPatch.DistanceToWarp, new DistanceMapper(), "0.0", 100f);
-        EventHandler navSettingChanged = (_, _) =>
+
         {
-            navcb1.SetEnable(PlayerPatch.AutoNavigationEnabled.Value);
-            navcb2.SetEnable(PlayerPatch.AutoNavigationEnabled.Value);
-            navSlider.SetEnable(PlayerPatch.AutoNavigationEnabled.Value);
-        };
-        PlayerPatch.AutoNavigationEnabled.SettingChanged += navSettingChanged;
-        wnd.OnFree += () => { PlayerPatch.AutoNavigationEnabled.SettingChanged -= navSettingChanged; };
-        navSettingChanged(null, null);
+            y += 36f;
+            wnd.AddCheckBox(x, y, tab3, PlayerPatch.AutoNavigationEnabled, "Auto navigation on sailings");
+            y += 26f;
+            var autoCruiseCheckBox = wnd.AddCheckBox(x + 20f, y, tab3, PlayerPatch.AutoCruiseEnabled, "Enable auto-cruise", 13);
+            y += 26f;
+            var autoBoostCheckBox = wnd.AddCheckBox(x + 20f, y, tab3, PlayerPatch.AutoBoostEnabled, "Auto boost", 13);
+            y += 32f;
+            txt = wnd.AddText2(x + 20f, y, tab3, "Distance to use warp", 15, "text-distance-to-warp");
+            var navDistanceSlider = wnd.AddSlider(x + 20f + txt.preferredWidth + 5f, y + 6f, tab3, PlayerPatch.DistanceToWarp, new DistanceMapper(), "0.0", 100f);
+            PlayerPatch.AutoNavigationEnabled.SettingChanged += NavSettingChanged;
+            wnd.OnFree += () => { PlayerPatch.AutoNavigationEnabled.SettingChanged -= NavSettingChanged; };
+            NavSettingChanged(null, null);
+
+            void NavSettingChanged(object o, EventArgs e)
+            {
+                autoCruiseCheckBox.SetEnable(PlayerPatch.AutoNavigationEnabled.Value);
+                autoBoostCheckBox.SetEnable(PlayerPatch.AutoNavigationEnabled.Value);
+                navDistanceSlider.SetEnable(PlayerPatch.AutoNavigationEnabled.Value);
+            }
+        }
 
         var tab4 = wnd.AddTab(trans, "Dyson Sphere");
         x = 0f;

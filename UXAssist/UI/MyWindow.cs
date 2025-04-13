@@ -42,7 +42,7 @@ public class MyWindow : ManualBehaviour
 
         _baseObject = go;
     }
-    
+
     public static T Create<T>(string name, string title = "") where T : MyWindow
     {
         var go = Instantiate(_baseObject, UIRoot.instance.uiGame.transform.parent);
@@ -236,7 +236,7 @@ public class MyWindow : ManualBehaviour
         MaxY = Math.Max(MaxY, y + cb.Height);
         return cb;
     }
-    
+
     public MyComboBox AddComboBox(float x, float y, RectTransform parent, string label = "", int fontSize = 15)
     {
         var comboBox = MyComboBox.CreateComboBox(x, y, parent).WithPrompt(label).WithFontSize(fontSize);
@@ -269,6 +269,12 @@ public class MyWindow : ManualBehaviour
         {
             return string.Format($"{{0:{format}}}", value);
         }
+    }
+
+    public class RangeValueMapper<T>(int min, int max) : ValueMapper<T>
+    {
+        public override int Min => min;
+        public override int Max => max;
     }
 
     public MySlider AddSlider<T>(float x, float y, RectTransform parent, ConfigEntry<T> config, ValueMapper<T> valueMapper, string format = "G", float width = 0f)
@@ -362,7 +368,7 @@ public class MyWindow : ManualBehaviour
         MaxY = Math.Max(MaxY, y + rect.sizeDelta.y);
         return inputField;
     }
-    
+
     public InputField AddInputField(float x, float y, float width, RectTransform parent, ConfigEntry<string> config, int fontSize = 16, string objName = "input")
     {
         var stationWindow = UIRoot.instance.uiGame.stationWindow;

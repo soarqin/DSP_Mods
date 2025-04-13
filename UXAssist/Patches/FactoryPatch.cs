@@ -34,6 +34,11 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
     public static ConfigEntry<bool> TankFastFillInAndTakeOutEnabled;
     public static ConfigEntry<int> TankFastFillInAndTakeOutMultiplier;
     public static ConfigEntry<bool> CutConveyorBeltEnabled;
+    public static ConfigEntry<bool> TweakBuildingBufferEnabled;
+    public static ConfigEntry<int> ReceiverBufferCount;
+    public static ConfigEntry<int> AssemblerBufferTimeMultiplier;
+    public static ConfigEntry<int> AssemblerBufferMininumMultiplier;
+
     private static PressKeyBind _doNotRenderEntitiesKey;
     private static PressKeyBind _offgridfForPathsKey;
     private static PressKeyBind _cutConveyorBeltKey;
@@ -43,30 +48,30 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
     public static void Init()
     {
         _doNotRenderEntitiesKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
-            {
-                key = new CombineKey(0, 0, ECombineKeyAction.OnceClick, true),
-                conflictGroup = KeyBindConflict.MOVEMENT | KeyBindConflict.FLYING | KeyBindConflict.SAILING | KeyBindConflict.BUILD_MODE_1 | KeyBindConflict.KEYBOARD_KEYBIND,
-                name = "ToggleDoNotRenderEntities",
-                canOverride = true
-            }
+        {
+            key = new CombineKey(0, 0, ECombineKeyAction.OnceClick, true),
+            conflictGroup = KeyBindConflict.MOVEMENT | KeyBindConflict.FLYING | KeyBindConflict.SAILING | KeyBindConflict.BUILD_MODE_1 | KeyBindConflict.KEYBOARD_KEYBIND,
+            name = "ToggleDoNotRenderEntities",
+            canOverride = true
+        }
         );
         I18N.Add("KEYToggleDoNotRenderEntities", "Toggle Do Not Render Factory Entities", "切换不渲染工厂建筑实体");
         _offgridfForPathsKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
-            {
-                key = new CombineKey(0, 0, ECombineKeyAction.OnceClick, true),
-                conflictGroup = KeyBindConflict.MOVEMENT | KeyBindConflict.UI | KeyBindConflict.FLYING | KeyBindConflict.SAILING | KeyBindConflict.BUILD_MODE_1 | KeyBindConflict.KEYBOARD_KEYBIND,
-                name = "OffgridForPaths",
-                canOverride = true
-            }
+        {
+            key = new CombineKey(0, 0, ECombineKeyAction.OnceClick, true),
+            conflictGroup = KeyBindConflict.MOVEMENT | KeyBindConflict.UI | KeyBindConflict.FLYING | KeyBindConflict.SAILING | KeyBindConflict.BUILD_MODE_1 | KeyBindConflict.KEYBOARD_KEYBIND,
+            name = "OffgridForPaths",
+            canOverride = true
+        }
         );
         I18N.Add("KEYOffgridForPaths", "Build belts offgrid", "脱离网格建造传送带");
         _cutConveyorBeltKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
-            {
-                key = new CombineKey((int)KeyCode.X, CombineKey.ALT_COMB, ECombineKeyAction.OnceClick, false),
-                conflictGroup = KeyBindConflict.MOVEMENT | KeyBindConflict.FLYING | KeyBindConflict.SAILING | KeyBindConflict.BUILD_MODE_1 | KeyBindConflict.KEYBOARD_KEYBIND,
-                name = "CutConveyorBelt",
-                canOverride = true
-            }
+        {
+            key = new CombineKey((int)KeyCode.X, CombineKey.ALT_COMB, ECombineKeyAction.OnceClick, false),
+            conflictGroup = KeyBindConflict.MOVEMENT | KeyBindConflict.FLYING | KeyBindConflict.SAILING | KeyBindConflict.BUILD_MODE_1 | KeyBindConflict.KEYBOARD_KEYBIND,
+            name = "CutConveyorBelt",
+            canOverride = true
+        }
         );
         I18N.Add("KEYCutConveyorBelt", "Cut conveyor belt", "切割传送带");
 
@@ -89,8 +94,12 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         DragBuildPowerPolesAlternatelyEnabled.SettingChanged += (_, _) => DragBuildPowerPoles.AlternatelyChanged();
         BeltSignalsForBuyOutEnabled.SettingChanged += (_, _) => BeltSignalsForBuyOut.Enable(BeltSignalsForBuyOutEnabled.Value);
         TankFastFillInAndTakeOutEnabled.SettingChanged += (_, _) => TankFastFillInAndTakeOut.Enable(TankFastFillInAndTakeOutEnabled.Value);
-        TankFastFillInAndTakeOutMultiplier.SettingChanged += (_, _) => { UpdateTankFastFillInAndTakeOutMultiplierRealValue(); };
+        TankFastFillInAndTakeOutMultiplier.SettingChanged += (_, _) => UpdateTankFastFillInAndTakeOutMultiplierRealValue();
         CutConveyorBeltEnabled.SettingChanged += (_, _) => CutConveyorBelt.Enable(CutConveyorBeltEnabled.Value);
+        TweakBuildingBufferEnabled.SettingChanged += (_, _) => TweakBuildingBuffer.Enable(TweakBuildingBufferEnabled.Value);
+        AssemblerBufferTimeMultiplier.SettingChanged += (_, _) => TweakBuildingBuffer.RefreshAssemblerBufferMultipliers();
+        AssemblerBufferMininumMultiplier.SettingChanged += (_, _) => TweakBuildingBuffer.RefreshAssemblerBufferMultipliers();
+        ReceiverBufferCount.SettingChanged += (_, _) => TweakBuildingBuffer.RefreshReceiverBufferCount();
     }
 
     public static void Start()
@@ -110,6 +119,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         BeltSignalsForBuyOut.Enable(BeltSignalsForBuyOutEnabled.Value);
         TankFastFillInAndTakeOut.Enable(TankFastFillInAndTakeOutEnabled.Value);
         CutConveyorBelt.Enable(CutConveyorBeltEnabled.Value);
+        TweakBuildingBuffer.Enable(TweakBuildingBufferEnabled.Value);
 
         Enable(true);
         UpdateTankFastFillInAndTakeOutMultiplierRealValue();
@@ -119,6 +129,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
     {
         Enable(false);
 
+        TweakBuildingBuffer.Enable(false);
         CutConveyorBelt.Enable(false);
         TankFastFillInAndTakeOut.Enable(false);
         BeltSignalsForBuyOut.Enable(false);
@@ -234,7 +245,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             _sail = null;
             _nightlightInitialized = false;
         }
-        
+
         private static void GameMain_End_Postfix()
         {
             if (_sunlight)
@@ -705,13 +716,6 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             return matcher.InstructionEnumeration();
         }
 
-        private static bool CheckOffgridForPathsKeyPressed()
-        {
-            ref var bind = ref _offgridfForPathsKey.defaultBind;
-            ref var key = ref VFInput.override_keys[bind.id];
-            return key.IsNull() ? bind.key.GetKey() : key.GetKey();
-        }
-
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(BuildTool_Path), nameof(BuildTool_Path.UpdateRaycast))]
         public static IEnumerable<CodeInstruction> AllowOffGridConstructionForPath(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -736,7 +740,8 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             var jmp0 = generator.DefineLabel();
             var jmp1 = generator.DefineLabel();
             matcher.InsertAndAdvance(
-                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(OffGridBuilding), nameof(CheckOffgridForPathsKeyPressed))),
+                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(FactoryPatch), nameof(_offgridfForPathsKey))),
+                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(KeyBindings), nameof(KeyBindings.IsKeyPressing))),
                 new CodeInstruction(OpCodes.Brfalse, jmp0),
                 new CodeInstruction(OpCodes.Ldarg_0),
                 new CodeInstruction(OpCodes.Ldarg_0),
@@ -1963,12 +1968,10 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
 
     private class CutConveyorBelt : PatchImpl<CutConveyorBelt>
     {
-
         [HarmonyPostfix]
         [HarmonyPatch(typeof(PlayerController), nameof(PlayerController.GameTick))]
         private static void PlayerController_GameTick_Postfix(PlayerController __instance)
         {
-            if (DSPGame.IsMenuDemo) return;
             if (!_cutConveyorBeltKey.keyValue) return;
             var raycast = __instance.cmd.raycast;
             if (raycast == null) return;
@@ -1977,6 +1980,85 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             if ((beltId = raycast.castEntity.beltId) <= 0) return;
             var cargoTraffic = raycast.planet.factory.cargoTraffic;
             Functions.FactoryFunctions.CutConveyorBelt(cargoTraffic, beltId);
+        }
+    }
+
+    private class TweakBuildingBuffer : PatchImpl<TweakBuildingBuffer>
+    {
+        public static void RefreshReceiverBufferCount()
+        {
+            if (!TweakBuildingBufferEnabled.Value) return;
+            /* re-patch to use new value */
+            var patch = Instance._patch;
+            patch.Unpatch(AccessTools.Method(typeof(PowerGeneratorComponent), nameof(PowerGeneratorComponent.GameTick_Gamma)), AccessTools.Method(typeof(TweakBuildingBuffer), nameof(PowerGeneratorComponent_GameTick_Gamma_Transpiler)));
+            patch.Patch(AccessTools.Method(typeof(PowerGeneratorComponent), nameof(PowerGeneratorComponent.GameTick_Gamma)), null, null, new HarmonyMethod(typeof(TweakBuildingBuffer), nameof(PowerGeneratorComponent_GameTick_Gamma_Transpiler)));
+        }
+
+        public static void RefreshAssemblerBufferMultipliers()
+        {
+            if (!TweakBuildingBufferEnabled.Value) return;
+            /* re-patch to use new value */
+            var patch = Instance._patch;
+            patch.Unpatch(AccessTools.Method(typeof(AssemblerComponent), nameof(AssemblerComponent.UpdateNeeds)), AccessTools.Method(typeof(TweakBuildingBuffer), nameof(AssemblerComponent_UpdateNeeds_Transpiler)));
+            patch.Patch(AccessTools.Method(typeof(AssemblerComponent), nameof(AssemblerComponent.UpdateNeeds)), null, null, new HarmonyMethod(typeof(TweakBuildingBuffer), nameof(AssemblerComponent_UpdateNeeds_Transpiler)));
+        }
+
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(PowerGeneratorComponent), nameof(PowerGeneratorComponent.GameTick_Gamma))]
+        private static IEnumerable<CodeInstruction> PowerGeneratorComponent_GameTick_Gamma_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            /*
+             * Patch:
+             *  bool flag3 = keyFrame && useIon && (float)this.catalystPoint < 72000f;
+             * To:
+             *  bool flag3 = keyFrame && useIon && this.catalystPoint < 3600 * ReceiverBufferCount.Value;
+             */
+            var matcher = new CodeMatcher(instructions, generator);
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Ldarg_0),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(PowerGeneratorComponent), nameof(PowerGeneratorComponent.catalystPoint))),
+                new CodeMatch(OpCodes.Conv_R4),
+                new CodeMatch(OpCodes.Ldc_R4, 72000f),
+                new CodeMatch(OpCodes.Clt)
+            );
+            matcher.Advance(2).RemoveInstructions(2).Insert(new CodeInstruction(OpCodes.Ldc_I4, ReceiverBufferCount.Value * 3600));
+            return matcher.InstructionEnumeration();
+        }
+
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(AssemblerComponent), nameof(AssemblerComponent.UpdateNeeds))]
+        private static IEnumerable<CodeInstruction> AssemblerComponent_UpdateNeeds_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            /*
+             * Patch:
+             *  int num2 = this.speedOverride * 180 / this.timeSpend + 1;
+             *  if (num2 < 2)
+             *  {
+             *      num2 = 2;
+             *  }
+             * To:
+             *  int num2 = this.speedOverride * 60 * (AssemblerBufferTimeMultiplier.Value - 1) * 60 / this.timeSpend + 1;
+             *  if (num2 < AssemblerBufferMininumMultiplier.Value)
+             *  {
+             *      num2 = AssemblerBufferMininumMultiplier.Value;
+             *  }
+             */
+            var matcher = new CodeMatcher(instructions, generator);
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Ldarg_0),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(AssemblerComponent), nameof(AssemblerComponent.speedOverride))),
+                new CodeMatch(OpCodes.Ldc_I4, 180),
+                new CodeMatch(OpCodes.Mul)
+            );
+            matcher.Advance(2).Operand = (AssemblerBufferTimeMultiplier.Value - 1) * 60;
+            matcher.Advance(2).MatchForward(false,
+                new CodeMatch(OpCodes.Ldc_I4_2),
+                new CodeMatch(ci => ci.opcode == OpCodes.Bge_S || ci.opcode == OpCodes.Bge),
+                new CodeMatch(OpCodes.Ldc_I4_2)
+            );
+            matcher.Operand = AssemblerBufferMininumMultiplier.Value;
+            matcher.Advance(2).Operand = AssemblerBufferMininumMultiplier.Value;
+            return matcher.InstructionEnumeration();
         }
     }
 }

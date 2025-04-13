@@ -29,4 +29,11 @@ public static class KeyBindings
 
         return new CombineKey((int)shortcut.MainKey, mod, ECombineKeyAction.OnceClick, false);
     }
+
+    public static bool IsKeyPressing(this PressKeyBind keyBind)
+    {
+        var defBind = keyBind.defaultBind;
+        var overrideKey = VFInput.override_keys[defBind.id];
+        return overrideKey.IsNull() ? defBind.key.GetKey() : overrideKey.GetKey();
+    }
 }

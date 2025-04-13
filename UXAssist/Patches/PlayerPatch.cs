@@ -8,7 +8,7 @@ using UXAssist.Common;
 
 namespace UXAssist.Patches;
 
-public static class PlayerPatch
+public class PlayerPatch: PatchImpl<PlayerPatch>
 {
     public static ConfigEntry<bool> EnhancedMechaForgeCountControlEnabled;
     public static ConfigEntry<bool> HideTipsForSandsChangesEnabled;
@@ -17,7 +17,8 @@ public static class PlayerPatch
     public static ConfigEntry<bool> AutoBoostEnabled;
     public static ConfigEntry<double> DistanceToWarp;
     private static PressKeyBind _autoDriveKey;
-    
+    private static PressKeyBind _showAllAstrosNameKey;
+
     public static void Init()
     {
         _autoDriveKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
@@ -27,8 +28,20 @@ public static class PlayerPatch
             name = "ToggleAutoCruise",
             canOverride = true
         });
+        I18N.Add("KEYToggleAutoCruise", "Toggle auto-cruise", "切换自动巡航");
         I18N.Add("AutoCruiseOn", "Auto-cruise enabled", "已启用自动巡航");
         I18N.Add("AutoCruiseOff", "Auto-cruise disabled", "已禁用自动巡航");
+
+        _showAllAstrosNameKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
+        {
+            key = new CombineKey(0, CombineKey.ALT_COMB, ECombineKeyAction.OnceClick, false),
+            conflictGroup = KeyBindConflict.UI | KeyBindConflict.KEYBOARD_KEYBIND,
+            name = "ShowAllAstrosName",
+            canOverride = true
+        }
+        );
+        I18N.Add("KEYShowAllAstrosName", "Keep pressing to show all astros' name", "按住显示所有星球名称");
+
         EnhancedMechaForgeCountControlEnabled.SettingChanged += (_, _) => EnhancedMechaForgeCountControl.Enable(EnhancedMechaForgeCountControlEnabled.Value);
         HideTipsForSandsChangesEnabled.SettingChanged += (_, _) => HideTipsForSandsChanges.Enable(HideTipsForSandsChangesEnabled.Value);
         AutoNavigationEnabled.SettingChanged += (_, _) => AutoNavigation.Enable(AutoNavigationEnabled.Value);
@@ -39,6 +52,7 @@ public static class PlayerPatch
         EnhancedMechaForgeCountControl.Enable(EnhancedMechaForgeCountControlEnabled.Value);
         HideTipsForSandsChanges.Enable(HideTipsForSandsChangesEnabled.Value);
         AutoNavigation.Enable(AutoNavigationEnabled.Value);
+        Enable(true);
     }
 
     public static void OnUpdate()
@@ -48,12 +62,33 @@ public static class PlayerPatch
             AutoNavigation.ToggleAutoCruise();
         }
     }
-    
+
     public static void Uninit()
     {
+        Enable(false);
         EnhancedMechaForgeCountControl.Enable(false);
         HideTipsForSandsChanges.Enable(false);
         AutoNavigation.Enable(false);
+    }
+
+    [HarmonyTranspiler]
+    [HarmonyPatch(typeof(UIStarmapStar), nameof(UIStarmapStar._OnLateUpdate))]
+    private static IEnumerable<CodeInstruction> UIStarmapStar__OnLateUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+    {
+        var matcher = new CodeMatcher(instructions, generator);
+        Label? br = null;
+        matcher.MatchForward(false,
+            new CodeMatch(OpCodes.Stfld, AccessTools.Field(typeof(UIStarmapStar), nameof(UIStarmapStar.projectedCoord))),
+            new CodeMatch(ci => ci.IsLdloc()),
+            new CodeMatch(ci => ci.Branches(out br))
+        );
+        matcher.Advance(3);
+        matcher.InsertAndAdvance(
+            new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(PlayerPatch), nameof(_showAllAstrosNameKey))),
+            new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(KeyBindings), nameof(KeyBindings.IsKeyPressing))),
+            new CodeInstruction(OpCodes.Brtrue, br.Value)
+        );
+        return matcher.InstructionEnumeration();
     }
 
     private class EnhancedMechaForgeCountControl: PatchImpl<EnhancedMechaForgeCountControl>
@@ -319,7 +354,7 @@ public static class PlayerPatch
             );
             return matcher.InstructionEnumeration();
         }
-        
+
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(VFInput), nameof(VFInput._sailSpeedUp), MethodType.Getter)]
         private static IEnumerable<CodeInstruction> VFInput_sailSpeedUp_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -335,7 +370,7 @@ public static class PlayerPatch
             return matcher.InstructionEnumeration();
         }
 
-        /* Disable Lock Cursor Mode on entering sail panel 
+        /* Disable Lock Cursor Mode on entering sail panel
         [HarmonyPrefix]
         [HarmonyPatch(typeof(UISailPanel), nameof(UISailPanel._OnOpen))]
         public static void OnOpen_Prefix()
