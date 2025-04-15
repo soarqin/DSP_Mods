@@ -64,7 +64,7 @@ public static class PlayerPatch
     {
         EnhancedMechaForgeCountControl.Enable(EnhancedMechaForgeCountControlEnabled.Value);
         HideTipsForSandsChanges.Enable(HideTipsForSandsChangesEnabled.Value);
-        ShortcutKeysForStarsName.Enable(ShortcutKeysForAstrosNameEnabled.Value);
+        ShortcutKeysForStarsName.Enable(ShortcutKeysForStarsNameEnabled.Value);
         AutoNavigation.Enable(AutoNavigationEnabled.Value);
     }
 
