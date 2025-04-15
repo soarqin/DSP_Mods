@@ -35,9 +35,12 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
     public static ConfigEntry<int> TankFastFillInAndTakeOutMultiplier;
     public static ConfigEntry<bool> CutConveyorBeltEnabled;
     public static ConfigEntry<bool> TweakBuildingBufferEnabled;
-    public static ConfigEntry<int> ReceiverBufferCount;
     public static ConfigEntry<int> AssemblerBufferTimeMultiplier;
     public static ConfigEntry<int> AssemblerBufferMininumMultiplier;
+    public static ConfigEntry<int> LabBufferMaxCountForAssemble;
+    public static ConfigEntry<int> LabBufferExtraCountForAdvancedAssemble;
+    public static ConfigEntry<int> LabBufferMaxCountForResearch;
+    public static ConfigEntry<int> ReceiverBufferCount;
 
     private static PressKeyBind _doNotRenderEntitiesKey;
     private static PressKeyBind _offgridfForPathsKey;
@@ -99,6 +102,9 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         TweakBuildingBufferEnabled.SettingChanged += (_, _) => TweakBuildingBuffer.Enable(TweakBuildingBufferEnabled.Value);
         AssemblerBufferTimeMultiplier.SettingChanged += (_, _) => TweakBuildingBuffer.RefreshAssemblerBufferMultipliers();
         AssemblerBufferMininumMultiplier.SettingChanged += (_, _) => TweakBuildingBuffer.RefreshAssemblerBufferMultipliers();
+        LabBufferMaxCountForAssemble.SettingChanged += (_, _) => TweakBuildingBuffer.RefreshLabBufferMaxCountForAssemble();
+        LabBufferExtraCountForAdvancedAssemble.SettingChanged += (_, _) => TweakBuildingBuffer.RefreshLabBufferMaxCountForAssemble();
+        LabBufferMaxCountForResearch.SettingChanged += (_, _) => TweakBuildingBuffer.RefreshLabBufferMaxCountForResearch();
         ReceiverBufferCount.SettingChanged += (_, _) => TweakBuildingBuffer.RefreshReceiverBufferCount();
     }
 
@@ -1985,15 +1991,6 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
 
     private class TweakBuildingBuffer : PatchImpl<TweakBuildingBuffer>
     {
-        public static void RefreshReceiverBufferCount()
-        {
-            if (!TweakBuildingBufferEnabled.Value) return;
-            /* re-patch to use new value */
-            var patch = Instance._patch;
-            patch.Unpatch(AccessTools.Method(typeof(PowerGeneratorComponent), nameof(PowerGeneratorComponent.GameTick_Gamma)), AccessTools.Method(typeof(TweakBuildingBuffer), nameof(PowerGeneratorComponent_GameTick_Gamma_Transpiler)));
-            patch.Patch(AccessTools.Method(typeof(PowerGeneratorComponent), nameof(PowerGeneratorComponent.GameTick_Gamma)), null, null, new HarmonyMethod(typeof(TweakBuildingBuffer), nameof(PowerGeneratorComponent_GameTick_Gamma_Transpiler)));
-        }
-
         public static void RefreshAssemblerBufferMultipliers()
         {
             if (!TweakBuildingBufferEnabled.Value) return;
@@ -2001,6 +1998,33 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             var patch = Instance._patch;
             patch.Unpatch(AccessTools.Method(typeof(AssemblerComponent), nameof(AssemblerComponent.UpdateNeeds)), AccessTools.Method(typeof(TweakBuildingBuffer), nameof(AssemblerComponent_UpdateNeeds_Transpiler)));
             patch.Patch(AccessTools.Method(typeof(AssemblerComponent), nameof(AssemblerComponent.UpdateNeeds)), null, null, new HarmonyMethod(typeof(TweakBuildingBuffer), nameof(AssemblerComponent_UpdateNeeds_Transpiler)));
+        }
+
+        public static void RefreshLabBufferMaxCountForAssemble()
+        {
+            if (!TweakBuildingBufferEnabled.Value) return;
+            /* re-patch to use new value */
+            var patch = Instance._patch;
+            patch.Unpatch(AccessTools.Method(typeof(LabComponent), nameof(LabComponent.UpdateNeedsAssemble)), AccessTools.Method(typeof(TweakBuildingBuffer), nameof(LabComponent_UpdateNeedsAssemble_Transpiler)));
+            patch.Patch(AccessTools.Method(typeof(LabComponent), nameof(LabComponent.UpdateNeedsAssemble)), null, null, new HarmonyMethod(typeof(TweakBuildingBuffer), nameof(LabComponent_UpdateNeedsAssemble_Transpiler)));
+        }
+
+        public static void RefreshLabBufferMaxCountForResearch()
+        {
+            if (!TweakBuildingBufferEnabled.Value) return;
+            /* re-patch to use new value */
+            var patch = Instance._patch;
+            patch.Unpatch(AccessTools.Method(typeof(LabComponent), nameof(LabComponent.UpdateNeedsResearch)), AccessTools.Method(typeof(TweakBuildingBuffer), nameof(LabComponent_UpdateNeedsResearch_Transpiler)));
+            patch.Patch(AccessTools.Method(typeof(LabComponent), nameof(LabComponent.UpdateNeedsResearch)), null, null, new HarmonyMethod(typeof(TweakBuildingBuffer), nameof(LabComponent_UpdateNeedsResearch_Transpiler)));
+        }
+
+        public static void RefreshReceiverBufferCount()
+        {
+            if (!TweakBuildingBufferEnabled.Value) return;
+            /* re-patch to use new value */
+            var patch = Instance._patch;
+            patch.Unpatch(AccessTools.Method(typeof(PowerGeneratorComponent), nameof(PowerGeneratorComponent.GameTick_Gamma)), AccessTools.Method(typeof(TweakBuildingBuffer), nameof(PowerGeneratorComponent_GameTick_Gamma_Transpiler)));
+            patch.Patch(AccessTools.Method(typeof(PowerGeneratorComponent), nameof(PowerGeneratorComponent.GameTick_Gamma)), null, null, new HarmonyMethod(typeof(TweakBuildingBuffer), nameof(PowerGeneratorComponent_GameTick_Gamma_Transpiler)));
         }
 
         [HarmonyTranspiler]
@@ -2058,6 +2082,47 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             );
             matcher.Operand = AssemblerBufferMininumMultiplier.Value;
             matcher.Advance(2).Operand = AssemblerBufferMininumMultiplier.Value;
+            return matcher.InstructionEnumeration();
+        }
+
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(LabComponent), nameof(LabComponent.UpdateNeedsAssemble))]
+        private static IEnumerable<CodeInstruction> LabComponent_UpdateNeedsAssemble_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Ldarg_0),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(LabComponent), nameof(LabComponent.timeSpend))),
+                new CodeMatch(OpCodes.Ldc_I4, 5400000),
+                new CodeMatch(ci => ci.opcode == OpCodes.Bgt_S || ci.opcode == OpCodes.Bgt),
+                new CodeMatch(OpCodes.Ldc_I4_3)
+            );
+            var extraCount = LabBufferExtraCountForAdvancedAssemble.Value;
+            matcher.Advance(4).SetAndAdvance(OpCodes.Ldc_I4, extraCount);
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Div),
+                new CodeMatch(OpCodes.Mul),
+                new CodeMatch(OpCodes.Ldc_I4_3),
+                new CodeMatch(OpCodes.Add),
+                new CodeMatch(ci => ci.opcode == OpCodes.Br || ci.opcode == OpCodes.Br_S),
+                new CodeMatch(OpCodes.Ldc_I4_6),
+                new CodeMatch(ci => ci.IsStloc())
+            );
+            var maxCount = LabBufferMaxCountForAssemble.Value;
+            matcher.Advance(2).SetAndAdvance(OpCodes.Ldc_I4, maxCount > extraCount ? maxCount - extraCount : 2);
+            matcher.Advance(2).SetAndAdvance(OpCodes.Ldc_I4, maxCount);
+            return matcher.InstructionEnumeration();
+        }
+
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(LabComponent), nameof(LabComponent.UpdateNeedsResearch))]
+        private static IEnumerable<CodeInstruction> LabComponent_UpdateNeedsResearch_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Ldc_I4, 36000)
+            );
+            matcher.Repeat(m => m.SetAndAdvance(OpCodes.Ldc_I4, LabBufferMaxCountForResearch.Value * 3600));
             return matcher.InstructionEnumeration();
         }
     }

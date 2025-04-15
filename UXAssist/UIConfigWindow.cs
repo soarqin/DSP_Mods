@@ -1,5 +1,6 @@
 ﻿using System;
 using UnityEngine;
+using UnityEngine.UI;
 using UXAssist.Common;
 using UXAssist.Functions;
 using UXAssist.ModsCompat;
@@ -92,6 +93,9 @@ public static class UIConfigWindow
         I18N.Add("Tweak building buffers", "Tweak building buffers", "调整建筑输入缓冲");
         I18N.Add("Assembler buffer time multiplier(in seconds)", "Assembler buffer time multiplier(in seconds)", "工厂配方缓冲时间倍率(秒)");
         I18N.Add("Assembler buffer minimum multiplier", "Assembler buffer minimum multiplier", "工厂配方缓冲最小倍率");
+        I18N.Add("Buffer count for assembling in labs", "Buffer count for assembling in labs", "研究站矩阵合成模式缓存数量");
+        I18N.Add("Extra buffer count in Self-evolution Labs", "Extra buffer count in Self-evolution Labs", "自演化研究站矩阵额外缓冲数量");
+        I18N.Add("Buffer count for researching in labs", "Buffer count for researching in labs", "研究站科研模式缓存数量");
         I18N.Add("Ray Receiver Graviton Lens buffer count", "Ray Receiver Graviton Lens buffer count", "射线接收器透镜缓冲数量");
         I18N.Add("Shortcut keys for showing stars' name", "Shortcut keys for showing stars' name", "启用显示所有星系名称的快捷键");
         I18N.Add("Auto navigation on sailings", "Auto navigation on sailings", "宇宙航行时自动导航");
@@ -257,21 +261,6 @@ public static class UIConfigWindow
         y += 36f;
         wnd.AddCheckBox(x, y, tab2, FactoryPatch.QuickBuildAndDismantleLabsEnabled, "Quick build and dismantle stacking labs");
 
-        {
-            y += 36f;
-            wnd.AddCheckBox(x, y, tab2, FactoryPatch.DragBuildPowerPolesEnabled, "Drag building power poles in maximum connection range");
-            y += 30f;
-            var alternatelyCheckBox = wnd.AddCheckBox(x + 20f, y, tab2, FactoryPatch.DragBuildPowerPolesAlternatelyEnabled, "Build Tesla Tower and Wireless Power Tower alternately", 13);
-            FactoryPatch.DragBuildPowerPolesEnabled.SettingChanged += AlternatelyCheckBoxChanged;
-            wnd.OnFree += () => { FactoryPatch.DragBuildPowerPolesEnabled.SettingChanged -= AlternatelyCheckBoxChanged; };
-            AlternatelyCheckBoxChanged(null, null);
-
-            void AlternatelyCheckBoxChanged(object o, EventArgs e)
-            {
-                alternatelyCheckBox.SetEnable(FactoryPatch.DragBuildPowerPolesEnabled.Value);
-            }
-        }
-
         y += 36f;
         checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab2, FactoryPatch.ProtectVeinsFromExhaustionEnabled, "Protect veins from exhaustion");
         wnd.AddTipsButton2(x + checkBoxForMeasureTextWidth.Width + 5f, y + 6f, tab2, "Protect veins from exhaustion", "Protect veins from exhaustion tips", "protect-veins-tips");
@@ -297,6 +286,14 @@ public static class UIConfigWindow
         wnd.AddCheckBox(x, y, tab2, FactoryPatch.DoNotRenderEntitiesEnabled, "Do not render factory entities");
         y += 36f;
         wnd.AddCheckBox(x, y, tab2, FactoryPatch.BeltSignalsForBuyOutEnabled, "Belt signals for buy out dark fog items automatically");
+        y += 36f;
+        checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab2, LogisticsPatch.LogisticsCapacityTweaksEnabled, "Enhance control for logistic storage limits");
+        wnd.AddTipsButton2(x + checkBoxForMeasureTextWidth.Width + 5f, y + 6f, tab2, "Enhance control for logistic storage limits", "Enhance control for logistic storage limits tips", "enhanced-logistic-limit-tips");
+        y += 36f;
+        wnd.AddCheckBox(x, y, tab2, LogisticsPatch.AllowOverflowInLogisticsEnabled, "Allow overflow for Logistic Stations and Advanced Mining Machines");
+        y += 36f;
+        checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab2, LogisticsPatch.LogisticsConstrolPanelImprovementEnabled, "Logistics Control Panel Improvement");
+        wnd.AddTipsButton2(x + checkBoxForMeasureTextWidth.Width + 5f, y + 6f, tab2, "Logistics Control Panel Improvement", "Logistics Control Panel Improvement tips", "lcp-improvement-tips");
         x = 400f;
         y = 10f;
         wnd.AddButton(x, y, tab2, "Initialize This Planet", 16, "button-init-planet", () =>
@@ -311,23 +308,29 @@ public static class UIConfigWindow
         y += 72f;
         wnd.AddButton(x, y, 200, tab2, "Quick build Orbital Collectors", 16, "button-init-planet", PlanetFunctions.BuildOrbitalCollectors);
         y += 30f;
-        wnd.AddText2(x + 10f, y, tab2, "Maximum count to build", 15, "text-oc-build-count");
-        y += 24f;
-        wnd.AddSlider(x + 10f, y, tab2, PlanetFunctions.OrbitalCollectorMaxBuildCount, new OcMapper(), "G", 200f);
+        txt = wnd.AddText2(x + 10f, y, tab2, "Maximum count to build", 15, "text-oc-build-count");
+        wnd.AddSlider(x + 10f + txt.preferredWidth + 5f, y + 6f, tab2, PlanetFunctions.OrbitalCollectorMaxBuildCount, new OcMapper(), "G", 160f);
         x = 400f;
-        y += 54f;
-        checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab2, LogisticsPatch.LogisticsCapacityTweaksEnabled, "Enhance control for logistic storage limits");
-        wnd.AddTipsButton2(x + checkBoxForMeasureTextWidth.Width + 5f, y + 6f, tab2, "Enhance control for logistic storage limits", "Enhance control for logistic storage limits tips", "enhanced-logistic-limit-tips");
-        y += 36f;
-        wnd.AddCheckBox(x, y, tab2, LogisticsPatch.AllowOverflowInLogisticsEnabled, "Allow overflow for Logistic Stations and Advanced Mining Machines");
-        y += 36f;
-        checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab2, LogisticsPatch.LogisticsConstrolPanelImprovementEnabled, "Logistics Control Panel Improvement");
-        wnd.AddTipsButton2(x + checkBoxForMeasureTextWidth.Width + 5f, y + 6f, tab2, "Logistics Control Panel Improvement", "Logistics Control Panel Improvement tips", "lcp-improvement-tips");
+        y += 18f;
 
         {
             y += 36f;
+            wnd.AddCheckBox(x, y, tab2, FactoryPatch.DragBuildPowerPolesEnabled, "Drag building power poles in maximum connection range");
+            y += 27f;
+            var alternatelyCheckBox = wnd.AddCheckBox(x + 20f, y, tab2, FactoryPatch.DragBuildPowerPolesAlternatelyEnabled, "Build Tesla Tower and Wireless Power Tower alternately", 13);
+            FactoryPatch.DragBuildPowerPolesEnabled.SettingChanged += AlternatelyCheckBoxChanged;
+            wnd.OnFree += () => { FactoryPatch.DragBuildPowerPolesEnabled.SettingChanged -= AlternatelyCheckBoxChanged; };
+            AlternatelyCheckBoxChanged(null, null);
+
+            void AlternatelyCheckBoxChanged(object o, EventArgs e)
+            {
+                alternatelyCheckBox.SetEnable(FactoryPatch.DragBuildPowerPolesEnabled.Value);
+            }
+        }
+        {
+            y += 36f;
             var realtimeLogisticsInfoPanelCheckBox = wnd.AddCheckBox(x, y, tab2, LogisticsPatch.RealtimeLogisticsInfoPanelEnabled, "Real-time logistic stations info panel");
-            y += 30f;
+            y += 27f;
             var realtimeLogisticsInfoPanelBarsCheckBox = wnd.AddCheckBox(x + 20f, y, tab2, LogisticsPatch.RealtimeLogisticsInfoPanelBarsEnabled, "Show status bars for storage items", 13);
             if (AuxilaryfunctionWrapper.ShowStationInfo != null)
             {
@@ -360,21 +363,36 @@ public static class UIConfigWindow
         {
             y += 36f;
             wnd.AddCheckBox(x, y, tab2, FactoryPatch.TweakBuildingBufferEnabled, "Tweak building buffers");
-            y += 30f;
+            y += 27f;
             txt = wnd.AddText2(x + 20f, y, tab2, "Assembler buffer time multiplier(in seconds)", 13);
             var nx1 = txt.preferredWidth + 5f;
-            y += 30f;
+            y += 27f;
             txt = wnd.AddText2(x + 20f, y, tab2, "Assembler buffer minimum multiplier", 13);
             var nx2 = txt.preferredWidth + 5f;
-            y += 30f;
-            txt = wnd.AddText2(x + 20f, y, tab2, "Ray Receiver Graviton Lens buffer count", 13);
+            y += 27f;
+            txt = wnd.AddText2(x + 20f, y, tab2, "Buffer count for assembling in labs", 13);
             var nx3 = txt.preferredWidth + 5f;
-            y -= 60f;
-            var mx = Mathf.Max(nx1, nx2, nx3) + 20f;
+            y += 27f;
+            txt = wnd.AddText2(x + 20f, y, tab2, "Extra buffer count in Self-evolution Labs", 13);
+            var nx4 = txt.preferredWidth + 5f;
+            y += 27f;
+            txt = wnd.AddText2(x + 20f, y, tab2, "Buffer count for researching in labs", 13);
+            var nx5 = txt.preferredWidth + 5f;
+            y += 27f;
+            txt = wnd.AddText2(x + 20f, y, tab2, "Ray Receiver Graviton Lens buffer count", 13);
+            var nx6 = txt.preferredWidth + 5f;
+            y -= 135f;
+            var mx = Mathf.Max(nx1, nx2, nx3, nx4, nx5, nx6) + 20f;
             var assemblerBufferTimeMultiplierSlider = wnd.AddSlider(x + mx, y + 5f, tab2, FactoryPatch.AssemblerBufferTimeMultiplier, new MyWindow.RangeValueMapper<int>(2, 10), "0", 80f).WithSmallerHandle();
-            y += 30f;
+            y += 27f;
             var assemblerBufferMininumMultiplierSlider = wnd.AddSlider(x + mx, y + 5f, tab2, FactoryPatch.AssemblerBufferMininumMultiplier, new MyWindow.RangeValueMapper<int>(2, 10), "0", 80f).WithSmallerHandle();
-            y += 30f;
+            y += 27f;
+            var labBufferMaxCountForAssembleSlider = wnd.AddSlider(x + mx, y + 5f, tab2, FactoryPatch.LabBufferMaxCountForAssemble, new MyWindow.RangeValueMapper<int>(2, 20), "0", 80f).WithSmallerHandle();
+            y += 27f;
+            var labBufferExtraCountForAdvancedAssembleSlider = wnd.AddSlider(x + mx, y + 5f, tab2, FactoryPatch.LabBufferExtraCountForAdvancedAssemble, new MyWindow.RangeValueMapper<int>(1, 10), "0", 80f).WithSmallerHandle();
+            y += 27f;
+            var labBufferMaxCountForResearchSlider = wnd.AddSlider(x + mx, y + 5f, tab2, FactoryPatch.LabBufferMaxCountForResearch, new MyWindow.RangeValueMapper<int>(2, 20), "0", 80f).WithSmallerHandle();
+            y += 27f;
             var receiverBufferCountSlider = wnd.AddSlider(x + mx, y + 5f, tab2, FactoryPatch.ReceiverBufferCount, new MyWindow.RangeValueMapper<int>(1, 20), "0", 80f).WithSmallerHandle();
             FactoryPatch.TweakBuildingBufferEnabled.SettingChanged += TweakBuildingBufferChanged;
             wnd.OnFree += () => { FactoryPatch.TweakBuildingBufferEnabled.SettingChanged -= TweakBuildingBufferChanged; };
@@ -384,6 +402,9 @@ public static class UIConfigWindow
             {
                 assemblerBufferTimeMultiplierSlider.SetEnable(FactoryPatch.TweakBuildingBufferEnabled.Value);
                 assemblerBufferMininumMultiplierSlider.SetEnable(FactoryPatch.TweakBuildingBufferEnabled.Value);
+                labBufferMaxCountForAssembleSlider.SetEnable(FactoryPatch.TweakBuildingBufferEnabled.Value);
+                labBufferExtraCountForAdvancedAssembleSlider.SetEnable(FactoryPatch.TweakBuildingBufferEnabled.Value);
+                labBufferMaxCountForResearchSlider.SetEnable(FactoryPatch.TweakBuildingBufferEnabled.Value);
                 receiverBufferCountSlider.SetEnable(FactoryPatch.TweakBuildingBufferEnabled.Value);
             }
         }
@@ -405,11 +426,11 @@ public static class UIConfigWindow
         {
             y += 36f;
             wnd.AddCheckBox(x, y, tab3, PlayerPatch.AutoNavigationEnabled, "Auto navigation on sailings");
-            y += 26f;
+            y += 27f;
             var autoCruiseCheckBox = wnd.AddCheckBox(x + 20f, y, tab3, PlayerPatch.AutoCruiseEnabled, "Enable auto-cruise", 13);
-            y += 26f;
+            y += 27f;
             var autoBoostCheckBox = wnd.AddCheckBox(x + 20f, y, tab3, PlayerPatch.AutoBoostEnabled, "Auto boost", 13);
-            y += 32f;
+            y += 27f;
             txt = wnd.AddText2(x + 20f, y, tab3, "Distance to use warp", 15, "text-distance-to-warp");
             var navDistanceSlider = wnd.AddSlider(x + 20f + txt.preferredWidth + 5f, y + 6f, tab3, PlayerPatch.DistanceToWarp, new DistanceMapper(), "0.0", 100f);
             PlayerPatch.AutoNavigationEnabled.SettingChanged += NavSettingChanged;
@@ -438,7 +459,7 @@ public static class UIConfigWindow
         );
         y += 36f;
         wnd.AddText2(x, y, tab4, "Click to dismantle selected layer", 16, "text-dismantle-layer");
-        y += 26f;
+        y += 27f;
         for (var i = 0; i < 10; i++)
         {
             var id = i + 1;
@@ -464,9 +485,8 @@ public static class UIConfigWindow
 
         x = 400f;
         y += 36f;
-        wnd.AddText2(x, y, tab4, "Auto Fast Build Speed Multiplier", 15, "text-auto-fast-build-multiplier");
-        y += 24f;
-        wnd.AddSlider(x, y, tab4, DysonSpherePatch.AutoConstructMultiplier, [1, 2, 5, 10, 20, 50, 100], "0", 200f);
+        txt = wnd.AddText2(x, y, tab4, "Auto Fast Build Speed Multiplier", 15, "text-auto-fast-build-multiplier");
+        wnd.AddSlider(x + txt.preferredWidth + 5f, y + 6f, tab4, DysonSpherePatch.AutoConstructMultiplier, [1, 2, 5, 10, 20, 50, 100], "0", 100f);
         _dysonTab = tab4;
 
         var tab5 = wnd.AddTab(_windowTrans, "Tech/Combat");
