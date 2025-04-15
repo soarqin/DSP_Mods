@@ -93,6 +93,7 @@ public static class UIConfigWindow
         I18N.Add("Assembler buffer time multiplier(in seconds)", "Assembler buffer time multiplier(in seconds)", "工厂配方缓冲时间倍率(秒)");
         I18N.Add("Assembler buffer minimum multiplier", "Assembler buffer minimum multiplier", "工厂配方缓冲最小倍率");
         I18N.Add("Ray Receiver Graviton Lens buffer count", "Ray Receiver Graviton Lens buffer count", "射线接收器透镜缓冲数量");
+        I18N.Add("Shortcut keys for showing stars' name", "Shortcut keys for showing stars' name", "启用显示所有星系名称的快捷键");
         I18N.Add("Auto navigation on sailings", "Auto navigation on sailings", "宇宙航行时自动导航");
         I18N.Add("Enable auto-cruise", "Enable auto-cruise", "启用自动巡航");
         I18N.Add("Auto boost", "Auto boost", "自动加速");
@@ -398,6 +399,8 @@ public static class UIConfigWindow
         y += 36f;
         checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab3, PlayerPatch.EnhancedMechaForgeCountControlEnabled, "Enhanced count control for hand-make");
         wnd.AddTipsButton2(x + checkBoxForMeasureTextWidth.Width + 5f, y + 6f, tab3, "Enhanced count control for hand-make", "Enhanced count control for hand-make tips", "enhanced-count-control-tips");
+        y += 36f;
+        wnd.AddCheckBox(x, y, tab3, PlayerPatch.ShortcutKeysForStarsNameEnabled, "Shortcut keys for showing stars' name");
 
         {
             y += 36f;

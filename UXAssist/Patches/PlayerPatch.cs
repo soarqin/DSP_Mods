@@ -8,19 +8,41 @@ using UXAssist.Common;
 
 namespace UXAssist.Patches;
 
-public class PlayerPatch: PatchImpl<PlayerPatch>
+public static class PlayerPatch
 {
     public static ConfigEntry<bool> EnhancedMechaForgeCountControlEnabled;
     public static ConfigEntry<bool> HideTipsForSandsChangesEnabled;
+    public static ConfigEntry<bool> ShortcutKeysForStarsNameEnabled;
     public static ConfigEntry<bool> AutoNavigationEnabled;
     public static ConfigEntry<bool> AutoCruiseEnabled;
     public static ConfigEntry<bool> AutoBoostEnabled;
     public static ConfigEntry<double> DistanceToWarp;
+    private static PressKeyBind _showAllStarsNameKey;
+    private static PressKeyBind _toggleAllStarsNameKey;
     private static PressKeyBind _autoDriveKey;
-    private static PressKeyBind _showAllAstrosNameKey;
 
     public static void Init()
     {
+        _showAllStarsNameKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
+        {
+            key = new CombineKey(0, CombineKey.ALT_COMB, ECombineKeyAction.OnceClick, false),
+            conflictGroup = KeyBindConflict.UI | KeyBindConflict.KEYBOARD_KEYBIND,
+            name = "ShowAllStarsName",
+            canOverride = true
+        }
+        );
+        I18N.Add("KEYShowAllStarsName", "Keep pressing to show all Stars' name", "按住显示所有星系名称");
+
+        _toggleAllStarsNameKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
+        {
+            key = new CombineKey((int)KeyCode.Tab, 0, ECombineKeyAction.OnceClick, false),
+            conflictGroup = KeyBindConflict.UI | KeyBindConflict.KEYBOARD_KEYBIND,
+            name = "ToggleAllStarsName",
+            canOverride = true
+        }
+        );
+        I18N.Add("KEYToggleAllStarsName", "Toggle display of all Stars' name", "切换所有星系名称显示状态");
+
         _autoDriveKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
         {
             key = new CombineKey(0, 0, ECombineKeyAction.OnceClick, true),
@@ -32,18 +54,9 @@ public class PlayerPatch: PatchImpl<PlayerPatch>
         I18N.Add("AutoCruiseOn", "Auto-cruise enabled", "已启用自动巡航");
         I18N.Add("AutoCruiseOff", "Auto-cruise disabled", "已禁用自动巡航");
 
-        _showAllAstrosNameKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
-        {
-            key = new CombineKey(0, CombineKey.ALT_COMB, ECombineKeyAction.OnceClick, false),
-            conflictGroup = KeyBindConflict.UI | KeyBindConflict.KEYBOARD_KEYBIND,
-            name = "ShowAllAstrosName",
-            canOverride = true
-        }
-        );
-        I18N.Add("KEYShowAllAstrosName", "Keep pressing to show all astros' name", "按住显示所有星球名称");
-
         EnhancedMechaForgeCountControlEnabled.SettingChanged += (_, _) => EnhancedMechaForgeCountControl.Enable(EnhancedMechaForgeCountControlEnabled.Value);
         HideTipsForSandsChangesEnabled.SettingChanged += (_, _) => HideTipsForSandsChanges.Enable(HideTipsForSandsChangesEnabled.Value);
+        ShortcutKeysForStarsNameEnabled.SettingChanged += (_, _) => ShortcutKeysForStarsName.Enable(ShortcutKeysForStarsNameEnabled.Value);
         AutoNavigationEnabled.SettingChanged += (_, _) => AutoNavigation.Enable(AutoNavigationEnabled.Value);
     }
 
@@ -51,12 +64,16 @@ public class PlayerPatch: PatchImpl<PlayerPatch>
     {
         EnhancedMechaForgeCountControl.Enable(EnhancedMechaForgeCountControlEnabled.Value);
         HideTipsForSandsChanges.Enable(HideTipsForSandsChangesEnabled.Value);
+        ShortcutKeysForStarsName.Enable(ShortcutKeysForAstrosNameEnabled.Value);
         AutoNavigation.Enable(AutoNavigationEnabled.Value);
-        Enable(true);
     }
 
     public static void OnUpdate()
     {
+        if (_toggleAllStarsNameKey.keyValue)
+        {
+            ShortcutKeysForStarsName.ToggleAllStarsName();
+        }
         if (_autoDriveKey.keyValue)
         {
             AutoNavigation.ToggleAutoCruise();
@@ -65,30 +82,10 @@ public class PlayerPatch: PatchImpl<PlayerPatch>
 
     public static void Uninit()
     {
-        Enable(false);
         EnhancedMechaForgeCountControl.Enable(false);
         HideTipsForSandsChanges.Enable(false);
+        ShortcutKeysForStarsName.Enable(false);
         AutoNavigation.Enable(false);
-    }
-
-    [HarmonyTranspiler]
-    [HarmonyPatch(typeof(UIStarmapStar), nameof(UIStarmapStar._OnLateUpdate))]
-    private static IEnumerable<CodeInstruction> UIStarmapStar__OnLateUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
-    {
-        var matcher = new CodeMatcher(instructions, generator);
-        Label? br = null;
-        matcher.MatchForward(false,
-            new CodeMatch(OpCodes.Stfld, AccessTools.Field(typeof(UIStarmapStar), nameof(UIStarmapStar.projectedCoord))),
-            new CodeMatch(ci => ci.IsLdloc()),
-            new CodeMatch(ci => ci.Branches(out br))
-        );
-        matcher.Advance(3);
-        matcher.InsertAndAdvance(
-            new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(PlayerPatch), nameof(_showAllAstrosNameKey))),
-            new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(KeyBindings), nameof(KeyBindings.IsKeyPressing))),
-            new CodeInstruction(OpCodes.Brtrue, br.Value)
-        );
-        return matcher.InstructionEnumeration();
     }
 
     private class EnhancedMechaForgeCountControl: PatchImpl<EnhancedMechaForgeCountControl>
@@ -154,6 +151,156 @@ public class PlayerPatch: PatchImpl<PlayerPatch>
             ).Advance(1).Insert(new CodeInstruction(OpCodes.Ret));
             return matcher.InstructionEnumeration();
         }
+    }
+
+    public class ShortcutKeysForStarsName: PatchImpl<ShortcutKeysForStarsName>
+    {
+        private static int _showAllStarsNameStatus;
+
+        public static void ToggleAllStarsName()
+        {
+            _showAllStarsNameStatus = (_showAllStarsNameStatus + 1) % 3;
+        }
+
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(UIStarmapStar), nameof(UIStarmapStar._OnLateUpdate))]
+        private static IEnumerable<CodeInstruction> UIStarmapStar__OnLateUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Ldarg_0),
+                new CodeMatch(OpCodes.Ldloc_1),
+                new CodeMatch(OpCodes.Stfld, AccessTools.Field(typeof(UIStarmapStar), nameof(UIStarmapStar.projected)))
+            );
+            matcher.Advance(3);
+            matcher.CreateLabel(out var jumpPos1);
+            matcher.InsertAndAdvance(
+                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(ShortcutKeysForStarsName), nameof(_showAllStarsNameStatus))),
+                new CodeInstruction(OpCodes.Ldc_I4_2),
+                new CodeInstruction(OpCodes.Ceq),
+                new CodeInstruction(OpCodes.Brfalse, jumpPos1),
+                new CodeInstruction(OpCodes.Ldc_I4_0),
+                new CodeInstruction(OpCodes.Stloc_1)
+            );
+            Label? jumpPos2 = null;
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Stfld, AccessTools.Field(typeof(UIStarmapStar), nameof(UIStarmapStar.projectedCoord))),
+                new CodeMatch(ci => ci.IsLdloc()),
+                new CodeMatch(ci => ci.Branches(out jumpPos2))
+            );
+            matcher.Advance(3);
+            var labels = matcher.Labels;
+            matcher.Labels = null;
+            matcher.InsertAndAdvance(
+                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(ShortcutKeysForStarsName), nameof(_showAllStarsNameStatus))).WithLabels(labels),
+                new CodeInstruction(OpCodes.Ldc_I4_1),
+                new CodeInstruction(OpCodes.Ceq),
+                new CodeInstruction(OpCodes.Brtrue, jumpPos2.Value),
+                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(PlayerPatch), nameof(_showAllStarsNameKey))),
+                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(KeyBindings), nameof(KeyBindings.IsKeyPressing))),
+                new CodeInstruction(OpCodes.Brtrue, jumpPos2.Value)
+            );
+            return matcher.InstructionEnumeration();
+        }
+/*
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(UIStarmapPlanet), nameof(UIStarmapPlanet._OnLateUpdate))]
+        private static IEnumerable<CodeInstruction> UIStarmapPlanet__OnLateUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Ldarg_0),
+                new CodeMatch(OpCodes.Ldloc_3),
+                new CodeMatch(OpCodes.Stfld, AccessTools.Field(typeof(UIStarmapPlanet), nameof(UIStarmapPlanet.projected)))
+            );
+            matcher.Advance(3);
+            matcher.CreateLabel(out var jumpPos1);
+            matcher.InsertAndAdvance(
+                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(ShortcutKeysForStarsName), nameof(_showAllStarsNameStatus))),
+                new CodeInstruction(OpCodes.Ldc_I4_2),
+                new CodeInstruction(OpCodes.Ceq),
+                new CodeInstruction(OpCodes.Brfalse, jumpPos1),
+                new CodeInstruction(OpCodes.Ldc_I4_0),
+                new CodeInstruction(OpCodes.Stloc_3)
+            );
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Ldarg_0),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(UIStarmapPlanet), nameof(UIStarmapPlanet.gameHistory))),
+                new CodeMatch(OpCodes.Ldarg_0),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(UIStarmapPlanet), nameof(UIStarmapPlanet.planet))),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(PlanetData), nameof(PlanetData.id))),
+                new CodeMatch(OpCodes.Callvirt, AccessTools.Field(typeof(GameHistoryData), nameof(GameHistoryData.GetPlanetPin))),
+                new CodeMatch(OpCodes.Ldc_I4_1),
+                new CodeMatch(ci => ci.Branches(out _)),
+                new CodeMatch(OpCodes.Ldc_I4_1),
+                new CodeMatch(ci => ci.IsStloc()),
+                new CodeMatch(ci => ci.Branches(out _))
+            );
+            matcher.CreateLabelAt(matcher.Pos + 8, out var jumpPos);
+            var labels = matcher.Labels;
+            matcher.Labels = null;
+            matcher.InsertAndAdvance(
+                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(ShortcutKeysForStarsName), nameof(_showAllStarsNameStatus))).WithLabels(labels),
+                new CodeInstruction(OpCodes.Ldc_I4_1),
+                new CodeInstruction(OpCodes.Ceq),
+                new CodeInstruction(OpCodes.Brtrue, jumpPos),
+                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(PlayerPatch), nameof(_showAllStarsNameKey))),
+                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(KeyBindings), nameof(KeyBindings.IsKeyPressing))),
+                new CodeInstruction(OpCodes.Brtrue, jumpPos)
+            );
+            return matcher.InstructionEnumeration();
+        }
+
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(UIStarmapDFHive), nameof(UIStarmapDFHive._OnLateUpdate))]
+        private static IEnumerable<CodeInstruction> UIStarmapDFHive__OnLateUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Ldarg_0),
+                new CodeMatch(ci => ci.IsLdloc()),
+                new CodeMatch(OpCodes.Stfld, AccessTools.Field(typeof(UIStarmapDFHive), nameof(UIStarmapDFHive.projected)))
+            );
+            matcher.Advance(3);
+            matcher.CreateLabel(out var jumpPos1);
+            matcher.InsertAndAdvance(
+                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(ShortcutKeysForStarsName), nameof(_showAllStarsNameStatus))),
+                new CodeInstruction(OpCodes.Ldc_I4_2),
+                new CodeInstruction(OpCodes.Ceq),
+                new CodeInstruction(OpCodes.Brfalse, jumpPos1),
+                new CodeInstruction(OpCodes.Ldc_I4_0),
+                new CodeInstruction(OpCodes.Stloc_S, 4)
+            );
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Ldarg_0),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(UIStarmapDFHive), nameof(UIStarmapDFHive.gameHistory))),
+                new CodeMatch(OpCodes.Ldarg_0),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(UIStarmapDFHive), nameof(UIStarmapDFHive.hive))),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(EnemyDFHiveSystem), nameof(EnemyDFHiveSystem.hiveStarId))),
+                new CodeMatch(OpCodes.Ldc_I4, 1000000),
+                new CodeMatch(OpCodes.Sub),
+                new CodeMatch(OpCodes.Callvirt, AccessTools.Field(typeof(GameHistoryData), nameof(GameHistoryData.GetHivePin))),
+                new CodeMatch(OpCodes.Ldc_I4_1),
+                new CodeMatch(ci => ci.Branches(out _)),
+                new CodeMatch(OpCodes.Ldc_I4_1),
+                new CodeMatch(ci => ci.IsStloc()),
+                new CodeMatch(ci => ci.Branches(out _))
+            );
+            matcher.CreateLabelAt(matcher.Pos + 10, out var jumpPos);
+            var labels = matcher.Labels;
+            matcher.Labels = null;
+            matcher.InsertAndAdvance(
+                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(ShortcutKeysForStarsName), nameof(_showAllStarsNameStatus))).WithLabels(labels),
+                new CodeInstruction(OpCodes.Ldc_I4_1),
+                new CodeInstruction(OpCodes.Ceq),
+                new CodeInstruction(OpCodes.Brtrue, jumpPos),
+                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(PlayerPatch), nameof(_showAllStarsNameKey))),
+                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(KeyBindings), nameof(KeyBindings.IsKeyPressing))),
+                new CodeInstruction(OpCodes.Brtrue, jumpPos)
+            );
+            return matcher.InstructionEnumeration();
+        }
+*/
     }
 
     public class AutoNavigation: PatchImpl<AutoNavigation>

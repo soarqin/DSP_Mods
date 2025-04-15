@@ -158,6 +158,8 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
             "Enhanced count control for hand-make, increases maximum of count to 1000, and you can hold Ctrl/Shift/Alt to change the count rapidly");
         PlayerPatch.HideTipsForSandsChangesEnabled = Config.Bind("Player", "HideTipsForGettingSands", false,
             "Hide tips for getting soil piles");
+        PlayerPatch.ShortcutKeysForStarsNameEnabled = Config.Bind("Player", "ShortcutKeysForStarsName", false,
+            "Shortcut keys for showing stars' name");
         PlayerPatch.AutoNavigationEnabled = Config.Bind("Player", "AutoNavigation", false,
             "Auto navigation");
         PlayerPatch.AutoCruiseEnabled = Config.Bind("Player", "AutoCruise", false,
