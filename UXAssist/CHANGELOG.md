@@ -1,5 +1,19 @@
 ## Changlog
 
+* 1.2.19
+  + New feature: `Tweak building buffer`
+    - Factory recipe buffer formula: take the larger value between `Assembler buffer time multiplier(in seconds) * items needed per second` and `Assembler buffer minimum multiplier * items needed per recipe`
+      - `Assembler buffer time multiplier(in seconds)`: Range 2-10, default is 4 (same as game)
+      - `Assembler buffer minimum multiplier`: Range 2-10, default is 2 (same as game)
+    - Matrix Lab assembly mode formula: Default buffer is `Buffer count for assembling in labs`, when using Self-evolution Lab, if recipe's original production time is not greater than 9 seconds, add `Extra buffer count for Self-evolution Labs` * (`Lab speed` - 1)
+      - `Buffer count for assembling in labs`: Range 2-20, default is 6 (same as game)
+      - `Extra buffer count for Self-evolution Labs`: Range 1-10, default is 3 (same as game)
+    - `Buffer count for researching in labs`: Range 2-20, default is 10 (same as game)
+    - `Ray Receiver Graviton Lens buffer count`: Range 1-20, default is 1 (game default is 20)
+  + New feature: `Shortcut keys for showing stars' name`
+    - Add a shortcut key to always show all star names in starmap when holding, default is `Alt`
+    - Add a shortcut key to toggle between three star name display states in starmap: `Original state`, `Show all names`, `Hide all names`, default is `Tab`, will restore to original state when closing starmap
+  + `Cut conveyor belt`: Fix a bug that entity logic connection is not cut so that belt is not cut off on copying as a blueprint.
 * 1.2.18
   + `Protect veins from exhaustion`: Optimized implementation, now veins will not be protected once you have upgrade `Veins Utilization` to level 390+, while the cost rate becomes absolute 0.
   + `Night Sunlight`: Fix bugs that sunlight angle is not updated as expected.
@@ -33,7 +47,7 @@
   + Fix an issue caused by game update: tips are not shown when mouse hovering on tips button.
 * 1.2.10
   + `Set enabled CPU threads`: Fix hybrid-architect check for CPUs without hyper-threading
-  + `Re-initialize Dyson Spheres` and `Quick dismantle Dyson Shells`: Fix possible crashes and a display issue, while Dyson Sphere panel is actived. 
+  + `Re-initialize Dyson Spheres` and `Quick dismantle Dyson Shells`: Fix possible crashes and a display issue, while Dyson Sphere panel is actived.
 * 1.2.9
   + `Protect veins from exhaustion`:
     - Fix a bug that vein protection causes crashes (#50).
@@ -92,7 +106,7 @@
   + New feature: `Scale up mouse cursor`
     - Note: This will enable software cursor mode, which may cause mouse movement lag on heavy load.
   + New feature: `Real-time logistic stations info panel`
-    - Note: This function will be hidden if you enabled `Show station info` in mod `Auxilaryfunction`. 
+    - Note: This function will be hidden if you enabled `Show station info` in mod `Auxilaryfunction`.
   + Fix an issue that `Dyson Sphere "Auto Fast Build"` does not generate production records for solar sails.
   + Remove use of AssetBundle, move all icons into `Assembly Resources`, for better flexibility.
 * 1.1.5
@@ -251,6 +265,20 @@
 
 ## 更新日志
 
+* 1.2.19
+  + 新功能：`调整建筑输入缓冲`
+    - 工厂配方计算公式，在`工厂配方缓冲时间倍率秒数x每秒需要的原料数量`和`工厂配方缓冲最小倍率x每生产一次配方需要的原料数量`中取更大的那个值
+      - `工厂配方缓冲时间倍率(秒)`：范围2-10，默认为4(同游戏)
+      - `工厂配方缓冲最小倍率`：范围2-10，默认为2(同游戏)
+    - 研究站矩阵合成模式计算公式，默认缓存`研究站矩阵合成模式缓存数量`个，当使用自演化研究站时，如果配方的原始生产时间不大于9秒，则增加`自演化研究站矩阵额外缓冲数量`*(`研究站速度倍率`-1)
+      - `研究站矩阵合成模式缓存数量`：范围2-20，默认为6(同游戏)
+      - `自演化研究站矩阵额外缓冲数量`：范围1-10，默认为3(同游戏)
+    - `研究站科研模式缓存数量`：范围2-20，默认为10(同游戏)
+    - `射线接收器透镜缓冲数量`：范围1-20，默认为1(游戏默认为20)
+  + 新功能：`启用显示所有星系名称的快捷键`
+    - 新增一个快捷键，按住后始终在星图显示所有星系名称，默认为`Alt`
+    - 新增一个快捷键，在星图视图切换三种星系名称显示状态：`原始显示状态`，`显示所有名称`，`隐藏所有名称`，默认为`Tab`，关闭星图时会恢复到原始状态
+  + `切割传送带`：修复了实体逻辑连接未切断导致复制为蓝图时传送带未被切断的问题。
 * 1.2.18
   + `保护矿脉不会耗尽`：优化实现，当`矿物利用`升级到390级以上时消耗速度变为0时，矿脉将不再被保护。
   + `夜间日光灯`：修复了光照角度未正确更新的问题。
@@ -296,7 +324,7 @@
     - 影响手动注入和抽取，以及从储液罐上层传输到下层的速度
   + 在游戏窗口标题中追加mod配置档案名的修复：
     - 修复了多实例启动时窗口标题未正确设置的问题
-    - 修复了启用BepInEx调试控制台时窗口标题未正确设置的问题 
+    - 修复了启用BepInEx调试控制台时窗口标题未正确设置的问题
   + `物流运输站实时信息面板`：修复了一个物品状态条意外显示的问题
 * 1.2.7
   + 修复了一些小问题

@@ -86,11 +86,23 @@
         - 1 Metaverse = 30 Negentropy Singularities
         - 1 Metaverse = 30 Matter Recombinators
         - 1 Metaverse = 10 Core Elements
+    - Tweak building buffer
+      - Factory recipe buffer formula: take the larger value between `Assembler buffer time multiplier(in seconds) * items needed per second` and `Assembler buffer minimum multiplier * items needed per recipe`
+        - `Assembler buffer time multiplier(in seconds)`: Range 2-10, default is 4 (same as game)
+        - `Assembler buffer minimum multiplier`: Range 2-10, default is 2 (same as game)
+      - Matrix Lab assembly mode formula: Default buffer is `Buffer count for assembling in labs`, when using Self-evolution Lab, if recipe's original production time is not greater than 9 seconds, add `Extra buffer count for Self-evolution Labs` * (`Lab speed` - 1)
+        - `Buffer count for assembling in labs`: Range 2-20, default is 6 (same as game)
+        - `Extra buffer count for Self-evolution Labs`: Range 1-10, default is 3 (same as game)
+      - `Buffer count for researching in labs`: Range 2-20, default is 10 (same as game)
+      - `Ray Receiver Graviton Lens buffer count`: Range 1-20, default is 1 (game default is 20)
   + Player/Mecha
     - Unlimited interactive range
     - Enable player actions in globe view
     - Hide tips for soil piles changes
     - Enhanced count control for hand-make
+    - Shortcut keys for showing stars' name
+      - Add a shortcut key to always show all star names in starmap when holding, default is `Alt`
+      - Add a shortcut key to toggle between three star name display states in starmap: `Original state`, `Show all names`, `Hide all names`, default is `Tab`, will restore to original state when closing starmap
     - Auto navigation on sailings
       - It keeps Icarus on course to the target planet
       - It will try to bypass any obstacles(planets, stars or dark-fog hives) on the way
@@ -209,12 +221,24 @@
         - 1个元宇宙 = 30个负熵奇点
         - 1个元宇宙 = 30个物质重组器
         - 1个元宇宙 = 10个核心素
+    - 调整建筑输入缓冲
+      - 工厂配方计算公式，在`工厂配方缓冲时间倍率秒数x每秒需要的原料数量`和`工厂配方缓冲最小倍率x每生产一次配方需要的原料数量`中取更大的那个值
+        - `工厂配方缓冲时间倍率(秒)`：范围2-10，默认为4(同游戏)
+        - `工厂配方缓冲最小倍率`：范围2-10，默认为2(同游戏)
+      - 研究站矩阵合成模式计算公式，默认缓存`研究站矩阵合成模式缓存数量`个，当使用自演化研究站时，如果配方的原始生产时间不大于9秒，则增加`自演化研究站矩阵额外缓冲数量`*(`研究站速度倍率`-1)
+        - `研究站矩阵合成模式缓存数量`：范围2-20，默认为6(同游戏)
+        - `自演化研究站矩阵额外缓冲数量`：范围1-10，默认为3(同游戏)
+      - `研究站科研模式缓存数量`：范围2-20，默认为10(同游戏)
+      - `射线接收器透镜缓冲数量`：范围1-20，默认为1(游戏默认为20)
   + 玩家/机甲
     - 无限交互距离
     - 移除建造数量和范围限制
     - 在行星视图中允许玩家操作
     - 隐藏沙土数量变动的提示
     - 手动制造物品的数量控制改进
+    - 启用显示所有星系名称的快捷键
+      - 新增一个快捷键，按住后始终在星图显示所有星系名称，默认为`Alt`
+      - 新增一个快捷键，在星图视图切换三种星系名称显示状态：`原始显示状态`，`显示所有名称`，`隐藏所有名称`，默认为`Tab`，关闭星图时会恢复到原始状态
     - 航行时自动导航
       - 它会保持伊卡洛斯飞向目标星球
       - 它会尝试绕过途中的任何障碍物(行星、恒星或黑雾巢穴)

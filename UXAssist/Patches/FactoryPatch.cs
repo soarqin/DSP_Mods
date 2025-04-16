@@ -2089,6 +2089,14 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         [HarmonyPatch(typeof(LabComponent), nameof(LabComponent.UpdateNeedsAssemble))]
         private static IEnumerable<CodeInstruction> LabComponent_UpdateNeedsAssemble_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
         {
+            /*
+             * Patch:
+             *  int num2 = ((this.timeSpend > 5400000) ? 6 :
+             *             (3 * ((this.speedOverride + 5001) / 10000) + 3));
+             * To:
+             *  int num2 = ((this.timeSpend > 5400000) ? LabBufferMaxCountForAssemble.Value :
+             *             (LabBufferExtraCountForAdvancedAssemble.Value * ((this.speedOverride + 5001) / 10000) + (LabBufferMaxCountForAssemble.Value - LabBufferExtraCountForAdvancedAssemble.Value)));
+             */
             var matcher = new CodeMatcher(instructions, generator);
             matcher.MatchForward(false,
                 new CodeMatch(OpCodes.Ldarg_0),
@@ -2118,6 +2126,22 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         [HarmonyPatch(typeof(LabComponent), nameof(LabComponent.UpdateNeedsResearch))]
         private static IEnumerable<CodeInstruction> LabComponent_UpdateNeedsResearch_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
         {
+            /*
+             * Patch:
+             *  this.needs[0] = ((this.matrixServed[0] < 36000) ? 6001 : 0);
+             *  this.needs[1] = ((this.matrixServed[1] < 36000) ? 6002 : 0);
+             *  this.needs[2] = ((this.matrixServed[2] < 36000) ? 6003 : 0);
+             *  this.needs[3] = ((this.matrixServed[3] < 36000) ? 6004 : 0);
+             *  this.needs[4] = ((this.matrixServed[4] < 36000) ? 6005 : 0);
+             *  this.needs[5] = ((this.matrixServed[5] < 36000) ? 6006 : 0);
+             * To:
+             *  this.needs[0] = ((this.matrixServed[0] < LabBufferMaxCountForResearch.Value * 3600) ? 6001 : 0);
+             *  this.needs[1] = ((this.matrixServed[1] < LabBufferMaxCountForResearch.Value * 3600) ? 6002 : 0);
+             *  this.needs[2] = ((this.matrixServed[2] < LabBufferMaxCountForResearch.Value * 3600) ? 6003 : 0);
+             *  this.needs[3] = ((this.matrixServed[3] < LabBufferMaxCountForResearch.Value * 3600) ? 6004 : 0);
+             *  this.needs[4] = ((this.matrixServed[4] < LabBufferMaxCountForResearch.Value * 3600) ? 6005 : 0);
+             *  this.needs[5] = ((this.matrixServed[5] < LabBufferMaxCountForResearch.Value * 3600) ? 6006 : 0);
+             */
             var matcher = new CodeMatcher(instructions, generator);
             matcher.MatchForward(false,
                 new CodeMatch(OpCodes.Ldc_I4, 36000)

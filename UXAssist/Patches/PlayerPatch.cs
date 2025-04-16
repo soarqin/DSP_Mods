@@ -162,43 +162,43 @@ public static class PlayerPatch
             _showAllStarsNameStatus = (_showAllStarsNameStatus + 1) % 3;
         }
 
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(UIStarmap), nameof(UIStarmap._OnClose))]
+        private static void UIStarmap__OnClose_Postfix()
+        {
+            _showAllStarsNameStatus = 0;
+        }
+
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(UIStarmapStar), nameof(UIStarmapStar._OnLateUpdate))]
         private static IEnumerable<CodeInstruction> UIStarmapStar__OnLateUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
         {
             var matcher = new CodeMatcher(instructions, generator);
-            matcher.MatchForward(false,
-                new CodeMatch(OpCodes.Ldarg_0),
-                new CodeMatch(OpCodes.Ldloc_1),
-                new CodeMatch(OpCodes.Stfld, AccessTools.Field(typeof(UIStarmapStar), nameof(UIStarmapStar.projected)))
-            );
-            matcher.Advance(3);
-            matcher.CreateLabel(out var jumpPos1);
-            matcher.InsertAndAdvance(
-                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(ShortcutKeysForStarsName), nameof(_showAllStarsNameStatus))),
-                new CodeInstruction(OpCodes.Ldc_I4_2),
-                new CodeInstruction(OpCodes.Ceq),
-                new CodeInstruction(OpCodes.Brfalse, jumpPos1),
-                new CodeInstruction(OpCodes.Ldc_I4_0),
-                new CodeInstruction(OpCodes.Stloc_1)
-            );
-            Label? jumpPos2 = null;
+            Label? jumpPos = null;
             matcher.MatchForward(false,
                 new CodeMatch(OpCodes.Stfld, AccessTools.Field(typeof(UIStarmapStar), nameof(UIStarmapStar.projectedCoord))),
                 new CodeMatch(ci => ci.IsLdloc()),
-                new CodeMatch(ci => ci.Branches(out jumpPos2))
+                new CodeMatch(ci => ci.Branches(out jumpPos))
             );
             matcher.Advance(3);
             var labels = matcher.Labels;
-            matcher.Labels = null;
+            matcher.Labels = [];
+            matcher.CreateLabel(out var jumpPos2);
             matcher.InsertAndAdvance(
                 new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(ShortcutKeysForStarsName), nameof(_showAllStarsNameStatus))).WithLabels(labels),
                 new CodeInstruction(OpCodes.Ldc_I4_1),
                 new CodeInstruction(OpCodes.Ceq),
-                new CodeInstruction(OpCodes.Brtrue, jumpPos2.Value),
+                new CodeInstruction(OpCodes.Brtrue, jumpPos.Value),
                 new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(PlayerPatch), nameof(_showAllStarsNameKey))),
                 new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(KeyBindings), nameof(KeyBindings.IsKeyPressing))),
-                new CodeInstruction(OpCodes.Brtrue, jumpPos2.Value)
+                new CodeInstruction(OpCodes.Brtrue, jumpPos.Value),
+                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(ShortcutKeysForStarsName), nameof(_showAllStarsNameStatus))),
+                new CodeInstruction(OpCodes.Ldc_I4_2),
+                new CodeInstruction(OpCodes.Ceq),
+                new CodeInstruction(OpCodes.Brfalse, jumpPos2),
+                new CodeInstruction(OpCodes.Ldc_I4_0),
+                new CodeInstruction(OpCodes.Stloc_1),
+                new CodeInstruction(OpCodes.Br, jumpPos.Value)
             );
             return matcher.InstructionEnumeration();
         }

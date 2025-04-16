@@ -142,9 +142,9 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
             "Tweak buffer count for assemblers and power generators");
         FactoryPatch.AssemblerBufferTimeMultiplier = Config.Bind("Factory", "AssemblerBufferTimeMultiplier", 4, new ConfigDescription("Assembler buffer time multiplier in seconds", new AcceptableValueRange<int>(2, 10)));
         FactoryPatch.AssemblerBufferMininumMultiplier = Config.Bind("Factory", "AssemblerBufferMininumMultiplier", 4, new ConfigDescription("Assembler buffer minimum multiplier", new AcceptableValueRange<int>(2, 10)));
-        FactoryPatch.LabBufferMaxCountForAssemble = Config.Bind("Factory", "LabBufferMaxCountForAssemble", 100, new ConfigDescription("Buffer count for assembling in labs", new AcceptableValueRange<int>(2, 20)));
-        FactoryPatch.LabBufferExtraCountForAdvancedAssemble = Config.Bind("Factory", "LabBufferExtraCountForAdvancedAssemble", 100, new ConfigDescription("Extra buffer count in Self-evolution Labs", new AcceptableValueRange<int>(1, 10)));
-        FactoryPatch.LabBufferMaxCountForResearch = Config.Bind("Factory", "LabBufferMaxCountForResearch", 100, new ConfigDescription("Buffer count for researching in labs", new AcceptableValueRange<int>(2, 20)));
+        FactoryPatch.LabBufferMaxCountForAssemble = Config.Bind("Factory", "LabBufferMaxCountForAssemble", 6, new ConfigDescription("Buffer count for assembling in labs", new AcceptableValueRange<int>(2, 20)));
+        FactoryPatch.LabBufferExtraCountForAdvancedAssemble = Config.Bind("Factory", "LabBufferExtraCountForAdvancedAssemble", 3, new ConfigDescription("Extra buffer count for Self-evolution Labs", new AcceptableValueRange<int>(1, 10)));
+        FactoryPatch.LabBufferMaxCountForResearch = Config.Bind("Factory", "LabBufferMaxCountForResearch", 10, new ConfigDescription("Buffer count for researching in labs", new AcceptableValueRange<int>(2, 20)));
         FactoryPatch.ReceiverBufferCount = Config.Bind("Factory", "ReceiverBufferCount", 1, new ConfigDescription("Ray Receiver Graviton Lens buffer count", new AcceptableValueRange<int>(1, 20)));
         LogisticsPatch.LogisticsCapacityTweaksEnabled = Config.Bind("Factory", "LogisticsCapacityTweaks", true,
             "Logistics capacity related tweaks");

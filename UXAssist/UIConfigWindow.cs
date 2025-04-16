@@ -94,7 +94,7 @@ public static class UIConfigWindow
         I18N.Add("Assembler buffer time multiplier(in seconds)", "Assembler buffer time multiplier(in seconds)", "工厂配方缓冲时间倍率(秒)");
         I18N.Add("Assembler buffer minimum multiplier", "Assembler buffer minimum multiplier", "工厂配方缓冲最小倍率");
         I18N.Add("Buffer count for assembling in labs", "Buffer count for assembling in labs", "研究站矩阵合成模式缓存数量");
-        I18N.Add("Extra buffer count in Self-evolution Labs", "Extra buffer count in Self-evolution Labs", "自演化研究站矩阵额外缓冲数量");
+        I18N.Add("Extra buffer count for Self-evolution Labs", "Extra buffer count for Self-evolution Labs", "自演化研究站矩阵额外缓冲数量");
         I18N.Add("Buffer count for researching in labs", "Buffer count for researching in labs", "研究站科研模式缓存数量");
         I18N.Add("Ray Receiver Graviton Lens buffer count", "Ray Receiver Graviton Lens buffer count", "射线接收器透镜缓冲数量");
         I18N.Add("Shortcut keys for showing stars' name", "Shortcut keys for showing stars' name", "启用显示所有星系名称的快捷键");
@@ -373,7 +373,7 @@ public static class UIConfigWindow
             txt = wnd.AddText2(x + 20f, y, tab2, "Buffer count for assembling in labs", 13);
             var nx3 = txt.preferredWidth + 5f;
             y += 27f;
-            txt = wnd.AddText2(x + 20f, y, tab2, "Extra buffer count in Self-evolution Labs", 13);
+            txt = wnd.AddText2(x + 20f, y, tab2, "Extra buffer count for Self-evolution Labs", 13);
             var nx4 = txt.preferredWidth + 5f;
             y += 27f;
             txt = wnd.AddText2(x + 20f, y, tab2, "Buffer count for researching in labs", 13);
