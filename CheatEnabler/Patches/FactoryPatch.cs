@@ -235,7 +235,8 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
         matcher.Repeat(m =>
         {
             var label1 = generator.DefineLabel();
-            m.Advance(1).RemoveInstructions(2).InsertAndAdvance(
+            m.Advance(3).InsertAndAdvance(
+                new CodeInstruction(OpCodes.Ldarg_0),
                 Transpilers.EmitDelegate((WarningSystem w) =>
                     {
                         if (NoConditionEnabled.Value)
@@ -629,7 +630,7 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
                 inc = 0;
                 speedLimit = number;
             }
-            
+
             if (speedLimit > 3600) speedLimit = 3600;
 
             var signalBelts = GetOrCreateSignalBelts(factory);
@@ -728,12 +729,12 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
             if (BeltSignalGeneratorEnabled.Value) InitSignalBelts();
             InitItemSources();
         }
-    
+
         [HarmonyPostfix]
         [HarmonyPatch(typeof(DigitalSystem), MethodType.Constructor, typeof(PlanetData))]
         private static void DigitalSystem_Constructor_Postfix(PlanetData _planet)
         {
-            if (!BeltSignalGeneratorEnabled.Value) return; 
+            if (!BeltSignalGeneratorEnabled.Value) return;
             var player = GameMain.mainPlayer;
             if (player == null) return;
             var factory = _planet?.factory;
@@ -1186,7 +1187,7 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
             return matcher.InstructionEnumeration();
         }
     }
-    
+
     private class BoostSolarPower: PatchImpl<BoostSolarPower>
     {
         [HarmonyTranspiler]
@@ -1515,7 +1516,7 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
             );
             return matcher.InstructionEnumeration();
         }
-        
+
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(UIControlPanelStationInspector), nameof(UIControlPanelStationInspector.OnShipIconClick))]
         [HarmonyPatch(typeof(UIControlPanelStationInspector), nameof(UIControlPanelStationInspector.OnWarperIconClick))]
@@ -1544,7 +1545,7 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
             );
             return matcher.InstructionEnumeration();
         }
-        
+
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(UIControlPanelStationStorage), nameof(UIControlPanelStationStorage.OnItemIconMouseDown))]
         private static IEnumerable<CodeInstruction> UIControlPanelStationStorage_OnItemIconMouseDown_Transpiler(IEnumerable<CodeInstruction> instructions)
@@ -1571,7 +1572,7 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
             );
             return matcher.InstructionEnumeration();
         }
-        
+
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(UIControlPanelStationStorage), nameof(UIControlPanelStationStorage.OnTakeBackButtonClick))]
         private static IEnumerable<CodeInstruction> UIControlPanelStationStorage_OnTakeBackButtonClick_Transpiler(IEnumerable<CodeInstruction> instructions)
@@ -1590,7 +1591,7 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
             );
             return matcher.InstructionEnumeration();
         }
-        
+
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(UIControlPanelVeinCollectorPanel), nameof(UIControlPanelVeinCollectorPanel.OnProductIconClick))]
         private static IEnumerable<CodeInstruction> UIControlPanelVeinCollectorPanel_OnProductIconClick_Transpiler(IEnumerable<CodeInstruction> instructions)
