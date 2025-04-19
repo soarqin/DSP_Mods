@@ -97,6 +97,7 @@ public static class UIConfigWindow
         I18N.Add("Extra buffer count for Self-evolution Labs", "Extra buffer count for Self-evolution Labs", "自演化研究站矩阵额外缓冲数量");
         I18N.Add("Buffer count for researching in labs", "Buffer count for researching in labs", "研究站科研模式缓存数量");
         I18N.Add("Ray Receiver Graviton Lens buffer count", "Ray Receiver Graviton Lens buffer count", "射线接收器透镜缓冲数量");
+        I18N.Add("Dismantle blueprint selected buildings", "Dismantle blueprint selected buildings", "拆除蓝图选中的建筑");
         I18N.Add("Shortcut keys for showing stars' name", "Shortcut keys for showing stars' name", "启用显示所有星系名称的快捷键");
         I18N.Add("Auto navigation on sailings", "Auto navigation on sailings", "宇宙航行时自动导航");
         I18N.Add("Enable auto-cruise", "Enable auto-cruise", "启用自动巡航");
@@ -312,6 +313,9 @@ public static class UIConfigWindow
         wnd.AddSlider(x + 10f + txt.preferredWidth + 5f, y + 6f, tab2, PlanetFunctions.OrbitalCollectorMaxBuildCount, new OcMapper(), "G", 160f);
         x = 400f;
         y += 18f;
+
+        y += 36f;
+        wnd.AddCheckBox(x, y, tab2, FactoryPatch.DismantleBlueprintSelectionEnabled, "Dismantle blueprint selected buildings");
 
         {
             y += 36f;

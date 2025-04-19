@@ -41,10 +41,12 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
     public static ConfigEntry<int> LabBufferExtraCountForAdvancedAssemble;
     public static ConfigEntry<int> LabBufferMaxCountForResearch;
     public static ConfigEntry<int> ReceiverBufferCount;
+    public static ConfigEntry<bool> DismantleBlueprintSelectionEnabled;
 
     private static PressKeyBind _doNotRenderEntitiesKey;
     private static PressKeyBind _offgridfForPathsKey;
     private static PressKeyBind _cutConveyorBeltKey;
+    private static PressKeyBind _dismantleBlueprintSelectionKey;
 
     private static int _tankFastFillInAndTakeOutMultiplierRealValue = 2;
 
@@ -53,7 +55,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         _doNotRenderEntitiesKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
         {
             key = new CombineKey(0, 0, ECombineKeyAction.OnceClick, true),
-            conflictGroup = KeyBindConflict.MOVEMENT | KeyBindConflict.FLYING | KeyBindConflict.SAILING | KeyBindConflict.BUILD_MODE_1 | KeyBindConflict.KEYBOARD_KEYBIND,
+            conflictGroup = KeyBindConflict.MOVEMENT | KeyBindConflict.FLYING | KeyBindConflict.BUILD_MODE_1 | KeyBindConflict.KEYBOARD_KEYBIND,
             name = "ToggleDoNotRenderEntities",
             canOverride = true
         }
@@ -62,7 +64,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         _offgridfForPathsKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
         {
             key = new CombineKey(0, 0, ECombineKeyAction.OnceClick, true),
-            conflictGroup = KeyBindConflict.MOVEMENT | KeyBindConflict.UI | KeyBindConflict.FLYING | KeyBindConflict.SAILING | KeyBindConflict.BUILD_MODE_1 | KeyBindConflict.KEYBOARD_KEYBIND,
+            conflictGroup = KeyBindConflict.MOVEMENT | KeyBindConflict.UI | KeyBindConflict.FLYING | KeyBindConflict.BUILD_MODE_1 | KeyBindConflict.KEYBOARD_KEYBIND,
             name = "OffgridForPaths",
             canOverride = true
         }
@@ -77,6 +79,15 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         }
         );
         I18N.Add("KEYCutConveyorBelt", "Cut conveyor belt", "切割传送带");
+        _dismantleBlueprintSelectionKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
+        {
+            key = new CombineKey((int)KeyCode.X, CombineKey.CTRL_COMB, ECombineKeyAction.OnceClick, false),
+            conflictGroup = KeyBindConflict.KEYBOARD_KEYBIND,
+            name = "DismantleBlueprintSelection",
+            canOverride = true
+        }
+        );
+        I18N.Add("KEYDismantleBlueprintSelection", "Dismantle blueprint selected buildings", "拆除蓝图选中的建筑");
 
         BeltSignalsForBuyOut.InitPersist();
         ProtectVeinsFromExhaustion.InitConfig();
@@ -164,6 +175,8 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
     {
         if (_doNotRenderEntitiesKey.keyValue)
             DoNotRenderEntitiesEnabled.Value = !DoNotRenderEntitiesEnabled.Value;
+        if (DismantleBlueprintSelectionEnabled.Value && _dismantleBlueprintSelectionKey.keyValue)
+            Functions.FactoryFunctions.DismantleBlueprintSelectedBuildings();
     }
 
     public static void Export(BinaryWriter w)

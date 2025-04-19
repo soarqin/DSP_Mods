@@ -1,5 +1,10 @@
 ## Changlog
 
+* 1.2.20
+  + New feature: `Dismantle blueprint selected buildings`
+    - Press shortcut key in blueprint copy mode to dismantle selected buildings.
+    - The default shortcut key is Ctrl+X, you can set it in system options panel.
+  + `Night Sunlight`: Fix bugs that sunlight angle is not updated as expected again.
 * 1.2.19
   + New feature: `Tweak building buffer`
     - Factory recipe buffer formula: take the larger value between `Assembler buffer time multiplier(in seconds) * items needed per second` and `Assembler buffer minimum multiplier * items needed per recipe`
@@ -265,6 +270,11 @@
 
 ## 更新日志
 
+* 1.2.20
+  + 新功能：`拆除蓝图选中的建筑`
+    - 在蓝图复制模式下按快捷键拆除选中的建筑
+    - 默认快捷键是Ctrl+X，可以在系统选项面板中设置
+  + `夜间日光灯`：再次修复了光照角度未正确更新的问题
 * 1.2.19
   + 新功能：`调整建筑输入缓冲`
     - 工厂配方计算公式，在`工厂配方缓冲时间倍率秒数x每秒需要的原料数量`和`工厂配方缓冲最小倍率x每生产一次配方需要的原料数量`中取更大的那个值

@@ -73,6 +73,9 @@
       - Auto apply filter with item under mouse cursor while opening the panel
       - Quick-set item filter while right-clicking item icons in storage list on the panel
     - Real-time logistic stations info panel
+    - Dismantle blueprint selected buildings
+      - Press shortcut key in blueprint copy mode to dismantle selected buildings.
+      - The default shortcut key is Ctrl+X, you can set it in system options panel.
     - Re-intialize planet (without reseting veins)
     - Quick dismantle all buildings (without drops)
     - Quick build Orbital Collectors
@@ -208,6 +211,9 @@
       - 在控制面板物流塔列表中右键点击物品图标快速设置为筛选条件
     - 物流运输站实时信息面板
       - 注意：如果你启用了`Auxilaryfunction`中的`展示物流站信息`，此功能将被隐藏
+    - 拆除蓝图选中的建筑
+      - 在蓝图复制模式下按快捷键拆除选中的建筑
+      - 默认快捷键是Ctrl+X，可以在系统选项面板中设置
     - 初始化本行星（不重置矿脉）
     - 快速拆除所有建筑（不掉落）
     - 快速建造轨道采集器
