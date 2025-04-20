@@ -60,7 +60,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             canOverride = true
         }
         );
-        I18N.Add("KEYToggleDoNotRenderEntities", "Toggle Do Not Render Factory Entities", "切换不渲染工厂建筑实体");
+        I18N.Add("KEYToggleDoNotRenderEntities", "[UXA] Toggle Do Not Render Factory Entities", "[UXA] 切换不渲染工厂建筑实体");
         _offgridfForPathsKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
         {
             key = new CombineKey(0, 0, ECombineKeyAction.OnceClick, true),
@@ -69,7 +69,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             canOverride = true
         }
         );
-        I18N.Add("KEYOffgridForPaths", "Build belts offgrid", "脱离网格建造传送带");
+        I18N.Add("KEYOffgridForPaths", "[UXA] Build belts offgrid", "[UXA] 脱离网格建造传送带");
         _cutConveyorBeltKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
         {
             key = new CombineKey((int)KeyCode.X, CombineKey.ALT_COMB, ECombineKeyAction.OnceClick, false),
@@ -78,7 +78,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             canOverride = true
         }
         );
-        I18N.Add("KEYCutConveyorBelt", "Cut conveyor belt", "切割传送带");
+        I18N.Add("KEYCutConveyorBelt", "[UXA] Cut conveyor belt", "[UXA] 切割传送带");
         _dismantleBlueprintSelectionKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
         {
             key = new CombineKey((int)KeyCode.X, CombineKey.CTRL_COMB, ECombineKeyAction.OnceClick, false),
@@ -87,7 +87,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             canOverride = true
         }
         );
-        I18N.Add("KEYDismantleBlueprintSelection", "Dismantle blueprint selected buildings", "拆除蓝图选中的建筑");
+        I18N.Add("KEYDismantleBlueprintSelection", "[UXA] Dismantle blueprint selected buildings", "[UXA] 拆除蓝图选中的建筑");
 
         BeltSignalsForBuyOut.InitPersist();
         ProtectVeinsFromExhaustion.InitConfig();

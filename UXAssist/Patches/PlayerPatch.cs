@@ -31,7 +31,7 @@ public static class PlayerPatch
             canOverride = true
         }
         );
-        I18N.Add("KEYShowAllStarsName", "Keep pressing to show all Stars' name", "按住显示所有星系名称");
+        I18N.Add("KEYShowAllStarsName", "[UXA] Keep pressing to show all Stars' name", "[UXA] 按住显示所有星系名称");
 
         _toggleAllStarsNameKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
         {
@@ -41,7 +41,7 @@ public static class PlayerPatch
             canOverride = true
         }
         );
-        I18N.Add("KEYToggleAllStarsName", "Toggle display of all Stars' name", "切换所有星系名称显示状态");
+        I18N.Add("KEYToggleAllStarsName", "[UXA] Toggle display of all Stars' name", "[UXA] 切换所有星系名称显示状态");
 
         _autoDriveKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
         {
@@ -50,7 +50,7 @@ public static class PlayerPatch
             name = "ToggleAutoCruise",
             canOverride = true
         });
-        I18N.Add("KEYToggleAutoCruise", "Toggle auto-cruise", "切换自动巡航");
+        I18N.Add("KEYToggleAutoCruise", "[UXA] Toggle auto-cruise", "[UXA] 切换自动巡航");
         I18N.Add("AutoCruiseOn", "Auto-cruise enabled", "已启用自动巡航");
         I18N.Add("AutoCruiseOff", "Auto-cruise disabled", "已禁用自动巡航");
 

@@ -19,6 +19,20 @@ public static class Util
         return rect;
     }
 
+    public static RectTransform NormalizeRectWithTopRight(Component cmp, float right, float top, Transform parent = null)
+    {
+        if (cmp.transform is not RectTransform rect) return null;
+        if (parent != null)
+        {
+            rect.SetParent(parent, false);
+        }
+        rect.anchorMax = new Vector2(1f, 1f);
+        rect.anchorMin = new Vector2(1f, 1f);
+        rect.pivot = new Vector2(1f, 1f);
+        rect.anchoredPosition3D = new Vector3(-right, -top, 0f);
+        return rect;
+    }
+
     public static RectTransform NormalizeRectWithBottomLeft(Component cmp, float left, float bottom, Transform parent = null)
     {
         if (cmp.transform is not RectTransform rect) return null;

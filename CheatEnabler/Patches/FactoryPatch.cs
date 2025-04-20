@@ -51,8 +51,8 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
                 canOverride = true
             }
         );
-        I18N.Add("KEYToggleNoCondition", "Toggle No Condition Build", "切换无条件建造");
-        I18N.Add("KEYToggleNoCollision", "Toggle No Collision", "切换无碰撞");
+        I18N.Add("KEYToggleNoCondition", "[CE] Toggle No Condition Build", "[CE] 切换无条件建造");
+        I18N.Add("KEYToggleNoCollision", "[CE] Toggle No Collision", "[CE] 切换无碰撞");
         I18N.Add("NoConditionOn", "No condition build is enabled!", "无条件建造已开启");
         I18N.Add("NoConditionOff", "No condition build is disabled!", "无条件建造已关闭");
         I18N.Add("NoCollisionOn", "No collision is enabled!", "无碰撞已开启");

@@ -93,7 +93,7 @@ public class MyComboBox : MonoBehaviour
         var oldPosition = rtrans.localPosition;
         var pwidth = _text.preferredWidth;
         rtrans.localPosition = new Vector3(pwidth + 5f, oldPosition.y, oldPosition.z);
-        _rectTrans.sizeDelta = new Vector2(rtrans.localPosition.x + rtrans.sizeDelta.x, _rectTrans.sizeDelta.y);
+        _rectTrans.sizeDelta = new Vector2(rtrans.localPosition.x + 5f + rtrans.sizeDelta.x, _rectTrans.sizeDelta.y);
     }
 
     public void SetPrompt(string prompt)
@@ -112,7 +112,12 @@ public class MyComboBox : MonoBehaviour
         UpdateComboBoxPosition();
     }
 
-    public void SetItems(params string[] items) => _comboBox.Items = items.Select(s => s.Translate()).ToList();
+    public void SetItems(params string[] items)
+    {
+        _comboBox.Items = [.. items.Select(s => s.Translate())];
+        _comboBox.StartItemIndex = 0;
+        _comboBox.DropDownCount = Math.Min(items.Length, 8);
+    }
 
     public void SetIndex(int index) => _comboBox.itemIndex = index;
 

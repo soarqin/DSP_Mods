@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
 using UXAssist.Common;
@@ -20,7 +21,8 @@ public static class UIConfigWindow
     {
         I18N.Add("UXAssist", "UXAssist", "UX助手");
         I18N.Add("General", "General", "常规");
-        I18N.Add("Planet/Factory", "Planet/Factory", "行星/工厂");
+        I18N.Add("Factory", "Factory", "工厂");
+        I18N.Add("Logistics", "Logistics", "物流");
         I18N.Add("Player/Mecha", "Player/Mecha", "玩家/机甲");
         I18N.Add("Dyson Sphere", "Dyson Sphere", "戴森球");
         I18N.Add("Tech/Combat", "Tech/Combat", "科研/战斗");
@@ -65,10 +67,6 @@ public static class UIConfigWindow
         I18N.Add("Off-grid building and stepped rotation", "Off-grid building and stepped rotation (Hold Shift)", "脱离网格建造以及小角度旋转(按住Shift)");
         I18N.Add("Enable player actions in globe view", "Enable player actions in globe view", "在行星视图中允许玩家操作");
         I18N.Add("Hide tips for soil piles changes", "Hide tips for soil piles changes", "隐藏沙土数量变动的提示");
-        I18N.Add("Enhance control for logistic storage limits", "Enhance control for logistic storage limits", "物流塔存储限制控制改进");
-        I18N.Add("Enhance control for logistic storage limits tips",
-            "Logistic storage limits are not scaled on upgrading 'Logistics Carrier Capacity', if they are not set to maximum capacity.\nUse arrow keys to adjust logistic storage limits:\n  \u2190/\u2192: -/+10  \u2193\u2191: -/+100",
-            "当升级'运输机舱扩容'时，不会对各种物流塔的存储限制按比例提升，除非设置为最大允许容量。\n你可以使用方向键微调物流塔存储限制：\n  \u2190\u2192: -/+10  \u2193\u2191: -/+100");
         I18N.Add("Enhanced count control for hand-make", "Enhanced count control for hand-make", "手动制造物品的数量控制改进");
         I18N.Add("Enhanced count control for hand-make tips", "Maximum count is increased to 1000.\nHold Ctrl/Shift/Alt to change the count rapidly.", "最大数量提升至1000\n按住Ctrl/Shift/Alt可快速改变数量");
         I18N.Add("Quick build and dismantle stacking labs", "Quick build and dismantle stacking labs/storages/tanks(hold shift)", "快速建造和拆除堆叠研究站/储物仓/储液罐(按住shift)");
@@ -82,8 +80,39 @@ public static class UIConfigWindow
         I18N.Add("Do not render factory entities", "Do not render factory entities (except belts and sorters)", "不渲染工厂建筑实体(除了传送带和分拣器)");
         I18N.Add("Drag building power poles in maximum connection range", "Drag building power poles in maximum connection range", "拖动建造电线杆时自动使用最大连接距离间隔");
         I18N.Add("Build Tesla Tower and Wireless Power Tower alternately", "Build Tesla Tower and Wireless Power Tower alternately", "交替建造电力感应塔和无线输电塔");
-        I18N.Add("Allow overflow for Logistic Stations and Advanced Mining Machines", "Allow overflow for Logistic Stations and Advanced Mining Machines", "允许物流站和大型采矿机物品溢出");
         I18N.Add("Belt signals for buy out dark fog items automatically", "Belt signals for buy out dark fog items automatically", "用于自动购买黑雾物品的传送带信号");
+        I18N.Add("Auto-config logistic stations", "Auto-config logistic stations", "自动配置物流设施");
+        I18N.Add("Dispenser", "Dispenser", "物流配送器");
+        I18N.Add("PLS", "PLS", "行星物流站");
+        I18N.Add("ILS", "ILS", "星际物流站");
+        I18N.Add("Advanced Mining Machine", "Advanced Mining Machine", "大型采矿机");
+        I18N.Add("Max. Charging Power", "Max. Charging Power", "最大充能功率");
+        I18N.Add("Count of Bots auto-filled", "Count of Bots auto-filled", "自动填充的配送机数量");
+        I18N.Add("Auto guess dispenser filter", "Auto guess dispenser filter", "自动智能猜测");
+        I18N.Add("Max. Charging Power", "Max. Charging Power", "最大充能功率");
+        I18N.Add("Drone transport range", "Drone transport range", "运输机最远路程");
+        I18N.Add("Min. Load of Drones", "Min. Load of Drones", "运输机起送量");
+        I18N.Add("Outgoing integration count", "Outgoing integration count", "输出货物集装数量");
+        I18N.Add("Count of Drones auto-filled", "Count of Drones auto-filled", "自动填充的运输机数量");
+        I18N.Add("Max. Charging Power", "Max. Charging Power", "最大充能功率");
+        I18N.Add("Drone transport range", "Drone transport range", "运输机最远路程");
+        I18N.Add("Vessel transport range", "Vessel transport range", "运输船最远路程");
+        I18N.Add("Warp distance", "Warp distance", "曲速启用路程");
+        I18N.Add("Min. Load of Drones", "Min. Load of Drones", "运输机起送量");
+        I18N.Add("Min. Load of Vessels", "Min. Load of Vessels", "运输船起送量");
+        I18N.Add("Outgoing integration count", "Outgoing integration count", "输出货物集装数量");
+        I18N.Add("Include Orbital Collector", "Include Orbital Collector", "包含轨道采集器");
+        I18N.Add("Warpers required", "Warpers required", "翘曲器必备");
+        I18N.Add("Count of Drones auto-filled", "Count of Drones auto-filled", "自动填充的运输机数量");
+        I18N.Add("Count of Vessels auto-filled", "Count of Vessels auto-filled", "自动填充的运输船数量");
+        I18N.Add("Collecting Speed", "Collecting Speed", "开采速度");
+        I18N.Add("Min. Piler Value", "Outgoing integration count", "输出货物集装数量");
+
+        I18N.Add("Allow overflow for Logistic Stations and Advanced Mining Machines", "Allow overflow for Logistic Stations and Advanced Mining Machines", "允许物流站和大型采矿机物品溢出");
+        I18N.Add("Enhance control for logistic storage limits", "Enhance control for logistic storage limits", "物流塔存储限制控制改进");
+        I18N.Add("Enhance control for logistic storage limits tips",
+            "Logistic storage limits are not scaled on upgrading 'Logistics Carrier Capacity', if they are not set to maximum capacity.\nUse arrow keys to adjust logistic storage limits:\n  \u2190/\u2192: -/+10  \u2193\u2191: -/+100",
+            "当升级'运输机舱扩容'时，不会对各种物流塔的存储限制按比例提升，除非设置为最大允许容量。\n你可以使用方向键微调物流塔存储限制：\n  \u2190\u2192: -/+10  \u2193\u2191: -/+100");
         I18N.Add("Logistics Control Panel Improvement", "Logistics Control Panel Improvement", "物流控制面板改进");
         I18N.Add("Logistics Control Panel Improvement tips",
             "Auto apply filter with item under mouse cursor while opening the panel\nQuick-set item filter while right-clicking item icons in storage list on the panel",
@@ -163,6 +192,92 @@ public static class UIConfigWindow
         public override int ValueToIndex(double value) => Mathf.RoundToInt((float)(value * 10.0));
     }
 
+    private class AutoConfigDispenserChargePowerMapper() : MyWindow.RangeValueMapper<int>(3, 30)
+    {
+        public override string FormatValue(string format, int value)
+        {
+            var sb = new StringBuilder("         ");
+            StringBuilderUtility.WriteKMG(sb, 8, (long)value * 300000, false);
+            sb.Append('W');
+            return sb.ToString().Trim();
+        }
+    }
+
+    private class AutoConfigPLSChargePowerMapper() : MyWindow.RangeValueMapper<int>(2, 20)
+    {
+
+        public override string FormatValue(string format, int value)
+        {
+            var sb = new StringBuilder("         ");
+            StringBuilderUtility.WriteKMG(sb, 8, (long)value * 3000000L, false);
+            sb.Append('W');
+            return sb.ToString().Trim();
+        }
+    }
+
+    private class AutoConfigCarrierMinDeliverMapper() : MyWindow.RangeValueMapper<int>(0, 10)
+    {
+        public override string FormatValue(string format, int value)
+        {
+            return value == 0 ? "1%" : (value * 10).ToString() + "%";
+        }
+    }
+
+    private class AutoConfigMinPilerValueMapper() : MyWindow.RangeValueMapper<int>(0, 4)
+    {
+        public override string FormatValue(string format, int value)
+        {
+            return value == 0 ? "集装使用科技上限" : value.ToString();
+        }
+    }
+
+    private class AutoConfigILSChargePowerMapper() : MyWindow.RangeValueMapper<int>(2, 20)
+    {
+        public override string FormatValue(string format, int value)
+        {
+            var sb = new StringBuilder("         ");
+            StringBuilderUtility.WriteKMG(sb, 8, (long)value * 15000000L, false);
+            sb.Append('W');
+            return sb.ToString().Trim();
+        }
+    }
+
+    private class AutoConfigILSMaxTripShipMapper() : MyWindow.RangeValueMapper<int>(1, 41)
+    {
+        public override string FormatValue(string format, int value)
+        {
+            return value switch
+            {
+                <= 20 => value.ToString("0 LY"),
+                <= 40 => (value * 2 - 20).ToString("0 LY"),
+                _ => "∞",
+            };
+        }
+    }
+
+    private class AutoConfigILSWarperDistanceMapper() : MyWindow.RangeValueMapper<int>(2, 21)
+    {
+        public override string FormatValue(string format, int value)
+        {
+            return value switch
+            {
+                <= 7 => (value * 0.5 - 0.5).ToString("0.0 AU"),
+                <= 13 => (value - 4.0).ToString("0.0 AU"),
+                <= 16 => (value - 4).ToString("0 AU"),
+                <= 20 => (value * 2 - 20).ToString("0 AU"),
+                _ => "60 AU",
+            };
+        }
+    }
+
+    private class AutoConfigVeinCollectorHarvestSpeedMapper() : MyWindow.RangeValueMapper<int>(0, 20)
+    {
+        public override string FormatValue(string format, int value)
+        {
+            return (value * 10).ToString("0%");
+        }
+    }
+
     private static void CreateUI(MyConfigWindow wnd, RectTransform trans)
     {
         _windowTrans = trans;
@@ -233,7 +348,7 @@ public static class UIConfigWindow
         y += 36f;
         ((RectTransform)wnd.AddButton(x, y, tab1, "CPU Info", 16, "button-show-cpu-info", WindowFunctions.ShowCPUInfo).transform).sizeDelta = new Vector2(100f, 25f);
 
-        var tab2 = wnd.AddTab(trans, "Planet/Factory");
+        var tab2 = wnd.AddTab(trans, "Factory");
         x = 0f;
         y = 10f;
         wnd.AddCheckBox(x, y, tab2, FactoryPatch.RemoveSomeConditionEnabled, "Remove some build conditions");
@@ -262,10 +377,6 @@ public static class UIConfigWindow
         y += 36f;
         wnd.AddCheckBox(x, y, tab2, FactoryPatch.QuickBuildAndDismantleLabsEnabled, "Quick build and dismantle stacking labs");
 
-        y += 36f;
-        checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab2, FactoryPatch.ProtectVeinsFromExhaustionEnabled, "Protect veins from exhaustion");
-        wnd.AddTipsButton2(x + checkBoxForMeasureTextWidth.Width + 5f, y + 6f, tab2, "Protect veins from exhaustion", "Protect veins from exhaustion tips", "protect-veins-tips");
-
         {
             y += 36f;
             var cb = wnd.AddCheckBox(x, y, tab2, FactoryPatch.TankFastFillInAndTakeOutEnabled, "Fast fill in to and take out from tanks");
@@ -286,15 +397,10 @@ public static class UIConfigWindow
         y += 36f;
         wnd.AddCheckBox(x, y, tab2, FactoryPatch.DoNotRenderEntitiesEnabled, "Do not render factory entities");
         y += 36f;
+        wnd.AddCheckBox(x, y, tab2, FactoryPatch.DismantleBlueprintSelectionEnabled, "Dismantle blueprint selected buildings");
+        y += 36f;
         wnd.AddCheckBox(x, y, tab2, FactoryPatch.BeltSignalsForBuyOutEnabled, "Belt signals for buy out dark fog items automatically");
-        y += 36f;
-        checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab2, LogisticsPatch.LogisticsCapacityTweaksEnabled, "Enhance control for logistic storage limits");
-        wnd.AddTipsButton2(x + checkBoxForMeasureTextWidth.Width + 5f, y + 6f, tab2, "Enhance control for logistic storage limits", "Enhance control for logistic storage limits tips", "enhanced-logistic-limit-tips");
-        y += 36f;
-        wnd.AddCheckBox(x, y, tab2, LogisticsPatch.AllowOverflowInLogisticsEnabled, "Allow overflow for Logistic Stations and Advanced Mining Machines");
-        y += 36f;
-        checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab2, LogisticsPatch.LogisticsConstrolPanelImprovementEnabled, "Logistics Control Panel Improvement");
-        wnd.AddTipsButton2(x + checkBoxForMeasureTextWidth.Width + 5f, y + 6f, tab2, "Logistics Control Panel Improvement", "Logistics Control Panel Improvement tips", "lcp-improvement-tips");
+
         x = 400f;
         y = 10f;
         wnd.AddButton(x, y, tab2, "Initialize This Planet", 16, "button-init-planet", () =>
@@ -311,12 +417,12 @@ public static class UIConfigWindow
         y += 30f;
         txt = wnd.AddText2(x + 10f, y, tab2, "Maximum count to build", 15, "text-oc-build-count");
         wnd.AddSlider(x + 10f + txt.preferredWidth + 5f, y + 6f, tab2, PlanetFunctions.OrbitalCollectorMaxBuildCount, new OcMapper(), "G", 160f);
-        x = 400f;
+
         y += 18f;
 
         y += 36f;
-        wnd.AddCheckBox(x, y, tab2, FactoryPatch.DismantleBlueprintSelectionEnabled, "Dismantle blueprint selected buildings");
-
+        checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab2, FactoryPatch.ProtectVeinsFromExhaustionEnabled, "Protect veins from exhaustion");
+        wnd.AddTipsButton2(x + checkBoxForMeasureTextWidth.Width + 5f, y + 6f, tab2, "Protect veins from exhaustion", "Protect veins from exhaustion tips", "protect-veins-tips");
         {
             y += 36f;
             wnd.AddCheckBox(x, y, tab2, FactoryPatch.DragBuildPowerPolesEnabled, "Drag building power poles in maximum connection range");
@@ -329,38 +435,6 @@ public static class UIConfigWindow
             void AlternatelyCheckBoxChanged(object o, EventArgs e)
             {
                 alternatelyCheckBox.SetEnable(FactoryPatch.DragBuildPowerPolesEnabled.Value);
-            }
-        }
-        {
-            y += 36f;
-            var realtimeLogisticsInfoPanelCheckBox = wnd.AddCheckBox(x, y, tab2, LogisticsPatch.RealtimeLogisticsInfoPanelEnabled, "Real-time logistic stations info panel");
-            y += 27f;
-            var realtimeLogisticsInfoPanelBarsCheckBox = wnd.AddCheckBox(x + 20f, y, tab2, LogisticsPatch.RealtimeLogisticsInfoPanelBarsEnabled, "Show status bars for storage items", 13);
-            if (AuxilaryfunctionWrapper.ShowStationInfo != null)
-            {
-                AuxilaryfunctionWrapper.ShowStationInfo.SettingChanged += RealtimeLogisticsInfoPanelChanged;
-                wnd.OnFree += () => { AuxilaryfunctionWrapper.ShowStationInfo.SettingChanged -= RealtimeLogisticsInfoPanelChanged; };
-            }
-            LogisticsPatch.RealtimeLogisticsInfoPanelEnabled.SettingChanged += RealtimeLogisticsInfoPanelChanged;
-            wnd.OnFree += () => { LogisticsPatch.RealtimeLogisticsInfoPanelEnabled.SettingChanged -= RealtimeLogisticsInfoPanelChanged; };
-            RealtimeLogisticsInfoPanelChanged(null, null);
-
-            void RealtimeLogisticsInfoPanelChanged(object o, EventArgs e)
-            {
-                if (AuxilaryfunctionWrapper.ShowStationInfo == null)
-                {
-                    realtimeLogisticsInfoPanelCheckBox.SetEnable(true);
-                    realtimeLogisticsInfoPanelBarsCheckBox.SetEnable(LogisticsPatch.RealtimeLogisticsInfoPanelEnabled.Value);
-                    return;
-                }
-
-                var on = !AuxilaryfunctionWrapper.ShowStationInfo.Value;
-                realtimeLogisticsInfoPanelCheckBox.SetEnable(on);
-                realtimeLogisticsInfoPanelBarsCheckBox.SetEnable(on & LogisticsPatch.RealtimeLogisticsInfoPanelEnabled.Value);
-                if (!on)
-                {
-                    LogisticsPatch.RealtimeLogisticsInfoPanelEnabled.Value = false;
-                }
             }
         }
 
@@ -413,30 +487,182 @@ public static class UIConfigWindow
             }
         }
 
-        var tab3 = wnd.AddTab(trans, "Player/Mecha");
+        var tab3 = wnd.AddTab(trans, "Logistics");
         x = 0f;
         y = 10f;
-        wnd.AddCheckBox(x, y, tab3, FactoryPatch.UnlimitInteractiveEnabled, "Unlimited interactive range");
+
+        checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab3, LogisticsPatch.LogisticsCapacityTweaksEnabled, "Enhance control for logistic storage limits");
+        wnd.AddTipsButton2(x + checkBoxForMeasureTextWidth.Width + 5f, y + 6f, tab3, "Enhance control for logistic storage limits", "Enhance control for logistic storage limits tips", "enhanced-logistic-limit-tips");
         y += 36f;
-        wnd.AddCheckBox(x, y, tab3, PlanetPatch.PlayerActionsInGlobeViewEnabled, "Enable player actions in globe view");
+        wnd.AddCheckBox(x, y, tab3, LogisticsPatch.AllowOverflowInLogisticsEnabled, "Allow overflow for Logistic Stations and Advanced Mining Machines");
         y += 36f;
-        wnd.AddCheckBox(x, y, tab3, PlayerPatch.HideTipsForSandsChangesEnabled, "Hide tips for soil piles changes");
+        checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab3, LogisticsPatch.LogisticsConstrolPanelImprovementEnabled, "Logistics Control Panel Improvement");
+        wnd.AddTipsButton2(x + checkBoxForMeasureTextWidth.Width + 5f, y + 6f, tab3, "Logistics Control Panel Improvement", "Logistics Control Panel Improvement tips", "lcp-improvement-tips");
+        {
+            y += 36f;
+            var realtimeLogisticsInfoPanelCheckBox = wnd.AddCheckBox(x, y, tab3, LogisticsPatch.RealtimeLogisticsInfoPanelEnabled, "Real-time logistic stations info panel");
+            y += 27f;
+            var realtimeLogisticsInfoPanelBarsCheckBox = wnd.AddCheckBox(x + 20f, y, tab3, LogisticsPatch.RealtimeLogisticsInfoPanelBarsEnabled, "Show status bars for storage items", 13);
+            if (AuxilaryfunctionWrapper.ShowStationInfo != null)
+            {
+                AuxilaryfunctionWrapper.ShowStationInfo.SettingChanged += RealtimeLogisticsInfoPanelChanged;
+                wnd.OnFree += () => { AuxilaryfunctionWrapper.ShowStationInfo.SettingChanged -= RealtimeLogisticsInfoPanelChanged; };
+            }
+            LogisticsPatch.RealtimeLogisticsInfoPanelEnabled.SettingChanged += RealtimeLogisticsInfoPanelChanged;
+            wnd.OnFree += () => { LogisticsPatch.RealtimeLogisticsInfoPanelEnabled.SettingChanged -= RealtimeLogisticsInfoPanelChanged; };
+            RealtimeLogisticsInfoPanelChanged(null, null);
+
+            void RealtimeLogisticsInfoPanelChanged(object o, EventArgs e)
+            {
+                if (AuxilaryfunctionWrapper.ShowStationInfo == null)
+                {
+                    realtimeLogisticsInfoPanelCheckBox.SetEnable(true);
+                    realtimeLogisticsInfoPanelBarsCheckBox.SetEnable(LogisticsPatch.RealtimeLogisticsInfoPanelEnabled.Value);
+                    return;
+                }
+
+                var on = !AuxilaryfunctionWrapper.ShowStationInfo.Value;
+                realtimeLogisticsInfoPanelCheckBox.SetEnable(on);
+                realtimeLogisticsInfoPanelBarsCheckBox.SetEnable(on & LogisticsPatch.RealtimeLogisticsInfoPanelEnabled.Value);
+                if (!on)
+                {
+                    LogisticsPatch.RealtimeLogisticsInfoPanelEnabled.Value = false;
+                }
+            }
+        }
         y += 36f;
-        checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab3, PlayerPatch.EnhancedMechaForgeCountControlEnabled, "Enhanced count control for hand-make");
-        wnd.AddTipsButton2(x + checkBoxForMeasureTextWidth.Width + 5f, y + 6f, tab3, "Enhanced count control for hand-make", "Enhanced count control for hand-make tips", "enhanced-count-control-tips");
+        wnd.AddCheckBox(x, y, tab3, LogisticsPatch.AutoConfigLogisticsEnabled, "Auto-config logistic stations");
+        y += 24f;
+        var maxWidth = 0f;
+        wnd.AddText2(10f, y, tab3, "Dispenser", 15, "text-dispenser");
+        y += 24f;
+        var oy = y;
+        x = 20f;
+        var textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Max. Charging Power", 15, "text-dispenser-max-charging-power");
+        maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
+        wnd.AddCheckBox(x + 400, y, tab3, LogisticsPatch.AutoConfigDispenserAutoGuess, "Auto guess dispenser filter");
+        y += 24f;
+        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Count of Bots auto-filled", 15, "text-dispenser-count-of-bots-auto-filled");
+        maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
+        y += 24f;
+        wnd.AddText2(10f, y, tab3, "PLS", 15, "text-pls");
+        y += 24f;
+        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Max. Charging Power", 15, "text-pls-max-charging-power");
+        maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
+        y += 24f;
+        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Drone transport range", 15, "text-pls-drone-transport-range");
+        maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
+        y += 24f;
+        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Min. Load of Drones", 15, "text-pls-min-load-of-drones");
+        maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
+        y += 24f;
+        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Outgoing integration count", 15, "text-pls-outgoing-integration-count");
+        maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
+        y += 24f;
+        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Count of Drones auto-filled", 15, "text-pls-count-of-drones-auto-filled");
+        maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
+        y += 24f;
+        wnd.AddText2(10f, y, tab3, "ILS", 15, "text-ils");
+        y += 24f;
+        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Max. Charging Power", 15, "text-ils-max-charging-power");
+        maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
+        y += 24f;
+        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Drone transport range", 15, "text-ils-drone-transport-range");
+        maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
+        y += 24f;
+        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Vessel transport range", 15, "text-ils-vessel-transport-range");
+        maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
+        wnd.AddCheckBox(x + 400, y, tab3, LogisticsPatch.AutoConfigILSIncludeOrbitCollector, "Include Orbital Collector");
+        y += 24f;
+        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Warp distance", 15, "text-ils-warp-distance");
+        maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
+        wnd.AddCheckBox(x + 400, y, tab3, LogisticsPatch.AutoConfigILSWarperNecessary, "Warpers required");
+        y += 24f;
+        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Min. Load of Drones", 15, "text-ils-min-load-of-drones");
+        maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
+        y += 24f;
+        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Min. Load of Vessels", 15, "text-ils-min-load-of-vessels");
+        maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
+        y += 24f;
+        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Outgoing integration count", 15, "text-ils-outgoing-integration-count");
+        maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
+        y += 24f;
+        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Count of Drones auto-filled", 15, "text-ils-count-of-drones-auto-filled");
+        maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
+        y += 24f;
+        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Count of Vessels auto-filled", 15, "text-ils-count-of-vessels-auto-filled");
+        maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
+        y += 24f;
+        wnd.AddText2(10f, y, tab3, "Advanced Mining Machine", 15, "text-amm");
+        y += 24f;
+        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Collecting Speed", 15, "text-amm-collecting-speed");
+        maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
+        y += 24f;
+        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Min. Piler Value", 15, "text-amm-min-piler-value");
+        maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
+        y = oy + 2;
+        var nx = x + maxWidth + 5f;
+        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigDispenserChargePower, new AutoConfigDispenserChargePowerMapper(), "G", 150f, -100f);
+        y += 24f;
+        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigDispenserCourierCount, new MyWindow.RangeValueMapper<int>(0, 10), "G", 150f, -100f);
+        y += 48f;
+        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigPLSChargePower, new AutoConfigPLSChargePowerMapper(), "G", 150f, -100f);
+        y += 24f;
+        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigPLSMaxTripDrone, new MyWindow.RangeValueMapper<int>(1, 180), "0 °", 150f, -100f);
+        y += 24f;
+        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigPLSDroneMinDeliver, new AutoConfigCarrierMinDeliverMapper(), "G", 150f, -100f);
+        y += 24f;
+        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigPLSMinPilerValue, new AutoConfigMinPilerValueMapper(), "G", 150f, -100f);
+        y += 24f;
+        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigPLSDroneCount, new MyWindow.RangeValueMapper<int>(0, 50), "G", 150f, -100f);
+        y += 48f;
+        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigILSChargePower, new AutoConfigILSChargePowerMapper(), "G", 150f, -100f);
+        y += 24f;
+        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigILSMaxTripDrone, new MyWindow.RangeValueMapper<int>(1, 180), "0 °", 150f, -100f);
+        y += 24f;
+        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigILSMaxTripShip, new AutoConfigILSMaxTripShipMapper(), "G", 150f, -100f);
+        y += 24f;
+        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigILSWarperDistance, new AutoConfigILSWarperDistanceMapper(), "G", 150f, -100f);
+        y += 24f;
+        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigILSDroneMinDeliver, new AutoConfigCarrierMinDeliverMapper(), "G", 150f, -100f);
+        y += 24f;
+        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigILSShipMinDeliver, new AutoConfigCarrierMinDeliverMapper(), "G", 150f, -100f);
+        y += 24f;
+        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigILSMinPilerValue, new AutoConfigMinPilerValueMapper(), "G", 150f, -100f);
+        y += 24f;
+        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigILSDroneCount, new MyWindow.RangeValueMapper<int>(0, 100), "G", 150f, -100f);
+        y += 24f;
+        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigILSShipCount, new MyWindow.RangeValueMapper<int>(0, 10), "G", 150f, -100f);
+        y += 48f;
+        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigVeinCollectorHarvestSpeed, new MyWindow.RangeValueMapper<int>(0, 20), "G", 150f, -100f);
+        y += 24f;
+        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigVeinCollectorMinPilerValue, new AutoConfigMinPilerValueMapper(), "G", 150f, -100f);
+        x = 0f;
+
+        var tab4 = wnd.AddTab(trans, "Player/Mecha");
+        x = 0f;
+        y = 10f;
+        wnd.AddCheckBox(x, y, tab4, FactoryPatch.UnlimitInteractiveEnabled, "Unlimited interactive range");
         y += 36f;
-        wnd.AddCheckBox(x, y, tab3, PlayerPatch.ShortcutKeysForStarsNameEnabled, "Shortcut keys for showing stars' name");
+        wnd.AddCheckBox(x, y, tab4, PlanetPatch.PlayerActionsInGlobeViewEnabled, "Enable player actions in globe view");
+        y += 36f;
+        wnd.AddCheckBox(x, y, tab4, PlayerPatch.HideTipsForSandsChangesEnabled, "Hide tips for soil piles changes");
+        y += 36f;
+        checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab4, PlayerPatch.EnhancedMechaForgeCountControlEnabled, "Enhanced count control for hand-make");
+        wnd.AddTipsButton2(x + checkBoxForMeasureTextWidth.Width + 5f, y + 6f, tab4, "Enhanced count control for hand-make", "Enhanced count control for hand-make tips", "enhanced-count-control-tips");
+        y += 36f;
+        wnd.AddCheckBox(x, y, tab4, PlayerPatch.ShortcutKeysForStarsNameEnabled, "Shortcut keys for showing stars' name");
 
         {
             y += 36f;
-            wnd.AddCheckBox(x, y, tab3, PlayerPatch.AutoNavigationEnabled, "Auto navigation on sailings");
+            wnd.AddCheckBox(x, y, tab4, PlayerPatch.AutoNavigationEnabled, "Auto navigation on sailings");
             y += 27f;
-            var autoCruiseCheckBox = wnd.AddCheckBox(x + 20f, y, tab3, PlayerPatch.AutoCruiseEnabled, "Enable auto-cruise", 13);
+            var autoCruiseCheckBox = wnd.AddCheckBox(x + 20f, y, tab4, PlayerPatch.AutoCruiseEnabled, "Enable auto-cruise", 13);
             y += 27f;
-            var autoBoostCheckBox = wnd.AddCheckBox(x + 20f, y, tab3, PlayerPatch.AutoBoostEnabled, "Auto boost", 13);
+            var autoBoostCheckBox = wnd.AddCheckBox(x + 20f, y, tab4, PlayerPatch.AutoBoostEnabled, "Auto boost", 13);
             y += 27f;
-            txt = wnd.AddText2(x + 20f, y, tab3, "Distance to use warp", 15, "text-distance-to-warp");
-            var navDistanceSlider = wnd.AddSlider(x + 20f + txt.preferredWidth + 5f, y + 6f, tab3, PlayerPatch.DistanceToWarp, new DistanceMapper(), "0.0", 100f);
+            txt = wnd.AddText2(x + 20f, y, tab4, "Distance to use warp", 15, "text-distance-to-warp");
+            var navDistanceSlider = wnd.AddSlider(x + 20f + txt.preferredWidth + 5f, y + 6f, tab4, PlayerPatch.DistanceToWarp, new DistanceMapper(), "0.0", 100f);
             PlayerPatch.AutoNavigationEnabled.SettingChanged += NavSettingChanged;
             wnd.OnFree += () => { PlayerPatch.AutoNavigationEnabled.SettingChanged -= NavSettingChanged; };
             NavSettingChanged(null, null);
@@ -449,25 +675,25 @@ public static class UIConfigWindow
             }
         }
 
-        var tab4 = wnd.AddTab(trans, "Dyson Sphere");
+        var tab5 = wnd.AddTab(trans, "Dyson Sphere");
         x = 0f;
         y = 10f;
-        wnd.AddCheckBox(x, y, tab4, DysonSpherePatch.StopEjectOnNodeCompleteEnabled, "Stop ejectors when available nodes are all filled up");
+        wnd.AddCheckBox(x, y, tab5, DysonSpherePatch.StopEjectOnNodeCompleteEnabled, "Stop ejectors when available nodes are all filled up");
         y += 36f;
-        wnd.AddCheckBox(x, y, tab4, DysonSpherePatch.OnlyConstructNodesEnabled, "Construct only structure points but frames");
+        wnd.AddCheckBox(x, y, tab5, DysonSpherePatch.OnlyConstructNodesEnabled, "Construct only structure points but frames");
         x = 400f;
         y = 10f;
-        _dysonInitBtn = wnd.AddButton(x, y, tab4, "Initialize Dyson Sphere", 16, "init-dyson-sphere", () =>
+        _dysonInitBtn = wnd.AddButton(x, y, tab5, "Initialize Dyson Sphere", 16, "init-dyson-sphere", () =>
             UIMessageBox.Show("Initialize Dyson Sphere".Translate(), "Initialize Dyson Sphere Confirm".Translate(), "取消".Translate(), "确定".Translate(), 2, null,
                 () => { DysonSphereFunctions.InitCurrentDysonLayer(null, -1); })
         );
         y += 36f;
-        wnd.AddText2(x, y, tab4, "Click to dismantle selected layer", 16, "text-dismantle-layer");
+        wnd.AddText2(x, y, tab5, "Click to dismantle selected layer", 16, "text-dismantle-layer");
         y += 27f;
         for (var i = 0; i < 10; i++)
         {
             var id = i + 1;
-            var btn = wnd.AddFlatButton(x, y, tab4, id.ToString(), 12, "dismantle-layer-" + id, () =>
+            var btn = wnd.AddFlatButton(x, y, tab5, id.ToString(), 12, "dismantle-layer-" + id, () =>
                 {
                     var star = DysonSphereFunctions.CurrentStarForDysonSystem();
                     UIMessageBox.Show("Dismantle selected layer".Translate(), "Dismantle selected layer Confirm".Translate(), "取消".Translate(), "确定".Translate(), 2, null,
@@ -489,18 +715,18 @@ public static class UIConfigWindow
 
         x = 400f;
         y += 36f;
-        txt = wnd.AddText2(x, y, tab4, "Auto Fast Build Speed Multiplier", 15, "text-auto-fast-build-multiplier");
-        wnd.AddSlider(x + txt.preferredWidth + 5f, y + 6f, tab4, DysonSpherePatch.AutoConstructMultiplier, [1, 2, 5, 10, 20, 50, 100], "0", 100f);
-        _dysonTab = tab4;
+        txt = wnd.AddText2(x, y, tab5, "Auto Fast Build Speed Multiplier", 15, "text-auto-fast-build-multiplier");
+        wnd.AddSlider(x + txt.preferredWidth + 5f, y + 6f, tab5, DysonSpherePatch.AutoConstructMultiplier, [1, 2, 5, 10, 20, 50, 100], "0", 100f);
+        _dysonTab = tab5;
 
-        var tab5 = wnd.AddTab(_windowTrans, "Tech/Combat");
+        var tab6 = wnd.AddTab(trans, "Tech/Combat");
         x = 10;
         y = 10;
-        wnd.AddCheckBox(x, y, tab5, TechPatch.BatchBuyoutTechEnabled, "Buy out techs with their prerequisites");
+        wnd.AddCheckBox(x, y, tab6, TechPatch.BatchBuyoutTechEnabled, "Buy out techs with their prerequisites");
         y += 36f;
-        wnd.AddCheckBox(x, y, tab5, TechPatch.SorterCargoStackingEnabled, "Restore upgrades of \"Sorter Cargo Stacking\" on panel");
+        wnd.AddCheckBox(x, y, tab6, TechPatch.SorterCargoStackingEnabled, "Restore upgrades of \"Sorter Cargo Stacking\" on panel");
         y += 36f;
-        wnd.AddButton(x, y, 300f, tab5, "Set \"Sorter Cargo Stacking\" to unresearched state", 16, "button-remove-cargo-stacking", () =>
+        wnd.AddButton(x, y, 300f, tab6, "Set \"Sorter Cargo Stacking\" to unresearched state", 16, "button-remove-cargo-stacking", () =>
         {
             var history = GameMain.data?.history;
             if (history == null) return;
@@ -516,7 +742,7 @@ public static class UIConfigWindow
         });
         y += 36f;
         y += 36f;
-        wnd.AddButton(x, y, 300f, tab5, "Open Dark Fog Communicator", 16, "button-open-df-communicator", () =>
+        wnd.AddButton(x, y, 300f, tab6, "Open Dark Fog Communicator", 16, "button-open-df-communicator", () =>
         {
             if (!(GameMain.data?.gameDesc.isCombatMode ?? false)) return;
             var uiGame = UIRoot.instance.uiGame;

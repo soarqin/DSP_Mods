@@ -245,6 +245,14 @@ public class MyWindow : ManualBehaviour
         return comboBox;
     }
 
+    // public MySmallComboBox AddSmallComboBox(float x, float y, RectTransform parent, int fontSize = 15)
+    // {
+    //     var comboBox = MySmallComboBox.CreateComboBox(x, y, parent).WithFontSize(fontSize);
+    //     _maxX = Math.Max(_maxX, x + comboBox.Width);
+    //     MaxY = Math.Max(MaxY, y + comboBox.Height);
+    //     return comboBox;
+    // }
+
 #region Slider
     public class ValueMapper<T>
     {
@@ -315,9 +323,9 @@ public class MyWindow : ManualBehaviour
         return slider;
     }
 
-    public MySlider AddSlider<T>(float x, float y, RectTransform parent, ConfigEntry<T> config, ValueMapper<T> valueMapper, string format = "G", float width = 0f, float textWidth = 0f)
+    public MySlider AddSlider<T>(float x, float y, RectTransform parent, ConfigEntry<T> config, ValueMapper<T> valueMapper, string format = "G", float width = 0f)
     {
-        var slider = MySlider.CreateSlider(x, y, parent, OnConfigValueChanged(config), valueMapper.Min, valueMapper.Max, format, width, textWidth);
+        var slider = MySlider.CreateSlider(x, y, parent, OnConfigValueChanged(config), valueMapper.Min, valueMapper.Max, format, width);
         slider.SetLabelText(valueMapper.FormatValue(format, config.Value));
         config.SettingChanged += SettingsChanged;
         OnFree += () => config.SettingChanged -= SettingsChanged;
@@ -558,6 +566,7 @@ public abstract class MyWindowManager
         MyWindow.InitBaseObject();
         MyCheckBox.InitBaseObject();
         MyComboBox.InitBaseObject();
+        // MySmallComboBox.InitBaseObject();
     }
 
     public static T CreateWindow<T>(string name, string title = "") where T : MyWindow

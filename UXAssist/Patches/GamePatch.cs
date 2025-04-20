@@ -65,7 +65,7 @@ public class GamePatch : PatchImpl<GamePatch>
                 canOverride = true
             }
         );
-        I18N.Add("KEYUPSSpeedDown", "Decrease logical frame rate", "降低逻辑帧率");
+        I18N.Add("KEYUPSSpeedDown", "[UXA] Decrease logical frame rate", "[UXA] 降低逻辑帧率");
         _speedUpKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
             {
                 key = new CombineKey((int)KeyCode.Equals, CombineKey.CTRL_COMB, ECombineKeyAction.OnceClick, false),
@@ -74,8 +74,8 @@ public class GamePatch : PatchImpl<GamePatch>
                 canOverride = true
             }
         );
-        I18N.Add("KEYUPSSpeedUp", "Increase logical frame rate", "提升逻辑帧率");
-        I18N.Add("Logical frame rate: {0}x", "Logical frame rate: {0}x", "逻辑帧速率: {0}x");
+        I18N.Add("KEYUPSSpeedUp", "[UXA] Increase logical frame rate", "[UXA] 提升逻辑帧率");
+        I18N.Add("Logical frame rate: {0}x", "[UXA] Logical frame rate: {0}x", "[UXA] 逻辑帧速率: {0}x");
 
         EnableWindowResizeEnabled.SettingChanged += (_, _) => EnableWindowResize.Enable(EnableWindowResizeEnabled.Value);
         LoadLastWindowRectEnabled.SettingChanged += (_, _) => LoadLastWindowRect.Enable(LoadLastWindowRectEnabled.Value);

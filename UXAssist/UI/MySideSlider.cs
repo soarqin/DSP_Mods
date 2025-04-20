@@ -40,7 +40,7 @@ public class MySideSlider : MonoBehaviour
         if (sl.slider.transform is RectTransform rectTrans)
         {
             rectTrans.localPosition = new Vector3(width, rectTrans.localPosition.y, rectTrans.localPosition.z);
-            rectTrans.sizeDelta = new Vector2(textWidth <= 0f ? width + 5f : width, rectTrans.sizeDelta.y);
+            rectTrans.sizeDelta = new Vector2(width, rectTrans.sizeDelta.y);
         }
         sl.Value = 0f;
 
@@ -52,8 +52,12 @@ public class MySideSlider : MonoBehaviour
             {
                 rectTrans2.sizeDelta = new Vector2(textWidth, rectTrans2.sizeDelta.y);
             }
+            else
+            {
+                rectTrans2.sizeDelta = new Vector2(-textWidth, rectTrans2.sizeDelta.y);
+            }
             rectTrans2.pivot = new Vector2(0f, 1f);
-            rectTrans2.localPosition = new Vector3(width, rectTrans2.localPosition.y, rectTrans2.localPosition.z);
+            rectTrans2.localPosition = new Vector3(textWidth <= 0f ? width + 10f : width, rectTrans2.localPosition.y, rectTrans2.localPosition.z);
         }
         sl.labelFormat = "G";
 

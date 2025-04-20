@@ -15,6 +15,33 @@ namespace UXAssist.Patches;
 
 public static class LogisticsPatch
 {
+    public static ConfigEntry<bool> AutoConfigLogisticsEnabled;
+    // Dispenser config
+    public static ConfigEntry<int> AutoConfigDispenserChargePower; // 3~30, display as 300000.0 * value
+    public static ConfigEntry<int> AutoConfigDispenserCourierCount; // 0~10
+    public static ConfigEntry<bool> AutoConfigDispenserAutoGuess;
+    // PLS config
+    public static ConfigEntry<int> AutoConfigPLSChargePower; // 2~20, display as 3000000.0 * value
+    public static ConfigEntry<int> AutoConfigPLSMaxTripDrone; // 1~180, by degress
+    public static ConfigEntry<int> AutoConfigPLSDroneMinDeliver; // 0~10; 0 = 1%, 1~10 = 10% *value
+    public static ConfigEntry<int> AutoConfigPLSMinPilerValue; // 0~4; 0 = Maximum in tech, 1~4 = piler stacking count
+    public static ConfigEntry<int> AutoConfigPLSDroneCount; // 0~50
+    // ILS config
+    public static ConfigEntry<int> AutoConfigILSChargePower; // 2~20, display as 15000000.0 * value
+    public static ConfigEntry<int> AutoConfigILSMaxTripDrone; // 1~180, by degress
+    public static ConfigEntry<int> AutoConfigILSMaxTripShip; // 1~41; 1~20 = value LY, 21-40 = 2*value-20LY, 41 = Unlimited
+    public static ConfigEntry<int> AutoConfigILSWarperDistance; // 2~21; 2~7 = value * 0.5 - 0.5AU, 8~16 = value - 4AU, 17~20 = value * 2 - 20AU, 21 = 60AU
+    public static ConfigEntry<int> AutoConfigILSDroneMinDeliver; // 0~10; 0 = 1%, 1~10 = 10% *value
+    public static ConfigEntry<int> AutoConfigILSShipMinDeliver; // 0~10; 0 = 1%, 1~10 = 10% *value
+    public static ConfigEntry<int> AutoConfigILSMinPilerValue; // 0~4; 0 = Maximum in tech, 1~4 = piler stacking count
+    public static ConfigEntry<bool> AutoConfigILSIncludeOrbitCollector;
+    public static ConfigEntry<bool> AutoConfigILSWarperNecessary;
+    public static ConfigEntry<int> AutoConfigILSDroneCount; // 0~100
+    public static ConfigEntry<int> AutoConfigILSShipCount; // 0~10
+    // Vein collector config
+    public static ConfigEntry<int> AutoConfigVeinCollectorHarvestSpeed; // 0-20, 100% + 10% * value
+    public static ConfigEntry<int> AutoConfigVeinCollectorMinPilerValue; // 0~4; 0 = Maximum in tech, 1~4 = piler stacking count
+
     public static ConfigEntry<bool> LogisticsCapacityTweaksEnabled;
     public static ConfigEntry<bool> AllowOverflowInLogisticsEnabled;
     public static ConfigEntry<bool> LogisticsConstrolPanelImprovementEnabled;
@@ -23,6 +50,7 @@ public static class LogisticsPatch
 
     public static void Init()
     {
+        AutoConfigLogisticsEnabled.SettingChanged += (_, _) => AutoConfigLogistics.Enable(AutoConfigLogisticsEnabled.Value);
         LogisticsCapacityTweaksEnabled.SettingChanged += (_, _) => LogisticsCapacityTweaks.Enable(LogisticsCapacityTweaksEnabled.Value);
         AllowOverflowInLogisticsEnabled.SettingChanged += (_, _) => AllowOverflowInLogistics.Enable(AllowOverflowInLogisticsEnabled.Value);
         LogisticsConstrolPanelImprovementEnabled.SettingChanged += (_, _) => LogisticsConstrolPanelImprovement.Enable(LogisticsConstrolPanelImprovementEnabled.Value);
@@ -32,6 +60,7 @@ public static class LogisticsPatch
 
     public static void Start()
     {
+        AutoConfigLogistics.Enable(AutoConfigLogisticsEnabled.Value);
         LogisticsCapacityTweaks.Enable(LogisticsCapacityTweaksEnabled.Value);
         AllowOverflowInLogistics.Enable(AllowOverflowInLogisticsEnabled.Value);
         LogisticsConstrolPanelImprovement.Enable(LogisticsConstrolPanelImprovementEnabled.Value);
@@ -48,6 +77,7 @@ public static class LogisticsPatch
         GameLogic.OnDataLoaded -= RealtimeLogisticsInfoPanel.OnDataLoaded;
         GameLogic.OnGameBegin -= RealtimeLogisticsInfoPanel.OnGameBegin;
 
+        AutoConfigLogistics.Enable(false);
         LogisticsCapacityTweaks.Enable(false);
         AllowOverflowInLogistics.Enable(false);
         LogisticsConstrolPanelImprovement.Enable(false);
@@ -59,6 +89,16 @@ public static class LogisticsPatch
         if (RealtimeLogisticsInfoPanelEnabled.Value)
         {
             RealtimeLogisticsInfoPanel.StationInfoPanelsUpdate();
+        }
+    }
+
+    private class AutoConfigLogistics: PatchImpl<AutoConfigLogistics>
+    {
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(PlanetTransport), nameof(PlanetTransport.NewStationComponent))]
+        private static void PlanetTransport_NewStationComponent_Postfix(PlanetTransport __instance, StationComponent __result)
+        {
+
         }
     }
 
@@ -847,8 +887,8 @@ public static class LogisticsPatch
                 stationTip.UpdateStationInfo(stationComponent);
             }
         }
-        
-        
+
+
         public class StationTip : MonoBehaviour
         {
             [FormerlySerializedAs("RectTransform")]
@@ -891,7 +931,7 @@ public static class LogisticsPatch
                 public ELogisticStorage LocalState;
                 public ELogisticStorage RemoteState;
             }
-            
+
             private static readonly Sprite[] StateSprite =
             [
                 Util.LoadEmbeddedSprite("assets/icon/keep.png"),
@@ -981,7 +1021,7 @@ public static class LogisticsPatch
                     _countTextsText[i].color = StateColor[0];
                     _iconLocalsImage[i].color = StateColor[0];
                     _iconRemotesImage[i].color = StateColor[0];
-                    
+
                     ref var storageItem = ref _storageItems[i];
                     storageItem.ItemId = -1;
                     storageItem.ItemCount = -1;
