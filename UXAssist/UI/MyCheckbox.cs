@@ -21,7 +21,7 @@ public class MyCheckBox : MonoBehaviour
     private static readonly Color BoxColor = new Color(1f, 1f, 1f, 100f / 255f);
     private static readonly Color CheckColor = new Color(1f, 1f, 1f, 1f);
     private static readonly Color TextColor = new Color(178f / 255f, 178f / 255f, 178f / 255f, 168f / 255f);
-    
+
     public static void InitBaseObject()
     {
         if (_baseObject) return;
@@ -82,7 +82,7 @@ public class MyCheckBox : MonoBehaviour
         cb.uiButton.onClick += cb.OnClick;
         return cb;
     }
-    
+
     private void UpdateLabelTextWidth()
     {
         if (labelText) labelText.rectTransform.sizeDelta = new Vector2(labelText.preferredWidth, labelText.rectTransform.sizeDelta.y);
@@ -150,7 +150,7 @@ public class MyCheckBox : MonoBehaviour
         Checked = check;
         return this;
     }
-    
+
     public MyCheckBox WithEnable(bool on)
     {
         SetEnable(on);

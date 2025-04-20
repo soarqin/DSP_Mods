@@ -31,7 +31,7 @@ public class MyWindow : ManualBehaviour
         go.SetActive(false);
         go.name = "my-window";
         Destroy(go.GetComponent<UITankWindow>());
-        for (var i = 0; i < go.transform.childCount; i++)
+        for (var i = go.transform.childCount - 1; i >= 0; i--)
         {
             var child = go.transform.GetChild(i).gameObject;
             if (child.name != "panel-bg" && child.name != "shadow")
@@ -245,19 +245,7 @@ public class MyWindow : ManualBehaviour
         return comboBox;
     }
 
-    public MySlider AddSlider(float x, float y, RectTransform parent, float value, float minValue, float maxValue, string format = "G", float width = 0f)
-    {
-        var slider = MySlider.CreateSlider(x, y, parent, value, minValue, maxValue, format, width);
-        var rect = slider.rectTrans;
-        if (rect != null)
-        {
-            _maxX = Math.Max(_maxX, x + rect.sizeDelta.x);
-            MaxY = Math.Max(MaxY, y + rect.sizeDelta.y);
-        }
-
-        return slider;
-    }
-
+#region Slider
     public class ValueMapper<T>
     {
         public virtual int Min => 1;
@@ -275,45 +263,6 @@ public class MyWindow : ManualBehaviour
     {
         public override int Min => min;
         public override int Max => max;
-    }
-
-    public MySlider AddSlider<T>(float x, float y, RectTransform parent, ConfigEntry<T> config, ValueMapper<T> valueMapper, string format = "G", float width = 0f)
-    {
-        var slider = MySlider.CreateSlider(x, y, parent, OnConfigValueChanged(config), valueMapper.Min, valueMapper.Max, format, width);
-        slider.SetLabelText(valueMapper.FormatValue(format, config.Value));
-        EventHandler func = (_, _) =>
-        {
-            var index = OnConfigValueChanged(config);
-            slider.Value = index;
-            slider.SetLabelText(valueMapper.FormatValue(format, config.Value));
-        };
-        config.SettingChanged += func;
-        OnFree += () => config.SettingChanged -= func;
-        slider.OnValueChanged += () =>
-        {
-            var index = Mathf.RoundToInt(slider.Value);
-            config.Value = valueMapper.IndexToValue(index);
-            slider.SetLabelText(valueMapper.FormatValue(format, config.Value));
-        };
-
-        var rect = slider.rectTrans;
-        if (rect != null)
-        {
-            _maxX = Math.Max(_maxX, x + rect.sizeDelta.x);
-            MaxY = Math.Max(MaxY, y + rect.sizeDelta.y);
-        }
-
-        return slider;
-
-        int OnConfigValueChanged(ConfigEntry<T> conf)
-        {
-            var index = valueMapper.ValueToIndex(conf.Value);
-            if (index >= 0) return index;
-            index = ~index;
-            index = Math.Max(0, Math.Min(valueMapper.Max, index));
-            conf.Value = valueMapper.IndexToValue(index);
-            return index;
-        }
     }
 
     private class ArrayMapper<T> : ValueMapper<T>
@@ -340,10 +289,121 @@ public class MyWindow : ManualBehaviour
         }
     }
 
+    public MySlider AddSlider(float x, float y, RectTransform parent, float value, float minValue, float maxValue, string format = "G", float width = 0f)
+    {
+        var slider = MySlider.CreateSlider(x, y, parent, value, minValue, maxValue, format, width);
+        var rect = slider.rectTrans;
+        if (rect != null)
+        {
+            _maxX = Math.Max(_maxX, x + rect.sizeDelta.x);
+            MaxY = Math.Max(MaxY, y + rect.sizeDelta.y);
+        }
+
+        return slider;
+    }
+
+    public MySideSlider AddSideSlider(float x, float y, RectTransform parent, float value, float minValue, float maxValue, string format = "G", float width = 0f, float textWidth = 0f)
+    {
+        var slider = MySideSlider.CreateSlider(x, y, parent, value, minValue, maxValue, format, width, textWidth);
+        var rect = slider.rectTrans;
+        if (rect != null)
+        {
+            _maxX = Math.Max(_maxX, x + rect.sizeDelta.x);
+            MaxY = Math.Max(MaxY, y + rect.sizeDelta.y);
+        }
+
+        return slider;
+    }
+
+    public MySlider AddSlider<T>(float x, float y, RectTransform parent, ConfigEntry<T> config, ValueMapper<T> valueMapper, string format = "G", float width = 0f, float textWidth = 0f)
+    {
+        var slider = MySlider.CreateSlider(x, y, parent, OnConfigValueChanged(config), valueMapper.Min, valueMapper.Max, format, width, textWidth);
+        slider.SetLabelText(valueMapper.FormatValue(format, config.Value));
+        config.SettingChanged += SettingsChanged;
+        OnFree += () => config.SettingChanged -= SettingsChanged;
+        slider.OnValueChanged += () =>
+        {
+            var index = Mathf.RoundToInt(slider.Value);
+            config.Value = valueMapper.IndexToValue(index);
+            slider.SetLabelText(valueMapper.FormatValue(format, config.Value));
+        };
+
+        var rect = slider.rectTrans;
+        if (rect != null)
+        {
+            _maxX = Math.Max(_maxX, x + rect.sizeDelta.x);
+            MaxY = Math.Max(MaxY, y + rect.sizeDelta.y);
+        }
+
+        return slider;
+
+        void SettingsChanged(object o, EventArgs a)
+        {
+            var index = OnConfigValueChanged(config);
+            slider.Value = index;
+            slider.SetLabelText(valueMapper.FormatValue(format, config.Value));
+        }
+
+        int OnConfigValueChanged(ConfigEntry<T> conf)
+        {
+            var index = valueMapper.ValueToIndex(conf.Value);
+            if (index >= 0) return index;
+            index = ~index;
+            index = Math.Max(0, Math.Min(valueMapper.Max, index));
+            conf.Value = valueMapper.IndexToValue(index);
+            return index;
+        }
+    }
+
+    public MySideSlider AddSideSlider<T>(float x, float y, RectTransform parent, ConfigEntry<T> config, ValueMapper<T> valueMapper, string format = "G", float width = 0f, float textWidth = 0f)
+    {
+        var slider = MySideSlider.CreateSlider(x, y, parent, OnConfigValueChanged(config), valueMapper.Min, valueMapper.Max, format, width, textWidth);
+        slider.SetLabelText(valueMapper.FormatValue(format, config.Value));
+        config.SettingChanged += SettingsChanged;
+        OnFree += () => config.SettingChanged -= SettingsChanged;
+        slider.OnValueChanged += () =>
+        {
+            var index = Mathf.RoundToInt(slider.Value);
+            config.Value = valueMapper.IndexToValue(index);
+            slider.SetLabelText(valueMapper.FormatValue(format, config.Value));
+        };
+
+        var rect = slider.rectTrans;
+        if (rect != null)
+        {
+            _maxX = Math.Max(_maxX, x + rect.sizeDelta.x);
+            MaxY = Math.Max(MaxY, y + rect.sizeDelta.y);
+        }
+
+        return slider;
+
+        void SettingsChanged(object o, EventArgs a)
+        {
+            var index = OnConfigValueChanged(config);
+            slider.Value = index;
+            slider.SetLabelText(valueMapper.FormatValue(format, config.Value));
+        }
+        int OnConfigValueChanged(ConfigEntry<T> conf)
+        {
+            var index = valueMapper.ValueToIndex(conf.Value);
+            if (index >= 0) return index;
+            index = ~index;
+            index = Math.Max(0, Math.Min(valueMapper.Max, index));
+            conf.Value = valueMapper.IndexToValue(index);
+            return index;
+        }
+    }
+
     public MySlider AddSlider<T>(float x, float y, RectTransform parent, ConfigEntry<T> config, T[] valueList, string format = "G", float width = 0f)
     {
         return AddSlider(x, y, parent, config, new ArrayMapper<T>(valueList), format, width);
     }
+
+    public MySideSlider AddSideSlider<T>(float x, float y, RectTransform parent, ConfigEntry<T> config, T[] valueList, string format = "G", float width = 0f)
+    {
+        return AddSideSlider(x, y, parent, config, new ArrayMapper<T>(valueList), format, width);
+    }
+#endregion
 
     public InputField AddInputField(float x, float y, RectTransform parent, string text = "", int fontSize = 16, string objName = "input", UnityAction<string> onChanged = null,
         UnityAction<string> onEditEnd = null)

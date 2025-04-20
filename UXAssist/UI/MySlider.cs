@@ -53,7 +53,7 @@ public class MySlider : MonoBehaviour
             }
         }
         sl.labelFormat = "G";
-        
+
         sl.handleSlideArea = sl.transform.Find("Handle Slide Area")?.GetComponent<RectTransform>();
 
         var bg = sl.slider.transform.Find("Background")?.GetComponent<Image>();
@@ -105,14 +105,14 @@ public class MySlider : MonoBehaviour
         Value = value;
         return this;
     }
-    
+
     public MySlider WithMinMaxValue(float min, float max)
     {
         slider.minValue = min;
         slider.maxValue = max;
         return this;
     }
-    
+
     public MySlider WithLabelFormat(string format)
     {
         if (format == labelFormat) return this;

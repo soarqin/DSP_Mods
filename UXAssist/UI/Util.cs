@@ -18,7 +18,7 @@ public static class Util
         rect.anchoredPosition3D = new Vector3(left, -top, 0f);
         return rect;
     }
-    
+
     public static RectTransform NormalizeRectWithBottomLeft(Component cmp, float left, float bottom, Transform parent = null)
     {
         if (cmp.transform is not RectTransform rect) return null;

@@ -43,7 +43,7 @@ public class MyKeyBinder : MonoBehaviour
     public UIButton setNoneKeyUIButton;
 
     private bool _nextNotOn;
-    
+
     protected void OnDestroy()
     {
         OnFree?.Invoke();

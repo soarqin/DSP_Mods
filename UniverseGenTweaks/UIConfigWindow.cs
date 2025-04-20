@@ -85,7 +85,7 @@ public static class UIConfigWindow
         sl2.OnValueChanged += () =>
         {
             var val = EpicDifficulty.IndexToOilMultiplier(Mathf.RoundToInt(sl2.Value));
-            EpicDifficulty.OilMultiplier.Value = val; 
+            EpicDifficulty.OilMultiplier.Value = val;
             sl2.SetLabelText(val.ToString(sl2.labelFormat));
         };
         var tab2 = wnd.AddTab(_windowTrans, "Birth Star");

@@ -34,7 +34,7 @@ public class MyComboBox : MonoBehaviour
         }
         var localizer = go.GetComponent<Localizer>();
         if (localizer) DestroyImmediate(localizer);
-        
+
         var rect = (RectTransform)go.transform;
         var cbctrl = rect.transform.Find("ComboBox").GetComponent<UIComboBox>();
         foreach (var button in cbctrl.ItemButtons)
@@ -146,7 +146,7 @@ public class MyComboBox : MonoBehaviour
         SetPrompt(prompt);
         return this;
     }
-    
+
     public MyComboBox WithFontSize(int size)
     {
         SetFontSize(size);
@@ -158,7 +158,7 @@ public class MyComboBox : MonoBehaviour
         SetItems(items);
         return this;
     }
-    
+
     public MyComboBox WithIndex(int index)
     {
         SetIndex(index);
