@@ -19,7 +19,6 @@ public static class LogisticsPatch
     // Dispenser config
     public static ConfigEntry<int> AutoConfigDispenserChargePower; // 3~30, display as 300000.0 * value
     public static ConfigEntry<int> AutoConfigDispenserCourierCount; // 0~10
-    public static ConfigEntry<bool> AutoConfigDispenserAutoGuess;
     // PLS config
     public static ConfigEntry<int> AutoConfigPLSChargePower; // 2~20, display as 3000000.0 * value
     public static ConfigEntry<int> AutoConfigPLSMaxTripDrone; // 1~180, by degress
@@ -94,11 +93,77 @@ public static class LogisticsPatch
 
     private class AutoConfigLogistics: PatchImpl<AutoConfigLogistics>
     {
+        enum KnownItemId: int
+        {
+            Drone = 5001,
+            Ship = 5002,
+            Bot = 5003,
+            Warper = 1210,
+        }
+
+        private static void DoConfigStation(PlanetFactory factory, StationComponent station)
+        {
+            if (station.isCollector) return;
+            if (station.isVeinCollector)
+            {
+                factory.factorySystem.minerPool[station.minerId].speed = 10000 + AutoConfigVeinCollectorHarvestSpeed.Value * 1000;
+                station.pilerCount = AutoConfigVeinCollectorMinPilerValue.Value;
+                return;
+            }
+            int toFill;
+            if (!station.isStellar) {
+                factory.powerSystem.consumerPool[station.pcId].workEnergyPerTick = (long)(50000.0 * (double)AutoConfigPLSChargePower.Value + 0.5);
+                station.tripRangeDrones = Math.Cos(AutoConfigPLSMaxTripDrone.Value / 180.0 * Math.PI);
+                station.deliveryDrones = AutoConfigPLSDroneMinDeliver.Value switch { 0 => 1, _ => AutoConfigPLSDroneMinDeliver.Value * 10 };
+                station.pilerCount = AutoConfigPLSMinPilerValue.Value;
+                toFill = Math.Max(0, AutoConfigPLSDroneCount.Value - station.idleDroneCount - station.workDroneCount);
+                if (toFill > 0) station.idleDroneCount += GameMain.data.mainPlayer.package.TakeItem((int)KnownItemId.Drone, toFill, out _);
+                return;
+            }
+            factory.powerSystem.consumerPool[station.pcId].workEnergyPerTick = (long)(250000.0 * (double)AutoConfigILSChargePower.Value + 0.5);
+            station.tripRangeDrones = Math.Cos(AutoConfigILSMaxTripDrone.Value / 180.0 * Math.PI);
+            station.tripRangeShips = AutoConfigILSMaxTripShip.Value switch {
+                <= 20 => AutoConfigILSMaxTripShip.Value,
+                <= 40 => AutoConfigILSMaxTripShip.Value * 2 - 20,
+                _ => 10000,
+            } * 2400000.0;
+            station.warpEnableDist = AutoConfigILSWarperDistance.Value switch {
+                <= 7 => AutoConfigILSWarperDistance.Value * 0.5 - 0.5,
+                <= 16 => AutoConfigILSWarperDistance.Value - 4.0,
+                <= 20 => AutoConfigILSWarperDistance.Value * 2 - 20.0,
+                _ => 60.0,
+            } * 40000.0;
+            station.deliveryDrones = AutoConfigILSDroneMinDeliver.Value switch { 0 => 1, _ => AutoConfigILSDroneMinDeliver.Value * 10 };
+            station.deliveryShips = AutoConfigILSShipMinDeliver.Value switch { 0 => 1, _ => AutoConfigILSShipMinDeliver.Value * 10 };
+            station.pilerCount = AutoConfigILSMinPilerValue.Value;
+            station.includeOrbitCollector = AutoConfigILSIncludeOrbitCollector.Value;
+            station.warperNecessary = AutoConfigILSWarperNecessary.Value;
+            toFill = Math.Max(0, AutoConfigILSDroneCount.Value - station.idleDroneCount - station.workDroneCount);
+            if (toFill > 0) station.idleDroneCount += GameMain.data.mainPlayer.package.TakeItem((int)KnownItemId.Drone, toFill, out _);
+            toFill = Math.Max(0, AutoConfigILSShipCount.Value - station.idleShipCount - station.workShipCount);
+            if (toFill > 0) station.idleShipCount += GameMain.data.mainPlayer.package.TakeItem((int)KnownItemId.Ship, toFill, out _);
+        }
+
+        private static void DoConfigDispenser(PlanetFactory factory, DispenserComponent dispenser)
+        {
+            factory.powerSystem.consumerPool[dispenser.pcId].workEnergyPerTick = (long)(5000.0 * (double)AutoConfigDispenserChargePower.Value + 0.5);
+            var toFill = Math.Max(0, AutoConfigDispenserCourierCount.Value - dispenser.idleCourierCount - dispenser.workCourierCount);
+            if (toFill > 0) dispenser.idleCourierCount += GameMain.data.mainPlayer.package.TakeItem((int)KnownItemId.Bot, toFill, out _);
+        }
+
         [HarmonyPostfix]
         [HarmonyPatch(typeof(PlanetTransport), nameof(PlanetTransport.NewStationComponent))]
         private static void PlanetTransport_NewStationComponent_Postfix(PlanetTransport __instance, StationComponent __result)
         {
+            DoConfigStation(__instance.factory, __result);
+        }
 
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(PlanetTransport), nameof(PlanetTransport.NewDispenserComponent))]
+        private static void PlanetTransport_NewDispenserComponent_Postfix(PlanetTransport __instance, int __result)
+        {
+            if (__result <= 0) return;
+            DoConfigDispenser(__instance.factory, __instance.dispenserPool[__result]);
         }
     }
 

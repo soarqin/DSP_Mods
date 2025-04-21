@@ -66,6 +66,7 @@ public class MyCheckBox : MonoBehaviour
         cb.uiButton = go.GetComponent<UIButton>();
         cb.boxImage = go.transform.GetComponent<Image>();
         cb.checkImage = go.transform.Find("checked")?.GetComponent<Image>();
+        Util.NormalizeRectWithTopLeft(cb.checkImage, 0f, 0f);
 
         var child = go.transform.Find("text");
         if (child != null)
@@ -148,6 +149,16 @@ public class MyCheckBox : MonoBehaviour
     public MyCheckBox WithCheck(bool check)
     {
         Checked = check;
+        return this;
+    }
+
+    public MyCheckBox WithSmallerBox(float boxSize = 20f)
+    {
+        var oldWidth = rectTrans.sizeDelta.x;
+        rectTrans.sizeDelta = new Vector2(boxSize, boxSize);
+        checkImage.rectTransform.sizeDelta = new Vector2(boxSize, boxSize);
+        labelText.rectTransform.sizeDelta = new Vector2(labelText.rectTransform.sizeDelta.x, boxSize);
+        labelText.rectTransform.localPosition = new Vector3(labelText.rectTransform.localPosition.x + boxSize - oldWidth, labelText.rectTransform.localPosition.y, labelText.rectTransform.localPosition.z);
         return this;
     }
 

@@ -4,6 +4,8 @@
   + New feature: `Dismantle blueprint selected buildings`
     - Press shortcut key in blueprint copy mode to dismantle selected buildings.
     - The default shortcut key is Ctrl+X, you can set it in system options panel.
+  + New feature: `Auto-config logistic stations`
+    - Auto-config buildings include: Logistics Distributor, PLS, ILS, Advanced Mining Machine.
   + `Night Sunlight`: Fix bugs that sunlight angle is not updated as expected again.
 * 1.2.19
   + New feature: `Tweak building buffer`
@@ -274,6 +276,8 @@
   + 新功能：`拆除蓝图选中的建筑`
     - 在蓝图复制模式下按快捷键拆除选中的建筑
     - 默认快捷键是Ctrl+X，可以在系统选项面板中设置
+  + 新功能：`自动配置物流站`
+    - 自动配置的建筑包括：物流配送器、行星物流站、星际物流站、高级采矿机
   + `夜间日光灯`：再次修复了光照角度未正确更新的问题
 * 1.2.19
   + 新功能：`调整建筑输入缓冲`

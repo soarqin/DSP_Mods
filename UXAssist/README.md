@@ -40,7 +40,7 @@
     - Set enabled CPU threads
     - Increase maximum count of Metadata Instantiations to 20000 (from 2000)
     - Increase capacity of player order queue to 128 (from 16)
-  + Planet/Factory
+  + Factory
     - Sunlight at night
     - Remove some build conditions
     - Remove build count and range limit
@@ -51,9 +51,6 @@
       - Press shortcut key to cut conveyor belt under cursor.
       - The default shortcut key is Alt+X, you can set it in system options panel.
     - Treat stack items as single in monitor components
-    - Enhanced control for logistic storage limits
-      - Logistic storage limits are not scaled on upgrading `Logistics Carrier Capacity`, if they are not set to maximum capacity.
-      - You can use arrow keys to adjust logistic storage limits gracefully.
     - Quick build and dismantle stacking labs/storages/tanks
     - Fast fill in to and take out from tanks
       - You can set multiplier for tanks' operation speed
@@ -65,14 +62,6 @@
     - Do not render factory entities (except belts and sorters)
       - This also makes players click though factory entities but belts and sorters
     - Drag building power poles in maximum connection range
-    - Allow overflow for Logistic Stations and Advanced Mining Machines
-      - Allow overflow when trying to insert in-hand items
-      - Allow `Enhanced control for logistic storage limits` to exceed tech capacity limits
-      - Remove logistic strorage limit check on loading game
-    - Logistics Control Panel Improvement
-      - Auto apply filter with item under mouse cursor while opening the panel
-      - Quick-set item filter while right-clicking item icons in storage list on the panel
-    - Real-time logistic stations info panel
     - Dismantle blueprint selected buildings
       - Press shortcut key in blueprint copy mode to dismantle selected buildings.
       - The default shortcut key is Ctrl+X, you can set it in system options panel.
@@ -98,6 +87,20 @@
         - `Extra buffer count for Self-evolution Labs`: Range 1-10, default is 3 (same as game)
       - `Buffer count for researching in labs`: Range 2-20, default is 10 (same as game)
       - `Ray Receiver Graviton Lens buffer count`: Range 1-20, default is 1 (game default is 20)
+  + Logistics
+    - Enhanced control for logistic storage limits
+      - Logistic storage limits are not scaled on upgrading `Logistics Carrier Capacity`, if they are not set to maximum capacity.
+      - You can use arrow keys to adjust logistic storage limits gracefully.
+    - Logistics Control Panel Improvement
+      - Auto apply filter with item under mouse cursor while opening the panel
+      - Quick-set item filter while right-clicking item icons in storage list on the panel
+    - Allow overflow for Logistic Stations and Advanced Mining Machines
+      - Allow overflow when trying to insert in-hand items
+      - Allow `Enhanced control for logistic storage limits` to exceed tech capacity limits
+      - Remove logistic strorage limit check on loading game
+    - Real-time logistic stations info panel
+    - Auto-config logistic stations
+      - Auto-config buildings include: Logistics Distributor, PLS, ILS, Advanced Mining Machine
   + Player/Mecha
     - Unlimited interactive range
     - Enable player actions in globe view
@@ -178,7 +181,7 @@
     - 设置使用的CPU线程
     - 将元数据提取的最大数量增加到20000(原来为2000)
     - 将玩家指令队列的容量增加到128(原来为16)
-  + 行星/工厂
+  + 工厂
     - 夜间日光灯
     - 移除部分不影响游戏逻辑的建造条件
     - 范围升级和拆除的最大区域扩大(最大30x30)
@@ -188,9 +191,6 @@
       - 按快捷键切割光标位置的传送带
       - 默认快捷键是Alt+X，可以在系统选项面板中设置
     - 在流速计中将堆叠物品视为单个物品
-    - 物流塔存储数量限制控制改进
-      - 当升级`运输机舱扩容`时，不会对各种物流塔的存储限制按比例提升，除非设置为最大允许容量。
-      - 你可以使用方向键微调物流塔存储限制
     - 快速建造和拆除堆叠研究站/储物仓/储液罐
     - 储液罐快速注入和抽取液体
       - 你可以设置储液罐操作速度的倍率
@@ -202,15 +202,6 @@
     - 不渲染工厂建筑实体(除了传送带和分拣器)
       - 这也使玩家可以点穿工厂实体直接点到传送带和分拣器
     - 拖动建造电线杆时自动使用最大连接距离间隔
-    - 允许物流塔和大型采矿机物品溢出
-      - 当尝试塞入手中物品时允许溢出
-      - 允许`物流塔存储数量限制控制改进`超过科技容量限制
-      - 在加载游戏时移除物流塔容量限制检查
-    - 物流控制面板改进
-      - 打开面板时自动将鼠标指向物品设为筛选条件
-      - 在控制面板物流塔列表中右键点击物品图标快速设置为筛选条件
-    - 物流运输站实时信息面板
-      - 注意：如果你启用了`Auxilaryfunction`中的`展示物流站信息`，此功能将被隐藏
     - 拆除蓝图选中的建筑
       - 在蓝图复制模式下按快捷键拆除选中的建筑
       - 默认快捷键是Ctrl+X，可以在系统选项面板中设置
@@ -236,6 +227,21 @@
         - `自演化研究站矩阵额外缓冲数量`：范围1-10，默认为3(同游戏)
       - `研究站科研模式缓存数量`：范围2-20，默认为10(同游戏)
       - `射线接收器透镜缓冲数量`：范围1-20，默认为1(游戏默认为20)
+  + 物流
+    - 物流塔存储数量限制控制改进
+      - 当升级`运输机舱扩容`时，不会对各种物流塔的存储限制按比例提升，除非设置为最大允许容量。
+      - 你可以使用方向键微调物流塔存储限制
+    - 物流控制面板改进
+      - 打开面板时自动将鼠标指向物品设为筛选条件
+      - 在控制面板物流塔列表中右键点击物品图标快速设置为筛选条件
+    - 允许物流塔和大型采矿机物品溢出
+      - 当尝试塞入手中物品时允许溢出
+      - 允许`物流塔存储数量限制控制改进`超过科技容量限制
+      - 在加载游戏时移除物流塔容量限制检查
+    - 物流运输站实时信息面板
+      - 注意：如果你启用了`Auxilaryfunction`中的`展示物流站信息`，此功能将被隐藏
+    - 自动配置物流站
+      - 自动配置的建筑包括：物流配送器、行星物流站、星际物流站、高级采矿机
   + 玩家/机甲
     - 无限交互距离
     - 移除建造数量和范围限制

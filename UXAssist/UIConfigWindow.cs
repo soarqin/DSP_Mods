@@ -82,13 +82,12 @@ public static class UIConfigWindow
         I18N.Add("Build Tesla Tower and Wireless Power Tower alternately", "Build Tesla Tower and Wireless Power Tower alternately", "交替建造电力感应塔和无线输电塔");
         I18N.Add("Belt signals for buy out dark fog items automatically", "Belt signals for buy out dark fog items automatically", "用于自动购买黑雾物品的传送带信号");
         I18N.Add("Auto-config logistic stations", "Auto-config logistic stations", "自动配置物流设施");
-        I18N.Add("Dispenser", "Dispenser", "物流配送器");
+        I18N.Add("Dispenser", "Logistics Distributor", "物流配送器");
         I18N.Add("PLS", "PLS", "行星物流站");
         I18N.Add("ILS", "ILS", "星际物流站");
         I18N.Add("Advanced Mining Machine", "Advanced Mining Machine", "大型采矿机");
         I18N.Add("Max. Charging Power", "Max. Charging Power", "最大充能功率");
         I18N.Add("Count of Bots auto-filled", "Count of Bots auto-filled", "自动填充的配送机数量");
-        I18N.Add("Auto guess dispenser filter", "Auto guess dispenser filter", "自动智能猜测");
         I18N.Add("Max. Charging Power", "Max. Charging Power", "最大充能功率");
         I18N.Add("Drone transport range", "Drone transport range", "运输机最远路程");
         I18N.Add("Min. Load of Drones", "Min. Load of Drones", "运输机起送量");
@@ -219,7 +218,7 @@ public static class UIConfigWindow
     {
         public override string FormatValue(string format, int value)
         {
-            return value == 0 ? "1%" : (value * 10).ToString() + "%";
+            return (value == 0 ? 1 : (value * 10)).ToString("0\\%");
         }
     }
 
@@ -227,7 +226,7 @@ public static class UIConfigWindow
     {
         public override string FormatValue(string format, int value)
         {
-            return value == 0 ? "集装使用科技上限" : value.ToString();
+            return value == 0 ? "集装使用科技上限".Translate().Trim() : value.ToString();
         }
     }
 
@@ -248,8 +247,8 @@ public static class UIConfigWindow
         {
             return value switch
             {
-                <= 20 => value.ToString("0 LY"),
-                <= 40 => (value * 2 - 20).ToString("0 LY"),
+                <= 20 => value.ToString("0LY"),
+                <= 40 => (value * 2 - 20).ToString("0LY"),
                 _ => "∞",
             };
         }
@@ -261,11 +260,11 @@ public static class UIConfigWindow
         {
             return value switch
             {
-                <= 7 => (value * 0.5 - 0.5).ToString("0.0 AU"),
-                <= 13 => (value - 4.0).ToString("0.0 AU"),
-                <= 16 => (value - 4).ToString("0 AU"),
-                <= 20 => (value * 2 - 20).ToString("0 AU"),
-                _ => "60 AU",
+                <= 7 => (value * 0.5 - 0.5).ToString("0.0AU"),
+                <= 13 => (value - 4.0).ToString("0.0AU"),
+                <= 16 => (value - 4).ToString("0AU"),
+                <= 20 => (value * 2 - 20).ToString("0AU"),
+                _ => "60AU",
             };
         }
     }
@@ -274,7 +273,7 @@ public static class UIConfigWindow
     {
         public override string FormatValue(string format, int value)
         {
-            return (value * 10).ToString("0%");
+            return (100 + value * 10).ToString("0\\%");
         }
     }
 
@@ -401,6 +400,24 @@ public static class UIConfigWindow
         y += 36f;
         wnd.AddCheckBox(x, y, tab2, FactoryPatch.BeltSignalsForBuyOutEnabled, "Belt signals for buy out dark fog items automatically");
 
+        y += 36f;
+        checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab2, FactoryPatch.ProtectVeinsFromExhaustionEnabled, "Protect veins from exhaustion");
+        wnd.AddTipsButton2(x + checkBoxForMeasureTextWidth.Width + 5f, y + 6f, tab2, "Protect veins from exhaustion", "Protect veins from exhaustion tips", "protect-veins-tips");
+        {
+            y += 36f;
+            wnd.AddCheckBox(x, y, tab2, FactoryPatch.DragBuildPowerPolesEnabled, "Drag building power poles in maximum connection range");
+            y += 27f;
+            var alternatelyCheckBox = wnd.AddCheckBox(x + 20f, y, tab2, FactoryPatch.DragBuildPowerPolesAlternatelyEnabled, "Build Tesla Tower and Wireless Power Tower alternately", 13);
+            FactoryPatch.DragBuildPowerPolesEnabled.SettingChanged += AlternatelyCheckBoxChanged;
+            wnd.OnFree += () => { FactoryPatch.DragBuildPowerPolesEnabled.SettingChanged -= AlternatelyCheckBoxChanged; };
+            AlternatelyCheckBoxChanged(null, null);
+
+            void AlternatelyCheckBoxChanged(object o, EventArgs e)
+            {
+                alternatelyCheckBox.SetEnable(FactoryPatch.DragBuildPowerPolesEnabled.Value);
+            }
+        }
+
         x = 400f;
         y = 10f;
         wnd.AddButton(x, y, tab2, "Initialize This Planet", 16, "button-init-planet", () =>
@@ -419,24 +436,6 @@ public static class UIConfigWindow
         wnd.AddSlider(x + 10f + txt.preferredWidth + 5f, y + 6f, tab2, PlanetFunctions.OrbitalCollectorMaxBuildCount, new OcMapper(), "G", 160f);
 
         y += 18f;
-
-        y += 36f;
-        checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab2, FactoryPatch.ProtectVeinsFromExhaustionEnabled, "Protect veins from exhaustion");
-        wnd.AddTipsButton2(x + checkBoxForMeasureTextWidth.Width + 5f, y + 6f, tab2, "Protect veins from exhaustion", "Protect veins from exhaustion tips", "protect-veins-tips");
-        {
-            y += 36f;
-            wnd.AddCheckBox(x, y, tab2, FactoryPatch.DragBuildPowerPolesEnabled, "Drag building power poles in maximum connection range");
-            y += 27f;
-            var alternatelyCheckBox = wnd.AddCheckBox(x + 20f, y, tab2, FactoryPatch.DragBuildPowerPolesAlternatelyEnabled, "Build Tesla Tower and Wireless Power Tower alternately", 13);
-            FactoryPatch.DragBuildPowerPolesEnabled.SettingChanged += AlternatelyCheckBoxChanged;
-            wnd.OnFree += () => { FactoryPatch.DragBuildPowerPolesEnabled.SettingChanged -= AlternatelyCheckBoxChanged; };
-            AlternatelyCheckBoxChanged(null, null);
-
-            void AlternatelyCheckBoxChanged(object o, EventArgs e)
-            {
-                alternatelyCheckBox.SetEnable(FactoryPatch.DragBuildPowerPolesEnabled.Value);
-            }
-        }
 
         {
             y += 36f;
@@ -534,109 +533,108 @@ public static class UIConfigWindow
         wnd.AddCheckBox(x, y, tab3, LogisticsPatch.AutoConfigLogisticsEnabled, "Auto-config logistic stations");
         y += 24f;
         var maxWidth = 0f;
-        wnd.AddText2(10f, y, tab3, "Dispenser", 15, "text-dispenser");
-        y += 24f;
+        wnd.AddText2(10f, y, tab3, "Dispenser", 14, "text-dispenser");
+        y += 18f;
         var oy = y;
         x = 20f;
-        var textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Max. Charging Power", 15, "text-dispenser-max-charging-power");
+        var textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Max. Charging Power", 13, "text-dispenser-max-charging-power");
         maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
-        wnd.AddCheckBox(x + 400, y, tab3, LogisticsPatch.AutoConfigDispenserAutoGuess, "Auto guess dispenser filter");
-        y += 24f;
-        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Count of Bots auto-filled", 15, "text-dispenser-count-of-bots-auto-filled");
+        y += 18f;
+        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Count of Bots auto-filled", 13, "text-dispenser-count-of-bots-auto-filled");
         maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
-        y += 24f;
-        wnd.AddText2(10f, y, tab3, "PLS", 15, "text-pls");
-        y += 24f;
-        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Max. Charging Power", 15, "text-pls-max-charging-power");
+        y += 18f;
+        wnd.AddText2(10f, y, tab3, "PLS", 14, "text-pls");
+        y += 18f;
+        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Max. Charging Power", 13, "text-pls-max-charging-power");
         maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
-        y += 24f;
-        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Drone transport range", 15, "text-pls-drone-transport-range");
+        y += 18f;
+        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Drone transport range", 13, "text-pls-drone-transport-range");
         maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
-        y += 24f;
-        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Min. Load of Drones", 15, "text-pls-min-load-of-drones");
+        y += 18f;
+        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Min. Load of Drones", 13, "text-pls-min-load-of-drones");
         maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
-        y += 24f;
-        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Outgoing integration count", 15, "text-pls-outgoing-integration-count");
+        y += 18f;
+        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Outgoing integration count", 13, "text-pls-outgoing-integration-count");
         maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
-        y += 24f;
-        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Count of Drones auto-filled", 15, "text-pls-count-of-drones-auto-filled");
+        y += 18f;
+        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Count of Drones auto-filled", 13, "text-pls-count-of-drones-auto-filled");
         maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
-        y += 24f;
-        wnd.AddText2(10f, y, tab3, "ILS", 15, "text-ils");
-        y += 24f;
-        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Max. Charging Power", 15, "text-ils-max-charging-power");
+        y += 18f;
+        wnd.AddText2(10f, y, tab3, "ILS", 14, "text-ils");
+        y += 18f;
+        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Max. Charging Power", 13, "text-ils-max-charging-power");
         maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
-        y += 24f;
-        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Drone transport range", 15, "text-ils-drone-transport-range");
+        y += 18f;
+        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Drone transport range", 13, "text-ils-drone-transport-range");
         maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
-        y += 24f;
-        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Vessel transport range", 15, "text-ils-vessel-transport-range");
+        y += 18f;
+        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Vessel transport range", 13, "text-ils-vessel-transport-range");
         maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
-        wnd.AddCheckBox(x + 400, y, tab3, LogisticsPatch.AutoConfigILSIncludeOrbitCollector, "Include Orbital Collector");
-        y += 24f;
-        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Warp distance", 15, "text-ils-warp-distance");
+        wnd.AddCheckBox(x + 360f, y + 6f, tab3, LogisticsPatch.AutoConfigILSIncludeOrbitCollector, "Include Orbital Collector", 13).WithSmallerBox();
+        y += 18f;
+        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Warp distance", 13, "text-ils-warp-distance");
         maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
-        wnd.AddCheckBox(x + 400, y, tab3, LogisticsPatch.AutoConfigILSWarperNecessary, "Warpers required");
-        y += 24f;
-        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Min. Load of Drones", 15, "text-ils-min-load-of-drones");
+        wnd.AddCheckBox(x + 360f, y + 6f, tab3, LogisticsPatch.AutoConfigILSWarperNecessary, "Warpers required", 13).WithSmallerBox();
+        y += 18f;
+        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Min. Load of Drones", 13, "text-ils-min-load-of-drones");
         maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
-        y += 24f;
-        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Min. Load of Vessels", 15, "text-ils-min-load-of-vessels");
+        y += 18f;
+        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Min. Load of Vessels", 13, "text-ils-min-load-of-vessels");
         maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
-        y += 24f;
-        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Outgoing integration count", 15, "text-ils-outgoing-integration-count");
+        y += 18f;
+        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Outgoing integration count", 13, "text-ils-outgoing-integration-count");
         maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
-        y += 24f;
-        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Count of Drones auto-filled", 15, "text-ils-count-of-drones-auto-filled");
+        y += 18f;
+        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Count of Drones auto-filled", 13, "text-ils-count-of-drones-auto-filled");
         maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
-        y += 24f;
-        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Count of Vessels auto-filled", 15, "text-ils-count-of-vessels-auto-filled");
+        y += 18f;
+        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Count of Vessels auto-filled", 13, "text-ils-count-of-vessels-auto-filled");
         maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
-        y += 24f;
-        wnd.AddText2(10f, y, tab3, "Advanced Mining Machine", 15, "text-amm");
-        y += 24f;
-        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Collecting Speed", 15, "text-amm-collecting-speed");
+        y += 18f;
+        wnd.AddText2(10f, y, tab3, "Advanced Mining Machine", 14, "text-amm");
+        y += 18f;
+        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Collecting Speed", 13, "text-amm-collecting-speed");
         maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
-        y += 24f;
-        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Min. Piler Value", 15, "text-amm-min-piler-value");
+        y += 18f;
+        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Min. Piler Value", 13, "text-amm-min-piler-value");
         maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
-        y = oy + 2;
+        y = oy + 1;
         var nx = x + maxWidth + 5f;
-        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigDispenserChargePower, new AutoConfigDispenserChargePowerMapper(), "G", 150f, -100f);
-        y += 24f;
-        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigDispenserCourierCount, new MyWindow.RangeValueMapper<int>(0, 10), "G", 150f, -100f);
-        y += 48f;
-        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigPLSChargePower, new AutoConfigPLSChargePowerMapper(), "G", 150f, -100f);
-        y += 24f;
-        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigPLSMaxTripDrone, new MyWindow.RangeValueMapper<int>(1, 180), "0 °", 150f, -100f);
-        y += 24f;
-        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigPLSDroneMinDeliver, new AutoConfigCarrierMinDeliverMapper(), "G", 150f, -100f);
-        y += 24f;
-        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigPLSMinPilerValue, new AutoConfigMinPilerValueMapper(), "G", 150f, -100f);
-        y += 24f;
-        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigPLSDroneCount, new MyWindow.RangeValueMapper<int>(0, 50), "G", 150f, -100f);
-        y += 48f;
-        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigILSChargePower, new AutoConfigILSChargePowerMapper(), "G", 150f, -100f);
-        y += 24f;
-        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigILSMaxTripDrone, new MyWindow.RangeValueMapper<int>(1, 180), "0 °", 150f, -100f);
-        y += 24f;
-        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigILSMaxTripShip, new AutoConfigILSMaxTripShipMapper(), "G", 150f, -100f);
-        y += 24f;
-        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigILSWarperDistance, new AutoConfigILSWarperDistanceMapper(), "G", 150f, -100f);
-        y += 24f;
-        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigILSDroneMinDeliver, new AutoConfigCarrierMinDeliverMapper(), "G", 150f, -100f);
-        y += 24f;
-        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigILSShipMinDeliver, new AutoConfigCarrierMinDeliverMapper(), "G", 150f, -100f);
-        y += 24f;
-        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigILSMinPilerValue, new AutoConfigMinPilerValueMapper(), "G", 150f, -100f);
-        y += 24f;
-        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigILSDroneCount, new MyWindow.RangeValueMapper<int>(0, 100), "G", 150f, -100f);
-        y += 24f;
-        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigILSShipCount, new MyWindow.RangeValueMapper<int>(0, 10), "G", 150f, -100f);
-        y += 48f;
-        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigVeinCollectorHarvestSpeed, new MyWindow.RangeValueMapper<int>(0, 20), "G", 150f, -100f);
-        y += 24f;
-        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigVeinCollectorMinPilerValue, new AutoConfigMinPilerValueMapper(), "G", 150f, -100f);
+        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigDispenserChargePower, new AutoConfigDispenserChargePowerMapper(), "G", 150f, -100f).WithFontSize(13);
+        y += 18f;
+        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigDispenserCourierCount, new MyWindow.RangeValueMapper<int>(0, 10), "G", 150f, -100f).WithFontSize(13);
+        y += 36f;
+        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigPLSChargePower, new AutoConfigPLSChargePowerMapper(), "G", 150f, -100f).WithFontSize(13);
+        y += 18f;
+        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigPLSMaxTripDrone, new MyWindow.RangeValueMapper<int>(1, 180), "0°", 150f, -100f).WithFontSize(13);
+        y += 18f;
+        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigPLSDroneMinDeliver, new AutoConfigCarrierMinDeliverMapper(), "G", 150f, -100f).WithFontSize(13);
+        y += 18f;
+        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigPLSMinPilerValue, new AutoConfigMinPilerValueMapper(), "G", 150f, -100f).WithFontSize(13);
+        y += 18f;
+        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigPLSDroneCount, new MyWindow.RangeValueMapper<int>(0, 50), "G", 150f, -100f).WithFontSize(13);
+        y += 36f;
+        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigILSChargePower, new AutoConfigILSChargePowerMapper(), "G", 150f, -100f).WithFontSize(13);
+        y += 18f;
+        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigILSMaxTripDrone, new MyWindow.RangeValueMapper<int>(1, 180), "0°", 150f, -100f).WithFontSize(13);
+        y += 18f;
+        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigILSMaxTripShip, new AutoConfigILSMaxTripShipMapper(), "G", 150f, -100f).WithFontSize(13);
+        y += 18f;
+        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigILSWarperDistance, new AutoConfigILSWarperDistanceMapper(), "G", 150f, -100f).WithFontSize(13);
+        y += 18f;
+        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigILSDroneMinDeliver, new AutoConfigCarrierMinDeliverMapper(), "G", 150f, -100f).WithFontSize(13);
+        y += 18f;
+        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigILSShipMinDeliver, new AutoConfigCarrierMinDeliverMapper(), "G", 150f, -100f).WithFontSize(13);
+        y += 18f;
+        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigILSMinPilerValue, new AutoConfigMinPilerValueMapper(), "G", 150f, -100f).WithFontSize(13);
+        y += 18f;
+        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigILSDroneCount, new MyWindow.RangeValueMapper<int>(0, 100), "G", 150f, -100f).WithFontSize(13);
+        y += 18f;
+        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigILSShipCount, new MyWindow.RangeValueMapper<int>(0, 10), "G", 150f, -100f).WithFontSize(13);
+        y += 36f;
+        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigVeinCollectorHarvestSpeed, new AutoConfigVeinCollectorHarvestSpeedMapper(), "G", 150f, -100f).WithFontSize(13);
+        y += 18f;
+        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigVeinCollectorMinPilerValue, new AutoConfigMinPilerValueMapper(), "G", 150f, -100f).WithFontSize(13);
         x = 0f;
 
         var tab4 = wnd.AddTab(trans, "Player/Mecha");

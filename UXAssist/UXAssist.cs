@@ -150,10 +150,8 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
             "Dismantle blueprint selected buildings");
         LogisticsPatch.AutoConfigLogisticsEnabled = Config.Bind("Factory", "AutoConfigLogistics", false,
             "Auto-config logistic stations");
-        LogisticsPatch.AutoConfigDispenserChargePower = Config.Bind("Factory", "AutoConfigDispenserChargePower", 30, new ConfigDescription("Dispenser: Max. Charging Power", new AcceptableValueRange<int>(3, 30)));
-        LogisticsPatch.AutoConfigDispenserCourierCount = Config.Bind("Factory", "AutoConfigDispenserCourierCount", 10, new ConfigDescription("Dispenser: Count of Bots auto-filled", new AcceptableValueRange<int>(0, 10)));
-        LogisticsPatch.AutoConfigDispenserAutoGuess = Config.Bind("Factory", "AutoConfigDispenserAutoGuess", false,
-            "Dispenser: Auto guess dispenser filter");
+        LogisticsPatch.AutoConfigDispenserChargePower = Config.Bind("Factory", "AutoConfigDispenserChargePower", 30, new ConfigDescription("LD: Max. Charging Power", new AcceptableValueRange<int>(3, 30)));
+        LogisticsPatch.AutoConfigDispenserCourierCount = Config.Bind("Factory", "AutoConfigDispenserCourierCount", 10, new ConfigDescription("LD: Count of Bots auto-filled", new AcceptableValueRange<int>(0, 10)));
         LogisticsPatch.AutoConfigPLSChargePower = Config.Bind("Factory", "AutoConfigPLSChargePower", 4, new ConfigDescription("PLS: Max. Charging Power", new AcceptableValueRange<int>(2, 20)));
         LogisticsPatch.AutoConfigPLSMaxTripDrone = Config.Bind("Factory", "AutoConfigPLSMaxTripDrone", 180, new ConfigDescription("PLS: Drone transport range", new AcceptableValueRange<int>(1, 180)));
         LogisticsPatch.AutoConfigPLSDroneMinDeliver = Config.Bind("Factory", "AutoConfigPLSDroneMinDeliver", 10, new ConfigDescription("PLS: Min. Load of Drones", new AcceptableValueRange<int>(0, 10)));
@@ -166,9 +164,9 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
         LogisticsPatch.AutoConfigILSDroneMinDeliver = Config.Bind("Factory", "AutoConfigILSDroneMinDeliver", 10, new ConfigDescription("ILS: Min. Load of Drones", new AcceptableValueRange<int>(0, 10)));
         LogisticsPatch.AutoConfigILSShipMinDeliver = Config.Bind("Factory", "AutoConfigILSShipMinDeliver", 10, new ConfigDescription("ILS: Min. Load of Vessels", new AcceptableValueRange<int>(0, 10)));
         LogisticsPatch.AutoConfigILSMinPilerValue = Config.Bind("Factory", "AutoConfigILSMinPilerValue", 0, new ConfigDescription("ILS: Outgoing integration count", new AcceptableValueRange<int>(0, 4)));
-        LogisticsPatch.AutoConfigILSIncludeOrbitCollector = Config.Bind("Factory", "AutoConfigILSIncludeOrbitCollector", false,
+        LogisticsPatch.AutoConfigILSIncludeOrbitCollector = Config.Bind("Factory", "AutoConfigILSIncludeOrbitCollector", true,
             "ILS: Include Orbital Collector");
-        LogisticsPatch.AutoConfigILSWarperNecessary = Config.Bind("Factory", "AutoConfigILSWarperNecessary", false,
+        LogisticsPatch.AutoConfigILSWarperNecessary = Config.Bind("Factory", "AutoConfigILSWarperNecessary", true,
             "ILS: Warpers required");
         LogisticsPatch.AutoConfigILSDroneCount = Config.Bind("Factory", "AutoConfigILSDroneCount", 20, new ConfigDescription("ILS: Count of Drones auto-filled", new AcceptableValueRange<int>(0, 100)));
         LogisticsPatch.AutoConfigILSShipCount = Config.Bind("Factory", "AutoConfigILSShipCount", 10, new ConfigDescription("ILS: Count of Vessels auto-filled", new AcceptableValueRange<int>(0, 10)));

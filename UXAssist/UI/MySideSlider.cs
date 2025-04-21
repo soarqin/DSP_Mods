@@ -127,6 +127,12 @@ public class MySideSlider : MonoBehaviour
         return this;
     }
 
+    public MySideSlider WithFontSize(int fontSize)
+    {
+        labelText.fontSize = fontSize;
+        return this;
+    }
+
     public MySideSlider WithEnable(bool on)
     {
         SetEnable(on);
