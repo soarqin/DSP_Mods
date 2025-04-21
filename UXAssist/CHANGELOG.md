@@ -21,6 +21,10 @@
     - Add a shortcut key to always show all star names in starmap when holding, default is `Alt`
     - Add a shortcut key to toggle between three star name display states in starmap: `Original state`, `Show all names`, `Hide all names`, default is `Tab`, will restore to original state when closing starmap
   + `Cut conveyor belt`: Fix a bug that entity logic connection is not cut so that belt is not cut off on copying as a blueprint.
+
+<details>
+<summary>Older versions</summary>
+
 * 1.2.18
   + `Protect veins from exhaustion`: Optimized implementation, now veins will not be protected once you have upgrade `Veins Utilization` to level 390+, while the cost rate becomes absolute 0.
   + `Night Sunlight`: Fix bugs that sunlight angle is not updated as expected.
@@ -33,10 +37,6 @@
   + New feature: `Profile based option`
     - Option file is stored as `Options\<ProfileName>.xml`.
   + Fix compatibility with game update 0.10.32.25779
-
-<details>
-<summary>Older versions</summary>
-
 * 1.2.15
   + `Off-grid building and stepped rotation`: Fix compatibility with DSP 0.10.32.25682. (#57)
   + `Enhanced control for logistic storage limits`: Try to fix possible crash. (#54)
@@ -293,6 +293,10 @@
     - 新增一个快捷键，按住后始终在星图显示所有星系名称，默认为`Alt`
     - 新增一个快捷键，在星图视图切换三种星系名称显示状态：`原始显示状态`，`显示所有名称`，`隐藏所有名称`，默认为`Tab`，关闭星图时会恢复到原始状态
   + `切割传送带`：修复了实体逻辑连接未切断导致复制为蓝图时传送带未被切断的问题。
+
+<details>
+<summary>Older versions</summary>
+
 * 1.2.18
   + `保护矿脉不会耗尽`：优化实现，当`矿物利用`升级到390级以上时消耗速度变为0时，矿脉将不再被保护。
   + `夜间日光灯`：修复了光照角度未正确更新的问题。
@@ -305,10 +309,6 @@
   + 新功能：`基于mod管理器配置档案名`
     - 选项文件存储在`Options\<ProfileName>.xml`中
   + 修复了与游戏更新0.10.32.25779的兼容性
-
-<details>
-<summary>Older versions</summary>
-
 * 1.2.15
   + `脱离网格建造和小角度旋转`：修复了与0.10.32.25682的兼容性 (#57)
   + `物流塔存储数量限制控制改进`：修复了可能导致崩溃的问题 (#54)
