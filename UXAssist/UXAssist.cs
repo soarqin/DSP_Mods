@@ -9,7 +9,6 @@ using CommonAPI.Systems;
 using crecheng.DSPModSave;
 using HarmonyLib;
 using UnityEngine;
-using UnityEngine.UI;
 using UXAssist.Common;
 using UXAssist.Functions;
 using UXAssist.Patches;
@@ -27,10 +26,6 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
     public new static readonly ManualLogSource Logger =
         BepInEx.Logging.Logger.CreateLogSource(PluginInfo.PLUGIN_NAME);
 
-    private static bool _configWinInitialized;
-    private static MyConfigWindow _configWin;
-    private static bool _initialized;
-    private static PressKeyBind _toggleKey;
     private static ConfigFile _dummyConfig;
     private Type[] _patches, _compats;
 
@@ -61,13 +56,6 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
         {
             SaveOnConfigSet = false
         };
-        _toggleKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
-        {
-            key = new CombineKey((int)KeyCode.BackQuote, CombineKey.ALT_COMB, ECombineKeyAction.OnceClick, false),
-            conflictGroup = KeyBindConflict.MOVEMENT | KeyBindConflict.FLYING | KeyBindConflict.SAILING | KeyBindConflict.BUILD_MODE_1 | KeyBindConflict.KEYBOARD_KEYBIND,
-            name = "OpenUXAssistConfigWindow",
-            canOverride = true
-        });
         GamePatch.EnableWindowResizeEnabled = Config.Bind("Game", "EnableWindowResize", false,
             "Enable game window resize (maximum box and thick frame)");
         GamePatch.LoadLastWindowRectEnabled = Config.Bind("Game", "LoadLastWindowRect", false,
@@ -208,7 +196,6 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
 
         I18N.Init();
         I18N.Add("UXAssist Config", "UXAssist Config", "UX助手设置");
-        I18N.Add("KEYOpenUXAssistConfigWindow", "[UXA] Open UXAssist Config Window", "[UXA] 打开UX助手设置面板");
 
         // UI Patches
         GameLogic.Enable(true);
@@ -222,14 +209,12 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
         _compats?.Do(type => type.GetMethod("Init")?.Invoke(null, null));
 
         I18N.Apply();
-        I18N.OnInitialized += RecreateConfigWindow;
     }
 
     private void Start()
     {
         MyWindowManager.InitBaseObjects();
         MyWindowManager.Enable(true);
-        UIPatch.Enable(true);
 
         _patches?.Do(type => type.GetMethod("Start")?.Invoke(null, null));
 
@@ -248,148 +233,11 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
 
     private void Update()
     {
+        LogisticsPatch.OnUpdate();
         if (VFInput.inputing) return;
-        if (VFInput.onGUI)
-        {
-            LogisticsPatch.LogisticsCapacityTweaks.UpdateInput();
-        }
-        if (_toggleKey.keyValue)
-        {
-            ToggleConfigWindow();
-        }
+        UIFunctions.OnUpdate();
         GamePatch.OnUpdate();
         FactoryPatch.OnUpdate();
         PlayerPatch.OnUpdate();
-        LogisticsPatch.OnUpdate();
-    }
-
-    private static void ToggleConfigWindow()
-    {
-        if (!_configWinInitialized)
-        {
-            if (!I18N.Initialized()) return;
-            _configWinInitialized = true;
-            _configWin = MyConfigWindow.CreateInstance();
-        }
-
-        if (_configWin.active)
-        {
-            _configWin._Close();
-        }
-        else
-        {
-            _configWin.Open();
-        }
-    }
-
-    private static void RecreateConfigWindow()
-    {
-        if (!_configWinInitialized) return;
-        var wasActive = _configWin.active;
-        if (wasActive) _configWin._Close();
-        MyConfigWindow.DestroyInstance(_configWin);
-        _configWinInitialized = false;
-        if (wasActive) ToggleConfigWindow();
-    }
-
-    [PatchGuid(PluginInfo.PLUGIN_GUID)]
-    private class UIPatch: PatchImpl<UIPatch>
-    {
-        private static GameObject _buttonOnPlanetGlobe;
-
-        protected override void OnEnable()
-        {
-            InitMenuButtons();
-        }
-
-        private static void InitMenuButtons()
-        {
-            if (_initialized) return;
-            var uiRoot = UIRoot.instance;
-            if (!uiRoot) return;
-            {
-                var mainMenu = uiRoot.uiMainMenu;
-                var src = mainMenu.newGameButton;
-                var parent = src.transform.parent;
-                var btn = Instantiate(src, parent);
-                btn.name = "button-uxassist-config";
-                var l = btn.text.GetComponent<Localizer>();
-                if (l != null)
-                {
-                    l.stringKey = "UXAssist Config";
-                    l.translation = "UXAssist Config".Translate();
-                }
-
-                btn.text.text = "UXAssist Config".Translate();
-                btn.text.fontSize = btn.text.fontSize * 7 / 8;
-                I18N.OnInitialized += () => { btn.text.text = "UXAssist Config".Translate(); };
-                var vec = ((RectTransform)mainMenu.exitButton.transform).anchoredPosition3D;
-                var vec2 = ((RectTransform)mainMenu.creditsButton.transform).anchoredPosition3D;
-                var transform1 = (RectTransform)btn.transform;
-                transform1.anchoredPosition3D = new Vector3(vec.x, vec.y + (vec.y - vec2.y) * 2, vec.z);
-                btn.button.onClick.RemoveAllListeners();
-                btn.button.onClick.AddListener(ToggleConfigWindow);
-            }
-            {
-                var panel = uiRoot.uiGame.planetGlobe;
-                var src = panel.button2;
-                var sandboxMenu = uiRoot.uiGame.sandboxMenu;
-                var icon = sandboxMenu.categoryButtons[6].transform.Find("icon")?.GetComponent<Image>()?.sprite;
-                var b = Instantiate(src, src.transform.parent);
-                _buttonOnPlanetGlobe = b.gameObject;
-                var rect = (RectTransform)_buttonOnPlanetGlobe.transform;
-                var btn = _buttonOnPlanetGlobe.GetComponent<UIButton>();
-                var img = _buttonOnPlanetGlobe.transform.Find("button-2/icon")?.GetComponent<Image>();
-                if (img != null)
-                {
-                    img.sprite = icon;
-                }
-
-                if (_buttonOnPlanetGlobe != null && btn != null)
-                {
-                    _buttonOnPlanetGlobe.name = "open-uxassist-config";
-                    rect.localScale = new Vector3(0.6f, 0.6f, 0.6f);
-                    rect.anchoredPosition3D = new Vector3(64f, -5f, 0f);
-                    b.onClick.RemoveAllListeners();
-                    btn.onClick += _ => { ToggleConfigWindow(); };
-                    btn.tips.tipTitle = "UXAssist Config";
-                    I18N.OnInitialized += () => { btn.tips.tipTitle = "UXAssist Config".Translate(); };
-                    btn.tips.tipText = null;
-                    btn.tips.corner = 9;
-                    btn.tips.offset = new Vector2(-20f, -20f);
-                    _buttonOnPlanetGlobe.SetActive(true);
-                }
-            }
-            /*
-            {
-                var cb = MySmallComboBox.CreateComboBox(125, 0, uiRoot.uiGame.starmap.transform as RectTransform, true).WithItems("显示原始名称", "显示星球类型+距离");
-                cb.SetIndex(0);
-            }
-            */
-            _initialized = true;
-        }
-
-        // Add config button to main menu
-        [HarmonyPostfix, HarmonyPatch(typeof(UIRoot), nameof(UIRoot._OnOpen))]
-        public static void UIRoot__OnOpen_Postfix()
-        {
-            InitMenuButtons();
-        }
-
-        [HarmonyPostfix]
-        [HarmonyPatch(typeof(UIPlanetGlobe), nameof(UIPlanetGlobe.DistributeButtons))]
-        private static void UIPlanetGlobe_DistributeButtons_Postfix(UIPlanetGlobe __instance)
-        {
-            if (_buttonOnPlanetGlobe == null) return;
-            var rect = (RectTransform)_buttonOnPlanetGlobe.transform;
-            if (__instance.dysonSphereSystemUnlocked || __instance.logisticsSystemUnlocked)
-            {
-                rect.anchoredPosition3D = new Vector3(64f, -5f, 0f);
-            }
-            else
-            {
-                rect.anchoredPosition3D = new Vector3(128f, -100f, 0f);
-            }
-        }
     }
 }

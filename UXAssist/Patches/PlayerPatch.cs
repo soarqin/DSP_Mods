@@ -70,10 +70,7 @@ public static class PlayerPatch
 
     public static void OnUpdate()
     {
-        if (_toggleAllStarsNameKey.keyValue)
-        {
-            ShortcutKeysForStarsName.ToggleAllStarsName();
-        }
+        ShortcutKeysForStarsName.OnUpdate();
         if (_autoDriveKey.keyValue)
         {
             AutoNavigation.ToggleAutoCruise();
@@ -156,10 +153,26 @@ public static class PlayerPatch
     public class ShortcutKeysForStarsName: PatchImpl<ShortcutKeysForStarsName>
     {
         private static int _showAllStarsNameStatus;
+        private static bool _forceShowAllStarsName;
+        private static bool _forceShowAllStarsNameExternal;
 
         public static void ToggleAllStarsName()
         {
             _showAllStarsNameStatus = (_showAllStarsNameStatus + 1) % 3;
+        }
+
+        public static void SetForceShowAllStarsNameExternal(bool value)
+        {
+            _forceShowAllStarsNameExternal = value;
+        }
+
+        public static void OnUpdate()
+        {
+            if (_toggleAllStarsNameKey.keyValue)
+            {
+                ToggleAllStarsName();
+            }
+            _forceShowAllStarsName = _forceShowAllStarsNameExternal || _showAllStarsNameKey.IsKeyPressing();
         }
 
         [HarmonyPostfix]
@@ -189,8 +202,7 @@ public static class PlayerPatch
                 new CodeInstruction(OpCodes.Ldc_I4_1),
                 new CodeInstruction(OpCodes.Ceq),
                 new CodeInstruction(OpCodes.Brtrue, jumpPos.Value),
-                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(PlayerPatch), nameof(_showAllStarsNameKey))),
-                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(KeyBindings), nameof(KeyBindings.IsKeyPressing))),
+                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(PlayerPatch.ShortcutKeysForStarsName), nameof(_forceShowAllStarsName))),
                 new CodeInstruction(OpCodes.Brtrue, jumpPos.Value),
                 new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(ShortcutKeysForStarsName), nameof(_showAllStarsNameStatus))),
                 new CodeInstruction(OpCodes.Ldc_I4_2),

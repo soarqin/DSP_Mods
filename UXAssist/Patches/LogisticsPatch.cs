@@ -89,6 +89,10 @@ public static class LogisticsPatch
         {
             RealtimeLogisticsInfoPanel.StationInfoPanelsUpdate();
         }
+        if (LogisticsCapacityTweaksEnabled.Value && VFInput.onGUI && !VFInput.inputing)
+        {
+            LogisticsCapacityTweaks.UpdateInput();
+        }
     }
 
     private class AutoConfigLogistics: PatchImpl<AutoConfigLogistics>

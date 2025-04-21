@@ -245,13 +245,13 @@ public class MyWindow : ManualBehaviour
         return comboBox;
     }
 
-    // public MySmallComboBox AddSmallComboBox(float x, float y, RectTransform parent, int fontSize = 15)
-    // {
-    //     var comboBox = MySmallComboBox.CreateComboBox(x, y, parent).WithFontSize(fontSize);
-    //     _maxX = Math.Max(_maxX, x + comboBox.Width);
-    //     MaxY = Math.Max(MaxY, y + comboBox.Height);
-    //     return comboBox;
-    // }
+    public MyCornerComboBox AddCornerComboBox(float x, float y, RectTransform parent, int fontSize = 15)
+    {
+        var comboBox = MyCornerComboBox.CreateComboBox(x, y, parent).WithFontSize(fontSize);
+        _maxX = Math.Max(_maxX, x + comboBox.Width);
+        MaxY = Math.Max(MaxY, y + comboBox.Height);
+        return comboBox;
+    }
 
 #region Slider
     public class ValueMapper<T>
@@ -566,7 +566,7 @@ public abstract class MyWindowManager
         MyWindow.InitBaseObject();
         MyCheckBox.InitBaseObject();
         MyComboBox.InitBaseObject();
-        // MySmallComboBox.InitBaseObject();
+        MyCornerComboBox.InitBaseObject();
     }
 
     public static T CreateWindow<T>(string name, string title = "") where T : MyWindow
