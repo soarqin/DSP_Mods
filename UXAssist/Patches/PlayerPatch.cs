@@ -168,6 +168,7 @@ public static class PlayerPatch
 
         public static void OnUpdate()
         {
+            if (!UIRoot.instance.uiGame.starmap.active) return;
             if (_toggleAllStarsNameKey.keyValue)
             {
                 ToggleAllStarsName();
@@ -175,9 +176,9 @@ public static class PlayerPatch
             _forceShowAllStarsName = _forceShowAllStarsNameExternal || _showAllStarsNameKey.IsKeyPressing();
         }
 
-        [HarmonyPostfix]
-        [HarmonyPatch(typeof(UIStarmap), nameof(UIStarmap._OnClose))]
-        private static void UIStarmap__OnClose_Postfix()
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(UIStarmap), nameof(UIStarmap._OnOpen))]
+        private static void UIStarmap__OnOpen_Prefix()
         {
             _showAllStarsNameStatus = 0;
         }

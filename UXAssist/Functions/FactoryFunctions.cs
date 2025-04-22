@@ -33,14 +33,15 @@ public static class FactoryFunctions
         List<int> buildPreviewsToRemove = [];
         foreach (var buildPreview in blueprintCopyTool.bpPool)
         {
-            if (buildPreview?.item == null || buildPreview.objId <= 0) continue;
+            if (buildPreview?.item == null) continue;
+            var objId = buildPreview.objId;
+            if (objId == 0) continue;
             int index;
-            if ((index = buildPreviewsToRemove.BinarySearch(buildPreview.objId)) < 0)
-                buildPreviewsToRemove.Insert(~index, buildPreview.objId);
+            if ((index = buildPreviewsToRemove.BinarySearch(objId)) < 0)
+                buildPreviewsToRemove.Insert(~index, objId);
             var isBelt = buildPreview.desc.isBelt;
             var isInserter = buildPreview.desc.isInserter;
             if (isInserter) continue;
-            var objId = buildPreview.objId;
             if (isBelt)
             {
                 var needCheck = false;
@@ -86,7 +87,6 @@ public static class FactoryFunctions
         {
             build.DoDismantleObject(objId);
         }
-        buildPreviewsToRemove = null;
         blueprintCopyTool.ClearSelection();
         blueprintCopyTool.ClearPreSelection();
         blueprintCopyTool.ResetBlueprint();
