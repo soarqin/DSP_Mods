@@ -126,7 +126,7 @@ public class GamePatch : PatchImpl<GamePatch>
         ConvertSavesFromPeace.Enable(false);
     }
 
-    public static void OnUpdate()
+    public static void OnInputUpdate()
     {
         if (!_enableGameUpsFactor) return;
         if (_speedDownKey.keyValue)

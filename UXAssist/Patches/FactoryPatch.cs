@@ -109,7 +109,6 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         BeltSignalsForBuyOutEnabled.SettingChanged += (_, _) => BeltSignalsForBuyOut.Enable(BeltSignalsForBuyOutEnabled.Value);
         TankFastFillInAndTakeOutEnabled.SettingChanged += (_, _) => TankFastFillInAndTakeOut.Enable(TankFastFillInAndTakeOutEnabled.Value);
         TankFastFillInAndTakeOutMultiplier.SettingChanged += (_, _) => UpdateTankFastFillInAndTakeOutMultiplierRealValue();
-        CutConveyorBeltEnabled.SettingChanged += (_, _) => CutConveyorBelt.Enable(CutConveyorBeltEnabled.Value);
         TweakBuildingBufferEnabled.SettingChanged += (_, _) => TweakBuildingBuffer.Enable(TweakBuildingBufferEnabled.Value);
         AssemblerBufferTimeMultiplier.SettingChanged += (_, _) => TweakBuildingBuffer.RefreshAssemblerBufferMultipliers();
         AssemblerBufferMininumMultiplier.SettingChanged += (_, _) => TweakBuildingBuffer.RefreshAssemblerBufferMultipliers();
@@ -135,7 +134,6 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         DragBuildPowerPoles.Enable(DragBuildPowerPolesEnabled.Value);
         BeltSignalsForBuyOut.Enable(BeltSignalsForBuyOutEnabled.Value);
         TankFastFillInAndTakeOut.Enable(TankFastFillInAndTakeOutEnabled.Value);
-        CutConveyorBelt.Enable(CutConveyorBeltEnabled.Value);
         TweakBuildingBuffer.Enable(TweakBuildingBufferEnabled.Value);
 
         Enable(true);
@@ -147,7 +145,6 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         Enable(false);
 
         TweakBuildingBuffer.Enable(false);
-        CutConveyorBelt.Enable(false);
         TankFastFillInAndTakeOut.Enable(false);
         BeltSignalsForBuyOut.Enable(false);
         DragBuildPowerPoles.Enable(false);
@@ -171,10 +168,20 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         _tankFastFillInAndTakeOutMultiplierRealValue = Mathf.Max(1, TankFastFillInAndTakeOutMultiplier.Value) * 2;
     }
 
-    public static void OnUpdate()
+    public static void OnInputUpdate()
     {
         if (_doNotRenderEntitiesKey.keyValue)
             DoNotRenderEntitiesEnabled.Value = !DoNotRenderEntitiesEnabled.Value;
+        if (CutConveyorBeltEnabled.Value && _cutConveyorBeltKey.keyValue)
+        {
+            var raycast = GameMain.mainPlayer.controller?.cmd.raycast;
+            int beltId;
+            if (raycast != null && raycast.castEntity.id > 0 && (beltId = raycast.castEntity.beltId) > 0)
+            {
+                var cargoTraffic = raycast.planet.factory.cargoTraffic;
+                Functions.FactoryFunctions.CutConveyorBelt(cargoTraffic, beltId);
+            }
+        }
         if (DismantleBlueprintSelectionEnabled.Value && _dismantleBlueprintSelectionKey.keyValue)
             Functions.FactoryFunctions.DismantleBlueprintSelectedBuildings();
     }
@@ -1989,23 +1996,6 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                 tankComponent.fluidInc += takeInc;
             }
             return false;
-        }
-    }
-
-    private class CutConveyorBelt : PatchImpl<CutConveyorBelt>
-    {
-        [HarmonyPostfix]
-        [HarmonyPatch(typeof(PlayerController), nameof(PlayerController.GameTick))]
-        private static void PlayerController_GameTick_Postfix(PlayerController __instance)
-        {
-            if (!_cutConveyorBeltKey.keyValue) return;
-            var raycast = __instance.cmd.raycast;
-            if (raycast == null) return;
-            if (raycast.castEntity.id <= 0) return;
-            int beltId;
-            if ((beltId = raycast.castEntity.beltId) <= 0) return;
-            var cargoTraffic = raycast.planet.factory.cargoTraffic;
-            Functions.FactoryFunctions.CutConveyorBelt(cargoTraffic, beltId);
         }
     }
 

@@ -68,9 +68,9 @@ public static class PlayerPatch
         AutoNavigation.Enable(AutoNavigationEnabled.Value);
     }
 
-    public static void OnUpdate()
+    public static void OnInputUpdate()
     {
-        ShortcutKeysForStarsName.OnUpdate();
+        ShortcutKeysForStarsName.OnInputUpdate();
         if (_autoDriveKey.keyValue)
         {
             AutoNavigation.ToggleAutoCruise();
@@ -166,7 +166,7 @@ public static class PlayerPatch
             _forceShowAllStarsNameExternal = value;
         }
 
-        public static void OnUpdate()
+        public static void OnInputUpdate()
         {
             if (!UIRoot.instance.uiGame.starmap.active) return;
             if (_toggleAllStarsNameKey.keyValue)

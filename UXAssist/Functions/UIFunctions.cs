@@ -6,6 +6,7 @@ using CommonAPI.Systems;
 using UnityEngine;
 using UnityEngine.UI;
 using System;
+using System.Linq;
 
 public static class UIFunctions
 {
@@ -15,6 +16,7 @@ public static class UIFunctions
     private static MyConfigWindow _configWin;
     private static GameObject _buttonOnPlanetGlobe;
     private static int _cornerComboBoxIndex;
+    private static string[] _starOrderNames;
 
     public static void Init()
     {
@@ -27,9 +29,25 @@ public static class UIFunctions
         });
         I18N.Add("KEYOpenUXAssistConfigWindow", "[UXA] Open UXAssist Config Window", "[UXA] 打开UX助手设置面板");
         I18N.OnInitialized += RecreateConfigWindow;
+        GameLogic.OnGameBegin += () =>
+        {
+            var galaxy = GameMain.data.galaxy;
+            _starOrderNames = new string[galaxy.starCount];
+            StarData[] stars = [..galaxy.stars.Where(star => star != null)];
+            Array.Sort(stars, (a, b) =>
+            {
+                int res = a.position.sqrMagnitude.CompareTo(b.position.sqrMagnitude);
+                if (res != 0) return res;
+                return a.index.CompareTo(b.index);
+            });
+        };
+        GameLogic.OnGameEnd += () =>
+        {
+            _starOrderNames = null;
+        };
     }
 
-    public static void OnUpdate()
+    public static void OnInputUpdate()
     {
         if (_toggleKey.keyValue)
         {
@@ -162,18 +180,11 @@ public static class UIFunctions
 
     public static void UpdateStarmapStarNames()
     {
-        var galaxy = GameMain.data.galaxy;
-        string[] starOrderNames = null;
         if (_cornerComboBoxIndex > 0)
         {
-            starOrderNames = new string[galaxy.starCount];
-            StarData[] stars = new StarData[galaxy.starCount];
-            for (int i = 0; i < galaxy.starCount; i++)
-            {
-                stars[i] = galaxy.stars[i];
-            }
-            Array.Sort(stars, (a, b) => a.position.sqrMagnitude.CompareTo(b.position.sqrMagnitude));
             int[] spectrCount = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+            var galaxy = GameMain.data.galaxy;
+            StarData[] stars = new StarData[galaxy.starCount];
             for (int i = 0; i < galaxy.starCount; i++)
             {
                 var star = stars[i];
@@ -184,39 +195,39 @@ public static class UIFunctions
                         switch (star.spectr)
                         {
                             case ESpectrType.M:
-                                starOrderNames[index] = String.Format("M{0}", ++spectrCount[0]);
+                                _starOrderNames[index] = String.Format("M{0}", ++spectrCount[0]);
                                 break;
                             case ESpectrType.K:
-                                starOrderNames[index] = String.Format("K{0}", ++spectrCount[1]);
+                                _starOrderNames[index] = String.Format("K{0}", ++spectrCount[1]);
                                 break;
                             case ESpectrType.G:
-                                starOrderNames[index] = String.Format("G{0}", ++spectrCount[2]);
+                                _starOrderNames[index] = String.Format("G{0}", ++spectrCount[2]);
                                 break;
                             case ESpectrType.F:
-                                starOrderNames[index] = String.Format("F{0}", ++spectrCount[3]);
+                                _starOrderNames[index] = String.Format("F{0}", ++spectrCount[3]);
                                 break;
                             case ESpectrType.A:
-                                starOrderNames[index] = String.Format("A{0}", ++spectrCount[4]);
+                                _starOrderNames[index] = String.Format("A{0}", ++spectrCount[4]);
                                 break;
                             case ESpectrType.B:
-                                starOrderNames[index] = String.Format("B{0}", ++spectrCount[5]);
+                                _starOrderNames[index] = String.Format("B{0}", ++spectrCount[5]);
                                 break;
                             case ESpectrType.O:
-                                starOrderNames[index] = String.Format("O{0}", ++spectrCount[6]);
+                                _starOrderNames[index] = String.Format("O{0}", ++spectrCount[6]);
                                 break;
                         }
                         break;
                     case EStarType.GiantStar:
-                        starOrderNames[index] = String.Format("GS{0}", ++spectrCount[7]);
+                        _starOrderNames[index] = String.Format("GS{0}", ++spectrCount[7]);
                         break;
                     case EStarType.WhiteDwarf:
-                        starOrderNames[index] = String.Format("WD{0}", ++spectrCount[8]);
+                        _starOrderNames[index] = String.Format("WD{0}", ++spectrCount[8]);
                         break;
                     case EStarType.NeutronStar:
-                        starOrderNames[index] = String.Format("NS{0}", ++spectrCount[9]);
+                        _starOrderNames[index] = String.Format("NS{0}", ++spectrCount[9]);
                         break;
                     case EStarType.BlackHole:
-                        starOrderNames[index] = String.Format("BH{0}", ++spectrCount[10]);
+                        _starOrderNames[index] = String.Format("BH{0}", ++spectrCount[10]);
                         break;
                 }
             }
@@ -228,21 +239,21 @@ public static class UIFunctions
             switch (_cornerComboBoxIndex)
             {
                 case 1:
-                    starUI.nameText.text = String.Format("{0}-{1:0.00LY}", starOrderNames[star.index], GetStarDist(star));
+                    starUI.nameText.text = String.Format("{0}-{1:0.00}", _starOrderNames[star.index], GetStarDist(star));
                     break;
                 case 2:
                 {
                     var (nongas, total) = GetStarPlanetCount(star);
-                    starUI.nameText.text = String.Format("{0}-{1}-{2}", starOrderNames[star.index], nongas, total);
+                    starUI.nameText.text = String.Format("{0}-{1}-{2}", _starOrderNames[star.index], nongas, total);
                     break;
                 }
                 case 3:
-                    starUI.nameText.text = String.Format("{0}-{1}", starOrderNames[star.index], GetStarSpecialOres(star));
+                    starUI.nameText.text = String.Format("{0}-{1}", _starOrderNames[star.index], GetStarSpecialOres(star));
                     break;
                 case 4:
                 {
                     var (nongas, total) = GetStarPlanetCount(star);
-                    starUI.nameText.text = String.Format("{0}-{1:0.00LY}-{2}-{3}-{4}", starOrderNames[star.index], GetStarDist(star), GetStarSpecialOres(star), nongas, total);
+                    starUI.nameText.text = String.Format("{0}-{1:0.00}-{2}-{3}-{4}", _starOrderNames[star.index], GetStarDist(star), GetStarSpecialOres(star), nongas, total);
                     break;
                 }
                 default:

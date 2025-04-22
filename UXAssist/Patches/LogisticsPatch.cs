@@ -89,7 +89,11 @@ public static class LogisticsPatch
         {
             RealtimeLogisticsInfoPanel.StationInfoPanelsUpdate();
         }
-        if (LogisticsCapacityTweaksEnabled.Value && VFInput.onGUI && !VFInput.inputing)
+    }
+
+    public static void OnInputUpdate()
+    {
+        if (VFInput.onGUI && LogisticsCapacityTweaksEnabled.Value)
         {
             LogisticsCapacityTweaks.UpdateInput();
         }
