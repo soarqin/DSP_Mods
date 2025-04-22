@@ -1,5 +1,10 @@
 ## Changlog
 
+* 1.2.21
+  + `Cut conveyor belt`: Fix input issue.
+  + `Shortcut keys for showing stars`: Fix an issue that toggle key is read when Starmap View is not opened.
+  + `Dismantle blueprint selected buildings`: Fix an issue that preview buildings are not dismantled.
+  + Optimized some UI codes.
 * 1.2.20
   + New feature: `Dismantle blueprint selected buildings`
     - Press shortcut key in blueprint copy mode to dismantle selected buildings.
@@ -272,6 +277,11 @@
 
 ## 更新日志
 
+* 1.2.21
+  + `切割传送带`：修复了输入问题
+  + `启用显示所有星系名称的快捷键`：修复了在未打开星图视图时读取切换键的问题
+  + `拆除蓝图选中的建筑`：修复了预建造建筑未被拆除的问题
+  + 优化了一些UI代码
 * 1.2.20
   + 新功能：`拆除蓝图选中的建筑`
     - 在蓝图复制模式下按快捷键拆除选中的建筑
