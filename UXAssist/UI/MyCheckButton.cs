@@ -92,9 +92,9 @@ public class MyCheckButton : MonoBehaviour
             }
         }
 
-        cb.uiButton.onClick += cb.OnClick;
         cb._iconWidth = Mathf.Min(cb._iconWidth > 0f ? cb._iconWidth : 28f, rect.sizeDelta.y);
         cb.UpdateCheckColor();
+        cb.uiButton.onClick += cb.OnClick;
         return cb;
     }
 
@@ -202,6 +202,18 @@ public class MyCheckButton : MonoBehaviour
         {
             SetIcon(sprite);
         }
+        return this;
+    }
+
+    public MyCheckButton WithTip(string tip, float delay = 1f)
+    {
+        uiButton.tips.type = UIButton.ItemTipType.Other;
+        uiButton.tips.topLevel = true;
+        uiButton.tips.tipTitle = tip;
+        uiButton.tips.tipText = null;
+        uiButton.tips.delay = delay;
+        uiButton.tips.corner = 2;
+        uiButton.UpdateTip();
         return this;
     }
 

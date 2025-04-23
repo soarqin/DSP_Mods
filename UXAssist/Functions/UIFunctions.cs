@@ -7,9 +7,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using System;
 using System.Linq;
-using System.Runtime.Remoting.Messaging;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
 
 public static class UIFunctions
 {
@@ -20,7 +18,9 @@ public static class UIFunctions
     private static GameObject _buttonOnPlanetGlobe;
     private static int _cornerComboBoxIndex;
     private static string[] _starOrderNames;
+    private static bool _starmapFilterInitialized;
     private static bool _starFilterEnabled;
+    private static UI.MyCheckButton _starmapFilterToggler;
     public static bool[] ShowStarName;
 
     public static void Init()
@@ -39,7 +39,7 @@ public static class UIFunctions
             var galaxy = GameMain.data.galaxy;
             ShowStarName = new bool[galaxy.starCount];
             _starOrderNames = new string[galaxy.starCount];
-            StarData[] stars = [..galaxy.stars.Where(star => star != null)];
+            StarData[] stars = [.. galaxy.stars.Where(star => star != null)];
             Array.Sort(stars, (a, b) =>
             {
                 int res = a.position.sqrMagnitude.CompareTo(b.position.sqrMagnitude);
@@ -104,6 +104,12 @@ public static class UIFunctions
             _starOrderNames = null;
             ShowStarName = null;
         };
+    }
+
+    public static void OnUpdate()
+    {
+        if (!_starmapFilterInitialized || _starmapFilterToggler == null || _starmapFilterToggler.gameObject.activeSelf) return;
+        if (PlanetModelingManager.scnPlanetReqList.Count == 0) _starmapFilterToggler.gameObject.SetActive(true);
     }
 
     public static void OnInputUpdate()
@@ -199,18 +205,22 @@ public static class UIFunctions
             {
                 Functions.UIFunctions.CornerComboBoxIndex = index;
             };
-            var toggleButton = UI.MyCheckButton.CreateCheckButton(20, 0, rtrans, false, ">>").WithSize(20, 20);
+            _starmapFilterToggler = UI.MyCheckButton.CreateCheckButton(20, 0, rtrans, false, ">>").WithSize(20, 20);
             MyCheckButton[] buttons = [
-                UI.MyCheckButton.CreateCheckButton(40, 0, rtrans, false).WithIcon().WithSize(20, 20),
-                UI.MyCheckButton.CreateCheckButton(60, 0, rtrans, false).WithIcon().WithSize(20, 20),
-                UI.MyCheckButton.CreateCheckButton(80, 0, rtrans, false).WithIcon().WithSize(20, 20),
-                UI.MyCheckButton.CreateCheckButton(100, 0, rtrans, false).WithIcon().WithSize(20, 20),
-                UI.MyCheckButton.CreateCheckButton(120, 0, rtrans, false).WithIcon().WithSize(20, 20),
-                UI.MyCheckButton.CreateCheckButton(140, 0, rtrans, false).WithIcon().WithSize(20, 20),
-                UI.MyCheckButton.CreateCheckButton(160, 0, rtrans, false).WithIcon().WithSize(20, 20),
-                UI.MyCheckButton.CreateCheckButton(180, 0, rtrans, false).WithIcon().WithSize(20, 20),
+                UI.MyCheckButton.CreateCheckButton(40, 0, rtrans, false).WithIcon().WithSize(20, 20), // Kimberlite
+                UI.MyCheckButton.CreateCheckButton(60, 0, rtrans, false).WithIcon().WithSize(20, 20), // Fractal Silicon
+                UI.MyCheckButton.CreateCheckButton(80, 0, rtrans, false).WithIcon().WithSize(20, 20), // Organic Crystal
+                UI.MyCheckButton.CreateCheckButton(100, 0, rtrans, false).WithIcon().WithSize(20, 20), // Grating Crystal
+                UI.MyCheckButton.CreateCheckButton(120, 0, rtrans, false).WithIcon().WithSize(20, 20), // Stalagmite Crystal
+                UI.MyCheckButton.CreateCheckButton(140, 0, rtrans, false).WithIcon().WithSize(20, 20), // Unipolar Magnet
+                UI.MyCheckButton.CreateCheckButton(160, 0, rtrans, false).WithIcon().WithSize(20, 20), // Crude Oil
+                UI.MyCheckButton.CreateCheckButton(180, 0, rtrans, false).WithIcon().WithSize(20, 20), // Fire Ice
+                UI.MyCheckButton.CreateCheckButton(200, 0, rtrans, false).WithIcon().WithSize(20, 20), // Sulfuric Acid
+                UI.MyCheckButton.CreateCheckButton(220, 0, rtrans, false).WithIcon().WithSize(20, 20), // Water
+                UI.MyCheckButton.CreateCheckButton(240, 0, rtrans, false).WithIcon().WithSize(20, 20), // Hydrogen
+                UI.MyCheckButton.CreateCheckButton(260, 0, rtrans, false).WithIcon().WithSize(20, 20), // Deuterium
             ];
-            toggleButton.OnChecked += UpdateButtons;
+            _starmapFilterToggler.OnChecked += UpdateButtons;
             foreach (var button in buttons)
             {
                 button.OnChecked += UpdateStarmapStarFilters;
@@ -218,19 +228,45 @@ public static class UIFunctions
 
             GameLogic.OnDataLoaded += () =>
             {
-                for (int i = 0; i < 8; i++)
+                VeinProto veinProto;
+                for (int i = 0; i < 6; i++)
                 {
-                    buttons[i].SetIcon(LDB.veins.Select(i + 7)._iconSprite);
+                    veinProto = LDB.veins.Select(i + 9);
+                    buttons[i].WithTip(veinProto.Name).SetIcon(veinProto.iconSprite);
                 }
+                var itemProto = LDB.items.Select(1007);
+                buttons[6].WithTip(itemProto.Name).SetIcon(itemProto.iconSprite);
+                veinProto = LDB.veins.Select(8);
+                buttons[7].WithTip(veinProto.Name).SetIcon(veinProto.iconSprite);
+                itemProto = LDB.items.Select(1116);
+                buttons[8].WithTip(itemProto.Name).SetIcon(itemProto.iconSprite);
+                itemProto = LDB.items.Select(1000);
+                buttons[9].WithTip(itemProto.Name).SetIcon(itemProto.iconSprite);
+                itemProto = LDB.items.Select(1120);
+                buttons[10].WithTip(itemProto.Name).SetIcon(itemProto.iconSprite);
+                itemProto = LDB.items.Select(1121);
+                buttons[11].WithTip(itemProto.Name).SetIcon(itemProto.iconSprite);
             };
             GameLogic.OnGameBegin += () =>
             {
+                if (DSPGame.IsMenuDemo) return;
+                _starmapFilterToggler.gameObject.SetActive(false);
+                _starmapFilterToggler.Checked = false;
                 UpdateButtons();
                 SetStarFilterEnabled(false);
+                foreach (var star in GameMain.data.galaxy.stars)
+                {
+                    if (star != null) PlanetModelingManager.RequestScanStar(star);
+                }
+                _starmapFilterInitialized = true;
+            };
+            GameLogic.OnGameEnd += () =>
+            {
+                _starmapFilterInitialized = false;
             };
             void UpdateButtons()
             {
-                var chk = toggleButton.Checked;
+                var chk = _starmapFilterToggler.Checked;
                 foreach (var button in buttons)
                 {
                     if (chk)
@@ -241,7 +277,7 @@ public static class UIFunctions
                         button.Checked = false;
                     }
                 }
-                toggleButton.SetLabelText(chk ? "X" : ">>");
+                _starmapFilterToggler.SetLabelText(chk ? "X" : ">>");
                 if (!chk)
                 {
                     UpdateStarmapStarFilters();
@@ -249,17 +285,47 @@ public static class UIFunctions
             }
             void UpdateStarmapStarFilters()
             {
-                List<int> starFilter = [];
+                List<(int, int)> filters = [];
                 bool showAny = false;
-                if (toggleButton.Checked)
+                if (_starmapFilterToggler.Checked)
                 {
-                    for (int i = buttons.Length - 1; i >= 0; i--)
+                    for (int i = 0; i < 6; i++)
                     {
                         if (buttons[i].Checked)
                         {
-                            starFilter.Add(i + 7);
+                            filters.Add((i + 9, 0));
                             showAny = true;
                         }
+                    }
+                    if (buttons[6].Checked)
+                    {
+                        filters.Add((7, 0));
+                        showAny = true;
+                    }
+                    if (buttons[7].Checked)
+                    {
+                        filters.Add((8, 1011));
+                        showAny = true;
+                    }
+                    if (buttons[8].Checked)
+                    {
+                        filters.Add((0, 1116));
+                        showAny = true;
+                    }
+                    if (buttons[9].Checked)
+                    {
+                        filters.Add((0, 1000));
+                        showAny = true;
+                    }
+                    if (buttons[10].Checked)
+                    {
+                        filters.Add((0, 1120));
+                        showAny = true;
+                    }
+                    if (buttons[11].Checked)
+                    {
+                        filters.Add((0, 1121));
+                        showAny = true;
                     }
                 }
                 if (!showAny)
@@ -279,7 +345,7 @@ public static class UIFunctions
                     if (star == null) continue;
                     ShowStarName[i] = false;
                     var allMatch = true;
-                    foreach (var filter in starFilter)
+                    foreach (var filter in filters)
                     {
                         var match = false;
                         foreach (var planet in star.planets)
@@ -287,19 +353,42 @@ public static class UIFunctions
                             if (planet == null) continue;
                             if (planet.type == EPlanetType.Gas)
                             {
+                                if (filter.Item2 != 0)
+                                {
+                                    foreach (var n in planet.gasItems)
+                                    {
+                                        if (n == filter.Item2)
+                                        {
+                                            match = true;
+                                            break;
+                                        }
+                                    }
+                                    if (match) break;
+                                }
                             }
                             else
                             {
-                                foreach (var group in planet.veinGroups)
+                                if (filter.Item2 != 0)
                                 {
-                                    if (group.amount > 0 && (int)group.type == filter)
+                                    if (planet.waterItemId == filter.Item2)
                                     {
                                         match = true;
                                         break;
                                     }
                                 }
+                                if (filter.Item1 != 0)
+                                {
+                                    foreach (var group in planet.veinGroups)
+                                    {
+                                        if (group.amount > 0 && (int)group.type == filter.Item1)
+                                        {
+                                            match = true;
+                                            break;
+                                        }
+                                    }
+                                    if (match) break;
+                                }
                             }
-                            if (match) break;
                         }
                         if (!match)
                         {
@@ -374,24 +463,25 @@ public static class UIFunctions
                     starUI.nameText.text = String.Format("{0}-{1:0.00}", _starOrderNames[star.index], GetStarDist(star));
                     break;
                 case 2:
-                {
-                    var (nongas, total) = GetStarPlanetCount(star);
-                    starUI.nameText.text = String.Format("{0}-{1}-{2}", _starOrderNames[star.index], nongas, total);
-                    break;
-                }
+                    {
+                        var (nongas, total) = GetStarPlanetCount(star);
+                        starUI.nameText.text = String.Format("{0}-{1}-{2}", _starOrderNames[star.index], nongas, total);
+                        break;
+                    }
                 case 3:
                     starUI.nameText.text = String.Format("{0}-{1}", _starOrderNames[star.index], GetStarSpecialOres(star));
                     break;
                 case 4:
-                {
-                    var (nongas, total) = GetStarPlanetCount(star);
-                    starUI.nameText.text = String.Format("{0}-{1:0.00}-{2}-{3}-{4}", _starOrderNames[star.index], GetStarDist(star), GetStarSpecialOres(star), nongas, total);
-                    break;
-                }
+                    {
+                        var (nongas, total) = GetStarPlanetCount(star);
+                        starUI.nameText.text = String.Format("{0}-{1:0.00}-{2}-{3}-{4}", _starOrderNames[star.index], GetStarDist(star), GetStarSpecialOres(star), nongas, total);
+                        break;
+                    }
                 default:
                     starUI.nameText.text = star.displayName;
                     break;
-            };
+            }
+            ;
         }
         return;
 

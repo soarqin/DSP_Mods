@@ -239,6 +239,7 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
             UIFunctions.OnInputUpdate();
             return;
         }
+        UIFunctions.OnUpdate();
         LogisticsPatch.OnUpdate();
         if (VFInput.inputing) return;
         LogisticsPatch.OnInputUpdate();
