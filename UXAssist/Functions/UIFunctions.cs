@@ -7,6 +7,9 @@ using UnityEngine;
 using UnityEngine.UI;
 using System;
 using System.Linq;
+using System.Runtime.Remoting.Messaging;
+using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 public static class UIFunctions
 {
@@ -17,6 +20,8 @@ public static class UIFunctions
     private static GameObject _buttonOnPlanetGlobe;
     private static int _cornerComboBoxIndex;
     private static string[] _starOrderNames;
+    private static bool _starFilterEnabled;
+    public static bool[] ShowStarName;
 
     public static void Init()
     {
@@ -32,6 +37,7 @@ public static class UIFunctions
         GameLogic.OnGameBegin += () =>
         {
             var galaxy = GameMain.data.galaxy;
+            ShowStarName = new bool[galaxy.starCount];
             _starOrderNames = new string[galaxy.starCount];
             StarData[] stars = [..galaxy.stars.Where(star => star != null)];
             Array.Sort(stars, (a, b) =>
@@ -40,10 +46,63 @@ public static class UIFunctions
                 if (res != 0) return res;
                 return a.index.CompareTo(b.index);
             });
+            for (int i = 0; i < stars.Length; i++)
+            {
+                var star = stars[i];
+                _starOrderNames[star.index] = star.displayName;
+            }
+            int[] spectrCount = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+            for (int i = 0; i < stars.Length; i++)
+            {
+                var star = stars[i];
+                var index = star.index;
+                switch (star.type)
+                {
+                    case EStarType.MainSeqStar:
+                        switch (star.spectr)
+                        {
+                            case ESpectrType.M:
+                                _starOrderNames[index] = String.Format("M{0}", ++spectrCount[0]);
+                                break;
+                            case ESpectrType.K:
+                                _starOrderNames[index] = String.Format("K{0}", ++spectrCount[1]);
+                                break;
+                            case ESpectrType.G:
+                                _starOrderNames[index] = String.Format("G{0}", ++spectrCount[2]);
+                                break;
+                            case ESpectrType.F:
+                                _starOrderNames[index] = String.Format("F{0}", ++spectrCount[3]);
+                                break;
+                            case ESpectrType.A:
+                                _starOrderNames[index] = String.Format("A{0}", ++spectrCount[4]);
+                                break;
+                            case ESpectrType.B:
+                                _starOrderNames[index] = String.Format("B{0}", ++spectrCount[5]);
+                                break;
+                            case ESpectrType.O:
+                                _starOrderNames[index] = String.Format("O{0}", ++spectrCount[6]);
+                                break;
+                        }
+                        break;
+                    case EStarType.GiantStar:
+                        _starOrderNames[index] = String.Format("GS{0}", ++spectrCount[7]);
+                        break;
+                    case EStarType.WhiteDwarf:
+                        _starOrderNames[index] = String.Format("WD{0}", ++spectrCount[8]);
+                        break;
+                    case EStarType.NeutronStar:
+                        _starOrderNames[index] = String.Format("NS{0}", ++spectrCount[9]);
+                        break;
+                    case EStarType.BlackHole:
+                        _starOrderNames[index] = String.Format("BH{0}", ++spectrCount[10]);
+                        break;
+                }
+            }
         };
         GameLogic.OnGameEnd += () =>
         {
             _starOrderNames = null;
+            ShowStarName = null;
         };
     }
 
@@ -133,12 +192,128 @@ public static class UIFunctions
             }
         }
         {
-            var cb = UI.MyCornerComboBox.CreateComboBox(125, 0, uiRoot.uiGame.starmap.transform as RectTransform, true).WithItems("显示原始名称", "显示距离", "显示行星数", "显示主要矿物", "显示全部信息");
+            var rtrans = uiRoot.uiGame.starmap.transform as RectTransform;
+            var cb = UI.MyCornerComboBox.CreateComboBox(125, 0, rtrans, true).WithItems("显示原始名称", "显示距离", "显示行星数", "显示主要矿物", "显示全部信息");
             cb.SetIndex(Functions.UIFunctions.CornerComboBoxIndex);
             cb.OnSelChanged += (index) =>
             {
                 Functions.UIFunctions.CornerComboBoxIndex = index;
             };
+            var toggleButton = UI.MyCheckButton.CreateCheckButton(20, 0, rtrans, false, ">>").WithSize(20, 20);
+            MyCheckButton[] buttons = [
+                UI.MyCheckButton.CreateCheckButton(40, 0, rtrans, false).WithIcon().WithSize(20, 20),
+                UI.MyCheckButton.CreateCheckButton(60, 0, rtrans, false).WithIcon().WithSize(20, 20),
+                UI.MyCheckButton.CreateCheckButton(80, 0, rtrans, false).WithIcon().WithSize(20, 20),
+                UI.MyCheckButton.CreateCheckButton(100, 0, rtrans, false).WithIcon().WithSize(20, 20),
+                UI.MyCheckButton.CreateCheckButton(120, 0, rtrans, false).WithIcon().WithSize(20, 20),
+                UI.MyCheckButton.CreateCheckButton(140, 0, rtrans, false).WithIcon().WithSize(20, 20),
+                UI.MyCheckButton.CreateCheckButton(160, 0, rtrans, false).WithIcon().WithSize(20, 20),
+                UI.MyCheckButton.CreateCheckButton(180, 0, rtrans, false).WithIcon().WithSize(20, 20),
+            ];
+            toggleButton.OnChecked += UpdateButtons;
+            foreach (var button in buttons)
+            {
+                button.OnChecked += UpdateStarmapStarFilters;
+            }
+
+            GameLogic.OnDataLoaded += () =>
+            {
+                for (int i = 0; i < 8; i++)
+                {
+                    buttons[i].SetIcon(LDB.veins.Select(i + 7)._iconSprite);
+                }
+            };
+            GameLogic.OnGameBegin += () =>
+            {
+                UpdateButtons();
+                SetStarFilterEnabled(false);
+            };
+            void UpdateButtons()
+            {
+                var chk = toggleButton.Checked;
+                foreach (var button in buttons)
+                {
+                    if (chk)
+                        button.gameObject.SetActive(true);
+                    else
+                    {
+                        button.gameObject.SetActive(false);
+                        button.Checked = false;
+                    }
+                }
+                toggleButton.SetLabelText(chk ? "X" : ">>");
+                if (!chk)
+                {
+                    UpdateStarmapStarFilters();
+                }
+            }
+            void UpdateStarmapStarFilters()
+            {
+                List<int> starFilter = [];
+                bool showAny = false;
+                if (toggleButton.Checked)
+                {
+                    for (int i = buttons.Length - 1; i >= 0; i--)
+                    {
+                        if (buttons[i].Checked)
+                        {
+                            starFilter.Add(i + 7);
+                            showAny = true;
+                        }
+                    }
+                }
+                if (!showAny)
+                {
+                    for (int i = 0; i < ShowStarName.Length; i++)
+                    {
+                        ShowStarName[i] = false;
+                    }
+                    SetStarFilterEnabled(false);
+                    return;
+                }
+                var galaxy = GameMain.data.galaxy;
+                var stars = galaxy.stars;
+                for (int i = 0; i < galaxy.starCount; i++)
+                {
+                    var star = stars[i];
+                    if (star == null) continue;
+                    ShowStarName[i] = false;
+                    var allMatch = true;
+                    foreach (var filter in starFilter)
+                    {
+                        var match = false;
+                        foreach (var planet in star.planets)
+                        {
+                            if (planet == null) continue;
+                            if (planet.type == EPlanetType.Gas)
+                            {
+                            }
+                            else
+                            {
+                                foreach (var group in planet.veinGroups)
+                                {
+                                    if (group.amount > 0 && (int)group.type == filter)
+                                    {
+                                        match = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (match) break;
+                        }
+                        if (!match)
+                        {
+                            allMatch = false;
+                            break;
+                        }
+                    }
+                    if (allMatch)
+                    {
+                        ShowStarName[i] = true;
+                    }
+                }
+                SetStarFilterEnabled(true);
+            }
         }
         _initialized = true;
     }
@@ -173,65 +348,22 @@ public static class UIFunctions
         set
         {
             _cornerComboBoxIndex = value;
-            Patches.PlayerPatch.ShortcutKeysForStarsName.SetForceShowAllStarsNameExternal(_cornerComboBoxIndex != 0);
+            Patches.PlayerPatch.ShortcutKeysForStarsName.SetForceShowAllStarsNameExternal(_cornerComboBoxIndex != 0 && !_starFilterEnabled);
             UpdateStarmapStarNames();
         }
     }
 
-    public static void UpdateStarmapStarNames()
+    private static void SetStarFilterEnabled(bool enabled)
     {
-        if (_cornerComboBoxIndex > 0)
-        {
-            int[] spectrCount = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-            var galaxy = GameMain.data.galaxy;
-            StarData[] stars = new StarData[galaxy.starCount];
-            for (int i = 0; i < galaxy.starCount; i++)
-            {
-                var star = stars[i];
-                var index = star.index;
-                switch (star.type)
-                {
-                    case EStarType.MainSeqStar:
-                        switch (star.spectr)
-                        {
-                            case ESpectrType.M:
-                                _starOrderNames[index] = String.Format("M{0}", ++spectrCount[0]);
-                                break;
-                            case ESpectrType.K:
-                                _starOrderNames[index] = String.Format("K{0}", ++spectrCount[1]);
-                                break;
-                            case ESpectrType.G:
-                                _starOrderNames[index] = String.Format("G{0}", ++spectrCount[2]);
-                                break;
-                            case ESpectrType.F:
-                                _starOrderNames[index] = String.Format("F{0}", ++spectrCount[3]);
-                                break;
-                            case ESpectrType.A:
-                                _starOrderNames[index] = String.Format("A{0}", ++spectrCount[4]);
-                                break;
-                            case ESpectrType.B:
-                                _starOrderNames[index] = String.Format("B{0}", ++spectrCount[5]);
-                                break;
-                            case ESpectrType.O:
-                                _starOrderNames[index] = String.Format("O{0}", ++spectrCount[6]);
-                                break;
-                        }
-                        break;
-                    case EStarType.GiantStar:
-                        _starOrderNames[index] = String.Format("GS{0}", ++spectrCount[7]);
-                        break;
-                    case EStarType.WhiteDwarf:
-                        _starOrderNames[index] = String.Format("WD{0}", ++spectrCount[8]);
-                        break;
-                    case EStarType.NeutronStar:
-                        _starOrderNames[index] = String.Format("NS{0}", ++spectrCount[9]);
-                        break;
-                    case EStarType.BlackHole:
-                        _starOrderNames[index] = String.Format("BH{0}", ++spectrCount[10]);
-                        break;
-                }
-            }
-        }
+        if (_starFilterEnabled == enabled) return;
+        _starFilterEnabled = enabled;
+        if (!enabled) Patches.PlayerPatch.ShortcutKeysForStarsName.SetShowAllStarsNameStatus(0);
+        Patches.PlayerPatch.ShortcutKeysForStarsName.SetForceShowAllStarsNameExternal(_cornerComboBoxIndex != 0 && !_starFilterEnabled);
+        UpdateStarmapStarNames();
+    }
+
+    private static void UpdateStarmapStarNames()
+    {
         foreach (var starUI in UIRoot.instance.uiGame.starmap.starUIs)
         {
             var star = starUI?.star;

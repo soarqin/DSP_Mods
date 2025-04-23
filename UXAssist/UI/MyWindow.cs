@@ -564,6 +564,7 @@ public abstract class MyWindowManager
     public static void InitBaseObjects()
     {
         MyWindow.InitBaseObject();
+        MyCheckButton.InitBaseObject();
         MyCheckBox.InitBaseObject();
         MyComboBox.InitBaseObject();
         MyCornerComboBox.InitBaseObject();

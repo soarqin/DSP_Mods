@@ -41,7 +41,7 @@ public class MyCheckBox : MonoBehaviour
 
     protected void OnDestroy()
     {
-        _config.SettingChanged -= _configChanged;
+        if (_config != null) _config.SettingChanged -= _configChanged;
     }
 
     public static MyCheckBox CreateCheckBox(float x, float y, RectTransform parent, ConfigEntry<bool> config, string label = "", int fontSize = 15)

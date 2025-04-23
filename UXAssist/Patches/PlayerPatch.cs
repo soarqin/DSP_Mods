@@ -156,6 +156,11 @@ public static class PlayerPatch
         private static bool _forceShowAllStarsName;
         private static bool _forceShowAllStarsNameExternal;
 
+        public static void SetShowAllStarsNameStatus(int status)
+        {
+            _showAllStarsNameStatus = status;
+        }
+
         public static void ToggleAllStarsName()
         {
             _showAllStarsNameStatus = (_showAllStarsNameStatus + 1) % 3;
@@ -204,6 +209,12 @@ public static class PlayerPatch
                 new CodeInstruction(OpCodes.Ceq),
                 new CodeInstruction(OpCodes.Brtrue, jumpPos.Value),
                 new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(PlayerPatch.ShortcutKeysForStarsName), nameof(_forceShowAllStarsName))),
+                new CodeInstruction(OpCodes.Brtrue, jumpPos.Value),
+                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(Functions.UIFunctions), nameof(Functions.UIFunctions.ShowStarName))),
+                new CodeInstruction(OpCodes.Ldarg_0),
+                new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(UIStarmapStar), nameof(UIStarmapStar.star))),
+                new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(StarData), nameof(StarData.index))),
+                new CodeInstruction(OpCodes.Ldelem_I1),
                 new CodeInstruction(OpCodes.Brtrue, jumpPos.Value),
                 new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(ShortcutKeysForStarsName), nameof(_showAllStarsNameStatus))),
                 new CodeInstruction(OpCodes.Ldc_I4_2),
