@@ -255,5 +255,6 @@ public class MyCheckButton : MonoBehaviour
             uiButton.transitions[0].pressedColor = closePressColor;
             uiButton.transitions[0].normalColor = new Color(0.6557f, 0.9145f, 1f, 0.0627f);
         }
+        uiButton.RefreshTransitionsImmediately();
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using BepInEx.Configuration;
 using UnityEngine;
@@ -74,6 +75,14 @@ public class MyCornerComboBox : MonoBehaviour
         _comboBox.Items = [.. items.Select(s => s.Translate())];
         _comboBox.StartItemIndex = 0;
         _comboBox.DropDownCount = items.Length;
+    }
+
+    public List<string> Items => _comboBox.Items;
+
+    public void UpdateLabelText()
+    {
+        var textComp = _comboBox.transform.Find("Main Button")?.GetComponentInChildren<Text>();
+        if (textComp) textComp.text = _comboBox.Items[_comboBox.itemIndex];
     }
 
     public void SetIndex(int index) => _comboBox.itemIndex = index;

@@ -34,6 +34,13 @@ public static class UIFunctions
             canOverride = true
         });
         I18N.Add("KEYOpenUXAssistConfigWindow", "[UXA] Open UXAssist Config Window", "[UXA] 打开UX助手设置面板");
+        I18N.Add("High yield", "High yield", "高产");
+        I18N.Add("Perfect", "Perfect", "完美");
+        I18N.Add("All 6 Basic Ores", "All 6 Basic Ores", "六种基础矿物齐全");
+        I18N.Add("Show original name", "Show original name", "显示原始名称");
+        I18N.Add("Show distance", "Show distance", "显示距离");
+        I18N.Add("Show planet count", "Show planet count", "显示行星数");
+        I18N.Add("Show all information", "Show all information", "显示全部信息");
         I18N.OnInitialized += RecreateConfigWindow;
     }
 
@@ -75,9 +82,19 @@ public static class UIFunctions
     }
 
     private static readonly Sprite[] PlanetIcons = [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
         Common.Util.LoadEmbeddedSprite("assets/planet_icon/07.png"),
+        null,
         Common.Util.LoadEmbeddedSprite("assets/planet_icon/09.png"),
         Common.Util.LoadEmbeddedSprite("assets/planet_icon/10.png"),
+        null,
+        null,
         Common.Util.LoadEmbeddedSprite("assets/planet_icon/13.png"),
         Common.Util.LoadEmbeddedSprite("assets/planet_icon/14.png"),
         Common.Util.LoadEmbeddedSprite("assets/planet_icon/15.png"),
@@ -85,12 +102,14 @@ public static class UIFunctions
         Common.Util.LoadEmbeddedSprite("assets/planet_icon/17.png"),
         Common.Util.LoadEmbeddedSprite("assets/planet_icon/18.png"),
         Common.Util.LoadEmbeddedSprite("assets/planet_icon/19.png"),
+        null,
         Common.Util.LoadEmbeddedSprite("assets/planet_icon/21.png"),
         Common.Util.LoadEmbeddedSprite("assets/planet_icon/22.png"),
         Common.Util.LoadEmbeddedSprite("assets/planet_icon/23.png"),
         Common.Util.LoadEmbeddedSprite("assets/planet_icon/24.png"),
         Common.Util.LoadEmbeddedSprite("assets/planet_icon/25.png")
     ];
+    private static readonly int[] FilterPlanetThemes = [16, 23, 10, 15, 18, 22, 25, 21, 14, 17, 19, 7, 24, 9, 13];
     public static void InitMenuButtons()
     {
         if (_initialized) return;
@@ -151,99 +170,89 @@ public static class UIFunctions
         }
         {
             var rtrans = uiRoot.uiGame.starmap.transform as RectTransform;
-            var cb = UI.MyCornerComboBox.CreateComboBox(125, 0, rtrans, true).WithItems("显示原始名称", "显示距离", "显示行星数", "显示主要矿物", "显示全部信息");
-            cb.SetIndex(Functions.UIFunctions.CornerComboBoxIndex);
-            cb.OnSelChanged += (index) =>
+            var cornerComboBox = UI.MyCornerComboBox.CreateComboBox(135, 5, rtrans, true).WithItems("Show original name".Translate(), "Show distance".Translate(), "Show planet count".Translate(), "Show all information".Translate());
+            cornerComboBox.SetIndex(Functions.UIFunctions.CornerComboBoxIndex);
+            cornerComboBox.OnSelChanged += (index) =>
             {
                 Functions.UIFunctions.CornerComboBoxIndex = index;
             };
-            _starmapFilterToggler = UI.MyCheckButton.CreateCheckButton(10, 0, rtrans, false, ">>").WithSize(24, 24);
+            _starmapFilterToggler = UI.MyCheckButton.CreateCheckButton(5, 5, rtrans, false, ">>").WithSize(24, 24);
             MyCheckButton[] buttons = [
-                UI.MyCheckButton.CreateCheckButton(34, 0, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Kimberlite
-                UI.MyCheckButton.CreateCheckButton(58, 0, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Fractal Silicon
-                UI.MyCheckButton.CreateCheckButton(82, 0, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Organic Crystal
-                UI.MyCheckButton.CreateCheckButton(106, 0, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Grating Crystal
-                UI.MyCheckButton.CreateCheckButton(130, 0, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Stalagmite Crystal
-                UI.MyCheckButton.CreateCheckButton(154, 0, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Unipolar Magnet
-                UI.MyCheckButton.CreateCheckButton(178, 0, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Crude Oil
-                UI.MyCheckButton.CreateCheckButton(202, 0, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Fire Ice
-                UI.MyCheckButton.CreateCheckButton(226, 0, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Sulfuric Acid
-                UI.MyCheckButton.CreateCheckButton(250, 0, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Water
-                UI.MyCheckButton.CreateCheckButton(274, 0, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Hydrogen
-                UI.MyCheckButton.CreateCheckButton(298, 0, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Deuterium
+                UI.MyCheckButton.CreateCheckButton(29, 5, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Kimberlite
+                UI.MyCheckButton.CreateCheckButton(53, 5, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Fractal Silicon
+                UI.MyCheckButton.CreateCheckButton(77, 5, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Organic Crystal
+                UI.MyCheckButton.CreateCheckButton(101, 5, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Grating Crystal
+                UI.MyCheckButton.CreateCheckButton(125, 5, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Stalagmite Crystal
+                UI.MyCheckButton.CreateCheckButton(149, 5, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Unipolar Magnet
+                UI.MyCheckButton.CreateCheckButton(173, 5, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Crude Oil
+                UI.MyCheckButton.CreateCheckButton(197, 5, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Fire Ice
+                UI.MyCheckButton.CreateCheckButton(221, 5, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Sulfuric Acid
+                UI.MyCheckButton.CreateCheckButton(245, 5, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Water
+                UI.MyCheckButton.CreateCheckButton(269, 5, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Hydrogen
+                UI.MyCheckButton.CreateCheckButton(293, 5, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Deuterium
 
-                UI.MyCheckButton.CreateCheckButton(34, 24, rtrans, false).WithIcon().WithSize(120, 24).WithIconWidth(24),
-                UI.MyCheckButton.CreateCheckButton(34, 48, rtrans, false).WithIcon().WithSize(120, 24).WithIconWidth(24),
-                UI.MyCheckButton.CreateCheckButton(34, 72, rtrans, false).WithIcon().WithSize(120, 24).WithIconWidth(24),
-                UI.MyCheckButton.CreateCheckButton(34, 96, rtrans, false).WithIcon().WithSize(120, 24).WithIconWidth(24),
-                UI.MyCheckButton.CreateCheckButton(34, 120, rtrans, false).WithIcon().WithSize(120, 24).WithIconWidth(24),
-                UI.MyCheckButton.CreateCheckButton(34, 144, rtrans, false).WithIcon().WithSize(120, 24).WithIconWidth(24),
-                UI.MyCheckButton.CreateCheckButton(34, 168, rtrans, false).WithIcon().WithSize(120, 24).WithIconWidth(24),
+                UI.MyCheckButton.CreateCheckButton(29, 29, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
+                UI.MyCheckButton.CreateCheckButton(29, 53, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
+                UI.MyCheckButton.CreateCheckButton(29, 77, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
+                UI.MyCheckButton.CreateCheckButton(29, 101, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
+                UI.MyCheckButton.CreateCheckButton(29, 125, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
+                UI.MyCheckButton.CreateCheckButton(29, 149, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
+                UI.MyCheckButton.CreateCheckButton(29, 173, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
+                UI.MyCheckButton.CreateCheckButton(29, 197, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
+                UI.MyCheckButton.CreateCheckButton(29, 221, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
+
+                UI.MyCheckButton.CreateCheckButton(29, 263, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
+                UI.MyCheckButton.CreateCheckButton(29, 287, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
+                UI.MyCheckButton.CreateCheckButton(29, 311, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
+                UI.MyCheckButton.CreateCheckButton(29, 335, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
+                UI.MyCheckButton.CreateCheckButton(29, 359, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
+                UI.MyCheckButton.CreateCheckButton(29, 383, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
             ];
+            var allOresText = MyWindow.AddText(25, 243, rtrans, "All 6 Basic Ores".Translate(), 12);
+            allOresText.gameObject.SetActive(false);
             _starmapFilterToggler.OnChecked += UpdateButtons;
             foreach (var button in buttons)
             {
-                button.OnChecked += UpdateStarmapStarFilters;
+                button.OnChecked += () =>
+                {
+                    if (button.Checked && !VFInput.shift && !VFInput.control)
+                    {
+                        foreach (var b in buttons)
+                        {
+                            if (b != button) b.Checked = false;
+                        }
+                    }
+                    UpdateStarmapStarFilters();
+                };
             }
 
+            I18N.OnInitialized += UpdateI18N;
             GameLogic.OnDataLoaded += () =>
             {
                 VeinProto veinProto;
                 for (int i = 0; i < 6; i++)
                 {
                     veinProto = LDB.veins.Select(i + 9);
-                    buttons[i].WithTip(veinProto.Name).SetIcon(veinProto.iconSprite);
+                    buttons[i].SetIcon(veinProto.iconSprite);
                 }
                 var itemProto = LDB.items.Select(1007);
-                buttons[6].WithTip(itemProto.Name).SetIcon(itemProto.iconSprite);
+                buttons[6].SetIcon(itemProto.iconSprite);
                 veinProto = LDB.veins.Select(8);
-                buttons[7].WithTip(veinProto.Name).SetIcon(veinProto.iconSprite);
+                buttons[7].SetIcon(veinProto.iconSprite);
                 itemProto = LDB.items.Select(1116);
-                buttons[8].WithTip(itemProto.Name).SetIcon(itemProto.iconSprite);
+                buttons[8].SetIcon(itemProto.iconSprite);
                 itemProto = LDB.items.Select(1000);
-                buttons[9].WithTip(itemProto.Name).SetIcon(itemProto.iconSprite);
+                buttons[9].SetIcon(itemProto.iconSprite);
                 itemProto = LDB.items.Select(1120);
-                buttons[10].WithTip(itemProto.Name).SetIcon(itemProto.iconSprite);
+                buttons[10].SetIcon(itemProto.iconSprite);
                 itemProto = LDB.items.Select(1121);
-                buttons[11].WithTip(itemProto.Name).SetIcon(itemProto.iconSprite);
+                buttons[11].SetIcon(itemProto.iconSprite);
 
-                // [ 0] = 07.png
-                // [ 1] = 09.png
-                // [ 2] = 10.png
-                // [ 3] = 13.png
-                // [ 4] = 14.png
-                // [ 5] = 15.png
-                // [ 6] = 16.png
-                // [ 7] = 17.png
-                // [ 8] = 18.png
-                // [ 9] = 19.png
-                // [10] = 21.png
-                // [11] = 22.png
-                // [12] = 23.png
-                // [13] = 24.png
-                // [14] = 25.png
-
-                var themeProto = LDB.themes.Select(16);
-                buttons[12].SetLabelText(themeProto.DisplayName);
-                buttons[12].SetIcon(PlanetIcons[6]);
-                themeProto = LDB.themes.Select(23);
-                buttons[13].SetLabelText(themeProto.DisplayName);
-                buttons[13].SetIcon(PlanetIcons[12]);
-                themeProto = LDB.themes.Select(10);
-                buttons[14].SetLabelText(themeProto.DisplayName);
-                buttons[14].SetIcon(PlanetIcons[2]);
-                themeProto = LDB.themes.Select(15);
-                buttons[15].SetLabelText(themeProto.DisplayName);
-                buttons[15].SetIcon(PlanetIcons[5]);
-                themeProto = LDB.themes.Select(18);
-                buttons[16].SetLabelText(themeProto.DisplayName);
-                buttons[16].SetIcon(PlanetIcons[8]);
-                themeProto = LDB.themes.Select(22);
-                buttons[17].SetLabelText(themeProto.DisplayName);
-                buttons[17].SetIcon(PlanetIcons[11]);
-                themeProto = LDB.themes.Select(25);
-                buttons[18].SetLabelText(themeProto.DisplayName);
-                buttons[18].SetIcon(PlanetIcons[14]);
+                for (int i = 0; i < FilterPlanetThemes.Length; i++)
+                {
+                    buttons[12 + i].SetIcon(PlanetIcons[FilterPlanetThemes[i]]);
+                }
+                UpdateI18N();
             };
 
             GameLogic.OnGameBegin += () =>
@@ -330,6 +339,58 @@ public static class UIFunctions
                 _starmapStarFilterValues = null;
                 _starmapFilterInitialized = false;
             };
+            void UpdateI18N()
+            {
+                if (cornerComboBox != null)
+                {
+                    var items = cornerComboBox.Items;
+                    cornerComboBox.UpdateLabelText();
+                    items[0] = "Show original name".Translate();
+                    items[1] = "Show distance".Translate();
+                    items[2] = "Show planet count".Translate();
+                    items[3] = "Show all information".Translate();
+                }
+                if (buttons != null)
+                {
+                    VeinProto veinProto;
+                    for (int i = 0; i < 6; i++)
+                    {
+                        veinProto = LDB.veins.Select(i + 9);
+                        buttons[i].WithTip(veinProto.Name);
+                    }
+                    var itemProto = LDB.items.Select(1007);
+                    buttons[6].WithTip(itemProto.Name);
+                    veinProto = LDB.veins.Select(8);
+                    buttons[7].WithTip(veinProto.Name);
+                    itemProto = LDB.items.Select(1116);
+                    buttons[8].WithTip(itemProto.Name);
+                    itemProto = LDB.items.Select(1000);
+                    buttons[9].WithTip(itemProto.Name);
+                    itemProto = LDB.items.Select(1120);
+                    buttons[10].WithTip(itemProto.Name);
+                    itemProto = LDB.items.Select(1121);
+                    buttons[11].WithTip(itemProto.Name);
+
+                    for (int i = 0; i < FilterPlanetThemes.Length; i++)
+                    {
+                        var theme = FilterPlanetThemes[i];
+                        var themeProto = LDB.themes.Select(theme);
+                        switch (i)
+                        {
+                            case 7:
+                                buttons[12 + i].SetLabelText($"{themeProto.DisplayName.Translate()} ({"High yield".Translate()})");
+                                break;
+                            case 8:
+                                buttons[12 + i].SetLabelText($"{themeProto.DisplayName.Translate()} ({"Perfect".Translate()})");
+                                break;
+                            default:
+                                buttons[12 + i].SetLabelText(themeProto.DisplayName.Translate());
+                                break;
+                        }
+                    }
+                }
+                if (allOresText != null) allOresText.text = "All 6 Basic Ores".Translate();
+            }
             void UpdateButtons()
             {
                 var chk = _starmapFilterToggler.Checked;
@@ -343,6 +404,7 @@ public static class UIFunctions
                         button.Checked = false;
                     }
                 }
+                allOresText.gameObject.SetActive(chk);
                 _starmapFilterToggler.SetLabelText(chk ? "X" : ">>");
                 if (!chk)
                 {
@@ -385,33 +447,12 @@ public static class UIFunctions
                     {
                         filterValue |= 1UL << 21;
                     }
-                    if (buttons[12].Checked)
+                    for (int i = 0; i < FilterPlanetThemes.Length; i++)
                     {
-                        filterValue |= 1UL << (30 + 16);
-                    }
-                    if (buttons[13].Checked)
-                    {
-                        filterValue |= 1UL << (30 + 23);
-                    }
-                    if (buttons[14].Checked)
-                    {
-                        filterValue |= 1UL << (30 + 10);
-                    }
-                    if (buttons[15].Checked)
-                    {
-                        filterValue |= 1UL << (30 + 15);
-                    }
-                    if (buttons[16].Checked)
-                    {
-                        filterValue |= 1UL << (30 + 18);
-                    }
-                    if (buttons[17].Checked)
-                    {
-                        filterValue |= 1UL << (30 + 22);
-                    }
-                    if (buttons[18].Checked)
-                    {
-                        filterValue |= 1UL << (30 + 25);
+                        if (buttons[12 + i].Checked)
+                        {
+                            filterValue |= 1UL << (30 + FilterPlanetThemes[i]);
+                        }
                     }
                 }
                 if (filterValue == 0UL)
@@ -491,25 +532,37 @@ public static class UIFunctions
                 {
                     switch (planet.theme)
                     {
-                        case 7: case 9: case 13: case 17: case 19: case 24:
-                        {
-                            const ulong needed = 0x7EUL;
-                            if ((planetValue & needed) == needed)
+                        case 7:
+                        case 9:
+                        case 13:
+                        case 17:
+                        case 19:
+                        case 24:
                             {
-                                value |= 1UL << (30 + planet.theme);
+                                const ulong needed = 0x7EUL;
+                                if ((planetValue & needed) == needed)
+                                {
+                                    value |= 1UL << (30 + planet.theme);
+                                }
+                                break;
                             }
-                            break;
-                        }
                         case 14:
-                        {
-                            const ulong needed = 0x2200UL;
-                            if ((planetValue & needed) == needed)
                             {
-                                value |= 1UL << (30 + planet.theme);
+                                const ulong needed = 0x2200UL;
+                                if ((planetValue & needed) == needed)
+                                {
+                                    value |= 1UL << (30 + planet.theme);
+                                }
+                                break;
                             }
-                            break;
-                        }
-                        case 10: case 15: case 16: case 18: case 21: case 22: case 23: case 25:
+                        case 10:
+                        case 15:
+                        case 16:
+                        case 18:
+                        case 21:
+                        case 22:
+                        case 23:
+                        case 25:
                             value |= 1UL << (30 + planet.theme);
                             break;
                     }
@@ -582,19 +635,15 @@ public static class UIFunctions
                         break;
                     }
                 case 3:
-                    starUI.nameText.text = String.Format("{0}-{1}", _starOrderNames[star.index], GetStarSpecialOres(star));
-                    break;
-                case 4:
                     {
                         var (nongas, total) = GetStarPlanetCount(star);
-                        starUI.nameText.text = String.Format("{0}-{1:0.00}-{2}-{3}-{4}", _starOrderNames[star.index], GetStarDist(star), GetStarSpecialOres(star), nongas, total);
+                        starUI.nameText.text = String.Format("{0}-{1:0.00}-{2}-{3}", _starOrderNames[star.index], GetStarDist(star), nongas, total);
                         break;
                     }
                 default:
                     starUI.nameText.text = star.displayName;
                     break;
             }
-            ;
         }
         return;
 
@@ -614,11 +663,6 @@ public static class UIFunctions
                 total++;
             }
             return (nongas, total);
-        }
-
-        string GetStarSpecialOres(StarData star)
-        {
-            return "";
         }
     }
 }

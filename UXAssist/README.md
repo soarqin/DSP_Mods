@@ -1,8 +1,9 @@
 # UXAssist
 
-#### Some functions and patches for better user experience
+<details>
+<summary>Read me in English</summary>
 
-#### 一些提升用户体验的功能和补丁
+#### Some functions and patches for better user experience
 
 ## Usage
 
@@ -40,6 +41,9 @@
     - Set enabled CPU threads
     - Increase maximum count of Metadata Instantiations to 20000 (from 2000)
     - Increase capacity of player order queue to 128 (from 16)
+    - Starmap view:
+      - Add a star name filter, you can filter displayed star names by ores or planet types now.
+      - Add a dropdown box to show all stars' distance and/or planet count.
   + Factory
     - Sunlight at night
     - Remove some build conditions
@@ -145,6 +149,16 @@
 * [OffGridConstruction](https://github.com/Velociraptor115-DSPModding/OffGridConstruction): Off-grid building & stepped rotation implementations
 * [CruiseAssist](https://dsp.thunderstore.io/package/tanu/CruiseAssist/) and its extension [AutoPilot](https://dsp.thunderstore.io/package/tanu/AutoPilot/): `Auto navigation on sailings` and `Auto-cruise` implementations
 
+</details>
+
+<details>
+<summary>中文读我</summary>
+
+#### 一些提升用户体验的功能和补丁
+
+## Bug反馈
+* QQ群：372754090
+
 ## 使用说明
 
 * 按 `` Alt+`(反引号) `` 键呼出主面板，可以在面板上修改快捷键。
@@ -181,6 +195,9 @@
     - 设置使用的CPU线程
     - 将元数据提取的最大数量增加到20000(原来为2000)
     - 将玩家指令队列的容量增加到128(原来为16)
+    - 星图：
+      - 添加星系名过滤器，现在可以按矿物或行星类型过滤显示的星系名
+      - 添加了一个下拉框用以切换显示所有星系的距离和/或行星数量
   + 工厂
     - 夜间日光灯
     - 移除部分不影响游戏逻辑的建造条件
@@ -286,3 +303,5 @@
 * [LSTM](https://github.com/hetima/DSP_LSTM) & [PlanetFinder](https://github.com/hetima/DSP_PlanetFinder): UI实现
 * [OffGridConstruction](https://github.com/Velociraptor115-DSPModding/OffGridConstruction): 脱离网格建造以及小角度旋转的实现
 * [CruiseAssist](https://dsp.thunderstore.io/package/tanu/CruiseAssist/)及其扩展[AutoPilot](https://dsp.thunderstore.io/package/tanu/AutoPilot/): `航行时自动导航`和`自动巡航`的实现
+
+</details>

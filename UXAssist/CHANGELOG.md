@@ -1,6 +1,12 @@
+<details>
+<summary>Read me in English</summary>
+
 ## Changlog
 
 * 1.2.21
+  + New feature for starmap view:
+    - Add a star name filter, you can filter displayed star names by ores or planet types now.
+    - Add a dropdown box to show all stars' distance and/or planet count.
   + `Cut conveyor belt`: Fix input issue.
   + `Shortcut keys for showing stars`: Fix an issue that toggle key is read when Starmap View is not opened.
   + `Dismantle blueprint selected buildings`: Fix an issue that preview buildings are not dismantled.
@@ -26,10 +32,6 @@
     - Add a shortcut key to always show all star names in starmap when holding, default is `Alt`
     - Add a shortcut key to toggle between three star name display states in starmap: `Original state`, `Show all names`, `Hide all names`, default is `Tab`, will restore to original state when closing starmap
   + `Cut conveyor belt`: Fix a bug that entity logic connection is not cut so that belt is not cut off on copying as a blueprint.
-
-<details>
-<summary>Older versions</summary>
-
 * 1.2.18
   + `Protect veins from exhaustion`: Optimized implementation, now veins will not be protected once you have upgrade `Veins Utilization` to level 390+, while the cost rate becomes absolute 0.
   + `Night Sunlight`: Fix bugs that sunlight angle is not updated as expected.
@@ -275,9 +277,15 @@
 
 </details>
 
+<details>
+<summary>中文读我</summary>
+
 ## 更新日志
 
 * 1.2.21
+  + 在星图上添加新功能：
+    - 添加星系名过滤器，现在可以按矿物或行星类型过滤显示的星系名
+    - 添加了一个下拉框用以切换显示所有星系的距离和/或行星数量
   + `切割传送带`：修复了输入问题
   + `启用显示所有星系名称的快捷键`：修复了在未打开星图视图时读取切换键的问题
   + `拆除蓝图选中的建筑`：修复了预建造建筑未被拆除的问题
@@ -303,10 +311,6 @@
     - 新增一个快捷键，按住后始终在星图显示所有星系名称，默认为`Alt`
     - 新增一个快捷键，在星图视图切换三种星系名称显示状态：`原始显示状态`，`显示所有名称`，`隐藏所有名称`，默认为`Tab`，关闭星图时会恢复到原始状态
   + `切割传送带`：修复了实体逻辑连接未切断导致复制为蓝图时传送带未被切断的问题。
-
-<details>
-<summary>Older versions</summary>
-
 * 1.2.18
   + `保护矿脉不会耗尽`：优化实现，当`矿物利用`升级到390级以上时消耗速度变为0时，矿脉将不再被保护。
   + `夜间日光灯`：修复了光照角度未正确更新的问题。
