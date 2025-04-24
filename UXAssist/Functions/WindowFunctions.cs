@@ -18,7 +18,6 @@ public static class WindowFunctions
     private static IntPtr _oldWndProc = IntPtr.Zero;
     private static IntPtr _gameWindowHandle = IntPtr.Zero;
 
-    private static bool _gameLoaded;
     public static WinApi.LogicalProcessorDetails ProcessorDetails { get; private set; }
 
     public static ConfigEntry<int> ProcessPriority;
@@ -48,7 +47,6 @@ public static class WindowFunctions
 
     public static void Start()
     {
-        GameLogic.OnDataLoaded += OnDataLoaded;
         var wndProc = new WinApi.WndProc(GameWndProc);
         var gameWnd = FindGameWindow();
         if (gameWnd != IntPtr.Zero)
@@ -65,7 +63,7 @@ public static class WindowFunctions
         UpdateAffinity();
         return;
 
-        void UpdateAffinity()
+        static void UpdateAffinity()
         {
             var process = WinApi.GetCurrentProcess();
             if (!WinApi.GetProcessAffinityMask(process, out _, out var systemMask))
@@ -94,16 +92,6 @@ public static class WindowFunctions
         }
     }
 
-    public static void Uninit()
-    {
-        GameLogic.OnDataLoaded -= OnDataLoaded;
-    }
-
-    private static void OnDataLoaded()
-    {
-        _gameLoaded = true;
-    }
-
     private static IntPtr GameWndProc(IntPtr hWnd, uint uMsg, IntPtr wParam, IntPtr lParam)
     {
         switch (uMsg)
@@ -122,13 +110,13 @@ public static class WindowFunctions
                 switch ((long)wParam & 0xFFF0L)
                 {
                     case WinApi.SC_MOVE:
-                        if (GamePatch.LoadLastWindowRectEnabled.Value && !_gameLoaded) return (IntPtr)1L;
+                        if (GamePatch.LoadLastWindowRectEnabled.Value && !GameMain.isRunning) return (IntPtr)1L;
                         break;
                 }
 
                 break;
             case WinApi.WM_MOVING:
-                if (!GamePatch.LoadLastWindowRectEnabled.Value || _gameLoaded) break;
+                if (!GamePatch.LoadLastWindowRectEnabled.Value || GameMain.isRunning) break;
                 var rect = GamePatch.LastWindowRect.Value;
                 if (rect is { z: 0f, w: 0f }) break;
                 var x = Mathf.RoundToInt(rect.x);
@@ -137,9 +125,9 @@ public static class WindowFunctions
                 rect2.Left = x;
                 rect2.Top = y;
                 Marshal.StructureToPtr(rect2, lParam, false);
-                break;
+                return (IntPtr)1L;
             case WinApi.WM_SIZING:
-                if (!GamePatch.LoadLastWindowRectEnabled.Value || _gameLoaded) break;
+                if (!GamePatch.LoadLastWindowRectEnabled.Value || Screen.fullScreenMode is FullScreenMode.ExclusiveFullScreen or FullScreenMode.FullScreenWindow or FullScreenMode.MaximizedWindow || GameMain.isRunning) break;
                 rect = GamePatch.LastWindowRect.Value;
                 if (rect is { z: 0f, w: 0f }) break;
                 x = Mathf.RoundToInt(rect.x);
@@ -152,7 +140,7 @@ public static class WindowFunctions
                 rect2.Right = x + w;
                 rect2.Bottom = y + h;
                 Marshal.StructureToPtr(rect2, lParam, false);
-                break;
+                return (IntPtr)1L;
         }
 
         return WinApi.CallWindowProc(_oldWndProc, hWnd, uMsg, wParam, lParam);
@@ -219,24 +207,32 @@ public static class WindowFunctions
     {
         // Get profile name from command line arguments, and set window title accordingly
         var args = Environment.GetCommandLineArgs();
-        for (var i = 0; i < args.Length - 1; i++)
+        for (var i = args.Length - 2; i >= 0; i--)
         {
-            // Doorstop 3.x and 4.x use different arguments to pass the target assembly path
-            if (args[i] != "--doorstop-target" && args[i] != "--doorstop-target-assembly") continue;
-            var arg = args[i + 1];
-            const string doorstopPathSuffix = @"\BepInEx\core\BepInEx.Preloader.dll";
-            if (!arg.EndsWith(doorstopPathSuffix, StringComparison.OrdinalIgnoreCase))
-                break;
-            arg = arg.Substring(0, arg.Length - doorstopPathSuffix.Length);
-            const string profileSuffix = @"\profiles\";
-            var index = arg.LastIndexOf(profileSuffix, StringComparison.OrdinalIgnoreCase);
-            if (index < 0)
-                break;
-            arg = arg.Substring(index + profileSuffix.Length);
+            if (args[i] == "--gale-profile")
+            {
+                // We use gale profile name directly
+                ProfileName = args[i + 1];
+            }
+            else
+            {
+                // Doorstop 3.x and 4.x use different arguments to pass the target assembly path
+                if (args[i] != "--doorstop-target" && args[i] != "--doorstop-target-assembly") continue;
+                var arg = args[i + 1];
+                const string doorstopPathSuffix = @"\BepInEx\core\BepInEx.Preloader.dll";
+                if (!arg.EndsWith(doorstopPathSuffix, StringComparison.OrdinalIgnoreCase))
+                    break;
+                arg = arg.Substring(0, arg.Length - doorstopPathSuffix.Length);
+                const string profileSuffix = @"\profiles\";
+                var index = arg.LastIndexOf(profileSuffix, StringComparison.OrdinalIgnoreCase);
+                if (index < 0)
+                    break;
+                arg = arg.Substring(index + profileSuffix.Length);
+                ProfileName = arg;
+            }
             var wnd = FindGameWindow();
             if (wnd == IntPtr.Zero) return;
-            ProfileName = arg;
-            _gameWindowTitle = $"Dyson Sphere Program - {arg}";
+            _gameWindowTitle = $"Dyson Sphere Program - {ProfileName}";
             WinApi.SetWindowText(wnd, _gameWindowTitle);
             break;
         }

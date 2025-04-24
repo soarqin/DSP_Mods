@@ -42,6 +42,21 @@
     <EmbeddedResource Include="assets/icon/in.png" />
     <EmbeddedResource Include="assets/icon/out.png" />
     <EmbeddedResource Include="assets/icon/keep.png" />
+    <EmbeddedResource Include="assets/planet_icon/07.png" />
+    <EmbeddedResource Include="assets/planet_icon/09.png" />
+    <EmbeddedResource Include="assets/planet_icon/10.png" />
+    <EmbeddedResource Include="assets/planet_icon/13.png" />
+    <EmbeddedResource Include="assets/planet_icon/14.png" />
+    <EmbeddedResource Include="assets/planet_icon/15.png" />
+    <EmbeddedResource Include="assets/planet_icon/16.png" />
+    <EmbeddedResource Include="assets/planet_icon/17.png" />
+    <EmbeddedResource Include="assets/planet_icon/18.png" />
+    <EmbeddedResource Include="assets/planet_icon/19.png" />
+    <EmbeddedResource Include="assets/planet_icon/21.png" />
+    <EmbeddedResource Include="assets/planet_icon/22.png" />
+    <EmbeddedResource Include="assets/planet_icon/23.png" />
+    <EmbeddedResource Include="assets/planet_icon/24.png" />
+    <EmbeddedResource Include="assets/planet_icon/25.png" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">

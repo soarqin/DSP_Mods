@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection.Emit;
+using System.Threading;
 using System.Xml;
 using BepInEx.Configuration;
 using CommonAPI.Systems;
@@ -270,8 +271,6 @@ public class GamePatch : PatchImpl<GamePatch>
                     LastWindowRect.Value = new Vector4(x, y, w, h);
                 }
             }
-
-            MoveWindowPosition();
         }
 
         protected override void OnDisable()
@@ -309,13 +308,6 @@ public class GamePatch : PatchImpl<GamePatch>
             var h = Mathf.RoundToInt(rect.w);
             width = w;
             height = h;
-        }
-
-        [HarmonyPostfix]
-        [HarmonyPatch(typeof(Screen), nameof(Screen.SetResolution), typeof(int), typeof(int), typeof(FullScreenMode), typeof(int))]
-        private static void Screen_SetResolution_Postfix(FullScreenMode fullscreenMode)
-        {
-            MoveWindowPosition();
         }
 
         private static void VFPreload_InvokeOnLoadWorkEnded_Postfix()

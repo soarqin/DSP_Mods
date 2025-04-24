@@ -46,7 +46,11 @@ public class MyCheckButton : MonoBehaviour
             if (txt)
             {
                 txt.text = "";
-                txt.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+                txt.alignment = TextAnchor.MiddleCenter;
+                txt.rectTransform.anchorMax = new Vector2(0f, 1f);
+                txt.rectTransform.anchorMin = new Vector2(0f, 1f);
+                txt.rectTransform.pivot = new Vector2(0f, 1f);
+                txt.rectTransform.localPosition = new Vector3(0f, 0f, 0f);
             }
             var localizer = comp.GetComponent<Localizer>();
             if (localizer) DestroyImmediate(localizer);
@@ -88,19 +92,14 @@ public class MyCheckButton : MonoBehaviour
             {
                 cb.labelText.text = "";
                 cb.labelText.fontSize = fontSize;
-                cb.UpdateLabelTextWidth();
             }
         }
 
-        cb._iconWidth = Mathf.Min(cb._iconWidth > 0f ? cb._iconWidth : 28f, rect.sizeDelta.y);
+        cb._iconWidth = Mathf.Min(cb._iconWidth > 0f ? cb._iconWidth : 32f, rect.sizeDelta.y);
         cb.UpdateCheckColor();
         cb.uiButton.onClick += cb.OnClick;
+        cb.UpdateSize();
         return cb;
-    }
-
-    private void UpdateLabelTextWidth()
-    {
-        if (labelText) labelText.rectTransform.sizeDelta = new Vector2(labelText.preferredWidth, labelText.rectTransform.sizeDelta.y);
     }
 
     public bool Checked
@@ -118,7 +117,6 @@ public class MyCheckButton : MonoBehaviour
         if (labelText != null)
         {
             labelText.text = val.Translate();
-            UpdateLabelTextWidth();
         }
     }
 
@@ -147,17 +145,19 @@ public class MyCheckButton : MonoBehaviour
     {
         var width = rectTrans.sizeDelta.x;
         var height = rectTrans.sizeDelta.y;
+        labelText.rectTransform.localPosition = new Vector3(icon != null ? _iconWidth : 0f, 0f, 0f);
         labelText.rectTransform.sizeDelta = new Vector2(icon != null ? width - _iconWidth : width, height);
         if (icon != null)
         {
-            icon.transform.localPosition = new Vector3((-width - _iconWidth) * 0.5f, 0f, 0f);
+            icon.rectTransform.sizeDelta = new Vector2(_iconWidth, _iconWidth);
+            icon.rectTransform.localPosition = new Vector3(0f, -height * 0.5f, 0f);
         }
     }
 
     public MyCheckButton WithSize(float width, float height)
     {
         rectTrans.sizeDelta = new Vector2(width, height);
-        if (height > _iconWidth) _iconWidth = height;
+        if (height < _iconWidth) _iconWidth = height;
         UpdateSize();
         return this;
     }
@@ -178,25 +178,21 @@ public class MyCheckButton : MonoBehaviour
 
     public MyCheckButton WithIcon(Sprite sprite = null)
     {
-        var trans = labelText.gameObject.transform;
         if (icon == null)
         {
             var iconGo = new GameObject("icon");
             var rect = iconGo.AddComponent<RectTransform>();
             (icon = iconGo.AddComponent<Image>()).sprite = sprite;
-            iconGo.transform.SetParent(trans);
-            rect.localPosition = new Vector3(0f, 0f, 0f);
+            iconGo.transform.SetParent(rectTrans);
             rect.sizeDelta = new Vector2(_iconWidth, _iconWidth);
             rect.localScale = new Vector3(1f, 1f, 1f);
             rect.anchorMax = new Vector2(0f, 1f);
             rect.anchorMin = new Vector2(0f, 1f);
             rect.pivot = new Vector2(0f, 0.5f);
+            var height = rectTrans.sizeDelta.y;
+            rect.localPosition = new Vector3(0f, -height * 0.5f, 0f);
             iconGo.SetActive(sprite != null);
-
-            var width = rectTrans.sizeDelta.x;
-            var originPosition = labelText.rectTransform.localPosition;
-            labelText.rectTransform.localPosition = new Vector3(originPosition.x + _iconWidth * 0.5f, originPosition.y, originPosition.z);
-            labelText.rectTransform.sizeDelta = new Vector2(width - _iconWidth, labelText.rectTransform.sizeDelta.y);
+            UpdateSize();
         }
         else
         {
@@ -220,7 +216,6 @@ public class MyCheckButton : MonoBehaviour
     public void SetIcon(Sprite sprite = null)
     {
         icon.sprite = sprite;
-        icon.transform.localPosition = new Vector3((-rectTrans.sizeDelta.x - _iconWidth) * 0.5f, 0f, 0f);
         icon.gameObject.SetActive(sprite != null);
     }
 
@@ -258,7 +253,7 @@ public class MyCheckButton : MonoBehaviour
         {
             uiButton.transitions[0].mouseoverColor = closeMouseOverColor;
             uiButton.transitions[0].pressedColor = closePressColor;
-            uiButton.transitions[0].normalColor = closeNormalColor;
+            uiButton.transitions[0].normalColor = new Color(0.6557f, 0.9145f, 1f, 0.0627f);
         }
     }
 }
