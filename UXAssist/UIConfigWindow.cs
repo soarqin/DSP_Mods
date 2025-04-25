@@ -82,7 +82,7 @@ public static class UIConfigWindow
         I18N.Add("Build Tesla Tower and Wireless Power Tower alternately", "Build Tesla Tower and Wireless Power Tower alternately", "交替建造电力感应塔和无线输电塔");
         I18N.Add("Belt signals for buy out dark fog items automatically", "Belt signals for buy out dark fog items automatically", "用于自动购买黑雾物品的传送带信号");
         I18N.Add("Auto-config logistic stations", "Auto-config logistic stations", "自动配置物流设施");
-        I18N.Add("Limit auto-replenish count to values below", "Limit auto-replenish count to values below", "限制自动补给数量为下面配置的值");
+        I18N.Add("Limit auto-replenish count to values below", "Limit auto-replenish count to values below", "限制自动补充数量为下面配置的值");
         I18N.Add("Dispenser", "Logistics Distributor", "物流配送器");
         I18N.Add("PLS", "PLS", "行星物流站");
         I18N.Add("ILS", "ILS", "星际物流站");

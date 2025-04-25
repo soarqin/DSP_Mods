@@ -11,6 +11,7 @@
   + `Shortcut keys for showing stars`: Fix an issue that toggle key is read when Starmap View is not opened.
   + `Dismantle blueprint selected buildings`: Fix an issue that preview buildings are not dismantled.
   + `Remember window position and size on last exit`: Optimized implementation
+  + `Auto-config logistic stations`: Add an option `Limit auto-replenish count to config values`
   + Optimized some UI codes.
 * 1.2.20
   + New feature: `Dismantle blueprint selected buildings`
@@ -291,6 +292,7 @@
   + `启用显示所有星系名称的快捷键`：修复了在未打开星图视图时读取切换键的问题
   + `拆除蓝图选中的建筑`：修复了预建造建筑未被拆除的问题
   + `记住上次退出时的窗口位置和大小`：优化实现
+  + `自动配置物流站`: 增加了一个选项`限制自动补充数量为配置的值`
   + 优化了一些UI代码
 * 1.2.20
   + 新功能：`拆除蓝图选中的建筑`
