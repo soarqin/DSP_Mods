@@ -1,7 +1,9 @@
 # CheatEnabler
 
+<details>
+<summary>Read me in English</summary>
+
 #### Add various cheat functions while disabling abnormal determinants
-#### 添加一些作弊功能，同时屏蔽异常检测
 
 ## Usage
 
@@ -63,6 +65,12 @@
 * [BepInEx](https://bepinex.dev/): Base modding framework
 * [Multifunction_mod](https://github.com/blacksnipebiu/Multifunction_mod): Some cheat functions
 
+</details>
+
+<details>
+<summary>中文读我</summary>
+
+#### 添加一些作弊功能，同时屏蔽异常检测
 
 ## 使用说明
 
@@ -123,3 +131,5 @@
 * [戴森球计划](https://store.steampowered.com/app/1366540): 伟大的游戏
 * [BepInEx](https://bepinex.dev/): 基础模组框架
 * [Multifunction_mod](https://github.com/blacksnipebiu/Multifunction_mod): 一些作弊功能
+
+</details>

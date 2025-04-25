@@ -122,7 +122,7 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
         _beltIds ??= [..LDB.items.dataArray.Where(i => i.prefabDesc.isBelt).Select(i => i.ID)];
     }
 
-    public static void OnUpdate()
+    public static void OnInputUpdate()
     {
         if (_noConditionKey.keyValue)
         {
@@ -154,43 +154,32 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
 
     public static void ArrivePlanet(PlanetFactory factory)
     {
+        if (factory.prebuildCount <= 0) return;
         var imm = ImmediateEnabled.Value;
         var architect = ArchitectModeEnabled.Value;
         if ((!imm && !architect) || GameMain.gameScenario == null) return;
         var prebuilds = factory.prebuildPool;
-        var anyBelt = false;
         if (imm)
         {
+            var anyBelt = false;
+            var anyBuilt = false;
             factory.BeginFlattenTerrain();
             factory.cargoTraffic._batch_buffer_no_refresh = true;
-        }
-        for (var i = factory.prebuildCursor - 1; i > 0; i--)
-        {
-            if (prebuilds[i].id != i) continue;
-            if (prebuilds[i].itemRequired > 0)
+            PlanetFactory.batchBuild = true;
+            for (var i = factory.prebuildCursor - 1; i > 0; i--)
             {
-                if (!architect) continue;
-                prebuilds[i].itemRequired = 0;
-                if (imm)
+                ref var pb = ref prebuilds[i];
+                if (pb.id != i || pb.isDestroyed) continue;
+                if (pb.itemRequired > 0)
                 {
-                    anyBelt = anyBelt || _beltIds.Contains(prebuilds[i].protoId);
-                    factory.BuildFinally(GameMain.mainPlayer, i, false);
+                    if (!architect) continue;
+                    pb.itemRequired = 0;
                 }
-                else
-                    factory.AlterPrebuildModelState(i);
+                anyBelt = anyBelt || _beltIds.Contains(pb.protoId);
+                factory.BuildFinally(GameMain.mainPlayer, i, false);
+                anyBuilt = true;
             }
-            else
-            {
-                if (imm)
-                {
-                    anyBelt = anyBelt || _beltIds.Contains(prebuilds[i].protoId);
-                    factory.BuildFinally(GameMain.mainPlayer, i, false);
-                }
-            }
-        }
-
-        if (imm)
-        {
+            PlanetFactory.batchBuild = false;
             if (anyBelt)
             {
                 factory.cargoTraffic.RefreshBeltBatchesBuffers();
@@ -198,6 +187,21 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
             }
             factory.cargoTraffic._batch_buffer_no_refresh = false;
             factory.EndFlattenTerrain();
+            if (anyBuilt)
+            {
+                factory.planet.physics?.raycastLogic?.NotifyBatchObjectRemove();
+                factory.planet.audio?.SetPlanetAudioDirty();
+            }
+        }
+        else if (architect)
+        {
+            for (var i = factory.prebuildCursor - 1; i > 0; i--)
+            {
+                ref var pb = ref prebuilds[i];
+                if (pb.id != i || pb.isDestroyed || pb.itemRequired == 0) continue;
+                pb.itemRequired = 0;
+                factory.AlterPrebuildModelState(i);
+            }
         }
     }
 
@@ -214,6 +218,7 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
 
     private static void GameMain_Begin_Postfix_For_ImmBuild()
     {
+        if (DSPGame.IsMenuDemo) return;
         var factory = GameMain.mainPlayer?.factory;
         if (factory != null)
         {
@@ -752,6 +757,7 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
 
         private static void GameMain_Begin_Postfix()
         {
+            if (DSPGame.IsMenuDemo) return;
             if (BeltSignalGeneratorEnabled.Value) InitSignalBelts();
             InitItemSources();
         }

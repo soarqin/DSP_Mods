@@ -171,7 +171,6 @@ public static class LogisticsPatch
                     new CodeMatch(OpCodes.Ldlen),
                     new CodeMatch(OpCodes.Conv_I4)
                 );
-                UXAssist.Logger.LogDebug($"Patch ILS ship count: {matcher.Pos}");
                 matcher.Repeat(m => m.Advance(4).InsertAndAdvance(
                     new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(LogisticsPatch), nameof(AutoConfigILSShipCount))),
                     new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(ConfigEntry<int>), nameof(ConfigEntry<int>.Value))),

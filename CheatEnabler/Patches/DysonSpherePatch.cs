@@ -37,7 +37,7 @@ public class DysonSpherePatch: PatchImpl<DysonSpherePatch>
         OverclockSilo.Enable(OverclockSiloEnabled.Value);
         Enable(true);
     }
-    
+
     public static void Uninit()
     {
         Enable(false);
@@ -48,7 +48,7 @@ public class DysonSpherePatch: PatchImpl<DysonSpherePatch>
         OverclockEjector.Enable(false);
         OverclockSilo.Enable(false);
     }
-        
+
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(DysonNode), nameof(DysonNode.OrderConstructCp))]
     private static IEnumerable<CodeInstruction> DysonNode_OrderConstructCp_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -88,7 +88,7 @@ public class DysonSpherePatch: PatchImpl<DysonSpherePatch>
         private static long _sailLifeTime;
         private static DysonSailCache[][] _sailsCache;
         private static int[] _sailsCacheLen, _sailsCacheCapacity;
-        
+
         private struct DysonSailCache
         {
             public DysonSail Sail;
@@ -136,7 +136,7 @@ public class DysonSpherePatch: PatchImpl<DysonSpherePatch>
             Array.Clear(_sailsCacheLen, 0, starCount);
             Array.Clear(_sailsCacheCapacity, 0, starCount);
         }
-        
+
         private static void SetSailsCacheCapacity(int index, int capacity)
         {
             var newCache = new DysonSailCache[capacity];
@@ -164,7 +164,7 @@ public class DysonSpherePatch: PatchImpl<DysonSpherePatch>
                 UpdateSailLifeTime();
             }
         }
-        
+
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(EjectorComponent), nameof(EjectorComponent.InternalUpdate))]
         private static IEnumerable<CodeInstruction> EjectorComponent_InternalUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -280,7 +280,7 @@ public class DysonSpherePatch: PatchImpl<DysonSpherePatch>
             }
         }
     }
-    
+
     private class SkipAbsorbPatch: PatchImpl<SkipAbsorbPatch>
     {
         protected override void OnEnable()
@@ -319,12 +319,12 @@ public class DysonSpherePatch: PatchImpl<DysonSpherePatch>
                 new CodeInstruction(OpCodes.Ldc_I4_1),
                 new CodeInstruction(OpCodes.Add),
                 new CodeInstruction(OpCodes.Stind_I4),
-                
+
                 // this.RemoveSolarSail(index);
                 new CodeInstruction(OpCodes.Ldarg_0).WithLabels(label1),
                 new CodeInstruction(OpCodes.Ldloc_1),
                 new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(DysonSwarm), nameof(DysonSwarm.RemoveSolarSail))),
-                
+
                 // return false;
                 new CodeInstruction(OpCodes.Ldc_I4_1),
                 new CodeInstruction(OpCodes.Ret)
@@ -332,7 +332,7 @@ public class DysonSpherePatch: PatchImpl<DysonSpherePatch>
             return matcher.InstructionEnumeration();
         }
     }
-    
+
     private class QuickAbsorbPatch: PatchImpl<QuickAbsorbPatch>
     {
         protected override void OnEnable()
@@ -363,7 +363,7 @@ public class DysonSpherePatch: PatchImpl<DysonSpherePatch>
             /* Insert a RETURN before old absorption functions */
             return matcher.InstructionEnumeration();
         }
-        
+
         private static void DoAbsorb(DysonSphereLayer layer, long gameTick)
         {
             var nodeCount = layer.nodeCursor - 1;
@@ -383,7 +383,7 @@ public class DysonSpherePatch: PatchImpl<DysonSpherePatch>
             }
         }
     }
-    
+
     private class EjectAnywayPatch: PatchImpl<EjectAnywayPatch>
     {
         [HarmonyTranspiler]

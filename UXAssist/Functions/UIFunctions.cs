@@ -205,45 +205,45 @@ public static class UIFunctions
         var uiRoot = UIRoot.instance;
         if (!uiRoot) return;
         var rtrans = uiRoot.uiGame.starmap.transform as RectTransform;
-        var cornerComboBox = UI.MyCornerComboBox.CreateComboBox(135, 5, rtrans, true).WithItems("Show original name".Translate(), "Show distance".Translate(), "Show planet count".Translate(), "Show all information".Translate());
+        var cornerComboBox = UI.MyCornerComboBox.CreateComboBox(135, 0, rtrans, true).WithItems("Show original name".Translate(), "Show distance".Translate(), "Show planet count".Translate(), "Show all information".Translate());
         cornerComboBox.SetIndex(Functions.UIFunctions.CornerComboBoxIndex);
         cornerComboBox.OnSelChanged += (index) =>
         {
             Functions.UIFunctions.CornerComboBoxIndex = index;
         };
-        _starmapFilterToggler = UI.MyCheckButton.CreateCheckButton(5, 5, rtrans, false, ">>").WithSize(24, 24);
+        _starmapFilterToggler = UI.MyCheckButton.CreateCheckButton(0, 0, rtrans, false, ">>").WithSize(24, 24);
         MyCheckButton[] buttons = [
-            UI.MyCheckButton.CreateCheckButton(29, 5, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Kimberlite
-            UI.MyCheckButton.CreateCheckButton(53, 5, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Fractal Silicon
-            UI.MyCheckButton.CreateCheckButton(77, 5, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Organic Crystal
-            UI.MyCheckButton.CreateCheckButton(101, 5, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Grating Crystal
-            UI.MyCheckButton.CreateCheckButton(125, 5, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Stalagmite Crystal
-            UI.MyCheckButton.CreateCheckButton(149, 5, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Unipolar Magnet
-            UI.MyCheckButton.CreateCheckButton(173, 5, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Crude Oil
-            UI.MyCheckButton.CreateCheckButton(197, 5, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Fire Ice
-            UI.MyCheckButton.CreateCheckButton(221, 5, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Sulfuric Acid
-            UI.MyCheckButton.CreateCheckButton(245, 5, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Water
-            UI.MyCheckButton.CreateCheckButton(269, 5, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Hydrogen
-            UI.MyCheckButton.CreateCheckButton(293, 5, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Deuterium
+            UI.MyCheckButton.CreateCheckButton(24, 0, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Kimberlite
+            UI.MyCheckButton.CreateCheckButton(48, 0, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Fractal Silicon
+            UI.MyCheckButton.CreateCheckButton(72, 0, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Organic Crystal
+            UI.MyCheckButton.CreateCheckButton(96, 0, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Grating Crystal
+            UI.MyCheckButton.CreateCheckButton(120, 0, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Stalagmite Crystal
+            UI.MyCheckButton.CreateCheckButton(144, 0, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Unipolar Magnet
+            UI.MyCheckButton.CreateCheckButton(168, 0, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Crude Oil
+            UI.MyCheckButton.CreateCheckButton(192, 0, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Fire Ice
+            UI.MyCheckButton.CreateCheckButton(216, 0, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Sulfuric Acid
+            UI.MyCheckButton.CreateCheckButton(240, 0, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Water
+            UI.MyCheckButton.CreateCheckButton(264, 0, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Hydrogen
+            UI.MyCheckButton.CreateCheckButton(288, 0, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Deuterium
 
-            UI.MyCheckButton.CreateCheckButton(29, 29, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
-            UI.MyCheckButton.CreateCheckButton(29, 53, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
-            UI.MyCheckButton.CreateCheckButton(29, 77, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
-            UI.MyCheckButton.CreateCheckButton(29, 101, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
-            UI.MyCheckButton.CreateCheckButton(29, 125, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
-            UI.MyCheckButton.CreateCheckButton(29, 149, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
-            UI.MyCheckButton.CreateCheckButton(29, 173, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
-            UI.MyCheckButton.CreateCheckButton(29, 197, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
-            UI.MyCheckButton.CreateCheckButton(29, 221, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
+            UI.MyCheckButton.CreateCheckButton(24, 24, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
+            UI.MyCheckButton.CreateCheckButton(24, 48, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
+            UI.MyCheckButton.CreateCheckButton(24, 72, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
+            UI.MyCheckButton.CreateCheckButton(24, 96, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
+            UI.MyCheckButton.CreateCheckButton(24, 120, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
+            UI.MyCheckButton.CreateCheckButton(24, 144, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
+            UI.MyCheckButton.CreateCheckButton(24, 168, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
+            UI.MyCheckButton.CreateCheckButton(24, 192, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
+            UI.MyCheckButton.CreateCheckButton(24, 216, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
 
-            UI.MyCheckButton.CreateCheckButton(29, 263, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
-            UI.MyCheckButton.CreateCheckButton(29, 287, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
-            UI.MyCheckButton.CreateCheckButton(29, 311, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
-            UI.MyCheckButton.CreateCheckButton(29, 335, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
-            UI.MyCheckButton.CreateCheckButton(29, 359, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
-            UI.MyCheckButton.CreateCheckButton(29, 383, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
+            UI.MyCheckButton.CreateCheckButton(24, 258, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
+            UI.MyCheckButton.CreateCheckButton(24, 282, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
+            UI.MyCheckButton.CreateCheckButton(24, 306, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
+            UI.MyCheckButton.CreateCheckButton(24, 330, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
+            UI.MyCheckButton.CreateCheckButton(24, 354, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
+            UI.MyCheckButton.CreateCheckButton(24, 378, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
         ];
-        var allOresText = MyWindow.AddText(25, 243, rtrans, "All 6 Basic Ores".Translate(), 12);
+        var allOresText = MyWindow.AddText(20, 238, rtrans, "All 6 Basic Ores".Translate(), 12);
         allOresText.gameObject.SetActive(false);
         _starmapFilterToggler.OnChecked += UpdateButtons;
         foreach (var button in buttons)

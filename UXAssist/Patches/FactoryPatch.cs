@@ -261,6 +261,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
 
         protected override void OnDisable()
         {
+            GameLogic.OnGameEnd -= GameMain_End_Postfix;
             if (_sunlight)
             {
                 _sunlight.transform.localEulerAngles = new Vector3(0f, 180f);

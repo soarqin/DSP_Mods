@@ -497,7 +497,7 @@ public class DysonSpherePatch: PatchImpl<DysonSpherePatch>
         {
             RecheckDysonSphereAutoNodes();
         }
-        
+
         protected override void OnDisable()
         {
             RecheckDysonSphereAutoNodes();

@@ -1,5 +1,11 @@
+<details>
+<summary>Read me in English</summary>
+
 ## Changlog
 
+* 2.3.30
+  + Fix a warning issue while `No condition build` or `No collision` is enabled.
+  + Optimized `Finish build immediately` for better performance.
 * 2.3.29
   + Fix compatibility with game update 0.10.32.25779
 * 2.3.28
@@ -15,14 +21,10 @@
   + New feature: `Enable warp without space warpers`
   + New feature: `Wind Turbines do global power coverage`
   + Fix an issue that `Complete Dyson Sphere Shells instantly` does not generate production records for solar sails.
-
-<details>
-<summary>Older versions</summary>
-
 * 2.3.24
   + `Complete Dyson Sphere Shells instantly`: Fix a bug that may cause negative power in some cases
 * 2.3.23
-  + New feature: `Complete Dyson Sphere Shells instantly` 
+  + New feature: `Complete Dyson Sphere Shells instantly`
   + Fix a crash when config panel is opened before game is fully loaded
 * 2.3.22
   + Fix `Pump Anywhere`
@@ -146,8 +148,14 @@
 
 </details>
 
+<details>
+<summary>中文读我</summary>
+
 ## 更新日志
 
+* 2.3.30
+  + 修复了启用`无条件建造`或`无碰撞`时的警告问题
+  + 优化了`立即完成建造`的性能表现
 * 2.3.29
   + 修复了与游戏更新0.10.32.25779的兼容性
 * 2.3.28
@@ -163,10 +171,6 @@
   + 新功能：`无需空间翘曲器即可曲速飞行`
   + 新功能：`风力涡轮机供电覆盖全球`
   + 修复了`立即完成戴森壳建造`未生成太阳帆生产记录的问题
-
-<details>
-<summary>更早的版本</summary>
-
 * 2.3.24
   + `立即完成戴森壳建造`：修复了在某些情况下可能导致发电为负的问题
 * 2.3.23

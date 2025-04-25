@@ -106,6 +106,6 @@ public class CheatEnabler : BaseUnityPlugin
     private void Update()
     {
         if (VFInput.inputing) return;
-        FactoryPatch.OnUpdate();
+        FactoryPatch.OnInputUpdate();
     }
 }
