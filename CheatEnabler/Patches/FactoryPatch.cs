@@ -176,6 +176,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             factory.BeginFlattenTerrain();
             factory.cargoTraffic._batch_buffer_no_refresh = true;
             PlanetFactory.batchBuild = true;
+            CargoTrafficPatch.DisableRefreshBatchesBuffers = true;
             for (var i = factory.prebuildCursor - 1; i > 0; i--)
             {
                 ref var pb = ref prebuilds[i];
@@ -190,11 +191,6 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                 anyBuilt = true;
             }
             PlanetFactory.batchBuild = false;
-            if (anyBelt)
-            {
-                factory.cargoTraffic.RefreshBeltBatchesBuffers();
-                factory.cargoTraffic.RefreshPathBatchesBuffers();
-            }
             factory.cargoTraffic._batch_buffer_no_refresh = false;
             factory.EndFlattenTerrain();
             CargoTrafficPatch.IsBatchBuilding = false;
@@ -216,6 +212,12 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             _alterBeltRendererIds.Clear();
             _alterPathRendererIds.Clear();
             _refreshPathUVIds.Clear();
+            CargoTrafficPatch.DisableRefreshBatchesBuffers = false;
+            if (anyBelt)
+            {
+                factory.cargoTraffic.RefreshBeltBatchesBuffers();
+                factory.cargoTraffic.RefreshPathBatchesBuffers();
+            }
             if (anyBuilt)
             {
                 factory.planet.physics?.raycastLogic?.NotifyBatchObjectRemove();
@@ -237,7 +239,9 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
     private class CargoTrafficPatch : PatchImpl<CargoTrafficPatch>
     {
         public static bool IsBatchBuilding;
+        public static bool DisableRefreshBatchesBuffers;
         [HarmonyPrefix]
+        [HarmonyPriority(Priority.First)]
         [HarmonyPatch(typeof(CargoTraffic), nameof(CargoTraffic.AlterBeltRenderer))]
         private static bool CargoTraffic_AlterBeltRenderer_Prefix(int beltId)
         {
@@ -247,6 +251,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         }
 
         [HarmonyPrefix]
+        [HarmonyPriority(Priority.First)]
         [HarmonyPatch(typeof(CargoTraffic), nameof(CargoTraffic.AlterPathRenderer))]
         private static bool CargoTraffic_AlterPathRenderer_Prefix(int pathId)
         {
@@ -256,12 +261,22 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         }
 
         [HarmonyPrefix]
+        [HarmonyPriority(Priority.First)]
         [HarmonyPatch(typeof(CargoTraffic), nameof(CargoTraffic.RefreshPathUV))]
         private static bool CargoTraffic_RefreshPathUV_Prefix(int pathId)
         {
             if (!IsBatchBuilding) return true;
             _refreshPathUVIds.Add(pathId);
             return false;
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPriority(Priority.First)]
+        [HarmonyPatch(typeof(CargoTraffic), nameof(CargoTraffic.RefreshBeltBatchesBuffers))]
+        [HarmonyPatch(typeof(CargoTraffic), nameof(CargoTraffic.RefreshPathBatchesBuffers))]
+        private static bool CargoTraffic_RefreshBeltBatchesBuffers_Prefix()
+        {
+            return !DisableRefreshBatchesBuffers;
         }
     }
 
