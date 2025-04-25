@@ -82,17 +82,18 @@ public static class UIConfigWindow
         I18N.Add("Build Tesla Tower and Wireless Power Tower alternately", "Build Tesla Tower and Wireless Power Tower alternately", "交替建造电力感应塔和无线输电塔");
         I18N.Add("Belt signals for buy out dark fog items automatically", "Belt signals for buy out dark fog items automatically", "用于自动购买黑雾物品的传送带信号");
         I18N.Add("Auto-config logistic stations", "Auto-config logistic stations", "自动配置物流设施");
+        I18N.Add("Limit auto-replenish count to values below", "Limit auto-replenish count to values below", "限制自动补给数量为下面配置的值");
         I18N.Add("Dispenser", "Logistics Distributor", "物流配送器");
         I18N.Add("PLS", "PLS", "行星物流站");
         I18N.Add("ILS", "ILS", "星际物流站");
         I18N.Add("Advanced Mining Machine", "Advanced Mining Machine", "大型采矿机");
         I18N.Add("Max. Charging Power", "Max. Charging Power", "最大充能功率");
-        I18N.Add("Count of Bots auto-filled", "Count of Bots auto-filled", "自动填充的配送机数量");
+        I18N.Add("Count of Bots filled", "Count of Bots filled", "填充的配送机数量");
         I18N.Add("Max. Charging Power", "Max. Charging Power", "最大充能功率");
         I18N.Add("Drone transport range", "Drone transport range", "运输机最远路程");
         I18N.Add("Min. Load of Drones", "Min. Load of Drones", "运输机起送量");
         I18N.Add("Outgoing integration count", "Outgoing integration count", "输出货物集装数量");
-        I18N.Add("Count of Drones auto-filled", "Count of Drones auto-filled", "自动填充的运输机数量");
+        I18N.Add("Count of Drones filled", "Count of Drones filled", "填充的运输机数量");
         I18N.Add("Max. Charging Power", "Max. Charging Power", "最大充能功率");
         I18N.Add("Drone transport range", "Drone transport range", "运输机最远路程");
         I18N.Add("Vessel transport range", "Vessel transport range", "运输船最远路程");
@@ -102,8 +103,8 @@ public static class UIConfigWindow
         I18N.Add("Outgoing integration count", "Outgoing integration count", "输出货物集装数量");
         I18N.Add("Include Orbital Collector", "Include Orbital Collector", "包含轨道采集器");
         I18N.Add("Warpers required", "Warpers required", "翘曲器必备");
-        I18N.Add("Count of Drones auto-filled", "Count of Drones auto-filled", "自动填充的运输机数量");
-        I18N.Add("Count of Vessels auto-filled", "Count of Vessels auto-filled", "自动填充的运输船数量");
+        I18N.Add("Count of Drones filled", "Count of Drones filled", "填充的运输机数量");
+        I18N.Add("Count of Vessels filled", "Count of Vessels filled", "填充的运输船数量");
         I18N.Add("Collecting Speed", "Collecting Speed", "开采速度");
         I18N.Add("Min. Piler Value", "Outgoing integration count", "输出货物集装数量");
 
@@ -532,6 +533,8 @@ public static class UIConfigWindow
         y += 36f;
         wnd.AddCheckBox(x, y, tab3, LogisticsPatch.AutoConfigLogisticsEnabled, "Auto-config logistic stations");
         y += 24f;
+        wnd.AddCheckBox(10f, y, tab3, LogisticsPatch.AutoConfigLimitAutoReplenishCount, "Limit auto-replenish count to values below", 13).WithSmallerBox();
+        y += 18f;
         var maxWidth = 0f;
         wnd.AddText2(10f, y, tab3, "Dispenser", 14, "text-dispenser");
         y += 18f;
@@ -540,7 +543,7 @@ public static class UIConfigWindow
         var textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Max. Charging Power", 13, "text-dispenser-max-charging-power");
         maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
         y += 18f;
-        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Count of Bots auto-filled", 13, "text-dispenser-count-of-bots-auto-filled");
+        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Count of Bots filled", 13, "text-dispenser-count-of-bots-filled");
         maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
         y += 18f;
         wnd.AddText2(10f, y, tab3, "PLS", 14, "text-pls");
@@ -557,7 +560,7 @@ public static class UIConfigWindow
         textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Outgoing integration count", 13, "text-pls-outgoing-integration-count");
         maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
         y += 18f;
-        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Count of Drones auto-filled", 13, "text-pls-count-of-drones-auto-filled");
+        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Count of Drones filled", 13, "text-pls-count-of-drones-filled");
         maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
         y += 18f;
         wnd.AddText2(10f, y, tab3, "ILS", 14, "text-ils");
@@ -585,10 +588,10 @@ public static class UIConfigWindow
         textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Outgoing integration count", 13, "text-ils-outgoing-integration-count");
         maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
         y += 18f;
-        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Count of Drones auto-filled", 13, "text-ils-count-of-drones-auto-filled");
+        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Count of Drones filled", 13, "text-ils-count-of-drones-filled");
         maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
         y += 18f;
-        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Count of Vessels auto-filled", 13, "text-ils-count-of-vessels-auto-filled");
+        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Count of Vessels filled", 13, "text-ils-count-of-vessels-filled");
         maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
         y += 18f;
         wnd.AddText2(10f, y, tab3, "Advanced Mining Machine", 14, "text-amm");

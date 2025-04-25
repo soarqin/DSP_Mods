@@ -16,6 +16,7 @@ namespace UXAssist.Patches;
 public static class LogisticsPatch
 {
     public static ConfigEntry<bool> AutoConfigLogisticsEnabled;
+    public static ConfigEntry<bool> AutoConfigLimitAutoReplenishCount;
     // Dispenser config
     public static ConfigEntry<int> AutoConfigDispenserChargePower; // 3~30, display as 300000.0 * value
     public static ConfigEntry<int> AutoConfigDispenserCourierCount; // 0~10
@@ -50,6 +51,7 @@ public static class LogisticsPatch
     public static void Init()
     {
         AutoConfigLogisticsEnabled.SettingChanged += (_, _) => AutoConfigLogistics.Enable(AutoConfigLogisticsEnabled.Value);
+        AutoConfigLimitAutoReplenishCount.SettingChanged += (_, _) => AutoConfigLogistics.ToggleLimitAutoReplenishCount();
         LogisticsCapacityTweaksEnabled.SettingChanged += (_, _) => LogisticsCapacityTweaks.Enable(LogisticsCapacityTweaksEnabled.Value);
         AllowOverflowInLogisticsEnabled.SettingChanged += (_, _) => AllowOverflowInLogistics.Enable(AllowOverflowInLogisticsEnabled.Value);
         LogisticsConstrolPanelImprovementEnabled.SettingChanged += (_, _) => LogisticsConstrolPanelImprovement.Enable(LogisticsConstrolPanelImprovementEnabled.Value);
@@ -99,14 +101,84 @@ public static class LogisticsPatch
         }
     }
 
-    private class AutoConfigLogistics: PatchImpl<AutoConfigLogistics>
+    private class AutoConfigLogistics : PatchImpl<AutoConfigLogistics>
     {
-        enum KnownItemId: int
+        enum KnownItemId : int
         {
             Drone = 5001,
             Ship = 5002,
             Bot = 5003,
             Warper = 1210,
+        }
+
+        protected override void OnEnable()
+        {
+            ToggleLimitAutoReplenishCount();
+        }
+
+        protected override void OnDisable()
+        {
+            ToggleLimitAutoReplenishCount();
+        }
+
+        public static void ToggleLimitAutoReplenishCount()
+        {
+            LimitAutoReplenishCount.Enable(AutoConfigLogisticsEnabled.Value && AutoConfigLimitAutoReplenishCount.Value);
+        }
+
+        private class LimitAutoReplenishCount : PatchImpl<LimitAutoReplenishCount>
+        {
+            [HarmonyTranspiler]
+            [HarmonyPatch(typeof(PlanetFactory), nameof(PlanetFactory.EntityAutoReplenishIfNeeded))]
+            [HarmonyPatch(typeof(PlanetFactory), nameof(PlanetFactory.StationAutoReplenishIfNeeded))]
+            private static IEnumerable<CodeInstruction> PlanetFactory_StationAutoReplenishIfNeeded_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+            {
+                var matcher = new CodeMatcher(instructions, generator);
+                // Patch dispenser courier count
+                matcher.Start().MatchForward(false,
+                    new CodeMatch(ci => ci.IsLdloc()),
+                    new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(DispenserComponent), nameof(DispenserComponent.workCourierDatas))),
+                    new CodeMatch(OpCodes.Ldlen),
+                    new CodeMatch(OpCodes.Conv_I4)
+                );
+                matcher.Repeat(m => m.Advance(4).InsertAndAdvance(
+                    new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(LogisticsPatch), nameof(AutoConfigDispenserCourierCount))),
+                    new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(ConfigEntry<int>), nameof(ConfigEntry<int>.Value))),
+                    new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(Math), nameof(Math.Min), [typeof(int), typeof(int)]))
+                ));
+
+                // Patch PLS/ILS drone count
+                matcher.Start().MatchForward(false,
+                    new CodeMatch(ci => ci.IsLdloc()),
+                    new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(StationComponent), nameof(StationComponent.workDroneDatas))),
+                    new CodeMatch(OpCodes.Ldlen),
+                    new CodeMatch(OpCodes.Conv_I4)
+                );
+                matcher.Repeat(m =>
+                {
+                    var instr = m.Instruction;
+                    m.Advance(4).InsertAndAdvance(
+                        instr,
+                        Transpilers.EmitDelegate((int x, StationComponent station)
+                            => Math.Min(x, station.isStellar ? AutoConfigILSDroneCount.Value : AutoConfigPLSDroneCount.Value))
+                    );
+                });
+
+                // Patch ILS ship count
+                matcher.Start().MatchForward(false,
+                    new CodeMatch(ci => ci.IsLdloc()),
+                    new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(StationComponent), nameof(StationComponent.workShipDatas))),
+                    new CodeMatch(OpCodes.Ldlen),
+                    new CodeMatch(OpCodes.Conv_I4)
+                );
+                UXAssist.Logger.LogDebug($"Patch ILS ship count: {matcher.Pos}");
+                matcher.Repeat(m => m.Advance(4).InsertAndAdvance(
+                    new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(LogisticsPatch), nameof(AutoConfigILSShipCount))),
+                    new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(ConfigEntry<int>), nameof(ConfigEntry<int>.Value))),
+                    new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(Math), nameof(Math.Min), [typeof(int), typeof(int)]))
+                ));
+                return matcher.InstructionEnumeration();
+            }
         }
 
         private static void DoConfigStation(PlanetFactory factory, StationComponent station)
@@ -119,7 +191,8 @@ public static class LogisticsPatch
                 return;
             }
             int toFill;
-            if (!station.isStellar) {
+            if (!station.isStellar)
+            {
                 factory.powerSystem.consumerPool[station.pcId].workEnergyPerTick = (long)(50000.0 * (double)AutoConfigPLSChargePower.Value + 0.5);
                 station.tripRangeDrones = Math.Cos(AutoConfigPLSMaxTripDrone.Value / 180.0 * Math.PI);
                 station.deliveryDrones = AutoConfigPLSDroneMinDeliver.Value switch { 0 => 1, _ => AutoConfigPLSDroneMinDeliver.Value * 10 };
@@ -130,12 +203,14 @@ public static class LogisticsPatch
             }
             factory.powerSystem.consumerPool[station.pcId].workEnergyPerTick = (long)(250000.0 * (double)AutoConfigILSChargePower.Value + 0.5);
             station.tripRangeDrones = Math.Cos(AutoConfigILSMaxTripDrone.Value / 180.0 * Math.PI);
-            station.tripRangeShips = AutoConfigILSMaxTripShip.Value switch {
+            station.tripRangeShips = AutoConfigILSMaxTripShip.Value switch
+            {
                 <= 20 => AutoConfigILSMaxTripShip.Value,
                 <= 40 => AutoConfigILSMaxTripShip.Value * 2 - 20,
                 _ => 10000,
             } * 2400000.0;
-            station.warpEnableDist = AutoConfigILSWarperDistance.Value switch {
+            station.warpEnableDist = AutoConfigILSWarperDistance.Value switch
+            {
                 <= 7 => AutoConfigILSWarperDistance.Value * 0.5 - 0.5,
                 <= 16 => AutoConfigILSWarperDistance.Value - 4.0,
                 <= 20 => AutoConfigILSWarperDistance.Value * 2 - 20.0,
@@ -175,7 +250,7 @@ public static class LogisticsPatch
         }
     }
 
-    public class LogisticsCapacityTweaks: PatchImpl<LogisticsCapacityTweaks>
+    public class LogisticsCapacityTweaks : PatchImpl<LogisticsCapacityTweaks>
     {
         private static KeyCode _lastKey = KeyCode.None;
         private static long _nextKeyTick;
@@ -309,58 +384,58 @@ public static class LogisticsPatch
             switch (_funcId)
             {
                 case 30:
-                {
-                    var stationPool = __instance.stationPool;
-                    var factory = __instance.factory;
-                    var history = GameMain.history;
-                    for (var i = __instance.stationCursor - 1; i > 0; i--)
                     {
-                        if (stationPool[i] == null || stationPool[i].id != i || (stationPool[i].isStellar && !stationPool[i].isCollector && !stationPool[i].isVeinCollector)) continue;
-                        var modelIndex = factory.entityPool[stationPool[i].entityId].modelIndex;
-                        var maxCount = LDB.models.Select(modelIndex).prefabDesc.stationMaxItemCount;
-                        var oldMaxCount = maxCount + history.localStationExtraStorage - _valuelf;
-                        var intOldMaxCount = (int)Math.Round(oldMaxCount);
-                        var ratio = (maxCount + history.localStationExtraStorage) / oldMaxCount;
-                        var storage = stationPool[i].storage;
-                        for (var j = storage.Length - 1; j >= 0; j--)
+                        var stationPool = __instance.stationPool;
+                        var factory = __instance.factory;
+                        var history = GameMain.history;
+                        for (var i = __instance.stationCursor - 1; i > 0; i--)
                         {
-                            if (storage[j].max + 10 < intOldMaxCount) continue;
-                            storage[j].max = Mathf.RoundToInt((float)(storage[j].max * ratio / 50.0)) * 50;
+                            if (stationPool[i] == null || stationPool[i].id != i || (stationPool[i].isStellar && !stationPool[i].isCollector && !stationPool[i].isVeinCollector)) continue;
+                            var modelIndex = factory.entityPool[stationPool[i].entityId].modelIndex;
+                            var maxCount = LDB.models.Select(modelIndex).prefabDesc.stationMaxItemCount;
+                            var oldMaxCount = maxCount + history.localStationExtraStorage - _valuelf;
+                            var intOldMaxCount = (int)Math.Round(oldMaxCount);
+                            var ratio = (maxCount + history.localStationExtraStorage) / oldMaxCount;
+                            var storage = stationPool[i].storage;
+                            for (var j = storage.Length - 1; j >= 0; j--)
+                            {
+                                if (storage[j].max + 10 < intOldMaxCount) continue;
+                                storage[j].max = Mathf.RoundToInt((float)(storage[j].max * ratio / 50.0)) * 50;
+                            }
                         }
-                    }
 
-                    break;
-                }
+                        break;
+                    }
                 case 31:
-                {
-                    var stationPool = __instance.stationPool;
-                    var factory = __instance.factory;
-                    var history = GameMain.history;
-                    for (var i = __instance.stationCursor - 1; i > 0; i--)
                     {
-                        if (stationPool[i] == null || stationPool[i].id != i || !stationPool[i].isStellar || stationPool[i].isCollector || stationPool[i].isVeinCollector) continue;
-                        var modelIndex = factory.entityPool[stationPool[i].entityId].modelIndex;
-                        var maxCount = LDB.models.Select(modelIndex).prefabDesc.stationMaxItemCount;
-                        var oldMaxCount = maxCount + history.remoteStationExtraStorage - _valuelf;
-                        var intOldMaxCount = (int)Math.Round(oldMaxCount);
-                        var ratio = (maxCount + history.remoteStationExtraStorage) / oldMaxCount;
-                        var storage = stationPool[i].storage;
-                        for (var j = storage.Length - 1; j >= 0; j--)
+                        var stationPool = __instance.stationPool;
+                        var factory = __instance.factory;
+                        var history = GameMain.history;
+                        for (var i = __instance.stationCursor - 1; i > 0; i--)
                         {
-                            if (storage[j].max + 10 < intOldMaxCount) continue;
-                            storage[j].max = Mathf.RoundToInt((float)(storage[j].max * ratio / 100.0)) * 100;
+                            if (stationPool[i] == null || stationPool[i].id != i || !stationPool[i].isStellar || stationPool[i].isCollector || stationPool[i].isVeinCollector) continue;
+                            var modelIndex = factory.entityPool[stationPool[i].entityId].modelIndex;
+                            var maxCount = LDB.models.Select(modelIndex).prefabDesc.stationMaxItemCount;
+                            var oldMaxCount = maxCount + history.remoteStationExtraStorage - _valuelf;
+                            var intOldMaxCount = (int)Math.Round(oldMaxCount);
+                            var ratio = (maxCount + history.remoteStationExtraStorage) / oldMaxCount;
+                            var storage = stationPool[i].storage;
+                            for (var j = storage.Length - 1; j >= 0; j--)
+                            {
+                                if (storage[j].max + 10 < intOldMaxCount) continue;
+                                storage[j].max = Mathf.RoundToInt((float)(storage[j].max * ratio / 100.0)) * 100;
+                            }
                         }
-                    }
 
-                    break;
-                }
+                        break;
+                    }
             }
 
             return false;
         }
     }
 
-    private class AllowOverflowInLogistics: PatchImpl<AllowOverflowInLogistics>
+    private class AllowOverflowInLogistics : PatchImpl<AllowOverflowInLogistics>
     {
         // Do not check for overflow when try to send hand items into storages
         [HarmonyTranspiler]
@@ -412,7 +487,7 @@ public static class LogisticsPatch
         }
     }
 
-    private class LogisticsConstrolPanelImprovement: PatchImpl<LogisticsConstrolPanelImprovement>
+    private class LogisticsConstrolPanelImprovement : PatchImpl<LogisticsConstrolPanelImprovement>
     {
         private static int ItemIdHintUnderMouse()
         {
@@ -1073,8 +1148,12 @@ public static class LogisticsPatch
                     _iconRemotes[i].gameObject.SetActive(false);
                     _storageItems[i] = new StorageItemData
                     {
-                        ItemId = -1, ItemCount = -1, ItemOrdered = -1, ItemMax = -1,
-                        LocalState = ELogisticStorage.None, RemoteState = ELogisticStorage.None
+                        ItemId = -1,
+                        ItemCount = -1,
+                        ItemOrdered = -1,
+                        ItemMax = -1,
+                        LocalState = ELogisticStorage.None,
+                        RemoteState = ELogisticStorage.None
                     };
                 }
 
@@ -1163,16 +1242,16 @@ public static class LogisticsPatch
                     switch (_layout)
                     {
                         case EStationTipLayout.InterstellarLogistics:
-                        {
-                            countUIText.color = _iconRemotesImage[i].color = StateColor[(int)storageState.RemoteState];
-                            break;
-                        }
+                            {
+                                countUIText.color = _iconRemotesImage[i].color = StateColor[(int)storageState.RemoteState];
+                                break;
+                            }
                         case EStationTipLayout.VeinCollector:
                         case EStationTipLayout.PlanetaryLogistics:
-                        {
-                            countUIText.color = _iconLocalsImage[i].color = StateColor[(int)storageState.LocalState];
-                            break;
-                        }
+                            {
+                                countUIText.color = _iconLocalsImage[i].color = StateColor[(int)storageState.LocalState];
+                                break;
+                            }
                         case EStationTipLayout.None:
                         case EStationTipLayout.Collector:
                         default:
@@ -1260,39 +1339,39 @@ public static class LogisticsPatch
                 switch (_layout)
                 {
                     case EStationTipLayout.InterstellarLogistics:
-                    {
-                        var localLogic = storage.localLogic;
-                        if (storageState.LocalState != localLogic)
                         {
-                            storageState.LocalState = localLogic;
-                            var iconLocalImage = _iconLocalsImage[i];
-                            iconLocalImage.sprite = StateSprite[(int)localLogic];
-                            iconLocalImage.color = StateColor[(int)localLogic];
-                        }
-                        var remoteLogic = storage.remoteLogic;
-                        if (storageState.RemoteState != remoteLogic)
-                        {
-                            storageState.RemoteState = remoteLogic;
-                            var iconRemoteImage = _iconRemotesImage[i];
-                            iconRemoteImage.sprite = StateSprite[(int)remoteLogic];
-                            countUIText.color = iconRemoteImage.color = StateColor[(int)remoteLogic];
-                        }
+                            var localLogic = storage.localLogic;
+                            if (storageState.LocalState != localLogic)
+                            {
+                                storageState.LocalState = localLogic;
+                                var iconLocalImage = _iconLocalsImage[i];
+                                iconLocalImage.sprite = StateSprite[(int)localLogic];
+                                iconLocalImage.color = StateColor[(int)localLogic];
+                            }
+                            var remoteLogic = storage.remoteLogic;
+                            if (storageState.RemoteState != remoteLogic)
+                            {
+                                storageState.RemoteState = remoteLogic;
+                                var iconRemoteImage = _iconRemotesImage[i];
+                                iconRemoteImage.sprite = StateSprite[(int)remoteLogic];
+                                countUIText.color = iconRemoteImage.color = StateColor[(int)remoteLogic];
+                            }
 
-                        break;
-                    }
+                            break;
+                        }
                     case EStationTipLayout.VeinCollector:
                     case EStationTipLayout.PlanetaryLogistics:
-                    {
-                        var localLogic = storage.localLogic;
-                        if (storageState.LocalState != localLogic)
                         {
-                            storageState.LocalState = localLogic;
-                            var iconLocalImage = _iconLocalsImage[i];
-                            iconLocalImage.sprite = StateSprite[(int)localLogic];
-                            countUIText.color = iconLocalImage.color = StateColor[(int)localLogic];
+                            var localLogic = storage.localLogic;
+                            if (storageState.LocalState != localLogic)
+                            {
+                                storageState.LocalState = localLogic;
+                                var iconLocalImage = _iconLocalsImage[i];
+                                iconLocalImage.sprite = StateSprite[(int)localLogic];
+                                countUIText.color = iconLocalImage.color = StateColor[(int)localLogic];
+                            }
+                            break;
                         }
-                        break;
-                    }
                     case EStationTipLayout.None:
                     case EStationTipLayout.Collector:
                     default:

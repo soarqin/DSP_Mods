@@ -62,6 +62,7 @@ public static class UIFunctions
         }
     }
 
+#region ConfigWindow
     public static void ToggleConfigWindow()
     {
         if (!_configWinInitialized)
@@ -81,34 +82,6 @@ public static class UIFunctions
         }
     }
 
-    private static readonly Sprite[] PlanetIcons = [
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        Common.Util.LoadEmbeddedSprite("assets/planet_icon/07.png"),
-        null,
-        Common.Util.LoadEmbeddedSprite("assets/planet_icon/09.png"),
-        Common.Util.LoadEmbeddedSprite("assets/planet_icon/10.png"),
-        null,
-        null,
-        Common.Util.LoadEmbeddedSprite("assets/planet_icon/13.png"),
-        Common.Util.LoadEmbeddedSprite("assets/planet_icon/14.png"),
-        Common.Util.LoadEmbeddedSprite("assets/planet_icon/15.png"),
-        Common.Util.LoadEmbeddedSprite("assets/planet_icon/16.png"),
-        Common.Util.LoadEmbeddedSprite("assets/planet_icon/17.png"),
-        Common.Util.LoadEmbeddedSprite("assets/planet_icon/18.png"),
-        Common.Util.LoadEmbeddedSprite("assets/planet_icon/19.png"),
-        null,
-        Common.Util.LoadEmbeddedSprite("assets/planet_icon/21.png"),
-        Common.Util.LoadEmbeddedSprite("assets/planet_icon/22.png"),
-        Common.Util.LoadEmbeddedSprite("assets/planet_icon/23.png"),
-        Common.Util.LoadEmbeddedSprite("assets/planet_icon/24.png"),
-        Common.Util.LoadEmbeddedSprite("assets/planet_icon/25.png")
-    ];
     private static readonly int[] FilterPlanetThemes = [16, 23, 10, 15, 18, 22, 25, 21, 14, 17, 19, 7, 24, 9, 13];
     public static void InitMenuButtons()
     {
@@ -168,310 +141,370 @@ public static class UIFunctions
                 _buttonOnPlanetGlobe.SetActive(true);
             }
         }
+        InitStarmapButtons();
+        _initialized = true;
+    }
+
+    public static void RecreateConfigWindow()
+    {
+        if (!_configWinInitialized) return;
+        var wasActive = _configWin.active;
+        if (wasActive) _configWin._Close();
+        MyConfigWindow.DestroyInstance(_configWin);
+        _configWinInitialized = false;
+        if (wasActive) ToggleConfigWindow();
+    }
+
+    public static void UpdateGlobeButtonPosition(UIPlanetGlobe planetGlobe)
+    {
+        if (_buttonOnPlanetGlobe == null) return;
+        var rect = (RectTransform)_buttonOnPlanetGlobe.transform;
+        if (planetGlobe.dysonSphereSystemUnlocked || planetGlobe.logisticsSystemUnlocked)
         {
-            var rtrans = uiRoot.uiGame.starmap.transform as RectTransform;
-            var cornerComboBox = UI.MyCornerComboBox.CreateComboBox(135, 5, rtrans, true).WithItems("Show original name".Translate(), "Show distance".Translate(), "Show planet count".Translate(), "Show all information".Translate());
-            cornerComboBox.SetIndex(Functions.UIFunctions.CornerComboBoxIndex);
-            cornerComboBox.OnSelChanged += (index) =>
-            {
-                Functions.UIFunctions.CornerComboBoxIndex = index;
-            };
-            _starmapFilterToggler = UI.MyCheckButton.CreateCheckButton(5, 5, rtrans, false, ">>").WithSize(24, 24);
-            MyCheckButton[] buttons = [
-                UI.MyCheckButton.CreateCheckButton(29, 5, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Kimberlite
-                UI.MyCheckButton.CreateCheckButton(53, 5, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Fractal Silicon
-                UI.MyCheckButton.CreateCheckButton(77, 5, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Organic Crystal
-                UI.MyCheckButton.CreateCheckButton(101, 5, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Grating Crystal
-                UI.MyCheckButton.CreateCheckButton(125, 5, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Stalagmite Crystal
-                UI.MyCheckButton.CreateCheckButton(149, 5, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Unipolar Magnet
-                UI.MyCheckButton.CreateCheckButton(173, 5, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Crude Oil
-                UI.MyCheckButton.CreateCheckButton(197, 5, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Fire Ice
-                UI.MyCheckButton.CreateCheckButton(221, 5, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Sulfuric Acid
-                UI.MyCheckButton.CreateCheckButton(245, 5, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Water
-                UI.MyCheckButton.CreateCheckButton(269, 5, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Hydrogen
-                UI.MyCheckButton.CreateCheckButton(293, 5, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Deuterium
+            rect.anchoredPosition3D = new Vector3(64f, -5f, 0f);
+        }
+        else
+        {
+            rect.anchoredPosition3D = new Vector3(128f, -100f, 0f);
+        }
+    }
+#endregion
 
-                UI.MyCheckButton.CreateCheckButton(29, 29, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
-                UI.MyCheckButton.CreateCheckButton(29, 53, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
-                UI.MyCheckButton.CreateCheckButton(29, 77, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
-                UI.MyCheckButton.CreateCheckButton(29, 101, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
-                UI.MyCheckButton.CreateCheckButton(29, 125, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
-                UI.MyCheckButton.CreateCheckButton(29, 149, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
-                UI.MyCheckButton.CreateCheckButton(29, 173, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
-                UI.MyCheckButton.CreateCheckButton(29, 197, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
-                UI.MyCheckButton.CreateCheckButton(29, 221, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
+#region StarMapButtons
+    private static readonly Sprite[] PlanetIcons = [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        Common.Util.LoadEmbeddedSprite("assets/planet_icon/07.png"),
+        null,
+        Common.Util.LoadEmbeddedSprite("assets/planet_icon/09.png"),
+        Common.Util.LoadEmbeddedSprite("assets/planet_icon/10.png"),
+        null,
+        null,
+        Common.Util.LoadEmbeddedSprite("assets/planet_icon/13.png"),
+        Common.Util.LoadEmbeddedSprite("assets/planet_icon/14.png"),
+        Common.Util.LoadEmbeddedSprite("assets/planet_icon/15.png"),
+        Common.Util.LoadEmbeddedSprite("assets/planet_icon/16.png"),
+        Common.Util.LoadEmbeddedSprite("assets/planet_icon/17.png"),
+        Common.Util.LoadEmbeddedSprite("assets/planet_icon/18.png"),
+        Common.Util.LoadEmbeddedSprite("assets/planet_icon/19.png"),
+        null,
+        Common.Util.LoadEmbeddedSprite("assets/planet_icon/21.png"),
+        Common.Util.LoadEmbeddedSprite("assets/planet_icon/22.png"),
+        Common.Util.LoadEmbeddedSprite("assets/planet_icon/23.png"),
+        Common.Util.LoadEmbeddedSprite("assets/planet_icon/24.png"),
+        Common.Util.LoadEmbeddedSprite("assets/planet_icon/25.png")
+    ];
 
-                UI.MyCheckButton.CreateCheckButton(29, 263, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
-                UI.MyCheckButton.CreateCheckButton(29, 287, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
-                UI.MyCheckButton.CreateCheckButton(29, 311, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
-                UI.MyCheckButton.CreateCheckButton(29, 335, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
-                UI.MyCheckButton.CreateCheckButton(29, 359, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
-                UI.MyCheckButton.CreateCheckButton(29, 383, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
-            ];
-            var allOresText = MyWindow.AddText(25, 243, rtrans, "All 6 Basic Ores".Translate(), 12);
-            allOresText.gameObject.SetActive(false);
-            _starmapFilterToggler.OnChecked += UpdateButtons;
-            foreach (var button in buttons)
+    public static void InitStarmapButtons()
+    {
+        var uiRoot = UIRoot.instance;
+        if (!uiRoot) return;
+        var rtrans = uiRoot.uiGame.starmap.transform as RectTransform;
+        var cornerComboBox = UI.MyCornerComboBox.CreateComboBox(135, 5, rtrans, true).WithItems("Show original name".Translate(), "Show distance".Translate(), "Show planet count".Translate(), "Show all information".Translate());
+        cornerComboBox.SetIndex(Functions.UIFunctions.CornerComboBoxIndex);
+        cornerComboBox.OnSelChanged += (index) =>
+        {
+            Functions.UIFunctions.CornerComboBoxIndex = index;
+        };
+        _starmapFilterToggler = UI.MyCheckButton.CreateCheckButton(5, 5, rtrans, false, ">>").WithSize(24, 24);
+        MyCheckButton[] buttons = [
+            UI.MyCheckButton.CreateCheckButton(29, 5, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Kimberlite
+            UI.MyCheckButton.CreateCheckButton(53, 5, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Fractal Silicon
+            UI.MyCheckButton.CreateCheckButton(77, 5, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Organic Crystal
+            UI.MyCheckButton.CreateCheckButton(101, 5, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Grating Crystal
+            UI.MyCheckButton.CreateCheckButton(125, 5, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Stalagmite Crystal
+            UI.MyCheckButton.CreateCheckButton(149, 5, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Unipolar Magnet
+            UI.MyCheckButton.CreateCheckButton(173, 5, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Crude Oil
+            UI.MyCheckButton.CreateCheckButton(197, 5, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Fire Ice
+            UI.MyCheckButton.CreateCheckButton(221, 5, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Sulfuric Acid
+            UI.MyCheckButton.CreateCheckButton(245, 5, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Water
+            UI.MyCheckButton.CreateCheckButton(269, 5, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Hydrogen
+            UI.MyCheckButton.CreateCheckButton(293, 5, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Deuterium
+
+            UI.MyCheckButton.CreateCheckButton(29, 29, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
+            UI.MyCheckButton.CreateCheckButton(29, 53, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
+            UI.MyCheckButton.CreateCheckButton(29, 77, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
+            UI.MyCheckButton.CreateCheckButton(29, 101, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
+            UI.MyCheckButton.CreateCheckButton(29, 125, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
+            UI.MyCheckButton.CreateCheckButton(29, 149, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
+            UI.MyCheckButton.CreateCheckButton(29, 173, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
+            UI.MyCheckButton.CreateCheckButton(29, 197, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
+            UI.MyCheckButton.CreateCheckButton(29, 221, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
+
+            UI.MyCheckButton.CreateCheckButton(29, 263, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
+            UI.MyCheckButton.CreateCheckButton(29, 287, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
+            UI.MyCheckButton.CreateCheckButton(29, 311, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
+            UI.MyCheckButton.CreateCheckButton(29, 335, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
+            UI.MyCheckButton.CreateCheckButton(29, 359, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
+            UI.MyCheckButton.CreateCheckButton(29, 383, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
+        ];
+        var allOresText = MyWindow.AddText(25, 243, rtrans, "All 6 Basic Ores".Translate(), 12);
+        allOresText.gameObject.SetActive(false);
+        _starmapFilterToggler.OnChecked += UpdateButtons;
+        foreach (var button in buttons)
+        {
+            button.OnChecked += () =>
             {
-                button.OnChecked += () =>
+                if (button.Checked && !VFInput.shift && !VFInput.control)
                 {
-                    if (button.Checked && !VFInput.shift && !VFInput.control)
+                    foreach (var b in buttons)
                     {
-                        foreach (var b in buttons)
-                        {
-                            if (b != button) b.Checked = false;
-                        }
+                        if (b != button) b.Checked = false;
                     }
-                    UpdateStarmapStarFilters();
-                };
-            }
+                }
+                UpdateStarmapStarFilters();
+            };
+        }
 
-            I18N.OnInitialized += UpdateI18N;
-            GameLogic.OnDataLoaded += () =>
+        I18N.OnInitialized += UpdateI18N;
+        GameLogic.OnDataLoaded += () =>
+        {
+            VeinProto veinProto;
+            for (int i = 0; i < 6; i++)
+            {
+                veinProto = LDB.veins.Select(i + 9);
+                buttons[i].SetIcon(veinProto.iconSprite);
+            }
+            var itemProto = LDB.items.Select(1007);
+            buttons[6].SetIcon(itemProto.iconSprite);
+            veinProto = LDB.veins.Select(8);
+            buttons[7].SetIcon(veinProto.iconSprite);
+            itemProto = LDB.items.Select(1116);
+            buttons[8].SetIcon(itemProto.iconSprite);
+            itemProto = LDB.items.Select(1000);
+            buttons[9].SetIcon(itemProto.iconSprite);
+            itemProto = LDB.items.Select(1120);
+            buttons[10].SetIcon(itemProto.iconSprite);
+            itemProto = LDB.items.Select(1121);
+            buttons[11].SetIcon(itemProto.iconSprite);
+
+            for (int i = 0; i < FilterPlanetThemes.Length; i++)
+            {
+                buttons[12 + i].SetIcon(PlanetIcons[FilterPlanetThemes[i]]);
+            }
+            UpdateI18N();
+        };
+
+        GameLogic.OnGameBegin += () =>
+        {
+            if (DSPGame.IsMenuDemo) return;
+
+            var galaxy = GameMain.data.galaxy;
+            ShowStarName = new bool[galaxy.starCount];
+            _starOrderNames = new string[galaxy.starCount];
+            _starmapStarFilterValues = new ulong[galaxy.starCount];
+            StarData[] stars = [.. galaxy.stars.Where(star => star != null)];
+            Array.Sort(stars, (a, b) =>
+            {
+                int res = a.position.sqrMagnitude.CompareTo(b.position.sqrMagnitude);
+                if (res != 0) return res;
+                return a.index.CompareTo(b.index);
+            });
+            for (int i = 0; i < stars.Length; i++)
+            {
+                var star = stars[i];
+                _starOrderNames[star.index] = star.displayName;
+            }
+            int[] spectrCount = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+            for (int i = 0; i < stars.Length; i++)
+            {
+                var star = stars[i];
+                var index = star.index;
+                switch (star.type)
+                {
+                    case EStarType.MainSeqStar:
+                        switch (star.spectr)
+                        {
+                            case ESpectrType.M:
+                                _starOrderNames[index] = String.Format("M{0}", ++spectrCount[0]);
+                                break;
+                            case ESpectrType.K:
+                                _starOrderNames[index] = String.Format("K{0}", ++spectrCount[1]);
+                                break;
+                            case ESpectrType.G:
+                                _starOrderNames[index] = String.Format("G{0}", ++spectrCount[2]);
+                                break;
+                            case ESpectrType.F:
+                                _starOrderNames[index] = String.Format("F{0}", ++spectrCount[3]);
+                                break;
+                            case ESpectrType.A:
+                                _starOrderNames[index] = String.Format("A{0}", ++spectrCount[4]);
+                                break;
+                            case ESpectrType.B:
+                                _starOrderNames[index] = String.Format("B{0}", ++spectrCount[5]);
+                                break;
+                            case ESpectrType.O:
+                                _starOrderNames[index] = String.Format("O{0}", ++spectrCount[6]);
+                                break;
+                        }
+                        break;
+                    case EStarType.GiantStar:
+                        _starOrderNames[index] = String.Format("GS{0}", ++spectrCount[7]);
+                        break;
+                    case EStarType.WhiteDwarf:
+                        _starOrderNames[index] = String.Format("WD{0}", ++spectrCount[8]);
+                        break;
+                    case EStarType.NeutronStar:
+                        _starOrderNames[index] = String.Format("NS{0}", ++spectrCount[9]);
+                        break;
+                    case EStarType.BlackHole:
+                        _starOrderNames[index] = String.Format("BH{0}", ++spectrCount[10]);
+                        break;
+                }
+            }
+            _starmapFilterToggler.gameObject.SetActive(false);
+            _starmapFilterToggler.Checked = false;
+            UpdateButtons();
+            SetStarFilterEnabled(false);
+            foreach (var star in galaxy.stars)
+            {
+                if (star != null) PlanetModelingManager.RequestScanStar(star);
+            }
+            _starmapFilterInitialized = true;
+        };
+        GameLogic.OnGameEnd += () =>
+        {
+            _starOrderNames = null;
+            ShowStarName = null;
+            _starmapStarFilterValues = null;
+            _starmapFilterInitialized = false;
+        };
+        void UpdateI18N()
+        {
+            if (cornerComboBox != null)
+            {
+                var items = cornerComboBox.Items;
+                cornerComboBox.UpdateLabelText();
+                items[0] = "Show original name".Translate();
+                items[1] = "Show distance".Translate();
+                items[2] = "Show planet count".Translate();
+                items[3] = "Show all information".Translate();
+            }
+            if (buttons != null)
             {
                 VeinProto veinProto;
                 for (int i = 0; i < 6; i++)
                 {
                     veinProto = LDB.veins.Select(i + 9);
-                    buttons[i].SetIcon(veinProto.iconSprite);
+                    buttons[i].WithTip(veinProto.Name);
                 }
                 var itemProto = LDB.items.Select(1007);
-                buttons[6].SetIcon(itemProto.iconSprite);
+                buttons[6].WithTip(itemProto.Name);
                 veinProto = LDB.veins.Select(8);
-                buttons[7].SetIcon(veinProto.iconSprite);
+                buttons[7].WithTip(veinProto.Name);
                 itemProto = LDB.items.Select(1116);
-                buttons[8].SetIcon(itemProto.iconSprite);
+                buttons[8].WithTip(itemProto.Name);
                 itemProto = LDB.items.Select(1000);
-                buttons[9].SetIcon(itemProto.iconSprite);
+                buttons[9].WithTip(itemProto.Name);
                 itemProto = LDB.items.Select(1120);
-                buttons[10].SetIcon(itemProto.iconSprite);
+                buttons[10].WithTip(itemProto.Name);
                 itemProto = LDB.items.Select(1121);
-                buttons[11].SetIcon(itemProto.iconSprite);
+                buttons[11].WithTip(itemProto.Name);
 
                 for (int i = 0; i < FilterPlanetThemes.Length; i++)
                 {
-                    buttons[12 + i].SetIcon(PlanetIcons[FilterPlanetThemes[i]]);
-                }
-                UpdateI18N();
-            };
-
-            GameLogic.OnGameBegin += () =>
-            {
-                if (DSPGame.IsMenuDemo) return;
-
-                var galaxy = GameMain.data.galaxy;
-                ShowStarName = new bool[galaxy.starCount];
-                _starOrderNames = new string[galaxy.starCount];
-                _starmapStarFilterValues = new ulong[galaxy.starCount];
-                StarData[] stars = [.. galaxy.stars.Where(star => star != null)];
-                Array.Sort(stars, (a, b) =>
-                {
-                    int res = a.position.sqrMagnitude.CompareTo(b.position.sqrMagnitude);
-                    if (res != 0) return res;
-                    return a.index.CompareTo(b.index);
-                });
-                for (int i = 0; i < stars.Length; i++)
-                {
-                    var star = stars[i];
-                    _starOrderNames[star.index] = star.displayName;
-                }
-                int[] spectrCount = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-                for (int i = 0; i < stars.Length; i++)
-                {
-                    var star = stars[i];
-                    var index = star.index;
-                    switch (star.type)
+                    var theme = FilterPlanetThemes[i];
+                    var themeProto = LDB.themes.Select(theme);
+                    switch (i)
                     {
-                        case EStarType.MainSeqStar:
-                            switch (star.spectr)
-                            {
-                                case ESpectrType.M:
-                                    _starOrderNames[index] = String.Format("M{0}", ++spectrCount[0]);
-                                    break;
-                                case ESpectrType.K:
-                                    _starOrderNames[index] = String.Format("K{0}", ++spectrCount[1]);
-                                    break;
-                                case ESpectrType.G:
-                                    _starOrderNames[index] = String.Format("G{0}", ++spectrCount[2]);
-                                    break;
-                                case ESpectrType.F:
-                                    _starOrderNames[index] = String.Format("F{0}", ++spectrCount[3]);
-                                    break;
-                                case ESpectrType.A:
-                                    _starOrderNames[index] = String.Format("A{0}", ++spectrCount[4]);
-                                    break;
-                                case ESpectrType.B:
-                                    _starOrderNames[index] = String.Format("B{0}", ++spectrCount[5]);
-                                    break;
-                                case ESpectrType.O:
-                                    _starOrderNames[index] = String.Format("O{0}", ++spectrCount[6]);
-                                    break;
-                            }
+                        case 7:
+                            buttons[12 + i].SetLabelText($"{themeProto.DisplayName.Translate()} ({"High yield".Translate()})");
                             break;
-                        case EStarType.GiantStar:
-                            _starOrderNames[index] = String.Format("GS{0}", ++spectrCount[7]);
+                        case 8:
+                            buttons[12 + i].SetLabelText($"{themeProto.DisplayName.Translate()} ({"Perfect".Translate()})");
                             break;
-                        case EStarType.WhiteDwarf:
-                            _starOrderNames[index] = String.Format("WD{0}", ++spectrCount[8]);
-                            break;
-                        case EStarType.NeutronStar:
-                            _starOrderNames[index] = String.Format("NS{0}", ++spectrCount[9]);
-                            break;
-                        case EStarType.BlackHole:
-                            _starOrderNames[index] = String.Format("BH{0}", ++spectrCount[10]);
+                        default:
+                            buttons[12 + i].SetLabelText(themeProto.DisplayName.Translate());
                             break;
                     }
-                }
-                _starmapFilterToggler.gameObject.SetActive(false);
-                _starmapFilterToggler.Checked = false;
-                UpdateButtons();
-                SetStarFilterEnabled(false);
-                foreach (var star in galaxy.stars)
-                {
-                    if (star != null) PlanetModelingManager.RequestScanStar(star);
-                }
-                _starmapFilterInitialized = true;
-            };
-            GameLogic.OnGameEnd += () =>
-            {
-                _starOrderNames = null;
-                ShowStarName = null;
-                _starmapStarFilterValues = null;
-                _starmapFilterInitialized = false;
-            };
-            void UpdateI18N()
-            {
-                if (cornerComboBox != null)
-                {
-                    var items = cornerComboBox.Items;
-                    cornerComboBox.UpdateLabelText();
-                    items[0] = "Show original name".Translate();
-                    items[1] = "Show distance".Translate();
-                    items[2] = "Show planet count".Translate();
-                    items[3] = "Show all information".Translate();
-                }
-                if (buttons != null)
-                {
-                    VeinProto veinProto;
-                    for (int i = 0; i < 6; i++)
-                    {
-                        veinProto = LDB.veins.Select(i + 9);
-                        buttons[i].WithTip(veinProto.Name);
-                    }
-                    var itemProto = LDB.items.Select(1007);
-                    buttons[6].WithTip(itemProto.Name);
-                    veinProto = LDB.veins.Select(8);
-                    buttons[7].WithTip(veinProto.Name);
-                    itemProto = LDB.items.Select(1116);
-                    buttons[8].WithTip(itemProto.Name);
-                    itemProto = LDB.items.Select(1000);
-                    buttons[9].WithTip(itemProto.Name);
-                    itemProto = LDB.items.Select(1120);
-                    buttons[10].WithTip(itemProto.Name);
-                    itemProto = LDB.items.Select(1121);
-                    buttons[11].WithTip(itemProto.Name);
-
-                    for (int i = 0; i < FilterPlanetThemes.Length; i++)
-                    {
-                        var theme = FilterPlanetThemes[i];
-                        var themeProto = LDB.themes.Select(theme);
-                        switch (i)
-                        {
-                            case 7:
-                                buttons[12 + i].SetLabelText($"{themeProto.DisplayName.Translate()} ({"High yield".Translate()})");
-                                break;
-                            case 8:
-                                buttons[12 + i].SetLabelText($"{themeProto.DisplayName.Translate()} ({"Perfect".Translate()})");
-                                break;
-                            default:
-                                buttons[12 + i].SetLabelText(themeProto.DisplayName.Translate());
-                                break;
-                        }
-                    }
-                }
-                if (allOresText != null) allOresText.text = "All 6 Basic Ores".Translate();
-            }
-            void UpdateButtons()
-            {
-                var chk = _starmapFilterToggler.Checked;
-                foreach (var button in buttons)
-                {
-                    if (chk)
-                        button.gameObject.SetActive(true);
-                    else
-                    {
-                        button.gameObject.SetActive(false);
-                        button.Checked = false;
-                    }
-                }
-                allOresText.gameObject.SetActive(chk);
-                _starmapFilterToggler.SetLabelText(chk ? "X" : ">>");
-                if (!chk)
-                {
-                    UpdateStarmapStarFilters();
                 }
             }
-            void UpdateStarmapStarFilters()
+            if (allOresText != null) allOresText.text = "All 6 Basic Ores".Translate();
+        }
+        void UpdateButtons()
+        {
+            var chk = _starmapFilterToggler.Checked;
+            foreach (var button in buttons)
             {
-                var filterValue = 0UL;
-                if (_starmapFilterToggler.Checked)
+                if (chk)
+                    button.gameObject.SetActive(true);
+                else
                 {
-                    for (int i = 0; i < 6; i++)
-                    {
-                        if (buttons[i].Checked)
-                        {
-                            filterValue |= 1UL << (i + 9);
-                        }
-                    }
-                    if (buttons[6].Checked)
-                    {
-                        filterValue |= 1UL << 7;
-                    }
-                    if (buttons[7].Checked)
-                    {
-                        filterValue |= 1UL << 8;
-                    }
-                    if (buttons[8].Checked)
-                    {
-                        filterValue |= 1UL << 22;
-                    }
-                    if (buttons[9].Checked)
-                    {
-                        filterValue |= 1UL << 23;
-                    }
-                    if (buttons[10].Checked)
-                    {
-                        filterValue |= 1UL << 20;
-                    }
-                    if (buttons[11].Checked)
-                    {
-                        filterValue |= 1UL << 21;
-                    }
-                    for (int i = 0; i < FilterPlanetThemes.Length; i++)
-                    {
-                        if (buttons[12 + i].Checked)
-                        {
-                            filterValue |= 1UL << (30 + FilterPlanetThemes[i]);
-                        }
-                    }
+                    button.gameObject.SetActive(false);
+                    button.Checked = false;
                 }
-                if (filterValue == 0UL)
-                {
-                    for (int i = 0; i < ShowStarName.Length; i++)
-                    {
-                        ShowStarName[i] = false;
-                    }
-                    SetStarFilterEnabled(false);
-                    return;
-                }
-                for (int i = _starmapStarFilterValues.Length - 1; i >= 0; i--)
-                {
-                    ShowStarName[i] = (_starmapStarFilterValues[i] & filterValue) == filterValue;
-                }
-                SetStarFilterEnabled(true);
+            }
+            allOresText.gameObject.SetActive(chk);
+            _starmapFilterToggler.SetLabelText(chk ? "X" : ">>");
+            if (!chk)
+            {
+                UpdateStarmapStarFilters();
             }
         }
-        _initialized = true;
+        void UpdateStarmapStarFilters()
+        {
+            var filterValue = 0UL;
+            if (_starmapFilterToggler.Checked)
+            {
+                for (int i = 0; i < 6; i++)
+                {
+                    if (buttons[i].Checked)
+                    {
+                        filterValue |= 1UL << (i + 9);
+                    }
+                }
+                if (buttons[6].Checked)
+                {
+                    filterValue |= 1UL << 7;
+                }
+                if (buttons[7].Checked)
+                {
+                    filterValue |= 1UL << 8;
+                }
+                if (buttons[8].Checked)
+                {
+                    filterValue |= 1UL << 22;
+                }
+                if (buttons[9].Checked)
+                {
+                    filterValue |= 1UL << 23;
+                }
+                if (buttons[10].Checked)
+                {
+                    filterValue |= 1UL << 20;
+                }
+                if (buttons[11].Checked)
+                {
+                    filterValue |= 1UL << 21;
+                }
+                for (int i = 0; i < FilterPlanetThemes.Length; i++)
+                {
+                    if (buttons[12 + i].Checked)
+                    {
+                        filterValue |= 1UL << (30 + FilterPlanetThemes[i]);
+                    }
+                }
+            }
+            if (filterValue == 0UL)
+            {
+                for (int i = 0; i < ShowStarName.Length; i++)
+                {
+                    ShowStarName[i] = false;
+                }
+                SetStarFilterEnabled(false);
+                return;
+            }
+            for (int i = _starmapStarFilterValues.Length - 1; i >= 0; i--)
+            {
+                ShowStarName[i] = (_starmapStarFilterValues[i] & filterValue) == filterValue;
+            }
+            SetStarFilterEnabled(true);
+        }
     }
 
     private static void StarmapUpdateFilterValues()
@@ -573,30 +606,6 @@ public static class UIFunctions
         }
     }
 
-    public static void RecreateConfigWindow()
-    {
-        if (!_configWinInitialized) return;
-        var wasActive = _configWin.active;
-        if (wasActive) _configWin._Close();
-        MyConfigWindow.DestroyInstance(_configWin);
-        _configWinInitialized = false;
-        if (wasActive) ToggleConfigWindow();
-    }
-
-    public static void UpdateGlobeButtonPosition(UIPlanetGlobe planetGlobe)
-    {
-        if (_buttonOnPlanetGlobe == null) return;
-        var rect = (RectTransform)_buttonOnPlanetGlobe.transform;
-        if (planetGlobe.dysonSphereSystemUnlocked || planetGlobe.logisticsSystemUnlocked)
-        {
-            rect.anchoredPosition3D = new Vector3(64f, -5f, 0f);
-        }
-        else
-        {
-            rect.anchoredPosition3D = new Vector3(128f, -100f, 0f);
-        }
-    }
-
     public static int CornerComboBoxIndex
     {
         get => _cornerComboBoxIndex;
@@ -665,4 +674,5 @@ public static class UIFunctions
             return (nongas, total);
         }
     }
+#endregion
 }
