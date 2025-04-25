@@ -11,7 +11,7 @@ using UXAssist.Common;
 
 namespace CheatEnabler.Patches;
 
-public class FactoryPatch: PatchImpl<FactoryPatch>
+public class FactoryPatch : PatchImpl<FactoryPatch>
 {
     public static ConfigEntry<bool> ImmediateEnabled;
     public static ConfigEntry<bool> ArchitectModeEnabled;
@@ -37,20 +37,20 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
     public static void Init()
     {
         _noConditionKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
-            {
-                key = new CombineKey(0, 0, ECombineKeyAction.OnceClick, true),
-                conflictGroup = KeyBindConflict.MOVEMENT | KeyBindConflict.FLYING | KeyBindConflict.SAILING | KeyBindConflict.BUILD_MODE_1 | KeyBindConflict.KEYBOARD_KEYBIND,
-                name = "ToggleNoCondition",
-                canOverride = true
-            }
+        {
+            key = new CombineKey(0, 0, ECombineKeyAction.OnceClick, true),
+            conflictGroup = KeyBindConflict.MOVEMENT | KeyBindConflict.FLYING | KeyBindConflict.SAILING | KeyBindConflict.BUILD_MODE_1 | KeyBindConflict.KEYBOARD_KEYBIND,
+            name = "ToggleNoCondition",
+            canOverride = true
+        }
         );
         _noCollisionKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
-            {
-                key = new CombineKey(0, 0, ECombineKeyAction.OnceClick, true),
-                conflictGroup = KeyBindConflict.MOVEMENT | KeyBindConflict.FLYING | KeyBindConflict.SAILING | KeyBindConflict.BUILD_MODE_1 | KeyBindConflict.KEYBOARD_KEYBIND,
-                name = "ToggleNoCollision",
-                canOverride = true
-            }
+        {
+            key = new CombineKey(0, 0, ECombineKeyAction.OnceClick, true),
+            conflictGroup = KeyBindConflict.MOVEMENT | KeyBindConflict.FLYING | KeyBindConflict.SAILING | KeyBindConflict.BUILD_MODE_1 | KeyBindConflict.KEYBOARD_KEYBIND,
+            name = "ToggleNoCollision",
+            canOverride = true
+        }
         );
         I18N.Add("KEYToggleNoCondition", "[CE] Toggle No Condition Build", "[CE] 切换无条件建造");
         I18N.Add("KEYToggleNoCollision", "[CE] Toggle No Collision", "[CE] 切换无碰撞");
@@ -92,6 +92,7 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
         GreaterPowerUsageInLogistics.Enable(GreaterPowerUsageInLogisticsEnabled.Value);
         ControlPanelRemoteLogistics.Enable(ControlPanelRemoteLogisticsEnabled.Value);
         Enable(true);
+        CargoTrafficPatch.Enable(true);
         GameLogic.OnGameBegin += GameMain_Begin_Postfix_For_ImmBuild;
         GameLogic.OnDataLoaded += OnDataLoaded;
     }
@@ -100,6 +101,7 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
     {
         GameLogic.OnDataLoaded -= OnDataLoaded;
         GameLogic.OnGameBegin -= GameMain_Begin_Postfix_For_ImmBuild;
+        CargoTrafficPatch.Enable(false);
         Enable(false);
         ImmediateBuild.Enable(false);
         ArchitectMode.Enable(false);
@@ -116,10 +118,14 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
     }
 
     private static HashSet<int> _beltIds = [];
+    private static HashSet<int> _alterBeltRendererIds;
+    private static HashSet<int> _alterPathRendererIds;
+    private static HashSet<int> _refreshPathUVIds;
+
     private static void OnDataLoaded()
     {
         WindTurbinesPowerGlobalCoverage.Enable(WindTurbinesPowerGlobalCoverageEnabled.Value);
-        _beltIds ??= [..LDB.items.dataArray.Where(i => i.prefabDesc.isBelt).Select(i => i.ID)];
+        _beltIds ??= [.. LDB.items.dataArray.Where(i => i.prefabDesc.isBelt).Select(i => i.ID)];
     }
 
     public static void OnInputUpdate()
@@ -163,6 +169,10 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
         {
             var anyBelt = false;
             var anyBuilt = false;
+            _alterBeltRendererIds ??= [];
+            _alterPathRendererIds ??= [];
+            _refreshPathUVIds ??= [];
+            CargoTrafficPatch.IsBatchBuilding = true;
             factory.BeginFlattenTerrain();
             factory.cargoTraffic._batch_buffer_no_refresh = true;
             PlanetFactory.batchBuild = true;
@@ -187,6 +197,25 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
             }
             factory.cargoTraffic._batch_buffer_no_refresh = false;
             factory.EndFlattenTerrain();
+            CargoTrafficPatch.IsBatchBuilding = false;
+            var cargoTraffic = factory.cargoTraffic;
+            var entityPool = factory.entityPool;
+            var colChunks = factory.planet.physics?.colChunks;
+            foreach (var beltId in _alterBeltRendererIds)
+            {
+                cargoTraffic.AlterBeltRenderer(beltId, entityPool, colChunks, false);
+            }
+            foreach (var pathId in _alterPathRendererIds)
+            {
+                cargoTraffic.AlterPathRenderer(pathId, false);
+            }
+            foreach (var pathId in _refreshPathUVIds)
+            {
+                cargoTraffic.RefreshPathUV(pathId);
+            }
+            _alterBeltRendererIds.Clear();
+            _alterPathRendererIds.Clear();
+            _refreshPathUVIds.Clear();
             if (anyBuilt)
             {
                 factory.planet.physics?.raycastLogic?.NotifyBatchObjectRemove();
@@ -202,6 +231,37 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
                 pb.itemRequired = 0;
                 factory.AlterPrebuildModelState(i);
             }
+        }
+    }
+
+    private class CargoTrafficPatch : PatchImpl<CargoTrafficPatch>
+    {
+        public static bool IsBatchBuilding;
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(CargoTraffic), nameof(CargoTraffic.AlterBeltRenderer))]
+        private static bool CargoTraffic_AlterBeltRenderer_Prefix(int beltId)
+        {
+            if (!IsBatchBuilding) return true;
+            _alterBeltRendererIds.Add(beltId);
+            return false;
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(CargoTraffic), nameof(CargoTraffic.AlterPathRenderer))]
+        private static bool CargoTraffic_AlterPathRenderer_Prefix(int pathId)
+        {
+            if (!IsBatchBuilding) return true;
+            _alterPathRendererIds.Add(pathId);
+            return false;
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(CargoTraffic), nameof(CargoTraffic.RefreshPathUV))]
+        private static bool CargoTraffic_RefreshPathUV_Prefix(int pathId)
+        {
+            if (!IsBatchBuilding) return true;
+            _refreshPathUVIds.Add(pathId);
+            return false;
         }
     }
 
@@ -297,7 +357,7 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
         return matcher.InstructionEnumeration();
     }
 
-    private class ImmediateBuild: PatchImpl<ImmediateBuild>
+    private class ImmediateBuild : PatchImpl<ImmediateBuild>
     {
         protected override void OnEnable()
         {
@@ -355,7 +415,7 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
         }
     }
 
-    private class ArchitectMode: PatchImpl<ArchitectMode>
+    private class ArchitectMode : PatchImpl<ArchitectMode>
     {
         private static bool[] _canBuildItems;
 
@@ -409,7 +469,7 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
         }
     }
 
-    private class NoConditionBuild: PatchImpl<NoConditionBuild>
+    private class NoConditionBuild : PatchImpl<NoConditionBuild>
     {
         protected override void OnEnable()
         {
@@ -497,7 +557,7 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
         }
     }
 
-    public class BeltSignalGenerator: PatchImpl<BeltSignalGenerator>
+    public class BeltSignalGenerator : PatchImpl<BeltSignalGenerator>
     {
         private static Dictionary<int, BeltSignal>[] _signalBelts;
         private static Dictionary<long, int> _portalFrom;
@@ -882,7 +942,7 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
         public static void ProcessBeltSignals()
         {
             if (!_initialized) return;
-            var data =  GameMain.data;
+            var data = GameMain.data;
             var factories = data?.factories;
             if (factories == null) return;
             PerformanceMonitor.BeginSample(ECpuWorkEntry.Belt);
@@ -914,96 +974,96 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
                     switch (signalId)
                     {
                         case 404:
-                        {
-                            var beltId = pair.Key;
-                            ref var belt = ref cargoTraffic.beltPool[beltId];
-                            var cargoPath = cargoTraffic.GetCargoPath(belt.segPathId);
-                            if (cargoPath == null) continue;
-                            int itemId;
-                            if ((itemId = cargoPath.TryPickItem(belt.segIndex + belt.segPivotOffset - 5, 12, out var stack, out _)) > 0)
                             {
-                                if (BeltSignalCountRemEnabled.Value) consumeRegister[itemId] += stack;
-                            }
-
-                            continue;
-                        }
-                        case 600:
-                        {
-                            if (!_portalTo.TryGetValue(beltSignal.SpeedLimit, out var set)) continue;
-                            var beltId = pair.Key;
-                            ref var belt = ref cargoTraffic.beltPool[beltId];
-                            var cargoPath = cargoTraffic.GetCargoPath(belt.segPathId);
-                            if (cargoPath == null) continue;
-                            var segIndex = belt.segIndex + belt.segPivotOffset;
-                            if (!cargoPath.GetCargoAtIndex(segIndex, out var cargo, out var cargoId, out var _)) break;
-                            var itemId = cargo.item;
-                            var cargoPool = cargoPath.cargoContainer.cargoPool;
-                            var inc = cargoPool[cargoId].inc;
-                            var stack = cargoPool[cargoId].stack;
-                            foreach (var n in set)
-                            {
-                                var cargoTraffic1 = factories[(int)(n >> 32)].cargoTraffic;
-                                ref var belt1 = ref cargoTraffic1.beltPool[(int)(n & 0x7FFFFFFF)];
-                                cargoPath = cargoTraffic1.GetCargoPath(belt1.segPathId);
+                                var beltId = pair.Key;
+                                ref var belt = ref cargoTraffic.beltPool[beltId];
+                                var cargoPath = cargoTraffic.GetCargoPath(belt.segPathId);
                                 if (cargoPath == null) continue;
-                                if (!cargoPath.TryInsertItem(belt1.segIndex + belt1.segPivotOffset, itemId, stack, inc)) continue;
-                                cargoPath.TryPickItem(segIndex - 5, 12, out var stack1, out var inc1);
-                                if (inc1 != inc || stack1 != stack)
-                                    cargoPath.TryPickItem(segIndex - 5, 12, out _, out _);
-                                break;
-                            }
+                                int itemId;
+                                if ((itemId = cargoPath.TryPickItem(belt.segIndex + belt.segPivotOffset - 5, 12, out var stack, out _)) > 0)
+                                {
+                                    if (BeltSignalCountRemEnabled.Value) consumeRegister[itemId] += stack;
+                                }
 
-                            continue;
-                        }
+                                continue;
+                            }
+                        case 600:
+                            {
+                                if (!_portalTo.TryGetValue(beltSignal.SpeedLimit, out var set)) continue;
+                                var beltId = pair.Key;
+                                ref var belt = ref cargoTraffic.beltPool[beltId];
+                                var cargoPath = cargoTraffic.GetCargoPath(belt.segPathId);
+                                if (cargoPath == null) continue;
+                                var segIndex = belt.segIndex + belt.segPivotOffset;
+                                if (!cargoPath.GetCargoAtIndex(segIndex, out var cargo, out var cargoId, out var _)) break;
+                                var itemId = cargo.item;
+                                var cargoPool = cargoPath.cargoContainer.cargoPool;
+                                var inc = cargoPool[cargoId].inc;
+                                var stack = cargoPool[cargoId].stack;
+                                foreach (var n in set)
+                                {
+                                    var cargoTraffic1 = factories[(int)(n >> 32)].cargoTraffic;
+                                    ref var belt1 = ref cargoTraffic1.beltPool[(int)(n & 0x7FFFFFFF)];
+                                    cargoPath = cargoTraffic1.GetCargoPath(belt1.segPathId);
+                                    if (cargoPath == null) continue;
+                                    if (!cargoPath.TryInsertItem(belt1.segIndex + belt1.segPivotOffset, itemId, stack, inc)) continue;
+                                    cargoPath.TryPickItem(segIndex - 5, 12, out var stack1, out var inc1);
+                                    if (inc1 != inc || stack1 != stack)
+                                        cargoPath.TryPickItem(segIndex - 5, 12, out _, out _);
+                                    break;
+                                }
+
+                                continue;
+                            }
                         case >= 1000 and < 20000:
-                        {
-                            var hasSpeedLimit = beltSignal.SpeedLimit > 0;
-                            if (hasSpeedLimit)
                             {
-                                beltSignal.Progress += beltSignal.SpeedLimit;
-                                switch (beltSignal.Progress)
+                                var hasSpeedLimit = beltSignal.SpeedLimit > 0;
+                                if (hasSpeedLimit)
                                 {
-                                    case < 3600:
-                                        continue;
-                                    case > 18000:
-                                        beltSignal.Progress = 14400;
-                                        break;
+                                    beltSignal.Progress += beltSignal.SpeedLimit;
+                                    switch (beltSignal.Progress)
+                                    {
+                                        case < 3600:
+                                            continue;
+                                        case > 18000:
+                                            beltSignal.Progress = 14400;
+                                            break;
+                                    }
                                 }
-                            }
 
-                            var beltId = pair.Key;
-                            ref var belt = ref cargoTraffic.beltPool[beltId];
-                            var cargoPath = cargoTraffic.GetCargoPath(belt.segPathId);
-                            if (cargoPath == null) continue;
-                            var stack = beltSignal.Stack;
-                            var inc = beltSignal.Inc;
-                            if (!cargoPath.TryInsertItem(belt.segIndex + belt.segPivotOffset, signalId, stack, inc)) continue;
-                            if (hasSpeedLimit) beltSignal.Progress -= 3600;
-                            if (BeltSignalCountGenEnabled.Value) productRegister[signalId] += stack;
-                            if (!countRecipe) continue;
-                            var sources = beltSignal.Sources;
-                            if (sources == null) continue;
-                            var progress = beltSignal.SourceProgress;
-                            var stackf = (float)stack;
-                            for (var i = sources.Length - 1; i >= 0; i--)
-                            {
-                                var newCnt = progress[i] + sources[i].Item2 * stackf;
-                                if (newCnt > 0)
+                                var beltId = pair.Key;
+                                ref var belt = ref cargoTraffic.beltPool[beltId];
+                                var cargoPath = cargoTraffic.GetCargoPath(belt.segPathId);
+                                if (cargoPath == null) continue;
+                                var stack = beltSignal.Stack;
+                                var inc = beltSignal.Inc;
+                                if (!cargoPath.TryInsertItem(belt.segIndex + belt.segPivotOffset, signalId, stack, inc)) continue;
+                                if (hasSpeedLimit) beltSignal.Progress -= 3600;
+                                if (BeltSignalCountGenEnabled.Value) productRegister[signalId] += stack;
+                                if (!countRecipe) continue;
+                                var sources = beltSignal.Sources;
+                                if (sources == null) continue;
+                                var progress = beltSignal.SourceProgress;
+                                var stackf = (float)stack;
+                                for (var i = sources.Length - 1; i >= 0; i--)
                                 {
-                                    var itemId = sources[i].Item1;
-                                    var cnt = Mathf.CeilToInt(newCnt);
-                                    productRegister[itemId] += cnt;
-                                    consumeRegister[itemId] += cnt;
-                                    progress[i] = newCnt - cnt;
+                                    var newCnt = progress[i] + sources[i].Item2 * stackf;
+                                    if (newCnt > 0)
+                                    {
+                                        var itemId = sources[i].Item1;
+                                        var cnt = Mathf.CeilToInt(newCnt);
+                                        productRegister[itemId] += cnt;
+                                        consumeRegister[itemId] += cnt;
+                                        progress[i] = newCnt - cnt;
+                                    }
+                                    else
+                                    {
+                                        progress[i] = newCnt;
+                                    }
                                 }
-                                else
-                                {
-                                    progress[i] = newCnt;
-                                }
-                            }
 
-                            continue;
-                        }
+                                continue;
+                            }
                     }
                 }
                 if (beltsToRemove == null) continue;
@@ -1165,7 +1225,7 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
         /* END: Item sources calculation */
     }
 
-    private class RemovePowerSpaceLimit: PatchImpl<RemovePowerSpaceLimit>
+    private class RemovePowerSpaceLimit : PatchImpl<RemovePowerSpaceLimit>
     {
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(BuildTool_Click), nameof(BuildTool_Click.CheckBuildConditions))]
@@ -1195,7 +1255,7 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
         }
     }
 
-    private class BoostWindPower: PatchImpl<BoostWindPower>
+    private class BoostWindPower : PatchImpl<BoostWindPower>
     {
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(PowerGeneratorComponent), nameof(PowerGeneratorComponent.EnergyCap_Wind))]
@@ -1220,7 +1280,7 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
         }
     }
 
-    private class BoostSolarPower: PatchImpl<BoostSolarPower>
+    private class BoostSolarPower : PatchImpl<BoostSolarPower>
     {
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(PowerGeneratorComponent), nameof(PowerGeneratorComponent.EnergyCap_PV))]
@@ -1244,7 +1304,7 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
         }
     }
 
-    private class BoostFuelPower: PatchImpl<BoostFuelPower>
+    private class BoostFuelPower : PatchImpl<BoostFuelPower>
     {
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(PowerGeneratorComponent), nameof(PowerGeneratorComponent.EnergyCap_Fuel))]
@@ -1285,7 +1345,7 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
         }
     }
 
-    private class BoostGeothermalPower: PatchImpl<BoostGeothermalPower>
+    private class BoostGeothermalPower : PatchImpl<BoostGeothermalPower>
     {
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(PowerGeneratorComponent), nameof(PowerGeneratorComponent.EnergyCap_GTH))]
@@ -1368,7 +1428,7 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
         }
     }
 
-    private class GreaterPowerUsageInLogistics: PatchImpl<GreaterPowerUsageInLogistics>
+    private class GreaterPowerUsageInLogistics : PatchImpl<GreaterPowerUsageInLogistics>
     {
         protected override void OnEnable()
         {
@@ -1518,7 +1578,7 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
         }
     }
 
-    private class ControlPanelRemoteLogistics: PatchImpl<ControlPanelRemoteLogistics>
+    private class ControlPanelRemoteLogistics : PatchImpl<ControlPanelRemoteLogistics>
     {
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(UIControlPanelDispenserInspector), nameof(UIControlPanelDispenserInspector.OnItemIconMouseDown))]

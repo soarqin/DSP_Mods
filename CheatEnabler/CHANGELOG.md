@@ -5,7 +5,7 @@
 
 * 2.3.30
   + Fix a warning issue while `No condition build` or `No collision` is enabled.
-  + Optimized `Finish build immediately` for better performance.
+  + Increase performance for `Finish build immediately` greatly on pasting large blueprints.
 * 2.3.29
   + Fix compatibility with game update 0.10.32.25779
 * 2.3.28
@@ -155,7 +155,7 @@
 
 * 2.3.30
   + 修复了启用`无条件建造`或`无碰撞`时的警告问题
-  + 优化了`立即完成建造`的性能表现
+  + 粘贴大规模蓝图时大幅提升`立即完成建造`的性能表现
 * 2.3.29
   + 修复了与游戏更新0.10.32.25779的兼容性
 * 2.3.28
