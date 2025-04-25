@@ -3,13 +3,14 @@
 
 ## Changlog
 
-* 1.2.21
+* 1.3.0
   + New feature for starmap view:
     - Add a star name filter, you can filter displayed star names by ores or planet types now.
     - Add a dropdown box to show all stars' distance and/or planet count.
   + `Cut conveyor belt`: Fix input issue.
   + `Shortcut keys for showing stars`: Fix an issue that toggle key is read when Starmap View is not opened.
   + `Dismantle blueprint selected buildings`: Fix an issue that preview buildings are not dismantled.
+  + `Remember window position and size on last exit`: Optimized implementation
   + Optimized some UI codes.
 * 1.2.20
   + New feature: `Dismantle blueprint selected buildings`
@@ -282,13 +283,14 @@
 
 ## 更新日志
 
-* 1.2.21
+* 1.3.0
   + 在星图上添加新功能：
     - 添加星系名过滤器，现在可以按矿物或行星类型过滤显示的星系名
     - 添加了一个下拉框用以切换显示所有星系的距离和/或行星数量
   + `切割传送带`：修复了输入问题
   + `启用显示所有星系名称的快捷键`：修复了在未打开星图视图时读取切换键的问题
   + `拆除蓝图选中的建筑`：修复了预建造建筑未被拆除的问题
+  + `记住上次退出时的窗口位置和大小`：优化实现
   + 优化了一些UI代码
 * 1.2.20
   + 新功能：`拆除蓝图选中的建筑`
