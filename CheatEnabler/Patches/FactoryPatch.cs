@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection.Emit;
 using BepInEx.Configuration;
 using CommonAPI.Systems;
@@ -114,7 +115,12 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
         ControlPanelRemoteLogistics.Enable(false);
     }
 
-    private static void OnDataLoaded() => WindTurbinesPowerGlobalCoverage.Enable(WindTurbinesPowerGlobalCoverageEnabled.Value);
+    private static HashSet<int> _beltIds = [];
+    private static void OnDataLoaded()
+    {
+        WindTurbinesPowerGlobalCoverage.Enable(WindTurbinesPowerGlobalCoverageEnabled.Value);
+        _beltIds ??= [..LDB.items.dataArray.Where(i => i.prefabDesc.isBelt).Select(i => i.ID)];
+    }
 
     public static void OnUpdate()
     {
@@ -152,7 +158,12 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
         var architect = ArchitectModeEnabled.Value;
         if ((!imm && !architect) || GameMain.gameScenario == null) return;
         var prebuilds = factory.prebuildPool;
-        if (imm) factory.BeginFlattenTerrain();
+        var anyBelt = false;
+        if (imm)
+        {
+            factory.BeginFlattenTerrain();
+            factory.cargoTraffic._batch_buffer_no_refresh = true;
+        }
         for (var i = factory.prebuildCursor - 1; i > 0; i--)
         {
             if (prebuilds[i].id != i) continue;
@@ -161,18 +172,33 @@ public class FactoryPatch: PatchImpl<FactoryPatch>
                 if (!architect) continue;
                 prebuilds[i].itemRequired = 0;
                 if (imm)
+                {
+                    anyBelt = anyBelt || _beltIds.Contains(prebuilds[i].protoId);
                     factory.BuildFinally(GameMain.mainPlayer, i, false);
+                }
                 else
                     factory.AlterPrebuildModelState(i);
             }
             else
             {
                 if (imm)
+                {
+                    anyBelt = anyBelt || _beltIds.Contains(prebuilds[i].protoId);
                     factory.BuildFinally(GameMain.mainPlayer, i, false);
+                }
             }
         }
 
-        if (imm) factory.EndFlattenTerrain();
+        if (imm)
+        {
+            if (anyBelt)
+            {
+                factory.cargoTraffic.RefreshBeltBatchesBuffers();
+                factory.cargoTraffic.RefreshPathBatchesBuffers();
+            }
+            factory.cargoTraffic._batch_buffer_no_refresh = false;
+            factory.EndFlattenTerrain();
+        }
     }
 
     [HarmonyPostfix]
