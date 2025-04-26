@@ -23,14 +23,14 @@ public class MyCornerComboBox : MonoBehaviour
         go.SetActive(false);
 
         var cbctrl = go.transform.GetComponent<UIComboBox>();
+        cbctrl.onSubmit.RemoveAllListeners();
+        cbctrl.onItemIndexChange.RemoveAllListeners();
         foreach (var button in cbctrl.ItemButtons)
         {
             Destroy(button.gameObject);
         }
         cbctrl.Items.Clear();
         cbctrl.ItemButtons.Clear();
-        cbctrl.onSubmit.RemoveAllListeners();
-        cbctrl.onItemIndexChange.RemoveAllListeners();
         _baseObject = go;
     }
 

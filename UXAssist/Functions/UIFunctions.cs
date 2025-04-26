@@ -204,7 +204,18 @@ public static class UIFunctions
     {
         var uiRoot = UIRoot.instance;
         if (!uiRoot) return;
-        var rtrans = uiRoot.uiGame.starmap.transform as RectTransform;
+
+        var rect = uiRoot.uiGame.starmap.transform as RectTransform;
+        var panel = new GameObject("uxassist-starmap-panel");
+        var rtrans = panel.AddComponent<RectTransform>();
+        panel.transform.SetParent(rect);
+        rtrans.sizeDelta = new Vector2(Screen.width, Screen.height);
+        rtrans.localScale = new Vector3(1f, 1f, 1f);
+        rtrans.anchorMax = new Vector2(0f, 1f);
+        rtrans.anchorMin = new Vector2(0f, 1f);
+        rtrans.pivot = new Vector2(0f, 1f);
+        rtrans.localPosition = new Vector3(0f, 0, 0f);
+
         var cornerComboBox = UI.MyCornerComboBox.CreateComboBox(135, 0, rtrans, true).WithItems("Show original name".Translate(), "Show distance".Translate(), "Show planet count".Translate(), "Show all information".Translate());
         cornerComboBox.SetIndex(Functions.UIFunctions.CornerComboBoxIndex);
         cornerComboBox.OnSelChanged += (index) =>
