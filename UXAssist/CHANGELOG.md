@@ -3,6 +3,11 @@
 
 ## Changlog
 
+* 1.3.1
+  + Fix an issue that some UI elements are hidden while hitting the newly added combobox on Starmap.
+  + Fix an issue that star name filter is not applied if `Shortcut keys for showing stars` is not enabled.
+  + `Dismantle blueprint selected buildings`: Fix an issue that items in Logistic Station slots are not dropped out.
+  + Tweak star name filter's planet type list.
 * 1.3.0
   + New feature for starmap view:
     - Add a star name filter, you can filter displayed star names by ores or planet types now.
@@ -284,6 +289,11 @@
 
 ## 更新日志
 
+* 1.3.1
+  + 修复了在星图上点击新增的下拉框时部分UI元素被隐藏的问题
+  + 修复了未启用`显示星系名称快捷键`时星系名称过滤器不生效的问题
+  + `拆除蓝图选中的建筑`：修复了物流站中的物品未被丢出的问题
+  + 调整了星系名称过滤器中的行星类型列表
 * 1.3.0
   + 在星图上添加新功能：
     - 添加星系名过滤器，现在可以按矿物或行星类型过滤显示的星系名

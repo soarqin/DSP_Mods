@@ -82,7 +82,7 @@ public static class UIFunctions
         }
     }
 
-    private static readonly int[] FilterPlanetThemes = [16, 23, 10, 15, 18, 22, 25, 21, 14, 17, 19, 7, 24, 9, 13];
+    private static readonly int[] FilterPlanetThemes = [16, 23, 15, 22, 25, 21, 14, 17, 19, 7, 10, 20, 24, 9, 13];
     public static void InitMenuButtons()
     {
         if (_initialized) return;
@@ -190,9 +190,9 @@ public static class UIFunctions
         Common.Util.LoadEmbeddedSprite("assets/planet_icon/15.png"),
         Common.Util.LoadEmbeddedSprite("assets/planet_icon/16.png"),
         Common.Util.LoadEmbeddedSprite("assets/planet_icon/17.png"),
-        Common.Util.LoadEmbeddedSprite("assets/planet_icon/18.png"),
-        Common.Util.LoadEmbeddedSprite("assets/planet_icon/19.png"),
         null,
+        Common.Util.LoadEmbeddedSprite("assets/planet_icon/19.png"),
+        Common.Util.LoadEmbeddedSprite("assets/planet_icon/20.png"),
         Common.Util.LoadEmbeddedSprite("assets/planet_icon/21.png"),
         Common.Util.LoadEmbeddedSprite("assets/planet_icon/22.png"),
         Common.Util.LoadEmbeddedSprite("assets/planet_icon/23.png"),
@@ -209,12 +209,12 @@ public static class UIFunctions
         var panel = new GameObject("uxassist-starmap-panel");
         var rtrans = panel.AddComponent<RectTransform>();
         panel.transform.SetParent(rect);
-        rtrans.sizeDelta = new Vector2(Screen.width, Screen.height);
+        rtrans.sizeDelta = new Vector2(0f, 0f);
         rtrans.localScale = new Vector3(1f, 1f, 1f);
-        rtrans.anchorMax = new Vector2(0f, 1f);
-        rtrans.anchorMin = new Vector2(0f, 1f);
+        rtrans.anchorMax = new Vector2(1f, 1f);
+        rtrans.anchorMin = new Vector2(0f, 0f);
         rtrans.pivot = new Vector2(0f, 1f);
-        rtrans.localPosition = new Vector3(0f, 0, 0f);
+        rtrans.anchoredPosition3D = new Vector3(0, 0, 0f);
 
         var cornerComboBox = UI.MyCornerComboBox.CreateComboBox(135, 0, rtrans, true).WithItems("Show original name".Translate(), "Show distance".Translate(), "Show planet count".Translate(), "Show all information".Translate());
         cornerComboBox.SetIndex(Functions.UIFunctions.CornerComboBoxIndex);
@@ -244,9 +244,9 @@ public static class UIFunctions
             UI.MyCheckButton.CreateCheckButton(24, 120, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
             UI.MyCheckButton.CreateCheckButton(24, 144, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
             UI.MyCheckButton.CreateCheckButton(24, 168, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
-            UI.MyCheckButton.CreateCheckButton(24, 192, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
-            UI.MyCheckButton.CreateCheckButton(24, 216, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
 
+            UI.MyCheckButton.CreateCheckButton(24, 210, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
+            UI.MyCheckButton.CreateCheckButton(24, 234, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
             UI.MyCheckButton.CreateCheckButton(24, 258, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
             UI.MyCheckButton.CreateCheckButton(24, 282, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
             UI.MyCheckButton.CreateCheckButton(24, 306, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
@@ -254,7 +254,7 @@ public static class UIFunctions
             UI.MyCheckButton.CreateCheckButton(24, 354, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
             UI.MyCheckButton.CreateCheckButton(24, 378, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
         ];
-        var allOresText = MyWindow.AddText(20, 238, rtrans, "All 6 Basic Ores".Translate(), 12);
+        var allOresText = MyWindow.AddText(20, 190, rtrans, "All 6 Basic Ores".Translate(), 12);
         allOresText.gameObject.SetActive(false);
         _starmapFilterToggler.OnChecked += UpdateButtons;
         foreach (var button in buttons)
@@ -281,10 +281,10 @@ public static class UIFunctions
                 veinProto = LDB.veins.Select(i + 9);
                 buttons[i].SetIcon(veinProto.iconSprite);
             }
-            var itemProto = LDB.items.Select(1007);
-            buttons[6].SetIcon(itemProto.iconSprite);
-            veinProto = LDB.veins.Select(8);
-            buttons[7].SetIcon(veinProto.iconSprite);
+            veinProto = LDB.veins.Select(7);
+            buttons[6].SetIcon(veinProto.iconSprite);
+            var itemProto = LDB.items.Select(1011);
+            buttons[7].SetIcon(itemProto.iconSprite);
             itemProto = LDB.items.Select(1116);
             buttons[8].SetIcon(itemProto.iconSprite);
             itemProto = LDB.items.Select(1000);
@@ -423,10 +423,10 @@ public static class UIFunctions
                     var themeProto = LDB.themes.Select(theme);
                     switch (i)
                     {
-                        case 7:
+                        case 5:
                             buttons[12 + i].SetLabelText($"{themeProto.DisplayName.Translate()} ({"High yield".Translate()})");
                             break;
-                        case 8:
+                        case 6:
                             buttons[12 + i].SetLabelText($"{themeProto.DisplayName.Translate()} ({"Perfect".Translate()})");
                             break;
                         default:
@@ -623,7 +623,7 @@ public static class UIFunctions
         set
         {
             _cornerComboBoxIndex = value;
-            Patches.PlayerPatch.ShortcutKeysForStarsName.SetForceShowAllStarsNameExternal(_cornerComboBoxIndex != 0 && !_starFilterEnabled);
+            Patches.PlayerPatch.ShortcutKeysForStarsName.ForceShowAllStarsNameExternal = _cornerComboBoxIndex != 0 && !_starFilterEnabled;
             UpdateStarmapStarNames();
         }
     }
@@ -632,8 +632,8 @@ public static class UIFunctions
     {
         if (_starFilterEnabled == enabled) return;
         _starFilterEnabled = enabled;
-        if (!enabled) Patches.PlayerPatch.ShortcutKeysForStarsName.SetShowAllStarsNameStatus(0);
-        Patches.PlayerPatch.ShortcutKeysForStarsName.SetForceShowAllStarsNameExternal(_cornerComboBoxIndex != 0 && !_starFilterEnabled);
+        if (!enabled) Patches.PlayerPatch.ShortcutKeysForStarsName.ShowAllStarsNameStatus = 0;
+        Patches.PlayerPatch.ShortcutKeysForStarsName.ForceShowAllStarsNameExternal = _cornerComboBoxIndex != 0 && !_starFilterEnabled;
         UpdateStarmapStarNames();
     }
 

@@ -8,7 +8,7 @@ using UXAssist.Common;
 
 namespace UXAssist.Patches;
 
-public static class PlayerPatch
+public class PlayerPatch : PatchImpl<PlayerPatch>
 {
     public static ConfigEntry<bool> EnhancedMechaForgeCountControlEnabled;
     public static ConfigEntry<bool> HideTipsForSandsChangesEnabled;
@@ -66,6 +66,7 @@ public static class PlayerPatch
         HideTipsForSandsChanges.Enable(HideTipsForSandsChangesEnabled.Value);
         ShortcutKeysForStarsName.Enable(ShortcutKeysForStarsNameEnabled.Value);
         AutoNavigation.Enable(AutoNavigationEnabled.Value);
+        Enable(true);
     }
 
     public static void OnInputUpdate()
@@ -79,11 +80,53 @@ public static class PlayerPatch
 
     public static void Uninit()
     {
+        Enable(false);
         EnhancedMechaForgeCountControl.Enable(false);
         HideTipsForSandsChanges.Enable(false);
         ShortcutKeysForStarsName.Enable(false);
         AutoNavigation.Enable(false);
     }
+
+
+    [HarmonyTranspiler]
+    [HarmonyPatch(typeof(UIStarmapStar), nameof(UIStarmapStar._OnLateUpdate))]
+    private static IEnumerable<CodeInstruction> UIStarmapStar__OnLateUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+    {
+        var matcher = new CodeMatcher(instructions, generator);
+        Label? jumpPos = null;
+        matcher.MatchForward(false,
+            new CodeMatch(OpCodes.Stfld, AccessTools.Field(typeof(UIStarmapStar), nameof(UIStarmapStar.projectedCoord))),
+            new CodeMatch(ci => ci.IsLdloc()),
+            new CodeMatch(ci => ci.Branches(out jumpPos))
+        );
+        matcher.Advance(3);
+        var labels = matcher.Labels;
+        matcher.Labels = [];
+        matcher.CreateLabel(out var jumpPos2);
+        matcher.InsertAndAdvance(
+            new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(ShortcutKeysForStarsName), nameof(ShortcutKeysForStarsName.ShowAllStarsNameStatus))).WithLabels(labels),
+            new CodeInstruction(OpCodes.Ldc_I4_1),
+            new CodeInstruction(OpCodes.Ceq),
+            new CodeInstruction(OpCodes.Brtrue, jumpPos.Value),
+            new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(PlayerPatch.ShortcutKeysForStarsName), nameof(ShortcutKeysForStarsName.ForceShowAllStarsName))),
+            new CodeInstruction(OpCodes.Brtrue, jumpPos.Value),
+            new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(Functions.UIFunctions), nameof(Functions.UIFunctions.ShowStarName))),
+            new CodeInstruction(OpCodes.Ldarg_0),
+            new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(UIStarmapStar), nameof(UIStarmapStar.star))),
+            new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(StarData), nameof(StarData.index))),
+            new CodeInstruction(OpCodes.Ldelem_I1),
+            new CodeInstruction(OpCodes.Brtrue, jumpPos.Value),
+            new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(ShortcutKeysForStarsName), nameof(ShortcutKeysForStarsName.ShowAllStarsNameStatus))),
+            new CodeInstruction(OpCodes.Ldc_I4_2),
+            new CodeInstruction(OpCodes.Ceq),
+            new CodeInstruction(OpCodes.Brfalse, jumpPos2),
+            new CodeInstruction(OpCodes.Ldc_I4_0),
+            new CodeInstruction(OpCodes.Stloc_1),
+            new CodeInstruction(OpCodes.Br, jumpPos.Value)
+        );
+        return matcher.InstructionEnumeration();
+    }
+
 
     private class EnhancedMechaForgeCountControl: PatchImpl<EnhancedMechaForgeCountControl>
     {
@@ -152,79 +195,36 @@ public static class PlayerPatch
 
     public class ShortcutKeysForStarsName: PatchImpl<ShortcutKeysForStarsName>
     {
-        private static int _showAllStarsNameStatus;
-        private static bool _forceShowAllStarsName;
-        private static bool _forceShowAllStarsNameExternal;
-
-        public static void SetShowAllStarsNameStatus(int status)
-        {
-            _showAllStarsNameStatus = status;
-        }
+        public static int ShowAllStarsNameStatus;
+        public static bool ForceShowAllStarsName;
+        public static bool ForceShowAllStarsNameExternal;
 
         public static void ToggleAllStarsName()
         {
-            _showAllStarsNameStatus = (_showAllStarsNameStatus + 1) % 3;
-        }
-
-        public static void SetForceShowAllStarsNameExternal(bool value)
-        {
-            _forceShowAllStarsNameExternal = value;
+            ShowAllStarsNameStatus = (ShowAllStarsNameStatus + 1) % 3;
         }
 
         public static void OnInputUpdate()
         {
             if (!UIRoot.instance.uiGame.starmap.active) return;
+            var enabled = ShortcutKeysForStarsNameEnabled.Value;
+            if (!enabled)
+            {
+                ForceShowAllStarsName = ForceShowAllStarsNameExternal;
+                return;
+            }
             if (_toggleAllStarsNameKey.keyValue)
             {
                 ToggleAllStarsName();
             }
-            _forceShowAllStarsName = _forceShowAllStarsNameExternal || _showAllStarsNameKey.IsKeyPressing();
+            ForceShowAllStarsName = ForceShowAllStarsNameExternal || _showAllStarsNameKey.IsKeyPressing();
         }
 
         [HarmonyPrefix]
         [HarmonyPatch(typeof(UIStarmap), nameof(UIStarmap._OnOpen))]
         private static void UIStarmap__OnOpen_Prefix()
         {
-            _showAllStarsNameStatus = 0;
-        }
-
-        [HarmonyTranspiler]
-        [HarmonyPatch(typeof(UIStarmapStar), nameof(UIStarmapStar._OnLateUpdate))]
-        private static IEnumerable<CodeInstruction> UIStarmapStar__OnLateUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
-        {
-            var matcher = new CodeMatcher(instructions, generator);
-            Label? jumpPos = null;
-            matcher.MatchForward(false,
-                new CodeMatch(OpCodes.Stfld, AccessTools.Field(typeof(UIStarmapStar), nameof(UIStarmapStar.projectedCoord))),
-                new CodeMatch(ci => ci.IsLdloc()),
-                new CodeMatch(ci => ci.Branches(out jumpPos))
-            );
-            matcher.Advance(3);
-            var labels = matcher.Labels;
-            matcher.Labels = [];
-            matcher.CreateLabel(out var jumpPos2);
-            matcher.InsertAndAdvance(
-                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(ShortcutKeysForStarsName), nameof(_showAllStarsNameStatus))).WithLabels(labels),
-                new CodeInstruction(OpCodes.Ldc_I4_1),
-                new CodeInstruction(OpCodes.Ceq),
-                new CodeInstruction(OpCodes.Brtrue, jumpPos.Value),
-                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(PlayerPatch.ShortcutKeysForStarsName), nameof(_forceShowAllStarsName))),
-                new CodeInstruction(OpCodes.Brtrue, jumpPos.Value),
-                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(Functions.UIFunctions), nameof(Functions.UIFunctions.ShowStarName))),
-                new CodeInstruction(OpCodes.Ldarg_0),
-                new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(UIStarmapStar), nameof(UIStarmapStar.star))),
-                new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(StarData), nameof(StarData.index))),
-                new CodeInstruction(OpCodes.Ldelem_I1),
-                new CodeInstruction(OpCodes.Brtrue, jumpPos.Value),
-                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(ShortcutKeysForStarsName), nameof(_showAllStarsNameStatus))),
-                new CodeInstruction(OpCodes.Ldc_I4_2),
-                new CodeInstruction(OpCodes.Ceq),
-                new CodeInstruction(OpCodes.Brfalse, jumpPos2),
-                new CodeInstruction(OpCodes.Ldc_I4_0),
-                new CodeInstruction(OpCodes.Stloc_1),
-                new CodeInstruction(OpCodes.Br, jumpPos.Value)
-            );
-            return matcher.InstructionEnumeration();
+            ShowAllStarsNameStatus = 0;
         }
 /*
         [HarmonyTranspiler]

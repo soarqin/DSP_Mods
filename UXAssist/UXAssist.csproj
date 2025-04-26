@@ -4,7 +4,7 @@
     <TargetFramework>net472</TargetFramework>
     <BepInExPluginGuid>org.soardev.uxassist</BepInExPluginGuid>
     <Description>DSP MOD - UXAssist</Description>
-    <Version>1.3.0</Version>
+    <Version>1.3.1</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
     <PackageId>UXAssist</PackageId>
@@ -50,8 +50,8 @@
     <EmbeddedResource Include="assets/planet_icon/15.png" />
     <EmbeddedResource Include="assets/planet_icon/16.png" />
     <EmbeddedResource Include="assets/planet_icon/17.png" />
-    <EmbeddedResource Include="assets/planet_icon/18.png" />
     <EmbeddedResource Include="assets/planet_icon/19.png" />
+    <EmbeddedResource Include="assets/planet_icon/20.png" />
     <EmbeddedResource Include="assets/planet_icon/21.png" />
     <EmbeddedResource Include="assets/planet_icon/22.png" />
     <EmbeddedResource Include="assets/planet_icon/23.png" />

@@ -83,8 +83,23 @@ public static class FactoryFunctions
                     buildPreviewsToRemove.Insert(~index, connObjId);
             }
         }
+        var entityPool = factory.entityPool;
+        var stationPool = factory.transport.stationPool;
         foreach (var objId in buildPreviewsToRemove)
         {
+            int stationId = entityPool[objId].stationId;
+            if (stationId > 0)
+            {
+                StationComponent sc = stationPool[stationId];
+                if (sc.id != stationId) continue;
+                for (int i = 0; i < sc.storage.Length; i++)
+                {
+                    int package = player.TryAddItemToPackage(sc.storage[i].itemId, sc.storage[i].count, 0, true, objId);
+                    UIItemup.Up(sc.storage[i].itemId, package);
+                }
+                sc.storage = new StationStore[sc.storage.Length];
+                sc.needs = new int[sc.needs.Length];
+            }
             build.DoDismantleObject(objId);
         }
         blueprintCopyTool.ClearSelection();
