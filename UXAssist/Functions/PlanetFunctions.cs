@@ -151,6 +151,22 @@ public static class PlanetFunctions
             if (warningPool[i].id == i && warningPool[i].factoryId == index)
                 warningSystem.RemoveWarningData(warningPool[i].id);
         }
+        var hive = GameMain.spaceSector.dfHives[planet.star.index];
+        var relays = hive.relays.buffer;
+        var astroId = planet.astroId;
+        for (var i = relays.Length - 1; i >= 0; i--)
+        {
+            var relay = relays[i];
+            if (relay.id != i) continue;
+            if (relay.targetAstroId == astroId || relay.searchAstroId == astroId)
+            {
+                relay.targetAstroId = 0;
+                relay.searchAstroId = 0;
+                if (relay.baseId > 0)
+                    hive.relayNeutralizedCounter++;
+                relay.LeaveBase();
+            }
+        }
         var isCombatMode = factory.gameData.gameDesc.isCombatMode;
         factory.entityCursor = 1;
         factory.entityRecycleCursor = 0;
