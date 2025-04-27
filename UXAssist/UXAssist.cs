@@ -233,7 +233,7 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
         GameLogic.Enable(false);
     }
 
-    private void Update()
+    private void FixedUpdate()
     {
         if (DSPGame.IsMenuDemo)
         {
@@ -241,7 +241,6 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
             UIFunctions.OnInputUpdate();
             return;
         }
-        UIFunctions.OnUpdate();
         LogisticsPatch.OnUpdate();
         if (VFInput.inputing) return;
         LogisticsPatch.OnInputUpdate();

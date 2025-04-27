@@ -3,6 +3,10 @@
 
 ## Changlog
 
+* 1.3.2
+  + Add a checkbox to make union of results in starmap filter.
+  + Fix some starmap vein/planet filter conditions.
+  + Fix compatibility with `NebulaMultiplayerMod`.
 * 1.3.1
   + Fix an issue that some UI elements are hidden while hitting the newly added combobox on Starmap.
   + Fix an issue that star name filter is not applied if `Shortcut keys for showing stars` is not enabled.
@@ -289,6 +293,10 @@
 
 ## 更新日志
 
+* 1.3.2
+  + 添加了一个勾选框用于对星图过滤器的结果进行并集操作
+  + 修复了一些星图过滤条件
+  + 修复了与`NebulaMultiplayerMod`的兼容性问题
 * 1.3.1
   + 修复了在星图上点击新增的下拉框时部分UI元素被隐藏的问题
   + 修复了未启用`显示星系名称快捷键`时星系名称过滤器不生效的问题

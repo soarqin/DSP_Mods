@@ -8,6 +8,7 @@ using UnityEngine.UI;
 using System;
 using System.Linq;
 using System.Threading;
+using System.Collections.Generic;
 
 public static class UIFunctions
 {
@@ -36,22 +37,13 @@ public static class UIFunctions
         I18N.Add("KEYOpenUXAssistConfigWindow", "[UXA] Open UXAssist Config Window", "[UXA] 打开UX助手设置面板");
         I18N.Add("High yield", "High yield", "高产");
         I18N.Add("Perfect", "Perfect", "完美");
+        I18N.Add("Union results", "Union results", "结果取并集");
         I18N.Add("All 6 Basic Ores", "All 6 Basic Ores", "六种基础矿物齐全");
         I18N.Add("Show original name", "Show original name", "显示原始名称");
         I18N.Add("Show distance", "Show distance", "显示距离");
         I18N.Add("Show planet count", "Show planet count", "显示行星数");
         I18N.Add("Show all information", "Show all information", "显示全部信息");
         I18N.OnInitialized += RecreateConfigWindow;
-    }
-
-    public static void OnUpdate()
-    {
-        if (!_starmapFilterInitialized || _starmapFilterToggler == null || _starmapFilterToggler.gameObject.activeSelf) return;
-        if (PlanetModelingManager.scnPlanetReqList.Count == 0)
-        {
-            StarmapUpdateFilterValues();
-            _starmapFilterToggler.gameObject.SetActive(true);
-        }
     }
 
     public static void OnInputUpdate()
@@ -82,7 +74,6 @@ public static class UIFunctions
         }
     }
 
-    private static readonly int[] FilterPlanetThemes = [16, 23, 15, 22, 25, 21, 14, 17, 19, 7, 10, 20, 24, 9, 13];
     public static void InitMenuButtons()
     {
         if (_initialized) return;
@@ -200,6 +191,17 @@ public static class UIFunctions
         Common.Util.LoadEmbeddedSprite("assets/planet_icon/25.png")
     ];
 
+    private static readonly (int, int)[] FilterVeinIds = [(9, 0), (10, 0), (11, 0), (12, 0), (13, 0), (14, 0), (7, 0), (0, 1116), (0, 1000), (8, 1011), (0, 1120), (0, 1121)];
+    private static readonly int[] FilterPlanetThemes = [16, 23, 15, 22, 25, 21, 14, 17, 19, 7, 10, 20, 24, 9, 13];
+    private static readonly Dictionary<int, int> ItemToVeinBitFlagMap = new()
+    {
+        {1011, 8},
+        {1120, 20},
+        {1121, 21},
+        {1116, 22},
+        {1000, 23},
+    };
+
     public static void InitStarmapButtons()
     {
         var uiRoot = UIRoot.instance;
@@ -254,6 +256,12 @@ public static class UIFunctions
             UI.MyCheckButton.CreateCheckButton(24, 354, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
             UI.MyCheckButton.CreateCheckButton(24, 378, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
         ];
+        var unionCheckBox = UI.MyCheckBox.CreateCheckBox(312, 0, rtrans, false, "Union results".Translate(), 15).WithSmallerBox(24f);
+        unionCheckBox.gameObject.SetActive(false);
+        unionCheckBox.OnChecked += () =>
+        {
+            UpdateStarmapStarFilters();
+        };
         var allOresText = MyWindow.AddText(20, 190, rtrans, "All 6 Basic Ores".Translate(), 12);
         allOresText.gameObject.SetActive(false);
         _starmapFilterToggler.OnChecked += UpdateButtons;
@@ -276,23 +284,21 @@ public static class UIFunctions
         GameLogic.OnDataLoaded += () =>
         {
             VeinProto veinProto;
-            for (int i = 0; i < 6; i++)
+            ItemProto itemProto;
+            for (int i = 0; i < 12; i++)
             {
-                veinProto = LDB.veins.Select(i + 9);
-                buttons[i].SetIcon(veinProto.iconSprite);
+                var (veinProtoId, itemProtoId) = FilterVeinIds[i];
+                if (itemProtoId != 0)
+                {
+                    itemProto = LDB.items.Select(itemProtoId);
+                    buttons[i].SetIcon(itemProto.iconSprite);
+                }
+                else if (veinProtoId != 0)
+                {
+                    veinProto = LDB.veins.Select(veinProtoId);
+                    buttons[i].SetIcon(veinProto.iconSprite);
+                }
             }
-            veinProto = LDB.veins.Select(7);
-            buttons[6].SetIcon(veinProto.iconSprite);
-            var itemProto = LDB.items.Select(1011);
-            buttons[7].SetIcon(itemProto.iconSprite);
-            itemProto = LDB.items.Select(1116);
-            buttons[8].SetIcon(itemProto.iconSprite);
-            itemProto = LDB.items.Select(1000);
-            buttons[9].SetIcon(itemProto.iconSprite);
-            itemProto = LDB.items.Select(1120);
-            buttons[10].SetIcon(itemProto.iconSprite);
-            itemProto = LDB.items.Select(1121);
-            buttons[11].SetIcon(itemProto.iconSprite);
 
             for (int i = 0; i < FilterPlanetThemes.Length; i++)
             {
@@ -377,6 +383,10 @@ public static class UIFunctions
                 if (star != null) PlanetModelingManager.RequestScanStar(star);
             }
             _starmapFilterInitialized = true;
+            if (PlanetModelingManager.scnPlanetReqList.Count == 0)
+            {
+                OnPlanetScanEnded();
+            }
         };
         GameLogic.OnGameEnd += () =>
         {
@@ -399,24 +409,21 @@ public static class UIFunctions
             if (buttons != null)
             {
                 VeinProto veinProto;
-                for (int i = 0; i < 6; i++)
+                ItemProto itemProto;
+                for (int i = 0; i < 12; i++)
                 {
-                    veinProto = LDB.veins.Select(i + 9);
-                    buttons[i].WithTip(veinProto.Name);
+                    var (veinProtoId, itemProtoId) = FilterVeinIds[i];
+                    if (itemProtoId != 0)
+                    {
+                        itemProto = LDB.items.Select(itemProtoId);
+                        buttons[i].WithTip(itemProto.Name);
+                    }
+                    else if (veinProtoId != 0)
+                    {
+                        veinProto = LDB.veins.Select(veinProtoId);
+                        buttons[i].WithTip(veinProto.Name);
+                    }
                 }
-                var itemProto = LDB.items.Select(1007);
-                buttons[6].WithTip(itemProto.Name);
-                veinProto = LDB.veins.Select(8);
-                buttons[7].WithTip(veinProto.Name);
-                itemProto = LDB.items.Select(1116);
-                buttons[8].WithTip(itemProto.Name);
-                itemProto = LDB.items.Select(1000);
-                buttons[9].WithTip(itemProto.Name);
-                itemProto = LDB.items.Select(1120);
-                buttons[10].WithTip(itemProto.Name);
-                itemProto = LDB.items.Select(1121);
-                buttons[11].WithTip(itemProto.Name);
-
                 for (int i = 0; i < FilterPlanetThemes.Length; i++)
                 {
                     var theme = FilterPlanetThemes[i];
@@ -450,6 +457,7 @@ public static class UIFunctions
                     button.Checked = false;
                 }
             }
+            unionCheckBox.gameObject.SetActive(chk);
             allOresText.gameObject.SetActive(chk);
             _starmapFilterToggler.SetLabelText(chk ? "X" : ">>");
             if (!chk)
@@ -460,38 +468,23 @@ public static class UIFunctions
         void UpdateStarmapStarFilters()
         {
             var filterValue = 0UL;
+            var union = unionCheckBox.Checked;
             if (_starmapFilterToggler.Checked)
             {
-                for (int i = 0; i < 6; i++)
+                for (int i = 0; i < 12; i++)
                 {
                     if (buttons[i].Checked)
                     {
-                        filterValue |= 1UL << (i + 9);
+                        var (veinProtoId, itemProtoId) = FilterVeinIds[i];
+                        if (veinProtoId != 0)
+                        {
+                            filterValue |= 1UL << veinProtoId;
+                        }
+                        else if (itemProtoId != 0)
+                        {
+                            filterValue |= 1UL << ItemToVeinBitFlagMap[itemProtoId];
+                        }
                     }
-                }
-                if (buttons[6].Checked)
-                {
-                    filterValue |= 1UL << 7;
-                }
-                if (buttons[7].Checked)
-                {
-                    filterValue |= 1UL << 8;
-                }
-                if (buttons[8].Checked)
-                {
-                    filterValue |= 1UL << 22;
-                }
-                if (buttons[9].Checked)
-                {
-                    filterValue |= 1UL << 23;
-                }
-                if (buttons[10].Checked)
-                {
-                    filterValue |= 1UL << 20;
-                }
-                if (buttons[11].Checked)
-                {
-                    filterValue |= 1UL << 21;
                 }
                 for (int i = 0; i < FilterPlanetThemes.Length; i++)
                 {
@@ -512,10 +505,17 @@ public static class UIFunctions
             }
             for (int i = _starmapStarFilterValues.Length - 1; i >= 0; i--)
             {
-                ShowStarName[i] = (_starmapStarFilterValues[i] & filterValue) == filterValue;
+                ShowStarName[i] = union ? (_starmapStarFilterValues[i] & filterValue) != 0 : (_starmapStarFilterValues[i] & filterValue) == filterValue;
             }
             SetStarFilterEnabled(true);
         }
+    }
+
+    public static void OnPlanetScanEnded()
+    {
+        if (!_starmapFilterInitialized || _starmapFilterToggler == null || _starmapFilterToggler.gameObject.activeSelf) return;
+        StarmapUpdateFilterValues();
+        _starmapFilterToggler.gameObject.SetActive(true);
     }
 
     private static void StarmapUpdateFilterValues()
@@ -530,46 +530,37 @@ public static class UIFunctions
             foreach (var planet in star.planets)
             {
                 if (planet == null) continue;
-                while (planet.scanning)
+                if (!planet.scanned)
                 {
-                    Thread.Sleep(50);
+                    PlanetModelingManager.RequestScanPlanet(planet);
+                    continue;
                 }
                 var planetValue = 0UL;
                 if (planet.type == EPlanetType.Gas)
                 {
                     foreach (var n in planet.gasItems)
                     {
-                        switch (n)
+                        if (ItemToVeinBitFlagMap.TryGetValue(n, out var bitFlag))
                         {
-                            case 1011:
-                                planetValue |= 1UL << 8;
-                                break;
-                            case 1120:
-                                planetValue |= 1UL << 20;
-                                break;
-                            case 1121:
-                                planetValue |= 1UL << 21;
-                                break;
+                            planetValue |= 1UL << bitFlag;
                         }
                     }
                 }
                 else
                 {
-                    foreach (var group in planet.veinGroups)
+                    if (planet.runtimeVeinGroups != null)
                     {
-                        if (group.amount > 0)
+                        foreach (var group in planet.runtimeVeinGroups)
                         {
-                            planetValue |= 1UL << (int)group.type;
+                            if (group.amount > 0)
+                            {
+                                planetValue |= 1UL << (int)group.type;
+                            }
                         }
                     }
-                    switch (planet.waterItemId)
+                    if (ItemToVeinBitFlagMap.TryGetValue(planet.waterItemId, out var bitFlag))
                     {
-                        case 1116:
-                            planetValue |= 1UL << 22;
-                            break;
-                        case 1000:
-                            planetValue |= 1UL << 23;
-                            break;
+                        planetValue |= 1UL << bitFlag;
                     }
                 }
                 if ((value & (1UL << (30 + planet.theme))) == 0)
@@ -578,9 +569,11 @@ public static class UIFunctions
                     {
                         case 7:
                         case 9:
+                        case 10:
                         case 13:
                         case 17:
                         case 19:
+                        case 20:
                         case 24:
                             {
                                 const ulong needed = 0x7EUL;
@@ -599,10 +592,8 @@ public static class UIFunctions
                                 }
                                 break;
                             }
-                        case 10:
                         case 15:
                         case 16:
-                        case 18:
                         case 21:
                         case 22:
                         case 23:

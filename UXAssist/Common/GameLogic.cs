@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using HarmonyLib;
 
 namespace UXAssist.Common;
@@ -8,7 +9,7 @@ public class GameLogic: PatchImpl<GameLogic>
     public static Action OnDataLoaded;
     public static Action OnGameBegin;
     public static Action OnGameEnd;
-    
+
     [HarmonyPostfix]
     [HarmonyPatch(typeof(VFPreload), nameof(VFPreload.InvokeOnLoadWorkEnded))]
     public static void VFPreload_InvokeOnLoadWorkEnded_Postfix()
