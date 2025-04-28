@@ -288,7 +288,7 @@ public static class TechPatch
             }
             var techProto = __instance.techProto;
             if (techProto == null) return false;
-            Functions.TechFunctions.UnlockProtoWithMetadataAndPrompt([techProto], true);
+            Functions.TechFunctions.UnlockProtoWithMetadataAndPrompt([techProto], -1, true);
             return false;
         }
     }

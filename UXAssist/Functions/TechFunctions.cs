@@ -184,17 +184,17 @@ public static class TechFunctions
                 techProtos.Add(techProto);
             }
         }
-        UnlockProtoWithMetadataAndPrompt([.. techProtos], false);
+        UnlockProtoWithMetadataAndPrompt([.. techProtos], 16, false);
     }
 
-    public static void UnlockProtoWithMetadataAndPrompt(TechProto[] techProtos, bool withPrerequisites = true)
+    public static void UnlockProtoWithMetadataAndPrompt(TechProto[] techProtos, int toLevel, bool withPrerequisites = true)
     {
         var techList = new List<Tuple<TechProto, int, int>>();
         var properties = new SortedList<int, int>();
         var history = GameMain.history;
         foreach (var techProto in techProtos)
         {
-            CheckTechUnlockProperties(history, techProto, properties, techList, -1, withPrerequisites);
+            CheckTechUnlockProperties(history, techProto, properties, techList, toLevel, withPrerequisites);
         }
         var propertySystem = DSPGame.propertySystem;
         var clusterSeedKey = history.gameData.GetClusterSeedKey();
@@ -207,7 +207,7 @@ public static class TechFunctions
         }
         if (!enough)
         {
-            UIRealtimeTip.Popup("元数据不足".Translate(), true, 0);
+            UIMessageBox.Show("元数据".Translate(), "元数据不足".Translate(), "确定".Translate(), 3);
             return;
         }
 
@@ -286,7 +286,7 @@ public static class TechFunctions
             }
             foreach (var techProto in techProtos)
             {
-                UnlockTechImmediately(techProto, -1, withPrerequisites);
+                UnlockTechImmediately(techProto, toLevel, withPrerequisites);
             }
             history.VarifyTechQueue();
             if (history.currentTech != history.techQueue[0])
