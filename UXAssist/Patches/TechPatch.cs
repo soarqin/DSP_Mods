@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection.Emit;
 using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine;
+using UnityEngine.UI;
 using UXAssist.Common;
 
 namespace UXAssist.Patches;
@@ -11,47 +13,54 @@ namespace UXAssist.Patches;
 public static class TechPatch
 {
     public static ConfigEntry<bool> SorterCargoStackingEnabled;
+    public static ConfigEntry<bool> DisableBattleRelatedTechsInPeaceModeEnabled;
     public static ConfigEntry<bool> BatchBuyoutTechEnabled;
-    
+
     public static void Init()
     {
         I18N.Add("分拣器运货量", "Sorter Mk.III cargo stacking : ", "极速分拣器每次可运送 ");
         SorterCargoStackingEnabled.SettingChanged += (_, _) => SorterCargoStacking.Enable(SorterCargoStackingEnabled.Value);
+        DisableBattleRelatedTechsInPeaceModeEnabled.SettingChanged += (_, _) => DisableBattleRelatedTechsInPeaceMode.Enable(DisableBattleRelatedTechsInPeaceModeEnabled.Value);
         BatchBuyoutTechEnabled.SettingChanged += (_, _) => BatchBuyoutTech.Enable(BatchBuyoutTechEnabled.Value);
     }
 
     public static void Start()
     {
         SorterCargoStacking.Enable(SorterCargoStackingEnabled.Value);
+        DisableBattleRelatedTechsInPeaceMode.Enable(DisableBattleRelatedTechsInPeaceModeEnabled.Value);
         BatchBuyoutTech.Enable(BatchBuyoutTechEnabled.Value);
     }
 
     public static void Uninit()
     {
         BatchBuyoutTech.Enable(false);
+        DisableBattleRelatedTechsInPeaceMode.Enable(false);
         SorterCargoStacking.Enable(false);
     }
-    
-    private class SorterCargoStacking: PatchImpl<SorterCargoStacking>
+
+    private class SorterCargoStacking
     {
         private static bool _protoPatched;
-        
-        protected override void OnEnable()
+
+        public static void Enable(bool enable)
         {
-            TryPatchProto(true);
-            GameLogic.OnDataLoaded += VFPreload_InvokeOnLoadWorkEnded_Postfix;
-        }
-        
-        protected override void OnDisable()
-        {
-            GameLogic.OnDataLoaded -= VFPreload_InvokeOnLoadWorkEnded_Postfix;
-            TryPatchProto(false);
+            if (enable)
+            {
+                TryPatchProto(true);
+                GameLogic.OnDataLoaded += VFPreload_InvokeOnLoadWorkEnded_Postfix;
+            }
+            else
+            {
+                GameLogic.OnDataLoaded -= VFPreload_InvokeOnLoadWorkEnded_Postfix;
+                TryPatchProto(false);
+            }
         }
 
         private static void TryPatchProto(bool on)
         {
+            if (DSPGame.IsMenuDemo) return;
             var techs = LDB.techs;
-            if (techs == null || techs.dataArray == null || techs.dataArray.Length == 0) return;
+            if (techs == null || techs?.dataArray == null || techs.dataArray.Length == 0) return;
             if (on)
             {
                 var delim = -26.0f;
@@ -114,162 +123,145 @@ public static class TechPatch
         }
     }
 
+    private static class DisableBattleRelatedTechsInPeaceMode
+    {
+        private static bool _protoPatched;
+        private static HashSet<int> _techsToDisableSet;
+        private static Dictionary<int, TechProto[]> _originTechPosts = [];
+
+        public static void Enable(bool enable)
+        {
+            if (_techsToDisableSet == null)
+            {
+                (int, int)[] techListToDisable =
+                [
+                    // Combustible Unit, Explosive Unit, Crystal Explosive Unit
+                    // 燃烧单元，爆破单元，晶石爆破单元
+                    (1802, 1804),
+                    // Implosion Cannon
+                    // 聚爆加农炮
+                    (1807, 1807),
+                    // Signal Tower, Planetary Defense System, Jammer Tower, Plasma Turret, Titanium Ammo Box, Superalloy Ammo Box, High-Explosive Shell Set, Supersonic Missile Set, Crystal Shell Set, Gravity Missile Set, Antimatter Capsule, Precision Drone, Prototype, Attack Drone, Corvette, Destroyer, Suppressing Capsule, EM Capsule Mk.III
+                    // 信号塔, 行星防御系统, 干扰塔, 磁化电浆炮, 钛化弹箱, 超合金弹箱, 高爆炮弹组, 超音速导弹组, 晶石炮弹组, 引力导弹组, 反物质胶囊, 地面战斗机-A型, 地面战斗机-E型, 地面战斗机-F型, 太空战斗机-A型, 太空战斗机-F型, 电磁胶囊II, 电磁胶囊III
+                    (1809, 1825),
+                    // Auto Reconstruction Marking
+                    // 自动标记重建
+                    (2951, 2956),
+                    // Energy Shield
+                    // 能量护盾
+                    (2801, 2807),
+                    // Kinetic Weapon Damage
+                    // 动能武器伤害
+                    (5001, 5006),
+                    // Energy Weapon Damage
+                    // 能量武器伤害
+                    (5101, 5106),
+                    // Explosive Weapon Damage
+                    // 爆炸武器伤害
+                    (5201, 5206),
+                    // Combat Drone Damage
+                    // 战斗无人机伤害
+                    (5301, 5305),
+                    // Combat Drone Attack Speed
+                    // 战斗无人机攻击速度
+                    (5401, 5405),
+                    // Combat Drone Engine
+                    // 战斗无人机引擎
+                    (5601, 5605),
+                    // Combat Drone Durability
+                    // 战斗无人机耐久
+                    (5701, 5705),
+                    // Ground Squadron Expansion
+                    // 地面编队扩容
+                    (5801, 5807),
+                    // Space Fleet Expansion
+                    // 太空编队扩容
+                    (5901, 5907),
+                    // Enhanced Structure
+                    // 结构强化
+                    (6001, 6006),
+                    // Planetary Shield
+                    // 行星护盾
+                    (6101, 6106),
+                ];
+                _techsToDisableSet = [.. techListToDisable.SelectMany(t => Enumerable.Range(t.Item1, t.Item2 - t.Item1 + 1))];
+            }
+            if (enable)
+            {
+                if (DSPGame.GameDesc != null)
+                    TryPatchProto(DSPGame.GameDesc.isPeaceMode);
+                GameLogic.OnGameBegin += OnGameBegin;
+            }
+            else
+            {
+                GameLogic.OnGameBegin -= OnGameBegin;
+                TryPatchProto(false);
+            }
+        }
+
+        private static void OnGameBegin()
+        {
+            TryPatchProto(DSPGame.GameDesc.isPeaceMode);
+        }
+
+        private static void TryPatchProto(bool on)
+        {
+            if (DSPGame.IsMenuDemo || on == _protoPatched) return;
+            var techs = LDB.techs;
+            if (techs?.dataArray == null || techs.dataArray.Length == 0) return;
+            if (on)
+            {
+                foreach (var tp in techs.dataArray)
+                {
+                    if (_techsToDisableSet.Contains(tp.ID))
+                    {
+                        tp.IsObsolete = true;
+                    }
+                    var postTechs = tp.postTechArray;
+                    for (var i = postTechs.Length - 1; i >= 0; i--)
+                    {
+                        if (_techsToDisableSet.Contains(postTechs[i].ID))
+                        {
+                            _originTechPosts[tp.ID] = postTechs;
+                            tp.postTechArray = [.. postTechs.Where(p => !_techsToDisableSet.Contains(p.ID))];
+                            break;
+                        }
+                    }
+                }
+                _protoPatched = true;
+            }
+            else
+            {
+                foreach (var tp in techs.dataArray)
+                {
+                    if (_techsToDisableSet.Contains(tp.ID))
+                    {
+                        tp.IsObsolete = false;
+                    }
+                    if (_originTechPosts.TryGetValue(tp.ID, out var postTechs))
+                    {
+                        tp.postTechArray = postTechs;
+                    }
+                }
+                _originTechPosts.Clear();
+                _protoPatched = false;
+            }
+            foreach (var item in UIRoot.instance.uiGame.techTree.nodes)
+            {
+                var node = item.Value;
+                foreach (var arrow in node.arrows)
+                {
+                    arrow.gameObject.SetActive(false);
+                }
+                var active = node.techProto.postTechArray.Length > 0;
+                node.connGroup.gameObject.SetActive(active);
+                node.connImages = active ? node.connGroup.GetComponentsInChildren<Image>(true) : [];
+            }
+        }
+    }
+
     private class BatchBuyoutTech: PatchImpl<BatchBuyoutTech>
     {
-        private static void GenerateTechList(GameHistoryData history, int techId, List<int> techIdList)
-        {
-            var techProto = LDB.techs.Select(techId);
-            if (techProto == null || !techProto.Published) return;
-            var flag = true;
-            for (var i = 0; i < 2; i++)
-            {
-                var array = techProto.PreTechs;
-                if (i == 1)
-                {
-                    array = techProto.PreTechsImplicit;
-                }
-                for (var j = 0; j < array.Length; j++)
-                {
-                    if (!history.techStates.ContainsKey(array[j]) || history.techStates[array[j]].unlocked) continue;
-                    if (history.techStates[array[j]].maxLevel > history.techStates[array[j]].curLevel)
-                    {
-                        flag = false;
-                    }
-                    GenerateTechList(history, array[j], techIdList);
-                }
-            }
-            if (history.techStates.ContainsKey(techId) && !history.techStates[techId].unlocked && flag)
-            {
-                techIdList.Add(techId);
-            }
-        }
-
-        
-        private static void CheckTechUnlockProperties(GameHistoryData history, TechProto techProto, int[] properties, List<Tuple<TechProto, int, int>> techList, int maxLevel = 10000)
-        {
-            var techStates = history.techStates;
-            var techID = techProto.ID;
-            if (techStates == null || !techStates.TryGetValue(techID, out var value)) return;
-            if (value.unlocked) return;
-
-            var maxLvl = Math.Min(maxLevel < 0 ? value.curLevel - maxLevel - 1 : maxLevel, value.maxLevel);
-
-            foreach (var preid in techProto.PreTechs)
-            {
-                var preProto = LDB.techs.Select(preid);
-                if (preProto != null)
-                    CheckTechUnlockProperties(history, preProto, properties, techList, techProto.PreTechsMax ? 10000 : preProto.Level);
-            }
-            foreach (var preid in techProto.PreTechsImplicit)
-            {
-                var preProto = LDB.techs.Select(preid);
-                if (preProto != null)
-                    CheckTechUnlockProperties(history, preProto, properties, techList, techProto.PreTechsMax ? 10000 : preProto.Level);
-            }
-
-            if (value.curLevel < techProto.Level) value.curLevel = techProto.Level;
-            techList.Add(new Tuple<TechProto, int, int>(techProto, value.curLevel, techProto.Level));
-            while (value.curLevel <= maxLvl)
-            {
-                if (techProto.PropertyOverrideItemArray != null)
-                {
-                    var propertyOverrideItemArray = techProto.PropertyOverrideItemArray;
-                    for (var i = 0; i < propertyOverrideItemArray.Length; i++)
-                    {
-                        var id = propertyOverrideItemArray[i].id;
-                        var count = (float)propertyOverrideItemArray[i].count;
-                        var ratio = Mathf.Clamp01((float)((double)value.hashUploaded / value.hashNeeded));
-                        var consume = Mathf.CeilToInt(count * (1f - ratio));
-                        properties[id - 6001] += consume;
-                    }
-                }
-                else
-                {
-                    for (var j = 0; j < techProto.itemArray.Length; j++)
-                    {
-                        var id = techProto.itemArray[j].ID;
-                        var consume = (int)(techProto.ItemPoints[j] * (value.hashNeeded - value.hashUploaded) / 3600L);
-                        properties[id - 6001] += consume;
-                    }
-                }
-                value.curLevel++;
-                value.hashUploaded = 0;
-                value.hashNeeded = techProto.GetHashNeeded(value.curLevel);
-            }
-        }
-
-        private static int UnlockTechRecursiveImpl(GameHistoryData history, TechProto techProto, int maxLevel = 10000)
-        {
-            var techStates = history.techStates;
-            var techID = techProto.ID;
-            if (techStates == null || !techStates.TryGetValue(techID, out var value))
-            {
-                return -1;
-            }
-
-            if (value.unlocked)
-            {
-                return -1;
-            }
-
-            var maxLvl = Math.Min(maxLevel < 0 ? value.curLevel - maxLevel - 1 : maxLevel, value.maxLevel);
-
-            foreach (var preid in techProto.PreTechs)
-            {
-                var preProto = LDB.techs.Select(preid);
-                if (preProto != null)
-                    UnlockTechRecursiveImpl(history, preProto, techProto.PreTechsMax ? 10000 : preProto.Level);
-            }
-            foreach (var preid in techProto.PreTechsImplicit)
-            {
-                var preProto = LDB.techs.Select(preid);
-                if (preProto != null)
-                    UnlockTechRecursiveImpl(history, preProto, techProto.PreTechsMax ? 10000 : preProto.Level);
-            }
-
-            if (value.curLevel < techProto.Level) value.curLevel = techProto.Level;
-            while (value.curLevel <= maxLvl)
-            {
-                if (value.curLevel == 0)
-                {
-                    foreach (var recipe in techProto.UnlockRecipes)
-                    {
-                        history.UnlockRecipe(recipe);
-                    }
-                }
-
-                for (var j = 0; j < techProto.UnlockFunctions.Length; j++)
-                {
-                    history.UnlockTechFunction(techProto.UnlockFunctions[j], techProto.UnlockValues[j], value.curLevel);
-                }
-
-                for (var k = 0; k < techProto.AddItems.Length; k++)
-                {
-                    history.GainTechAwards(techProto.AddItems[k], techProto.AddItemCounts[k]);
-                }
-
-                value.curLevel++;
-            }
-
-            value.unlocked = maxLvl >= value.maxLevel;
-            value.curLevel = value.unlocked ? maxLvl : maxLvl + 1;
-            value.hashNeeded = techProto.GetHashNeeded(value.curLevel);
-            value.hashUploaded = value.unlocked ? value.hashNeeded : 0;
-            techStates[techID] = value;
-            return maxLvl;
-        }
-
-        private static bool UnlockTechRecursive(TechProto techProto, int maxLevel = 10000)
-        {
-            if (techProto == null) return false;
-            var history = GameMain.history;
-            var ulvl = UnlockTechRecursiveImpl(history, techProto, maxLevel);
-            if (ulvl < 0) return false;
-            history.RegFeatureKey(1000100);
-            history.NotifyTechUnlock(techProto.ID, ulvl);
-            return true;
-        }
-        
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(UITechNode), nameof(UITechNode.UpdateInfoDynamic))]
         private static IEnumerable<CodeInstruction> UITechNode_UpdateInfoDynamic_Transpiler(IEnumerable<CodeInstruction> instructions)
@@ -285,7 +277,7 @@ public static class TechPatch
             );
             return matcher.InstructionEnumeration();
         }
-        
+
         [HarmonyPrefix]
         [HarmonyPatch(typeof(UITechNode), nameof(UITechNode.OnBuyoutButtonClick))]
         private static bool UITechNode_OnBuyoutButtonClick_Prefix(UITechNode __instance)
@@ -296,109 +288,8 @@ public static class TechPatch
             }
             var techProto = __instance.techProto;
             if (techProto == null) return false;
-            var properties = new int[6];
-            List<Tuple<TechProto, int, int>> techList = new();
-            var history = GameMain.history;
-            var maxLevel = -1;
-            CheckTechUnlockProperties(history, techProto, properties, techList, maxLevel);
-            var propertySystem = DSPGame.propertySystem;
-            var clusterSeedKey = history.gameData.GetClusterSeedKey();
-            var enough = true;
-            for (var i = 0; i < 6; i++)
-            {
-                if (propertySystem.GetItemAvaliableProperty(clusterSeedKey, 6001 + i) >= properties[i]) continue;
-                enough = false;
-                break;
-            }
-            if (!enough)
-            {
-                UIRealtimeTip.Popup("元数据不足".Translate());
-                return false;
-            }
-
-            if (!history.hasUsedPropertyBanAchievement)
-            {
-                UIMessageBox.Show("初次使用元数据标题".Translate(), "初次使用元数据描述".Translate(), "取消".Translate(), "确定".Translate(), 2, null, DoUnlockFunc);
-                return false;
-            }
-
-            DoUnlockFunc();
+            Functions.TechFunctions.UnlockProtoWithMetadataAndPrompt([techProto], true);
             return false;
-
-            void DoUnlockFunc()
-            {
-                if (techList.Count <= 1)
-                {
-                    DoUnlockFuncInternal();
-                    return;
-                }
-                var msg = "要使用元数据买断以下科技吗？";
-
-                if (techList.Count <= 10)
-                {
-                    foreach (var tuple in techList)
-                    {
-                        AddToMsg(ref msg, tuple);
-                    }
-                }
-                else
-                {
-                    for (var i = 0; i < 5; i++)
-                    {
-                        AddToMsg(ref msg, techList[i]);
-                    }
-                    msg += "  ...\n";
-                    for (var i = techList.Count - 5; i < techList.Count; i++)
-                    {
-                        AddToMsg(ref msg, techList[i]);
-                    }
-                }
-
-                msg += "\n\n";
-                msg += "以下是买断所需元数据：";
-                for (var i = 0; i < 6; i++)
-                {
-                    var itemCount = properties[i];
-                    if (itemCount <= 0) continue;
-                    msg += $"\n  {LDB.items.Select(6001 + i).propertyName}x{itemCount}";
-                }
-                UIMessageBox.Show("批量买断科技", msg, "取消".Translate(), "确定".Translate(), 2, null, DoUnlockFuncInternal);
-                return;
-            
-                void AddToMsg(ref string str, Tuple<TechProto, int, int> tuple)
-                {
-                    if (tuple.Item2 == tuple.Item3)
-                    {
-                        if (tuple.Item2 <= 0)
-                            str += $"\n  {tuple.Item1.name}";
-                        else
-                            str += $"\n  {tuple.Item1.name}{"杠等级".Translate()}{tuple.Item2}";
-                    }
-                    else
-                        str += $"\n  {tuple.Item1.name}{"杠等级".Translate()}{tuple.Item2}->{tuple.Item3}";
-                }
-            }
-
-            void DoUnlockFuncInternal()
-            {
-                var mainPlayer = GameMain.mainPlayer;
-                for (var i = 0; i < 6; i++)
-                {
-                    var itemCount = properties[i];
-                    if (itemCount <= 0) continue;
-                    var itemId = 6001 + i;
-                    propertySystem.AddItemConsumption(clusterSeedKey, itemId, itemCount);
-                    history.AddPropertyItemConsumption(itemId, itemCount, true);
-                    mainPlayer.mecha.AddProductionStat(itemId, itemCount, mainPlayer.nearestFactory);
-                    mainPlayer.mecha.AddConsumptionStat(itemId, itemCount, mainPlayer.nearestFactory);
-                }
-                UnlockTechRecursive(__instance.techProto, maxLevel);
-                history.VarifyTechQueue();
-                if (history.currentTech != history.techQueue[0])
-                {
-                    history.currentTech = history.techQueue[0];
-                }
-            }
         }
     }
 }

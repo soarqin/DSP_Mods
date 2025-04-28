@@ -188,6 +188,8 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
         PlayerPatch.DistanceToWarp = Config.Bind("Player", "DistanceToWarp", 5.0, "Distance to warp (in AU)");
         TechPatch.SorterCargoStackingEnabled = Config.Bind("Tech", "SorterCargoStacking", false,
             "Restore upgrades of `Sorter Cargo Stacking` on panel");
+        TechPatch.DisableBattleRelatedTechsInPeaceModeEnabled = Config.Bind("Tech", "DisableBattleRelatedTechsInPeaceMode", false,
+            "Disable battle-related techs in Peace mode");
         TechPatch.BatchBuyoutTechEnabled = Config.Bind("Tech", "BatchBuyoutTech", false,
             "Can buy out techs with their prerequisites");
         DysonSpherePatch.StopEjectOnNodeCompleteEnabled = Config.Bind("DysonSphere", "StopEjectOnNodeComplete", false,

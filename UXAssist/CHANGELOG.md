@@ -4,8 +4,11 @@
 ## Changlog
 
 * 1.3.2
+  + New feature: `Disable battle-related techs in Peace mode`
+  + New button: `Unlock all techs with metadata`
   + Add a checkbox to make union of results in starmap filter.
   + Fix some starmap vein/planet filter conditions.
+  + Fix a crash caused by `Re-initialize planet` in peace mode.
   + Fix compatibility with `NebulaMultiplayerMod`.
 * 1.3.1
   + Fix an issue that some UI elements are hidden while hitting the newly added combobox on Starmap.
@@ -294,8 +297,11 @@
 ## 更新日志
 
 * 1.3.2
-  + 添加了一个勾选框用于对星图过滤器的结果进行并集操作
-  + 修复了一些星图过滤条件
+  + 新功能：`在和平模式下隐藏战斗相关科技`
+  + 新按钮：`使用元数据解锁所有科技`
+  + 在星图过滤器中添加复选框以合并结果
+  + 修复了一些星图矿脉/行星过滤条件
+  + 修复了在和平模式下`初始化本行星`导致的崩溃问题
   + 修复了与`NebulaMultiplayerMod`的兼容性问题
 * 1.3.1
   + 修复了在星图上点击新增的下拉框时部分UI元素被隐藏的问题

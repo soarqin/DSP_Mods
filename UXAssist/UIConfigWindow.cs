@@ -149,8 +149,10 @@ public static class UIConfigWindow
         I18N.Add("Dismantle selected layer Confirm", "This operation will dismantle selected layer, are you sure?", "此操作将会拆除选中的戴森壳，确定吗？");
         I18N.Add("Auto Fast Build Speed Multiplier", "Auto Fast Build Speed Multiplier", "自动快速建造速度倍率");
         I18N.Add("Restore upgrades of \"Sorter Cargo Stacking\" on panel", "Restore upgrades of \"Sorter Cargo Stacking\" on panel", "在升级面板上恢复\"分拣器货物叠加\"的升级");
+        I18N.Add("Disable battle-related techs in Peace mode", "Disable battle-related techs in Peace mode", "在和平模式下隐藏战斗相关科技");
         I18N.Add("Buy out techs with their prerequisites", "Buy out techs with their prerequisites", "购买科技也同时购买所有前置科技");
         I18N.Add("Set \"Sorter Cargo Stacking\" to unresearched state", "Set \"Sorter Cargo Stacking\" to unresearched state", "将\"分拣器货物叠加\"设为未研究状态");
+        I18N.Add("Unlock all techs with metadata", "Unlock all techs with metadata", "使用元数据解锁所有科技");
         I18N.Add("Open Dark Fog Communicator", "Open Dark Fog Communicator", "打开黑雾通讯器");
         I18N.Apply();
         MyConfigWindow.OnUICreated += CreateUI;
@@ -727,20 +729,11 @@ public static class UIConfigWindow
         y += 36f;
         wnd.AddCheckBox(x, y, tab6, TechPatch.SorterCargoStackingEnabled, "Restore upgrades of \"Sorter Cargo Stacking\" on panel");
         y += 36f;
-        wnd.AddButton(x, y, 300f, tab6, "Set \"Sorter Cargo Stacking\" to unresearched state", 16, "button-remove-cargo-stacking", () =>
-        {
-            var history = GameMain.data?.history;
-            if (history == null) return;
-            history.inserterStackCountObsolete = 1;
-            for (var id = 3301; id <= 3305; id++)
-            {
-                history.techStates.TryGetValue(id, out var state);
-                if (!state.unlocked) continue;
-                state.unlocked = false;
-                state.hashUploaded = 0;
-                history.techStates[id] = state;
-            }
-        });
+        wnd.AddCheckBox(x, y, tab6, TechPatch.DisableBattleRelatedTechsInPeaceModeEnabled, "Disable battle-related techs in Peace mode");
+        y += 36f;
+        wnd.AddButton(x, y, 300f, tab6, "Set \"Sorter Cargo Stacking\" to unresearched state", 16, "button-remove-cargo-stacking", TechFunctions.RemoveCargoStackingTechs);
+        y += 36f;
+        wnd.AddButton(x, y, 300f, tab6, "Unlock all techs with metadata", 16, "button-unlock-all-techs-with-metadata", TechFunctions.UnlockAllProtoWithMetadataAndPrompt);
         y += 36f;
         y += 36f;
         wnd.AddButton(x, y, 300f, tab6, "Open Dark Fog Communicator", 16, "button-open-df-communicator", () =>
