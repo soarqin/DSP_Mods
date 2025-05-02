@@ -18,9 +18,9 @@ public class MyCheckBox : MonoBehaviour
 
     private static GameObject _baseObject;
 
-    private static readonly Color BoxColor = new Color(1f, 1f, 1f, 100f / 255f);
-    private static readonly Color CheckColor = new Color(1f, 1f, 1f, 1f);
-    private static readonly Color TextColor = new Color(178f / 255f, 178f / 255f, 178f / 255f, 168f / 255f);
+    private static readonly Color BoxColor = new(1f, 1f, 1f, 100f / 255f);
+    private static readonly Color CheckColor = new(1f, 1f, 1f, 1f);
+    private static readonly Color TextColor = new(178f / 255f, 178f / 255f, 178f / 255f, 168f / 255f);
 
     public static void InitBaseObject()
     {

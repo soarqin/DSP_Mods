@@ -235,20 +235,23 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
         GameLogic.Enable(false);
     }
 
-    private void FixedUpdate()
+    private void Update()
     {
+        if (VFInput.inputing) return;
         if (DSPGame.IsMenuDemo)
         {
-            if (VFInput.inputing) return;
             UIFunctions.OnInputUpdate();
             return;
         }
-        LogisticsPatch.OnUpdate();
-        if (VFInput.inputing) return;
         LogisticsPatch.OnInputUpdate();
         UIFunctions.OnInputUpdate();
         GamePatch.OnInputUpdate();
         FactoryPatch.OnInputUpdate();
         PlayerPatch.OnInputUpdate();
+    }
+
+    private void FixedUpdate()
+    {
+        LogisticsPatch.OnUpdate();
     }
 }
