@@ -410,7 +410,7 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 
                                 /* Check nearest astroes, try to bypass them */
                                 var localStar = GameMain.localStar;
-                                _canUseWarper = autoCruise && !player.warping && player.mecha.warpStorage.GetItemCount(1210) > 0;
+                                _canUseWarper = autoCruise && player.mecha.thrusterLevel >= 3 && !player.warping && player.mecha.HasWarper();
                                 if (localStar != null)
                                 {
                                     var nearestRange = (playerPos - localStar.uPosition).sqrMagnitude;
