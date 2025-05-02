@@ -22,7 +22,7 @@ public static class UIFunctions
     private static bool _starmapFilterInitialized;
     private static ulong[] _starmapStarFilterValues;
     private static bool _starFilterEnabled;
-    private static UI.MyCheckButton _starmapFilterToggler;
+    public static UI.MyCheckButton StarmapFilterToggler;
     public static bool[] ShowStarName;
 
     public static void Init()
@@ -224,7 +224,7 @@ public static class UIFunctions
         {
             Functions.UIFunctions.CornerComboBoxIndex = index;
         };
-        _starmapFilterToggler = UI.MyCheckButton.CreateCheckButton(0, 0, rtrans, false, ">>").WithSize(24, 24);
+        StarmapFilterToggler = UI.MyCheckButton.CreateCheckButton(0, 0, rtrans, false, ">>").WithSize(24, 24);
         MyCheckButton[] buttons = [
             UI.MyCheckButton.CreateCheckButton(24, 0, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Kimberlite
             UI.MyCheckButton.CreateCheckButton(48, 0, rtrans, false).WithIcon().WithSize(24, 24).WithIconWidth(24), // Fractal Silicon
@@ -264,7 +264,7 @@ public static class UIFunctions
         };
         var allOresText = MyWindow.AddText(20, 190, rtrans, "All 6 Basic Ores".Translate(), 12);
         allOresText.gameObject.SetActive(false);
-        _starmapFilterToggler.OnChecked += UpdateButtons;
+        StarmapFilterToggler.OnChecked += UpdateButtons;
         foreach (var button in buttons)
         {
             button.OnChecked += () =>
@@ -374,8 +374,8 @@ public static class UIFunctions
                         break;
                 }
             }
-            _starmapFilterToggler.gameObject.SetActive(false);
-            _starmapFilterToggler.Checked = false;
+            StarmapFilterToggler.gameObject.SetActive(false);
+            StarmapFilterToggler.Checked = false;
             UpdateButtons();
             SetStarFilterEnabled(false);
             foreach (var star in galaxy.stars)
@@ -446,7 +446,7 @@ public static class UIFunctions
         }
         void UpdateButtons()
         {
-            var chk = _starmapFilterToggler.Checked;
+            var chk = StarmapFilterToggler.Checked;
             foreach (var button in buttons)
             {
                 if (chk)
@@ -459,17 +459,18 @@ public static class UIFunctions
             }
             unionCheckBox.gameObject.SetActive(chk);
             allOresText.gameObject.SetActive(chk);
-            _starmapFilterToggler.SetLabelText(chk ? "X" : ">>");
+            StarmapFilterToggler.SetLabelText(chk ? "X" : ">>");
             if (!chk)
             {
                 UpdateStarmapStarFilters();
             }
+            UIRoot.instance.uiGame.dfMonitor.transform.parent.gameObject.SetActive(!chk);
         }
         void UpdateStarmapStarFilters()
         {
             var filterValue = 0UL;
             var union = unionCheckBox.Checked;
-            if (_starmapFilterToggler.Checked)
+            if (StarmapFilterToggler.Checked)
             {
                 for (int i = 0; i < 12; i++)
                 {
@@ -513,9 +514,9 @@ public static class UIFunctions
 
     public static void OnPlanetScanEnded()
     {
-        if (!_starmapFilterInitialized || _starmapFilterToggler == null || _starmapFilterToggler.gameObject.activeSelf) return;
+        if (!_starmapFilterInitialized || StarmapFilterToggler == null || StarmapFilterToggler.gameObject.activeSelf) return;
         StarmapUpdateFilterValues();
-        _starmapFilterToggler.gameObject.SetActive(true);
+        StarmapFilterToggler.gameObject.SetActive(true);
     }
 
     private static void StarmapUpdateFilterValues()

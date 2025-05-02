@@ -6,6 +6,7 @@
 * 1.3.3
   + `Re-initialize planet`: Fix a crash.
   + `Auto navigation on sailings`: Do not auto-use Warper if required Tech is not researched.
+  + Starmap filter: Hide top overlaping windows while the filter UI is shown.
 * 1.3.2
   + New feature: `Disable battle-related techs in Peace mode`
   + New button: `Unlock all techs with metadata`
