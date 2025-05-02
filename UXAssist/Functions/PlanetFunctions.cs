@@ -93,6 +93,28 @@ public static class PlanetFunctions
             planet.audio?.RemoveAudioData(ed.audioId);
         }
 
+        var hives = GameMain.spaceSector?.dfHives;
+        if (hives != null)
+        {
+            var hive = hives[planet.star.index];
+            var relays = hive?.relays?.buffer;
+            if (relays != null)
+            {
+                var astroId = planet.astroId;
+                for (var i = relays.Length - 1; i >= 0; i--)
+                {
+                    var relay = relays[i];
+                    if (relay == null || relay.id != i) continue;
+                    if (relay.targetAstroId != astroId && relay.searchAstroId != astroId) continue;
+                    relay.targetAstroId = 0;
+                    relay.searchAstroId = 0;
+                    if (relay.baseId > 0)
+                        hive.relayNeutralizedCounter++;
+                    relay.LeaveBase();
+                }
+            }
+        }
+
         if (planet.factory.enemyPool != null)
         {
             for (var i = planet.factory.enemyCursor - 1; i > 0; i--)
@@ -150,27 +172,6 @@ public static class PlanetFunctions
         {
             if (warningPool[i].id == i && warningPool[i].factoryId == index)
                 warningSystem.RemoveWarningData(warningPool[i].id);
-        }
-        var hives = GameMain.spaceSector?.dfHives;
-        if (hives != null)
-        {
-            var hive = hives[planet.star.index];
-            var relays = hive?.relays?.buffer;
-            if (relays != null)
-            {
-                var astroId = planet.astroId;
-                for (var i = relays.Length - 1; i >= 0; i--)
-                {
-                    var relay = relays[i];
-                    if (relay != null && relay.id != i) continue;
-                    if (relay.targetAstroId != astroId && relay.searchAstroId != astroId) continue;
-                    relay.targetAstroId = 0;
-                    relay.searchAstroId = 0;
-                    if (relay.baseId > 0)
-                        hive.relayNeutralizedCounter++;
-                    relay.LeaveBase();
-                }
-            }
         }
         var isCombatMode = factory.gameData.gameDesc.isCombatMode;
         factory.entityCursor = 1;
