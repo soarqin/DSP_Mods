@@ -60,21 +60,21 @@ public class GamePatch : PatchImpl<GamePatch>
     public static void Init()
     {
         _speedDownKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
-            {
-                key = new CombineKey((int)KeyCode.Minus, CombineKey.CTRL_COMB, ECombineKeyAction.OnceClick, false),
-                conflictGroup = KeyBindConflict.MOVEMENT | KeyBindConflict.FLYING | KeyBindConflict.SAILING | KeyBindConflict.BUILD_MODE_1 | KeyBindConflict.KEYBOARD_KEYBIND,
-                name = "UPSSpeedDown",
-                canOverride = true
-            }
+        {
+            key = new CombineKey((int)KeyCode.Minus, CombineKey.CTRL_COMB, ECombineKeyAction.OnceClick, false),
+            conflictGroup = KeyBindConflict.MOVEMENT | KeyBindConflict.FLYING | KeyBindConflict.SAILING | KeyBindConflict.BUILD_MODE_1 | KeyBindConflict.KEYBOARD_KEYBIND,
+            name = "UPSSpeedDown",
+            canOverride = true
+        }
         );
         I18N.Add("KEYUPSSpeedDown", "[UXA] Decrease logical frame rate", "[UXA] 降低逻辑帧率");
         _speedUpKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
-            {
-                key = new CombineKey((int)KeyCode.Equals, CombineKey.CTRL_COMB, ECombineKeyAction.OnceClick, false),
-                conflictGroup = KeyBindConflict.MOVEMENT | KeyBindConflict.UI | KeyBindConflict.FLYING | KeyBindConflict.SAILING | KeyBindConflict.BUILD_MODE_1 | KeyBindConflict.KEYBOARD_KEYBIND,
-                name = "UPSSpeedUp",
-                canOverride = true
-            }
+        {
+            key = new CombineKey((int)KeyCode.Equals, CombineKey.CTRL_COMB, ECombineKeyAction.OnceClick, false),
+            conflictGroup = KeyBindConflict.MOVEMENT | KeyBindConflict.UI | KeyBindConflict.FLYING | KeyBindConflict.SAILING | KeyBindConflict.BUILD_MODE_1 | KeyBindConflict.KEYBOARD_KEYBIND,
+            name = "UPSSpeedUp",
+            canOverride = true
+        }
         );
         I18N.Add("KEYUPSSpeedUp", "[UXA] Increase logical frame rate", "[UXA] 提升逻辑帧率");
         I18N.Add("Logical frame rate: {0}x", "[UXA] Logical frame rate: {0}x", "[UXA] 逻辑帧速率: {0}x");
@@ -144,38 +144,22 @@ public class GamePatch : PatchImpl<GamePatch>
         }
     }
 
+    [HarmonyPostfix]
+    [HarmonyPriority(Priority.First)]
+    [HarmonyPatch(typeof(GameConfig), "gameSaveFolder", MethodType.Getter)]
+    public static void GameConfig_gameSaveFolder_Postfix(ref string __result)
+    {
+        if (!ProfileBasedSaveFolderEnabled.Value || string.IsNullOrEmpty(WindowFunctions.ProfileName)) return;
+        __result = $"{__result}{WindowFunctions.ProfileName}/";
+    }
+
     private static void RefreshSavePath()
     {
-        var profileName = WindowFunctions.ProfileName;
-        if (profileName == null)
-        {
-            // We should initialize WindowFunctions before using WindowFunctions.ProfileName
-            WindowFunctions.Init();
-            profileName = WindowFunctions.ProfileName;
-            if (profileName == null) return;
-        }
-
-        if (UIRoot.instance.loadGameWindow.gameObject.activeSelf)
-        {
-            UIRoot.instance.loadGameWindow._Close();
-        }
-
-        if (UIRoot.instance.saveGameWindow.gameObject.activeSelf)
-        {
-            UIRoot.instance.saveGameWindow._Close();
-        }
-
-        string gameSavePath;
-        if (ProfileBasedSaveFolderEnabled.Value && string.Compare(DefaultProfileName.Value, profileName, StringComparison.OrdinalIgnoreCase) != 0)
-            gameSavePath = $"{GameConfig.gameDocumentFolder}Save/{profileName}/";
-        else
-            gameSavePath = $"{GameConfig.gameDocumentFolder}Save/";
-        if (string.Compare(GameConfig.gameSavePath, gameSavePath, StringComparison.OrdinalIgnoreCase) == 0) return;
-        GameConfig.gameSavePath = gameSavePath;
-        if (!Directory.Exists(GameConfig.gameSavePath))
-        {
-            Directory.CreateDirectory(GameConfig.gameSavePath);
-        }
+        var gameSaveFolder = GameConfig.gameSaveFolder;
+        if (!Directory.Exists(gameSaveFolder))
+            Directory.CreateDirectory(gameSaveFolder);
+        if (UIRoot.instance.loadGameWindow.active) UIRoot.instance.loadGameWindow.RefreshList();
+        if (UIRoot.instance.saveGameWindow.active) UIRoot.instance.saveGameWindow.RefreshList();
     }
 
     [HarmonyPrefix, HarmonyPatch(typeof(GameMain), nameof(GameMain.HandleApplicationQuit))]
@@ -255,7 +239,7 @@ public class GamePatch : PatchImpl<GamePatch>
                     needFix = true;
                 }
 
-                var rc = new WinApi.Rect {Left = x, Top = y, Right = x + w, Bottom = y + h};
+                var rc = new WinApi.Rect { Left = x, Top = y, Right = x + w, Bottom = y + h };
                 if (WinApi.MonitorFromRect(ref rc, 0) == IntPtr.Zero)
                 {
                     x = 0;
@@ -276,7 +260,8 @@ public class GamePatch : PatchImpl<GamePatch>
             //GameLogic.OnDataLoaded -= VFPreload_InvokeOnLoadWorkEnded_Postfix;
         }
 
-        public static IEnumerator SetWindowPosition(IntPtr wnd,int x, int y) {
+        public static IEnumerator SetWindowPosition(IntPtr wnd, int x, int y)
+        {
             yield return new WaitForEndOfFrame();
             yield return new WaitForEndOfFrame();
             WinApi.SetWindowPos(wnd, IntPtr.Zero, x, y, 0, 0, 0x0235);

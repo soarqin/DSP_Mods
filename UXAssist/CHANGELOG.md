@@ -7,6 +7,10 @@
   + `Re-initialize planet`: Fix a crash.
   + `Auto navigation on sailings`: Do not auto-use Warper if required Tech is not researched.
   + Starmap filter: Hide top overlaping windows while the filter UI is shown.
+  + `Dismantle blueprint selected buildings`: Fix an issue that belt connected buildings are dismantled unexpectly.
+  + `Mod manager profile based save folder`: Fix compatibility with [SaveTheWindows](https://thunderstore.io/c/dyson-sphere-program/p/starfi5h/SaveTheWindows/).
+  + `Allow overflow for Logistic Stations and Advanced Mining Machines`: Surpass maximum storage limit is not allowed on pasting blueprints.
+  + `Real-time logistic stations info panel`: Support for mods that change slot count of logistic stations.
 * 1.3.2
   + New feature: `Disable battle-related techs in Peace mode`
   + New button: `Unlock all techs with metadata`

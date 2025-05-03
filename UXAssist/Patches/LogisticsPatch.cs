@@ -67,7 +67,6 @@ public static class LogisticsPatch
         LogisticsConstrolPanelImprovement.Enable(LogisticsConstrolPanelImprovementEnabled.Value);
         RealtimeLogisticsInfoPanel.Enable(RealtimeLogisticsInfoPanelEnabled.Value);
         RealtimeLogisticsInfoPanel.EnableBars(RealtimeLogisticsInfoPanelBarsEnabled.Value);
-        RealtimeLogisticsInfoPanel.InitGUI();
 
         GameLogic.OnGameBegin += RealtimeLogisticsInfoPanel.OnGameBegin;
         GameLogic.OnDataLoaded += RealtimeLogisticsInfoPanel.OnDataLoaded;
@@ -436,6 +435,8 @@ public static class LogisticsPatch
 
     private class AllowOverflowInLogistics : PatchImpl<AllowOverflowInLogistics>
     {
+        private static bool _bludprintPasting;
+
         // Do not check for overflow when try to send hand items into storages
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(UIStationStorage), nameof(UIStationStorage.OnItemIconMouseDown))]
@@ -480,9 +481,29 @@ public static class LogisticsPatch
                 new CodeMatch(OpCodes.Add),
                 new CodeMatch(ci => ci.IsStarg())
             );
-            var labels = matcher.Labels;
-            matcher.RemoveInstructions(9).Labels.AddRange(labels);
+            var label = generator.DefineLabel();
+            var oldLabels = matcher.Labels;
+            matcher.Labels = [];
+            matcher.InsertAndAdvance(
+                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(AllowOverflowInLogistics), nameof(_bludprintPasting))).WithLabels(oldLabels),
+                new CodeInstruction(OpCodes.Brfalse, label)
+            );
+            matcher.Advance(9).Labels.Add(label);
             return matcher.InstructionEnumeration();
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(BuildTool_BlueprintPaste), nameof(BuildTool_BlueprintPaste.CreatePrebuilds))]
+        private static void BuildTool_BlueprintPaste_CreatePrebuilds_Prefix()
+        {
+            _bludprintPasting = true;
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(BuildTool_BlueprintPaste), nameof(BuildTool_BlueprintPaste.CreatePrebuilds))]
+        private static void BuildTool_BlueprintPaste_CreatePrebuilds_Postfix()
+        {
+            _bludprintPasting = false;
         }
     }
 
@@ -652,7 +673,7 @@ public static class LogisticsPatch
         private static float _localStoragePixelPerItem = StorageSliderWidth / _localStorageMaxTotal;
         private static float _remoteStoragePixelPerItem = StorageSliderWidth / _remoteStorageMaxTotal;
 
-        private const int StorageSlotCount = 5;
+        private static int _storageMaxSlotCount = 5;
         private const int CarrierSlotCount = 3;
         private const float StorageSliderWidth = 70f;
         private const float StorageSliderHeight = 5f;
@@ -700,13 +721,38 @@ public static class LogisticsPatch
 
         public static void OnDataLoaded()
         {
-            _localStorageMax = LDB.models.Select(49).prefabDesc.stationMaxItemCount;
-            _remoteStorageMax = LDB.models.Select(50).prefabDesc.stationMaxItemCount;
+            _storageMaxSlotCount = 5;
+            _localStorageMax = 5000;
+            _remoteStorageMax = 10000;
+            foreach (var model in LDB.models.dataArray)
+            {
+                var prefabDesc = model?.prefabDesc;
+                if (prefabDesc == null) continue;
+                if (prefabDesc.isStation)
+                {
+                    _storageMaxSlotCount = Math.Max(_storageMaxSlotCount, prefabDesc.stationMaxItemKinds);
+                    if (prefabDesc.isStellarStation)
+                    {
+                        if (!prefabDesc.isCollectStation)
+                        {
+                            _remoteStorageMax = prefabDesc.stationMaxItemCount;
+                        }
+                    }
+                    else
+                    {
+                        if (!prefabDesc.isVeinCollector)
+                        {
+                            _localStorageMax = prefabDesc.stationMaxItemCount;
+                        }
+                    }
+                }
+            }
             _localStorageExtra = -1;
             _remoteStorageExtra = -1;
             _localStoragePixelPerItem = 0f;
             _remoteStoragePixelPerItem = 0f;
             UpdateStorageMax();
+            RealtimeLogisticsInfoPanel.InitGUI();
         }
 
         public static void InitGUI()
@@ -729,7 +775,7 @@ public static class LogisticsPatch
             Object.Destroy(_tipPrefab.GetComponent<UIVeinDetailNode>());
             var infoText = _tipPrefab.transform.Find("info-text").gameObject;
 
-            for (var index = 0; index < StorageSlotCount; ++index)
+            for (var index = 0; index < _storageMaxSlotCount; ++index)
             {
                 var y = -5f - 35f * index;
                 var iconTrans = _tipPrefab.transform.Find("icon");
@@ -902,6 +948,7 @@ public static class LogisticsPatch
 
         public static void StationInfoPanelsUpdate()
         {
+            if (DSPGame.IsMenuDemo || !GameMain.isRunning) return;
             var localPlanet = GameMain.localPlanet;
             if (localPlanet == null)
             {
@@ -1065,7 +1112,7 @@ public static class LogisticsPatch
             private int _storageNum;
             private float _pixelPerItem;
 
-            private readonly StorageItemData[] _storageItems = new StorageItemData[5];
+            private StorageItemData[] _storageItems;
             private static readonly Dictionary<int, Sprite> ItemSprites = new();
             private static readonly Color[] StateColor = [Color.gray, SupplyColor, DemandColor];
 
@@ -1097,20 +1144,21 @@ public static class LogisticsPatch
 
             public void InitStationTip()
             {
+                _storageItems = new StorageItemData[_storageMaxSlotCount];
                 rectTransform = (RectTransform)transform;
-                _icons = new Transform[StorageSlotCount];
-                _iconLocals = new Transform[StorageSlotCount];
-                _iconRemotes = new Transform[StorageSlotCount];
-                _iconsImage = new Image[StorageSlotCount];
-                _iconLocalsImage = new Image[StorageSlotCount];
-                _iconRemotesImage = new Image[StorageSlotCount];
-                _countTexts = new Transform[StorageSlotCount];
-                _countTextsText = new Text[StorageSlotCount];
-                _sliderBg = new Transform[StorageSlotCount];
-                _sliderMax = new Transform[StorageSlotCount];
-                _sliderCurrent = new Transform[StorageSlotCount];
-                _sliderOrdered = new Transform[StorageSlotCount];
-                _sliderOrderedImage = new Image[StorageSlotCount];
+                _icons = new Transform[_storageMaxSlotCount];
+                _iconLocals = new Transform[_storageMaxSlotCount];
+                _iconRemotes = new Transform[_storageMaxSlotCount];
+                _iconsImage = new Image[_storageMaxSlotCount];
+                _iconLocalsImage = new Image[_storageMaxSlotCount];
+                _iconRemotesImage = new Image[_storageMaxSlotCount];
+                _countTexts = new Transform[_storageMaxSlotCount];
+                _countTextsText = new Text[_storageMaxSlotCount];
+                _sliderBg = new Transform[_storageMaxSlotCount];
+                _sliderMax = new Transform[_storageMaxSlotCount];
+                _sliderCurrent = new Transform[_storageMaxSlotCount];
+                _sliderOrdered = new Transform[_storageMaxSlotCount];
+                _sliderOrderedImage = new Image[_storageMaxSlotCount];
                 _carrierIcons = new Transform[3];
                 _carrierTotalCountText = new Text[3];
                 _carrierIdleCountText = new Text[2];
@@ -1125,7 +1173,7 @@ public static class LogisticsPatch
                     _carrierIdleCountText[i] = _carrierIcons[i].Find("carrierIdleCountText").GetComponent<Text>();
                 }
 
-                for (var i = StorageSlotCount - 1; i >= 0; i--)
+                for (var i = _storageMaxSlotCount - 1; i >= 0; i--)
                 {
                     _countTexts[i] = transform.Find("countText" + i);
                     _countTextsText[i] = _countTexts[i].GetComponent<Text>();
@@ -1162,7 +1210,7 @@ public static class LogisticsPatch
             public void ResetStationTip()
             {
                 _layout = EStationTipLayout.None;
-                for (var i = StorageSlotCount - 1; i >= 0; i--)
+                for (var i = _storageMaxSlotCount - 1; i >= 0; i--)
                 {
                     _countTexts[i].gameObject.SetActive(false);
                     _sliderBg[i].gameObject.SetActive(false);
@@ -1190,7 +1238,7 @@ public static class LogisticsPatch
 
             public void ResetStorageSlider()
             {
-                for (var i = StorageSlotCount - 1; i >= 0; i--)
+                for (var i = _storageMaxSlotCount - 1; i >= 0; i--)
                 {
                     ref var storageItem = ref _storageItems[i];
                     storageItem.ItemId = -1;
@@ -1385,7 +1433,7 @@ public static class LogisticsPatch
                 [true, false, false],
                 [true, true, true],
             ];
-            private static readonly int[] StorageNums = [0, 2, 1, 4, 5];
+
             private static readonly float[] TipWindowWidths = [0f, 100f, 120f, 120f, 120f];
             private static readonly float[] TipWindowExtraHeights = [0f, 5f, 5f, 40f, 40f];
             private static readonly float[] CarrierPositionX = [5f, 35f, 85f];
@@ -1399,7 +1447,7 @@ public static class LogisticsPatch
                 if (_layout != layout)
                 {
                     _layout = layout;
-                    for (var i = StorageSlotCount - 1; i >= 0; i--)
+                    for (var i = _storageMaxSlotCount - 1; i >= 0; i--)
                     {
                         _iconLocals[i].gameObject.SetActive(false);
                         _iconRemotes[i].gameObject.SetActive(false);
@@ -1418,7 +1466,7 @@ public static class LogisticsPatch
                                 break;
                         }
                     }
-                    for (var i = _storageNum; i < StorageSlotCount; i++)
+                    for (var i = _storageNum; i < _storageMaxSlotCount; i++)
                     {
                         _iconLocals[i].gameObject.SetActive(false);
                         _iconRemotes[i].gameObject.SetActive(false);
@@ -1427,9 +1475,9 @@ public static class LogisticsPatch
                         _sliderBg[i].gameObject.SetActive(false);
                     }
 
-                    _storageNum = Math.Min(StorageNums[(int)layout], stationComponent.storage.Length);
+                    _storageNum = Math.Min(_storageMaxSlotCount, stationComponent.storage.Length);
                     rectTransform.sizeDelta = new Vector2(TipWindowWidths[(int)layout], TipWindowExtraHeights[(int)layout] + 35f * _storageNum);
-                    for (var i = StorageSlotCount - 1; i >= 0; i--)
+                    for (var i = _storageMaxSlotCount - 1; i >= 0; i--)
                     {
                         _countTexts[i].gameObject.SetActive(i < _storageNum);
                     }
@@ -1491,7 +1539,7 @@ public static class LogisticsPatch
                 {
                     _sliderBg[i].gameObject.SetActive(on && _storageItems[i].ItemId > 0);
                 }
-                for (var i = _storageNum; i < StorageSlotCount; i++)
+                for (var i = _storageNum; i < _storageMaxSlotCount; i++)
                 {
                     _sliderBg[i].gameObject.SetActive(false);
                 }

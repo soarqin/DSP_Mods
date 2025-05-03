@@ -69,7 +69,7 @@ public static class FactoryFunctions
                     {
                         factory.ReadObjectConn(connObjId, j, out _, out var connObjId2, out _);
                         if (connObjId2 == 0 || (index = buildPreviewsToRemove.BinarySearch(connObjId2)) >= 0 || factory.ObjectIsBelt(connObjId2) || blueprintCopyTool.ObjectIsInserter(connObjId2)) continue;
-                        buildPreviewsToRemove.Insert(~index, connObjId2);
+                        buildPreviewsToRemove.Insert(~index, connObjId);
                         break;
                     }
                 }
