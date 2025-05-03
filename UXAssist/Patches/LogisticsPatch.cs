@@ -20,6 +20,8 @@ public static class LogisticsPatch
     // Dispenser config
     public static ConfigEntry<int> AutoConfigDispenserChargePower; // 3~30, display as 300000.0 * value
     public static ConfigEntry<int> AutoConfigDispenserCourierCount; // 0~10
+    // Battlefield Analysis Base
+    public static ConfigEntry<int> AutoConfigBattleBaseChargePower; // 4~40, display as 300000.0 * value
     // PLS config
     public static ConfigEntry<int> AutoConfigPLSChargePower; // 2~20, display as 3000000.0 * value
     public static ConfigEntry<int> AutoConfigPLSMaxTripDrone; // 1~180, by degress
@@ -232,11 +234,24 @@ public static class LogisticsPatch
             if (toFill > 0) dispenser.idleCourierCount += GameMain.data.mainPlayer.package.TakeItem((int)KnownItemId.Bot, toFill, out _);
         }
 
+        private static void DoConfigBattleBase(PlanetFactory factory, BattleBaseComponent battleBase)
+        {
+            factory.powerSystem.consumerPool[battleBase.pcId].workEnergyPerTick = (long)(5000.0 * (double)AutoConfigBattleBaseChargePower.Value + 0.5);
+        }
+
         [HarmonyPostfix]
         [HarmonyPatch(typeof(PlanetTransport), nameof(PlanetTransport.NewStationComponent))]
         private static void PlanetTransport_NewStationComponent_Postfix(PlanetTransport __instance, StationComponent __result)
         {
             DoConfigStation(__instance.factory, __result);
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(DefenseSystem), nameof(DefenseSystem.NewBattleBaseComponent))]
+        private static void DefenseSystem_NewBattleBaseComponent_Postfix(DefenseSystem __instance, int __result)
+        {
+            if (__result <= 0) return;
+            DoConfigBattleBase(__instance.factory, __instance.battleBases[__result]);
         }
 
         [HarmonyPostfix]
@@ -393,12 +408,14 @@ public static class LogisticsPatch
                             var maxCount = LDB.models.Select(modelIndex).prefabDesc.stationMaxItemCount;
                             var oldMaxCount = maxCount + history.localStationExtraStorage - _valuelf;
                             var intOldMaxCount = (int)Math.Round(oldMaxCount);
-                            var ratio = (maxCount + history.localStationExtraStorage) / oldMaxCount;
+                            var intNewMaxCount = (int)maxCount + history.localStationExtraStorage;
+                            var ratio = intNewMaxCount / oldMaxCount;
                             var storage = stationPool[i].storage;
                             for (var j = storage.Length - 1; j >= 0; j--)
                             {
-                                if (storage[j].max + 10 < intOldMaxCount) continue;
-                                storage[j].max = Mathf.RoundToInt((float)(storage[j].max * ratio / 50.0)) * 50;
+                                var max = storage[j].max;
+                                if (max + 10 < intOldMaxCount || max >= intNewMaxCount) continue;
+                                storage[j].max = Mathf.RoundToInt((float)(max * ratio / 50.0)) * 50;
                             }
                         }
 
@@ -416,12 +433,14 @@ public static class LogisticsPatch
                             var maxCount = LDB.models.Select(modelIndex).prefabDesc.stationMaxItemCount;
                             var oldMaxCount = maxCount + history.remoteStationExtraStorage - _valuelf;
                             var intOldMaxCount = (int)Math.Round(oldMaxCount);
-                            var ratio = (maxCount + history.remoteStationExtraStorage) / oldMaxCount;
+                            var intNewMaxCount = (int)maxCount + history.remoteStationExtraStorage;
+                            var ratio = intNewMaxCount / oldMaxCount;
                             var storage = stationPool[i].storage;
                             for (var j = storage.Length - 1; j >= 0; j--)
                             {
-                                if (storage[j].max + 10 < intOldMaxCount) continue;
-                                storage[j].max = Mathf.RoundToInt((float)(storage[j].max * ratio / 100.0)) * 100;
+                                var max = storage[j].max;
+                                if (max + 10 < intOldMaxCount || max >= intNewMaxCount) continue;
+                                storage[j].max = Mathf.RoundToInt((float)(max * ratio / 100.0)) * 100;
                             }
                         }
 

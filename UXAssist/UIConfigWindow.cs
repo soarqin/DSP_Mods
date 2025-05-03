@@ -84,35 +84,31 @@ public static class UIConfigWindow
         I18N.Add("Auto-config logistic stations", "Auto-config logistic stations", "自动配置物流设施");
         I18N.Add("Limit auto-replenish count to values below", "Limit auto-replenish count to values below", "限制自动补充数量为下面配置的值");
         I18N.Add("Dispenser", "Logistics Distributor", "物流配送器");
+        I18N.Add("Battlefield Analysis Base", "Battlefield Analysis Base", "战场分析基站");
         I18N.Add("PLS", "PLS", "行星物流站");
         I18N.Add("ILS", "ILS", "星际物流站");
         I18N.Add("Advanced Mining Machine", "Advanced Mining Machine", "大型采矿机");
         I18N.Add("Max. Charging Power", "Max. Charging Power", "最大充能功率");
         I18N.Add("Count of Bots filled", "Count of Bots filled", "填充的配送机数量");
-        I18N.Add("Max. Charging Power", "Max. Charging Power", "最大充能功率");
         I18N.Add("Drone transport range", "Drone transport range", "运输机最远路程");
         I18N.Add("Min. Load of Drones", "Min. Load of Drones", "运输机起送量");
         I18N.Add("Outgoing integration count", "Outgoing integration count", "输出货物集装数量");
         I18N.Add("Count of Drones filled", "Count of Drones filled", "填充的运输机数量");
-        I18N.Add("Max. Charging Power", "Max. Charging Power", "最大充能功率");
-        I18N.Add("Drone transport range", "Drone transport range", "运输机最远路程");
         I18N.Add("Vessel transport range", "Vessel transport range", "运输船最远路程");
         I18N.Add("Warp distance", "Warp distance", "曲速启用路程");
-        I18N.Add("Min. Load of Drones", "Min. Load of Drones", "运输机起送量");
         I18N.Add("Min. Load of Vessels", "Min. Load of Vessels", "运输船起送量");
         I18N.Add("Outgoing integration count", "Outgoing integration count", "输出货物集装数量");
         I18N.Add("Include Orbital Collector", "Include Orbital Collector", "包含轨道采集器");
         I18N.Add("Warpers required", "Warpers required", "翘曲器必备");
-        I18N.Add("Count of Drones filled", "Count of Drones filled", "填充的运输机数量");
         I18N.Add("Count of Vessels filled", "Count of Vessels filled", "填充的运输船数量");
         I18N.Add("Collecting Speed", "Collecting Speed", "开采速度");
         I18N.Add("Min. Piler Value", "Outgoing integration count", "输出货物集装数量");
 
         I18N.Add("Allow overflow for Logistic Stations and Advanced Mining Machines", "Allow overflow for Logistic Stations and Advanced Mining Machines", "允许物流站和大型采矿机物品溢出");
-        I18N.Add("Enhance control for logistic storage limits", "Enhance control for logistic storage limits", "物流塔存储限制控制改进");
-        I18N.Add("Enhance control for logistic storage limits tips",
-            "Logistic storage limits are not scaled on upgrading 'Logistics Carrier Capacity', if they are not set to maximum capacity.\nUse arrow keys to adjust logistic storage limits:\n  \u2190/\u2192: -/+10  \u2193\u2191: -/+100",
-            "当升级'运输机舱扩容'时，不会对各种物流塔的存储限制按比例提升，除非设置为最大允许容量。\n你可以使用方向键微调物流塔存储限制：\n  \u2190\u2192: -/+10  \u2193\u2191: -/+100");
+        I18N.Add("Enhance control for logistic storage capacities", "Enhance control for logistic storage capacities", "物流塔存储容量控制改进");
+        I18N.Add("Enhance control for logistic storage capacities tips",
+            "Logistic storage capacity limits are not scaled on upgrading 'Logistics Carrier Capacity', if they are not set to maximum capacity or already greater than upgraded maximum capacity.\nUse arrow keys to adjust logistic storage capacities:\n  \u2190/\u2192: -/+10  \u2193\u2191: -/+100",
+            "当升级'运输机舱扩容'时，不会对各种物流塔的存储容量按比例提升，除非设置为最大允许容量或者已经超过升级后的最大容量。\n你可以使用方向键微调物流塔存储容量：\n  \u2190\u2192: -/+10  \u2193\u2191: -/+100");
         I18N.Add("Logistics Control Panel Improvement", "Logistics Control Panel Improvement", "物流控制面板改进");
         I18N.Add("Logistics Control Panel Improvement tips",
             "Auto apply filter with item under mouse cursor while opening the panel\nQuick-set item filter while right-clicking item icons in storage list on the panel",
@@ -199,7 +195,19 @@ public static class UIConfigWindow
         public override string FormatValue(string format, int value)
         {
             var sb = new StringBuilder("         ");
-            StringBuilderUtility.WriteKMG(sb, 8, (long)value * 300000, false);
+            StringBuilderUtility.WriteKMG(sb, 8, (long)value * 300000L, false);
+            sb.Append('W');
+            return sb.ToString().Trim();
+        }
+    }
+
+    private class AutoConfigBattleBaseChargePowerMapper() : MyWindow.RangeValueMapper<int>(4, 40)
+    {
+
+        public override string FormatValue(string format, int value)
+        {
+            var sb = new StringBuilder("         ");
+            StringBuilderUtility.WriteKMG(sb, 8, (long)value * 300000L, false);
             sb.Append('W');
             return sb.ToString().Trim();
         }
@@ -493,8 +501,8 @@ public static class UIConfigWindow
         x = 0f;
         y = 10f;
 
-        checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab3, LogisticsPatch.LogisticsCapacityTweaksEnabled, "Enhance control for logistic storage limits");
-        wnd.AddTipsButton2(x + checkBoxForMeasureTextWidth.Width + 5f, y + 6f, tab3, "Enhance control for logistic storage limits", "Enhance control for logistic storage limits tips", "enhanced-logistic-limit-tips");
+        checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab3, LogisticsPatch.LogisticsCapacityTweaksEnabled, "Enhance control for logistic storage capacities");
+        wnd.AddTipsButton2(x + checkBoxForMeasureTextWidth.Width + 5f, y + 6f, tab3, "Enhance control for logistic storage capacities", "Enhance control for logistic storage capacities tips", "enhanced-logistic-capacities-tips");
         y += 36f;
         wnd.AddCheckBox(x, y, tab3, LogisticsPatch.AllowOverflowInLogisticsEnabled, "Allow overflow for Logistic Stations and Advanced Mining Machines");
         y += 36f;
@@ -546,6 +554,11 @@ public static class UIConfigWindow
         maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
         y += 18f;
         textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Count of Bots filled", 13, "text-dispenser-count-of-bots-filled");
+        maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
+        y += 18f;
+        wnd.AddText2(10f, y, tab3, "Battlefield Analysis Base", 14, "text-battlefield-analysis-base");
+        y += 18f;
+        textForMeasureTextWidth = wnd.AddText2(x, y, tab3, "Max. Charging Power", 13, "text-battlefield-analysis-base-max-charging-power");
         maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
         y += 18f;
         wnd.AddText2(10f, y, tab3, "PLS", 14, "text-pls");
@@ -608,6 +621,8 @@ public static class UIConfigWindow
         wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigDispenserChargePower, new AutoConfigDispenserChargePowerMapper(), "G", 150f, -100f).WithFontSize(13);
         y += 18f;
         wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigDispenserCourierCount, new MyWindow.RangeValueMapper<int>(0, 10), "G", 150f, -100f).WithFontSize(13);
+        y += 36f;
+        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigBattleBaseChargePower, new AutoConfigBattleBaseChargePowerMapper(), "G", 150f, -100f).WithFontSize(13);
         y += 36f;
         wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigPLSChargePower, new AutoConfigPLSChargePowerMapper(), "G", 150f, -100f).WithFontSize(13);
         y += 18f;

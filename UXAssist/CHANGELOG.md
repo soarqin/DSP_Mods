@@ -4,12 +4,15 @@
 ## Changlog
 
 * 1.3.3
+  + Starmap filter: Hide top overlaping windows while the filter UI is shown.
+  + `Auto-config logistic stations`: Can set Max. Charging Power for Battlefield Analysis Base now.
   + `Re-initialize planet`: Fix a crash.
   + `Auto navigation on sailings`: Do not auto-use Warper if required Tech is not researched.
-  + Starmap filter: Hide top overlaping windows while the filter UI is shown.
   + `Dismantle blueprint selected buildings`: Fix an issue that belt connected buildings are dismantled unexpectly.
   + `Mod manager profile based save folder`: Fix compatibility with [SaveTheWindows](https://thunderstore.io/c/dyson-sphere-program/p/starfi5h/SaveTheWindows/).
-  + `Allow overflow for Logistic Stations and Advanced Mining Machines`: Surpass maximum storage limit is not allowed on pasting blueprints.
+  + `Enhanced control for logistic storage capacities` & `Allow overflow for Logistic Stations and Advanced Mining Machines`:
+    - Logistic storage capacities are not scaled on upgrading `Logistics Carrier Capacity`, if they are already greater than upgraded maximum capacity.
+    - Logistic storage capacities will be reduced to tech capacity limits on pasting blueprints.
   + `Real-time logistic stations info panel`: Support for mods that change slot count of logistic stations.
 * 1.3.2
   + New feature: `Disable battle-related techs in Peace mode`
@@ -68,7 +71,7 @@
   + Fix compatibility with game update 0.10.32.25779
 * 1.2.15
   + `Off-grid building and stepped rotation`: Fix compatibility with DSP 0.10.32.25682. (#57)
-  + `Enhanced control for logistic storage limits`: Try to fix possible crash. (#54)
+  + `Enhanced control for logistic storage capacities`: Try to fix possible crash. (#54)
 * 1.2.14
   + Fix an issue that an unexpected menu icon is shown in the top-right corner of the config panel.
   + `Stop ejectors when available nodes are all filled up`: Fix compatibility with `Dyson Sphere Program v0.10.32.25496`.
@@ -199,8 +202,8 @@
   + New feature: `Drag building power poles in maximum connection range`
   + New feature: `Allow overflow for Logistic Stations and Advanced Mining Machines`
     - Allow overflow when trying to insert in-hand items
-    - Allow `Enhanced control for logistic storage limits` to exceed tech capacity limits
-    - Remove logistic strorage limit check on loading game
+    - Allow `Enhanced control for logistic storage capacities` to exceed tech capacity limits
+    - Remove logistic strorage capacity limit check on loading game
 * 1.0.23
   + New features:
     - `Do not render factory entities (except belts and sorters)`
@@ -261,13 +264,13 @@
   + Remove `Better auto-save mechanism` due to conflicts with DSPModSave and some other mods.
 * 1.0.10
   + Fix a button display bug
-  + Fix a possible crash while `Enhanced control for logistic storage limits` is enabled
+  + Fix a possible crash while `Enhanced control for logistic storage capacities` is enabled
 * 1.0.9
   + New function: `Better auto-save mechanism`
     - Auto saves are stored in 'Save\AutoSaves' folder, filenames are combined with cluster address and date-time
     - Note: this will sort gamesaves by modified time on save/load window, so you don't have to use [DSP_Save_Game_Sorter] anymore
 * 1.0.8
-  + New function: `Enhanced control for logistic storage limits`
+  + New function: `Enhanced control for logistic storage capacities`
 * 1.0.7
   + Fix a crash issue on choosing language other than English and Chinese
   + Games saved in Peace-Mode after Dark-Fog update can also be loaded as Combat-Mode now.

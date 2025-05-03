@@ -142,6 +142,7 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
             "Limit auto-replenish count to config values");
         LogisticsPatch.AutoConfigDispenserChargePower = Config.Bind("Factory", "AutoConfigDispenserChargePower", 30, new ConfigDescription("LD: Max. Charging Power", new AcceptableValueRange<int>(3, 30)));
         LogisticsPatch.AutoConfigDispenserCourierCount = Config.Bind("Factory", "AutoConfigDispenserCourierCount", 10, new ConfigDescription("LD: Count of Bots filled", new AcceptableValueRange<int>(0, 10)));
+        LogisticsPatch.AutoConfigBattleBaseChargePower = Config.Bind("Factory", "AutoConfigBattleBaseChargePower", 8, new ConfigDescription("Battlefield Analysis Base: Max. Charging Power", new AcceptableValueRange<int>(4, 40)));
         LogisticsPatch.AutoConfigPLSChargePower = Config.Bind("Factory", "AutoConfigPLSChargePower", 4, new ConfigDescription("PLS: Max. Charging Power", new AcceptableValueRange<int>(2, 20)));
         LogisticsPatch.AutoConfigPLSMaxTripDrone = Config.Bind("Factory", "AutoConfigPLSMaxTripDrone", 180, new ConfigDescription("PLS: Drone transport range", new AcceptableValueRange<int>(1, 180)));
         LogisticsPatch.AutoConfigPLSDroneMinDeliver = Config.Bind("Factory", "AutoConfigPLSDroneMinDeliver", 10, new ConfigDescription("PLS: Min. Load of Drones", new AcceptableValueRange<int>(0, 10)));

@@ -92,16 +92,16 @@
       - `Buffer count for researching in labs`: Range 2-20, default is 10 (same as game)
       - `Ray Receiver Graviton Lens buffer count`: Range 1-20, default is 1 (game default is 20)
   + Logistics
-    - Enhanced control for logistic storage limits
-      - Logistic storage limits are not scaled on upgrading `Logistics Carrier Capacity`, if they are not set to maximum capacity.
-      - You can use arrow keys to adjust logistic storage limits gracefully.
+    - Enhanced control for logistic storage capacities
+      - Logistic storage capacities are not scaled on upgrading `Logistics Carrier Capacity`, if they are not set to maximum capacity or already greater than maximum capacity.
+      - You can use arrow keys to adjust logistic storage capacities gracefully.
     - Logistics Control Panel Improvement
       - Auto apply filter with item under mouse cursor while opening the panel
       - Quick-set item filter while right-clicking item icons in storage list on the panel
     - Allow overflow for Logistic Stations and Advanced Mining Machines
       - Allow overflow when trying to insert in-hand items
-      - Allow `Enhanced control for logistic storage limits` to exceed tech capacity limits
-      - Remove logistic strorage limit check on loading game
+      - Allow `Enhanced control for logistic storage capacities` to exceed tech capacity limits
+      - Remove logistic strorage capacity limit check on loading game
     - Real-time logistic stations info panel
     - Auto-config logistic stations
       - Auto-config buildings include: Logistics Distributor, PLS, ILS, Advanced Mining Machine
@@ -246,7 +246,7 @@
       - `射线接收器透镜缓冲数量`：范围1-20，默认为1(游戏默认为20)
   + 物流
     - 物流塔存储数量限制控制改进
-      - 当升级`运输机舱扩容`时，不会对各种物流塔的存储限制按比例提升，除非设置为最大允许容量。
+      - 当升级`运输机舱扩容`时，不会对各种物流塔的存储限制按比例提升，除非设置为最大允许容量或者已经超过升级后的最大容量。
       - 你可以使用方向键微调物流塔存储限制
     - 物流控制面板改进
       - 打开面板时自动将鼠标指向物品设为筛选条件
