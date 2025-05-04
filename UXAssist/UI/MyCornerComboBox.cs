@@ -59,7 +59,8 @@ public class MyCornerComboBox : MonoBehaviour
 
     protected void OnDestroy()
     {
-        _config.SettingChanged -= _configChanged;
+        if (_config != null && _configChanged != null)
+            _config.SettingChanged -= _configChanged;
     }
 
     public void SetFontSize(int size)

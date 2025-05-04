@@ -393,7 +393,7 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
                                 {
                                     EAstroType.Planet => 800.0 + astro.uRadius,
                                     EAstroType.Star => 4000.0 + astro.uRadius,
-                                    EAstroType.EnemyHive => 400.0,
+                                    EAstroType.EnemyHive => 800.0,
                                     _ => 2000.0 + astro.uRadius
                                 })
                             {
@@ -434,9 +434,9 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
                                             if (hiveSys.realized && hiveSys.hiveAstroId > 1000000)
                                             {
                                                 ref var hiveAstro = ref GameMain.spaceSector.astros[hiveSys.hiveAstroId - 1000000];
-                                                /* Divide by 4, so that the real range is 2 times of the calculated range,
-                                                   which means the minimal range allowed is 4000 */
-                                                var range = (playerPos - hiveAstro.uPos).sqrMagnitude / 4.0;
+                                                /* Divide by 36, so that the real range is 6 times of the calculated range,
+                                                   which means the minimal range allowed is 12000 */
+                                                var range = (playerPos - hiveAstro.uPos).sqrMagnitude / 36.0;
                                                 if (range < nearestRange)
                                                 {
                                                     nearestRange = range;
