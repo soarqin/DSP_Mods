@@ -7,7 +7,9 @@
   + Starmap filter: Hide top overlaping windows while the filter UI is shown.
   + `Auto-config logistic stations`: Can set Max. Charging Power for Battlefield Analysis Base now.
   + `Re-initialize planet`: Fix a crash.
-  + `Auto navigation on sailings`: Do not auto-use Warper if required Tech is not researched.
+  + `Auto navigation on sailings`:
+    - Add a button to enable/disable `Auto-cruise` quickly.
+    - Do not auto-use Warper if required Tech is not researched.
   + `Dismantle blueprint selected buildings`: Fix an issue that belt connected buildings are dismantled unexpectly.
   + `Mod manager profile based save folder`: Fix compatibility with [SaveTheWindows](https://thunderstore.io/c/dyson-sphere-program/p/starfi5h/SaveTheWindows/).
   + `Enhanced control for logistic storage capacities` & `Allow overflow for Logistic Stations and Advanced Mining Machines`:
@@ -307,6 +309,19 @@
 
 ## 更新日志
 
+* 1.3.3
+  + 星图过滤器：当过滤器UI显示时隐藏顶部重叠窗口
+  + `自动配置物流站`：现在可以为战场分析基站设置最大充能功率
+  + `重新初始化行星`：修复崩溃问题
+  + `航行时自动导航`：
+    - 添加快速启用/禁用`自动巡航`的按钮
+    - 如果所需科技未研究则不自动使用翘曲器
+  + `拆除蓝图选中建筑`：修复传送带连接建筑意外被拆除的问题
+  + `基于mod管理器配置档案的存档文件夹`：修复与[SaveTheWindows](https://thunderstore.io/c/dyson-sphere-program/p/starfi5h/SaveTheWindows/)的兼容性
+  + `物流存储容量控制改进`和`允许物流站和大型采矿机物品溢出`：
+    - 如果物流存储容量已经超过升级后的最大容量，则在升级`物流运输机容量`时不会按比例提升
+    - 粘贴蓝图时物流存储容量将降低至科技容量限制
+  + `物流站实时信息面板`：支持修改物流站槽位数的mod
 * 1.3.2
   + 新功能：`在和平模式下隐藏战斗相关科技`
   + 新按钮：`使用元数据解锁所有科技`

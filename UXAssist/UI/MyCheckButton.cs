@@ -5,7 +5,6 @@ using UnityEngine.UI;
 
 namespace UXAssist.UI;
 
-// MyCheckButton modified from LSTM: https://github.com/hetima/DSP_LSTM/blob/main/LSTM/MyCheckButton.cs
 public class MyCheckButton : MonoBehaviour
 {
     public RectTransform rectTrans;

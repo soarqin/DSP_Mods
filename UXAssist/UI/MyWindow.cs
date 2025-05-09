@@ -194,38 +194,13 @@ public class MyWindow : ManualBehaviour
         return btn;
     }
 
-    public UIButton AddFlatButton(float x, float y, RectTransform parent, string text = "", int fontSize = 12, string objName = "button", UnityAction onClick = null)
+    public MyFlatButton AddFlatButton(float x, float y, RectTransform parent, string text = "", int fontSize = 12, string objName = "button", UnityAction onClick = null)
     {
-        var panel = UIRoot.instance.uiGame.dysonEditor.controlPanel.hierarchy.layerPanel;
-        var btn = Instantiate(panel.layerButtons[0]);
+        var btn = MyFlatButton.CreateFlatButton(x, y, parent, text, fontSize, _ => onClick());
         btn.gameObject.name = objName;
-        btn.highlighted = false;
-        var img = btn.GetComponent<Image>();
-        if (img != null)
-        {
-            img.sprite = panel.buttonDefaultSprite;
-            img.color = new Color(img.color.r, img.color.g, img.color.b, 13f / 255f);
-        }
 
-        img = btn.gameObject.transform.Find("frame")?.GetComponent<Image>();
-        if (img != null)
-        {
-            img.color = new Color(img.color.r, img.color.g, img.color.b, 0f);
-        }
-
-        var rect = Util.NormalizeRectWithTopLeft(btn, x, y, parent);
-        var t = btn.gameObject.transform.Find("Text")?.GetComponent<Text>();
-        if (t != null)
-        {
-            t.text = text.Translate();
-            t.fontSize = fontSize;
-        }
-
-        btn.button.onClick.RemoveAllListeners();
-        if (onClick != null) btn.button.onClick.AddListener(onClick);
-
-        _maxX = Math.Max(_maxX, x + rect.sizeDelta.x);
-        MaxY = Math.Max(MaxY, y + rect.sizeDelta.y);
+        _maxX = Math.Max(_maxX, x + btn.Width);
+        MaxY = Math.Max(MaxY, y + btn.Height);
         return btn;
     }
 
@@ -568,6 +543,7 @@ public abstract class MyWindowManager
         MyCheckBox.InitBaseObject();
         MyComboBox.InitBaseObject();
         MyCornerComboBox.InitBaseObject();
+        MyFlatButton.InitBaseObject();
     }
 
     public static T CreateWindow<T>(string name, string title = "") where T : MyWindow

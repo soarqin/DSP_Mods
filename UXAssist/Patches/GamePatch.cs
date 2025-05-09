@@ -80,7 +80,12 @@ public class GamePatch : PatchImpl<GamePatch>
         I18N.Add("Logical frame rate: {0}x", "[UXA] Logical frame rate: {0}x", "[UXA] 逻辑帧速率: {0}x");
 
         EnableWindowResizeEnabled.SettingChanged += (_, _) => EnableWindowResize.Enable(EnableWindowResizeEnabled.Value);
-        LoadLastWindowRectEnabled.SettingChanged += (_, _) => LoadLastWindowRect.Enable(LoadLastWindowRectEnabled.Value);
+        LoadLastWindowRectEnabled.SettingChanged += (_, _) => {
+            if (LoadLastWindowRectEnabled.Value)
+            {
+                FixLastWindowRect();
+            }
+        };
         MouseCursorScaleUpMultiplier.SettingChanged += (_, _) =>
         {
             MouseCursorScaleUp.NeedReloadCursors = true;
@@ -108,8 +113,16 @@ public class GamePatch : PatchImpl<GamePatch>
     public static void Start()
     {
         RefreshSavePath();
+        if (LoadLastWindowRectEnabled.Value)
+        {
+            FixLastWindowRect();
+            var wnd = WindowFunctions.FindGameWindow();
+            if (wnd != IntPtr.Zero)
+            {
+                ThreadingHelper.Instance.StartCoroutine(SetWindowPositionCoroutine(wnd, (int)LastWindowRect.Value.x, (int)LastWindowRect.Value.y));
+            }
+        }
         EnableWindowResize.Enable(EnableWindowResizeEnabled.Value);
-        LoadLastWindowRect.Enable(LoadLastWindowRectEnabled.Value);
         MouseCursorScaleUp.NeedReloadCursors = false;
         MouseCursorScaleUp.Enable(MouseCursorScaleUpMultiplier.Value > 1);
         // AutoSaveOpt.Enable(AutoSaveOptEnabled.Value);
@@ -120,7 +133,6 @@ public class GamePatch : PatchImpl<GamePatch>
     public static void Uninit()
     {
         Enable(false);
-        LoadLastWindowRect.Enable(false);
         EnableWindowResize.Enable(false);
         MouseCursorScaleUp.NeedReloadCursors = false;
         MouseCursorScaleUp.Enable(false);
@@ -158,17 +170,144 @@ public class GamePatch : PatchImpl<GamePatch>
         var gameSaveFolder = GameConfig.gameSaveFolder;
         if (!Directory.Exists(gameSaveFolder))
             Directory.CreateDirectory(gameSaveFolder);
-        if (UIRoot.instance.loadGameWindow.active) UIRoot.instance.loadGameWindow.RefreshList();
-        if (UIRoot.instance.saveGameWindow.active) UIRoot.instance.saveGameWindow.RefreshList();
+        if (UIRoot.instance?.loadGameWindow?.active == true) UIRoot.instance.loadGameWindow.RefreshList();
+        if (UIRoot.instance?.saveGameWindow?.active == true) UIRoot.instance.saveGameWindow.RefreshList();
     }
 
     [HarmonyPrefix, HarmonyPatch(typeof(GameMain), nameof(GameMain.HandleApplicationQuit))]
     private static void GameMain_HandleApplicationQuit_Prefix()
     {
+        if (!LoadLastWindowRectEnabled.Value) return;
         var wnd = WindowFunctions.FindGameWindow();
         if (wnd == IntPtr.Zero) return;
         WinApi.GetWindowRect(wnd, out var rect);
         LastWindowRect.Value = new Vector4(rect.Left, rect.Top, Screen.width, Screen.height);
+    }
+    private static void FixLastWindowRect()
+    {
+        if (Screen.fullScreenMode is not (FullScreenMode.ExclusiveFullScreen or FullScreenMode.FullScreenWindow or FullScreenMode.MaximizedWindow))
+        {
+            var rect = LastWindowRect.Value;
+            var x = Mathf.RoundToInt(rect.x);
+            var y = Mathf.RoundToInt(rect.y);
+            var w = Mathf.RoundToInt(rect.z);
+            var h = Mathf.RoundToInt(rect.w);
+            var needFix = false;
+            if (w < 100)
+            {
+                w = 1280;
+                needFix = true;
+            }
+
+            if (h < 100)
+            {
+                h = 720;
+                needFix = true;
+            }
+
+            var rc = new WinApi.Rect { Left = x, Top = y, Right = x + w, Bottom = y + h };
+            if (WinApi.MonitorFromRect(ref rc, 0) == IntPtr.Zero)
+            {
+                x = 0;
+                y = 0;
+                w = 1280;
+                h = 720;
+                needFix = true;
+            }
+            if (needFix)
+            {
+                LastWindowRect.Value = new Vector4(x, y, w, h);
+            }
+        }
+    }
+
+    public static IEnumerator SetWindowPositionCoroutine(IntPtr wnd, int x, int y)
+    {
+        yield return new WaitForEndOfFrame();
+        yield return new WaitForEndOfFrame();
+        WinApi.SetWindowPos(wnd, IntPtr.Zero, x, y, 0, 0, 0x0235);
+    }
+
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(Screen), nameof(Screen.SetResolution), typeof(int), typeof(int), typeof(FullScreenMode), typeof(int))]
+    private static void Screen_SetResolution_Prefix(ref int width, ref int height, FullScreenMode fullscreenMode, ref Vector2Int __state)
+    {
+        if (fullscreenMode is FullScreenMode.ExclusiveFullScreen or FullScreenMode.FullScreenWindow or FullScreenMode.MaximizedWindow) return;
+        if (GameMain.isRunning)
+        {
+            var wnd = WindowFunctions.FindGameWindow();
+            if (wnd == IntPtr.Zero) return;
+            WinApi.GetWindowRect(wnd, out var rc);
+            __state = new Vector2Int(rc.Left, rc.Top);
+            return;
+        }
+        else if (!LoadLastWindowRectEnabled.Value) return;
+        int x = 0, y = 0, w = 0, h = 0;
+        var rect = LastWindowRect.Value;
+        if (rect is not { z: 0f, w: 0f })
+        {
+            x = Mathf.RoundToInt(rect.x);
+            y = Mathf.RoundToInt(rect.y);
+            w = Mathf.RoundToInt(rect.z);
+            h = Mathf.RoundToInt(rect.w);
+        }
+        width = w;
+        height = h;
+    }
+
+    [HarmonyPostfix]
+    [HarmonyPatch(typeof(Screen), nameof(Screen.SetResolution), typeof(int), typeof(int), typeof(FullScreenMode), typeof(int))]
+    private static void Screen_SetResolution_Postfix(FullScreenMode fullscreenMode, Vector2Int __state)
+    {
+        if (fullscreenMode is FullScreenMode.ExclusiveFullScreen or FullScreenMode.FullScreenWindow or FullScreenMode.MaximizedWindow) return;
+        var gameRunning = GameMain.isRunning;
+        if (!LoadLastWindowRectEnabled.Value && !gameRunning) return;
+        var wnd = WindowFunctions.FindGameWindow();
+        if (wnd == IntPtr.Zero) return;
+        int x, y;
+        if (gameRunning)
+        {
+            x = __state.x;
+            y = __state.y;
+        }
+        else
+        {
+            var rect = LastWindowRect.Value;
+            if (rect is { z: 0f, w: 0f }) return;
+            x = Mathf.RoundToInt(rect.x);
+            y = Mathf.RoundToInt(rect.y);
+        }
+        ThreadingHelper.Instance.StartCoroutine(SetWindowPositionCoroutine(wnd, x, y));
+    }
+
+    private static GameOption _gameOption;
+
+    [HarmonyPostfix]
+    [HarmonyPatch(typeof(UIOptionWindow), nameof(UIOptionWindow._OnOpen))]
+    private static void UIOptionWindow__OnOpen_Postfix()
+    {
+        _gameOption = DSPGame.globalOption;
+    }
+
+    [HarmonyTranspiler]
+    [HarmonyPatch(typeof(GameOption), nameof(GameOption.Apply))]
+    private static IEnumerable<CodeInstruction> UIOptionWindow_ApplyOptions_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+    {
+        var matcher = new CodeMatcher(instructions, generator);
+        var label1 = generator.DefineLabel();
+        matcher.MatchForward(false,
+            new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(Screen), nameof(Screen.SetResolution), [typeof(int), typeof(int), typeof(bool), typeof(int)]))
+        ).Advance(1).Labels.Add(label1);
+        matcher.Start().Insert(
+            Transpilers.EmitDelegate(() =>
+                _gameOption.fullscreen == DSPGame.globalOption.fullscreen &&
+                _gameOption.resolution.width == DSPGame.globalOption.resolution.width &&
+                _gameOption.resolution.height == DSPGame.globalOption.resolution.height &&
+                _gameOption.resolution.refreshRate == DSPGame.globalOption.resolution.refreshRate
+            ),
+            new CodeInstruction(OpCodes.Brtrue, label1)
+        );
+        return matcher.InstructionEnumeration();
     }
 
     private class EnableWindowResize : PatchImpl<EnableWindowResize>
@@ -212,135 +351,6 @@ public class GamePatch : PatchImpl<GamePatch>
             else
                 WinApi.SetWindowLong(wnd, WinApi.GWL_STYLE,
                     WinApi.GetWindowLong(wnd, WinApi.GWL_STYLE) & ~(WinApi.WS_THICKFRAME | WinApi.WS_MAXIMIZEBOX));
-        }
-    }
-
-    public class LoadLastWindowRect : PatchImpl<LoadLastWindowRect>
-    {
-        protected override void OnEnable()
-        {
-            if (Screen.fullScreenMode is not (FullScreenMode.ExclusiveFullScreen or FullScreenMode.FullScreenWindow or FullScreenMode.MaximizedWindow))
-            {
-                var rect = LastWindowRect.Value;
-                var x = Mathf.RoundToInt(rect.x);
-                var y = Mathf.RoundToInt(rect.y);
-                var w = Mathf.RoundToInt(rect.z);
-                var h = Mathf.RoundToInt(rect.w);
-                var needFix = false;
-                if (w < 100)
-                {
-                    w = 1280;
-                    needFix = true;
-                }
-
-                if (h < 100)
-                {
-                    h = 720;
-                    needFix = true;
-                }
-
-                var rc = new WinApi.Rect { Left = x, Top = y, Right = x + w, Bottom = y + h };
-                if (WinApi.MonitorFromRect(ref rc, 0) == IntPtr.Zero)
-                {
-                    x = 0;
-                    y = 0;
-                    w = 1280;
-                    h = 720;
-                    needFix = true;
-                }
-                if (needFix)
-                {
-                    LastWindowRect.Value = new Vector4(x, y, w, h);
-                }
-            }
-        }
-
-        protected override void OnDisable()
-        {
-            //GameLogic.OnDataLoaded -= VFPreload_InvokeOnLoadWorkEnded_Postfix;
-        }
-
-        public static IEnumerator SetWindowPosition(IntPtr wnd, int x, int y)
-        {
-            yield return new WaitForEndOfFrame();
-            yield return new WaitForEndOfFrame();
-            WinApi.SetWindowPos(wnd, IntPtr.Zero, x, y, 0, 0, 0x0235);
-        }
-
-        [HarmonyPrefix]
-        [HarmonyPatch(typeof(Screen), nameof(Screen.SetResolution), typeof(int), typeof(int), typeof(FullScreenMode), typeof(int))]
-        private static void Screen_SetResolution_Prefix(ref int width, ref int height, FullScreenMode fullscreenMode, ref Vector2Int __state)
-        {
-            if (fullscreenMode is FullScreenMode.ExclusiveFullScreen or FullScreenMode.FullScreenWindow or FullScreenMode.MaximizedWindow) return;
-            int x = 0, y = 0, w = 0, h = 0;
-            var rect = LastWindowRect.Value;
-            if (rect is not { z: 0f, w: 0f })
-            {
-                x = Mathf.RoundToInt(rect.x);
-                y = Mathf.RoundToInt(rect.y);
-                w = Mathf.RoundToInt(rect.z);
-                h = Mathf.RoundToInt(rect.w);
-            }
-            if (GameMain.isRunning)
-            {
-                __state = new Vector2Int(x, y);
-                return;
-            }
-            width = w;
-            height = h;
-        }
-
-        [HarmonyPostfix]
-        [HarmonyPatch(typeof(Screen), nameof(Screen.SetResolution), typeof(int), typeof(int), typeof(FullScreenMode), typeof(int))]
-        private static void Screen_SetResolution_Postfix(FullScreenMode fullscreenMode, Vector2Int __state)
-        {
-            if (fullscreenMode is FullScreenMode.ExclusiveFullScreen or FullScreenMode.FullScreenWindow or FullScreenMode.MaximizedWindow) return;
-            var wnd = WindowFunctions.FindGameWindow();
-            if (wnd == IntPtr.Zero) return;
-            int x, y;
-            if (GameMain.isRunning)
-            {
-                x = __state.x;
-                y = __state.y;
-            }
-            else
-            {
-                var rect = LastWindowRect.Value;
-                if (rect is { z: 0f, w: 0f }) return;
-                x = Mathf.RoundToInt(rect.x);
-                y = Mathf.RoundToInt(rect.y);
-            }
-            ThreadingHelper.Instance.StartCoroutine(SetWindowPosition(wnd, x, y));
-        }
-
-        private static GameOption _gameOption;
-
-        [HarmonyPostfix]
-        [HarmonyPatch(typeof(UIOptionWindow), nameof(UIOptionWindow._OnOpen))]
-        private static void UIOptionWindow__OnOpen_Postfix()
-        {
-            _gameOption = DSPGame.globalOption;
-        }
-
-        [HarmonyTranspiler]
-        [HarmonyPatch(typeof(GameOption), nameof(GameOption.Apply))]
-        private static IEnumerable<CodeInstruction> UIOptionWindow_ApplyOptions_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
-        {
-            var matcher = new CodeMatcher(instructions, generator);
-            var label1 = generator.DefineLabel();
-            matcher.MatchForward(false,
-                new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(Screen), nameof(Screen.SetResolution), [typeof(int), typeof(int), typeof(bool), typeof(int)]))
-            ).Advance(1).Labels.Add(label1);
-            matcher.Start().Insert(
-                Transpilers.EmitDelegate(() =>
-                    _gameOption.fullscreen == DSPGame.globalOption.fullscreen &&
-                    _gameOption.resolution.width == DSPGame.globalOption.resolution.width &&
-                    _gameOption.resolution.height == DSPGame.globalOption.resolution.height &&
-                    _gameOption.resolution.refreshRate == DSPGame.globalOption.resolution.refreshRate
-                ),
-                new CodeInstruction(OpCodes.Brtrue, label1)
-            );
-            return matcher.InstructionEnumeration();
         }
     }
 

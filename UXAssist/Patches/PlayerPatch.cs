@@ -58,6 +58,8 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
         HideTipsForSandsChangesEnabled.SettingChanged += (_, _) => HideTipsForSandsChanges.Enable(HideTipsForSandsChangesEnabled.Value);
         ShortcutKeysForStarsNameEnabled.SettingChanged += (_, _) => ShortcutKeysForStarsName.Enable(ShortcutKeysForStarsNameEnabled.Value);
         AutoNavigationEnabled.SettingChanged += (_, _) => AutoNavigation.Enable(AutoNavigationEnabled.Value);
+        AutoNavigationEnabled.SettingChanged += (_, _) => Functions.UIFunctions.UpdateToggleAutoCruiseCheckButtonVisiblility();
+        AutoCruiseEnabled.SettingChanged += (_, _) => Functions.UIFunctions.UpdateToggleAutoCruiseCheckButtonVisiblility();
     }
 
     public static void Start()
@@ -128,7 +130,7 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
     }
 
 
-    private class EnhancedMechaForgeCountControl: PatchImpl<EnhancedMechaForgeCountControl>
+    private class EnhancedMechaForgeCountControl : PatchImpl<EnhancedMechaForgeCountControl>
     {
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(UIReplicatorWindow), nameof(UIReplicatorWindow.OnOkButtonClick))]
@@ -179,7 +181,7 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
         }
     }
 
-    private class HideTipsForSandsChanges: PatchImpl<HideTipsForSandsChanges>
+    private class HideTipsForSandsChanges : PatchImpl<HideTipsForSandsChanges>
     {
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(Player), nameof(Player.SetSandCount))]
@@ -193,7 +195,7 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
         }
     }
 
-    public class ShortcutKeysForStarsName: PatchImpl<ShortcutKeysForStarsName>
+    public class ShortcutKeysForStarsName : PatchImpl<ShortcutKeysForStarsName>
     {
         public static int ShowAllStarsNameStatus;
         public static bool ForceShowAllStarsName;
@@ -226,113 +228,115 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
         {
             ShowAllStarsNameStatus = 0;
         }
-/*
-        [HarmonyTranspiler]
-        [HarmonyPatch(typeof(UIStarmapPlanet), nameof(UIStarmapPlanet._OnLateUpdate))]
-        private static IEnumerable<CodeInstruction> UIStarmapPlanet__OnLateUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
-        {
-            var matcher = new CodeMatcher(instructions, generator);
-            matcher.MatchForward(false,
-                new CodeMatch(OpCodes.Ldarg_0),
-                new CodeMatch(OpCodes.Ldloc_3),
-                new CodeMatch(OpCodes.Stfld, AccessTools.Field(typeof(UIStarmapPlanet), nameof(UIStarmapPlanet.projected)))
-            );
-            matcher.Advance(3);
-            matcher.CreateLabel(out var jumpPos1);
-            matcher.InsertAndAdvance(
-                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(ShortcutKeysForStarsName), nameof(_showAllStarsNameStatus))),
-                new CodeInstruction(OpCodes.Ldc_I4_2),
-                new CodeInstruction(OpCodes.Ceq),
-                new CodeInstruction(OpCodes.Brfalse, jumpPos1),
-                new CodeInstruction(OpCodes.Ldc_I4_0),
-                new CodeInstruction(OpCodes.Stloc_3)
-            );
-            matcher.MatchForward(false,
-                new CodeMatch(OpCodes.Ldarg_0),
-                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(UIStarmapPlanet), nameof(UIStarmapPlanet.gameHistory))),
-                new CodeMatch(OpCodes.Ldarg_0),
-                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(UIStarmapPlanet), nameof(UIStarmapPlanet.planet))),
-                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(PlanetData), nameof(PlanetData.id))),
-                new CodeMatch(OpCodes.Callvirt, AccessTools.Field(typeof(GameHistoryData), nameof(GameHistoryData.GetPlanetPin))),
-                new CodeMatch(OpCodes.Ldc_I4_1),
-                new CodeMatch(ci => ci.Branches(out _)),
-                new CodeMatch(OpCodes.Ldc_I4_1),
-                new CodeMatch(ci => ci.IsStloc()),
-                new CodeMatch(ci => ci.Branches(out _))
-            );
-            matcher.CreateLabelAt(matcher.Pos + 8, out var jumpPos);
-            var labels = matcher.Labels;
-            matcher.Labels = null;
-            matcher.InsertAndAdvance(
-                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(ShortcutKeysForStarsName), nameof(_showAllStarsNameStatus))).WithLabels(labels),
-                new CodeInstruction(OpCodes.Ldc_I4_1),
-                new CodeInstruction(OpCodes.Ceq),
-                new CodeInstruction(OpCodes.Brtrue, jumpPos),
-                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(PlayerPatch), nameof(_showAllStarsNameKey))),
-                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(KeyBindings), nameof(KeyBindings.IsKeyPressing))),
-                new CodeInstruction(OpCodes.Brtrue, jumpPos)
-            );
-            return matcher.InstructionEnumeration();
-        }
+        /*
+                [HarmonyTranspiler]
+                [HarmonyPatch(typeof(UIStarmapPlanet), nameof(UIStarmapPlanet._OnLateUpdate))]
+                private static IEnumerable<CodeInstruction> UIStarmapPlanet__OnLateUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+                {
+                    var matcher = new CodeMatcher(instructions, generator);
+                    matcher.MatchForward(false,
+                        new CodeMatch(OpCodes.Ldarg_0),
+                        new CodeMatch(OpCodes.Ldloc_3),
+                        new CodeMatch(OpCodes.Stfld, AccessTools.Field(typeof(UIStarmapPlanet), nameof(UIStarmapPlanet.projected)))
+                    );
+                    matcher.Advance(3);
+                    matcher.CreateLabel(out var jumpPos1);
+                    matcher.InsertAndAdvance(
+                        new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(ShortcutKeysForStarsName), nameof(_showAllStarsNameStatus))),
+                        new CodeInstruction(OpCodes.Ldc_I4_2),
+                        new CodeInstruction(OpCodes.Ceq),
+                        new CodeInstruction(OpCodes.Brfalse, jumpPos1),
+                        new CodeInstruction(OpCodes.Ldc_I4_0),
+                        new CodeInstruction(OpCodes.Stloc_3)
+                    );
+                    matcher.MatchForward(false,
+                        new CodeMatch(OpCodes.Ldarg_0),
+                        new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(UIStarmapPlanet), nameof(UIStarmapPlanet.gameHistory))),
+                        new CodeMatch(OpCodes.Ldarg_0),
+                        new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(UIStarmapPlanet), nameof(UIStarmapPlanet.planet))),
+                        new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(PlanetData), nameof(PlanetData.id))),
+                        new CodeMatch(OpCodes.Callvirt, AccessTools.Field(typeof(GameHistoryData), nameof(GameHistoryData.GetPlanetPin))),
+                        new CodeMatch(OpCodes.Ldc_I4_1),
+                        new CodeMatch(ci => ci.Branches(out _)),
+                        new CodeMatch(OpCodes.Ldc_I4_1),
+                        new CodeMatch(ci => ci.IsStloc()),
+                        new CodeMatch(ci => ci.Branches(out _))
+                    );
+                    matcher.CreateLabelAt(matcher.Pos + 8, out var jumpPos);
+                    var labels = matcher.Labels;
+                    matcher.Labels = null;
+                    matcher.InsertAndAdvance(
+                        new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(ShortcutKeysForStarsName), nameof(_showAllStarsNameStatus))).WithLabels(labels),
+                        new CodeInstruction(OpCodes.Ldc_I4_1),
+                        new CodeInstruction(OpCodes.Ceq),
+                        new CodeInstruction(OpCodes.Brtrue, jumpPos),
+                        new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(PlayerPatch), nameof(_showAllStarsNameKey))),
+                        new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(KeyBindings), nameof(KeyBindings.IsKeyPressing))),
+                        new CodeInstruction(OpCodes.Brtrue, jumpPos)
+                    );
+                    return matcher.InstructionEnumeration();
+                }
 
-        [HarmonyTranspiler]
-        [HarmonyPatch(typeof(UIStarmapDFHive), nameof(UIStarmapDFHive._OnLateUpdate))]
-        private static IEnumerable<CodeInstruction> UIStarmapDFHive__OnLateUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
-        {
-            var matcher = new CodeMatcher(instructions, generator);
-            matcher.MatchForward(false,
-                new CodeMatch(OpCodes.Ldarg_0),
-                new CodeMatch(ci => ci.IsLdloc()),
-                new CodeMatch(OpCodes.Stfld, AccessTools.Field(typeof(UIStarmapDFHive), nameof(UIStarmapDFHive.projected)))
-            );
-            matcher.Advance(3);
-            matcher.CreateLabel(out var jumpPos1);
-            matcher.InsertAndAdvance(
-                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(ShortcutKeysForStarsName), nameof(_showAllStarsNameStatus))),
-                new CodeInstruction(OpCodes.Ldc_I4_2),
-                new CodeInstruction(OpCodes.Ceq),
-                new CodeInstruction(OpCodes.Brfalse, jumpPos1),
-                new CodeInstruction(OpCodes.Ldc_I4_0),
-                new CodeInstruction(OpCodes.Stloc_S, 4)
-            );
-            matcher.MatchForward(false,
-                new CodeMatch(OpCodes.Ldarg_0),
-                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(UIStarmapDFHive), nameof(UIStarmapDFHive.gameHistory))),
-                new CodeMatch(OpCodes.Ldarg_0),
-                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(UIStarmapDFHive), nameof(UIStarmapDFHive.hive))),
-                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(EnemyDFHiveSystem), nameof(EnemyDFHiveSystem.hiveStarId))),
-                new CodeMatch(OpCodes.Ldc_I4, 1000000),
-                new CodeMatch(OpCodes.Sub),
-                new CodeMatch(OpCodes.Callvirt, AccessTools.Field(typeof(GameHistoryData), nameof(GameHistoryData.GetHivePin))),
-                new CodeMatch(OpCodes.Ldc_I4_1),
-                new CodeMatch(ci => ci.Branches(out _)),
-                new CodeMatch(OpCodes.Ldc_I4_1),
-                new CodeMatch(ci => ci.IsStloc()),
-                new CodeMatch(ci => ci.Branches(out _))
-            );
-            matcher.CreateLabelAt(matcher.Pos + 10, out var jumpPos);
-            var labels = matcher.Labels;
-            matcher.Labels = null;
-            matcher.InsertAndAdvance(
-                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(ShortcutKeysForStarsName), nameof(_showAllStarsNameStatus))).WithLabels(labels),
-                new CodeInstruction(OpCodes.Ldc_I4_1),
-                new CodeInstruction(OpCodes.Ceq),
-                new CodeInstruction(OpCodes.Brtrue, jumpPos),
-                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(PlayerPatch), nameof(_showAllStarsNameKey))),
-                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(KeyBindings), nameof(KeyBindings.IsKeyPressing))),
-                new CodeInstruction(OpCodes.Brtrue, jumpPos)
-            );
-            return matcher.InstructionEnumeration();
-        }
-*/
+                [HarmonyTranspiler]
+                [HarmonyPatch(typeof(UIStarmapDFHive), nameof(UIStarmapDFHive._OnLateUpdate))]
+                private static IEnumerable<CodeInstruction> UIStarmapDFHive__OnLateUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+                {
+                    var matcher = new CodeMatcher(instructions, generator);
+                    matcher.MatchForward(false,
+                        new CodeMatch(OpCodes.Ldarg_0),
+                        new CodeMatch(ci => ci.IsLdloc()),
+                        new CodeMatch(OpCodes.Stfld, AccessTools.Field(typeof(UIStarmapDFHive), nameof(UIStarmapDFHive.projected)))
+                    );
+                    matcher.Advance(3);
+                    matcher.CreateLabel(out var jumpPos1);
+                    matcher.InsertAndAdvance(
+                        new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(ShortcutKeysForStarsName), nameof(_showAllStarsNameStatus))),
+                        new CodeInstruction(OpCodes.Ldc_I4_2),
+                        new CodeInstruction(OpCodes.Ceq),
+                        new CodeInstruction(OpCodes.Brfalse, jumpPos1),
+                        new CodeInstruction(OpCodes.Ldc_I4_0),
+                        new CodeInstruction(OpCodes.Stloc_S, 4)
+                    );
+                    matcher.MatchForward(false,
+                        new CodeMatch(OpCodes.Ldarg_0),
+                        new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(UIStarmapDFHive), nameof(UIStarmapDFHive.gameHistory))),
+                        new CodeMatch(OpCodes.Ldarg_0),
+                        new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(UIStarmapDFHive), nameof(UIStarmapDFHive.hive))),
+                        new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(EnemyDFHiveSystem), nameof(EnemyDFHiveSystem.hiveStarId))),
+                        new CodeMatch(OpCodes.Ldc_I4, 1000000),
+                        new CodeMatch(OpCodes.Sub),
+                        new CodeMatch(OpCodes.Callvirt, AccessTools.Field(typeof(GameHistoryData), nameof(GameHistoryData.GetHivePin))),
+                        new CodeMatch(OpCodes.Ldc_I4_1),
+                        new CodeMatch(ci => ci.Branches(out _)),
+                        new CodeMatch(OpCodes.Ldc_I4_1),
+                        new CodeMatch(ci => ci.IsStloc()),
+                        new CodeMatch(ci => ci.Branches(out _))
+                    );
+                    matcher.CreateLabelAt(matcher.Pos + 10, out var jumpPos);
+                    var labels = matcher.Labels;
+                    matcher.Labels = null;
+                    matcher.InsertAndAdvance(
+                        new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(ShortcutKeysForStarsName), nameof(_showAllStarsNameStatus))).WithLabels(labels),
+                        new CodeInstruction(OpCodes.Ldc_I4_1),
+                        new CodeInstruction(OpCodes.Ceq),
+                        new CodeInstruction(OpCodes.Brtrue, jumpPos),
+                        new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(PlayerPatch), nameof(_showAllStarsNameKey))),
+                        new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(KeyBindings), nameof(KeyBindings.IsKeyPressing))),
+                        new CodeInstruction(OpCodes.Brtrue, jumpPos)
+                    );
+                    return matcher.InstructionEnumeration();
+                }
+        */
     }
 
-    public class AutoNavigation: PatchImpl<AutoNavigation>
+    public class AutoNavigation : PatchImpl<AutoNavigation>
     {
         private static bool _canUseWarper;
         private static int _indicatorAstroId;
         private static bool _speedUp;
         private static Vector3 _direction;
+
+        public static int IndicatorAstroId => _indicatorAstroId;
 
         public static void ToggleAutoCruise()
         {
@@ -361,9 +365,9 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
                     if (navi.indicatorAstroId != _indicatorAstroId)
                     {
                         _indicatorAstroId = navi.indicatorAstroId;
-                        if (_indicatorAstroId == 0) return;
+                        Functions.UIFunctions.UpdateToggleAutoCruiseCheckButtonVisiblility();
                     }
-                    else if (_indicatorAstroId == 0) return;
+                    if (_indicatorAstroId == 0) return;
                     switch (controller.movementStateInFrame)
                     {
                         case EMovementState.Walk:
@@ -390,12 +394,12 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
                             var astroVec = astro.uPos - playerPos;
                             var distance = astroVec.magnitude;
                             if (distance < astro.type switch
-                                {
-                                    EAstroType.Planet => 800.0 + astro.uRadius,
-                                    EAstroType.Star => 4000.0 + astro.uRadius,
-                                    EAstroType.EnemyHive => 800.0,
-                                    _ => 2000.0 + astro.uRadius
-                                })
+                            {
+                                EAstroType.Planet => 800.0 + astro.uRadius,
+                                EAstroType.Star => 4000.0 + astro.uRadius,
+                                EAstroType.EnemyHive => 800.0,
+                                _ => 2000.0 + astro.uRadius
+                            })
                             {
                                 if (isHive)
                                 {
@@ -478,12 +482,12 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
                                     if (distance < GalaxyData.LY * 1.5)
                                     {
                                         if (distance < actionSail.currentWarpSpeed * distance switch
-                                            {
-                                                > GalaxyData.LY * 0.6 => 0.33,
-                                                > GalaxyData.LY * 0.3 => 0.5,
-                                                > GalaxyData.LY * 0.1 => 0.66,
-                                                _ => 1.0
-                                            })
+                                        {
+                                            > GalaxyData.LY * 0.6 => 0.33,
+                                            > GalaxyData.LY * 0.3 => 0.5,
+                                            > GalaxyData.LY * 0.1 => 0.66,
+                                            _ => 1.0
+                                        })
                                         {
                                             controller.input0.y = -1f;
                                         }

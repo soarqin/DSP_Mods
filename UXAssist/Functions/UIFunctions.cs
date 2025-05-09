@@ -7,7 +7,6 @@ using UnityEngine;
 using UnityEngine.UI;
 using System;
 using System.Linq;
-using System.Threading;
 using System.Collections.Generic;
 
 public static class UIFunctions
@@ -17,13 +16,6 @@ public static class UIFunctions
     private static bool _configWinInitialized;
     private static MyConfigWindow _configWin;
     private static GameObject _buttonOnPlanetGlobe;
-    private static int _cornerComboBoxIndex;
-    private static string[] _starOrderNames;
-    private static bool _starmapFilterInitialized;
-    private static ulong[] _starmapStarFilterValues;
-    private static bool _starFilterEnabled;
-    public static UI.MyCheckButton StarmapFilterToggler;
-    public static bool[] ShowStarName;
 
     public static void Init()
     {
@@ -35,6 +27,9 @@ public static class UIFunctions
             canOverride = true
         });
         I18N.Add("KEYOpenUXAssistConfigWindow", "[UXA] Open UXAssist Config Window", "[UXA] 打开UX助手设置面板");
+
+        I18N.Add("Enable auto-cruise", "Enable auto-cruise", "启用自动巡航");
+        I18N.Add("Disable auto-cruise", "Disable auto-cruise", "禁用自动巡航");
         I18N.Add("High yield", "High yield", "高产");
         I18N.Add("Perfect", "Perfect", "完美");
         I18N.Add("Union results", "Union results", "结果取并集");
@@ -54,7 +49,7 @@ public static class UIFunctions
         }
     }
 
-#region ConfigWindow
+    #region ConfigWindow
     public static void ToggleConfigWindow()
     {
         if (!_configWinInitialized)
@@ -132,6 +127,7 @@ public static class UIFunctions
                 _buttonOnPlanetGlobe.SetActive(true);
             }
         }
+        InitToggleAutoCruiseCheckButton();
         InitStarmapButtons();
         _initialized = true;
     }
@@ -159,9 +155,53 @@ public static class UIFunctions
             rect.anchoredPosition3D = new Vector3(128f, -100f, 0f);
         }
     }
-#endregion
+    #endregion
 
-#region StarMapButtons
+    #region ToggleAutoCruiseCheckButton
+    public static UI.MyCheckButton ToggleAutoCruise;
+
+    public static void InitToggleAutoCruiseCheckButton()
+    {
+        var lowGroup = GameObject.Find("UI Root/Overlay Canvas/In Game/Low Group");
+        ToggleAutoCruise = MyCheckButton.CreateCheckButton(0, 0, lowGroup.GetComponent<RectTransform>(), Patches.PlayerPatch.AutoCruiseEnabled).WithSize(120f, 40f);
+        UpdateToggleAutoCruiseCheckButtonVisiblility();
+        ToggleAutoCruiseChecked();
+        ToggleAutoCruise.OnChecked += ToggleAutoCruiseChecked;
+        var rectTrans = ToggleAutoCruise.rectTrans;
+        rectTrans.anchorMax = new Vector2(0.5f, 0f);
+        rectTrans.anchorMin = new Vector2(0.5f, 0f);
+        rectTrans.pivot = new Vector2(0.5f, 0f);
+        rectTrans.anchoredPosition3D = new Vector3(0f, 185f, 0f);
+        static void ToggleAutoCruiseChecked()
+        {
+            if (ToggleAutoCruise.Checked)
+            {
+                ToggleAutoCruise.SetLabelText("Disable auto-cruise");
+            }
+            else
+            {
+                ToggleAutoCruise.SetLabelText("Enable auto-cruise");
+            }
+        }
+    }
+
+    public static void UpdateToggleAutoCruiseCheckButtonVisiblility()
+    {
+        if (ToggleAutoCruise == null) return;
+        var active = Patches.PlayerPatch.AutoNavigationEnabled.Value && Patches.PlayerPatch.AutoNavigation.IndicatorAstroId > 0;
+        ToggleAutoCruise.gameObject.SetActive(active);
+    }
+    #endregion
+
+    #region StarMapButtons
+    private static int _cornerComboBoxIndex;
+    private static string[] _starOrderNames;
+    private static bool _starmapFilterInitialized;
+    private static ulong[] _starmapStarFilterValues;
+    private static bool _starFilterEnabled;
+    public static UI.MyCheckButton StarmapFilterToggler;
+    public static bool[] ShowStarName;
+
     private static readonly Sprite[] PlanetIcons = [
         null,
         null,
@@ -677,5 +717,5 @@ public static class UIFunctions
             return (nongas, total);
         }
     }
-#endregion
+    #endregion
 }

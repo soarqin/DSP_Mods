@@ -195,7 +195,7 @@ public static class UIConfigWindow
         public override string FormatValue(string format, int value)
         {
             var sb = new StringBuilder("         ");
-            StringBuilderUtility.WriteKMG(sb, 8, (long)value * 300000L, false);
+            StringBuilderUtility.WriteKMG(sb, 8, value * 300000L, false);
             sb.Append('W');
             return sb.ToString().Trim();
         }
@@ -207,7 +207,7 @@ public static class UIConfigWindow
         public override string FormatValue(string format, int value)
         {
             var sb = new StringBuilder("         ");
-            StringBuilderUtility.WriteKMG(sb, 8, (long)value * 300000L, false);
+            StringBuilderUtility.WriteKMG(sb, 8, value * 300000L, false);
             sb.Append('W');
             return sb.ToString().Trim();
         }
@@ -219,7 +219,7 @@ public static class UIConfigWindow
         public override string FormatValue(string format, int value)
         {
             var sb = new StringBuilder("         ");
-            StringBuilderUtility.WriteKMG(sb, 8, (long)value * 3000000L, false);
+            StringBuilderUtility.WriteKMG(sb, 8, value * 3000000L, false);
             sb.Append('W');
             return sb.ToString().Trim();
         }
@@ -246,7 +246,7 @@ public static class UIConfigWindow
         public override string FormatValue(string format, int value)
         {
             var sb = new StringBuilder("         ");
-            StringBuilderUtility.WriteKMG(sb, 8, (long)value * 15000000L, false);
+            StringBuilderUtility.WriteKMG(sb, 8, value * 15000000L, false);
             sb.Append('W');
             return sb.ToString().Trim();
         }
@@ -717,9 +717,8 @@ public static class UIConfigWindow
                     UIMessageBox.Show("Dismantle selected layer".Translate(), "Dismantle selected layer Confirm".Translate(), "取消".Translate(), "确定".Translate(), 2, null,
                         () => { DysonSphereFunctions.InitCurrentDysonLayer(star, id); });
                 }
-            );
-            ((RectTransform)btn.transform).sizeDelta = new Vector2(40f, 20f);
-            DysonLayerBtn[i] = btn;
+            ).WithSize(40f, 20f);
+            DysonLayerBtn[i] = btn.uiButton;
             if (i == 4)
             {
                 x -= 160f;
