@@ -186,14 +186,17 @@ public static class LogisticsPatch
             if (station.isCollector) return;
             if (station.isVeinCollector)
             {
-                factory.factorySystem.minerPool[station.minerId].speed = 10000 + AutoConfigVeinCollectorHarvestSpeed.Value * 1000;
+                /* station.minerId is not set at this point, so we need to fetch the minerId from the EntityData */
+                ref var entity = ref factory.entityPool[station.entityId];
+                if (entity.id != station.entityId || entity.minerId <= 0 || entity.minerId >= factory.factorySystem.minerCursor) return;
+                factory.factorySystem.minerPool[entity.minerId].speed = 10000 + AutoConfigVeinCollectorHarvestSpeed.Value * 1000;
                 station.pilerCount = AutoConfigVeinCollectorMinPilerValue.Value;
                 return;
             }
             int toFill;
             if (!station.isStellar)
             {
-                factory.powerSystem.consumerPool[station.pcId].workEnergyPerTick = (long)(50000.0 * (double)AutoConfigPLSChargePower.Value + 0.5);
+                factory.powerSystem.consumerPool[station.pcId].workEnergyPerTick = (long)(50000.0 * AutoConfigPLSChargePower.Value + 0.5);
                 station.tripRangeDrones = Math.Cos(AutoConfigPLSMaxTripDrone.Value / 180.0 * Math.PI);
                 station.deliveryDrones = AutoConfigPLSDroneMinDeliver.Value switch { 0 => 1, _ => AutoConfigPLSDroneMinDeliver.Value * 10 };
                 station.pilerCount = AutoConfigPLSMinPilerValue.Value;
@@ -201,7 +204,7 @@ public static class LogisticsPatch
                 if (toFill > 0) station.idleDroneCount += GameMain.data.mainPlayer.package.TakeItem((int)KnownItemId.Drone, toFill, out _);
                 return;
             }
-            factory.powerSystem.consumerPool[station.pcId].workEnergyPerTick = (long)(250000.0 * (double)AutoConfigILSChargePower.Value + 0.5);
+            factory.powerSystem.consumerPool[station.pcId].workEnergyPerTick = (long)(250000.0 * AutoConfigILSChargePower.Value + 0.5);
             station.tripRangeDrones = Math.Cos(AutoConfigILSMaxTripDrone.Value / 180.0 * Math.PI);
             station.tripRangeShips = AutoConfigILSMaxTripShip.Value switch
             {
@@ -229,14 +232,23 @@ public static class LogisticsPatch
 
         private static void DoConfigDispenser(PlanetFactory factory, DispenserComponent dispenser)
         {
-            factory.powerSystem.consumerPool[dispenser.pcId].workEnergyPerTick = (long)(5000.0 * (double)AutoConfigDispenserChargePower.Value + 0.5);
             var toFill = Math.Max(0, AutoConfigDispenserCourierCount.Value - dispenser.idleCourierCount - dispenser.workCourierCount);
             if (toFill > 0) dispenser.idleCourierCount += GameMain.data.mainPlayer.package.TakeItem((int)KnownItemId.Bot, toFill, out _);
         }
 
         private static void DoConfigBattleBase(PlanetFactory factory, BattleBaseComponent battleBase)
         {
-            factory.powerSystem.consumerPool[battleBase.pcId].workEnergyPerTick = (long)(5000.0 * (double)AutoConfigBattleBaseChargePower.Value + 0.5);
+            factory.powerSystem.consumerPool[battleBase.pcId].workEnergyPerTick = (long)(5000.0 * AutoConfigBattleBaseChargePower.Value + 0.5);
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(BuildTool_Addon), nameof(BuildTool_Addon.SetDefaultParams))]
+        private static void BuildTool_Addon_SetDefaultParams_Postfix(BuildTool_Addon __instance, int bpIndex)
+        {
+            if (__instance.handPrefabDesc.isDispenser)
+            {
+                __instance.handBpParams[bpIndex][2] = (int)(long)(5000.0 * AutoConfigDispenserChargePower.Value + 0.5);
+            }
         }
 
         [HarmonyPostfix]
@@ -408,7 +420,7 @@ public static class LogisticsPatch
                             var maxCount = LDB.models.Select(modelIndex).prefabDesc.stationMaxItemCount;
                             var oldMaxCount = maxCount + history.localStationExtraStorage - _valuelf;
                             var intOldMaxCount = (int)Math.Round(oldMaxCount);
-                            var intNewMaxCount = (int)maxCount + history.localStationExtraStorage;
+                            var intNewMaxCount = maxCount + history.localStationExtraStorage;
                             var ratio = intNewMaxCount / oldMaxCount;
                             var storage = stationPool[i].storage;
                             for (var j = storage.Length - 1; j >= 0; j--)
@@ -433,7 +445,7 @@ public static class LogisticsPatch
                             var maxCount = LDB.models.Select(modelIndex).prefabDesc.stationMaxItemCount;
                             var oldMaxCount = maxCount + history.remoteStationExtraStorage - _valuelf;
                             var intOldMaxCount = (int)Math.Round(oldMaxCount);
-                            var intNewMaxCount = (int)maxCount + history.remoteStationExtraStorage;
+                            var intNewMaxCount = maxCount + history.remoteStationExtraStorage;
                             var ratio = intNewMaxCount / oldMaxCount;
                             var storage = stationPool[i].storage;
                             for (var j = storage.Length - 1; j >= 0; j--)
