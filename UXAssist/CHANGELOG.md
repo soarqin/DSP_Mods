@@ -3,6 +3,8 @@
 
 ## Changlog
 
+* 1.3.4
+  + `Auto-config logistic stations`: Fix a bug that some settings are not applied to advance mining machines and dispensers
 * 1.3.3
   + Starmap filter: Hide top overlaping windows while the filter UI is shown.
   + `Auto-config logistic stations`: Can set Max. Charging Power for Battlefield Analysis Base now.
@@ -16,6 +18,7 @@
     - Logistic storage capacities are not scaled on upgrading `Logistics Carrier Capacity`, if they are already greater than upgraded maximum capacity.
     - Logistic storage capacities will be reduced to tech capacity limits on pasting blueprints.
   + `Real-time logistic stations info panel`: Support for mods that change slot count of logistic stations.
+  + `Auto-config logistic stations`: Fix a bug that some settings are not applied to advance mining machines and dispensers
 * 1.3.2
   + New feature: `Disable battle-related techs in Peace mode`
   + New button: `Unlock all techs with metadata`
@@ -309,6 +312,8 @@
 
 ## 更新日志
 
+* 1.3.4
+  + `自动配置物流站`：修复了高级采矿机和物流配送器的一些设置未被正确应用的问题
 * 1.3.3
   + 星图过滤器：当过滤器UI显示时隐藏顶部重叠窗口
   + `自动配置物流站`：现在可以为战场分析基站设置最大充能功率
