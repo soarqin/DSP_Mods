@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using BepInEx.Configuration;
-using UnityEngine;
 using UXAssist.Common;
-using UXAssist.Patches;
 
 namespace UXAssist.Functions;
 

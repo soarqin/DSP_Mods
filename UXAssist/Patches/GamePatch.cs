@@ -112,7 +112,6 @@ public class GamePatch : PatchImpl<GamePatch>
 
     public static void Start()
     {
-        RefreshSavePath();
         if (LoadLastWindowRectEnabled.Value)
         {
             FixLastWindowRect();
@@ -128,6 +127,8 @@ public class GamePatch : PatchImpl<GamePatch>
         // AutoSaveOpt.Enable(AutoSaveOptEnabled.Value);
         ConvertSavesFromPeace.Enable(ConvertSavesFromPeaceEnabled.Value);
         Enable(true);
+
+        RefreshSavePath();
     }
 
     public static void Uninit()
@@ -533,7 +534,6 @@ public class GamePatch : PatchImpl<GamePatch>
         [HarmonyPatch(typeof(GameOption), nameof(GameOption.LoadGlobal))]
         private static bool GameOption_LoadGlobal_Prefix(ref GameOption __instance)
         {
-            UXAssist.Logger.LogDebug("Loading global option");
             var profileName = WindowFunctions.ProfileName;
             if (profileName == null)
             {

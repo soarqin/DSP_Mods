@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Text;
 using UnityEngine;
-using UnityEngine.UI;
 using UXAssist.Common;
 using UXAssist.Functions;
 using UXAssist.ModsCompat;

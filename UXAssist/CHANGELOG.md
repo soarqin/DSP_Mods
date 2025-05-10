@@ -3,6 +3,8 @@
 
 ## Changlog
 
+* 1.3.5
+  + `Mod manager profile based save folder`: Fix crash on game startup
 * 1.3.4
   + `Auto-config logistic stations`: Fix a bug that some settings are not applied to Advanced Mining Machines and Logistics Distributors
 * 1.3.3
@@ -311,6 +313,8 @@
 
 ## 更新日志
 
+* 1.3.5
+  + `基于mod管理器配置档案的存档文件夹`：修复游戏启动时崩溃的问题
 * 1.3.4
   + `自动配置物流站`：修复了高级采矿机和物流配送器的一些设置未被正确应用的问题
 * 1.3.3

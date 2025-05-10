@@ -1,6 +1,4 @@
-﻿using System.Linq;
-
-namespace UXAssist.Functions;
+﻿namespace UXAssist.Functions;
 
 public static class DysonSphereFunctions
 {
