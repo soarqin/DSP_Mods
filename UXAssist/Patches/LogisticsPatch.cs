@@ -686,7 +686,7 @@ public static class LogisticsPatch
         private static StationTip[] _stationTips = new StationTip[16];
         private static readonly StationTip[] StationTipsRecycle = new StationTip[128];
         private static int _stationTipsRecycleCount;
-        private static GameObject _stationTipRoot;
+        private static GameObject _stationTipsRoot;
         private static GameObject _tipPrefab;
         private static readonly Color DemandColor = new(253f / 255, 150f / 255, 94f / 255);
         private static readonly Color SupplyColor = new(97f / 255, 216f / 255, 255f / 255);
@@ -732,8 +732,8 @@ public static class LogisticsPatch
 
         public static void Enable(bool on)
         {
-            if (_stationTipRoot)
-                _stationTipRoot.SetActive(on);
+            if (_stationTipsRoot)
+                _stationTipsRoot.SetActive(on);
         }
 
         public static void EnableBars(bool on)
@@ -788,13 +788,22 @@ public static class LogisticsPatch
 
         public static void InitGUI()
         {
-            _stationTipRoot = Object.Instantiate(GameObject.Find("UI Root/Overlay Canvas/In Game/Scene UIs/Vein Marks"),
-                GameObject.Find("UI Root/Overlay Canvas/In Game/Scene UIs").transform);
-            _stationTipRoot.name = "stationTip";
-            Object.Destroy(_stationTipRoot.GetComponent<UIVeinDetail>());
-            _tipPrefab = Object.Instantiate(GameObject.Find("UI Root/Overlay Canvas/In Game/Scene UIs/Vein Marks/vein-tip-prefab"), _stationTipRoot.transform);
-            _tipPrefab.name = "tipPrefab";
+            if (_stationTipsRoot != null) return;
+            _stationTipsRoot = new GameObject("station-tips-root");
+            var rtrans = _stationTipsRoot.AddComponent<RectTransform>();
+            _stationTipsRoot.transform.SetParent(GameObject.Find("UI Root/Overlay Canvas/In Game/Scene UIs").transform);
+            rtrans.sizeDelta = new Vector2(0f, 0f);
+            rtrans.localScale = new Vector3(1f, 1f, 1f);
+            rtrans.anchorMax = new Vector2(1f, 1f);
+            rtrans.anchorMin = new Vector2(0f, 0f);
+            rtrans.pivot = new Vector2(0f, 0f);
+            rtrans.anchoredPosition3D = new Vector3(0, 0, 0f);
+
             var sliderBgPrefab = GameObject.Find("UI Root/Overlay Canvas/In Game/Windows/Station Window/storage-box-0/slider-bg");
+
+            _tipPrefab = Object.Instantiate(GameObject.Find("UI Root/Overlay Canvas/In Game/Scene UIs/Vein Marks/vein-tip-prefab"), _stationTipsRoot.transform);
+            _tipPrefab.name = "tipPrefab";
+            Object.Destroy(_tipPrefab.GetComponent<UIVeinDetailNode>());
             var image = _tipPrefab.GetComponent<Image>();
             image.sprite = GameObject.Find("UI Root/Overlay Canvas/In Game/Windows/Key Tips/tip-prefab").GetComponent<Image>().sprite;
             image.color = new Color(0, 0, 0, 0.8f);
@@ -803,14 +812,14 @@ public static class LogisticsPatch
             rectTrans.localPosition = new Vector3(200f, 800f, 0);
             rectTrans.sizeDelta = new Vector2(150f, 160f);
             rectTrans.pivot = new Vector2(0.5f, 0.5f);
-            Object.Destroy(_tipPrefab.GetComponent<UIVeinDetailNode>());
+
             var infoText = _tipPrefab.transform.Find("info-text").gameObject;
+            var tipIconPrefab = _tipPrefab.transform.Find("icon");
 
             for (var index = 0; index < _storageMaxSlotCount; ++index)
             {
                 var y = -5f - 35f * index;
-                var iconTrans = _tipPrefab.transform.Find("icon");
-                var itemIcon = Object.Instantiate(iconTrans.gameObject, new Vector3(0, 0, 0), Quaternion.identity, _tipPrefab.transform);
+                var itemIcon = Object.Instantiate(tipIconPrefab.gameObject, new Vector3(0, 0, 0), Quaternion.identity, _tipPrefab.transform);
                 itemIcon.name = "icon" + index;
                 rectTrans = (RectTransform)itemIcon.transform;
                 rectTrans.sizeDelta = new Vector2(30f, 30f);
@@ -866,7 +875,7 @@ public static class LogisticsPatch
                 rectTrans.anchoredPosition3D = new Vector3(30f, y, 0);
                 Object.Destroy(countText.GetComponent<Shadow>());
 
-                var stateLocal = Object.Instantiate(iconTrans.gameObject, new Vector3(0, 0, 0), Quaternion.identity, _tipPrefab.transform);
+                var stateLocal = Object.Instantiate(tipIconPrefab.gameObject, new Vector3(0, 0, 0), Quaternion.identity, _tipPrefab.transform);
                 stateLocal.name = "iconLocal" + index;
                 stateLocal.GetComponent<Image>().material = null;
                 rectTrans = (RectTransform)stateLocal.transform;
@@ -875,7 +884,7 @@ public static class LogisticsPatch
                 rectTrans.anchorMin = new Vector2(0f, 1f);
                 rectTrans.pivot = new Vector2(0f, 1f);
                 rectTrans.anchoredPosition3D = new Vector3(102f, y, 0);
-                var stateRemote = Object.Instantiate(iconTrans.gameObject, new Vector3(0, 0, 0), Quaternion.identity, _tipPrefab.transform);
+                var stateRemote = Object.Instantiate(tipIconPrefab.gameObject, new Vector3(0, 0, 0), Quaternion.identity, _tipPrefab.transform);
                 stateRemote.name = "iconRemote" + index;
                 stateRemote.GetComponent<Image>().material = null;
                 rectTrans = (RectTransform)stateRemote.transform;
@@ -886,14 +895,16 @@ public static class LogisticsPatch
                 rectTrans.anchoredPosition3D = new Vector3(100f, y - 12f, 0);
             }
 
+            var iconPrefab = Object.Instantiate(GameObject.Find("UI Root/Overlay Canvas/In Game/Top Tips/Entity Briefs/brief-info-top/brief-info/content/icons/icon"), _tipPrefab.transform);
+            Object.Destroy(iconPrefab.transform.Find("count-text").gameObject);
+            Object.Destroy(iconPrefab.transform.Find("bg").gameObject);
+            Object.Destroy(iconPrefab.transform.Find("inc").gameObject);
+            Object.Destroy(iconPrefab.GetComponent<UIIconCountInc>());
+            iconPrefab.SetActive(false);
+
             for (var i = 0; i < CarrierSlotCount; i++)
             {
-                var iconObj = Object.Instantiate(GameObject.Find("UI Root/Overlay Canvas/In Game/Top Tips/Entity Briefs/brief-info-top/brief-info/content/icons/icon"),
-                    new Vector3(0, 0, 0), Quaternion.identity, _tipPrefab.transform);
-                Object.Destroy(iconObj.transform.Find("count-text").gameObject);
-                Object.Destroy(iconObj.transform.Find("bg").gameObject);
-                Object.Destroy(iconObj.transform.Find("inc").gameObject);
-                Object.Destroy(iconObj.GetComponent<UIIconCountInc>());
+                var iconObj = Object.Instantiate(iconPrefab, new Vector3(0, 0, 0), Quaternion.identity, _tipPrefab.transform);
 
                 iconObj.name = "carrierIcon" + i;
                 iconObj.GetComponent<Image>().sprite = LogisticsExtraItemSprites[i];
@@ -903,6 +914,7 @@ public static class LogisticsPatch
                 rectTrans.anchorMin = new Vector2(0f, 1f);
                 rectTrans.pivot = new Vector2(0f, 1f);
                 rectTrans.anchoredPosition3D = new Vector3(0f, -180f, 0);
+                iconObj.SetActive(true);
 
                 var countText = Object.Instantiate(infoText, Vector3.zero, Quaternion.identity, iconObj.transform);
                 Object.Destroy(countText.GetComponent<Shadow>());
@@ -938,7 +950,7 @@ public static class LogisticsPatch
                 rectTrans.localPosition = new Vector3(0f, 8f, 0f);
             }
 
-            _tipPrefab.transform.Find("icon").gameObject.SetActive(false);
+            tipIconPrefab.gameObject.SetActive(false);
             _tipPrefab.SetActive(false);
         }
 
@@ -971,7 +983,7 @@ public static class LogisticsPatch
                 return result;
             }
 
-            var tempTip = Object.Instantiate(_tipPrefab, _stationTipRoot.transform);
+            var tempTip = Object.Instantiate(_tipPrefab, _stationTipsRoot.transform);
             var stationTip = tempTip.AddComponent<StationTip>();
             stationTip.InitStationTip();
             return stationTip;
@@ -985,7 +997,7 @@ public static class LogisticsPatch
             {
                 if (_lastPlanet == null) return;
                 _lastPlanet = null;
-                _stationTipRoot.SetActive(false);
+                _stationTipsRoot.SetActive(false);
                 return;
             }
 
@@ -1007,15 +1019,14 @@ public static class LogisticsPatch
             var transport = factory?.transport;
             if (transport is not { stationCursor: > 1 } || (UIGame.viewMode != EViewMode.Normal && UIGame.viewMode != EViewMode.Globe))
             {
-                if (_stationTipRoot.activeSelf)
+                if (_stationTipsRoot.activeSelf)
                 {
-                    _stationTipRoot.SetActive(false);
+                    _stationTipsRoot.SetActive(false);
                 }
-
                 return;
             }
 
-            _stationTipRoot.SetActive(true);
+            _stationTipsRoot.SetActive(true);
             var localPosition = GameCamera.main.transform.localPosition;
             var forward = GameCamera.main.transform.forward;
             var realRadius = localPlanet.realRadius;
@@ -1077,7 +1088,7 @@ public static class LogisticsPatch
                 var magnitude = vec.magnitude;
                 if (magnitude < 1.0
                     || Vector3.Dot(forward, vec) < 1.0
-                    || !UIRoot.ScreenPointIntoRect(GameCamera.main.WorldToScreenPoint(position), (RectTransform)_stationTipRoot.transform, out var rectPoint)
+                    || !UIRoot.ScreenPointIntoRect(GameCamera.main.WorldToScreenPoint(position), (RectTransform)_stationTipsRoot.transform, out var rectPoint)
                     || rectPoint.x is < -4096f or > 4096f
                     || rectPoint.y is < -4096f or > 4096f
                     || Phys.RayCastSphere(localPosition, vec / magnitude, magnitude, Vector3.zero, realRadius, out _)
