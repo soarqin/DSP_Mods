@@ -146,7 +146,8 @@ public static class PlayerFunctions
             UIMessageBox.Show("Remove metadata consumption record in current game".Translate(), "NoMetadataConsumptionRecord".Translate(), "OK".Translate(), 0);
             return;
         }
-        foreach (var cons in clusterPropertyData.totalConsumption.Where(cons => cons.id is >= 6001 and <= 6006))
+        var currentGamePropertyData = GameMain.data.history.propertyData;
+        foreach (var cons in currentGamePropertyData.totalConsumption.Where(cons => cons.id is >= 6001 and <= 6006))
         {
             itemCnt[cons.id - 6001] += cons.count;
         }
@@ -170,7 +171,11 @@ public static class PlayerFunctions
             {
                 if (clusterPropertyData.totalConsumption[i].count == 0) continue;
                 var id = clusterPropertyData.totalConsumption[i].id;
-                clusterPropertyData.totalConsumption[i] = new IDCNT(id, 0);
+                if (id < 6001 || id > 6006) continue;
+                var currentGameCount = itemCnt[id - 6001];
+                if (currentGameCount == 0) continue;
+                var totalCount = clusterPropertyData.totalConsumption[i].count;
+                clusterPropertyData.totalConsumption[i] = new IDCNT(id, totalCount > currentGameCount ? totalCount - currentGameCount : 0);
             }
             PurgePropertySystem(propertySystem);
             propertySystem.SaveToFile();
