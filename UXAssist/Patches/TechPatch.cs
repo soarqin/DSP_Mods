@@ -133,9 +133,9 @@ public static class TechPatch
             {
                 (int, int)[] techListToDisable =
                 [
-                    // Combustible Unit, Explosive Unit, Crystal Explosive Unit
-                    // 燃烧单元，爆破单元，晶石爆破单元
-                    (1802, 1804),
+                    // Explosive Unit, Crystal Explosive Unit
+                    // 爆破单元，晶石爆破单元
+                    (1803, 1804),
                     // Implosion Cannon
                     // 聚爆加农炮
                     (1807, 1807),
@@ -244,16 +244,44 @@ public static class TechPatch
                 _originTechPosts.Clear();
                 _protoPatched = false;
             }
-            foreach (var item in UIRoot.instance.uiGame.techTree.nodes)
+            var nodes = UIRoot.instance.uiGame.techTree.nodes;
+            var history = GameMain.history;
+            foreach (var item in nodes)
             {
                 var node = item.Value;
                 foreach (var arrow in node.arrows)
                 {
                     arrow.gameObject.SetActive(false);
                 }
-                var active = node.techProto.postTechArray.Length > 0;
+                var postTechArray = node.techProto.postTechArray;
+                var active = postTechArray.Length > 0;
                 node.connGroup.gameObject.SetActive(active);
                 node.connImages = active ? node.connGroup.GetComponentsInChildren<Image>(true) : [];
+                if (!active) continue;
+                bool onlyOneOutput = postTechArray.Length == 1;
+                for (var i = 0; i < postTechArray.Length; i++)
+                {
+                    var postTech = postTechArray[i];
+                    if (!nodes.ContainsKey(postTech.ID)) continue;
+                    bool itemUnlocked = true;
+                    for (var n = 0; n < postTech.PreItem.Length; n++)
+                    {
+                        if (history.ItemUnlocked(postTech.PreItem[n])) continue;
+                        itemUnlocked = false;
+                        break;
+                    }
+                    bool techUnlocked = history.TechUnlocked(postTech.ID);
+                    node.arrows[i].gameObject.SetActive(itemUnlocked || techUnlocked);
+                    if (onlyOneOutput && !itemUnlocked && !techUnlocked)
+                    {
+                        node.outputArrow.enabled = false;
+                        node.outputLine.gameObject.SetActive(false);
+                    }
+                    else
+                    {
+                        node.outputLine.gameObject.SetActive(true);
+                    }
+                }
             }
         }
     }
