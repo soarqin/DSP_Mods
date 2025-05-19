@@ -81,6 +81,10 @@ public class CheatEnabler : BaseUnityPlugin
             "Overclock ejector");
         DysonSpherePatch.OverclockSiloEnabled = Config.Bind("DysonSphere", "OverclockSilo", false,
             "Overclock silo");
+        DysonSpherePatch.UnlockMaxOrbitRadiusEnabled = Config.Bind("DysonSphere", "UnlockMaxOrbitRadius", false,
+            "Unlock Dyson Sphere max orbit radius");
+        DysonSpherePatch.UnlockMaxOrbitRadiusValue = Config.Bind("DysonSphere", "MaxOrbitRadiusValue", 10_000_000f,
+            "Unlocked Dyson Sphere max orbit radius value");
         CombatPatch.MechaInvincibleEnabled = Config.Bind("Battle", "MechaInvincible", false,
             "Mecha and Drones/Fleets invincible");
         CombatPatch.BuildingsInvincibleEnabled = Config.Bind("Battle", "BuildingsInvincible", false,

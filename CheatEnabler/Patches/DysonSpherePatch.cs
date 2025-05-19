@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.Reflection.Emit;
 using BepInEx.Configuration;
 using HarmonyLib;
+using UnityEngine;
 using UXAssist.Common;
 
 namespace CheatEnabler.Patches;
 
-public class DysonSpherePatch: PatchImpl<DysonSpherePatch>
+public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
 {
     public static ConfigEntry<bool> SkipBulletEnabled;
     public static ConfigEntry<bool> SkipAbsorbEnabled;
@@ -15,6 +16,8 @@ public class DysonSpherePatch: PatchImpl<DysonSpherePatch>
     public static ConfigEntry<bool> EjectAnywayEnabled;
     public static ConfigEntry<bool> OverclockEjectorEnabled;
     public static ConfigEntry<bool> OverclockSiloEnabled;
+    public static ConfigEntry<bool> UnlockMaxOrbitRadiusEnabled;
+    public static ConfigEntry<float> UnlockMaxOrbitRadiusValue;
     private static bool _instantAbsorb;
 
     public static void Init()
@@ -25,6 +28,7 @@ public class DysonSpherePatch: PatchImpl<DysonSpherePatch>
         EjectAnywayEnabled.SettingChanged += (_, _) => EjectAnywayPatch.Enable(EjectAnywayEnabled.Value);
         OverclockEjectorEnabled.SettingChanged += (_, _) => OverclockEjector.Enable(OverclockEjectorEnabled.Value);
         OverclockSiloEnabled.SettingChanged += (_, _) => OverclockSilo.Enable(OverclockSiloEnabled.Value);
+        UnlockMaxOrbitRadiusEnabled.SettingChanged += (_, _) => UnlockMaxOrbitRadius.Enable(UnlockMaxOrbitRadiusEnabled.Value);
     }
 
     public static void Start()
@@ -35,6 +39,7 @@ public class DysonSpherePatch: PatchImpl<DysonSpherePatch>
         EjectAnywayPatch.Enable(EjectAnywayEnabled.Value);
         OverclockEjector.Enable(OverclockEjectorEnabled.Value);
         OverclockSilo.Enable(OverclockSiloEnabled.Value);
+        UnlockMaxOrbitRadius.Enable(UnlockMaxOrbitRadiusEnabled.Value);
         Enable(true);
     }
 
@@ -47,6 +52,7 @@ public class DysonSpherePatch: PatchImpl<DysonSpherePatch>
         EjectAnywayPatch.Enable(false);
         OverclockEjector.Enable(false);
         OverclockSilo.Enable(false);
+        UnlockMaxOrbitRadius.Enable(false);
     }
 
     [HarmonyTranspiler]
@@ -83,7 +89,7 @@ public class DysonSpherePatch: PatchImpl<DysonSpherePatch>
         return matcher.InstructionEnumeration();
     }
 
-    private class SkipBulletPatch: PatchImpl<SkipBulletPatch>
+    private class SkipBulletPatch : PatchImpl<SkipBulletPatch>
     {
         private static long _sailLifeTime;
         private static DysonSailCache[][] _sailsCache;
@@ -281,7 +287,7 @@ public class DysonSpherePatch: PatchImpl<DysonSpherePatch>
         }
     }
 
-    private class SkipAbsorbPatch: PatchImpl<SkipAbsorbPatch>
+    private class SkipAbsorbPatch : PatchImpl<SkipAbsorbPatch>
     {
         protected override void OnEnable()
         {
@@ -333,7 +339,7 @@ public class DysonSpherePatch: PatchImpl<DysonSpherePatch>
         }
     }
 
-    private class QuickAbsorbPatch: PatchImpl<QuickAbsorbPatch>
+    private class QuickAbsorbPatch : PatchImpl<QuickAbsorbPatch>
     {
         protected override void OnEnable()
         {
@@ -384,7 +390,7 @@ public class DysonSpherePatch: PatchImpl<DysonSpherePatch>
         }
     }
 
-    private class EjectAnywayPatch: PatchImpl<EjectAnywayPatch>
+    private class EjectAnywayPatch : PatchImpl<EjectAnywayPatch>
     {
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(EjectorComponent), nameof(EjectorComponent.InternalUpdate))]
@@ -414,7 +420,7 @@ public class DysonSpherePatch: PatchImpl<DysonSpherePatch>
         }
     }
 
-    private class OverclockEjector: PatchImpl<OverclockEjector>
+    private class OverclockEjector : PatchImpl<OverclockEjector>
     {
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(EjectorComponent), nameof(EjectorComponent.InternalUpdate))]
@@ -467,7 +473,7 @@ public class DysonSpherePatch: PatchImpl<DysonSpherePatch>
         }
     }
 
-    private class OverclockSilo: PatchImpl<OverclockSilo>
+    private class OverclockSilo : PatchImpl<OverclockSilo>
     {
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(SiloComponent), nameof(SiloComponent.InternalUpdate))]
@@ -516,6 +522,55 @@ public class DysonSpherePatch: PatchImpl<DysonSpherePatch>
             ).Advance(1);
             var end = matcher.Pos;
             matcher.Start().Advance(pos).RemoveInstructions(end - pos);
+            return matcher.InstructionEnumeration();
+        }
+    }
+
+    private class UnlockMaxOrbitRadius : PatchImpl<UnlockMaxOrbitRadius>
+    {
+        protected override void OnEnable()
+        {
+            OnViewStarChange(null, null);
+            UnlockMaxOrbitRadiusValue.SettingChanged += OnViewStarChange;
+        }
+
+        protected override void OnDisable()
+        {
+            OnViewStarChange(null, null);
+            UnlockMaxOrbitRadiusValue.SettingChanged -= OnViewStarChange;
+        }
+
+        public static void OnViewStarChange(object o, EventArgs e)
+        {
+            var dysonEditor = UIRoot.instance?.uiGame?.dysonEditor;
+            if (dysonEditor == null || !dysonEditor.gameObject.activeSelf) return;
+            dysonEditor.selection?.onViewStarChange?.Invoke();
+        }
+
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(DysonSphere), nameof(DysonSphere.CheckLayerRadius))]
+        [HarmonyPatch(typeof(DysonSphere), nameof(DysonSphere.CheckSwarmRadius))]
+        [HarmonyPatch(typeof(DysonSphere), nameof(DysonSphere.QueryLayerRadius))]
+        [HarmonyPatch(typeof(DysonSphere), nameof(DysonSphere.QuerySwarmRadius))]
+        [HarmonyPatch(typeof(UIDEAddLayerDialogue), nameof(UIDEAddLayerDialogue.OnViewStarChange))]
+        [HarmonyPatch(typeof(UIDEAddSwarmDialogue), nameof(UIDEAddSwarmDialogue.OnViewStarChange))]
+        [HarmonyPatch(typeof(UIDysonEditor), nameof(UIDysonEditor.OnViewStarChange))]
+        [HarmonyPatch(typeof(UIDESwarmOrbitInfo), nameof(UIDESwarmOrbitInfo._OnInit))]
+        [HarmonyPatch(typeof(UIDysonOrbitPreview), nameof(UIDysonOrbitPreview.UpdateAscNodeGizmos))]
+        private static IEnumerable<CodeInstruction> MaxOrbitRadiusPatch_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(DysonSphere), nameof(DysonSphere.maxOrbitRadius)))
+            );
+            matcher.Repeat(m =>
+            {
+                m.Advance(1).InsertAndAdvance(
+                    new CodeInstruction(OpCodes.Pop),
+                    new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(DysonSpherePatch), nameof(UnlockMaxOrbitRadiusValue))),
+                    new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(ConfigEntry<float>), nameof(ConfigEntry<float>.Value)))
+                );
+            });
             return matcher.InstructionEnumeration();
         }
     }

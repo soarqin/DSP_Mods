@@ -3,6 +3,9 @@
 
 ## Changlog
 
+* 2.3.31
+  + New feature: `Unlock Dyson Sphere max orbit radius`
+  + `Remove metadata consumption record in current game`: Fix implementation
 * 2.3.30
   + Fix a warning issue while `No condition build` or `No collision` is enabled.
   + Increase performance for `Finish build immediately` greatly on pasting large blueprints.
@@ -153,6 +156,9 @@
 
 ## 更新日志
 
+* 2.3.31
+  + 新功能：`解锁戴森球最大轨道半径`
+  + `移除当前存档的元数据消耗记录`：修复实现
 * 2.3.30
   + 修复了启用`无条件建造`或`无碰撞`时的警告问题
   + 粘贴大规模蓝图时大幅提升`立即完成建造`的性能表现
