@@ -65,6 +65,7 @@ public static class UIConfigWindow
         I18N.Add("Overclock Ejectors", "Overclock Ejectors (10x)", "高速弹射器(10倍射速)");
         I18N.Add("Overclock Silos", "Overclock Silos (10x)", "高速发射井(10倍射速)");
         I18N.Add("Unlock Dyson Sphere max orbit radius", "Unlock Dyson Sphere max orbit radius", "解锁戴森球最大轨道半径");
+        I18N.Add("Generate tricky dyson shells", "Generate tricky dyson shells (Put/Paste nodes first)", "生成仙术戴森壳(请先设置/粘贴节点)");
         I18N.Add("Complete Dyson Sphere shells instantly", "Complete Dyson Sphere shells instantly", "立即完成戴森壳建造");
         I18N.Add("Terraform without enough soil piles", "Terraform without enough soil piles", "沙土不够时依然可以整改地形");
         I18N.Add("Instant hand-craft", "Instant hand-craft", "快速手动制造");
@@ -259,6 +260,8 @@ public static class UIConfigWindow
             x = 300f;
             y = 10f;
             wnd.AddButton(x, y, 300f, tab4, "Complete Dyson Sphere shells instantly", 16, "button-complete-dyson-sphere-shells-instantly", DysonSphereFunctions.CompleteShellsInstantly);
+            y += 36f;
+            wnd.AddButton(x, y, 300f, tab4, "Generate tricky dyson shells", 16, "button-generate-tricky-dyson-shells", DysonSphereFunctions.CreatePossibleFramesAndShells);
 
             var tab5 = wnd.AddTab(_windowTrans, "Mecha/Combat");
             x = 0f;
