@@ -2,8 +2,11 @@
 using System.Collections.Generic;
 using System.Drawing.Text;
 using System.Linq;
+using System.Runtime.InteropServices;
+using CommonAPI;
 using HarmonyLib;
 using UnityEngine;
+using UnityEngine.Experimental.UIElements;
 using UXAssist.Common;
 
 namespace CheatEnabler.Functions;
@@ -201,6 +204,387 @@ public static class DysonSphereFunctions
         return frame;
     }
 
+	private static bool MyGenerateGeometry(this DysonShell shell)
+	{
+		VectorLF3 vectorLF = VectorLF3.zero;
+		double num = 0.0;
+		for (int i = 0; i < shell.frames.Count; i++)
+		{
+			float num2 = Vector3.Distance(shell.frames[i].nodeA.pos, shell.frames[i].nodeB.pos);
+			VectorLF3 vectorLF2 = (VectorLF3)(shell.frames[i].nodeA.pos + shell.frames[i].nodeB.pos) * 0.5;
+			vectorLF += vectorLF2 * (double)num2;
+			num += (double)num2;
+		}
+		shell.radius = 1.0;
+		for (int j = 0; j < shell.polygon.Count; j++)
+		{
+			shell.radius = shell.polygon[0].magnitude;
+			shell.radius = Math.Round(shell.radius * 10.0) / 10.0;
+			shell.polygon[j] = shell.polygon[j].normalized * shell.radius;
+		}
+		shell.center = vectorLF / num;
+		VectorLF3 normalized = shell.center.normalized;
+		shell.center = normalized * shell.radius;
+		float num3 = 0f;
+		for (int k = 0; k < shell.polygon.Count; k++)
+		{
+			float num4 = Vector3.Distance(shell.center, shell.polygon[k]);
+			if (num4 > num3)
+			{
+				num3 = num4;
+			}
+		}
+		shell.gridScale = (int)(Math.Pow(shell.radius / 4000.0, 0.75) + 0.5);
+		shell.gridScale = ((shell.gridScale < 1) ? 1 : shell.gridScale);
+		shell.gridSize = (float)shell.gridScale * 80f;
+		shell.cpPerVertex = shell.gridScale * shell.gridScale * 2;
+		int num5 = (int)((double)num3 / 0.8660254037844386 / (double)shell.gridSize + 2.5);
+		shell.xaxis = VectorLF3.Cross(normalized, Vector3.up).normalized;
+		if (shell.xaxis.magnitude < 0.1)
+		{
+			shell.xaxis = new VectorLF3(0f, 0f, 1f);
+		}
+		shell.yaxis = VectorLF3.Cross(shell.xaxis, normalized).normalized;
+		shell.raydir = shell.xaxis * 0.915662593339561 + shell.yaxis * 0.40194777665596015;
+		shell.w1axis = shell.xaxis * (0.5 * (double)shell.gridSize) - shell.yaxis * (0.8660254037844386 * (double)shell.gridSize);
+		shell.w2axis = shell.xaxis * (0.5 * (double)shell.gridSize) + shell.yaxis * (0.8660254037844386 * (double)shell.gridSize);
+		shell.w0axis = shell.xaxis * (double)shell.gridSize;
+		double num6 = 0.5773502691896258;
+		shell.t1axis = shell.yaxis * ((double)shell.gridSize * num6 * 0.5) - shell.xaxis * ((double)shell.gridSize * 0.5);
+		shell.t2axis = shell.yaxis * ((double)shell.gridSize * num6 * 0.5) + shell.xaxis * ((double)shell.gridSize * 0.5);
+		shell.t0axis = shell.yaxis * ((double)shell.gridSize / 0.8660254037844386 * 0.5);
+		int count = shell.polygon.Count;
+		shell.polyn = new VectorLF3[count];
+		shell.polynu = new double[count];
+		for (int l = 0; l < count; l++)
+		{
+			Vector3 vector = shell.polygon[l];
+			Vector3 vector2 = shell.polygon[(l + 1) % count];
+			shell.polyn[l] = VectorLF3.Cross(vector, vector2).normalized;
+			shell.polynu[l] = shell.polyn[l].x * shell.raydir.x + shell.polyn[l].y * shell.raydir.y + shell.polyn[l].z * shell.raydir.z;
+		}
+		DysonShell.s_vmap.Clear();
+		DysonShell.s_outvmap.Clear();
+		DysonShell.s_ivmap.Clear();
+		double num7 = (double)shell.gridSize * 0.5;
+		for (int m = -num5; m <= num5; m++)
+		{
+			for (int n = -num5; n <= num5; n++)
+			{
+				if (m - n <= num5 && m - n >= -num5)
+				{
+					VectorLF3 vectorLF3;
+					vectorLF3.x = shell.center.x + shell.w0axis.x * (double)m - shell.w1axis.x * (double)n;
+					vectorLF3.y = shell.center.y + shell.w0axis.y * (double)m - shell.w1axis.y * (double)n;
+					vectorLF3.z = shell.center.z + shell.w0axis.z * (double)m - shell.w1axis.z * (double)n;
+					double num8 = shell.radius / Math.Sqrt(vectorLF3.x * vectorLF3.x + vectorLF3.y * vectorLF3.y + vectorLF3.z * vectorLF3.z);
+					vectorLF3.x *= num8;
+					vectorLF3.y *= num8;
+					vectorLF3.z *= num8;
+					int num9 = 0;
+					for (int num10 = 0; num10 < count; num10++)
+					{
+						double num11 = -(shell.polyn[num10].x * vectorLF3.x + shell.polyn[num10].y * vectorLF3.y + shell.polyn[num10].z * vectorLF3.z) / shell.polynu[num10];
+						if (num11 >= 0.0)
+						{
+							VectorLF3 normalized2 = new VectorLF3(vectorLF3.x + num11 * shell.raydir.x, vectorLF3.y + num11 * shell.raydir.y, vectorLF3.z + num11 * shell.raydir.z).normalized;
+							normalized2.x *= shell.radius;
+							normalized2.y *= shell.radius;
+							normalized2.z *= shell.radius;
+							VectorLF3 vectorLF4 = shell.polygon[num10] - normalized2;
+							VectorLF3 vectorLF5 = shell.polygon[(num10 + 1) % count] - normalized2;
+							double num12 = vectorLF4.x * vectorLF5.x + vectorLF4.y * vectorLF5.y + vectorLF4.z * vectorLF5.z;
+							if (num12 < 0.0 || (num12 == 0.0 && vectorLF4.x == 0.0 && vectorLF4.y == 0.0 && vectorLF4.z == 0.0))
+							{
+								num9++;
+							}
+						}
+					}
+					if ((num9 & 1) == 1)
+					{
+						int num13 = DysonShell._get_key(m, n);
+						DysonShell.s_vmap[num13] = vectorLF3;
+					}
+					else
+					{
+						for (int num14 = 0; num14 < count; num14++)
+						{
+							VectorLF3 vectorLF6 = shell.polygon[num14];
+							VectorLF3 vectorLF7 = shell.polyn[num14];
+							VectorLF3 vectorLF8 = vectorLF3 - vectorLF6;
+							double num15 = vectorLF7.x * vectorLF8.x + vectorLF7.y * vectorLF8.y + vectorLF7.z * vectorLF8.z;
+							double num16 = Math.Abs(num15);
+							if (num16 <= num7)
+							{
+								VectorLF3 vectorLF9 = shell.polygon[(num14 + 1) % count];
+								VectorLF3 vectorLF10 = vectorLF3 - vectorLF7 * num15;
+								VectorLF3 vectorLF11 = vectorLF9 - vectorLF6;
+								double magnitude = vectorLF11.magnitude;
+								VectorLF3 vectorLF12 = vectorLF11 / magnitude;
+								VectorLF3 vectorLF13 = vectorLF10 - vectorLF6;
+								double num17 = vectorLF12.x * vectorLF13.x + vectorLF12.y * vectorLF13.y + vectorLF12.z * vectorLF13.z;
+								double num18;
+								if (num17 < 0.0)
+								{
+									num18 = vectorLF8.magnitude;
+								}
+								else if (num17 > magnitude)
+								{
+									num18 = (vectorLF3 - vectorLF9).magnitude;
+								}
+								else
+								{
+									num18 = num16;
+								}
+								if (num18 <= num7)
+								{
+									int num19 = DysonShell._get_key(m, n);
+									DysonShell.s_vmap[num19] = vectorLF3;
+									DysonShell.s_outvmap[num19] = vectorLF3;
+									break;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		int count2 = DysonShell.s_vmap.Count;
+        if (count2 > 32767)
+        {
+            return false;
+        }
+		shell.verts = new Vector3[count2];
+		shell.uvs = new Vector2[count2];
+		shell.uv2s = new Vector2[count2];
+		shell.vkeys = new int[count2];
+		shell._gen_points_topo_indices(count2);
+		shell.vAdjs = new short[count2 * 6];
+		for (int num20 = 0; num20 < shell.vAdjs.Length; num20++)
+		{
+			shell.vAdjs[num20] = -1;
+		}
+		int num21 = 0;
+		foreach (KeyValuePair<int, Vector3> keyValuePair in DysonShell.s_vmap)
+		{
+			Vector3 value = keyValuePair.Value;
+			DysonShell.s_ivmap[keyValuePair.Key] = num21;
+			shell.verts[num21] = value;
+			shell.uv2s[num21].x = (float)(DysonShell.s_outvmap.ContainsKey(keyValuePair.Key) ? 0 : 1);
+			shell.vkeys[num21] = keyValuePair.Key;
+			num21++;
+		}
+		foreach (KeyValuePair<int, int> keyValuePair2 in DysonShell.s_ivmap)
+		{
+			int key = keyValuePair2.Key;
+			int num22 = DysonShell.s_ivmap[key];
+			int num23 = key + 65536;
+			int num24 = key - 1;
+			int num25 = key - 65537;
+			int num26 = key - 65536;
+			int num27 = key + 1;
+			int num28 = key + 65537;
+			bool flag = DysonShell.s_ivmap.ContainsKey(num23);
+			bool flag2 = DysonShell.s_ivmap.ContainsKey(num24);
+			bool flag3 = DysonShell.s_ivmap.ContainsKey(num25);
+			bool flag4 = DysonShell.s_ivmap.ContainsKey(num26);
+			bool flag5 = DysonShell.s_ivmap.ContainsKey(num27);
+			bool flag6 = DysonShell.s_ivmap.ContainsKey(num28);
+			shell.vAdjs[num22 * 6] = (short)(flag ? DysonShell.s_ivmap[num23] : (-1));
+			shell.vAdjs[num22 * 6 + 1] = (short)(flag2 ? DysonShell.s_ivmap[num24] : (-1));
+			shell.vAdjs[num22 * 6 + 2] = (short)(flag3 ? DysonShell.s_ivmap[num25] : (-1));
+			shell.vAdjs[num22 * 6 + 3] = (short)(flag4 ? DysonShell.s_ivmap[num26] : (-1));
+			shell.vAdjs[num22 * 6 + 4] = (short)(flag5 ? DysonShell.s_ivmap[num27] : (-1));
+			shell.vAdjs[num22 * 6 + 5] = (short)(flag6 ? DysonShell.s_ivmap[num28] : (-1));
+		}
+		int num29 = 0;
+		int num30 = 0;
+		for (int num31 = 0; num31 < count2; num31++)
+		{
+			double num32 = shell.radius * 2.0;
+			int num33 = -1;
+			VectorLF3 vectorLF14 = shell.verts[num31];
+			for (int num34 = 0; num34 < count; num34++)
+			{
+				VectorLF3 vectorLF15 = shell.polygon[num34];
+				VectorLF3 vectorLF16 = shell.polygon[(num34 + 1) % count];
+				VectorLF3 vectorLF17 = shell.polyn[num34];
+				VectorLF3 vectorLF18 = vectorLF14 - vectorLF15;
+				double num35 = vectorLF17.x * vectorLF18.x + vectorLF17.y * vectorLF18.y + vectorLF17.z * vectorLF18.z;
+				VectorLF3 vectorLF19 = vectorLF14 - vectorLF17 * num35;
+				VectorLF3 vectorLF20 = vectorLF14 - vectorLF16;
+				double num36 = vectorLF17.x * vectorLF20.x + vectorLF17.y * vectorLF20.y + vectorLF17.z * vectorLF20.z;
+				VectorLF3 vectorLF21 = vectorLF16 - vectorLF15;
+				double magnitude2 = vectorLF21.magnitude;
+				VectorLF3 vectorLF22 = vectorLF21 / magnitude2;
+				VectorLF3 vectorLF23 = vectorLF19 - vectorLF15;
+				double num37 = vectorLF22.x * vectorLF23.x + vectorLF22.y * vectorLF23.y + vectorLF22.z * vectorLF23.z;
+				double num38;
+				if (num37 < 0.0)
+				{
+					num38 = (vectorLF14 - vectorLF15).magnitude;
+					num38 -= Math.Abs(num35) * 0.001;
+				}
+				else if (num37 > magnitude2)
+				{
+					num38 = (vectorLF14 - vectorLF16).magnitude;
+					num38 -= Math.Abs(num36) * 0.001;
+				}
+				else
+				{
+					num38 = Math.Abs(num35);
+					num38 -= Math.Abs(num35) * 0.001;
+				}
+				if (num38 < num32)
+				{
+					num32 = num38;
+					num33 = num34;
+				}
+			}
+			shell.uv2s[num31].y = (float)num33;
+			if (num29 + num30 < 49 && shell._is_point_in_shell(vectorLF14))
+			{
+				double num39 = VectorLF3.Dot(vectorLF14 - shell.polygon[num33], shell.polyn[num33]);
+				if (num39 > 0.1)
+				{
+					num29++;
+				}
+				else if (num39 < -0.1)
+				{
+					num30++;
+				}
+			}
+		}
+		if (num29 > num30)
+		{
+			shell.clockwise = true;
+		}
+		else
+		{
+			shell.clockwise = false;
+		}
+		shell.vertAttr = new int[count2];
+		shell.vertsq = new short[count2];
+		shell.vertsqOffset = new int[shell.nodes.Count + 1];
+		int count3 = shell.nodes.Count;
+		int num40 = count3 / 2;
+		for (int num41 = 0; num41 < count2; num41++)
+		{
+			Vector3 vector3 = shell.verts[num41];
+			double num42 = double.MaxValue;
+			int num43 = 0;
+			int num44 = 0;
+			int num45 = num41 + 479001600;
+			for (int num46 = 0; num46 < count3; num46++)
+			{
+				int num47 = num45 % count3 - num46;
+				if (num47 < 0)
+				{
+					num47 = -num47;
+				}
+				if (num47 > num40)
+				{
+					num47 = count3 - num47;
+				}
+				double num48 = (double)(vector3 - shell.nodes[num46].pos).sqrMagnitude;
+				num48 += (double)num47;
+				if (num48 < num42)
+				{
+					num42 = num48;
+					num43 = shell.nodes[num46].id;
+					num44 = num46;
+				}
+			}
+			shell.vertAttr[num41] = num43;
+			shell.vertsqOffset[num44]++;
+		}
+		int num49 = 0;
+		for (int num50 = 0; num50 < shell.vertsqOffset.Length; num50++)
+		{
+			num49 += shell.vertsqOffset[num50];
+		}
+		Assert.True(num49 == count2);
+		for (int num51 = shell.vertsqOffset.Length - 1; num51 >= 0; num51--)
+		{
+			shell.vertsqOffset[num51] = num49;
+			if (num51 > 0)
+			{
+				num49 -= shell.vertsqOffset[num51 - 1];
+			}
+		}
+		Assert.Zero(num49);
+		shell._openListPrepare();
+		int num52 = shell.randSeed;
+		int num53 = 0;
+		while (num53 < count3)
+		{
+			Vector3 pos = shell.nodes[num53].pos;
+			int num54 = shell.nodes[num53].id;
+			float num55 = float.MaxValue;
+			int num56 = -1;
+			for (int num57 = 0; num57 < count2; num57++)
+			{
+				if (shell.vertAttr[num57] == num54 && (shell.vAdjs[num57 * 6] >= 0 || shell.vAdjs[num57 * 6 + 1] >= 0 || shell.vAdjs[num57 * 6 + 2] >= 0 || shell.vAdjs[num57 * 6 + 3] >= 0 || shell.vAdjs[num57 * 6 + 4] >= 0 || shell.vAdjs[num57 * 6 + 5] >= 0))
+				{
+					float sqrMagnitude = (shell.verts[num57] - pos).sqrMagnitude;
+					if (sqrMagnitude < num55)
+					{
+						num55 = sqrMagnitude;
+						num56 = num57;
+					}
+				}
+			}
+			if (num56 >= 0)
+			{
+				shell._openListAdd(num56);
+			}
+			int num58 = shell.vertsqOffset[num53];
+			int num59 = shell.vertsqOffset[num53 + 1] - shell.vertsqOffset[num53];
+			double num60 = 0.0;
+			for (;;)
+			{
+				int num61 = shell._traverseRandomVertex(shell.nodes[num53].id, ref num52);
+				if (num61 < 0)
+				{
+					break;
+				}
+				shell.vertsq[num58++] = (short)num61;
+				num60 += 1.0;
+				shell.uvs[num61].x = (float)num53;
+				shell.uvs[num61].y = (float)(num60 / (double)num59);
+				if (num58 == shell.vertsqOffset[num53 + 1])
+				{
+					goto Block_57;
+				}
+			}
+			IL_1329:
+			if (num58 < shell.vertsqOffset[num53 + 1])
+			{
+				for (int num62 = 0; num62 < count2; num62++)
+				{
+					if (shell.vertAttr[num62] == num54 && !shell._tmp_marked[num62])
+					{
+						shell.vertsq[num58++] = (short)num62;
+						num60 += 1.0;
+						shell.uvs[num62].x = (float)num53;
+						shell.uvs[num62].y = (float)(num60 / (double)num59);
+					}
+				}
+			}
+			Assert.False(num58 > shell.vertsqOffset[num53 + 1]);
+			Assert.False(num58 < shell.vertsqOffset[num53 + 1]);
+			shell._openListClear();
+			num53++;
+			continue;
+			Block_57:
+			Assert.Zero(shell._tmp_openCount);
+			goto IL_1329;
+		}
+		shell._openListFree();
+		shell.vertexCount = count2;
+        return true;
+	}
+
     private static int QuickAddDysonShell(this DysonSphereLayer layer, int protoId, DysonNode[] nodes, DysonFrame[] frames)
     {
 		int shellId = 0;
@@ -238,7 +622,6 @@ public static class DysonSphereFunctions
 		for (int j = 0; j < nodes.Length; j++)
 		{
 			DysonNode dysonNode = nodes[j];
-			DysonNode dysonNode2 = nodes[(j + 1) % nodes.Length];
 			DysonFrame dysonFrame = frames[j];
 			List<Vector3> segments = dysonFrame.GetSegments();
 			if (dysonNode == dysonFrame.nodeA)
@@ -255,21 +638,43 @@ public static class DysonSphereFunctions
 					shell.polygon.Add(segments[l]);
 				}
 			}
-			shell.nodeIndexMap[nodes[j % nodes.Length].id] = shell.nodes.Count;
+			shell.nodeIndexMap[dysonNode.id] = shell.nodes.Count;
 			shell.nodes.Add(dysonNode);
 			shell.frames.Add(dysonFrame);
-			if (!dysonNode.shells.Contains(shell))
-			{
-				dysonNode.shells.Add(shell);
-			}
 		}
-		shell.GenerateGeometry();
+        if (!shell.MyGenerateGeometry())
+        {
+            CheatEnabler.Logger.LogDebug($"{shellId} DysonShell.s_vmap.Count: {DysonShell.s_vmap.Count}");
+            shell.Free();
+            layer.shellPool[shellId] = null;
+            int[] array = layer.shellRecycle;
+            int recycleIndex = layer.shellRecycleCursor;
+            layer.shellRecycleCursor = recycleIndex + 1;
+            array[recycleIndex] = shellId;
+            return 0;
+        }
+        CheatEnabler.Logger.LogDebug($"{shellId} DysonShell.s_vmap.Count: {DysonShell.s_vmap.Count}");
+        for (int j = 0; j < shell.nodes.Count; j++)
+        {
+            shell.nodes[j].shells.Add(shell);
+        }
 		shell.GenerateModelObjects();
-        CheatEnabler.Logger.LogInfo($"QuickAddDysonShell: {DysonShell.s_vmap.Count}");
 		return shellId;
     }
 
-    private struct SupposedShell
+    private static void QuickRemoveDysonFrame(this DysonSphereLayer layer, int frameId)
+    {
+        var frame = layer.framePool[frameId];
+		frame.nodeA.frames.Remove(frame);
+		frame.nodeB.frames.Remove(frame);
+		frame.Free();
+		layer.framePool[frameId] = null;
+		int recycleIndex = layer.frameRecycleCursor;
+		layer.frameRecycleCursor = recycleIndex + 1;
+		layer.frameRecycle[recycleIndex] = frameId;
+    }
+
+    private class SupposedShell
     {
         public DysonNode nodeA;
         public DysonNode nodeB;
@@ -301,14 +706,16 @@ public static class DysonSphereFunctions
             UIMessageBox.Show("CheatEnabler".Translate(), string.Format("There is no Dyson Sphere shell on \"{0}\".".Translate(), star.displayName), "确定".Translate(), 3, null);
             return;
         }
-        var framesChanged = false;
+		DysonShell.s_vmap ??= new Dictionary<int, Vector3>(16384);
+		DysonShell.s_outvmap ??= new Dictionary<int, Vector3>(16384);
+		DysonShell.s_ivmap ??= new Dictionary<int, int>(16384);
         var shellsChanged = false;
         for (var i = 1; i < dysonSphere.layersIdBased.Length; i++)
         {
             Dictionary<(int, int), int> availableFrames = [];
             HashSet<(int, int, int)> availableShells = [];
-            HashSet<DysonNode> spDirtyNodes = [];
-            HashSet<DysonNode> cpDirtyNodes = [];
+            HashSet<DysonNode> dirtyNodes = [];
+            HashSet<int> unusedFrameIds = [];
             var layer = dysonSphere.layersIdBased[i];
             if (layer == null || layer.id != i) continue;
             for (var j = 1; j < layer.frameCursor; j++)
@@ -334,6 +741,7 @@ public static class DysonSphereFunctions
             int nodeCount = layer.nodeCursor;
 
             List<SupposedShell> supposedShells = [];
+            var limitRadius = layer.orbitRadius * layer.orbitRadius * 2.5f;
             for (var j = 1; j < nodeCount; j++)
             {
                 var nodeA = layer.nodePool[j];
@@ -342,76 +750,74 @@ public static class DysonSphereFunctions
                 {
                     var nodeB = layer.nodePool[k];
                     if (nodeB == null || nodeB.id != k) continue;
+                    if ((nodeA.pos - nodeB.pos).sqrMagnitude > limitRadius) continue;
                     for (var l = k + 1; l < nodeCount; l++)
                     {
                         var nodeC = layer.nodePool[l];
                         if (nodeC == null || nodeC.id != l) continue;
+                        if ((nodeA.pos - nodeC.pos).sqrMagnitude > limitRadius) continue;
+                        if ((nodeB.pos - nodeC.pos).sqrMagnitude > limitRadius) continue;
                         var area = Vector3.Cross(nodeB.pos - nodeA.pos, nodeC.pos - nodeA.pos).sqrMagnitude;
                         supposedShells.Add(new SupposedShell { nodeA = nodeA, nodeB = nodeB, nodeC = nodeC, area = area });
                     }
                 }
             }
             supposedShells.Sort((a, b) => b.area.CompareTo(a.area));
-            var count = Math.Min(supposedShells.Count, 1);
+            CheatEnabler.Logger.LogDebug($"Finished Area Sort");
+            var count = supposedShells.Count;
             for (var j = 0; j < count; j++)
             {
                 var shell = supposedShells[j];
                 if (availableShells.TryGetValue((shell.nodeA.id, shell.nodeB.id, shell.nodeC.id), out _)) continue;
                 if (!availableFrames.TryGetValue((shell.nodeA.id, shell.nodeB.id), out _)) {
-                    var frame = layer.QuickAddDysonFrame(0, shell.nodeA, shell.nodeB, false);
+                    var frame = layer.QuickAddDysonFrame(0, shell.nodeA, shell.nodeB, true);
                     availableFrames[(shell.nodeA.id, shell.nodeB.id)] = frame.id;
-                    spDirtyNodes.Add(shell.nodeA);
-                    spDirtyNodes.Add(shell.nodeB);
+                    unusedFrameIds.Add(frame.id);
                 }
                 if (!availableFrames.TryGetValue((shell.nodeA.id, shell.nodeC.id), out _)) {
-                    var frame = layer.QuickAddDysonFrame(0, shell.nodeA, shell.nodeC, false);
+                    var frame = layer.QuickAddDysonFrame(0, shell.nodeA, shell.nodeC, true);
                     availableFrames[(shell.nodeA.id, shell.nodeC.id)] = frame.id;
-                    spDirtyNodes.Add(shell.nodeA);
-                    spDirtyNodes.Add(shell.nodeC);
+                    unusedFrameIds.Add(frame.id);
                 }
                 if (!availableFrames.TryGetValue((shell.nodeB.id, shell.nodeC.id), out _)) {
-                    var frame = layer.QuickAddDysonFrame(0, shell.nodeB, shell.nodeC, false);
+                    var frame = layer.QuickAddDysonFrame(0, shell.nodeB, shell.nodeC, true);
                     availableFrames[(shell.nodeB.id, shell.nodeC.id)] = frame.id;
-                    spDirtyNodes.Add(shell.nodeB);
-                    spDirtyNodes.Add(shell.nodeC);
+                    unusedFrameIds.Add(frame.id);
                 }
             }
-            foreach (var node in spDirtyNodes)
-            {
-                node.RecalcSpReq();
-            }
-            framesChanged = framesChanged || spDirtyNodes.Count > 0;
-            for (var j = 0; j < count; j++)
+            var total = 0;
+            for (var j = 0; j < count && total < 2048; j++)
             {
                 var shell = supposedShells[j];
                 if (availableShells.TryGetValue((shell.nodeA.id, shell.nodeB.id, shell.nodeC.id), out _)) continue;
-                DysonFrame[] frames = [layer.framePool[availableFrames[(shell.nodeA.id, shell.nodeB.id)]], layer.framePool[availableFrames[(shell.nodeA.id, shell.nodeC.id)]], layer.framePool[availableFrames[(shell.nodeB.id, shell.nodeC.id)]]];
+                DysonFrame[] frames = [layer.framePool[availableFrames[(shell.nodeA.id, shell.nodeB.id)]], layer.framePool[availableFrames[(shell.nodeB.id, shell.nodeC.id)]], layer.framePool[availableFrames[(shell.nodeA.id, shell.nodeC.id)]]];
                 DysonNode[] nodes = [shell.nodeA, shell.nodeB, shell.nodeC];
-                layer.QuickAddDysonShell(0, nodes, frames);
-                cpDirtyNodes.Add(shell.nodeA);
-                cpDirtyNodes.Add(shell.nodeB);
-                cpDirtyNodes.Add(shell.nodeC);
+                if (layer.QuickAddDysonShell(0, nodes, frames) <= 0) continue;
+                unusedFrameIds.Remove(frames[0].id);
+                dirtyNodes.Add(shell.nodeA);
+                dirtyNodes.Add(shell.nodeB);
+                dirtyNodes.Add(shell.nodeC);
+                total++;
                 shellsChanged = true;
             }
-            foreach (var node in cpDirtyNodes)
+            foreach (var frameId in unusedFrameIds)
             {
+                layer.QuickRemoveDysonFrame(frameId);
+            }
+            foreach (var node in dirtyNodes)
+            {
+                node.RecalcSpReq();
                 node.RecalcCpReq();
             }
         }
-        if (framesChanged)
+        dysonSphere.CheckAutoNodes();
+        if (dysonSphere.autoNodeCount <= 0)
         {
-            dysonSphere.CheckAutoNodes();
-            if (dysonSphere.autoNodeCount <= 0)
-            {
-                dysonSphere.PickAutoNode();
-            }
+            dysonSphere.PickAutoNode();
         }
         if (shellsChanged)
         {
             GameMain.gameScenario.NotifyOnPlanDysonShell();
-        }
-        if (framesChanged || shellsChanged)
-        {
             dysonSphere.modelRenderer.RebuildModels();
         }
     }
