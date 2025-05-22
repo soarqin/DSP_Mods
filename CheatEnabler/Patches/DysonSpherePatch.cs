@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Reflection.Emit;
 using BepInEx.Configuration;
 using HarmonyLib;
-using UnityEngine;
 using UXAssist.Common;
 
 namespace CheatEnabler.Patches;

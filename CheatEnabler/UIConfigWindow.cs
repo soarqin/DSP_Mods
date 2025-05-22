@@ -100,6 +100,35 @@ public static class UIConfigWindow
         }
     }
 
+    class RetainShellsCountMapper : MyWindow.RangeValueMapper<int>
+    {
+        public RetainShellsCountMapper() : base(1, 46)
+        {
+        }
+
+        public override int ValueToIndex(int value)
+        {
+            return value switch
+            {
+                < 4 => value,
+                < 64 => value / 4 + 3,
+                < 256 => value / 16 + 15,
+                _ => value / 256 + 30,
+            };
+        }
+
+        public override int IndexToValue(int index)
+        {
+            return index switch
+            {
+                < 4 => index,
+                < 19 => (index - 3) * 4,
+                < 31 => (index - 15) * 16,
+                _ => (index - 30) * 256,
+            };
+        }
+    }
+
     private static void CreateUI(MyConfigWindow wnd, RectTransform trans)
         {
             _windowTrans = trans;
@@ -247,7 +276,7 @@ public static class UIConfigWindow
             wnd.AddCheckBox(x, y, tab4, DysonSpherePatch.UnlockMaxOrbitRadiusEnabled, "Unlock Dyson Sphere max orbit radius");
             y += 30f;
             {
-                var slider = wnd.AddSlider(x + 20, y, tab4, DysonSpherePatch.UnlockMaxOrbitRadiusValue, new MaxOrbitRadiusValueMapper(), "##,#m").WithSmallerHandle(-40f);
+                var slider = wnd.AddSlider(x + 20f, y, tab4, DysonSpherePatch.UnlockMaxOrbitRadiusValue, new MaxOrbitRadiusValueMapper(), "##,#m").WithSmallerHandle(-40f);
                 DysonSpherePatch.UnlockMaxOrbitRadiusEnabled.SettingChanged += UnlockMaxOrbitRadiusChanged;
                 wnd.OnFree += () => { DysonSpherePatch.UnlockMaxOrbitRadiusEnabled.SettingChanged -= UnlockMaxOrbitRadiusChanged; };
                 UnlockMaxOrbitRadiusChanged(null, null);
@@ -262,6 +291,10 @@ public static class UIConfigWindow
             wnd.AddButton(x, y, 300f, tab4, "Complete Dyson Sphere shells instantly", 16, "button-complete-dyson-sphere-shells-instantly", DysonSphereFunctions.CompleteShellsInstantly);
             y += 36f;
             wnd.AddButton(x, y, 300f, tab4, "Generate tricky dyson shells", 16, "button-generate-tricky-dyson-shells", DysonSphereFunctions.CreatePossibleFramesAndShells);
+            y += 36f;
+            wnd.AddButton(x, y, 300f, tab4, "Remove low production dyson shells", 16, "button-remove-low-production-dyson-shells", () => DysonSphereFunctions.RemoveLowProductionShells());
+            y += 30f;
+            wnd.AddSlider(x + 20f, y, tab4, DysonSphereFunctions.RetainShellsCount, new RetainShellsCountMapper());
 
             var tab5 = wnd.AddTab(_windowTrans, "Mecha/Combat");
             x = 0f;
