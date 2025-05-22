@@ -988,6 +988,7 @@ public static class DysonSphereFunctions
 				shells[j] = null;
 			}
 			var count = UpToPowerOfTwo(retainCount + 1);
+			if (count < 64) count = 64;
 			layer.shellPool = new DysonShell[count];
 			layer.shellRecycle = new int[count];
 			layer.shellRecycleCursor = 0;
@@ -1013,6 +1014,7 @@ public static class DysonSphereFunctions
 			var nodes = layer.nodePool.Where(node => node != null && retainNodes.Contains(node.id)).ToArray();
 			var frames = layer.framePool.Where(frame => frame != null && retainFrames.Contains((frame.nodeA.id, frame.nodeB.id))).ToArray();
 			count = UpToPowerOfTwo(frames.Length + 1);
+			if (count < 64) count = 64;
 			layer.framePool = new DysonFrame[count];
 			layer.frameRecycle = new int[count];
 			layer.frameRecycleCursor = 0;
@@ -1025,6 +1027,7 @@ public static class DysonSphereFunctions
 				frames[j].id = id;
 			}
 			count = UpToPowerOfTwo(nodes.Length + 1);
+			if (count < 64) count = 64;
 			layer.nodePool = new DysonNode[count];
 			layer.nodeRecycle = new int[count];
 			layer.nodeRecycleCursor = 0;
@@ -1035,8 +1038,21 @@ public static class DysonSphereFunctions
 				int id = j + 1;
 				layer.nodePool[id] = nodes[j];
 				nodes[j].id = id;
-				nodes[j].RecalcSpReq();
-				nodes[j].RecalcCpReq();
+			}
+			for (var j = 1; j < layer.shellCursor; j++)
+			{
+				var shell = layer.shellPool[j];
+				shell.nodeIndexMap.Clear();
+				for (var k = 0; k < shell.nodes.Count; k++)
+				{
+					shell.nodeIndexMap[shell.nodes[k].id] = k;
+				}
+			}
+			for (var j = 1; j < layer.nodeCursor; j++)
+			{
+				var node = layer.nodePool[j];
+				node.RecalcSpReq();
+				node.RecalcCpReq();
 			}
 		}
 		dysonSphere.CheckAutoNodes();
