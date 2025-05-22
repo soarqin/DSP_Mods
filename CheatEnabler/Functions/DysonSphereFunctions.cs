@@ -214,11 +214,10 @@ public static class DysonSphereFunctions
 			vectorLF += vectorLF2 * (double)num2;
 			num += (double)num2;
 		}
-		shell.radius = 1.0;
+		shell.radius = shell.polygon[0].magnitude;
+		shell.radius = Math.Round(shell.radius * 10.0) / 10.0;
 		for (int j = 0; j < shell.polygon.Count; j++)
 		{
-			shell.radius = shell.polygon[0].magnitude;
-			shell.radius = Math.Round(shell.radius * 10.0) / 10.0;
 			shell.polygon[j] = shell.polygon[j].normalized * shell.radius;
 		}
 		shell.center = vectorLF / num;
@@ -641,7 +640,7 @@ public static class DysonSphereFunctions
 			shell.nodes.Add(dysonNode);
 			shell.frames.Add(dysonFrame);
 		}
-        if (!shell.MyGenerateGeometry() || DysonShell.s_vmap.Count < 3000)
+        if (!shell.MyGenerateGeometry() || DysonShell.s_vmap.Count < 32000)
         {
             CheatEnabler.Logger.LogDebug($"{shellId} DysonShell.s_vmap.Count: {DysonShell.s_vmap.Count}");
             shell.Free();
@@ -680,6 +679,135 @@ public static class DysonSphereFunctions
 
         public float area;
     }
+
+	public static void CreatePossibleFramesAndShells2()
+	{
+        StarData star = null;
+        var dysonEditor = UIRoot.instance?.uiGame?.dysonEditor;
+        if (dysonEditor != null && dysonEditor.gameObject.activeSelf)
+        {
+            star = dysonEditor.selection.viewStar;
+        }
+        if (star == null)
+        {
+            star = GameMain.data?.localStar;
+            if (star == null)
+            {
+                UIMessageBox.Show("CheatEnabler".Translate(), "You are not in any system.".Translate(), "确定".Translate(), 3, null);
+                return;
+            }
+        }
+        var dysonSphere = GameMain.data?.dysonSpheres[star.index];
+        if (dysonSphere == null || dysonSphere.layerCount == 0)
+        {
+            UIMessageBox.Show("CheatEnabler".Translate(), string.Format("There is no Dyson Sphere shell on \"{0}\".".Translate(), star.displayName), "确定".Translate(), 3, null);
+            return;
+        }
+		DysonShell.s_vmap ??= new Dictionary<int, Vector3>(16384);
+		DysonShell.s_outvmap ??= new Dictionary<int, Vector3>(16384);
+		DysonShell.s_ivmap ??= new Dictionary<int, int>(16384);
+        var shellsChanged = false;
+        for (var i = 1; i < dysonSphere.layersIdBased.Length; i++)
+        {
+            Dictionary<(int, int), int> availableFrames = [];
+            HashSet<DysonNode> dirtyNodes = [];
+            HashSet<int> unusedFrameIds = [];
+            var layer = dysonSphere.layersIdBased[i];
+            if (layer == null || layer.id != i) continue;
+            int nodeCount = layer.nodeCursor;
+
+            List<SupposedShell> supposedShells = [];
+			int j;
+            for (j = 1; j < nodeCount; j++)
+            {
+                var nodeA = layer.nodePool[j];
+                if (nodeA == null || nodeA.id != j) continue;
+				int angle = Mathf.RoundToInt(Mathf.Asin(Mathf.Clamp01(Mathf.Abs(nodeA.pos.normalized.y))) * 57.29578f);
+				if (angle > 15f) continue;
+                for (var k = j + 1; k < nodeCount; k++)
+                {
+                    var nodeB = layer.nodePool[k];
+                    if (nodeB == null || nodeB.id != k) continue;
+					angle = Mathf.RoundToInt(Mathf.Asin(Mathf.Clamp01(Mathf.Abs(nodeB.pos.normalized.y))) * 57.29578f);
+					if (angle > 15f) continue;
+                    for (var l = k + 1; l < nodeCount; l++)
+                    {
+                        var nodeC = layer.nodePool[l];
+                        if (nodeC == null || nodeC.id != l) continue;
+						angle = Mathf.RoundToInt(Mathf.Asin(Mathf.Clamp01(Mathf.Abs(nodeC.pos.normalized.y))) * 57.29578f);
+						if (angle > 15f) continue;
+                        var area = Vector3.Cross(nodeB.pos - nodeA.pos, nodeC.pos - nodeA.pos).sqrMagnitude;
+                        supposedShells.Add(new SupposedShell { nodeA = nodeA, nodeB = nodeB, nodeC = nodeC, area = area });
+                    }
+                }
+            }
+            supposedShells.Sort((a, b) => b.area.CompareTo(a.area));
+            CheatEnabler.Logger.LogDebug($"Finished Area Sort");
+            var count = supposedShells.Count;
+            for (j = 0; j < count; j++)
+            {
+                var shell = supposedShells[j];
+                if (!availableFrames.TryGetValue((shell.nodeA.id, shell.nodeB.id), out _)) {
+                    var frame = layer.QuickAddDysonFrame(0, shell.nodeA, shell.nodeB, false);
+                    availableFrames[(shell.nodeA.id, shell.nodeB.id)] = frame.id;
+                    unusedFrameIds.Add(frame.id);
+                }
+                if (!availableFrames.TryGetValue((shell.nodeA.id, shell.nodeC.id), out _)) {
+                    var frame = layer.QuickAddDysonFrame(0, shell.nodeA, shell.nodeC, false);
+                    availableFrames[(shell.nodeA.id, shell.nodeC.id)] = frame.id;
+                    unusedFrameIds.Add(frame.id);
+                }
+                if (!availableFrames.TryGetValue((shell.nodeB.id, shell.nodeC.id), out _)) {
+                    var frame = layer.QuickAddDysonFrame(0, shell.nodeB, shell.nodeC, false);
+                    availableFrames[(shell.nodeB.id, shell.nodeC.id)] = frame.id;
+                    unusedFrameIds.Add(frame.id);
+                }
+            }
+            var total = 0;
+			DysonFrame[] frames = null;
+			DysonNode[] nodes = null;
+            for (j = 0; j < count && total < 8192; j++)
+            {
+                var shell = supposedShells[j];
+                frames = [layer.framePool[availableFrames[(shell.nodeA.id, shell.nodeB.id)]], layer.framePool[availableFrames[(shell.nodeB.id, shell.nodeC.id)]], layer.framePool[availableFrames[(shell.nodeA.id, shell.nodeC.id)]]];
+                nodes = [shell.nodeA, shell.nodeB, shell.nodeC];
+                if (layer.QuickAddDysonShell(0, nodes, frames) <= 0) continue;
+                unusedFrameIds.Remove(frames[0].id);
+                unusedFrameIds.Remove(frames[1].id);
+                unusedFrameIds.Remove(frames[2].id);
+                dirtyNodes.Add(shell.nodeA);
+                dirtyNodes.Add(shell.nodeB);
+                dirtyNodes.Add(shell.nodeC);
+                total++;
+                shellsChanged = true;
+				break;
+            }
+			while (total < 2048)
+			{
+				layer.QuickAddDysonShell(0, nodes, frames);
+				total++;
+			}
+            foreach (var frameId in unusedFrameIds)
+            {
+                layer.QuickRemoveDysonFrame(frameId);
+            }
+            foreach (var node in dirtyNodes)
+            {
+                node.RecalcSpReq();
+                node.RecalcCpReq();
+            }
+        }
+        dysonSphere.CheckAutoNodes();
+        if (dysonSphere.autoNodeCount <= 0)
+        {
+            dysonSphere.PickAutoNode();
+        }
+        if (shellsChanged)
+        {
+            GameMain.gameScenario.NotifyOnPlanDysonShell();
+            dysonSphere.modelRenderer.RebuildModels();
+        }
+	}
 
     public static void CreatePossibleFramesAndShells()
     {

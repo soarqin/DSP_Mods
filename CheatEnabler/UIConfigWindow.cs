@@ -290,7 +290,7 @@ public static class UIConfigWindow
             y = 10f;
             wnd.AddButton(x, y, 300f, tab4, "Complete Dyson Sphere shells instantly", 16, "button-complete-dyson-sphere-shells-instantly", DysonSphereFunctions.CompleteShellsInstantly);
             y += 36f;
-            wnd.AddButton(x, y, 300f, tab4, "Generate tricky dyson shells", 16, "button-generate-tricky-dyson-shells", DysonSphereFunctions.CreatePossibleFramesAndShells);
+            wnd.AddButton(x, y, 300f, tab4, "Generate tricky dyson shells", 16, "button-generate-tricky-dyson-shells", DysonSphereFunctions.CreatePossibleFramesAndShells2);
             y += 36f;
             wnd.AddButton(x, y, 300f, tab4, "Remove low production dyson shells", 16, "button-remove-low-production-dyson-shells", () => DysonSphereFunctions.RemoveLowProductionShells());
             y += 30f;
