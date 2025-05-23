@@ -157,6 +157,48 @@ public static class DysonSphereFunctions
         });
     }
 
+	private static DysonNode QuickAddDysonNode(this DysonSphereLayer layer, int protoId, Vector3 pos)
+	{
+		int nodeId;
+		if (layer.nodeRecycleCursor > 0)
+		{
+			int[] array = layer.nodeRecycle;
+			int num = layer.nodeRecycleCursor - 1;
+			layer.nodeRecycleCursor = num;
+			nodeId = array[num];
+		}
+		else
+		{
+			int nodePoolIndex = layer.nodeCursor;
+			layer.nodeCursor = nodePoolIndex + 1;
+			nodeId = nodePoolIndex;
+			if (nodeId == layer.nodeCapacity)
+			{
+				layer.SetNodeCapacity(layer.nodeCapacity * 2);
+			}
+		}
+		DysonNode node = null;
+		if (layer.nodePool[nodeId] == null)
+		{
+			node = new DysonNode();
+			layer.nodePool[nodeId] = node;
+		}
+		else
+		{
+			node = layer.nodePool[nodeId];
+			node.SetEmpty();
+		}
+		node.id = nodeId;
+		node.protoId = protoId;
+		node.layerId = layer.id;
+		node.pos = pos;
+		node.reserved = false;
+		node.sp = 0;
+		node.spMax = DysonNode.kSpPerNode;
+		layer.dysonSphere.AddDysonNodeRData(node, true);
+		return node;
+	}
+
     private static DysonFrame QuickAddDysonFrame(this DysonSphereLayer layer, int protoId, DysonNode nodeA, DysonNode nodeB, bool euler)
     {
         int newId;
@@ -642,7 +684,7 @@ public static class DysonSphereFunctions
 		}
         if (!shell.MyGenerateGeometry() || DysonShell.s_vmap.Count < 32000)
         {
-            CheatEnabler.Logger.LogDebug($"{shellId} DysonShell.s_vmap.Count: {DysonShell.s_vmap.Count}");
+            CheatEnabler.Logger.LogDebug($"Stripped VertCount: {DysonShell.s_vmap.Count}");
             shell.Free();
             layer.shellPool[shellId] = null;
             int recycleIndex = layer.shellRecycleCursor;
@@ -650,7 +692,7 @@ public static class DysonSphereFunctions
             layer.shellRecycle[recycleIndex] = shellId;
             return 0;
         }
-        CheatEnabler.Logger.LogDebug($"{shellId} DysonShell.s_vmap.Count: {DysonShell.s_vmap.Count}");
+        CheatEnabler.Logger.LogDebug($"Shell {shellId} VertCount: {DysonShell.s_vmap.Count}");
         for (int j = 0; j < shell.nodes.Count; j++)
         {
             shell.nodes[j].shells.Add(shell);
@@ -679,6 +721,96 @@ public static class DysonSphereFunctions
 
         public float area;
     }
+
+	public static void CreatePossibleFramesAndShells3()
+	{
+        StarData star = null;
+        var dysonEditor = UIRoot.instance?.uiGame?.dysonEditor;
+        if (dysonEditor != null && dysonEditor.gameObject.activeSelf)
+        {
+            star = dysonEditor.selection.viewStar;
+        }
+        if (star == null)
+        {
+            star = GameMain.data?.localStar;
+            if (star == null)
+            {
+                UIMessageBox.Show("CheatEnabler".Translate(), "You are not in any system.".Translate(), "确定".Translate(), 3, null);
+                return;
+            }
+        }
+        var dysonSphere = GameMain.data?.dysonSpheres[star.index];
+        if (dysonSphere == null || dysonSphere.layerCount == 0)
+        {
+            UIMessageBox.Show("CheatEnabler".Translate(), string.Format("There is no Dyson Sphere shell on \"{0}\".".Translate(), star.displayName), "确定".Translate(), 3, null);
+            return;
+        }
+		DysonShell.s_vmap ??= new Dictionary<int, Vector3>(16384);
+		DysonShell.s_outvmap ??= new Dictionary<int, Vector3>(16384);
+		DysonShell.s_ivmap ??= new Dictionary<int, int>(16384);
+		DysonSphereLayer layer = null;
+		var nodePos = new List<Vector3>();
+		var isEuler = new List<bool>();
+        for (var i = 1; i < dysonSphere.layersIdBased.Length; i++)
+        {
+            layer = dysonSphere.layersIdBased[i];
+            if (layer == null || layer.id != i) continue;
+			for (var j = 1; j < layer.shellCursor; j++)
+			{
+				var shell = layer.shellPool[j];
+				if (shell == null || shell.id != j) continue;
+				if (shell.nodes.Count != 3) continue;
+				nodePos.Add(shell.nodes[0].pos);
+				nodePos.Add(shell.nodes[1].pos);
+				nodePos.Add(shell.nodes[2].pos);
+				isEuler.Add(shell.frames[0].euler);
+				isEuler.Add(shell.frames[1].euler);
+				isEuler.Add(shell.frames[2].euler);
+			}
+			break;
+		}
+		if (nodePos.Count == 0)
+		{
+			UIMessageBox.Show("CheatEnabler".Translate(), string.Format("There is no Dyson Sphere shell on \"{0}\".".Translate(), star.displayName), "确定".Translate(), 3, null);
+			return;
+		}
+		UXAssist.Functions.DysonSphereFunctions.InitCurrentDysonLayer(star, -1);
+		dysonSphere = GameMain.data?.dysonSpheres[star.index];
+		for (var i = 1; i < dysonSphere.layersIdBased.Length; i++)
+		{
+			if (dysonSphere.layersIdBased[i] != null) dysonSphere.RemoveLayer(dysonSphere.layersIdBased[i]);
+		}
+		var orbitRadius = dysonSphere.maxOrbitRadius;
+		dysonSphere.QueryLayerRadius(ref orbitRadius, out var speed);
+		Quaternion quaternion = Quaternion.Euler(0f, 0f, 0f);
+		layer = dysonSphere.AddLayer(orbitRadius, quaternion,speed);
+		DysonNode[] nodes = [
+			layer.QuickAddDysonNode(0, nodePos[0]),
+			layer.QuickAddDysonNode(0, nodePos[1]),
+			layer.QuickAddDysonNode(0, nodePos[2]),
+		];
+		DysonFrame[] frames = [
+			layer.QuickAddDysonFrame(0, nodes[0], nodes[1], isEuler[0]),
+			layer.QuickAddDysonFrame(0, nodes[1], nodes[2], isEuler[1]),
+			layer.QuickAddDysonFrame(0, nodes[2], nodes[0], isEuler[2]),
+		];
+		for (var i = 0; i < 1024; i++)
+		{
+			layer.QuickAddDysonShell(0, nodes, frames);
+		}
+		foreach (var node in nodes)
+		{
+			node.RecalcSpReq();
+			node.RecalcCpReq();
+		}
+        dysonSphere.CheckAutoNodes();
+        if (dysonSphere.autoNodeCount <= 0)
+        {
+            dysonSphere.PickAutoNode();
+        }
+		dysonSphere.modelRenderer.RebuildModels();
+		GameMain.gameScenario.NotifyOnPlanDysonShell();
+	}
 
 	public static void CreatePossibleFramesAndShells2()
 	{
