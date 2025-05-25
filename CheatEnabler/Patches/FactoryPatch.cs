@@ -418,6 +418,38 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             return matcher.InstructionEnumeration();
         }
 
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(ConstructionSystem), nameof(ConstructionSystem.AddBuildTargetToModules))]
+        private static IEnumerable<CodeInstruction> ConstructionSystem_AddBuildTargetToModules_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            // 13	0035	ldarg.0
+            // 14	0036	ldfld	class Player ConstructionSystem::player
+            // 15	003B	callvirt	instance class Mecha Player::get_mecha()
+            // 16	0040	ldfld	float32 Mecha::buildArea
+            // 17	0045	stloc.0
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Ldarg_0),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(ConstructionSystem), nameof(ConstructionSystem.player))),
+                new CodeMatch(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Player), nameof(Player.mecha))),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(Mecha), nameof(Mecha.buildArea))),
+                new CodeMatch(ci => ci.IsStloc())
+            );
+            var labels = matcher.Labels;
+            matcher.Labels = [];
+            matcher.Insert(
+                new CodeInstruction(OpCodes.Ldarg_0).WithLabels(labels),
+                new CodeInstruction(OpCodes.Ldarg_1),
+                Transpilers.EmitDelegate((ConstructionSystem constructionSystem, int objId) =>
+                {
+                    var player = constructionSystem.player;
+                    player.factory.BuildFinally(player, objId);
+                }),
+                new CodeInstruction(OpCodes.Ret)
+            );
+            return matcher.InstructionEnumeration();
+        }
+
         [HarmonyPostfix]
         [HarmonyPatch(typeof(UXAssist.Functions.PlanetFunctions), nameof(UXAssist.Functions.PlanetFunctions.BuildOrbitalCollectors))]
         private static void UXAssist_PlanetFunctions_BuildOrbitalCollectors_Postfix()
