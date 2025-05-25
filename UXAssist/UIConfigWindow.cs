@@ -121,7 +121,8 @@ public static class UIConfigWindow
         I18N.Add("Extra buffer count for Self-evolution Labs", "Extra buffer count for Self-evolution Labs", "自演化研究站矩阵额外缓冲数量");
         I18N.Add("Buffer count for researching in labs", "Buffer count for researching in labs", "研究站科研模式缓存数量");
         I18N.Add("Ray Receiver Graviton Lens buffer count", "Ray Receiver Graviton Lens buffer count", "射线接收器透镜缓冲数量");
-        I18N.Add("Dismantle blueprint selected buildings", "Dismantle blueprint selected buildings", "拆除蓝图选中的建筑");
+        I18N.Add("Shortcut keys for Blueprint Copy mode", "Shortcut keys for Blueprint Copy mode", "蓝图复制模式快捷键");
+        I18N.Add("Shortcut keys for Blueprint Copy mode tips", "You can set 2 shortcut keys in Settings panel:\n  1. Select all buildings\n  2. Dismantle selected buildings", "你可以在设置面板中设置2个快捷键：\n  1. 选择所有建筑\n  2. 拆除选中的建筑");
         I18N.Add("Shortcut keys for showing stars' name", "Shortcut keys for showing stars' name", "启用显示所有星系名称的快捷键");
         I18N.Add("Auto navigation on sailings", "Auto navigation on sailings", "宇宙航行时自动导航");
         I18N.Add("Enable auto-cruise", "Enable auto-cruise", "启用自动巡航");
@@ -406,7 +407,8 @@ public static class UIConfigWindow
         y += 36f;
         wnd.AddCheckBox(x, y, tab2, FactoryPatch.DoNotRenderEntitiesEnabled, "Do not render factory entities");
         y += 36f;
-        wnd.AddCheckBox(x, y, tab2, FactoryPatch.DismantleBlueprintSelectionEnabled, "Dismantle blueprint selected buildings");
+        checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab2, FactoryPatch.ShortcutKeysForBlueprintCopyEnabled, "Shortcut keys for Blueprint Copy mode");
+        wnd.AddTipsButton2(x + checkBoxForMeasureTextWidth.Width + 5f, y + 6f, tab2, "Shortcut keys for Blueprint Copy mode", "Shortcut keys for Blueprint Copy mode tips", "shortcut-keys-for-blueprint-copy-mode-tips");
         y += 36f;
         wnd.AddCheckBox(x, y, tab2, FactoryPatch.BeltSignalsForBuyOutEnabled, "Belt signals for buy out dark fog items automatically");
 

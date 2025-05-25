@@ -3,6 +3,11 @@
 
 ## Changlog
 
+* 1.3.6
+  + `Dismantle blueprint selected buildings`:
+    - Fix a crash on dismantling preview buildings.
+    - Rename to `Shortcut keys for Blueprint Copy mode`, while adding a shortcut key to select all buildings (Ctrl+A by default).
+  + `Allow overflow for Logistic Stations and Advanced Mining Machines`: Working for Logistics Control Panel now.
 * 1.3.5
   + `Mod manager profile based save folder`: Fix crash on game startup
 * 1.3.4
@@ -313,6 +318,11 @@
 
 ## 更新日志
 
+* 1.3.6
+  + `拆除蓝图选中的建筑`：
+    - 修复了拆除虚影建筑时崩溃的问题
+    - 重命名为`蓝图复制模式快捷键`，同时添加了选择所有建筑的快捷键（默认为Ctrl+A）
+  + `允许物流站和大型采矿机物品溢出`：现在也适用于物流控制面板
 * 1.3.5
   + `基于mod管理器配置档案的存档文件夹`：修复游戏启动时崩溃的问题
 * 1.3.4

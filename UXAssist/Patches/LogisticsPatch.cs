@@ -466,10 +466,11 @@ public static class LogisticsPatch
 
     private class AllowOverflowInLogistics : PatchImpl<AllowOverflowInLogistics>
     {
-        private static bool _bludprintPasting;
+        private static bool _blueprintPasting;
 
         // Do not check for overflow when try to send hand items into storages
         [HarmonyTranspiler]
+        [HarmonyPatch(typeof(UIControlPanelStationStorage), nameof(UIControlPanelStationStorage.OnItemIconMouseDown))]
         [HarmonyPatch(typeof(UIStationStorage), nameof(UIStationStorage.OnItemIconMouseDown))]
         private static IEnumerable<CodeInstruction> UIStationStorage_OnItemIconMouseDown_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
         {
@@ -516,7 +517,7 @@ public static class LogisticsPatch
             var oldLabels = matcher.Labels;
             matcher.Labels = [];
             matcher.InsertAndAdvance(
-                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(AllowOverflowInLogistics), nameof(_bludprintPasting))).WithLabels(oldLabels),
+                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(AllowOverflowInLogistics), nameof(_blueprintPasting))).WithLabels(oldLabels),
                 new CodeInstruction(OpCodes.Brfalse, label)
             );
             matcher.Advance(9).Labels.Add(label);
@@ -527,14 +528,14 @@ public static class LogisticsPatch
         [HarmonyPatch(typeof(BuildTool_BlueprintPaste), nameof(BuildTool_BlueprintPaste.CreatePrebuilds))]
         private static void BuildTool_BlueprintPaste_CreatePrebuilds_Prefix()
         {
-            _bludprintPasting = true;
+            _blueprintPasting = true;
         }
 
         [HarmonyPostfix]
         [HarmonyPatch(typeof(BuildTool_BlueprintPaste), nameof(BuildTool_BlueprintPaste.CreatePrebuilds))]
         private static void BuildTool_BlueprintPaste_CreatePrebuilds_Postfix()
         {
-            _bludprintPasting = false;
+            _blueprintPasting = false;
         }
     }
 

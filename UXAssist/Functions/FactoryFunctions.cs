@@ -87,18 +87,21 @@ public static class FactoryFunctions
         var stationPool = factory.transport.stationPool;
         foreach (var objId in buildPreviewsToRemove)
         {
-            int stationId = entityPool[objId].stationId;
-            if (stationId > 0)
+            if (objId > 0)
             {
-                StationComponent sc = stationPool[stationId];
-                if (sc.id != stationId) continue;
-                for (int i = 0; i < sc.storage.Length; i++)
+                int stationId = entityPool[objId].stationId;
+                if (stationId > 0)
                 {
-                    int package = player.TryAddItemToPackage(sc.storage[i].itemId, sc.storage[i].count, 0, true, objId);
-                    UIItemup.Up(sc.storage[i].itemId, package);
+                    StationComponent sc = stationPool[stationId];
+                    if (sc.id != stationId) continue;
+                    for (int i = 0; i < sc.storage.Length; i++)
+                    {
+                        int package = player.TryAddItemToPackage(sc.storage[i].itemId, sc.storage[i].count, 0, true, objId);
+                        UIItemup.Up(sc.storage[i].itemId, package);
+                    }
+                    sc.storage = new StationStore[sc.storage.Length];
+                    sc.needs = new int[sc.needs.Length];
                 }
-                sc.storage = new StationStore[sc.storage.Length];
-                sc.needs = new int[sc.needs.Length];
             }
             build.DoDismantleObject(objId);
         }
@@ -107,5 +110,22 @@ public static class FactoryFunctions
         blueprintCopyTool.ResetBlueprint();
         blueprintCopyTool.ResetBuildPreviews();
         blueprintCopyTool.RefreshBlueprintData();
+    }
+
+    public static void SelectAllBuildingsInBlueprintCopy()
+    {
+        var localFactory = GameMain.localPlanet?.factory;
+        if (localFactory == null) return;
+        var blueprintCopyTool = GameMain.mainPlayer?.controller?.actionBuild?.blueprintCopyTool;
+        if (blueprintCopyTool == null || !blueprintCopyTool.active) return;
+        var entityPool = localFactory.entityPool;
+        foreach (var entity in entityPool)
+        {
+            if (entity.id == 0) continue;
+            blueprintCopyTool.preSelectObjIds.Add(entity.id);
+            blueprintCopyTool.selectedObjIds.Add(entity.id);
+        }
+        blueprintCopyTool.RefreshBlueprintData();
+        blueprintCopyTool.DeterminePreviews();
     }
 }

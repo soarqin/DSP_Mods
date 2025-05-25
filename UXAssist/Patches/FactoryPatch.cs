@@ -41,12 +41,13 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
     public static ConfigEntry<int> LabBufferExtraCountForAdvancedAssemble;
     public static ConfigEntry<int> LabBufferMaxCountForResearch;
     public static ConfigEntry<int> ReceiverBufferCount;
-    public static ConfigEntry<bool> DismantleBlueprintSelectionEnabled;
+    public static ConfigEntry<bool> ShortcutKeysForBlueprintCopyEnabled;
 
     private static PressKeyBind _doNotRenderEntitiesKey;
     private static PressKeyBind _offgridfForPathsKey;
     private static PressKeyBind _cutConveyorBeltKey;
     private static PressKeyBind _dismantleBlueprintSelectionKey;
+    private static PressKeyBind _selectAllBuildingsInBlueprintCopyKey;
 
     private static int _tankFastFillInAndTakeOutMultiplierRealValue = 2;
 
@@ -88,6 +89,15 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         }
         );
         I18N.Add("KEYDismantleBlueprintSelection", "[UXA] Dismantle blueprint selected buildings", "[UXA] 拆除蓝图选中的建筑");
+        _selectAllBuildingsInBlueprintCopyKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
+        {
+            key = new CombineKey((int)KeyCode.A, CombineKey.CTRL_COMB, ECombineKeyAction.OnceClick, false),
+            conflictGroup = KeyBindConflict.KEYBOARD_KEYBIND,
+            name = "SelectAllBuildingsInBlueprintCopy",
+            canOverride = true
+        }
+        );
+        I18N.Add("KEYSelectAllBuildingsInBlueprintCopy", "[UXA] Select all buildings in Blueprint Copy Mode", "[UXA] 蓝图复制时选择所有建筑");
 
         BeltSignalsForBuyOut.InitPersist();
         ProtectVeinsFromExhaustion.InitConfig();
@@ -182,8 +192,13 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                 Functions.FactoryFunctions.CutConveyorBelt(cargoTraffic, beltId);
             }
         }
-        if (DismantleBlueprintSelectionEnabled.Value && _dismantleBlueprintSelectionKey.keyValue)
-            Functions.FactoryFunctions.DismantleBlueprintSelectedBuildings();
+        if (ShortcutKeysForBlueprintCopyEnabled.Value)
+        {
+            if (_dismantleBlueprintSelectionKey.keyValue)
+                Functions.FactoryFunctions.DismantleBlueprintSelectedBuildings();
+            if (_selectAllBuildingsInBlueprintCopyKey.keyValue)
+                Functions.FactoryFunctions.SelectAllBuildingsInBlueprintCopy();
+        }
     }
 
     public static void Export(BinaryWriter w)
