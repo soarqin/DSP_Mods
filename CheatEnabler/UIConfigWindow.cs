@@ -45,7 +45,7 @@ public static class UIConfigWindow
             "传送带信号物品生成数量格式：\n  默认为AAAABC\n  勾选替换为BCAAAA\nAAAA=生成速度，B=增产点数，C=堆叠数量");
         I18N.Add("Count generations as production in statistics", "Count generations as production in statistics", "统计信息里将生成计算为产物");
         I18N.Add("Count removals as consumption in statistics", "Count removals as consumption in statistics", "统计信息里将移除计算为消耗");
-        I18N.Add("Count all raws and intermediates in statistics","Count all raw materials in statistics", "统计信息里计算所有原料和中间产物");
+        I18N.Add("Count all raws and intermediates in statistics", "Count all raw materials in statistics", "统计信息里计算所有原料和中间产物");
         I18N.Add("Remove power space limit", "Remove space limit for winds and geothermals", "移除风力发电和地热发电的间距限制");
         I18N.Add("Boost wind power", "Boost wind power(x100,000)", "提升风力发电(x100,000)");
         I18N.Add("Boost solar power", "Boost solar power(x100,000)", "提升太阳能发电(x100,000)");
@@ -53,12 +53,14 @@ public static class UIConfigWindow
         I18N.Add("Boost fuel power 2", "(x20,000 for deuteron, x10,000 for antimatter)", "(氘核燃料棒x20,000，反物质燃料棒x10,000)");
         I18N.Add("Wind Turbines do global power coverage", "Wind Turbines do global power coverage", "风力涡轮机供电覆盖全球");
         I18N.Add("Boost geothermal power", "Boost geothermal power(x50,000)", "提升地热发电(x50,000)");
-        I18N.Add("Increase maximum power usage in Logistic Stations and Advanced Mining Machines", "Increase maximum power usage in Logistic Stations and Advanced Mining Machines", "提升物流塔和大型采矿机的最大功耗");
+        I18N.Add("Increase maximum power usage in Logistic Stations and Advanced Mining Machines", "Increase maximum power usage in Logistic Stations and Advanced Mining Machines",
+            "提升物流塔和大型采矿机的最大功耗");
         I18N.Add("Retrieve/Place items from/to remote planets on logistics control panel", "Retrieve/Place items from/to remote planets on logistics control panel", "在物流总控面板上可以从非本地行星取放物品");
         I18N.Add("Infinite Natural Resources", "Infinite natural resources", "自然资源采集不消耗");
         I18N.Add("Fast Mining", "Fast mining", "高速采集");
         I18N.Add("Pump Anywhere", "Pump anywhere", "平地抽水");
         I18N.Add("Skip bullet period", "Skip bullet period", "跳过子弹阶段");
+        I18N.Add("Fire all bullets at once", "Fire all bullets at once", "一次弹射所有太阳帆");
         I18N.Add("Skip absorption period", "Skip absorption period", "跳过吸收阶段");
         I18N.Add("Quick absorb", "Quick absorb", "快速吸收");
         I18N.Add("Eject anyway", "Eject anyway", "全球弹射");
@@ -100,180 +102,185 @@ public static class UIConfigWindow
     }
 
     private static void CreateUI(MyConfigWindow wnd, RectTransform trans)
+    {
+        _windowTrans = trans;
+        // General tab
+        var x = 0f;
+        var y = 10f;
+        wnd.AddSplitter(trans, 10f);
+        wnd.AddTabGroup(trans, "Cheat Enabler", "tab-group-cheatenabler");
+        var tab1 = wnd.AddTab(_windowTrans, "General");
+        var cb = wnd.AddCheckBox(x, y, tab1, GamePatch.DevShortcutsEnabled, "Enable Dev Shortcuts");
+        x += cb.Width + 5f;
+        y += 6f;
+        wnd.AddTipsButton2(x, y, tab1, "Dev Shortcuts", "Dev Shortcuts Tips", "dev-shortcuts-tips");
+        x = 0;
+        y += 30f;
+        wnd.AddCheckBox(x, y, tab1, GamePatch.AbnormalDisablerEnabled, "Disable Abnormal Checks");
+        y += 36f;
+        cb = wnd.AddCheckBox(x, y, tab1, GamePatch.UnlockTechEnabled, "Unlock Tech with Key-Modifiers");
+        x += cb.Width + 5f;
+        y += 6f;
+        wnd.AddTipsButton2(x, y, tab1, "Unlock Tech with Key-Modifiers", "Unlock Tech with Key-Modifiers Tips", "unlock-tech-tips");
+        x = 0f;
+        y += 30f + 36f;
+        wnd.AddButton(x, y, 400f, tab1, "Remove all metadata consumption records", 16, "button-remove-all-metadata-consumption", PlayerFunctions.RemoveAllMetadataConsumptions);
+        y += 36f;
+        wnd.AddButton(x, y, 400f, tab1, "Remove metadata consumption record in current game", 16, "button-remove-current-metadata-consumption", PlayerFunctions.RemoveCurrentMetadataConsumptions);
+        y += 36f;
+        _clearBanBtn = wnd.AddButton(x, y, 400f, tab1, "Clear metadata flag which bans achievements", 16, "button-clear-ban-list", PlayerFunctions.ClearMetadataBanAchievements);
+        x = 300f;
+        y = 10f;
+        _resignGameBtn = wnd.AddButton(x, y, 300f, tab1, "Assign gamesave to current account", 16, "resign-game-btn", () => { GameMain.data.account = AccountData.me; });
+
+        var tab2 = wnd.AddTab(_windowTrans, "Factory");
+        x = 0f;
+        y = 10f;
+        wnd.AddCheckBox(x, y, tab2, FactoryPatch.ImmediateEnabled, "Finish build immediately");
+        y += 36f;
+        wnd.AddCheckBox(x, y, tab2, FactoryPatch.ArchitectModeEnabled, "Architect mode");
+        y += 36f;
+        wnd.AddCheckBox(x, y, tab2, FactoryPatch.NoConditionEnabled, "Build without condition");
+        y += 36f;
+        wnd.AddCheckBox(x, y, tab2, FactoryPatch.NoCollisionEnabled, "No collision");
+        y += 36f;
+        wnd.AddCheckBox(x, y, tab2, FactoryPatch.BeltSignalGeneratorEnabled, "Belt signal generator");
+        x += 26f;
+        y += 26f;
+        var cb1 = wnd.AddCheckBox(x, y, tab2, FactoryPatch.BeltSignalCountGenEnabled, "Count generations as production in statistics", 13);
+        y += 26f;
+        var cb2 = wnd.AddCheckBox(x, y, tab2, FactoryPatch.BeltSignalCountRemEnabled, "Count removals as consumption in statistics", 13);
+        y += 26f;
+        var cb3 = wnd.AddCheckBox(x, y, tab2, FactoryPatch.BeltSignalCountRecipeEnabled, "Count all raws and intermediates in statistics", 13);
+        y += 26f;
+        var cb4 = wnd.AddCheckBox(x, y, tab2, FactoryPatch.BeltSignalNumberAltFormat, "Belt signal alt format", 13);
+        x += cb4.Width + 5f;
+        y += 6f;
+        var tip1 = wnd.AddTipsButton2(x, y, tab2, "Belt signal alt format", "Belt signal alt format tips", "belt-signal-alt-format-tips");
+        x = 0f;
+        y += 30f;
+        wnd.AddCheckBox(x, y, tab2, FactoryPatch.GreaterPowerUsageInLogisticsEnabled, "Increase maximum power usage in Logistic Stations and Advanced Mining Machines");
+        y += 36f;
+        wnd.AddCheckBox(x, y, tab2, FactoryPatch.ControlPanelRemoteLogisticsEnabled, "Retrieve/Place items from/to remote planets on logistics control panel");
         {
-            _windowTrans = trans;
-            // General tab
-            var x = 0f;
-            var y = 10f;
-            wnd.AddSplitter(trans, 10f);
-            wnd.AddTabGroup(trans, "Cheat Enabler", "tab-group-cheatenabler");
-            var tab1 = wnd.AddTab(_windowTrans, "General");
-            var cb = wnd.AddCheckBox(x, y, tab1, GamePatch.DevShortcutsEnabled, "Enable Dev Shortcuts");
-            x += cb.Width + 5f;
-            y += 6f;
-            wnd.AddTipsButton2(x, y, tab1, "Dev Shortcuts", "Dev Shortcuts Tips", "dev-shortcuts-tips");
-            x = 0;
-            y += 30f;
-            wnd.AddCheckBox(x, y, tab1, GamePatch.AbnormalDisablerEnabled, "Disable Abnormal Checks");
-            y += 36f;
-            cb = wnd.AddCheckBox(x, y, tab1, GamePatch.UnlockTechEnabled, "Unlock Tech with Key-Modifiers");
-            x += cb.Width + 5f;
-            y += 6f;
-            wnd.AddTipsButton2(x, y, tab1, "Unlock Tech with Key-Modifiers", "Unlock Tech with Key-Modifiers Tips", "unlock-tech-tips");
-            x = 0f;
-            y += 30f + 36f;
-            wnd.AddButton(x, y, 400f, tab1, "Remove all metadata consumption records", 16, "button-remove-all-metadata-consumption", PlayerFunctions.RemoveAllMetadataConsumptions);
-            y += 36f;
-            wnd.AddButton(x, y, 400f, tab1, "Remove metadata consumption record in current game", 16, "button-remove-current-metadata-consumption", PlayerFunctions.RemoveCurrentMetadataConsumptions);
-            y += 36f;
-            _clearBanBtn = wnd.AddButton(x, y, 400f, tab1, "Clear metadata flag which bans achievements", 16, "button-clear-ban-list", PlayerFunctions.ClearMetadataBanAchievements);
-            x = 300f;
-            y = 10f;
-            _resignGameBtn = wnd.AddButton(x, y, 300f, tab1, "Assign gamesave to current account", 16, "resign-game-btn", () => { GameMain.data.account = AccountData.me; });
+            FactoryPatch.BeltSignalGeneratorEnabled.SettingChanged += OnBeltSignalChanged;
+            wnd.OnFree += () => { FactoryPatch.BeltSignalGeneratorEnabled.SettingChanged -= OnBeltSignalChanged; };
+            OnBeltSignalChanged(null, null);
 
-            var tab2 = wnd.AddTab(_windowTrans, "Factory");
-            x = 0f;
-            y = 10f;
-            wnd.AddCheckBox(x, y, tab2, FactoryPatch.ImmediateEnabled, "Finish build immediately");
-            y += 36f;
-            wnd.AddCheckBox(x, y, tab2, FactoryPatch.ArchitectModeEnabled, "Architect mode");
-            y += 36f;
-            wnd.AddCheckBox(x, y, tab2, FactoryPatch.NoConditionEnabled, "Build without condition");
-            y += 36f;
-            wnd.AddCheckBox(x, y, tab2, FactoryPatch.NoCollisionEnabled, "No collision");
-            y += 36f;
-            wnd.AddCheckBox(x, y, tab2, FactoryPatch.BeltSignalGeneratorEnabled, "Belt signal generator");
-            x += 26f;
-            y += 26f;
-            var cb1 = wnd.AddCheckBox(x, y, tab2, FactoryPatch.BeltSignalCountGenEnabled, "Count generations as production in statistics", 13);
-            y += 26f;
-            var cb2 = wnd.AddCheckBox(x, y, tab2, FactoryPatch.BeltSignalCountRemEnabled, "Count removals as consumption in statistics", 13);
-            y += 26f;
-            var cb3 = wnd.AddCheckBox(x, y, tab2, FactoryPatch.BeltSignalCountRecipeEnabled, "Count all raws and intermediates in statistics", 13);
-            y += 26f;
-            var cb4 = wnd.AddCheckBox(x, y, tab2, FactoryPatch.BeltSignalNumberAltFormat, "Belt signal alt format", 13);
-            x += cb4.Width + 5f;
-            y += 6f;
-            var tip1 = wnd.AddTipsButton2(x, y, tab2, "Belt signal alt format", "Belt signal alt format tips", "belt-signal-alt-format-tips");
-            x = 0f;
-            y += 30f;
-            wnd.AddCheckBox(x, y, tab2, FactoryPatch.GreaterPowerUsageInLogisticsEnabled, "Increase maximum power usage in Logistic Stations and Advanced Mining Machines");
-            y += 36f;
-            wnd.AddCheckBox(x, y, tab2, FactoryPatch.ControlPanelRemoteLogisticsEnabled, "Retrieve/Place items from/to remote planets on logistics control panel");
+            void OnBeltSignalChanged(object o, EventArgs e)
             {
-                FactoryPatch.BeltSignalGeneratorEnabled.SettingChanged += OnBeltSignalChanged;
-                wnd.OnFree += () => { FactoryPatch.BeltSignalGeneratorEnabled.SettingChanged -= OnBeltSignalChanged; };
-                OnBeltSignalChanged(null, null);
-                void OnBeltSignalChanged(object o, EventArgs e)
-                {
-                    var on = FactoryPatch.BeltSignalGeneratorEnabled.Value;
-                    cb1.gameObject.SetActive(on);
-                    cb2.gameObject.SetActive(on);
-                    cb3.gameObject.SetActive(on);
-                    cb4.gameObject.SetActive(on);
-                    tip1.gameObject.SetActive(on);
-                }
+                var on = FactoryPatch.BeltSignalGeneratorEnabled.Value;
+                cb1.gameObject.SetActive(on);
+                cb2.gameObject.SetActive(on);
+                cb3.gameObject.SetActive(on);
+                cb4.gameObject.SetActive(on);
+                tip1.gameObject.SetActive(on);
             }
-            x = 350f;
-            y = 10f;
-            wnd.AddCheckBox(x, y, tab2, FactoryPatch.RemovePowerSpaceLimitEnabled, "Remove power space limit");
-            y += 36f;
-            wnd.AddCheckBox(x, y, tab2, FactoryPatch.WindTurbinesPowerGlobalCoverageEnabled, "Wind Turbines do global power coverage");
-            y += 36f;
-            wnd.AddCheckBox(x, y, tab2, FactoryPatch.BoostWindPowerEnabled, "Boost wind power");
-            y += 36f;
-            wnd.AddCheckBox(x, y, tab2, FactoryPatch.BoostSolarPowerEnabled, "Boost solar power");
-            y += 36f;
-            wnd.AddCheckBox(x, y, tab2, FactoryPatch.BoostGeothermalPowerEnabled, "Boost geothermal power");
-            y += 36f;
-            wnd.AddCheckBox(x, y, tab2, FactoryPatch.BoostFuelPowerEnabled, "Boost fuel power");
-            y += 26f;
-            wnd.AddText2(x + 32f, y, tab2, "Boost fuel power 2", 13);
-
-            // Planet Tab
-            var tab3 = wnd.AddTab(_windowTrans, "Planet");
-            x = 0f;
-            y = 10f;
-            wnd.AddCheckBox(x, y, tab3, ResourcePatch.InfiniteResourceEnabled, "Infinite Natural Resources");
-            y += 36f;
-            wnd.AddCheckBox(x, y, tab3, ResourcePatch.FastMiningEnabled, "Fast Mining");
-            y += 36f;
-            wnd.AddCheckBox(x, y, tab3, PlanetPatch.WaterPumpAnywhereEnabled, "Pump Anywhere");
-            y += 36f;
-            wnd.AddCheckBox(x, y, tab3, PlanetPatch.TerraformAnywayEnabled, "Terraform without enough soil piles");
-            y += 36f;
-            wnd.AddCheckBox(x, y, tab3, PlayerPatch.InstantHandCraftEnabled, "Instant hand-craft");
-            y += 36f;
-            wnd.AddCheckBox(x, y, tab3, PlayerPatch.InstantTeleportEnabled, "Instant teleport (like that in Sandbox mode)");
-            x = 400f;
-            y = 10f;
-            wnd.AddButton(x, y, 200f, tab3, "矿物掩埋标题", 16, "button-bury-all", () => { PlanetFunctions.BuryAllVeins(true); });
-            y += 36f;
-            wnd.AddButton(x, y, 200f, tab3, "矿物还原标题", 16, "button-bury-restore-all", () => { PlanetFunctions.BuryAllVeins(false); });
-            y += 36f;
-            wnd.AddButton(x, y, 200f, tab3, "铺满地基提示", 16, "button-reform-all", () =>
-            {
-                var player = GameMain.mainPlayer;
-                if (player == null) return;
-                var reformTool = player.controller.actionBuild.reformTool;
-                var factory = GameMain.localPlanet?.factory;
-                if (factory == null) return;
-                GameMain.localPlanet.factory.PlanetReformAll(reformTool.brushType, reformTool.brushColor, reformTool.buryVeins);
-            });
-            y += 36f;
-            wnd.AddButton(x, y, 200f, tab3, "还原地形提示", 16, "button-reform-revert-all", () =>
-            {
-                var factory = GameMain.localPlanet?.factory;
-                if (factory == null) return;
-                GameMain.localPlanet.factory.PlanetReformRevert();
-            });
-
-            var tab4 = wnd.AddTab(_windowTrans, "Dyson Sphere");
-            x = 0f;
-            y = 10f;
-            wnd.AddCheckBox(x, y, tab4, DysonSpherePatch.SkipBulletEnabled, "Skip bullet period");
-            y += 36f;
-            wnd.AddCheckBox(x, y, tab4, DysonSpherePatch.SkipAbsorbEnabled, "Skip absorption period");
-            y += 36f;
-            wnd.AddCheckBox(x, y, tab4, DysonSpherePatch.QuickAbsorbEnabled, "Quick absorb");
-            y += 36f;
-            wnd.AddCheckBox(x, y, tab4, DysonSpherePatch.EjectAnywayEnabled, "Eject anyway");
-            y += 36f;
-            wnd.AddCheckBox(x, y, tab4, DysonSpherePatch.OverclockEjectorEnabled, "Overclock Ejectors");
-            y += 36f;
-            wnd.AddCheckBox(x, y, tab4, DysonSpherePatch.OverclockSiloEnabled, "Overclock Silos");
-            y += 36f;
-            wnd.AddCheckBox(x, y, tab4, DysonSpherePatch.UnlockMaxOrbitRadiusEnabled, "Unlock Dyson Sphere max orbit radius");
-            y += 30f;
-            {
-                var slider = wnd.AddSlider(x + 20, y, tab4, DysonSpherePatch.UnlockMaxOrbitRadiusValue, new MaxOrbitRadiusValueMapper(), "##,#m").WithSmallerHandle(-40f);
-                DysonSpherePatch.UnlockMaxOrbitRadiusEnabled.SettingChanged += UnlockMaxOrbitRadiusChanged;
-                wnd.OnFree += () => { DysonSpherePatch.UnlockMaxOrbitRadiusEnabled.SettingChanged -= UnlockMaxOrbitRadiusChanged; };
-                UnlockMaxOrbitRadiusChanged(null, null);
-                void UnlockMaxOrbitRadiusChanged(object o, EventArgs e)
-                {
-                    slider.slider.enabled = DysonSpherePatch.UnlockMaxOrbitRadiusEnabled.Value;
-                }
-            ;
-            }
-            x = 300f;
-            y = 10f;
-            wnd.AddButton(x, y, 300f, tab4, "Complete Dyson Sphere shells instantly", 16, "button-complete-dyson-sphere-shells-instantly", DysonSphereFunctions.CompleteShellsInstantly);
-
-            var tab5 = wnd.AddTab(_windowTrans, "Mecha/Combat");
-            x = 0f;
-            y = 10f;
-            wnd.AddCheckBox(x, y, tab5, CombatPatch.MechaInvincibleEnabled, "Mecha and Drones/Fleets invicible");
-            y += 36f;
-            wnd.AddCheckBox(x, y, tab5, CombatPatch.BuildingsInvincibleEnabled, "Buildings invicible");
-            y += 36f;
-            wnd.AddCheckBox(x, y, tab5, PlayerPatch.WarpWithoutSpaceWarpersEnabled, "Enable warp without space warpers");
-            x = 400f;
-            y = 10f;
-            wnd.AddButton(x, y, 200f, tab5, "Teleport to outer space", 16, "button-teleport-to-outer-space", PlayerFunctions.TeleportToOuterSpace);
-            y += 36f;
-            wnd.AddButton(x, y, 200f, tab5, "Teleport to selected astronomical", 16, "button-teleport-to-selected-astronomical", PlayerFunctions.TeleportToSelectedAstronomical);
         }
+        x = 350f;
+        y = 10f;
+        wnd.AddCheckBox(x, y, tab2, FactoryPatch.RemovePowerSpaceLimitEnabled, "Remove power space limit");
+        y += 36f;
+        wnd.AddCheckBox(x, y, tab2, FactoryPatch.WindTurbinesPowerGlobalCoverageEnabled, "Wind Turbines do global power coverage");
+        y += 36f;
+        wnd.AddCheckBox(x, y, tab2, FactoryPatch.BoostWindPowerEnabled, "Boost wind power");
+        y += 36f;
+        wnd.AddCheckBox(x, y, tab2, FactoryPatch.BoostSolarPowerEnabled, "Boost solar power");
+        y += 36f;
+        wnd.AddCheckBox(x, y, tab2, FactoryPatch.BoostGeothermalPowerEnabled, "Boost geothermal power");
+        y += 36f;
+        wnd.AddCheckBox(x, y, tab2, FactoryPatch.BoostFuelPowerEnabled, "Boost fuel power");
+        y += 26f;
+        wnd.AddText2(x + 32f, y, tab2, "Boost fuel power 2", 13);
+
+        // Planet Tab
+        var tab3 = wnd.AddTab(_windowTrans, "Planet");
+        x = 0f;
+        y = 10f;
+        wnd.AddCheckBox(x, y, tab3, ResourcePatch.InfiniteResourceEnabled, "Infinite Natural Resources");
+        y += 36f;
+        wnd.AddCheckBox(x, y, tab3, ResourcePatch.FastMiningEnabled, "Fast Mining");
+        y += 36f;
+        wnd.AddCheckBox(x, y, tab3, PlanetPatch.WaterPumpAnywhereEnabled, "Pump Anywhere");
+        y += 36f;
+        wnd.AddCheckBox(x, y, tab3, PlanetPatch.TerraformAnywayEnabled, "Terraform without enough soil piles");
+        y += 36f;
+        wnd.AddCheckBox(x, y, tab3, PlayerPatch.InstantHandCraftEnabled, "Instant hand-craft");
+        y += 36f;
+        wnd.AddCheckBox(x, y, tab3, PlayerPatch.InstantTeleportEnabled, "Instant teleport (like that in Sandbox mode)");
+        x = 400f;
+        y = 10f;
+        wnd.AddButton(x, y, 200f, tab3, "矿物掩埋标题", 16, "button-bury-all", () => { PlanetFunctions.BuryAllVeins(true); });
+        y += 36f;
+        wnd.AddButton(x, y, 200f, tab3, "矿物还原标题", 16, "button-bury-restore-all", () => { PlanetFunctions.BuryAllVeins(false); });
+        y += 36f;
+        wnd.AddButton(x, y, 200f, tab3, "铺满地基提示", 16, "button-reform-all", () =>
+        {
+            var player = GameMain.mainPlayer;
+            if (player == null) return;
+            var reformTool = player.controller.actionBuild.reformTool;
+            var factory = GameMain.localPlanet?.factory;
+            if (factory == null) return;
+            GameMain.localPlanet.factory.PlanetReformAll(reformTool.brushType, reformTool.brushColor, reformTool.buryVeins);
+        });
+        y += 36f;
+        wnd.AddButton(x, y, 200f, tab3, "还原地形提示", 16, "button-reform-revert-all", () =>
+        {
+            var factory = GameMain.localPlanet?.factory;
+            if (factory == null) return;
+            GameMain.localPlanet.factory.PlanetReformRevert();
+        });
+
+        var tab4 = wnd.AddTab(_windowTrans, "Dyson Sphere");
+        x = 0f;
+        y = 10f;
+        wnd.AddCheckBox(x, y, tab4, DysonSpherePatch.SkipBulletEnabled, "Skip bullet period");
+        y += 26f;
+        wnd.AddCheckBox(x + 26f, y, tab4, DysonSpherePatch.FireAllBulletsEnabled, "Fire all bullets at once", 13);
+        y += 36f;
+        wnd.AddCheckBox(x, y, tab4, DysonSpherePatch.SkipAbsorbEnabled, "Skip absorption period");
+        y += 36f;
+        wnd.AddCheckBox(x, y, tab4, DysonSpherePatch.QuickAbsorbEnabled, "Quick absorb");
+        y += 36f;
+        wnd.AddCheckBox(x, y, tab4, DysonSpherePatch.EjectAnywayEnabled, "Eject anyway");
+        y += 36f;
+        wnd.AddCheckBox(x, y, tab4, DysonSpherePatch.OverclockEjectorEnabled, "Overclock Ejectors");
+        y += 36f;
+        wnd.AddCheckBox(x, y, tab4, DysonSpherePatch.OverclockSiloEnabled, "Overclock Silos");
+        y += 36f;
+        wnd.AddCheckBox(x, y, tab4, DysonSpherePatch.UnlockMaxOrbitRadiusEnabled, "Unlock Dyson Sphere max orbit radius");
+        y += 30f;
+        {
+            var slider = wnd.AddSlider(x + 20, y, tab4, DysonSpherePatch.UnlockMaxOrbitRadiusValue, new MaxOrbitRadiusValueMapper(), "##,#m").WithSmallerHandle(-40f);
+            DysonSpherePatch.UnlockMaxOrbitRadiusEnabled.SettingChanged += UnlockMaxOrbitRadiusChanged;
+            wnd.OnFree += () => { DysonSpherePatch.UnlockMaxOrbitRadiusEnabled.SettingChanged -= UnlockMaxOrbitRadiusChanged; };
+            UnlockMaxOrbitRadiusChanged(null, null);
+
+            void UnlockMaxOrbitRadiusChanged(object o, EventArgs e)
+            {
+                slider.slider.enabled = DysonSpherePatch.UnlockMaxOrbitRadiusEnabled.Value;
+            }
+
+            ;
+        }
+        x = 300f;
+        y = 10f;
+        wnd.AddButton(x, y, 300f, tab4, "Complete Dyson Sphere shells instantly", 16, "button-complete-dyson-sphere-shells-instantly", DysonSphereFunctions.CompleteShellsInstantly);
+
+        var tab5 = wnd.AddTab(_windowTrans, "Mecha/Combat");
+        x = 0f;
+        y = 10f;
+        wnd.AddCheckBox(x, y, tab5, CombatPatch.MechaInvincibleEnabled, "Mecha and Drones/Fleets invicible");
+        y += 36f;
+        wnd.AddCheckBox(x, y, tab5, CombatPatch.BuildingsInvincibleEnabled, "Buildings invicible");
+        y += 36f;
+        wnd.AddCheckBox(x, y, tab5, PlayerPatch.WarpWithoutSpaceWarpersEnabled, "Enable warp without space warpers");
+        x = 400f;
+        y = 10f;
+        wnd.AddButton(x, y, 200f, tab5, "Teleport to outer space", 16, "button-teleport-to-outer-space", PlayerFunctions.TeleportToOuterSpace);
+        y += 36f;
+        wnd.AddButton(x, y, 200f, tab5, "Teleport to selected astronomical", 16, "button-teleport-to-selected-astronomical", PlayerFunctions.TeleportToSelectedAstronomical);
+    }
 
     private static void UpdateUI()
     {
@@ -289,6 +296,7 @@ public static class UIConfigWindow
         {
             _resignGameBtn.gameObject.SetActive(resignEnabled);
         }
+
         var history = data.history;
         if (history == null) return;
         var banEnabled = history.hasUsedPropertyBanAchievement;

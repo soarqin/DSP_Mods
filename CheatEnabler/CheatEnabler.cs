@@ -71,6 +71,8 @@ public class CheatEnabler : BaseUnityPlugin
             "Enable warp without warper");
         DysonSpherePatch.SkipBulletEnabled = Config.Bind("DysonSphere", "SkipBullet", false,
             "Skip bullet");
+        DysonSpherePatch.FireAllBulletsEnabled = Config.Bind("DysonSphere", "FireAllBullets", false,
+            "Fire all bullets at once");
         DysonSpherePatch.SkipAbsorbEnabled = Config.Bind("DysonSphere", "SkipAbsorb", false,
             "Skip absorption");
         DysonSpherePatch.QuickAbsorbEnabled = Config.Bind("DysonSphere", "QuickAbsorb", false,

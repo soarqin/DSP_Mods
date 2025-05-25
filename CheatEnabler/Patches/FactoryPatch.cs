@@ -418,6 +418,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             return matcher.InstructionEnumeration();
         }
 
+        /*
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(ConstructionSystem), nameof(ConstructionSystem.AddBuildTargetToModules))]
         private static IEnumerable<CodeInstruction> ConstructionSystem_AddBuildTargetToModules_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -449,6 +450,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             );
             return matcher.InstructionEnumeration();
         }
+        */
 
         [HarmonyPostfix]
         [HarmonyPatch(typeof(UXAssist.Functions.PlanetFunctions), nameof(UXAssist.Functions.PlanetFunctions.BuildOrbitalCollectors))]

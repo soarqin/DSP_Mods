@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Reflection.Emit;
 using BepInEx.Configuration;
 using HarmonyLib;
-using UnityEngine;
 using UXAssist.Common;
 
 namespace CheatEnabler.Patches;
@@ -11,6 +10,7 @@ namespace CheatEnabler.Patches;
 public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
 {
     public static ConfigEntry<bool> SkipBulletEnabled;
+    public static ConfigEntry<bool> FireAllBulletsEnabled;
     public static ConfigEntry<bool> SkipAbsorbEnabled;
     public static ConfigEntry<bool> QuickAbsorbEnabled;
     public static ConfigEntry<bool> EjectAnywayEnabled;
@@ -29,6 +29,8 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
         OverclockEjectorEnabled.SettingChanged += (_, _) => OverclockEjector.Enable(OverclockEjectorEnabled.Value);
         OverclockSiloEnabled.SettingChanged += (_, _) => OverclockSilo.Enable(OverclockSiloEnabled.Value);
         UnlockMaxOrbitRadiusEnabled.SettingChanged += (_, _) => UnlockMaxOrbitRadius.Enable(UnlockMaxOrbitRadiusEnabled.Value);
+
+        FireAllBulletsEnabled.SettingChanged += (_, _) => SkipBulletPatch.SetFireAllBullets(FireAllBulletsEnabled.Value);
     }
 
     public static void Start()
@@ -41,6 +43,7 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
         OverclockSilo.Enable(OverclockSiloEnabled.Value);
         UnlockMaxOrbitRadius.Enable(UnlockMaxOrbitRadiusEnabled.Value);
         Enable(true);
+        SkipBulletPatch.SetFireAllBullets(FireAllBulletsEnabled.Value);
     }
 
     public static void Uninit()
@@ -94,6 +97,12 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
         private static long _sailLifeTime;
         private static DysonSailCache[][] _sailsCache;
         private static int[] _sailsCacheLen, _sailsCacheCapacity;
+        private static bool _fireAllBullets;
+
+        public static void SetFireAllBullets(bool value)
+        {
+            _fireAllBullets = value;
+        }
 
         private struct DysonSailCache
         {
@@ -181,25 +190,28 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
             ).Advance(2);
             var start = matcher.Pos;
             matcher.MatchForward(false,
-                new CodeMatch(OpCodes.Pop)
-            ).Advance(1);
+                new CodeMatch(OpCodes.Ldc_I4_M1),
+                new CodeMatch(OpCodes.Stfld, AccessTools.Field(typeof(EjectorComponent), nameof(EjectorComponent.direction)))
+            ).Advance(2);
             var end = matcher.Pos;
             matcher.Start().Advance(start).RemoveInstructions(end - start).Insert(
-                new CodeInstruction(OpCodes.Ldarg_3),
                 new CodeInstruction(OpCodes.Ldarg_0),
-                new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(EjectorComponent), nameof(EjectorComponent.orbitId))),
+                new CodeInstruction(OpCodes.Ldarg_3),
                 new CodeInstruction(OpCodes.Ldloc_S, 9),
                 new CodeInstruction(OpCodes.Ldloc_S, 11),
+                new CodeInstruction(OpCodes.Ldarg_S, 6),
                 new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(SkipBulletPatch), nameof(SkipBulletPatch.AddDysonSail)))
             );
             return matcher.InstructionEnumeration();
         }
 
-        private static void AddDysonSail(DysonSwarm swarm, int orbitId, VectorLF3 uPos, VectorLF3 endVec)
+        private static void AddDysonSail(ref EjectorComponent ejector, DysonSwarm swarm, VectorLF3 uPos, VectorLF3 endVec, int[] consumeRegister)
         {
             var index = swarm.starData.index;
+            var orbitId = ejector.orbitId;
             var delta1 = endVec - swarm.starData.uPosition;
             var delta2 = VectorLF3.Cross(endVec - uPos, swarm.orbits[orbitId].up).normalized * Math.Sqrt(swarm.dysonSphere.gravity / swarm.orbits[orbitId].radius);
+            var bulletCount = ejector.bulletCount;
             lock (swarm)
             {
                 var cache = _sailsCache[index];
@@ -209,6 +221,24 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
                     SetSailsCacheCapacity(index, 256);
                     cache = _sailsCache[index];
                 }
+                if (_fireAllBullets)
+                {
+                    var capacity = _sailsCacheCapacity[index];
+                    var leastCapacity = len + bulletCount;
+                    if (leastCapacity > capacity)
+                    {
+                        do
+                        {
+                            capacity *= 2;
+                        } while (leastCapacity > capacity);
+                        SetSailsCacheCapacity(index, capacity);
+                        cache = _sailsCache[index];
+                    }
+                    _sailsCacheLen[index] = len + bulletCount;
+                    var end = len + bulletCount;
+                    for (var i = len; i < end; i++)
+                        cache[i].FromData(delta1, delta2 + RandomTable.SphericNormal(ref swarm.randSeed, 0.5), orbitId);
+                }
                 else
                 {
                     var capacity = _sailsCacheCapacity[index];
@@ -217,10 +247,44 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
                         SetSailsCacheCapacity(index, capacity * 2);
                         cache = _sailsCache[index];
                     }
+                    _sailsCacheLen[index] = len + 1;
+                    cache[len].FromData(delta1, delta2 + RandomTable.SphericNormal(ref swarm.randSeed, 0.5), orbitId);
                 }
-                _sailsCacheLen[index] = len + 1;
-                cache[len].FromData(delta1, delta2 + RandomTable.SphericNormal(ref swarm.randSeed, 0.5), orbitId);
             }
+
+            if (_fireAllBullets)
+            {
+                if (!ejector.incUsed)
+                {
+                    ejector.incUsed = ejector.bulletInc >= bulletCount;
+                }
+                ejector.bulletInc = 0;
+                ejector.bulletCount = 0;
+                lock (consumeRegister)
+                {
+                    consumeRegister[ejector.bulletId] += bulletCount;
+                }
+            }
+            else
+            {
+                var inc = ejector.bulletInc / bulletCount;
+                if (!ejector.incUsed)
+                {
+                    ejector.incUsed = inc > 0;
+                }
+                ejector.bulletInc -= inc;
+                ejector.bulletCount = bulletCount - 1;
+                if (ejector.bulletCount == 0)
+                {
+                    ejector.bulletInc = 0;
+                }
+                lock (consumeRegister)
+                {
+                    consumeRegister[ejector.bulletId]++;
+                }
+            }
+            ejector.time = ejector.coldSpend;
+            ejector.direction = -1;
         }
 
         [HarmonyPrefix]
