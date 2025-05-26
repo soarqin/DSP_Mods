@@ -67,6 +67,7 @@ public static class UIConfigWindow
         I18N.Add("Overclock Ejectors", "Overclock Ejectors (10x)", "高速弹射器(10倍射速)");
         I18N.Add("Overclock Silos", "Overclock Silos (10x)", "高速发射井(10倍射速)");
         I18N.Add("Unlock Dyson Sphere max orbit radius", "Unlock Dyson Sphere max orbit radius", "解锁戴森球最大轨道半径");
+        I18N.Add("Generate tricky dyson shells", "Generate tricky dyson shells (Put/Paste nodes first)", "生成仙术戴森壳(请先设置/粘贴节点)");
         I18N.Add("Complete Dyson Sphere shells instantly", "Complete Dyson Sphere shells instantly", "立即完成戴森壳建造");
         I18N.Add("Terraform without enough soil piles", "Terraform without enough soil piles", "沙土不够时依然可以整改地形");
         I18N.Add("Instant hand-craft", "Instant hand-craft", "快速手动制造");
@@ -98,6 +99,37 @@ public static class UIConfigWindow
         public override float IndexToValue(int index)
         {
             return index * 500_000f;
+        }
+    }
+
+    class ShellsCountMapper : MyWindow.RangeValueMapper<int>
+    {
+        public ShellsCountMapper() : base(1, 139)
+        {
+        }
+
+        public override int ValueToIndex(int value)
+        {
+            return value switch
+            {
+                < 4 => value,
+                < 64 => value / 4 + 3,
+                < 256 => value / 16 + 15,
+                < 4096 => value / 64 + 27,
+                _ => value / 256 + 75,
+            };
+        }
+
+        public override int IndexToValue(int index)
+        {
+            return index switch
+            {
+                < 4 => index,
+                < 19 => (index - 3) * 4,
+                < 31 => (index - 15) * 16,
+                < 91 => (index - 27) * 64,
+                _ => (index - 75) * 256,
+            };
         }
     }
 
@@ -166,7 +198,6 @@ public static class UIConfigWindow
             FactoryPatch.BeltSignalGeneratorEnabled.SettingChanged += OnBeltSignalChanged;
             wnd.OnFree += () => { FactoryPatch.BeltSignalGeneratorEnabled.SettingChanged -= OnBeltSignalChanged; };
             OnBeltSignalChanged(null, null);
-
             void OnBeltSignalChanged(object o, EventArgs e)
             {
                 var on = FactoryPatch.BeltSignalGeneratorEnabled.Value;
@@ -260,12 +291,16 @@ public static class UIConfigWindow
             {
                 slider.slider.enabled = DysonSpherePatch.UnlockMaxOrbitRadiusEnabled.Value;
             }
-
-            ;
         }
         x = 300f;
         y = 10f;
         wnd.AddButton(x, y, 300f, tab4, "Complete Dyson Sphere shells instantly", 16, "button-complete-dyson-sphere-shells-instantly", DysonSphereFunctions.CompleteShellsInstantly);
+        y += 36f;
+        wnd.AddButton(x, y, 300f, tab4, "Keep max production shells and remove others", 16, "button-keep-max-production-shells", DysonSphereFunctions.KeepMaxProductionShells);
+        y += 36f;
+        wnd.AddButton(x, y, 300f, tab4, "Duplicate first shell", 16, "button-duplicate-first-shell", DysonSphereFunctions.DuplicateFirstShell);
+        y += 30f;
+        wnd.AddSlider(x + 20f, y, tab4, DysonSphereFunctions.ShellsCountForFunctions, new ShellsCountMapper());
 
         var tab5 = wnd.AddTab(_windowTrans, "Mecha/Combat");
         x = 0f;
