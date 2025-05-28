@@ -8,6 +8,9 @@
     - Fix a crash on dismantling preview buildings.
     - Rename to `Shortcut keys for Blueprint Copy mode`, while adding a shortcut key to select all buildings (Ctrl+A by default).
   + `Allow overflow for Logistic Stations and Advanced Mining Machines`: Working for Logistics Control Panel now.
+  + `Tweak building buffer`: add buffer tweaking for 2 new buildings
+    - `Ejector Solar Sails buffer count`: Range 5-400 (step by 5), default is 20 (same as game)
+    - `Silo Rockets buffer count`: Range 1-20, default is 20 (same as game)
 * 1.3.5
   + `Mod manager profile based save folder`: Fix crash on game startup
 * 1.3.4
@@ -323,6 +326,9 @@
     - 修复了拆除虚影建筑时崩溃的问题
     - 重命名为`蓝图复制模式快捷键`，同时添加了选择所有建筑的快捷键（默认为Ctrl+A）
   + `允许物流站和大型采矿机物品溢出`：现在也适用于物流控制面板
+  + `调整建筑缓冲区`：为2个新建筑添加缓冲区调整
+    - `弹射太阳帆缓冲区数量`：范围5-400（步进值为5），默认值为20（与游戏相同）
+    - `发射井火箭缓冲区数量`：范围1-20，默认值为20（与游戏相同）
 * 1.3.5
   + `基于mod管理器配置档案的存档文件夹`：修复游戏启动时崩溃的问题
 * 1.3.4

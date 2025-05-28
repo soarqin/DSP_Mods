@@ -91,6 +91,8 @@
         - `Extra buffer count for Self-evolution Labs`: Range 1-10, default is 3 (same as game)
       - `Buffer count for researching in labs`: Range 2-20, default is 10 (same as game)
       - `Ray Receiver Graviton Lens buffer count`: Range 1-20, default is 1 (game default is 20)
+      - `Ejector Solar Sails buffer count`: Range 5-400 (step by 5), default is 20 (same as game)
+      - `Silo Rockets buffer count`: Range 1-20, default is 20 (same as game)
   + Logistics
     - Enhanced control for logistic storage capacities
       - Logistic storage capacities are not scaled on upgrading `Logistics Carrier Capacity`, if they are not set to maximum capacity or already greater than maximum capacity.
@@ -244,6 +246,8 @@
         - `自演化研究站矩阵额外缓冲数量`：范围1-10，默认为3(同游戏)
       - `研究站科研模式缓存数量`：范围2-20，默认为10(同游戏)
       - `射线接收器透镜缓冲数量`：范围1-20，默认为1(游戏默认为20)
+      - `弹射太阳帆缓冲区数量`：范围5-400（步进值为5），默认值为20（与游戏相同）
+      - `发射井火箭缓冲区数量`：范围1-20，默认值为20（与游戏相同）
   + 物流
     - 物流塔存储数量限制控制改进
       - 当升级`运输机舱扩容`时，不会对各种物流塔的存储限制按比例提升，除非设置为最大允许容量或者已经超过升级后的最大容量。

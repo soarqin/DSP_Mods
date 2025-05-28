@@ -41,6 +41,8 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
     public static ConfigEntry<int> LabBufferExtraCountForAdvancedAssemble;
     public static ConfigEntry<int> LabBufferMaxCountForResearch;
     public static ConfigEntry<int> ReceiverBufferCount;
+    public static ConfigEntry<int> EjectorBufferCount;
+    public static ConfigEntry<int> SiloBufferCount;
     public static ConfigEntry<bool> ShortcutKeysForBlueprintCopyEnabled;
 
     private static PressKeyBind _doNotRenderEntitiesKey;
@@ -126,6 +128,8 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         LabBufferExtraCountForAdvancedAssemble.SettingChanged += (_, _) => TweakBuildingBuffer.RefreshLabBufferMaxCountForAssemble();
         LabBufferMaxCountForResearch.SettingChanged += (_, _) => TweakBuildingBuffer.RefreshLabBufferMaxCountForResearch();
         ReceiverBufferCount.SettingChanged += (_, _) => TweakBuildingBuffer.RefreshReceiverBufferCount();
+        EjectorBufferCount.SettingChanged += (_, _) => TweakBuildingBuffer.RefreshEjectorBufferCount();
+        SiloBufferCount.SettingChanged += (_, _) => TweakBuildingBuffer.RefreshSiloBufferCount();
     }
 
     public static void Start()
@@ -2053,6 +2057,24 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             patch.Patch(AccessTools.Method(typeof(PowerGeneratorComponent), nameof(PowerGeneratorComponent.GameTick_Gamma)), null, null, new HarmonyMethod(typeof(TweakBuildingBuffer), nameof(PowerGeneratorComponent_GameTick_Gamma_Transpiler)));
         }
 
+        public static void RefreshEjectorBufferCount()
+        {
+            if (!TweakBuildingBufferEnabled.Value) return;
+            /* re-patch to use new value */
+            var patch = Instance._patch;
+            patch.Unpatch(AccessTools.Method(typeof(EjectorComponent), nameof(EjectorComponent.InternalUpdate)), AccessTools.Method(typeof(TweakBuildingBuffer), nameof(EjectorComponent_InternalUpdate_Transpiler)));
+            patch.Patch(AccessTools.Method(typeof(EjectorComponent), nameof(EjectorComponent.InternalUpdate)), null, null, new HarmonyMethod(typeof(TweakBuildingBuffer), nameof(EjectorComponent_InternalUpdate_Transpiler)));
+        }
+
+        public static void RefreshSiloBufferCount()
+        {
+            if (!TweakBuildingBufferEnabled.Value) return;
+            /* re-patch to use new value */
+            var patch = Instance._patch;
+            patch.Unpatch(AccessTools.Method(typeof(SiloComponent), nameof(SiloComponent.InternalUpdate)), AccessTools.Method(typeof(TweakBuildingBuffer), nameof(SiloComponent_InternalUpdate_Transpiler)));
+            patch.Patch(AccessTools.Method(typeof(SiloComponent), nameof(SiloComponent.InternalUpdate)), null, null, new HarmonyMethod(typeof(TweakBuildingBuffer), nameof(SiloComponent_InternalUpdate_Transpiler)));
+        }
+
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(PowerGeneratorComponent), nameof(PowerGeneratorComponent.GameTick_Gamma))]
         private static IEnumerable<CodeInstruction> PowerGeneratorComponent_GameTick_Gamma_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -2173,6 +2195,34 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                 new CodeMatch(OpCodes.Ldc_I4, 36000)
             );
             matcher.Repeat(m => m.SetAndAdvance(OpCodes.Ldc_I4, LabBufferMaxCountForResearch.Value * 3600));
+            return matcher.InstructionEnumeration();
+        }
+
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(EjectorComponent), nameof(EjectorComponent.InternalUpdate))]
+        private static IEnumerable<CodeInstruction> EjectorComponent_InternalUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Ldarg_0),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(EjectorComponent), nameof(EjectorComponent.bulletCount))),
+                new CodeMatch(ci => (ci.opcode == OpCodes.Ldc_I4 || ci.opcode == OpCodes.Ldc_I4_S) && ci.OperandIs(20))
+            );
+            matcher.Advance(2).Set(OpCodes.Ldc_I4, EjectorBufferCount.Value);
+            return matcher.InstructionEnumeration();
+        }
+
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(SiloComponent), nameof(SiloComponent.InternalUpdate))]
+        private static IEnumerable<CodeInstruction> SiloComponent_InternalUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Ldarg_0),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(SiloComponent), nameof(SiloComponent.bulletCount))),
+                new CodeMatch(ci => (ci.opcode == OpCodes.Ldc_I4 || ci.opcode == OpCodes.Ldc_I4_S) && ci.OperandIs(20))
+            );
+            matcher.Advance(2).Operand = SiloBufferCount.Value;
             return matcher.InstructionEnumeration();
         }
     }

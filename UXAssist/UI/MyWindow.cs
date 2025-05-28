@@ -248,6 +248,22 @@ public class MyWindow : ManualBehaviour
         public override int Max => max;
     }
 
+    public class RangeValueWithMultiplierMapper<T>(int min, int max, T multiplier) : ValueMapper<T>
+    {
+        public override int Min => min;
+        public override int Max => max;
+
+        public override T IndexToValue(int index)
+        {
+            return (T)Convert.ChangeType((float)index * (float)Convert.ChangeType(multiplier, typeof(float)), typeof(T));
+        }
+
+        public override int ValueToIndex(T value)
+        {
+            return Mathf.RoundToInt((float)Convert.ChangeType(value, typeof(float)) / (float)Convert.ChangeType(multiplier, typeof(float)));
+        }
+    }
+
     private class ArrayMapper<T> : ValueMapper<T>
     {
         private readonly T[] _values;

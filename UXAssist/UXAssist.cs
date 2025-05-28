@@ -134,6 +134,8 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
         FactoryPatch.LabBufferExtraCountForAdvancedAssemble = Config.Bind("Factory", "LabBufferExtraCountForAdvancedAssemble", 3, new ConfigDescription("Extra buffer count for Self-evolution Labs", new AcceptableValueRange<int>(1, 10)));
         FactoryPatch.LabBufferMaxCountForResearch = Config.Bind("Factory", "LabBufferMaxCountForResearch", 10, new ConfigDescription("Buffer count for researching in labs", new AcceptableValueRange<int>(2, 20)));
         FactoryPatch.ReceiverBufferCount = Config.Bind("Factory", "ReceiverBufferCount", 1, new ConfigDescription("Ray Receiver Graviton Lens buffer count", new AcceptableValueRange<int>(1, 20)));
+        FactoryPatch.EjectorBufferCount = Config.Bind("Factory", "EjectorBufferCount", 1, new ConfigDescription("Ejector buffer count", new AcceptableValueRange<int>(5, 400)));
+        FactoryPatch.SiloBufferCount = Config.Bind("Factory", "SiloBufferCount", 1, new ConfigDescription("Silo buffer count", new AcceptableValueRange<int>(1, 40)));
         FactoryPatch.ShortcutKeysForBlueprintCopyEnabled = Config.Bind("Factory", "DismantleBlueprintSelection", false,
             "Dismantle blueprint selected buildings");
         LogisticsPatch.AutoConfigLogisticsEnabled = Config.Bind("Factory", "AutoConfigLogistics", false,
