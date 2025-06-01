@@ -125,6 +125,13 @@ public static class FactoryFunctions
             blueprintCopyTool.preSelectObjIds.Add(entity.id);
             blueprintCopyTool.selectedObjIds.Add(entity.id);
         }
+        var prebuildPool = localFactory.prebuildPool;
+        foreach (var prebuild in prebuildPool)
+        {
+            if (prebuild.id == 0) continue;
+            blueprintCopyTool.preSelectObjIds.Add(-prebuild.id);
+            blueprintCopyTool.selectedObjIds.Add(-prebuild.id);
+        }
         blueprintCopyTool.RefreshBlueprintData();
         blueprintCopyTool.DeterminePreviews();
     }
