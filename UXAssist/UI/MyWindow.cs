@@ -483,11 +483,15 @@ public class MyWindowWithTabs : MyWindow
         {
             btn.transitions[0].normalColor = new Color(0.1f, 0.1f, 0.1f, 0.68f);
             btn.transitions[0].highlightColorOverride = new Color(0.9906f, 0.5897f, 0.3691f, 0.4f);
-            btn.transitions[1].normalColor = new Color(1f, 1f, 1f, 0.6f);
-            btn.transitions[1].highlightColorOverride = new Color(0.2f, 0.1f, 0.1f, 0.9f);
+            btn.transitions[1].normalColor = new Color(1f, 1f, 1f, 0.8f);
+            btn.transitions[1].highlightColorOverride = new Color(0.2f, 0.2f, 0.2f, 1f);
         }
 
-        var btnText = btn.transform.Find("Text").GetComponent<Text>();
+        var textTrans = btn.transform.Find("Text");
+        var btnText = textTrans.GetComponent<Text>();
+        var shadow = textTrans.GetComponent<Shadow>() ?? textTrans.gameObject.AddComponent<Shadow>();
+        shadow.effectColor = new Color(0f, 0f, 0f, 0.6f);
+        shadow.effectDistance = new Vector2(1f, -2f);
         btnText.text = label.Translate();
         btnText.fontSize = 16;
         btn.data = index;
