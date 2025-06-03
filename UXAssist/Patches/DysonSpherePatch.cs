@@ -173,7 +173,7 @@ public class DysonSpherePatch: PatchImpl<DysonSpherePatch>
                     {
                         lock (productRegister)
                         {
-                            productRegister[11902] += todoCount - count;
+                            productRegister[ProductionStatistics.DYSON_STRUCTURE_ID] += todoCount - count;
                         }
                     }
                 }
@@ -213,8 +213,8 @@ public class DysonSpherePatch: PatchImpl<DysonSpherePatch>
                     {
                         lock (productRegister)
                         {
-                            productRegister[11901] += solarSailCount;
-                            productRegister[11903] += solarSailCount;
+                            productRegister[ProductionStatistics.SOLAR_SAIL_ID] += solarSailCount;
+                            productRegister[ProductionStatistics.DYSON_CELL_ID] += solarSailCount;
                         }
                     }
                     var consumeRegister = __instance.consumeRegister;
@@ -222,7 +222,7 @@ public class DysonSpherePatch: PatchImpl<DysonSpherePatch>
                     {
                         lock (consumeRegister)
                         {
-                            consumeRegister[11901] += solarSailCount;
+                            consumeRegister[ProductionStatistics.SOLAR_SAIL_ID] += solarSailCount;
                         }
                     }
                 }

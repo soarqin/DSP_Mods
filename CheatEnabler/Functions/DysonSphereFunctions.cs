@@ -76,7 +76,7 @@ public static class DysonSphereFunctions
                     dysonNode.spOrdered = 0;
                     dysonNode._spReq = 0;
                     totalNodeSp += dysonNode.spMax;
-                    var diff = dysonNode.spMax - dysonNode.sp; 
+                    var diff = dysonNode.spMax - dysonNode.sp;
                     if (diff > 0)
                     {
                         rocketCount += diff;
@@ -115,21 +115,21 @@ public static class DysonSphereFunctions
                     var count = rocketCount;
                     while (count > 0x40000000L)
                     {
-                        productRegister[11902] += 0x40000000;
+                        productRegister[ProductionStatistics.DYSON_STRUCTURE_ID] += 0x40000000;
                         count -= 0x40000000;
                     }
-                    if (count > 0L) productRegister[11902] += (int)count;
+                    if (count > 0L) productRegister[ProductionStatistics.DYSON_STRUCTURE_ID] += (int)count;
                     count = solarSailCount;
                     while (count > 0x40000000L)
                     {
-                        productRegister[11901] += 0x40000000;
-                        productRegister[11903] += 0x40000000;
+                        productRegister[ProductionStatistics.SOLAR_SAIL_ID] += 0x40000000;
+                        productRegister[ProductionStatistics.DYSON_CELL_ID] += 0x40000000;
                         count -= 0x40000000;
                     }
                     if (count > 0L)
                     {
-                        productRegister[11901] += (int)count;
-                        productRegister[11903] += (int)count;
+                        productRegister[ProductionStatistics.SOLAR_SAIL_ID] += (int)count;
+                        productRegister[ProductionStatistics.DYSON_CELL_ID] += (int)count;
                     }
                 }
             }
@@ -141,10 +141,10 @@ public static class DysonSphereFunctions
                     var count = solarSailCount;
                     while (count > 0x40000000L)
                     {
-                        consumeRegister[11901] += 0x40000000;
+                        consumeRegister[ProductionStatistics.SOLAR_SAIL_ID] += 0x40000000;
                         count -= 0x40000000;
                     }
-                    if (count > 0L) consumeRegister[11901] += (int)count;
+                    if (count > 0L) consumeRegister[ProductionStatistics.SOLAR_SAIL_ID] += (int)count;
                 }
             }
         });

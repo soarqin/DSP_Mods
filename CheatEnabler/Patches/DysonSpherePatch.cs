@@ -326,9 +326,9 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
                                 if (node.ConstructCp() == null) break;
                                 if (idx == 0)
                                 {
-                                    sphereProductRegister[11901] += len;
-                                    sphereConsumeRegister[11901] += len;
-                                    sphereProductRegister[11903] += len;
+                                    sphereProductRegister[ProductionStatistics.SOLAR_SAIL_ID] += len;
+                                    sphereConsumeRegister[ProductionStatistics.SOLAR_SAIL_ID] += len;
+                                    sphereProductRegister[ProductionStatistics.DYSON_CELL_ID] += len;
                                     return;
                                 }
                                 idx--;
@@ -339,9 +339,9 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
                 var absorbCnt = len - 1 - idx;
                 if (absorbCnt > 0)
                 {
-                    sphereProductRegister[11901] += absorbCnt;
-                    sphereConsumeRegister[11901] += absorbCnt;
-                    sphereProductRegister[11903] += absorbCnt;
+                    sphereProductRegister[ProductionStatistics.SOLAR_SAIL_ID] += absorbCnt;
+                    sphereConsumeRegister[ProductionStatistics.SOLAR_SAIL_ID] += absorbCnt;
+                    sphereProductRegister[ProductionStatistics.DYSON_CELL_ID] += absorbCnt;
                 }
             }
             for (; idx >= 0; idx--)
@@ -374,7 +374,7 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
             ).Advance(1).RemoveInstructions(matcher.Length - matcher.Pos).Insert(
                 // if (node.ConstructCp() != null)
                 // {
-                //     this.dysonSphere.productRegister[11903]++;
+                //     this.dysonSphere.productRegister[ProductionStatistics.DYSON_CELL_ID]++;
                 // }
                 new CodeInstruction(OpCodes.Ldarg_1),
                 new CodeInstruction(OpCodes.Callvirt, AccessTools.Method(typeof(DysonNode), nameof(DysonNode.ConstructCp))),
@@ -382,7 +382,7 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
                 new CodeInstruction(OpCodes.Ldarg_0),
                 new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(DysonSwarm), nameof(DysonSwarm.dysonSphere))),
                 new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(DysonSphere), nameof(DysonSphere.productRegister))),
-                new CodeInstruction(OpCodes.Ldc_I4, 11903),
+                new CodeInstruction(OpCodes.Ldc_I4, ProductionStatistics.DYSON_CELL_ID),
                 new CodeInstruction(OpCodes.Ldelema, typeof(int)),
                 new CodeInstruction(OpCodes.Dup),
                 new CodeInstruction(OpCodes.Ldind_I4),
