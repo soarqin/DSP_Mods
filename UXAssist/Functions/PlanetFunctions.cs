@@ -143,6 +143,7 @@ public static class PlanetFunctions
             }
         }
 
+        var planetId = planet.id;
         var gameScenario = GameMain.gameScenario;
         if (gameScenario != null)
         {
@@ -153,8 +154,8 @@ public static class PlanetFunctions
                 {
                     if (pgc.id <= 0) continue;
                     int protoId = factory.entityPool[pgc.entityId].protoId;
-                    gameScenario.achievementLogic.NotifyBeforeDismantleEntity(planet.id, protoId, pgc.entityId);
-                    gameScenario.NotifyOnDismantleEntity(planet.id, protoId, pgc.entityId);
+                    gameScenario.achievementLogic.NotifyBeforeDismantleEntity(planetId, protoId, pgc.entityId);
+                    gameScenario.NotifyOnDismantleEntity(planetId, protoId, pgc.entityId);
                 }
             }
         }
@@ -168,10 +169,22 @@ public static class PlanetFunctions
         var index = factory.index;
         var warningSystem = GameMain.data.warningSystem;
         var warningPool = warningSystem.warningPool;
-        for (var i = warningSystem.warningCursor - 1; i > 0; i--)
+        for (var i = warningSystem.warningCursor - 1; i >= 0; i--)
         {
-            if (warningPool[i].id == i && warningPool[i].factoryId == index)
-                warningSystem.RemoveWarningData(warningPool[i].id);
+            ref var warning = ref warningPool[i];
+            if (warning.id != i) continue;
+            switch (warning.factoryId) {
+                case -4:
+                    if (warning.astroId == planetId)
+                        warningSystem.RemoveWarningData(i);
+                    break;
+                case >= 0:
+                    if (warning.factoryId == index)
+                        warningSystem.RemoveWarningData(i);
+                    break;
+                default:
+                    break;
+            }
         }
         var isCombatMode = factory.gameData.gameDesc.isCombatMode;
         factory.entityCursor = 1;
