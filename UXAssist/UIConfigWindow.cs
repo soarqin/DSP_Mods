@@ -507,6 +507,8 @@ public static class UIConfigWindow
                 labBufferExtraCountForAdvancedAssembleSlider.SetEnable(FactoryPatch.TweakBuildingBufferEnabled.Value);
                 labBufferMaxCountForResearchSlider.SetEnable(FactoryPatch.TweakBuildingBufferEnabled.Value);
                 receiverBufferCountSlider.SetEnable(FactoryPatch.TweakBuildingBufferEnabled.Value);
+                ejectorBufferCountSlider.SetEnable(FactoryPatch.TweakBuildingBufferEnabled.Value);
+                siloBufferCountSlider.SetEnable(FactoryPatch.TweakBuildingBufferEnabled.Value);
             }
         }
 
