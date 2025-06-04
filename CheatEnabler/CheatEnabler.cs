@@ -87,6 +87,10 @@ public class CheatEnabler : BaseUnityPlugin
             "Unlock Dyson Sphere max orbit radius");
         DysonSpherePatch.UnlockMaxOrbitRadiusValue = Config.Bind("DysonSphere", "MaxOrbitRadiusValue", 10_000_000f,
             "Unlocked Dyson Sphere max orbit radius value");
+        Functions.DysonSphereFunctions.IllegalDysonShellFunctionsEnabled = Config.Bind("DysonSphere", "IllegalDysonShellFunctions", false,
+            "Enable illegal dyson shell functions");
+        Functions.DysonSphereFunctions.ShellsCountForFunctions = Config.Bind("DysonSphere", "ShellsCountForFunctions", 2048,
+            "Shells count for various functions");
         CombatPatch.MechaInvincibleEnabled = Config.Bind("Battle", "MechaInvincible", false,
             "Mecha and Drones/Fleets invincible");
         CombatPatch.BuildingsInvincibleEnabled = Config.Bind("Battle", "BuildingsInvincible", false,

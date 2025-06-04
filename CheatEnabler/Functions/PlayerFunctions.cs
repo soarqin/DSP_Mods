@@ -106,7 +106,7 @@ public static class PlayerFunctions
 
         if (itemCnt.All(cnt => cnt == 0))
         {
-            UIMessageBox.Show("Remove all metadata consumption records".Translate(), "NoMetadataConsumptionRecord".Translate(), "OK".Translate(), 0);
+            UIMessageBox.Show("Remove all metadata consumption records".Translate(), "NoMetadataConsumptionRecord".Translate(), "OK".Translate(), UIMessageBox.INFO);
             return;
         }
         var msg = "ClearAllMetadataConsumptionDetails".Translate();
@@ -117,7 +117,7 @@ public static class PlayerFunctions
                 msg += $"\n  {LDB.items.Select(i + 6001).propertyName} x{itemCnt[i]}";
             }
         }
-        UIMessageBox.Show("Remove all metadata consumption records".Translate(), msg, "取消".Translate(), "确定".Translate(), 2, null, () =>
+        UIMessageBox.Show("Remove all metadata consumption records".Translate(), msg, "取消".Translate(), "确定".Translate(), UIMessageBox.QUESTION, null, () =>
         {
             foreach (var data in propertySystem.propertyDatas)
             {
@@ -143,7 +143,7 @@ public static class PlayerFunctions
         var clusterPropertyData = propertySystem.propertyDatas.FirstOrDefault(cpd => cpd.seedKey == seedKey);
         if (clusterPropertyData == null)
         {
-            UIMessageBox.Show("Remove metadata consumption record in current game".Translate(), "NoMetadataConsumptionRecord".Translate(), "OK".Translate(), 0);
+            UIMessageBox.Show("Remove metadata consumption record in current game".Translate(), "NoMetadataConsumptionRecord".Translate(), "OK".Translate(), UIMessageBox.INFO);
             return;
         }
         var currentGamePropertyData = GameMain.data.history.propertyData;
@@ -154,7 +154,7 @@ public static class PlayerFunctions
 
         if (itemCnt.All(cnt => cnt == 0))
         {
-            UIMessageBox.Show("Remove metadata consumption record in current game".Translate(), "NoMetadataConsumptionRecord".Translate(), "OK".Translate(), 0);
+            UIMessageBox.Show("Remove metadata consumption record in current game".Translate(), "NoMetadataConsumptionRecord".Translate(), "OK".Translate(), UIMessageBox.INFO);
             return;
         }
         var msg = "ClearCurrentMetadataConsumptionDetails".Translate();
@@ -165,7 +165,7 @@ public static class PlayerFunctions
                 msg += $"\n  {LDB.items.Select(i + 6001).propertyName} x{itemCnt[i]}";
             }
         }
-        UIMessageBox.Show("Remove metadata consumption record in current game".Translate(), msg, "取消".Translate(), "确定".Translate(), 2, null, () =>
+        UIMessageBox.Show("Remove metadata consumption record in current game".Translate(), msg, "取消".Translate(), "确定".Translate(), UIMessageBox.QUESTION, null, () =>
         {
             for (var i = 0; i < clusterPropertyData.totalConsumption.Count; i++)
             {

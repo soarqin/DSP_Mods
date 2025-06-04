@@ -6,6 +6,10 @@
 * 2.3.31
   + New feature: `Unlock Dyson Sphere max orbit radius`
   + `Remove metadata consumption record in current game`: Fix implementation
+  + Add 3 buttons for creating illegal Dyson Sphere Shells, you must enable `IllegalDysonShellFunctionsEnabled` of `DysonSphere` section in config to see them.
+    - `Generate an illegal dyson shell`
+    - `Keep max production shells and remove others`
+    - `Duplicate shells from that with highest production`
 * 2.3.30
   + Fix a warning issue while `No condition build` or `No collision` is enabled.
   + Increase performance for `Finish build immediately` greatly on pasting large blueprints.
@@ -159,6 +163,10 @@
 * 2.3.31
   + 新功能：`解锁戴森球最大轨道半径`
   + `移除当前存档的元数据消耗记录`：修复实现
+  + 增加了3个用于制作仙术戴森壳的按钮，你必须在设置文件里开启`DysonSphere`分类的`IllegalDysonShellFunctionsEnabled`才能看到它们
+    - `生成单层仙术戴森壳`
+    - `保留发电量最高的戴森壳并移除其他戴森壳`
+    - `从发电量最高的壳复制戴森壳`
 * 2.3.30
   + 修复了启用`无条件建造`或`无碰撞`时的警告问题
   + 粘贴大规模蓝图时大幅提升`立即完成建造`的性能表现

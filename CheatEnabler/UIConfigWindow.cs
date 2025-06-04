@@ -68,6 +68,11 @@ public static class UIConfigWindow
         I18N.Add("Overclock Silos", "Overclock Silos (10x)", "高速发射井(10倍射速)");
         I18N.Add("Unlock Dyson Sphere max orbit radius", "Unlock Dyson Sphere max orbit radius", "解锁戴森球最大轨道半径");
         I18N.Add("Complete Dyson Sphere shells instantly", "Complete Dyson Sphere shells instantly", "立即完成戴森壳建造");
+        I18N.Add("Generate illegal dyson shell", "Generate an illegal dyson shell (Put/Paste nodes first)", "生成单层仙术戴森壳(请先设置/粘贴节点)");
+        I18N.Add("Keep max production shells and remove others", "Keep max production shells and remove others", "保留发电量最高的戴森壳并移除其他戴森壳");
+        I18N.Add("Duplicate shells from that with highest production", "Duplicate shells from that with highest production", "从发电量最高的壳复制戴森壳");
+        I18N.Add("WARNING: This operation can be very slow, continue?", "WARNING: This operation can be very slow, continue?", "警告：此操作可能非常慢，继续吗？");
+        I18N.Add("WARNING: This operation is DANGEROUS, continue?", "WARNING: This operation is DANGEROUS, continue?", "警告：此操作非常危险，继续吗？");
         I18N.Add("Terraform without enough soil piles", "Terraform without enough soil piles", "沙土不够时依然可以整改地形");
         I18N.Add("Instant hand-craft", "Instant hand-craft", "快速手动制造");
         I18N.Add("Instant teleport (like that in Sandbox mode)", "Instant teleport (like that in Sandbox mode)", "快速传送(和沙盒模式一样)");
@@ -98,6 +103,37 @@ public static class UIConfigWindow
         public override float IndexToValue(int index)
         {
             return index * 500_000f;
+        }
+    }
+
+    class ShellsCountMapper : MyWindow.RangeValueMapper<int>
+    {
+        public ShellsCountMapper() : base(1, 139)
+        {
+        }
+
+        public override int ValueToIndex(int value)
+        {
+            return value switch
+            {
+                < 4 => value,
+                < 64 => value / 4 + 3,
+                < 256 => value / 16 + 15,
+                < 4096 => value / 64 + 27,
+                _ => value / 256 + 75,
+            };
+        }
+
+        public override int IndexToValue(int index)
+        {
+            return index switch
+            {
+                < 4 => index,
+                < 19 => (index - 3) * 4,
+                < 31 => (index - 15) * 16,
+                < 91 => (index - 27) * 64,
+                _ => (index - 75) * 256,
+            };
         }
     }
 
@@ -166,7 +202,6 @@ public static class UIConfigWindow
             FactoryPatch.BeltSignalGeneratorEnabled.SettingChanged += OnBeltSignalChanged;
             wnd.OnFree += () => { FactoryPatch.BeltSignalGeneratorEnabled.SettingChanged -= OnBeltSignalChanged; };
             OnBeltSignalChanged(null, null);
-
             void OnBeltSignalChanged(object o, EventArgs e)
             {
                 var on = FactoryPatch.BeltSignalGeneratorEnabled.Value;
@@ -260,12 +295,40 @@ public static class UIConfigWindow
             {
                 slider.slider.enabled = DysonSpherePatch.UnlockMaxOrbitRadiusEnabled.Value;
             }
-
-            ;
         }
         x = 300f;
         y = 10f;
         wnd.AddButton(x, y, 300f, tab4, "Complete Dyson Sphere shells instantly", 16, "button-complete-dyson-sphere-shells-instantly", DysonSphereFunctions.CompleteShellsInstantly);
+        {
+            y += 72f;
+            var btn1 = wnd.AddButton(x, y, 300f, tab4, "Generate illegal dyson shell", 16, "button-generate-illegal-dyson-shells", () => {
+                UIMessageBox.Show("Generate illegal dyson shell".Translate(), "WARNING: This operation can be very slow, continue?".Translate(), "取消".Translate(), "确定".Translate(), UIMessageBox.WARNING, null,
+                    () => { DysonSphereFunctions.CreatePossibleFramesAndShells(); });
+            });
+            y += 36f;
+            var btn2 = wnd.AddButton(x, y, 300f, tab4, "Keep max production shells and remove others", 16, "button-keep-max-production-shells", () => {
+                UIMessageBox.Show("Keep max production shells and remove others".Translate(), "WARNING: This operation is DANGEROUS, continue?".Translate(), "取消".Translate(), "确定".Translate(), UIMessageBox.WARNING, null,
+                    () => { DysonSphereFunctions.KeepMaxProductionShells(); });
+            });
+            y += 36f;
+            var btn3 = wnd.AddButton(x, y, 300f, tab4, "Duplicate shells from that with highest production", 16, "button-duplicate-shells-from-the-highest-production", () => {
+                UIMessageBox.Show("Duplicate shells from that with highest production".Translate(), "WARNING: This operation can be very slow, continue?".Translate(), "取消".Translate(), "确定".Translate(), UIMessageBox.WARNING, null,
+                    () => { DysonSphereFunctions.DuplicateShellsWithHighestProduction(); });
+            });
+            y += 30f;
+            var slider1 = wnd.AddSlider(x + 20f, y, tab4, DysonSphereFunctions.ShellsCountForFunctions, new ShellsCountMapper());
+            Functions.DysonSphereFunctions.IllegalDysonShellFunctionsEnabled.SettingChanged += onIllegalDysonShellFunctionsChanged;
+            wnd.OnFree += () => { Functions.DysonSphereFunctions.IllegalDysonShellFunctionsEnabled.SettingChanged -= onIllegalDysonShellFunctionsChanged; };
+            onIllegalDysonShellFunctionsChanged(null, null);
+            void onIllegalDysonShellFunctionsChanged(object o, EventArgs e)
+            {
+                var enabled = Functions.DysonSphereFunctions.IllegalDysonShellFunctionsEnabled.Value;
+                btn1.gameObject.SetActive(enabled);
+                btn2.gameObject.SetActive(enabled);
+                btn3.gameObject.SetActive(enabled);
+                slider1.gameObject.SetActive(enabled);
+            }
+        }
 
         var tab5 = wnd.AddTab(_windowTrans, "Mecha/Combat");
         x = 0f;
