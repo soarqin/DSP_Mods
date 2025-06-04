@@ -87,6 +87,7 @@ public static class UIConfigWindow
         I18N.Add("PLS", "PLS", "行星物流站");
         I18N.Add("ILS", "ILS", "星际物流站");
         I18N.Add("Advanced Mining Machine", "Advanced Mining Machine", "大型采矿机");
+        I18N.Add("Set default remote logic to storage", "Set default remote logic to storage", "设置默认远程逻辑为仓储");
         I18N.Add("Max. Charging Power", "Max. Charging Power", "最大充能功率");
         I18N.Add("Count of Bots filled", "Count of Bots filled", "填充的配送机数量");
         I18N.Add("Drone transport range", "Drone transport range", "运输机最远路程");
@@ -557,9 +558,11 @@ public static class UIConfigWindow
         }
         y += 36f;
         wnd.AddCheckBox(x, y, tab3, LogisticsPatch.AutoConfigLogisticsEnabled, "Auto-config logistic stations");
-        y += 24f;
-        wnd.AddCheckBox(10f, y, tab3, LogisticsPatch.AutoConfigLimitAutoReplenishCount, "Limit auto-replenish count to values below", 13).WithSmallerBox();
+        y += 26f;
+        wnd.AddCheckBox(x + 10f, y, tab3, LogisticsPatch.AutoConfigLimitAutoReplenishCount, "Limit auto-replenish count to values below", 13).WithSmallerBox();
         y += 18f;
+        wnd.AddCheckBox(x + 10f, y, tab3, LogisticsPatch.SetDefaultRemoteLogicToStorage, "Set default remote logic to storage", 13).WithSmallerBox();
+        y += 16f;
         var maxWidth = 0f;
         wnd.AddText2(10f, y, tab3, "Dispenser", 14, "text-dispenser");
         y += 18f;

@@ -142,6 +142,8 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
             "Auto-config logistic stations");
         LogisticsPatch.AutoConfigLimitAutoReplenishCount = Config.Bind("Factory", "AutoConfigLimitAutoReplenishCount", false,
             "Limit auto-replenish count to config values");
+        LogisticsPatch.SetDefaultRemoteLogicToStorage = Config.Bind("Factory", "AutoConfigSetDefaultRemoteLogicToStorage", false,
+            "Set default remote logic to storage");
         LogisticsPatch.AutoConfigDispenserChargePower = Config.Bind("Factory", "AutoConfigDispenserChargePower", 30, new ConfigDescription("LD: Max. Charging Power", new AcceptableValueRange<int>(3, 30)));
         LogisticsPatch.AutoConfigDispenserCourierCount = Config.Bind("Factory", "AutoConfigDispenserCourierCount", 10, new ConfigDescription("LD: Count of Bots filled", new AcceptableValueRange<int>(0, 10)));
         LogisticsPatch.AutoConfigBattleBaseChargePower = Config.Bind("Factory", "AutoConfigBattleBaseChargePower", 8, new ConfigDescription("Battlefield Analysis Base: Max. Charging Power", new AcceptableValueRange<int>(4, 40)));

@@ -29,6 +29,7 @@ public static class LogisticsPatch
     public static ConfigEntry<int> AutoConfigPLSMinPilerValue; // 0~4; 0 = Maximum in tech, 1~4 = piler stacking count
     public static ConfigEntry<int> AutoConfigPLSDroneCount; // 0~50
     // ILS config
+    public static ConfigEntry<bool> SetDefaultRemoteLogicToStorage;
     public static ConfigEntry<int> AutoConfigILSChargePower; // 2~20, display as 15000000.0 * value
     public static ConfigEntry<int> AutoConfigILSMaxTripDrone; // 1~180, by degress
     public static ConfigEntry<int> AutoConfigILSMaxTripShip; // 1~41; 1~20 = value LY, 21-40 = 2*value-20LY, 41 = Unlimited
@@ -54,6 +55,7 @@ public static class LogisticsPatch
     {
         AutoConfigLogisticsEnabled.SettingChanged += (_, _) => AutoConfigLogistics.Enable(AutoConfigLogisticsEnabled.Value);
         AutoConfigLimitAutoReplenishCount.SettingChanged += (_, _) => AutoConfigLogistics.ToggleLimitAutoReplenishCount();
+        SetDefaultRemoteLogicToStorage.SettingChanged += (_, _) => AutoConfigLogisticsSetDefaultRemoteLogicToStorage.Enable(SetDefaultRemoteLogicToStorage.Value);
         LogisticsCapacityTweaksEnabled.SettingChanged += (_, _) => LogisticsCapacityTweaks.Enable(LogisticsCapacityTweaksEnabled.Value);
         AllowOverflowInLogisticsEnabled.SettingChanged += (_, _) => AllowOverflowInLogistics.Enable(AllowOverflowInLogisticsEnabled.Value);
         LogisticsConstrolPanelImprovementEnabled.SettingChanged += (_, _) => LogisticsConstrolPanelImprovement.Enable(LogisticsConstrolPanelImprovementEnabled.Value);
@@ -64,6 +66,7 @@ public static class LogisticsPatch
     public static void Start()
     {
         AutoConfigLogistics.Enable(AutoConfigLogisticsEnabled.Value);
+        AutoConfigLogisticsSetDefaultRemoteLogicToStorage.Enable(SetDefaultRemoteLogicToStorage.Value);
         LogisticsCapacityTweaks.Enable(LogisticsCapacityTweaksEnabled.Value);
         AllowOverflowInLogistics.Enable(AllowOverflowInLogisticsEnabled.Value);
         LogisticsConstrolPanelImprovement.Enable(LogisticsConstrolPanelImprovementEnabled.Value);
@@ -80,6 +83,7 @@ public static class LogisticsPatch
         GameLogic.OnGameBegin -= RealtimeLogisticsInfoPanel.OnGameBegin;
 
         AutoConfigLogistics.Enable(false);
+        AutoConfigLogisticsSetDefaultRemoteLogicToStorage.Enable(false);
         LogisticsCapacityTweaks.Enable(false);
         AllowOverflowInLogistics.Enable(false);
         LogisticsConstrolPanelImprovement.Enable(false);
@@ -272,6 +276,33 @@ public static class LogisticsPatch
         {
             if (__result <= 0) return;
             DoConfigDispenser(__instance.factory, __instance.dispenserPool[__result]);
+        }
+    }
+
+    public class AutoConfigLogisticsSetDefaultRemoteLogicToStorage : PatchImpl<AutoConfigLogisticsSetDefaultRemoteLogicToStorage>
+    {
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(UIControlPanelStationStorage), nameof(UIControlPanelStationStorage.OnItemPickerReturn))]
+        [HarmonyPatch(typeof(UIStationStorage), nameof(UIStationStorage.OnItemPickerReturn))]
+        private static IEnumerable<CodeInstruction> UIStationStorage_OnItemPickerReturn_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Ldarg_0),
+                new CodeMatch(OpCodes.Ldfld),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(StationComponent), nameof(StationComponent.isStellar))),
+                new CodeMatch(ci => ci.opcode == OpCodes.Brtrue_S || ci.opcode == OpCodes.Brtrue),
+                new CodeMatch(OpCodes.Ldc_I4_0),
+                new CodeMatch(ci => ci.opcode == OpCodes.Br_S || ci.opcode == OpCodes.Br),
+                new CodeMatch(OpCodes.Ldc_I4_1),
+                new CodeMatch(OpCodes.Call, AccessTools.PropertyGetter(typeof(GameMain), nameof(GameMain.mainPlayer)))
+            );
+            if (matcher.IsValid) {
+                matcher.RemoveInstructions(7).InsertAndAdvance(
+                    new CodeInstruction(OpCodes.Ldc_I4_0)
+                );
+            }
+            return matcher.InstructionEnumeration();
         }
     }
 

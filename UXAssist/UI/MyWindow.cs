@@ -490,8 +490,8 @@ public class MyWindowWithTabs : MyWindow
         var textTrans = btn.transform.Find("Text");
         var btnText = textTrans.GetComponent<Text>();
         var shadow = textTrans.GetComponent<Shadow>() ?? textTrans.gameObject.AddComponent<Shadow>();
-        shadow.effectColor = new Color(0f, 0f, 0f, 0.6f);
-        shadow.effectDistance = new Vector2(1f, -2f);
+        shadow.effectColor = new Color(0f, 0f, 0f, 0.4f);
+        shadow.effectDistance = new Vector2(1f, -1f);
         btnText.text = label.Translate();
         btnText.fontSize = 16;
         btn.data = index;
