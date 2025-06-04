@@ -207,13 +207,13 @@ public static class TechFunctions
         }
         if (!enough)
         {
-            UIMessageBox.Show("元数据".Translate(), "元数据不足".Translate(), "确定".Translate(), 3);
+            UIMessageBox.Show("元数据".Translate(), "元数据不足".Translate(), "确定".Translate(), UIMessageBox.ERROR);
             return;
         }
 
         if (!history.hasUsedPropertyBanAchievement)
         {
-            UIMessageBox.Show("初次使用元数据标题".Translate(), "初次使用元数据描述".Translate(), "取消".Translate(), "确定".Translate(), 2, null, DoUnlockCalculatedTechs);
+            UIMessageBox.Show("初次使用元数据标题".Translate(), "初次使用元数据描述".Translate(), "取消".Translate(), "确定".Translate(), UIMessageBox.QUESTION, null, DoUnlockCalculatedTechs);
             return;
         }
 
@@ -256,7 +256,7 @@ public static class TechFunctions
                 if (consumption.Value <= 0) continue;
                 msg += $"\n  {LDB.items.Select(consumption.Key).propertyName}x{consumption.Value}";
             }
-            UIMessageBox.Show("Batch buyout tech".Translate(), msg, "取消".Translate(), "确定".Translate(), 2, null, UnlockWithPropertiesImmediately);
+            UIMessageBox.Show("Batch buyout tech".Translate(), msg, "取消".Translate(), "确定".Translate(), UIMessageBox.QUESTION, null, UnlockWithPropertiesImmediately);
             return;
 
             void AddToMsg(ref string str, Tuple<TechProto, int, int> tuple)

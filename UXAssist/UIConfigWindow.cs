@@ -436,12 +436,12 @@ public static class UIConfigWindow
         x = 400f;
         y = 10f;
         wnd.AddButton(x, y, tab2, "Initialize This Planet", 16, "button-init-planet", () =>
-            UIMessageBox.Show("Initialize This Planet".Translate(), "Initialize This Planet Confirm".Translate(), "取消".Translate(), "确定".Translate(), 2, null,
+            UIMessageBox.Show("Initialize This Planet".Translate(), "Initialize This Planet Confirm".Translate(), "取消".Translate(), "确定".Translate(), UIMessageBox.QUESTION, null,
                 () => { PlanetFunctions.RecreatePlanet(true); })
         );
         y += 36f;
         wnd.AddButton(x, y, tab2, "Dismantle All Buildings", 16, "button-dismantle-all", () =>
-            UIMessageBox.Show("Dismantle All Buildings".Translate(), "Dismantle All Buildings Confirm".Translate(), "取消".Translate(), "确定".Translate(), 2, null,
+            UIMessageBox.Show("Dismantle All Buildings".Translate(), "Dismantle All Buildings Confirm".Translate(), "取消".Translate(), "确定".Translate(), UIMessageBox.QUESTION, null,
                 () => { PlanetFunctions.DismantleAll(false); })
         );
         y += 72f;
@@ -720,7 +720,7 @@ public static class UIConfigWindow
         x = 400f;
         y = 10f;
         _dysonInitBtn = wnd.AddButton(x, y, tab5, "Initialize Dyson Sphere", 16, "init-dyson-sphere", () =>
-            UIMessageBox.Show("Initialize Dyson Sphere".Translate(), "Initialize Dyson Sphere Confirm".Translate(), "取消".Translate(), "确定".Translate(), 2, null,
+            UIMessageBox.Show("Initialize Dyson Sphere".Translate(), "Initialize Dyson Sphere Confirm".Translate(), "取消".Translate(), "确定".Translate(), UIMessageBox.QUESTION, null,
                 () => { DysonSphereFunctions.InitCurrentDysonLayer(null, -1); })
         );
         y += 36f;
@@ -732,7 +732,7 @@ public static class UIConfigWindow
             var btn = wnd.AddFlatButton(x, y, tab5, id.ToString(), 12, "dismantle-layer-" + id, () =>
                 {
                     var star = DysonSphereFunctions.CurrentStarForDysonSystem();
-                    UIMessageBox.Show("Dismantle selected layer".Translate(), "Dismantle selected layer Confirm".Translate(), "取消".Translate(), "确定".Translate(), 2, null,
+                    UIMessageBox.Show("Dismantle selected layer".Translate(), "Dismantle selected layer Confirm".Translate(), "取消".Translate(), "确定".Translate(), UIMessageBox.QUESTION, null,
                         () => { DysonSphereFunctions.InitCurrentDysonLayer(star, id); });
                 }
             ).WithSize(40f, 20f);
