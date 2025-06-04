@@ -3,6 +3,9 @@
 
 ## Changlog
 
+* 1.3.7
+  + `Re-initialize planet`: Fix a possible crash.
+  + `Auto-config logistic stations`: Add `Set default remote logic to storage`
 * 1.3.6
   + `Dismantle blueprint selected buildings`:
     - Fix a crash on dismantling preview buildings.
@@ -321,6 +324,9 @@
 
 ## 更新日志
 
+* 1.3.7
+  + `重新初始化行星`: 修复可能导致崩溃的问题
+  + `自动配置物流站`: 增加`设置默认远程逻辑为仓储`
 * 1.3.6
   + `拆除蓝图选中的建筑`：
     - 修复了拆除虚影建筑时崩溃的问题
