@@ -46,7 +46,7 @@ public static class DysonSphereFunctions
             return;
         }
 
-        UIMessageBox.Show("CheatEnabler".Translate(), string.Format("This will complete all Dyson Sphere shells on \"{0}\" instantly. Are you sure?".Translate(), star.displayName), "取消".Translate(), "确定".Translate(), UIMessageBox.QUESTION, () =>
+        UIMessageBox.Show("CheatEnabler".Translate(), string.Format("This will complete all Dyson Sphere shells on \"{0}\" instantly. Are you sure?".Translate(), star.displayName), "取消".Translate(), "确定".Translate(), UIMessageBox.QUESTION, null, () =>
         {
             var totalNodeSpInfo = AccessTools.Field(typeof(DysonSphereLayer), "totalNodeSP");
             var totalFrameSpInfo = AccessTools.Field(typeof(DysonSphereLayer), "totalFrameSP");

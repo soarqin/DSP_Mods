@@ -3,6 +3,8 @@
 
 ## Changlog
 
+* 2.3.32
+  + `Complete Dyson Sphere Shells instantly`: Fix a crash.
 * 2.3.31
   + New feature: `Unlock Dyson Sphere max orbit radius`
   + `Remove metadata consumption record in current game`: Fix implementation
@@ -160,6 +162,8 @@
 
 ## 更新日志
 
+* 2.3.32
+  + `立即完成戴森壳建造`：修复了一个崩溃问题
 * 2.3.31
   + 新功能：`解锁戴森球最大轨道半径`
   + `移除当前存档的元数据消耗记录`：修复实现
