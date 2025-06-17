@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.Common;
+using System.Linq;
 using System.Reflection.Emit;
 using HarmonyLib;
 using UnityEngine;
@@ -87,31 +89,121 @@ public class PersistPatch : PatchImpl<PersistPatch>
     }
 
     // Sort blueprint structures by item id, model index, recipe id, area index, and position before saving
+    private struct BPBuildingData
+    {
+        public BlueprintBuilding building;
+        public int itemType;
+        public double offset;
+    }
+
+    private struct BPBeltData
+    {
+        public BlueprintBuilding building;
+        public double offset;
+    }
+
+    private static HashSet<int> _itemIsBelt = null;
+    private static Dictionary<int, int> _upgradeTypes = null;
+
     [HarmonyPostfix]
     [HarmonyPatch(typeof(BlueprintUtils), nameof(BlueprintUtils.GenerateBlueprintData))]
     private static void BlueprintUtils_GenerateBlueprintData_Postfix(BlueprintData _blueprintData)
     {
-        var buildings = _blueprintData.buildings;
-        Array.Sort(buildings, (a, b) =>
+        // Initialize itemIsBelt and upgradeTypes
+        if (_itemIsBelt == null)
         {
-            var tmpItemId = a.itemId - b.itemId;
-            if (tmpItemId != 0) return tmpItemId;
+            _itemIsBelt = [];
+            _upgradeTypes = [];
+            foreach (var proto in LDB.items.dataArray)
+            {
+                if (proto.prefabDesc?.isBelt ?? false)
+                {
+                    _itemIsBelt.Add(proto.ID);
+                    continue;
+                }
+                if (proto.Upgrades != null && proto.Upgrades.Length > 0)
+                {
+                    var minUpgrade = proto.Upgrades.Min(u => u);
+                    if (minUpgrade != 0 && minUpgrade != proto.ID)
+                    {
+                        _upgradeTypes.Add(proto.ID, minUpgrade);
+                    }
+                }
+            }
+        }
 
-            var tmpModelIndex = a.modelIndex - b.modelIndex;
-            if (tmpModelIndex != 0) return tmpModelIndex;
+        // Separate belt and non-belt buildings
+        List<BPBuildingData> bpBuildings = [];
+        Dictionary<BlueprintBuilding, BPBeltData> bpBelts = [];
+        for (var i = 0; i < _blueprintData.buildings.Length; i++)
+        {
+            var building = _blueprintData.buildings[i];
+            var offset = building.localOffset_y * 262144.0 + building.localOffset_x * 1024.0 + building.localOffset_z;
+            if (_itemIsBelt.Contains(building.itemId))
+            {
+                bpBelts.Add(building, new BPBeltData { building = building, offset = offset });
+            }
+            else
+            {
+                var itemType = _upgradeTypes.TryGetValue(building.itemId, out var upgradeType) ? upgradeType : building.itemId;
+                bpBuildings.Add(new BPBuildingData { building = building, itemType = itemType, offset = offset });
+            }
+        }
+        Dictionary<BlueprintBuilding, BPBeltData> beltHeads = new(bpBelts);
+        foreach (var building in bpBelts.Keys)
+        {
+            var next = building.outputObj;
+            if (next == null) continue;
+            beltHeads.Remove(next);
+        }
+        // Sort belt buildings
+        List<BlueprintBuilding> sortedBpBelts = [];
+        // Deal with non-cycle belt paths
+        foreach (var pair in beltHeads.OrderByDescending(pair => pair.Value.offset))
+        {
+            var building = pair.Key;
+            while (building != null)
+            {
+                if (!bpBelts.Remove(building)) break;
+                sortedBpBelts.Add(building);
+                building = building.outputObj;
+            }
+        }
+        // Deal with cycle belt paths
+        while (bpBelts.Count > 0)
+        {
+            var building = bpBelts.OrderByDescending(pair => pair.Value.offset).First().Key;
+            while (building != null)
+            {
+                if (!bpBelts.Remove(building)) break;
+                sortedBpBelts.Add(building);
+                building = building.outputObj;
+            }
+        }
 
-            var tmpRecipeId = a.recipeId - b.recipeId;
-            if (tmpRecipeId != 0) return tmpRecipeId;
-
-            var tmpAreaIndex = a.areaIndex - b.areaIndex;
-            if (tmpAreaIndex != 0) return tmpAreaIndex;
-
-            var sign = Math.Sign(b.localOffset_y - a.localOffset_y);
+        // Sort non-belt buildings
+        bpBuildings.Sort((a, b) =>
+        {
+            var sign = b.itemType.CompareTo(a.itemType);
             if (sign != 0) return sign;
 
-            sign = Math.Sign(b.localOffset_x - a.localOffset_x);
-            return sign != 0 ? sign : Math.Sign(b.localOffset_z - a.localOffset_z);
+            sign = b.building.modelIndex.CompareTo(a.building.modelIndex);
+            if (sign != 0) return sign;
+
+            sign = b.building.recipeId.CompareTo(a.building.recipeId);
+            if (sign != 0) return sign;
+
+            sign = a.building.areaIndex.CompareTo(b.building.areaIndex);
+            if (sign != 0) return sign;
+
+            return b.offset.CompareTo(a.offset);
         });
+
+        // Concatenate sorted belts and non-belt buildings
+        sortedBpBelts.Reverse();
+        _blueprintData.buildings = [.. bpBuildings.Select(b => b.building), .. sortedBpBelts];
+        var buildings = _blueprintData.buildings;
+
         for (var i = buildings.Length - 1; i >= 0; i--)
         {
             buildings[i].index = i;
