@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 
 namespace UXAssist.Functions;
 
@@ -134,5 +135,118 @@ public static class FactoryFunctions
         }
         blueprintCopyTool.RefreshBlueprintData();
         blueprintCopyTool.DeterminePreviews();
+    }
+
+    private struct BPBuildingData
+    {
+        public BlueprintBuilding building;
+        public int itemType;
+        public double offset;
+    }
+
+    private struct BPBeltData
+    {
+        public BlueprintBuilding building;
+        public double offset;
+    }
+
+    private static HashSet<int> _itemIsBelt = null;
+    private static Dictionary<int, int> _upgradeTypes = null;
+
+    public static void SortBlueprintData(BlueprintData blueprintData)
+    {
+        // Initialize itemIsBelt and upgradeTypes
+        if (_itemIsBelt == null)
+        {
+            _itemIsBelt = [];
+            _upgradeTypes = [];
+            foreach (var proto in LDB.items.dataArray)
+            {
+                if (proto.prefabDesc?.isBelt ?? false)
+                {
+                    _itemIsBelt.Add(proto.ID);
+                    continue;
+                }
+                if (proto.Upgrades != null && proto.Upgrades.Length > 0)
+                {
+                    var minUpgrade = proto.Upgrades.Min(u => u);
+                    if (minUpgrade != 0 && minUpgrade != proto.ID)
+                    {
+                        _upgradeTypes.Add(proto.ID, minUpgrade);
+                    }
+                }
+            }
+        }
+
+        // Separate belt and non-belt buildings
+        List<BPBuildingData> bpBuildings = [];
+        Dictionary<BlueprintBuilding, BPBeltData> bpBelts = [];
+        foreach (var building in blueprintData.buildings)
+        {
+            var offset = building.areaIndex * 1073741824.0 + building.localOffset_y * 262144.0 + building.localOffset_x * 1024.0 + building.localOffset_z;
+            if (_itemIsBelt.Contains(building.itemId))
+            {
+                bpBelts.Add(building, new BPBeltData { building = building, offset = offset });
+            }
+            else
+            {
+                var itemType = _upgradeTypes.TryGetValue(building.itemId, out var upgradeType) ? upgradeType : building.itemId;
+                bpBuildings.Add(new BPBuildingData { building = building, itemType = itemType, offset = offset });
+            }
+        }
+        var beltsWithInput = bpBelts.Select(pair => pair.Value.building.outputObj).ToHashSet();
+        var beltHeads = bpBelts.Where(pair => !beltsWithInput.Contains(pair.Value.building)).ToDictionary(pair => pair.Key, pair => pair.Value);
+        // Sort belt buildings
+        List<BlueprintBuilding> sortedBpBelts = [];
+        // Deal with non-cycle belt paths
+        foreach (var pair in beltHeads.OrderByDescending(pair => pair.Value.offset))
+        {
+            var building = pair.Key;
+            while (building != null)
+            {
+                if (!bpBelts.Remove(building)) break;
+                sortedBpBelts.Add(building);
+                building = building.outputObj;
+            }
+        }
+        // Deal with cycle belt paths
+        foreach (var pair in bpBelts.OrderByDescending(pair => pair.Value.offset))
+        {
+            var building = pair.Key;
+            while (building != null)
+            {
+                if (!bpBelts.Remove(building)) break;
+                sortedBpBelts.Add(building);
+                building = building.outputObj;
+            }
+        }
+
+        // Sort non-belt buildings
+        bpBuildings.Sort((a, b) =>
+        {
+            var sign = b.itemType.CompareTo(a.itemType);
+            if (sign != 0) return sign;
+
+            sign = b.building.modelIndex.CompareTo(a.building.modelIndex);
+            if (sign != 0) return sign;
+
+            sign = b.building.recipeId.CompareTo(a.building.recipeId);
+            if (sign != 0) return sign;
+
+            sign = a.building.areaIndex.CompareTo(b.building.areaIndex);
+            if (sign != 0) return sign;
+
+            return b.offset.CompareTo(a.offset);
+        });
+
+        // Concatenate sorted belts and non-belt buildings
+        sortedBpBelts.Reverse();
+        blueprintData.buildings = [.. bpBuildings.Select(b => b.building), .. sortedBpBelts];
+        var buildings = blueprintData.buildings;
+
+        for (var i = buildings.Length - 1; i >= 0; i--)
+        {
+            buildings[i].index = i;
+        }
     }
 }

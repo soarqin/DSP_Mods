@@ -764,8 +764,15 @@ public static class LogisticsPatch
 
         public static void Enable(bool on)
         {
-            if (_stationTipsRoot)
-                _stationTipsRoot.SetActive(on);
+            if (_stationTipsRoot == null) return;
+            if (!on)
+            {
+                _stationTipsRoot.SetActive(false);
+                return;
+            }
+            if (DSPGame.IsMenuDemo || !GameMain.isRunning) return;
+            _lastPlanet = GameMain.localPlanet;
+            _stationTipsRoot.SetActive(on && _lastPlanet != null);
         }
 
         public static void EnableBars(bool on)
