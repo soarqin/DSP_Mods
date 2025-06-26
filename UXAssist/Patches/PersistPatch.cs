@@ -88,7 +88,7 @@ public class PersistPatch : PatchImpl<PersistPatch>
         return matcher.InstructionEnumeration();
     }
 
-
+    // Sort blueprint data when pasting
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(BuildTool_BlueprintCopy), nameof(BuildTool_BlueprintCopy.UseToPasteNow))]
     private static IEnumerable<CodeInstruction> BuildTool_BlueprintCopy_UseToPasteNow_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -105,6 +105,7 @@ public class PersistPatch : PatchImpl<PersistPatch>
         return matcher.InstructionEnumeration();
     }
 
+    // Sort blueprint data when saving
     [HarmonyPrefix]
     [HarmonyPatch(typeof(BlueprintData), nameof(BlueprintData.SaveBlueprintData))]
     private static void BlueprintData_SaveBlueprintData_Prefix(BlueprintData __instance)
