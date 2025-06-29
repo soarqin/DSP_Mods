@@ -19,6 +19,7 @@ public static class DysonSphereFunctions
     {
         I18N.Add("You are not in any system.", "You are not in any system.", "你不在任何星系中");
         I18N.Add("There is no Dyson Sphere shell on \"{0}\".", "There is no Dyson Sphere shell on \"{0}\".", "“{0}”上没有可建造的戴森壳");
+        I18N.Add("There is no Dyson Sphere data on \"{0}\".", "There is no Dyson Sphere data on \"{0}\".", "“{0}”上没有戴森球数据");
         I18N.Add("This will complete all Dyson Sphere shells on \"{0}\" instantly. Are you sure?", "This will complete all Dyson Sphere shells on \"{0}\" instantly. Are you sure?", "这将立即完成“{0}”上的所有戴森壳。你确定吗？");
     }
 
@@ -249,18 +250,17 @@ public static class DysonSphereFunctions
     }
 
     private static readonly ThreadLocal<Dictionary<int, Vector3>> _vmap = new(() => new(16384));
-    private static int CalculateTriangleVertCount(DysonNode[] nodes)
+    private static int CalculateTriangleVertCount(VectorLF3[] polygon)
     {
-        if (nodes.Length != 3) return -1;
-        VectorLF3[] polygon = [.. nodes.Select(node => node.pos)];
+        if (polygon.Length != 3) return -1;
         VectorLF3 sum = VectorLF3.zero;
         double num = 0.0;
         for (int i = 0; i < 3; i++)
         {
-            var nodeA = nodes[i];
-            var nodeB = nodes[(i + 1) % 3];
-            float num2 = Vector3.Distance(nodeA.pos, nodeB.pos);
-            VectorLF3 vectorLF2 = (VectorLF3)(nodeA.pos + nodeB.pos) * 0.5;
+            var nodeApos = polygon[i];
+            var nodeBpos = polygon[(i + 1) % 3];
+            float num2 = Vector3.Distance(nodeApos, nodeBpos);
+            VectorLF3 vectorLF2 = (VectorLF3)(nodeApos + nodeBpos) * 0.5;
             sum += vectorLF2 * (double)num2;
             num += (double)num2;
         }
@@ -1111,7 +1111,7 @@ public static class DysonSphereFunctions
         dysonSphere.modelRenderer.RebuildModels();
     }
 
-    public static void CreatePossibleFramesAndShells()
+    public static void CreateIllegalDysonShellWithMaxOutput()
     {
         StarData star = null;
         var dysonEditor = UIRoot.instance?.uiGame?.dysonEditor;
@@ -1128,10 +1128,11 @@ public static class DysonSphereFunctions
                 return;
             }
         }
+        UXAssist.Functions.DysonSphereFunctions.InitCurrentDysonLayer(star, 0);
         var dysonSphere = GameMain.data?.dysonSpheres[star.index];
-        if (dysonSphere == null || dysonSphere.layerCount == 0)
+        if (dysonSphere == null)
         {
-            UIMessageBox.Show("CheatEnabler".Translate(), string.Format("There is no Dyson Sphere shell on \"{0}\".".Translate(), star.displayName), "确定".Translate(), UIMessageBox.ERROR, null);
+            UIMessageBox.Show("CheatEnabler".Translate(), string.Format("There is no Dyson Sphere data on \"{0}\".".Translate(), star.displayName), "确定".Translate(), UIMessageBox.ERROR, null);
             return;
         }
         DysonShell.s_vmap ??= new Dictionary<int, Vector3>(16384);
@@ -1139,97 +1140,92 @@ public static class DysonSphereFunctions
         DysonShell.s_ivmap ??= new Dictionary<int, int>(16384);
         var shellsChanged = false;
         var mutex = new object();
-        for (var i = 1; i < dysonSphere.layersIdBased.Length; i++)
+        Dictionary<(int, int), int> availableFrames = [];
+        HashSet<int> unusedFrameIds = [];
+        var layer = dysonSphere.layersIdBased[1];
+        if (layer != null)
         {
-            Dictionary<(int, int), int> availableFrames = [];
-            HashSet<int> unusedFrameIds = [];
-            var layer = dysonSphere.layersIdBased[i];
-            if (layer == null || layer.id != i) continue;
-            int nodeCount = layer.nodeCursor;
+            dysonSphere.RemoveLayer(1);
+        }
+        layer = dysonSphere.AddLayerOnId(1, dysonSphere.maxOrbitRadius, Quaternion.Euler(0f, 0f, 0f), Mathf.Sqrt(dysonSphere.gravity / dysonSphere.maxOrbitRadius) / dysonSphere.maxOrbitRadius * 57.2957802f);
+        if (layer == null) return;
 
-            List<SupposedShell> supposedShells = [];
-            int j;
-            for (j = 1; j < nodeCount; j++)
+        var supposedShells = new List<SupposedShell>(60 * 59 * 58);
+        VectorLF3[] nodePos = new VectorLF3[60];
+        for (var i = 0; i < 60; i++)
+        {
+            nodePos[i] = new VectorLF3(Math.Sin(Math.PI * 2 * i / 60), 0, Math.Cos(Math.PI * 2 * i / 60)) * layer.orbitRadius;
+        }
+        for (var i = 0; i < 58; i++)
+        {
+            for (var j = i + 1; j < 59; j++)
             {
-                var nodeA = layer.nodePool[j];
-                if (nodeA == null || nodeA.id != j) continue;
-                for (var k = j + 1; k < nodeCount; k++)
+                for (var k = j + 1; k < 60; k++)
                 {
-                    var nodeB = layer.nodePool[k];
-                    if (nodeB == null || nodeB.id != k) continue;
-                    for (var l = k + 1; l < nodeCount; l++)
-                    {
-                        var nodeC = layer.nodePool[l];
-                        if (nodeC == null || nodeC.id != l) continue;
-                        var area = Vector3.Cross(nodeB.pos - nodeA.pos, nodeC.pos - nodeA.pos).sqrMagnitude;
-                        supposedShells.Add(new SupposedShell { nodeA = nodeA, nodeB = nodeB, nodeC = nodeC, area = area });
-                    }
+                    var area = Vector3.Cross(nodePos[j] - nodePos[i], nodePos[k] - nodePos[i]).sqrMagnitude;
+                    supposedShells.Add(new SupposedShell { posA = nodePos[i], posB = nodePos[j], posC = nodePos[k], area = area });
                 }
-            }
-            supposedShells.Sort((a, b) => b.area.CompareTo(a.area));
-            CheatEnabler.Logger.LogDebug($"Finished Area Sort");
-            var maxVertCount = -1;
-            var maxJ = -1;
-            var options = new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount - 1 };
-            Parallel.For(0, supposedShells.Count, options, (j, loopState) =>
-            {
-                var sshell = supposedShells[j];
-                var vertCount = CalculateTriangleVertCount([sshell.nodeA, sshell.nodeB, sshell.nodeC]);
-                if (vertCount < 32768)
-                {
-                    lock (mutex)
-                    {
-                        if (loopState.ShouldExitCurrentIteration) return;
-                        if (vertCount > maxVertCount)
-                        {
-                            maxVertCount = vertCount;
-                            maxJ = j;
-                            if (maxVertCount >= 32000)
-                            {
-                                CheatEnabler.Logger.LogDebug($"!!STOP!! Triangle {j}[{sshell.nodeA.pos:F2} {sshell.nodeB.pos:F2} {sshell.nodeC.pos:F2}] has {vertCount} vertices");
-                                loopState.Stop();
-                                return;
-                            }
-                            CheatEnabler.Logger.LogDebug($"Triangle {j}[{sshell.nodeA.pos:F2} {sshell.nodeB.pos:F2} {sshell.nodeC.pos:F2}] has {vertCount} vertices");
-                        }
-                    }
-                }
-            });
-            if (maxJ >= 0)
-            {
-                foreach (var node in layer.nodePool)
-                {
-                    if (node == null || node.id != j) continue;
-                    dysonSphere.RemoveDysonNodeRData(node);
-                }
-                layer.nodePool = new DysonNode[64];
-                layer.nodeRecycle = new int[64];
-                layer.nodeRecycleCursor = 0;
-                layer.nodeCapacity = 64;
-                layer.nodeCursor = 1;
-                layer.framePool = new DysonFrame[64];
-                layer.frameRecycle = new int[64];
-                layer.frameRecycleCursor = 0;
-                layer.frameCapacity = 64;
-                layer.frameCursor = 1;
-                layer.shellPool = new DysonShell[64];
-                layer.shellRecycle = new int[64];
-                layer.shellRecycleCursor = 0;
-                layer.shellCapacity = 64;
-                layer.shellCursor = 1;
-                var sshell = supposedShells[maxJ];
-                DysonNode[] newNodes = [layer.QuickAddDysonNode(0, sshell.nodeA.pos), layer.QuickAddDysonNode(0, sshell.nodeB.pos), layer.QuickAddDysonNode(0, sshell.nodeC.pos)];
-                DysonFrame[] newFrames = [layer.QuickAddDysonFrame(0, newNodes[0], newNodes[1], false), layer.QuickAddDysonFrame(0, newNodes[1], newNodes[2], false), layer.QuickAddDysonFrame(0, newNodes[2], newNodes[0], false)];
-                layer.QuickAddDysonShell(0, newNodes, newFrames, false);
-                foreach (var node in newNodes)
-                {
-                    dysonSphere.AddDysonNodeRData(node, true);
-                    node.RecalcSpReq();
-                    node.RecalcCpReq();
-                }
-                shellsChanged = true;
             }
         }
+        supposedShells.Sort((a, b) => b.area.CompareTo(a.area));
+        CheatEnabler.Logger.LogDebug($"Finished Area Sort");
+        var maxVertCount = -1;
+        var maxJ = -1;
+        var options = new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount - 1 };
+        Parallel.For(0, supposedShells.Count, options, (j, loopState) =>
+        {
+            var sshell = supposedShells[j];
+            var vertCount = CalculateTriangleVertCount([sshell.posA, sshell.posB, sshell.posC]);
+            if (vertCount < 32768)
+            {
+                lock (mutex)
+                {
+                    if (loopState.ShouldExitCurrentIteration) return;
+                    if (vertCount > maxVertCount)
+                    {
+                        maxVertCount = vertCount;
+                        maxJ = j;
+                        if (maxVertCount >= 32000)
+                        {
+                            CheatEnabler.Logger.LogDebug($"!!STOP!! Triangle {j}[{sshell.posA:F2} {sshell.posB:F2} {sshell.posC:F2}] has {vertCount} vertices");
+                            loopState.Stop();
+                            return;
+                        }
+                        CheatEnabler.Logger.LogDebug($"Triangle {j}[{sshell.posA:F2} {sshell.posB:F2} {sshell.posC:F2}] has {vertCount} vertices");
+                    }
+                }
+            }
+        });
+        if (maxJ >= 0)
+        {
+            layer.nodePool = new DysonNode[64];
+            layer.nodeRecycle = new int[64];
+            layer.nodeRecycleCursor = 0;
+            layer.nodeCapacity = 64;
+            layer.nodeCursor = 1;
+            layer.framePool = new DysonFrame[64];
+            layer.frameRecycle = new int[64];
+            layer.frameRecycleCursor = 0;
+            layer.frameCapacity = 64;
+            layer.frameCursor = 1;
+            layer.shellPool = new DysonShell[64];
+            layer.shellRecycle = new int[64];
+            layer.shellRecycleCursor = 0;
+            layer.shellCapacity = 64;
+            layer.shellCursor = 1;
+            var sshell = supposedShells[maxJ];
+            DysonNode[] newNodes = [layer.QuickAddDysonNode(0, sshell.posA), layer.QuickAddDysonNode(0, sshell.posB), layer.QuickAddDysonNode(0, sshell.posC)];
+            DysonFrame[] newFrames = [layer.QuickAddDysonFrame(0, newNodes[0], newNodes[1], false), layer.QuickAddDysonFrame(0, newNodes[1], newNodes[2], false), layer.QuickAddDysonFrame(0, newNodes[2], newNodes[0], false)];
+            layer.QuickAddDysonShell(0, newNodes, newFrames, false);
+            foreach (var node in newNodes)
+            {
+                dysonSphere.AddDysonNodeRData(node, true);
+                node.RecalcSpReq();
+                node.RecalcCpReq();
+            }
+            shellsChanged = true;
+        }
+
         dysonSphere.CheckAutoNodes();
         if (dysonSphere.autoNodeCount <= 0) dysonSphere.PickAutoNode();
         dysonSphere.modelRenderer.RebuildModels();
@@ -1253,9 +1249,9 @@ public static class DysonSphereFunctions
 
     private class SupposedShell
     {
-        public DysonNode nodeA;
-        public DysonNode nodeB;
-        public DysonNode nodeC;
+        public VectorLF3 posA;
+        public VectorLF3 posB;
+        public VectorLF3 posC;
 
         public float area;
     }
