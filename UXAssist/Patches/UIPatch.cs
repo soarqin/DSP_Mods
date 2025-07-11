@@ -42,6 +42,13 @@ public class UIPatch: PatchImpl<UIPatch>
         return Functions.UIFunctions.CornerComboBoxIndex == 0;
     }
 
+    [HarmonyPostfix]
+    [HarmonyPatch(typeof(UIStarmapStar), nameof(UIStarmapStar._OnClose))]
+    private static void UIStarmapStar__OnClose_Postfix(UIStarmapStar __instance)
+    {
+        Functions.UIFunctions.StarmapFilterToggler?.SetCheckedWithEvent(false);
+    }
+
     [HarmonyPrefix]
     [HarmonyPatch(typeof(UIMechaLab), nameof(UIMechaLab.DetermineVisible))]
     private static bool UIMechaLab_DetermineVisible_Prefix(UIMechaLab __instance, ref bool __result)

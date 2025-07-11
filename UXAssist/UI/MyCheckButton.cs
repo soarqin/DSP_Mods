@@ -111,6 +111,13 @@ public class MyCheckButton : MonoBehaviour
         }
     }
 
+    public void SetCheckedWithEvent(bool check)
+    {
+        if (_checked == check) return;
+        Checked = check;
+        OnChecked?.Invoke();
+    }
+
     public void SetLabelText(string val)
     {
         if (labelText != null)
