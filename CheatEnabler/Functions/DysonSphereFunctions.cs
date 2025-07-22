@@ -1219,7 +1219,6 @@ public static class DysonSphereFunctions
             layer.QuickAddDysonShell(0, newNodes, newFrames, false);
             foreach (var node in newNodes)
             {
-                dysonSphere.AddDysonNodeRData(node, true);
                 node.RecalcSpReq();
                 node.RecalcCpReq();
             }
