@@ -10,6 +10,7 @@ using HarmonyLib;
 using UnityEngine;
 using UnityEngine.UI;
 using UXAssist.Common;
+using GameLogic = UXAssist.Common.GameLogic;
 
 namespace UXAssist.Patches;
 
@@ -445,12 +446,20 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                 new CodeMatch(OpCodes.Ldloca_S),
                 new CodeMatch(OpCodes.Call, AccessTools.PropertyGetter(typeof(Vector3), nameof(Vector3.magnitude)))
             );
+            var ldlocOpr = matcher.InstructionAt(0).operand;
             var jumpPos = matcher.InstructionAt(3).operand;
-            var labels = matcher.Labels;
-            matcher.Labels = [];
-            /* Insert: br   2358 (1C12) ldloc.s V_8 (8)
+            /* Insert after btrue:
+             *  Ldloc.s  V_8 (8)
+             *  ldfld	class PrefabDesc BuildPreview::desc
+             *  ldfld	bool PrefabDesc::isPowerGen
+             *  brtrue	2358 (1C12) ldloc.s V_8 (8)
              */
-            matcher.Insert(new CodeInstruction(OpCodes.Br, jumpPos).WithLabels(labels));
+            matcher.Advance(4).InsertAndAdvance(
+                new CodeInstruction(OpCodes.Ldloc_S, ldlocOpr),
+                new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(BuildPreview), nameof(BuildPreview.desc))),
+                new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(PrefabDesc), nameof(PrefabDesc.isPowerGen))),
+                new CodeInstruction(OpCodes.Brtrue_S, jumpPos)
+            );
             return matcher.InstructionEnumeration();
         }
 

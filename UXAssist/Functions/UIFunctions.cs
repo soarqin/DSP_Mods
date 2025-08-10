@@ -1,13 +1,14 @@
-namespace UXAssist.Functions;
-
-using UI;
-using Common;
 using CommonAPI.Systems;
 using UnityEngine;
 using UnityEngine.UI;
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using UXAssist.UI;
+using UXAssist.Common;
+using GameLogic = UXAssist.Common.GameLogic;
+
+namespace UXAssist.Functions;
 
 public static class UIFunctions
 {

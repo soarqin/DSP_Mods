@@ -9,6 +9,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
 using UXAssist.Common;
+using GameLogic = UXAssist.Common.GameLogic;
 using Object = UnityEngine.Object;
 
 namespace UXAssist.Patches;

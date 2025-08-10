@@ -14,6 +14,7 @@ using UXAssist.Functions;
 using UXAssist.Patches;
 using UXAssist.UI;
 using Util = UXAssist.Common.Util;
+using GameLogic = UXAssist.Common.GameLogic;
 
 namespace UXAssist;
 

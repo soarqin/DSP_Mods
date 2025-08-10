@@ -5,6 +5,7 @@ using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine.UI;
 using UXAssist.Common;
+using GameLogic = UXAssist.Common.GameLogic;
 
 namespace UXAssist.Patches;
 

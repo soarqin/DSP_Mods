@@ -2,6 +2,7 @@
 using BepInEx.Configuration;
 using HarmonyLib;
 using UXAssist.Common;
+using GameLogic = UXAssist.Common.GameLogic;
 
 namespace UniverseGenTweaks;
 public static class BirthPlanetPatch

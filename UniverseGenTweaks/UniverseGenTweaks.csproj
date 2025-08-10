@@ -16,7 +16,7 @@
     <PackageReference Include="BepInEx.Core" Version="5.*" />
     <PackageReference Include="BepInEx.PluginInfoProps" Version="1.*" />
     <PackageReference Include="UnityEngine.Modules" Version="2018.4.12" IncludeAssets="compile" />
-    <PackageReference Include="DysonSphereProgram.GameLibs" Version="*-r.*" />
+    <PackageReference Include="DysonSphereProgram.GameLibs" Version="0.10.32.*-r.*" />
     <PackageReference Include="DysonSphereProgram.Modding.DSPModSave" Version="1.*" />
   </ItemGroup>
 
