@@ -807,13 +807,13 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             var result = new Dictionary<int, float>();
             var extra = new Dictionary<int, float>();
             CalculateAllProductions(result, extra, itemId);
-            foreach (var p in extra)
-            {
-                if (result.TryGetValue(itemId, out var v) && v >= p.Value) continue;
-                result[itemId] = p.Value;
-            }
 
             result.Remove(itemId);
+
+            foreach (var p in extra)
+            {
+                result[p.Key] = (result.TryGetValue(p.Key, out var v) ? v : 0) + p.Value;
+            }
             var cnt = result.Count;
             if (cnt == 0)
             {
@@ -1253,16 +1253,12 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                 times = count / itemSource.Count;
             }
 
-            {
-                result.TryGetValue(itemId, out var oldCount);
-                result[itemId] = oldCount + count;
-            }
+            result[itemId] = (result.TryGetValue(itemId, out var oldCount) ? oldCount : 0) + count;
             if (itemSource.Extra != null)
             {
                 foreach (var p in itemSource.Extra)
                 {
-                    extra.TryGetValue(p.Key, out var oldCount);
-                    extra[p.Key] = oldCount + times * p.Value;
+                    extra[p.Key] = (extra.TryGetValue(p.Key, out oldCount) ? oldCount : 0) + times * p.Value;
                 }
             }
 
