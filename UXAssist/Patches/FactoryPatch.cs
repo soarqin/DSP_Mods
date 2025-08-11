@@ -431,12 +431,12 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         {
             var matcher = new CodeMatcher(instructions, generator);
             /* search for:
-             * ldloc.s	V_8 (8)
-             * ldfld	class PrefabDesc BuildPreview::desc
-             * ldfld	bool PrefabDesc::isInserter
-             * brtrue	2358 (1C12) ldloc.s V_8 (8)
-             * ldloca.s	V_10 (10)
-             * call	instance float32 [UnityEngine.CoreModule]UnityEngine.Vector3::get_magnitude()
+             *  ldloc.s	V_8 (8)
+             *  ldfld	class PrefabDesc BuildPreview::desc
+             *  ldfld	bool PrefabDesc::isInserter
+             *  brtrue	2358 (1C12) ldloc.s V_8 (8)
+             *  ldloca.s	V_10 (10)
+             *  call	instance float32 [UnityEngine.CoreModule]UnityEngine.Vector3::get_magnitude()
              */
             matcher.MatchForward(false,
                 new CodeMatch(OpCodes.Ldloc_S),
@@ -446,20 +446,16 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                 new CodeMatch(OpCodes.Ldloca_S),
                 new CodeMatch(OpCodes.Call, AccessTools.PropertyGetter(typeof(Vector3), nameof(Vector3.magnitude)))
             );
-            var ldlocOpr = matcher.InstructionAt(0).operand;
-            var jumpPos = matcher.InstructionAt(3).operand;
-            /* Insert after btrue:
-             *  Ldloc.s  V_8 (8)
+            /* Change to:
+             *  Ldloc.s	V_8 (8)
              *  ldfld	class PrefabDesc BuildPreview::desc
-             *  ldfld	bool PrefabDesc::isPowerGen
-             *  brtrue	2358 (1C12) ldloc.s V_8 (8)
+             *  ldfld	bool PrefabDesc::isEjector
+             *  brfalse	2358 (1C12) ldloc.s V_8 (8)
              */
-            matcher.Advance(4).InsertAndAdvance(
-                new CodeInstruction(OpCodes.Ldloc_S, ldlocOpr),
-                new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(BuildPreview), nameof(BuildPreview.desc))),
-                new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(PrefabDesc), nameof(PrefabDesc.isPowerGen))),
-                new CodeInstruction(OpCodes.Brtrue_S, jumpPos)
-            );
+            matcher.Advance(2);
+            matcher.Operand = AccessTools.Field(typeof(PrefabDesc), nameof(PrefabDesc.isEjector));
+            matcher.Advance(1);
+            matcher.Opcode = OpCodes.Brfalse;
             return matcher.InstructionEnumeration();
         }
 
