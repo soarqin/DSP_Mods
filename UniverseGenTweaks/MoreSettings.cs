@@ -137,6 +137,11 @@ public class MoreSettings
     [HarmonyPatch(typeof(UIGalaxySelect), nameof(UIGalaxySelect._OnOpen))]
     private static void UIGalaxySelect__OnOpen_Prefix()
     {
+        _gameMinDist = _minDist;
+        _gameMinStep = _minStep;
+        _gameMaxStep = _maxStep;
+        _gameFlatten = _flatten;
+
         _minDistText.text = _minDist.ToString();
         _minStepText.text = _minStep.ToString();
         _maxStepText.text = _maxStep.ToString();
@@ -237,6 +242,8 @@ public class MoreSettings
         [HarmonyPatch(typeof(GameData), nameof(GameData.Import))]
         private static void GameData_Import_Prefix(GameData __instance)
         {
+            // Skip prologue demo save
+            if (DSPGame.IsMenuDemo && DSPGame.LoadDemoIndex == -99) return;
             ResetSettings();
         }
 
@@ -305,16 +312,6 @@ public class MoreSettings
             matcher.Repeat(m => m.Advance(1).SetInstructionAndAdvance(new CodeInstruction(OpCodes.Ldarg_3)));
             return matcher.InstructionEnumeration();
         }
-    }
-
-    [HarmonyPrefix]
-    [HarmonyPatch(typeof(UIGalaxySelect), nameof(UIGalaxySelect.ApplySetting))]
-    private static void UIGalaxySelect_EnterGame_Prefix()
-    {
-        _gameMinDist = _minDist;
-        _gameMinStep = _minStep;
-        _gameMaxStep = _maxStep;
-        _gameFlatten = _flatten;
     }
 
     #region CombatSettings
