@@ -82,6 +82,7 @@ public class UniverseGenTweaks : BaseUnityPlugin, IModCanSave
 
     public void IntoOtherSave()
     {
+        MoreSettings.IntoOtherSave();
     }
     #endregion
 }

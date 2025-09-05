@@ -230,21 +230,12 @@ public class MoreSettings
 
     private static class PermanentPatch
     {
-        private static void ResetSettings()
+        public static void ResetSettings()
         {
             _gameMinDist = 2;
             _gameMinStep = 2;
             _gameMaxStep = 3.2;
             _gameFlatten = 0.18;
-        }
-
-        [HarmonyPrefix]
-        [HarmonyPatch(typeof(GameData), nameof(GameData.Import))]
-        private static void GameData_Import_Prefix(GameData __instance)
-        {
-            // Skip prologue demo save
-            if (DSPGame.IsMenuDemo && DSPGame.LoadDemoIndex == -99) return;
-            ResetSettings();
         }
 
         [HarmonyPrefix]
@@ -802,6 +793,13 @@ public class MoreSettings
         _gameMinStep = r.ReadDouble();
         _gameMaxStep = r.ReadDouble();
         _gameFlatten = r.ReadDouble();
+    }
+
+    public static void IntoOtherSave()
+    {
+        // Skip prologue demo save
+        if (DSPGame.IsMenuDemo && DSPGame.LoadDemoIndex == -99) return;
+        PermanentPatch.ResetSettings();
     }
     #endregion
 }
