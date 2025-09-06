@@ -303,6 +303,34 @@ public class MoreSettings
             matcher.Repeat(m => m.Advance(1).SetInstructionAndAdvance(new CodeInstruction(OpCodes.Ldarg_3)));
             return matcher.InstructionEnumeration();
         }
+
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(UIVirtualStarmap), nameof(UIVirtualStarmap._OnLateUpdate))]
+        private static IEnumerable<CodeInstruction> UIVirtualStarmap__OnLateUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            var local1 = generator.DeclareLocal(typeof(UIVirtualStarmap.StarNode));
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(UIVirtualStarmap.StarNode), nameof(UIVirtualStarmap.StarNode.nameText))),
+                new CodeMatch(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(UnityEngine.Component), nameof(UnityEngine.Component.gameObject))),
+                new CodeMatch(ci => ci.IsLdloc()),
+                new CodeMatch(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(GameObject), nameof(GameObject.SetActive)))
+            ).InsertAndAdvance(
+                new CodeInstruction(OpCodes.Dup),
+                new CodeInstruction(OpCodes.Stloc, local1)
+            ).Advance(3).Insert(
+                new CodeInstruction(OpCodes.Ldloc, local1),
+                Transpilers.EmitDelegate(bool (UIVirtualStarmap.StarNode starNode) => {
+                    return starNode.starData.type switch
+                    {
+                        EStarType.NeutronStar or EStarType.BlackHole => true,
+                        _ => false,
+                    };
+                }),
+                new CodeInstruction(OpCodes.Or)
+            );
+            return matcher.InstructionEnumeration();
+        }
     }
 
     #region CombatSettings
