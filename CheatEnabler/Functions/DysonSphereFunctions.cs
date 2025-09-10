@@ -284,6 +284,7 @@ public static class DysonSphereFunctions
         gridScale = ((gridScale < 1) ? 1 : gridScale);
         var gridSize = (float)gridScale * 80f;
         var cpPerVertex = gridScale * gridScale * 2;
+
         var num5 = (int)((double)num3 / 0.8660254037844386 / (double)gridSize + 2.5);
         var xaxis = VectorLF3.Cross(center, Vector3.up).normalized;
         if (xaxis.magnitude < 0.1)
@@ -1147,7 +1148,8 @@ public static class DysonSphereFunctions
         {
             dysonSphere.RemoveLayer(1);
         }
-        layer = dysonSphere.AddLayerOnId(1, dysonSphere.maxOrbitRadius, Quaternion.Euler(0f, 0f, 0f), Mathf.Sqrt(dysonSphere.gravity / dysonSphere.maxOrbitRadius) / dysonSphere.maxOrbitRadius * 57.2957802f);
+        var maxOrbitRadius = Patches.DysonSpherePatch.UnlockMaxOrbitRadiusEnabled.Value ? Patches.DysonSpherePatch.UnlockMaxOrbitRadiusValue.Value : dysonSphere.maxOrbitRadius;
+        layer = dysonSphere.AddLayerOnId(1, maxOrbitRadius, Quaternion.Euler(0f, 0f, 0f), Mathf.Sqrt(dysonSphere.gravity / maxOrbitRadius) / maxOrbitRadius * 57.2957802f);
         if (layer == null) return;
 
         var supposedShells = new List<SupposedShell>(60 * 59 * 58);
@@ -1172,11 +1174,20 @@ public static class DysonSphereFunctions
         var maxVertCount = -1;
         var maxJ = -1;
         var options = new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount - 1 };
+
+        var gridScale = (int)(Math.Pow(maxOrbitRadius / 4000.0, 0.75) + 0.5);
+        gridScale = (gridScale < 1) ? 1 : gridScale;
+        var cpPerVertex = gridScale * gridScale * 2;
+        var barrier = 0x7FFFFFFF / cpPerVertex;
+        if (barrier > 32767) barrier = 32767;
+        var truncValue = barrier / 1000 * 1000;
+        CheatEnabler.Logger.LogDebug($"cpPerVertex: {cpPerVertex}, Barrier: {barrier}, TruncValue: {truncValue}");
+
         Parallel.For(0, supposedShells.Count, options, (j, loopState) =>
         {
             var sshell = supposedShells[j];
             var vertCount = CalculateTriangleVertCount([sshell.posA, sshell.posB, sshell.posC]);
-            if (vertCount < 32768)
+            if (vertCount <= barrier)
             {
                 lock (mutex)
                 {
@@ -1185,7 +1196,7 @@ public static class DysonSphereFunctions
                     {
                         maxVertCount = vertCount;
                         maxJ = j;
-                        if (maxVertCount >= 32000)
+                        if (maxVertCount >= truncValue)
                         {
                             CheatEnabler.Logger.LogDebug($"!!STOP!! Triangle {j}[{sshell.posA:F2} {sshell.posB:F2} {sshell.posC:F2}] has {vertCount} vertices");
                             loopState.Stop();

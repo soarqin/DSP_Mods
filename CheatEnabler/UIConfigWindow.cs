@@ -68,7 +68,7 @@ public static class UIConfigWindow
         I18N.Add("Overclock Silos", "Overclock Silos (10x)", "高速发射井(10倍射速)");
         I18N.Add("Unlock Dyson Sphere max orbit radius", "Unlock Dyson Sphere max orbit radius", "解锁戴森球最大轨道半径");
         I18N.Add("Complete Dyson Sphere shells instantly", "Complete Dyson Sphere shells instantly", "立即完成戴森壳建造");
-        I18N.Add("Generate illegal dyson shell", "Generate an illegal dyson shell (Put/Paste nodes first)", "生成单层仙术戴森壳(请先设置/粘贴节点)");
+        I18N.Add("Generate illegal dyson shell", "Generate an illegal dyson shell (!!All shells will be removed first!!)", "生成单层仙术戴森壳(!!会先删除全部的壳!!)");
         I18N.Add("Keep max production shells and remove others", "Keep max production shells and remove others", "保留发电量最高的戴森壳并移除其他戴森壳");
         I18N.Add("Duplicate shells from that with highest production", "Duplicate shells from that with highest production", "从发电量最高的壳复制戴森壳");
         I18N.Add("WARNING: This operation can be very slow, continue?", "WARNING: This operation can be very slow, continue?", "警告：此操作可能非常慢，继续吗？");
