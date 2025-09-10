@@ -1,4 +1,7 @@
 ## Changelog
+* 1.2.9
+  * Fix some issues that universe settings not applied on staring a new game or loading game.
+  * Always show Black hole/Neutron star on preview galaxy map while creating new game.
 * 1.2.8
   * Fix compatiblity for game version 0.10.31.24632. 
 * 1.2.7
@@ -31,6 +34,9 @@
 
 
 ## 更新日志
+* 1.2.9
+  * 修复了一些在新建游戏或加载存档时宇宙设置没有应用的问题
+  * 在新建游戏时的星系预览图中始终显示黑洞/中子星
 * 1.2.8
   * 修复了对游戏版本0.10.31.24632的兼容性
 * 1.2.7
