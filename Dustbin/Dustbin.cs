@@ -48,7 +48,7 @@ public class Dustbin : BaseUnityPlugin, IModCanSave, IMultiplayerMod
         NebulaModAPI.RegisterPackets(Assembly.GetExecutingAssembly());
         NebulaModAPI.OnPlanetLoadFinished += RequestPlanetDustbinData;
     }
-    
+
     private void OnDestroy()
     {
         TankPatch.Enable(false);
@@ -68,7 +68,7 @@ public class Dustbin : BaseUnityPlugin, IModCanSave, IMultiplayerMod
         return count;
     }
 
-    #region IModCanSave 
+    #region IModCanSave
     private const ushort ModSaveVersion = 1;
 
     public void Export(BinaryWriter w)

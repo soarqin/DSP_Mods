@@ -54,7 +54,8 @@ public static class GamePatch
         protected override void OnDisable()
         {
             if (_savedDeterminators == null) return;
-            var abnormalLogic = GameMain.gameScenario.abnormalityLogic;
+            var abnormalLogic = GameMain.gameScenario?.abnormalityLogic;
+            if (abnormalLogic?.determinators == null) return;
             abnormalLogic.determinators = _savedDeterminators;
             foreach (var p in _savedDeterminators)
             {
