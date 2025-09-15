@@ -3,6 +3,9 @@
 
 ## Changelog
 
+* 1.2.10
+  * Fix issues which cause universe settings not applied on staring a new game or loading game (again).
+  * Reset star distance/flatten settings on entering galaxy creation screen.
 * 1.2.9
   * Fix some issues that universe settings not applied on staring a new game or loading game.
   * Always show Black hole/Neutron star on preview galaxy map while creating new game.
@@ -43,6 +46,9 @@
 
 ## 更新日志
 
+* 1.2.10
+  * (再次)修复新建游戏或加载存档时宇宙设置没有应用的问题
+  * 进入宇宙创建界面时重置星系间距/扁平度设置
 * 1.2.9
   * 修复了一些在新建游戏或加载存档时宇宙设置没有应用的问题
   * 在新建游戏时的星系预览图中始终显示黑洞/中子星

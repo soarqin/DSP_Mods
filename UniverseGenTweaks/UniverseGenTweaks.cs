@@ -63,7 +63,7 @@ public class UniverseGenTweaks : BaseUnityPlugin, IModCanSave
         EpicDifficulty.Uninit();
         MoreSettings.Uninit();
     }
-    
+
     #region IModCanSave
     private const ushort ModSaveVersion = 1;
 
@@ -82,7 +82,6 @@ public class UniverseGenTweaks : BaseUnityPlugin, IModCanSave
 
     public void IntoOtherSave()
     {
-        MoreSettings.IntoOtherSave();
     }
     #endregion
 }

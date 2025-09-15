@@ -8,16 +8,27 @@ using UnityEngine.UI;
 using UXAssist.Common;
 using Object = UnityEngine.Object;
 
-namespace UniverseGenTweaks; 
+namespace UniverseGenTweaks;
 
 public class MoreSettings
 {
+
+    const double DEFAULT_MIN_DIST = 2;
+    const double DEFAULT_MIN_STEP = 2;
+    const double DEFAULT_MAX_STEP = 3.2;
+    const double DEFAULT_FLATTEN = 0.18;
+
     public static ConfigEntry<bool> Enabled;
     public static ConfigEntry<int> MaxStarCount;
-    private static double _minDist = 2;
-    private static double _minStep = 2;
-    private static double _maxStep = 3.2;
-    private static double _flatten = 0.18;
+    private static double _minDist = DEFAULT_MIN_DIST;
+    private static double _minStep = DEFAULT_MIN_STEP;
+    private static double _maxStep = DEFAULT_MAX_STEP;
+    private static double _flatten = DEFAULT_FLATTEN;
+
+    private static double _gameMinDist = DEFAULT_MIN_DIST;
+    private static double _gameMinStep = DEFAULT_MIN_STEP;
+    private static double _gameMaxStep = DEFAULT_MAX_STEP;
+    private static double _gameFlatten = DEFAULT_FLATTEN;
 
     private static Text _minDistTitle;
     private static Text _minStepTitle;
@@ -32,11 +43,6 @@ public class MoreSettings
     private static Text _maxStepText;
     private static Text _flattenText;
     private static Harmony _patch, _permanentPatch;
-
-    private static double _gameMinDist = 2;
-    private static double _gameMinStep = 2;
-    private static double _gameMaxStep = 3.2;
-    private static double _gameFlatten = 0.18;
 
     public static void Init()
     {
@@ -87,6 +93,33 @@ public class MoreSettings
         ((RectTransform)trans).anchoredPosition3D = pos;
     }
 
+    private static void UpdateSliderControls()
+    {
+        _minDistSlider.minValue = 10f;
+        _minDistSlider.maxValue = 50f;
+        _minDistSlider.value = (float)(_minDist * 10.0);
+
+        _minStepTitle.name = "min-step";
+        _minStepSlider.minValue = (float)(_minDist * 10.0);
+        _minStepSlider.maxValue = (float)(_maxStep * 10.0);
+        _minStepSlider.value = (float)(_minStep * 10.0);
+
+        _maxStepTitle.name = "max-step";
+        _maxStepSlider.minValue = (float)(_minStep * 10.0);
+        _maxStepSlider.maxValue = 100f;
+        _maxStepSlider.value = (float)(_maxStep * 10.0);
+
+        _flattenTitle.name = "flatten";
+        _flattenSlider.minValue = 1f;
+        _flattenSlider.maxValue = 50f;
+        _flattenSlider.value = (float)(_flatten * 50.0);
+
+        _minDistText.text = _minDist.ToString();
+        _minStepText.text = _minStep.ToString();
+        _maxStepText.text = _maxStep.ToString();
+        _flattenText.text = _flatten.ToString();
+    }
+
     [HarmonyPostfix]
     [HarmonyPatch(typeof(UIGalaxySelect), nameof(UIGalaxySelect._OnCreate))]
     private static void UIGalaxySelect__OnCreate_Postfix(UIGalaxySelect __instance)
@@ -108,12 +141,12 @@ public class MoreSettings
         _minDistSlider.value = (float)(_minDist * 10.0);
 
         _minStepTitle.name = "min-step";
-        _minStepSlider.minValue = 10f;
-        _minStepSlider.maxValue = (float)(_maxStep * 10.0 - 1.0);
+        _minStepSlider.minValue = (float)(_minDist * 10.0);
+        _minStepSlider.maxValue = (float)(_maxStep * 10.0);
         _minStepSlider.value = (float)(_minStep * 10.0);
 
         _maxStepTitle.name = "max-step";
-        _maxStepSlider.minValue = (float)(_minStep * 10.0 + 1.0);
+        _maxStepSlider.minValue = (float)(_minStep * 10.0);
         _maxStepSlider.maxValue = 100f;
         _maxStepSlider.value = (float)(_maxStep * 10.0);
 
@@ -137,15 +170,12 @@ public class MoreSettings
     [HarmonyPatch(typeof(UIGalaxySelect), nameof(UIGalaxySelect._OnOpen))]
     private static void UIGalaxySelect__OnOpen_Prefix()
     {
-        _gameMinDist = _minDist;
-        _gameMinStep = _minStep;
-        _gameMaxStep = _maxStep;
-        _gameFlatten = _flatten;
+        _minDist = DEFAULT_MIN_DIST;
+        _minStep = DEFAULT_MIN_STEP;
+        _maxStep = DEFAULT_MAX_STEP;
+        _flatten = DEFAULT_FLATTEN;
 
-        _minDistText.text = _minDist.ToString();
-        _minStepText.text = _minStep.ToString();
-        _maxStepText.text = _maxStep.ToString();
-        _flattenText.text = _flatten.ToString();
+        UpdateSliderControls();
     }
 
     [HarmonyPostfix]
@@ -157,20 +187,21 @@ public class MoreSettings
         {
             var newVal = Mathf.Round(val) / 10.0;
             if (newVal.Equals(_minDist)) return;
-            _minDist = _gameMinDist = newVal;
+            _minDist = newVal;
             _minDistText.text = _minDist.ToString();
             if (_minStep < _minDist)
             {
-                _minStep = _gameMinStep = _minDist;
+                _minStep = _minDist;
                 _minStepSlider.value = (float)(_minStep * 10.0);
                 _minStepText.text = _minStep.ToString();
                 if (_maxStep < _minStep)
                 {
-                    _maxStep = _gameMaxStep = _minStep;
+                    _maxStep = _minStep;
                     _maxStepSlider.value = (float)(_maxStep * 10.0);
                     _maxStepText.text = _maxStep.ToString();
                 }
             }
+            _minStepSlider.minValue = (float)(_minDist * 10.0);
             __instance.SetStarmapGalaxy();
         });
         _minStepSlider.onValueChanged.RemoveAllListeners();
@@ -178,7 +209,7 @@ public class MoreSettings
         {
             var newVal = Mathf.Round(val) / 10.0;
             if (newVal.Equals(_minStep)) return;
-            _minStep = _gameMinStep = newVal;
+            _minStep = newVal;
             _maxStepSlider.minValue = (float)(newVal * 10.0);
             _minStepText.text = _minStep.ToString();
             __instance.SetStarmapGalaxy();
@@ -188,7 +219,7 @@ public class MoreSettings
         {
             var newVal = Mathf.Round(val) / 10.0;
             if (newVal.Equals(_maxStep)) return;
-            _maxStep = _gameMaxStep = newVal;
+            _maxStep = newVal;
             _minStepSlider.maxValue = (float)(newVal * 10.0);
             _maxStepText.text = _maxStep.ToString();
             __instance.SetStarmapGalaxy();
@@ -198,7 +229,7 @@ public class MoreSettings
         {
             var newVal = Mathf.Round(val) / 50.0;
             if (newVal.Equals(_flatten)) return;
-            _flatten = _gameFlatten = newVal;
+            _flatten = newVal;
             _flattenText.text = _flatten.ToString();
             __instance.SetStarmapGalaxy();
         });
@@ -230,20 +261,31 @@ public class MoreSettings
 
     private static class PermanentPatch
     {
-        public static void ResetSettings()
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(GameMain), nameof(GameMain.Start))]
+        private static void GameMain_Start_Prefix()
         {
-            _gameMinDist = 2;
-            _gameMinStep = 2;
-            _gameMaxStep = 3.2;
-            _gameFlatten = 0.18;
+            _gameMinDist = DEFAULT_MIN_DIST;
+            _gameMinStep = DEFAULT_MIN_STEP;
+            _gameMaxStep = DEFAULT_MAX_STEP;
+            _gameFlatten = DEFAULT_FLATTEN;
         }
 
         [HarmonyPrefix]
-        [HarmonyPatch(typeof(GameData), nameof(GameData.SetForNewGame))]
-        private static void GameData_SetForNewGame_Prefix(GameData __instance)
+        [HarmonyPatch(typeof(GameData), nameof(GameData.NewGame))]
+        private static void GameData_NewGame_Prefix()
         {
-            if (Enabled.Value) return;
-            ResetSettings();
+            if (!Enabled.Value) return;
+            _gameMinDist = _minDist;
+            _gameMinStep = _minStep;
+            _gameMaxStep = _maxStep;
+            _gameFlatten = _flatten;
+
+            _minDist = DEFAULT_MIN_DIST;
+            _minStep = DEFAULT_MIN_STEP;
+            _maxStep = DEFAULT_MAX_STEP;
+            _flatten = DEFAULT_FLATTEN;
         }
 
         [HarmonyTranspiler]
@@ -278,14 +320,26 @@ public class MoreSettings
         private static IEnumerable<CodeInstruction> UniverseGen_CreateGalaxy_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
         {
             var matcher = new CodeMatcher(instructions, generator);
+            var b0 = generator.DefineLabel();
+            var b1 = generator.DefineLabel();
             matcher.MatchForward(false,
                 new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(UniverseGen), nameof(UniverseGen.GenerateTempPoses)))
-            ).Advance(-4).RemoveInstructions(4).Insert(
-                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(MoreSettings), nameof(_gameMinDist))),
+            ).Advance(-4).RemoveInstructions(4).InsertAndAdvance(
+                new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(UIRoot), nameof(UIRoot.instance))),
+                new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(UIRoot), nameof(UIRoot.galaxySelect))),
+                new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(ManualBehaviour), nameof(ManualBehaviour.active))),
+                new CodeInstruction(OpCodes.Brfalse, b0),
+                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(MoreSettings), nameof(_minDist))),
+                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(MoreSettings), nameof(_minStep))),
+                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(MoreSettings), nameof(_maxStep))),
+                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(MoreSettings), nameof(_flatten))),
+                new CodeInstruction(OpCodes.Br, b1),
+                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(MoreSettings), nameof(_gameMinDist))).WithLabels(b0),
                 new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(MoreSettings), nameof(_gameMinStep))),
                 new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(MoreSettings), nameof(_gameMaxStep))),
                 new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(MoreSettings), nameof(_gameFlatten)))
             );
+            matcher.Labels.Add(b1);
             return matcher.InstructionEnumeration();
         }
 
@@ -320,14 +374,39 @@ public class MoreSettings
                 new CodeInstruction(OpCodes.Stloc, local1)
             ).Advance(3).Insert(
                 new CodeInstruction(OpCodes.Ldloc, local1),
-                Transpilers.EmitDelegate(bool (UIVirtualStarmap.StarNode starNode) => {
-                    return starNode.starData.type switch
+                Transpilers.EmitDelegate(bool (UIVirtualStarmap.StarNode starNode) =>
+                {
+                    return starNode?.starData?.type switch
                     {
                         EStarType.NeutronStar or EStarType.BlackHole => true,
                         _ => false,
                     };
                 }),
                 new CodeInstruction(OpCodes.Or)
+            );
+            return matcher.InstructionEnumeration();
+        }
+
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(UIGalaxySelect), nameof(UIGalaxySelect.UpdateUIDisplay))]
+        private static IEnumerable<CodeInstruction> UIGalaxySelect_UpdateUIDisplay_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            Label? b1 = null;
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Ldc_I4_0),
+                new CodeMatch(ci => ci.IsStloc()),
+                new CodeMatch(ci => ci.Branches(out b1)),
+                new CodeMatch(ci => ci.IsLdloc()),
+                new CodeMatch(ci => ci.IsLdloc()),
+                new CodeMatch(OpCodes.Ldelem_Ref),
+                new CodeMatch(ci => ci.IsStloc()),
+                new CodeMatch(ci => ci.IsLdloc())
+            ).Advance(7);
+            var instr = matcher.InstructionAt(0);
+            matcher.Insert(
+                instr,
+                new CodeInstruction(OpCodes.Brfalse, b1!)
             );
             return matcher.InstructionEnumeration();
         }
@@ -475,10 +554,10 @@ public class MoreSettings
         return false;
     }
 
-	[HarmonyPrefix]
-	[HarmonyPatch(typeof(UICombatSettingsDF), nameof(UICombatSettingsDF.OnCombatThreatSliderChanged))]
-	private static bool UICombatSettingsDF_OnCombatThreatSliderChanged_Prefix(UICombatSettingsDF __instance)
-	{
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(UICombatSettingsDF), nameof(UICombatSettingsDF.OnCombatThreatSliderChanged))]
+    private static bool UICombatSettingsDF_OnCombatThreatSliderChanged_Prefix(UICombatSettingsDF __instance)
+    {
         __instance.combatSettings.battleThreatFactor = __instance.combatThreatSlider.value switch
         {
             < 0.5f => 0.01f,
@@ -494,8 +573,8 @@ public class MoreSettings
             _ => 20f
         };
         __instance.UpdateUIParametersDisplay();
-		return false;
-	}
+        return false;
+    }
 
     [HarmonyPrefix]
     [HarmonyPatch(typeof(UICombatSettingsDF), nameof(UICombatSettingsDF.OnEXPSliderChanged))]
@@ -518,12 +597,12 @@ public class MoreSettings
         __instance.UpdateUIParametersDisplay();
         return false;
     }
-    
+
     [HarmonyPrefix]
     [HarmonyPatch(typeof(UICombatSettingsDF), nameof(UICombatSettingsDF.UpdateUIParametersDisplay))]
-	private static bool UICombatSettingsDF_UpdateUIParametersDisplay_Prefix(UICombatSettingsDF __instance)
-	{
-		var text = "";
+    private static bool UICombatSettingsDF_UpdateUIParametersDisplay_Prefix(UICombatSettingsDF __instance)
+    {
+        var text = "";
         __instance.aggresiveSlider.value = __instance.combatSettings.aggressiveness switch
         {
             < -0.99f => 0f,
@@ -544,7 +623,7 @@ public class MoreSettings
             _ => text
         };
         __instance.aggresiveText.text = text;
-		var num = __instance.combatSettings.initialLevel;
+        var num = __instance.combatSettings.initialLevel;
         __instance.initLevelSlider.value = num switch
         {
             < 0.01f => 0f,
@@ -580,7 +659,7 @@ public class MoreSettings
             _ => 30f
         };
         __instance.initLevelText.text = num.ToString();
-		num = __instance.combatSettings.initialGrowth;
+        num = __instance.combatSettings.initialGrowth;
         __instance.initGrowthSlider.value = num switch
         {
             < 0.01f => 0f,
@@ -597,7 +676,7 @@ public class MoreSettings
         };
         text = num * 100f + "%";
         __instance.initGrowthText.text = text;
-		num = __instance.combatSettings.initialColonize;
+        num = __instance.combatSettings.initialColonize;
         __instance.initOccupiedSlider.value = num switch
         {
             < 0.02f => 0f,
@@ -614,7 +693,7 @@ public class MoreSettings
         };
         text = num * 100f + "%";
         __instance.initOccupiedText.text = text;
-		num = __instance.combatSettings.maxDensity;
+        num = __instance.combatSettings.maxDensity;
         __instance.maxDensitySlider.value = num switch
         {
             < 1.01f => 0f,
@@ -625,7 +704,7 @@ public class MoreSettings
         };
         text = num + "x";
         __instance.maxDensityText.text = text;
-		num = __instance.combatSettings.growthSpeedFactor;
+        num = __instance.combatSettings.growthSpeedFactor;
         __instance.growthSpeedSlider.value = num switch
         {
             < 0.26f => 0f,
@@ -639,7 +718,7 @@ public class MoreSettings
         };
         text = num * 100f + "%";
         __instance.growthSpeedText.text = text;
-		num = __instance.combatSettings.powerThreatFactor;
+        num = __instance.combatSettings.powerThreatFactor;
         __instance.powerThreatSlider.value = num switch
         {
             < 0.02f => 0f,
@@ -656,7 +735,7 @@ public class MoreSettings
         };
         text = num * 100f + "%";
         __instance.powerThreatText.text = text;
-		num = __instance.combatSettings.battleThreatFactor;
+        num = __instance.combatSettings.battleThreatFactor;
         __instance.combatThreatSlider.value = num switch
         {
             < 0.02f => 0f,
@@ -673,7 +752,7 @@ public class MoreSettings
         };
         text = num * 100f + "%";
         __instance.combatThreatText.text = text;
-		num = __instance.combatSettings.battleExpFactor;
+        num = __instance.combatSettings.battleExpFactor;
         __instance.DFExpSlider.value = num switch
         {
             < 0.02f => 0f,
@@ -690,19 +769,19 @@ public class MoreSettings
         };
         text = num * 100f + "%";
         __instance.DFExpText.text = text;
-		var gameDesc = new GameDesc();
-		var difficulty = __instance.combatSettings.difficulty;
-		var text2 = difficulty >= 9.9999f ? difficulty.ToString("0.00") : difficulty.ToString("0.000");
+        var gameDesc = new GameDesc();
+        var difficulty = __instance.combatSettings.difficulty;
+        var text2 = difficulty >= 9.9999f ? difficulty.ToString("0.00") : difficulty.ToString("0.000");
         __instance.difficultyText.text = string.Format("难度系数值".Translate(), text2);
         __instance.difficultTipGroupDF.SetActive((__instance.combatSettings.aggressiveLevel == EAggressiveLevel.Rampage && difficulty > 4.5f) || difficulty > 6f);
         __instance.gameDesc.CopyTo(gameDesc);
-		gameDesc.combatSettings = __instance.combatSettings;
+        gameDesc.combatSettings = __instance.combatSettings;
         __instance.propertyMultiplierText.text = "元数据生成倍率".Translate() + " " + gameDesc.propertyMultiplier.ToString("0%");
         return false;
     }
-    
+
     [HarmonyPrefix]
-    [HarmonyPatch(typeof(CombatSettings),nameof(CombatSettings.difficulty), MethodType.Getter)]
+    [HarmonyPatch(typeof(CombatSettings), nameof(CombatSettings.difficulty), MethodType.Getter)]
     private static bool CombatSettings_difficulty_Getter_Prefix(CombatSettings __instance, ref float __result)
     {
         var aggressivenessScore = __instance.aggressiveness switch
@@ -798,10 +877,10 @@ public class MoreSettings
             _ => 20f
         };
         var score1 = aggressivenessScore < 0f ? 0f : 0.25f + aggressivenessScore * (powerThreatFactorScore * 0.5f + battleThreatFactorScore * 0.5f);
-		var score2 = 0.375f + 0.625f * ((initialLevelScore + battleExpFactorScore) / 10f);
-		var score3 = 0.375f + 0.625f * ((initialColonizeScore * 0.6f + initialGrowthScore * 0.4f * (initialColonizeScore * 0.75f + 0.25f)) * 0.6f + growthSpeedFactorScore * 0.4f * (initialColonizeScore * 0.8f + 0.2f) + maxDensityScore * 0.29f * (initialColonizeScore * 0.5f + 0.5f));
-		__result = (int)(score1 * score2 * score3 * 10000f + 0.5f) / 10000f;
-        
+        var score2 = 0.375f + 0.625f * ((initialLevelScore + battleExpFactorScore) / 10f);
+        var score3 = 0.375f + 0.625f * ((initialColonizeScore * 0.6f + initialGrowthScore * 0.4f * (initialColonizeScore * 0.75f + 0.25f)) * 0.6f + growthSpeedFactorScore * 0.4f * (initialColonizeScore * 0.8f + 0.2f) + maxDensityScore * 0.29f * (initialColonizeScore * 0.5f + 0.5f));
+        __result = (int)(score1 * score2 * score3 * 10000f + 0.5f) / 10000f;
+
         return false;
     }
     #endregion
@@ -823,11 +902,5 @@ public class MoreSettings
         _gameFlatten = r.ReadDouble();
     }
 
-    public static void IntoOtherSave()
-    {
-        // Skip prologue demo save
-        if (DSPGame.IsMenuDemo && DSPGame.LoadDemoIndex == -99) return;
-        PermanentPatch.ResetSettings();
-    }
     #endregion
 }
