@@ -1,9 +1,0 @@
-﻿{
-  "name": "OrbitalCollectorBatchBuild",
-  "version_number": "1.2.0",
-  "website_url": "https://github.com/soarqin/DSP_Mods/tree/master/OCBatchBuild",
-  "description": "Batch build Orbital Collectors / 轨道采集器快速批量建造",
-  "dependencies": [
-    "xiaoye97-BepInEx-5.4.17"
-  ]
-}
