@@ -14,9 +14,22 @@ public static class DysonSphereFunctions
 {
     public static ConfigEntry<bool> IllegalDysonShellFunctionsEnabled;
     public static ConfigEntry<int> ShellsCountForFunctions;
+    private static double factor0, factor1, factor2, factor3;
 
     public static void Init()
     {
+        var rawNum0 = 0x3FED4D1BA3920BFAUL; // cosr
+        var rawNum1 = 0x3FD9B9832ADBFC16UL; // sinr
+        var rawNum2 = 0x3FE279A74590331DUL;
+        var rawNum3 = 0x3FEBB67AE8584CAAUL; // cos30
+        unsafe
+        {
+            factor0 = *(double*)&rawNum0;
+            factor1 = *(double*)&rawNum1;
+            factor2 = *(double*)&rawNum2;
+            factor3 = *(double*)&rawNum3;
+        }
+
         I18N.Add("You are not in any system.", "You are not in any system.", "你不在任何星系中");
         I18N.Add("There is no Dyson Sphere shell on \"{0}\".", "There is no Dyson Sphere shell on \"{0}\".", "“{0}”上没有可建造的戴森壳");
         I18N.Add("There is no Dyson Sphere data on \"{0}\".", "There is no Dyson Sphere data on \"{0}\".", "“{0}”上没有戴森球数据");
@@ -250,26 +263,24 @@ public static class DysonSphereFunctions
     }
 
     private static readonly ThreadLocal<Dictionary<int, Vector3>> _vmap = new(() => new(16384));
-    private static int CalculateTriangleVertCount(VectorLF3[] polygon)
+    private static int CalculateTriangleVertCount(Vector3[] pos)
     {
-        if (polygon.Length != 3) return -1;
+        if (pos.Length != 3) return -1;
+        VectorLF3[] polygon = [pos[0], pos[1], pos[2]];
         VectorLF3 sum = VectorLF3.zero;
         double num = 0.0;
         for (int i = 0; i < 3; i++)
         {
-            var nodeApos = polygon[i];
-            var nodeBpos = polygon[(i + 1) % 3];
-            float num2 = Vector3.Distance(nodeApos, nodeBpos);
-            VectorLF3 vectorLF2 = (VectorLF3)(nodeApos + nodeBpos) * 0.5;
-            sum += vectorLF2 * (double)num2;
-            num += (double)num2;
+            double num2 = Vector3.Distance(pos[i], pos[(i + 1) % 3]);
+            VectorLF3 vectorLF2 = ((VectorLF3)pos[i] + (VectorLF3)pos[(i + 1) % 3]) * 0.5;
+            sum += vectorLF2 * num2;
+            num += num2;
         }
-        var radius = polygon[0].magnitude;
-        radius = Math.Round(radius * 10.0) / 10.0;
-        for (int j = 0; j < 3; j++)
-        {
-            polygon[j] = polygon[j].normalized * radius;
-        }
+        var radius = Math.Round(polygon[0].magnitude * 10.0) / 10.0;
+		for (int j = 0; j < polygon.Length; j++)
+		{
+			polygon[j] = polygon[j].normalized * radius;
+		}
         var center = (sum / num).normalized * radius;
         float num3 = 0f;
         for (int k = 0; k < 3; k++)
@@ -282,36 +293,34 @@ public static class DysonSphereFunctions
         }
         var gridScale = (int)(Math.Pow(radius / 4000.0, 0.75) + 0.5);
         gridScale = ((gridScale < 1) ? 1 : gridScale);
-        var gridSize = (float)gridScale * 80f;
+        var gridSize = gridScale * 80f;
+        var gridSizeDouble = (double)gridSize;
         var cpPerVertex = gridScale * gridScale * 2;
 
-        var num5 = (int)((double)num3 / 0.8660254037844386 / (double)gridSize + 2.5);
+        var num5 = (int)((double)num3 / factor3 / gridSizeDouble + 2.5);
         var xaxis = VectorLF3.Cross(center, Vector3.up).normalized;
         if (xaxis.magnitude < 0.1)
         {
             xaxis = new VectorLF3(0f, 0f, 1f);
         }
         var yaxis = VectorLF3.Cross(xaxis, center).normalized;
-        var raydir = xaxis * 0.915662593339561 + yaxis * 0.40194777665596015;
-        var w1axis = xaxis * (0.5 * (double)gridSize) - yaxis * (0.8660254037844386 * (double)gridSize);
-        var w2axis = xaxis * (0.5 * (double)gridSize) + yaxis * (0.8660254037844386 * (double)gridSize);
-        var w0axis = xaxis * (double)gridSize;
-        double num6 = 0.5773502691896258;
-        var t1axis = yaxis * ((double)gridSize * num6 * 0.5) - xaxis * ((double)gridSize * 0.5);
-        var t2axis = yaxis * ((double)gridSize * num6 * 0.5) + xaxis * ((double)gridSize * 0.5);
-        var t0axis = yaxis * ((double)gridSize / 0.8660254037844386 * 0.5);
+        var raydir = xaxis * factor0 + yaxis * factor1;
+        var w1axis = xaxis * (0.5 * gridSizeDouble) - yaxis * (factor3 * gridSizeDouble);
+        var w2axis = xaxis * (0.5 * gridSizeDouble) + yaxis * (factor3 * gridSizeDouble);
+        var w0axis = xaxis * gridSizeDouble;
+        var t1axis = yaxis * (gridSizeDouble * factor2 * 0.5) - xaxis * (gridSizeDouble * 0.5);
+        var t2axis = yaxis * (gridSizeDouble * factor2 * 0.5) + xaxis * (gridSizeDouble * 0.5);
+        var t0axis = yaxis * (gridSizeDouble / factor3 * 0.5);
         var polyn = new VectorLF3[3];
         var polynu = new double[3];
         for (int l = 0; l < 3; l++)
         {
-            Vector3 vector = polygon[l];
-            Vector3 vector2 = polygon[(l + 1) % 3];
-            polyn[l] = VectorLF3.Cross(vector, vector2).normalized;
+            polyn[l] = VectorLF3.Cross(polygon[l], polygon[(l + 1) % 3]).normalized;
             polynu[l] = polyn[l].x * raydir.x + polyn[l].y * raydir.y + polyn[l].z * raydir.z;
         }
         var vmap = _vmap.Value;
         vmap.Clear();
-        double num7 = (double)gridSize * 0.5;
+        double num7 = gridSizeDouble * 0.5;
         for (int m = -num5; m <= num5; m++)
         {
             for (int n = -num5; n <= num5; n++)
@@ -319,13 +328,11 @@ public static class DysonSphereFunctions
                 if (m - n <= num5 && m - n >= -num5)
                 {
                     VectorLF3 vectorLF3;
-                    vectorLF3.x = center.x + w0axis.x * (double)m - w1axis.x * (double)n;
-                    vectorLF3.y = center.y + w0axis.y * (double)m - w1axis.y * (double)n;
-                    vectorLF3.z = center.z + w0axis.z * (double)m - w1axis.z * (double)n;
-                    double num8 = radius / Math.Sqrt(vectorLF3.x * vectorLF3.x + vectorLF3.y * vectorLF3.y + vectorLF3.z * vectorLF3.z);
-                    vectorLF3.x *= num8;
-                    vectorLF3.y *= num8;
-                    vectorLF3.z *= num8;
+                    vectorLF3.x = center.x + w0axis.x * m - w1axis.x * n;
+                    vectorLF3.y = center.y + w0axis.y * m - w1axis.y * n;
+                    vectorLF3.z = center.z + w0axis.z * m - w1axis.z * n;
+                    double num8 = radius / vectorLF3.magnitude;
+                    vectorLF3 *= num8;
                     int num9 = 0;
                     for (int num10 = 0; num10 < 3; num10++)
                     {
@@ -333,9 +340,144 @@ public static class DysonSphereFunctions
                         if (num11 >= 0.0)
                         {
                             VectorLF3 normalized2 = new VectorLF3(vectorLF3.x + num11 * raydir.x, vectorLF3.y + num11 * raydir.y, vectorLF3.z + num11 * raydir.z).normalized;
-                            normalized2.x *= radius;
-                            normalized2.y *= radius;
-                            normalized2.z *= radius;
+                            normalized2 *= radius;
+                            VectorLF3 vectorLF4 = polygon[num10] - normalized2;
+                            VectorLF3 vectorLF5 = polygon[(num10 + 1) % 3] - normalized2;
+                            double num12 = vectorLF4.x * vectorLF5.x + vectorLF4.y * vectorLF5.y + vectorLF4.z * vectorLF5.z;
+                            if (num12 < 0.0 || (num12 == 0.0 && vectorLF4.x == 0.0 && vectorLF4.y == 0.0 && vectorLF4.z == 0.0))
+                            {
+                                num9++;
+                            }
+                        }
+                    }
+                    if ((num9 & 1) == 1)
+                    {
+                        int num13 = DysonShell._get_key(m, n);
+                        vmap[num13] = vectorLF3;
+                    }
+                    else
+                    {
+                        for (int num14 = 0; num14 < 3; num14++)
+                        {
+                            VectorLF3 vectorLF6 = polygon[num14];
+                            VectorLF3 vectorLF7 = polyn[num14];
+                            VectorLF3 vectorLF8 = vectorLF3 - vectorLF6;
+                            double num15 = vectorLF7.x * vectorLF8.x + vectorLF7.y * vectorLF8.y + vectorLF7.z * vectorLF8.z;
+                            double num16 = Math.Abs(num15);
+                            if (num16 <= num7)
+                            {
+                                VectorLF3 vectorLF9 = polygon[(num14 + 1) % 3];
+                                VectorLF3 vectorLF10 = vectorLF3 - vectorLF7 * num15;
+                                VectorLF3 vectorLF11 = vectorLF9 - vectorLF6;
+                                double magnitude = vectorLF11.magnitude;
+                                VectorLF3 vectorLF12 = vectorLF11 / magnitude;
+                                VectorLF3 vectorLF13 = vectorLF10 - vectorLF6;
+                                double num17 = vectorLF12.x * vectorLF13.x + vectorLF12.y * vectorLF13.y + vectorLF12.z * vectorLF13.z;
+                                double num18;
+                                if (num17 < 0.0)
+                                {
+                                    num18 = vectorLF8.magnitude;
+                                }
+                                else if (num17 > magnitude)
+                                {
+                                    num18 = (vectorLF3 - vectorLF9).magnitude;
+                                }
+                                else
+                                {
+                                    num18 = num16;
+                                }
+                                if (num18 <= num7)
+                                {
+                                    int num19 = DysonShell._get_key(m, n);
+                                    vmap[num19] = vectorLF3;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return vmap.Count;
+    }
+
+    private static int CalculateTriangleVertCount2(Vector3[] pos)
+    {
+        if (pos.Length != 3) return -1;
+        VectorLF3[] polygon = [pos[0], pos[1], pos[2]];
+        VectorLF3 sum = VectorLF3.zero;
+        double num = 0.0;
+        for (int i = 0; i < 3; i++)
+        {
+            double num2 = Vector3.Distance(pos[i], pos[(i + 1) % 3]);
+            VectorLF3 vectorLF2 = ((VectorLF3)pos[i] + (VectorLF3)pos[(i + 1) % 3]) * 0.5;
+            sum += vectorLF2 * num2;
+            num += num2;
+        }
+        var radius = Math.Round(polygon[0].magnitude * 10.0) / 10.0;
+		for (int j = 0; j < polygon.Length; j++)
+		{
+			polygon[j] = polygon[j].normalized * radius;
+		}
+        var center = (sum / num).normalized * radius;
+        float num3 = 0f;
+        for (int k = 0; k < 3; k++)
+        {
+            float num4 = Vector3.Distance(center, polygon[k]);
+            if (num4 > num3)
+            {
+                num3 = num4;
+            }
+        }
+        var gridScale = (int)(Math.Pow(radius / 4000.0, 0.75) + 0.5);
+        gridScale = ((gridScale < 1) ? 1 : gridScale);
+        var gridSize = gridScale * 80f;
+        var gridSizeDouble = (double)gridSize;
+        var cpPerVertex = gridScale * gridScale * 2;
+
+        var num5 = (int)((double)num3 / factor3 / gridSizeDouble + 2.5);
+        var xaxis = VectorLF3.Cross(center, Vector3.up).normalized;
+        if (xaxis.magnitude < 0.1)
+        {
+            xaxis = new VectorLF3(0f, 0f, 1f);
+        }
+        var yaxis = VectorLF3.Cross(xaxis, center).normalized;
+        var raydir = xaxis * factor0 + yaxis * factor1;
+        var w1axis = xaxis * (0.5 * gridSizeDouble) - yaxis * (factor3 * gridSizeDouble);
+        var w2axis = xaxis * (0.5 * gridSizeDouble) + yaxis * (factor3 * gridSizeDouble);
+        var w0axis = xaxis * gridSizeDouble;
+        var t1axis = yaxis * (gridSizeDouble * factor2 * 0.5) - xaxis * (gridSizeDouble * 0.5);
+        var t2axis = yaxis * (gridSizeDouble * factor2 * 0.5) + xaxis * (gridSizeDouble * 0.5);
+        var t0axis = yaxis * (gridSizeDouble / factor3 * 0.5);
+        var polyn = new VectorLF3[3];
+        var polynu = new double[3];
+        for (int l = 0; l < 3; l++)
+        {
+            polyn[l] = VectorLF3.Cross(polygon[l], polygon[(l + 1) % 3]).normalized;
+            polynu[l] = polyn[l].x * raydir.x + polyn[l].y * raydir.y + polyn[l].z * raydir.z;
+        }
+        var vmap = new Dictionary<int, Vector3>();
+        double num7 = gridSizeDouble * 0.5;
+        for (int m = -num5; m <= num5; m++)
+        {
+            for (int n = -num5; n <= num5; n++)
+            {
+                if (m - n <= num5 && m - n >= -num5)
+                {
+                    VectorLF3 vectorLF3;
+                    vectorLF3.x = center.x + w0axis.x * m - w1axis.x * n;
+                    vectorLF3.y = center.y + w0axis.y * m - w1axis.y * n;
+                    vectorLF3.z = center.z + w0axis.z * m - w1axis.z * n;
+                    double num8 = radius / vectorLF3.magnitude;
+                    vectorLF3 *= num8;
+                    int num9 = 0;
+                    for (int num10 = 0; num10 < 3; num10++)
+                    {
+                        double num11 = -(polyn[num10].x * vectorLF3.x + polyn[num10].y * vectorLF3.y + polyn[num10].z * vectorLF3.z) / polynu[num10];
+                        if (num11 >= 0.0)
+                        {
+                            VectorLF3 normalized2 = new VectorLF3(vectorLF3.x + num11 * raydir.x, vectorLF3.y + num11 * raydir.y, vectorLF3.z + num11 * raydir.z).normalized;
+                            normalized2 *= radius;
                             VectorLF3 vectorLF4 = polygon[num10] - normalized2;
                             VectorLF3 vectorLF5 = polygon[(num10 + 1) % 3] - normalized2;
                             double num12 = vectorLF4.x * vectorLF5.x + vectorLF4.y * vectorLF5.y + vectorLF4.z * vectorLF5.z;
@@ -402,17 +544,16 @@ public static class DysonSphereFunctions
         double num = 0.0;
         for (int i = 0; i < shell.frames.Count; i++)
         {
-            float num2 = Vector3.Distance(shell.frames[i].nodeA.pos, shell.frames[i].nodeB.pos);
-            VectorLF3 vectorLF2 = (VectorLF3)(shell.frames[i].nodeA.pos + shell.frames[i].nodeB.pos) * 0.5;
-            sum += vectorLF2 * (double)num2;
-            num += (double)num2;
+            double num2 = Vector3.Distance(shell.frames[i].nodeA.pos, shell.frames[i].nodeB.pos);
+            VectorLF3 vectorLF2 = ((VectorLF3)shell.frames[i].nodeA.pos + (VectorLF3)shell.frames[i].nodeB.pos) * 0.5;
+            sum += vectorLF2 * num2;
+            num += num2;
         }
-        shell.radius = shell.polygon[0].magnitude;
-        shell.radius = Math.Round(shell.radius * 10.0) / 10.0;
-        for (int j = 0; j < shell.polygon.Count; j++)
-        {
-            shell.polygon[j] = shell.polygon[j].normalized * shell.radius;
-        }
+        shell.radius = Math.Round(shell.polygon[0].magnitude * 10.0) / 10.0;
+		for (int j = 0; j < shell.polygon.Count; j++)
+		{
+			shell.polygon[j] = shell.polygon[j].normalized * shell.radius;
+		}
         var normalized = (sum / num).normalized;
         shell.center = normalized * shell.radius;
         float num3 = 0f;
@@ -426,37 +567,35 @@ public static class DysonSphereFunctions
         }
         shell.gridScale = (int)(Math.Pow(shell.radius / 4000.0, 0.75) + 0.5);
         shell.gridScale = ((shell.gridScale < 1) ? 1 : shell.gridScale);
-        shell.gridSize = (float)shell.gridScale * 80f;
+        shell.gridSize = shell.gridScale * 80f;
+        var gridSizeDouble = (double)shell.gridSize;
         shell.cpPerVertex = shell.gridScale * shell.gridScale * 2;
-        int num5 = (int)((double)num3 / 0.8660254037844386 / (double)shell.gridSize + 2.5);
+        int num5 = (int)((double)num3 / factor3 / gridSizeDouble + 2.5);
         shell.xaxis = VectorLF3.Cross(normalized, Vector3.up).normalized;
         if (shell.xaxis.magnitude < 0.1)
         {
             shell.xaxis = new VectorLF3(0f, 0f, 1f);
         }
         shell.yaxis = VectorLF3.Cross(shell.xaxis, normalized).normalized;
-        shell.raydir = shell.xaxis * 0.915662593339561 + shell.yaxis * 0.40194777665596015;
-        shell.w1axis = shell.xaxis * (0.5 * (double)shell.gridSize) - shell.yaxis * (0.8660254037844386 * (double)shell.gridSize);
-        shell.w2axis = shell.xaxis * (0.5 * (double)shell.gridSize) + shell.yaxis * (0.8660254037844386 * (double)shell.gridSize);
-        shell.w0axis = shell.xaxis * (double)shell.gridSize;
-        double num6 = 0.5773502691896258;
-        shell.t1axis = shell.yaxis * ((double)shell.gridSize * num6 * 0.5) - shell.xaxis * ((double)shell.gridSize * 0.5);
-        shell.t2axis = shell.yaxis * ((double)shell.gridSize * num6 * 0.5) + shell.xaxis * ((double)shell.gridSize * 0.5);
-        shell.t0axis = shell.yaxis * ((double)shell.gridSize / 0.8660254037844386 * 0.5);
+        shell.raydir = shell.xaxis * factor0 + shell.yaxis * factor1;
+        shell.w1axis = shell.xaxis * (0.5 * gridSizeDouble) - shell.yaxis * (factor3 * gridSizeDouble);
+        shell.w2axis = shell.xaxis * (0.5 * gridSizeDouble) + shell.yaxis * (factor3 * gridSizeDouble);
+        shell.w0axis = shell.xaxis * gridSizeDouble;
+        shell.t1axis = shell.yaxis * (gridSizeDouble * factor2 * 0.5) - shell.xaxis * (gridSizeDouble * 0.5);
+        shell.t2axis = shell.yaxis * (gridSizeDouble * factor2 * 0.5) + shell.xaxis * (gridSizeDouble * 0.5);
+        shell.t0axis = shell.yaxis * (gridSizeDouble / factor3 * 0.5);
         int count = shell.polygon.Count;
         shell.polyn = new VectorLF3[count];
         shell.polynu = new double[count];
         for (int l = 0; l < count; l++)
         {
-            Vector3 vector = shell.polygon[l];
-            Vector3 vector2 = shell.polygon[(l + 1) % count];
-            shell.polyn[l] = VectorLF3.Cross(vector, vector2).normalized;
+            shell.polyn[l] = VectorLF3.Cross(shell.polygon[l], shell.polygon[(l + 1) % count]).normalized;
             shell.polynu[l] = shell.polyn[l].x * shell.raydir.x + shell.polyn[l].y * shell.raydir.y + shell.polyn[l].z * shell.raydir.z;
         }
         DysonShell.s_vmap.Clear();
         DysonShell.s_outvmap.Clear();
         DysonShell.s_ivmap.Clear();
-        double num7 = (double)shell.gridSize * 0.5;
+        double num7 = gridSizeDouble * 0.5;
         for (int m = -num5; m <= num5; m++)
         {
             for (int n = -num5; n <= num5; n++)
@@ -464,13 +603,11 @@ public static class DysonSphereFunctions
                 if (m - n <= num5 && m - n >= -num5)
                 {
                     VectorLF3 vectorLF3;
-                    vectorLF3.x = shell.center.x + shell.w0axis.x * (double)m - shell.w1axis.x * (double)n;
-                    vectorLF3.y = shell.center.y + shell.w0axis.y * (double)m - shell.w1axis.y * (double)n;
-                    vectorLF3.z = shell.center.z + shell.w0axis.z * (double)m - shell.w1axis.z * (double)n;
-                    double num8 = shell.radius / Math.Sqrt(vectorLF3.x * vectorLF3.x + vectorLF3.y * vectorLF3.y + vectorLF3.z * vectorLF3.z);
-                    vectorLF3.x *= num8;
-                    vectorLF3.y *= num8;
-                    vectorLF3.z *= num8;
+                    vectorLF3.x = shell.center.x + shell.w0axis.x * m - shell.w1axis.x * n;
+                    vectorLF3.y = shell.center.y + shell.w0axis.y * m - shell.w1axis.y * n;
+                    vectorLF3.z = shell.center.z + shell.w0axis.z * m - shell.w1axis.z * n;
+                    double num8 = shell.radius / vectorLF3.magnitude;
+                    vectorLF3 *= num8;
                     int num9 = 0;
                     for (int num10 = 0; num10 < count; num10++)
                     {
@@ -478,9 +615,7 @@ public static class DysonSphereFunctions
                         if (num11 >= 0.0)
                         {
                             VectorLF3 normalized2 = new VectorLF3(vectorLF3.x + num11 * shell.raydir.x, vectorLF3.y + num11 * shell.raydir.y, vectorLF3.z + num11 * shell.raydir.z).normalized;
-                            normalized2.x *= shell.radius;
-                            normalized2.y *= shell.radius;
-                            normalized2.z *= shell.radius;
+                            normalized2 *= shell.radius;
                             VectorLF3 vectorLF4 = shell.polygon[num10] - normalized2;
                             VectorLF3 vectorLF5 = shell.polygon[(num10 + 1) % count] - normalized2;
                             double num12 = vectorLF4.x * vectorLF5.x + vectorLF4.y * vectorLF5.y + vectorLF4.z * vectorLF5.z;
@@ -560,7 +695,7 @@ public static class DysonSphereFunctions
             Vector3 value = keyValuePair.Value;
             DysonShell.s_ivmap[keyValuePair.Key] = num21;
             shell.verts[num21] = value;
-            shell.uv2s[num21].x = (float)(DysonShell.s_outvmap.ContainsKey(keyValuePair.Key) ? 0 : 1);
+            shell.uv2s[num21].x = DysonShell.s_outvmap.ContainsKey(keyValuePair.Key) ? 0 : 1;
             shell.vkeys[num21] = keyValuePair.Key;
             num21++;
         }
@@ -631,7 +766,7 @@ public static class DysonSphereFunctions
                     num33 = num34;
                 }
             }
-            shell.uv2s[num31].y = (float)num33;
+            shell.uv2s[num31].y = num33;
             if (num29 + num30 < 49 && shell._is_point_in_shell(vectorLF14))
             {
                 double num39 = VectorLF3.Dot(vectorLF14 - shell.polygon[num33], shell.polyn[num33]);
@@ -677,7 +812,7 @@ public static class DysonSphereFunctions
                     num47 = count3 - num47;
                 }
                 double num48 = (double)(vector3 - shell.nodes[num46].pos).sqrMagnitude;
-                num48 += (double)num47;
+                num48 += num47;
                 if (num48 < num42)
                 {
                     num42 = num48;
@@ -740,8 +875,8 @@ public static class DysonSphereFunctions
                 }
                 shell.vertsq[num58++] = (short)num61;
                 num60 += 1.0;
-                shell.uvs[num61].x = (float)num53;
-                shell.uvs[num61].y = (float)(num60 / (double)num59);
+                shell.uvs[num61].x = num53;
+                shell.uvs[num61].y = (float)(num60 / num59);
                 if (num58 == shell.vertsqOffset[num53 + 1])
                 {
                     goto Block_57;
@@ -756,8 +891,8 @@ public static class DysonSphereFunctions
                     {
                         shell.vertsq[num58++] = (short)num62;
                         num60 += 1.0;
-                        shell.uvs[num62].x = (float)num53;
-                        shell.uvs[num62].y = (float)(num60 / (double)num59);
+                        shell.uvs[num62].x = num53;
+                        shell.uvs[num62].y = (float)(num60 / num59);
                     }
                 }
             }
@@ -842,7 +977,10 @@ public static class DysonSphereFunctions
             layer.shellRecycle[recycleIndex] = shellId;
             return 0;
         }
-        CheatEnabler.Logger.LogDebug($"Shell {shellId} VertCount: {DysonShell.s_vmap.Count}");
+        // CheatEnabler.Logger.LogDebug($"Shell {shellId}   My VertCount: {DysonShell.s_vmap.Count}");
+        // CheatEnabler.Logger.LogDebug($"Shell {shellId} Calc VertCount: {CalculateTriangleVertCount2([shell.nodes[0].pos, shell.nodes[1].pos, shell.nodes[2].pos])}");
+        // shell.GenerateGeometry();
+        // CheatEnabler.Logger.LogDebug($"Shell {shellId} Orig VertCount: {DysonShell.s_vmap.Count}");
         for (int j = 0; j < shell.nodes.Count; j++)
         {
             shell.nodes[j].shells.Add(shell);
@@ -1153,10 +1291,10 @@ public static class DysonSphereFunctions
         if (layer == null) return;
 
         var supposedShells = new List<SupposedShell>(60 * 59 * 58);
-        VectorLF3[] nodePos = new VectorLF3[60];
+        Vector3[] nodePos = new Vector3[60];
         for (var i = 0; i < 60; i++)
         {
-            nodePos[i] = new VectorLF3(Math.Sin(Math.PI * 2 * i / 60), 0, Math.Cos(Math.PI * 2 * i / 60)) * layer.orbitRadius;
+            nodePos[i] = new Vector3((float)Math.Sin(Math.PI * 2 * i / 60), 0, (float)Math.Cos(Math.PI * 2 * i / 60)) * layer.orbitRadius;
         }
         for (var i = 0; i < 58; i++)
         {
@@ -1259,9 +1397,9 @@ public static class DysonSphereFunctions
 
     private class SupposedShell
     {
-        public VectorLF3 posA;
-        public VectorLF3 posB;
-        public VectorLF3 posC;
+        public Vector3 posA;
+        public Vector3 posB;
+        public Vector3 posC;
 
         public float area;
     }

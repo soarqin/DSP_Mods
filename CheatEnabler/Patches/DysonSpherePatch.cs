@@ -59,6 +59,13 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
         UnlockMaxOrbitRadius.Enable(false);
     }
 
+    // [HarmonyPostfix]
+    // [HarmonyPatch(typeof(DysonShell), nameof(DysonShell.ImportFromBlueprint))]
+    // private static void DysonShell_ImportFromBlueprint_Postfix(DysonShell __instance)
+    // {
+    //     CheatEnabler.Logger.LogDebug($"[DysonShell.ImportFromBlueprint] vertCount={__instance.vertexCount}, cpPerVertex={__instance.cpPerVertex}, cpMax={__instance.cellPointMax}");
+    // }
+
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(DysonNode), nameof(DysonNode.OrderConstructCp))]
     private static IEnumerable<CodeInstruction> DysonNode_OrderConstructCp_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
