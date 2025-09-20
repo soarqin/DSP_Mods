@@ -71,6 +71,8 @@ public static class UIConfigWindow
         I18N.Add("Generate illegal dyson shell", "Generate an illegal dyson shell (!!All shells will be removed first!!)", "生成单层仙术戴森壳(!!会先删除全部的壳!!)");
         I18N.Add("Keep max production shells and remove others", "Keep max production shells and remove others", "保留发电量最高的戴森壳并移除其他戴森壳");
         I18N.Add("Duplicate shells from that with highest production", "Duplicate shells from that with highest production", "从发电量最高的壳复制戴森壳");
+        I18N.Add("Generate illegal dyson shell quickly", "Generate illegal dyson shell quickly", "快速生成仙术戴森壳");
+        I18N.Add("Shells count", "Shells count", "壳面数量");
         I18N.Add("WARNING: This operation can be very slow, continue?", "WARNING: This operation can be very slow, continue?", "警告：此操作可能非常慢，继续吗？");
         I18N.Add("WARNING: This operation is DANGEROUS, continue?", "WARNING: This operation is DANGEROUS, continue?", "警告：此操作非常危险，继续吗？");
         I18N.Add("Terraform without enough soil piles", "Terraform without enough soil piles", "沙土不够时依然可以整改地形");
@@ -301,6 +303,7 @@ public static class UIConfigWindow
         wnd.AddButton(x, y, 300f, tab4, "Complete Dyson Sphere shells instantly", 16, "button-complete-dyson-sphere-shells-instantly", DysonSphereFunctions.CompleteShellsInstantly);
         {
             y += 72f;
+            var originalY = y;
             var btn1 = wnd.AddButton(x, y, 300f, tab4, "Generate illegal dyson shell", 16, "button-generate-illegal-dyson-shells", () => {
                 UIMessageBox.Show("Generate illegal dyson shell".Translate(), "WARNING: This operation can be very slow, continue?".Translate(), "取消".Translate(), "确定".Translate(), UIMessageBox.WARNING, null,
                     () => { DysonSphereFunctions.CreateIllegalDysonShellWithMaxOutput(); });
@@ -317,6 +320,16 @@ public static class UIConfigWindow
             });
             y += 30f;
             var slider1 = wnd.AddSlider(x + 20f, y, tab4, DysonSphereFunctions.ShellsCountForFunctions, new ShellsCountMapper());
+
+            y = originalY;
+            var btn4 = wnd.AddButton(x, y, 300f, tab4, "Generate illegal dyson shell quickly", 16, "button-generate-illegal-dyson-shells-quickly", () => {
+                UIMessageBox.Show("Generate illegal dyson shell".Translate(), "WARNING: This operation can be very slow, continue?".Translate(), "取消".Translate(), "确定".Translate(), UIMessageBox.WARNING, null,
+                    () => { DysonSphereFunctions.CreateIllegalDysonShellQuickly(DysonSphereFunctions.ShellsCountForFunctions.Value); });
+            });
+            y += 30f;
+            var txt2 = wnd.AddText2(x, y, tab4, "Shells count", 15, "text-shells-count");
+            var slider2 = wnd.AddSlider(x + txt2.preferredWidth + 5f, y + 6f, tab4, DysonSphereFunctions.ShellsCountForFunctions, new ShellsCountMapper());
+
             Functions.DysonSphereFunctions.IllegalDysonShellFunctionsEnabled.SettingChanged += onIllegalDysonShellFunctionsChanged;
             wnd.OnFree += () => { Functions.DysonSphereFunctions.IllegalDysonShellFunctionsEnabled.SettingChanged -= onIllegalDysonShellFunctionsChanged; };
             onIllegalDysonShellFunctionsChanged(null, null);
@@ -327,6 +340,10 @@ public static class UIConfigWindow
                 btn2.gameObject.SetActive(enabled);
                 btn3.gameObject.SetActive(enabled);
                 slider1.gameObject.SetActive(enabled);
+
+                btn4.gameObject.SetActive(!enabled);
+                txt2.gameObject.SetActive(!enabled);
+                slider2.gameObject.SetActive(!enabled);
             }
         }
 

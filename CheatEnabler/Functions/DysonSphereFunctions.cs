@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using BepInEx.Configuration;
 using HarmonyLib;
+using Unity.Jobs;
 using UnityEngine;
 using UXAssist.Common;
 
@@ -14,26 +15,71 @@ public static class DysonSphereFunctions
 {
     public static ConfigEntry<bool> IllegalDysonShellFunctionsEnabled;
     public static ConfigEntry<int> ShellsCountForFunctions;
-    private static double factor0, factor1, factor2, factor3;
+
+    const ulong rawNum0 = 0x3FED4D1BA3920BFAUL; // cosr
+    const ulong rawNum1 = 0x3FD9B9832ADBFC16UL; // sinr
+    const ulong rawNum2 = 0x3FE279A74590331DUL;
+    const ulong rawNum3 = 0x3FEBB67AE8584CAAUL; // cos30
+    private static readonly double factor0 = RawToDouble(rawNum0);
+    private static readonly double factor1 = RawToDouble(rawNum1);
+    private static readonly double factor2 = RawToDouble(rawNum2);
+    private static readonly double factor3 = RawToDouble(rawNum3);
+    private static readonly PrecalculatedTriangle[] PrecalculatedTriangles = [
+        new PrecalculatedTriangle() { MaxOrbitRadius = 6869, PosA = new Vector3() { x = RawToFloat(0x00000000U), y = RawToFloat(0x00000000U), z = RawToFloat(0x45D66000U)}, PosB = new Vector3() { x = RawToFloat(0x2C88BEC4U), y = RawToFloat(0x00000000U), z = RawToFloat(0xC5D66000U)}, PosC = new Vector3() { x = RawToFloat(0xC5D66000U), y = RawToFloat(0x00000000U), z = RawToFloat(0xABB1589BU)} }, 
+        new PrecalculatedTriangle() { MaxOrbitRadius = 13573, PosA = new Vector3() { x = RawToFloat(0x46540800U), y = RawToFloat(0x00000000U), z = RawToFloat(0x2C87400AU)}, PosB = new Vector3() { x = RawToFloat(0x4652DEA6U), y = RawToFloat(0x00000000U), z = RawToFloat(0xC4B14E71U)}, PosC = new Vector3() { x = RawToFloat(0xC6540800U), y = RawToFloat(0x00000000U), z = RawToFloat(0xAC2F683EU)} },
+        new PrecalculatedTriangle() { MaxOrbitRadius = 21257, PosA = new Vector3() { x = RawToFloat(0x46A60400U), y = RawToFloat(0x00000000U), z = RawToFloat(0x2CD3CBAAU)}, PosB = new Vector3() { x = RawToFloat(0xC6070C9DU), y = RawToFloat(0x00000000U), z = RawToFloat(0xC697A9AEU)}, PosC = new Vector3() { x = RawToFloat(0xC6A60400U), y = RawToFloat(0x00000000U), z = RawToFloat(0xAC8956FFU)} },
+        new PrecalculatedTriangle() { MaxOrbitRadius = 29718, PosA = new Vector3() { x = RawToFloat(0x469B4FBEU), y = RawToFloat(0x00000000U), z = RawToFloat(0x46AC7DAAU)}, PosB = new Vector3() { x = RawToFloat(0x46E81C00U), y = RawToFloat(0x00000000U), z = RawToFloat(0x2D140EBCU)}, PosC = new Vector3() { x = RawToFloat(0xC6E81C00U), y = RawToFloat(0x00000000U), z = RawToFloat(0xACC0046AU)} },
+        new PrecalculatedTriangle() { MaxOrbitRadius = 38834, PosA = new Vector3() { x = RawToFloat(0x4717AE00U), y = RawToFloat(0x00000000U), z = RawToFloat(0x2D4181A3U)}, PosB = new Vector3() { x = RawToFloat(0x45FC49B0U), y = RawToFloat(0x00000000U), z = RawToFloat(0xC7145D79U)}, PosC = new Vector3() { x = RawToFloat(0xC717AE00U), y = RawToFloat(0x00000000U), z = RawToFloat(0xACFAF5D4U)} },
+        new PrecalculatedTriangle() { MaxOrbitRadius = 48523, PosA = new Vector3() { x = RawToFloat(0x473D8800U), y = RawToFloat(0x00000000U), z = RawToFloat(0x2D71CBB9U)}, PosB = new Vector3() { x = RawToFloat(0xC73D8800U), y = RawToFloat(0x00000000U), z = RawToFloat(0xAD1CCB2AU)}, PosC = new Vector3() { x = RawToFloat(0xC72D2539U), y = RawToFloat(0x00000000U), z = RawToFloat(0x469A2DB9U)} },
+        new PrecalculatedTriangle() { MaxOrbitRadius = 58724, PosA = new Vector3() { x = RawToFloat(0x47656000U), y = RawToFloat(0x00000000U), z = RawToFloat(0x2D925038U)}, PosB = new Vector3() { x = RawToFloat(0xC7656000U), y = RawToFloat(0x00000000U), z = RawToFloat(0xAD3DC153U)}, PosC = new Vector3() { x = RawToFloat(0xC7518B63U), y = RawToFloat(0x00000000U), z = RawToFloat(0x46BA9727U)} },
+        new PrecalculatedTriangle() { MaxOrbitRadius = 69389, PosA = new Vector3() { x = RawToFloat(0x47878200U), y = RawToFloat(0x00000000U), z = RawToFloat(0x2DACE001U)}, PosB = new Vector3() { x = RawToFloat(0xC7878200U), y = RawToFloat(0x00000000U), z = RawToFloat(0xAD603407U)}, PosC = new Vector3() { x = RawToFloat(0xC7078200U), y = RawToFloat(0x00000000U), z = RawToFloat(0x476AB4D7U)} },
+        new PrecalculatedTriangle() { MaxOrbitRadius = 80481, PosA = new Vector3() { x = RawToFloat(0x479D3000U), y = RawToFloat(0x00000000U), z = RawToFloat(0x2DC88874U)}, PosB = new Vector3() { x = RawToFloat(0xC79D3000U), y = RawToFloat(0x00000000U), z = RawToFloat(0xAD82095EU)}, PosC = new Vector3() { x = RawToFloat(0xC71D3000U), y = RawToFloat(0x00000000U), z = RawToFloat(0x478820DDU)} },
+        new PrecalculatedTriangle() { MaxOrbitRadius = 91970, PosA = new Vector3() { x = RawToFloat(0x47B2A01EU), y = RawToFloat(0x00000000U), z = RawToFloat(0x461631C0U)}, PosB = new Vector3() { x = RawToFloat(0x47B39C00U), y = RawToFloat(0x00000000U), z = RawToFloat(0x2DE5234DU)}, PosC = new Vector3() { x = RawToFloat(0xC7B39C00U), y = RawToFloat(0x00000000U), z = RawToFloat(0xAD9495E6U)} },
+        new PrecalculatedTriangle() { MaxOrbitRadius = 103831, PosA = new Vector3() { x = RawToFloat(0x476E65BEU), y = RawToFloat(0x00000000U), z = RawToFloat(0x47A4101EU)}, PosB = new Vector3() { x = RawToFloat(0x47CACB00U), y = RawToFloat(0x00000000U), z = RawToFloat(0x2E015B75U)}, PosC = new Vector3() { x = RawToFloat(0xC7CACB00U), y = RawToFloat(0x00000000U), z = RawToFloat(0xADA7C3C0U)} },
+        new PrecalculatedTriangle() { MaxOrbitRadius = 116040, PosA = new Vector3() { x = RawToFloat(0x47E29F00U), y = RawToFloat(0x00000000U), z = RawToFloat(0x2E108E84U)}, PosB = new Vector3() { x = RawToFloat(0xC7E29F00U), y = RawToFloat(0x00000000U), z = RawToFloat(0xADBB7A19U)}, PosC = new Vector3() { x = RawToFloat(0xC70C0F3EU), y = RawToFloat(0x00000000U), z = RawToFloat(0x47D7878CU)} },
+        new PrecalculatedTriangle() { MaxOrbitRadius = 128580, PosA = new Vector3() { x = RawToFloat(0x00000000U), y = RawToFloat(0x00000000U), z = RawToFloat(0x47FB1D00U)}, PosB = new Vector3() { x = RawToFloat(0x47A80710U), y = RawToFloat(0x00000000U), z = RawToFloat(0x47BA9D10U)}, PosC = new Vector3() { x = RawToFloat(0x2EA02E04U), y = RawToFloat(0x00000000U), z = RawToFloat(0xC7FB1D00U)} },
+        new PrecalculatedTriangle() { MaxOrbitRadius = 141433, PosA = new Vector3() { x = RawToFloat(0x00000000U), y = RawToFloat(0x00000000U), z = RawToFloat(0x480A1D80U)}, PosB = new Vector3() { x = RawToFloat(0x47A25D3CU), y = RawToFloat(0x00000000U), z = RawToFloat(0x47DF79A3U)}, PosC = new Vector3() { x = RawToFloat(0x2EB03393U), y = RawToFloat(0x00000000U), z = RawToFloat(0xC80A1D80U)} },
+        new PrecalculatedTriangle() { MaxOrbitRadius = 154586, PosA = new Vector3() { x = RawToFloat(0x00000000U), y = RawToFloat(0x00000000U), z = RawToFloat(0x4816F500U)}, PosB = new Vector3() { x = RawToFloat(0x47B175ECU), y = RawToFloat(0x00000000U), z = RawToFloat(0x47F440EDU)}, PosC = new Vector3() { x = RawToFloat(0x2EC0959FU), y = RawToFloat(0x00000000U), z = RawToFloat(0xC816F500U)} },
+        new PrecalculatedTriangle() { MaxOrbitRadius = 168025, PosA = new Vector3() { x = RawToFloat(0x00000000U), y = RawToFloat(0x00000000U), z = RawToFloat(0x48241500U)}, PosB = new Vector3() { x = RawToFloat(0x48241500U), y = RawToFloat(0x00000000U), z = RawToFloat(0x2E51542AU)}, PosC = new Vector3() { x = RawToFloat(0xC8241500U), y = RawToFloat(0x00000000U), z = RawToFloat(0xAE07BD7FU)} },
+        new PrecalculatedTriangle() { MaxOrbitRadius = 181738, PosA = new Vector3() { x = RawToFloat(0x00000000U), y = RawToFloat(0x00000000U), z = RawToFloat(0x48317880U)}, PosB = new Vector3() { x = RawToFloat(0x48317880U), y = RawToFloat(0x00000000U), z = RawToFloat(0x2E6268D3U)}, PosC = new Vector3() { x = RawToFloat(0xC8317880U), y = RawToFloat(0x00000000U), z = RawToFloat(0xAE12D0F8U)} },
+        new PrecalculatedTriangle() { MaxOrbitRadius = 195715, PosA = new Vector3() { x = RawToFloat(0x469FD288U), y = RawToFloat(0x00000000U), z = RawToFloat(0x483E1379U)}, PosB = new Vector3() { x = RawToFloat(0x483F1F80U), y = RawToFloat(0x00000000U), z = RawToFloat(0x2E73D398U)}, PosC = new Vector3() { x = RawToFloat(0xC83F1F80U), y = RawToFloat(0x00000000U), z = RawToFloat(0xAE1E1C47U)} },
+        new PrecalculatedTriangle() { MaxOrbitRadius = 209946, PosA = new Vector3() { x = RawToFloat(0x00000000U), y = RawToFloat(0x00000000U), z = RawToFloat(0x484D0500U)}, PosB = new Vector3() { x = RawToFloat(0x48092F52U), y = RawToFloat(0x00000000U), z = RawToFloat(0x48185BF5U)}, PosC = new Vector3() { x = RawToFloat(0x2F02C70CU), y = RawToFloat(0x00000000U), z = RawToFloat(0xC84D0500U)} },
+        new PrecalculatedTriangle() { MaxOrbitRadius = 224422, PosA = new Vector3() { x = RawToFloat(0x00000000U), y = RawToFloat(0x00000000U), z = RawToFloat(0x485B2900U)}, PosB = new Vector3() { x = RawToFloat(0x4812A593U), y = RawToFloat(0x00000000U), z = RawToFloat(0x4822DE24U)}, PosC = new Vector3() { x = RawToFloat(0x2F0BCC2BU), y = RawToFloat(0x00000000U), z = RawToFloat(0xC85B2900U)} },
+        new PrecalculatedTriangle() { MaxOrbitRadius = 239136, PosA = new Vector3() { x = RawToFloat(0x00000000U), y = RawToFloat(0x00000000U), z = RawToFloat(0x48698680U)}, PosB = new Vector3() { x = RawToFloat(0x481C424DU), y = RawToFloat(0x00000000U), z = RawToFloat(0x482D8B0EU)}, PosC = new Vector3() { x = RawToFloat(0x2F14F5F7U), y = RawToFloat(0x00000000U), z = RawToFloat(0xC8698680U)} },
+        new PrecalculatedTriangle() { MaxOrbitRadius = 250000, PosA = new Vector3() { x = RawToFloat(0x00000000U), y = RawToFloat(0x00000000U), z = RawToFloat(0x48742180U)}, PosB = new Vector3() { x = RawToFloat(0x48235AFEU), y = RawToFloat(0x00000000U), z = RawToFloat(0x48356CB1U)}, PosC = new Vector3() { x = RawToFloat(0x2F1BB9CEU), y = RawToFloat(0x00000000U), z = RawToFloat(0xC8742180U)} },
+    ];
+
+    struct PrecalculatedTriangle
+    {
+        public int MaxOrbitRadius;
+        public Vector3 PosA;
+        public Vector3 PosB;
+        public Vector3 PosC;
+    }
+
+    private static double RawToDouble(ulong value)
+    {
+        unsafe
+        {
+            return *(double*)&value;
+        }
+    }
+
+    private static float RawToFloat(uint value)
+    {
+        unsafe
+        {
+            return *(float*)&value;
+        }
+    }
 
     public static void Init()
     {
-        var rawNum0 = 0x3FED4D1BA3920BFAUL; // cosr
-        var rawNum1 = 0x3FD9B9832ADBFC16UL; // sinr
-        var rawNum2 = 0x3FE279A74590331DUL;
-        var rawNum3 = 0x3FEBB67AE8584CAAUL; // cos30
-        unsafe
-        {
-            factor0 = *(double*)&rawNum0;
-            factor1 = *(double*)&rawNum1;
-            factor2 = *(double*)&rawNum2;
-            factor3 = *(double*)&rawNum3;
-        }
-
         I18N.Add("You are not in any system.", "You are not in any system.", "你不在任何星系中");
         I18N.Add("There is no Dyson Sphere shell on \"{0}\".", "There is no Dyson Sphere shell on \"{0}\".", "“{0}”上没有可建造的戴森壳");
         I18N.Add("There is no Dyson Sphere data on \"{0}\".", "There is no Dyson Sphere data on \"{0}\".", "“{0}”上没有戴森球数据");
         I18N.Add("This will complete all Dyson Sphere shells on \"{0}\" instantly. Are you sure?", "This will complete all Dyson Sphere shells on \"{0}\" instantly. Are you sure?", "这将立即完成“{0}”上的所有戴森壳。你确定吗？");
+        I18N.Add("No precalculated shell found for radius {0}.", "No precalculated shell found for radius {0}.", "没有找到适合半径 {0} 的预计算壳面");
     }
 
     public static void CompleteShellsInstantly()
@@ -320,143 +366,6 @@ public static class DysonSphereFunctions
         }
         var vmap = _vmap.Value;
         vmap.Clear();
-        double num7 = gridSizeDouble * 0.5;
-        for (int m = -num5; m <= num5; m++)
-        {
-            for (int n = -num5; n <= num5; n++)
-            {
-                if (m - n <= num5 && m - n >= -num5)
-                {
-                    VectorLF3 vectorLF3;
-                    vectorLF3.x = center.x + w0axis.x * m - w1axis.x * n;
-                    vectorLF3.y = center.y + w0axis.y * m - w1axis.y * n;
-                    vectorLF3.z = center.z + w0axis.z * m - w1axis.z * n;
-                    double num8 = radius / vectorLF3.magnitude;
-                    vectorLF3 *= num8;
-                    int num9 = 0;
-                    for (int num10 = 0; num10 < 3; num10++)
-                    {
-                        double num11 = -(polyn[num10].x * vectorLF3.x + polyn[num10].y * vectorLF3.y + polyn[num10].z * vectorLF3.z) / polynu[num10];
-                        if (num11 >= 0.0)
-                        {
-                            VectorLF3 normalized2 = new VectorLF3(vectorLF3.x + num11 * raydir.x, vectorLF3.y + num11 * raydir.y, vectorLF3.z + num11 * raydir.z).normalized;
-                            normalized2 *= radius;
-                            VectorLF3 vectorLF4 = polygon[num10] - normalized2;
-                            VectorLF3 vectorLF5 = polygon[(num10 + 1) % 3] - normalized2;
-                            double num12 = vectorLF4.x * vectorLF5.x + vectorLF4.y * vectorLF5.y + vectorLF4.z * vectorLF5.z;
-                            if (num12 < 0.0 || (num12 == 0.0 && vectorLF4.x == 0.0 && vectorLF4.y == 0.0 && vectorLF4.z == 0.0))
-                            {
-                                num9++;
-                            }
-                        }
-                    }
-                    if ((num9 & 1) == 1)
-                    {
-                        int num13 = DysonShell._get_key(m, n);
-                        vmap[num13] = vectorLF3;
-                    }
-                    else
-                    {
-                        for (int num14 = 0; num14 < 3; num14++)
-                        {
-                            VectorLF3 vectorLF6 = polygon[num14];
-                            VectorLF3 vectorLF7 = polyn[num14];
-                            VectorLF3 vectorLF8 = vectorLF3 - vectorLF6;
-                            double num15 = vectorLF7.x * vectorLF8.x + vectorLF7.y * vectorLF8.y + vectorLF7.z * vectorLF8.z;
-                            double num16 = Math.Abs(num15);
-                            if (num16 <= num7)
-                            {
-                                VectorLF3 vectorLF9 = polygon[(num14 + 1) % 3];
-                                VectorLF3 vectorLF10 = vectorLF3 - vectorLF7 * num15;
-                                VectorLF3 vectorLF11 = vectorLF9 - vectorLF6;
-                                double magnitude = vectorLF11.magnitude;
-                                VectorLF3 vectorLF12 = vectorLF11 / magnitude;
-                                VectorLF3 vectorLF13 = vectorLF10 - vectorLF6;
-                                double num17 = vectorLF12.x * vectorLF13.x + vectorLF12.y * vectorLF13.y + vectorLF12.z * vectorLF13.z;
-                                double num18;
-                                if (num17 < 0.0)
-                                {
-                                    num18 = vectorLF8.magnitude;
-                                }
-                                else if (num17 > magnitude)
-                                {
-                                    num18 = (vectorLF3 - vectorLF9).magnitude;
-                                }
-                                else
-                                {
-                                    num18 = num16;
-                                }
-                                if (num18 <= num7)
-                                {
-                                    int num19 = DysonShell._get_key(m, n);
-                                    vmap[num19] = vectorLF3;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return vmap.Count;
-    }
-
-    private static int CalculateTriangleVertCount2(Vector3[] pos)
-    {
-        if (pos.Length != 3) return -1;
-        VectorLF3[] polygon = [pos[0], pos[1], pos[2]];
-        VectorLF3 sum = VectorLF3.zero;
-        double num = 0.0;
-        for (int i = 0; i < 3; i++)
-        {
-            double num2 = Vector3.Distance(pos[i], pos[(i + 1) % 3]);
-            VectorLF3 vectorLF2 = ((VectorLF3)pos[i] + (VectorLF3)pos[(i + 1) % 3]) * 0.5;
-            sum += vectorLF2 * num2;
-            num += num2;
-        }
-        var radius = Math.Round(polygon[0].magnitude * 10.0) / 10.0;
-		for (int j = 0; j < polygon.Length; j++)
-		{
-			polygon[j] = polygon[j].normalized * radius;
-		}
-        var center = (sum / num).normalized * radius;
-        float num3 = 0f;
-        for (int k = 0; k < 3; k++)
-        {
-            float num4 = Vector3.Distance(center, polygon[k]);
-            if (num4 > num3)
-            {
-                num3 = num4;
-            }
-        }
-        var gridScale = (int)(Math.Pow(radius / 4000.0, 0.75) + 0.5);
-        gridScale = ((gridScale < 1) ? 1 : gridScale);
-        var gridSize = gridScale * 80f;
-        var gridSizeDouble = (double)gridSize;
-        var cpPerVertex = gridScale * gridScale * 2;
-
-        var num5 = (int)((double)num3 / factor3 / gridSizeDouble + 2.5);
-        var xaxis = VectorLF3.Cross(center, Vector3.up).normalized;
-        if (xaxis.magnitude < 0.1)
-        {
-            xaxis = new VectorLF3(0f, 0f, 1f);
-        }
-        var yaxis = VectorLF3.Cross(xaxis, center).normalized;
-        var raydir = xaxis * factor0 + yaxis * factor1;
-        var w1axis = xaxis * (0.5 * gridSizeDouble) - yaxis * (factor3 * gridSizeDouble);
-        var w2axis = xaxis * (0.5 * gridSizeDouble) + yaxis * (factor3 * gridSizeDouble);
-        var w0axis = xaxis * gridSizeDouble;
-        var t1axis = yaxis * (gridSizeDouble * factor2 * 0.5) - xaxis * (gridSizeDouble * 0.5);
-        var t2axis = yaxis * (gridSizeDouble * factor2 * 0.5) + xaxis * (gridSizeDouble * 0.5);
-        var t0axis = yaxis * (gridSizeDouble / factor3 * 0.5);
-        var polyn = new VectorLF3[3];
-        var polynu = new double[3];
-        for (int l = 0; l < 3; l++)
-        {
-            polyn[l] = VectorLF3.Cross(polygon[l], polygon[(l + 1) % 3]).normalized;
-            polynu[l] = polyn[l].x * raydir.x + polyn[l].y * raydir.y + polyn[l].z * raydir.z;
-        }
-        var vmap = new Dictionary<int, Vector3>();
         double num7 = gridSizeDouble * 0.5;
         for (int m = -num5; m <= num5; m++)
         {
@@ -978,9 +887,9 @@ public static class DysonSphereFunctions
             return 0;
         }
         // CheatEnabler.Logger.LogDebug($"Shell {shellId}   My VertCount: {DysonShell.s_vmap.Count}");
-        // CheatEnabler.Logger.LogDebug($"Shell {shellId} Calc VertCount: {CalculateTriangleVertCount2([shell.nodes[0].pos, shell.nodes[1].pos, shell.nodes[2].pos])}");
         // shell.GenerateGeometry();
         // CheatEnabler.Logger.LogDebug($"Shell {shellId} Orig VertCount: {DysonShell.s_vmap.Count}");
+        // CheatEnabler.Logger.LogDebug($"Shell {shellId} Calc VertCount: {CalculateTriangleVertCount2([shell.nodes[0].pos, shell.nodes[1].pos, shell.nodes[2].pos])}");
         for (int j = 0; j < shell.nodes.Count; j++)
         {
             shell.nodes[j].shells.Add(shell);
@@ -1250,6 +1159,98 @@ public static class DysonSphereFunctions
         dysonSphere.modelRenderer.RebuildModels();
     }
 
+    public static void CreateIllegalDysonShellQuickly(int triangleCount)
+    {
+        StarData star = null;
+        var dysonEditor = UIRoot.instance?.uiGame?.dysonEditor;
+        if (dysonEditor != null && dysonEditor.gameObject.activeSelf)
+        {
+            star = dysonEditor.selection.viewStar;
+        }
+        if (star == null)
+        {
+            star = GameMain.data?.localStar;
+            if (star == null)
+            {
+                UIMessageBox.Show("CheatEnabler".Translate(), "You are not in any system.".Translate(), "确定".Translate(), UIMessageBox.ERROR, null);
+                return;
+            }
+        }
+
+        var dysonSphere = GameMain.data?.dysonSpheres[star.index];
+        if (dysonSphere == null)
+        {
+            UIMessageBox.Show("CheatEnabler".Translate(), string.Format("There is no Dyson Sphere data on \"{0}\".".Translate(), star.displayName), "确定".Translate(), UIMessageBox.ERROR, null);
+            return;
+        }
+
+        DysonShell.s_vmap ??= new Dictionary<int, Vector3>(16384);
+        DysonShell.s_outvmap ??= new Dictionary<int, Vector3>(16384);
+        DysonShell.s_ivmap ??= new Dictionary<int, int>(16384);
+
+        for (int i = 1; i <= 10; i++)
+        {
+            var layer = dysonSphere.layersIdBased[i];
+            if (layer != null) {
+                continue;
+            }
+            var radius = dysonSphere.maxOrbitRadius;
+            for (; radius > 4000; radius -= 10) {
+                if (dysonSphere.CheckLayerRadius(radius) == 0) {
+                    break;
+                }
+            }
+            PrecalculatedTriangle triangle;
+            try {
+                triangle = PrecalculatedTriangles.First(t => t.MaxOrbitRadius > radius);
+            } catch (InvalidOperationException) {
+                UIMessageBox.Show("CheatEnabler".Translate(), string.Format("No precalculated triangle found for radius {0}.".Translate(), radius), "确定".Translate(), UIMessageBox.ERROR, null);
+                return;
+            }
+            layer = dysonSphere.AddLayerOnId(i, radius, Quaternion.Euler(0f, 0f, 0f), Mathf.Sqrt(dysonSphere.gravity / radius) / radius * 57.2957802f);
+            if (layer == null) return;
+            Vector3[] nodePos = [triangle.PosA.normalized * radius, triangle.PosB.normalized * radius, triangle.PosC.normalized * radius];
+            DysonNode[] nodes = [layer.QuickAddDysonNode(0, nodePos[0]), layer.QuickAddDysonNode(0, nodePos[1]), layer.QuickAddDysonNode(0, nodePos[2])];
+            DysonFrame[] frames = [layer.QuickAddDysonFrame(0, nodes[0], nodes[1], false), layer.QuickAddDysonFrame(0, nodes[1], nodes[2], false), layer.QuickAddDysonFrame(0, nodes[2], nodes[0], false)];
+            var shellId = layer.QuickAddDysonShell(0, nodes, frames, false);
+            if (shellId == 0) return;
+            var shell = layer.shellPool[shellId];
+            long[] cpMax = [.. nodes.Select(node => node.totalCpMax)];
+            long[] totalCpMax = [.. cpMax];
+            var dirtyFrames = new HashSet<int>();
+            for (var j = 1; j < triangleCount; j++)
+            {
+                dirtyFrames.Clear();
+                for (var k = 0; k < 3; k++)
+                {
+                    totalCpMax[k] += cpMax[k];
+                    if (totalCpMax[k] > int.MaxValue)
+                    {
+                        totalCpMax[k] = cpMax[k];
+                        dirtyFrames.Add(k > 0 ? k - 1 : 2);
+                        dirtyFrames.Add(k);
+                        nodes[k] = layer.QuickAddDysonNode(0, nodePos[k]);
+                    }
+                }
+                foreach (var frameId in dirtyFrames)
+                {
+                    frames[frameId] = layer.QuickAddDysonFrame(0, nodes[frameId], nodes[(frameId + 1) % 3], false);
+                }
+                layer.QuickAddDysonShell(0, nodes, frames, false);
+            }
+            foreach (var node in nodes)
+            {
+                node.RecalcSpReq();
+                node.RecalcCpReq();
+            }
+            dysonSphere.CheckAutoNodes();
+            if (dysonSphere.autoNodeCount <= 0) dysonSphere.PickAutoNode();
+            dysonSphere.modelRenderer.RebuildModels();
+            GameMain.gameScenario.NotifyOnPlanDysonShell();
+            return;
+        }
+    }
+
     public static void CreateIllegalDysonShellWithMaxOutput()
     {
         StarData star = null;
@@ -1384,6 +1385,168 @@ public static class DysonSphereFunctions
         dysonSphere.inGameRenderMaskL = 0;
     }
 
+    public static void CreateIllegalDysonShellsSpecially()
+    {
+        var lastGridScale = 0;
+        var radiusList = new List<int>();
+        for (var r = 4000; r <= 250000; r++) {
+            var gridScale = (int)(Math.Pow(r / 4000.0, 0.75) + 0.5);
+            gridScale = (gridScale < 1) ? 1 : gridScale;
+            if (gridScale == lastGridScale) continue;
+            lastGridScale = gridScale;
+            radiusList.Add(r);
+            CheatEnabler.Logger.LogDebug($"Grid Scale: {gridScale} from {r}");
+        }
+        radiusList.Add(250000);
+
+        StarData star = null;
+        var dysonEditor = UIRoot.instance?.uiGame?.dysonEditor;
+        if (dysonEditor != null && dysonEditor.gameObject.activeSelf)
+        {
+            star = dysonEditor.selection.viewStar;
+        }
+        if (star == null)
+        {
+            star = GameMain.data?.localStar;
+            if (star == null)
+            {
+                UIMessageBox.Show("CheatEnabler".Translate(), "You are not in any system.".Translate(), "确定".Translate(), UIMessageBox.ERROR, null);
+                return;
+            }
+        }
+        UXAssist.Functions.DysonSphereFunctions.InitCurrentDysonLayer(star, 0);
+        var dysonSphere = GameMain.data?.dysonSpheres[star.index];
+        if (dysonSphere == null)
+        {
+            UIMessageBox.Show("CheatEnabler".Translate(), string.Format("There is no Dyson Sphere data on \"{0}\".".Translate(), star.displayName), "确定".Translate(), UIMessageBox.ERROR, null);
+            return;
+        }
+        DysonShell.s_vmap ??= new Dictionary<int, Vector3>(16384);
+        DysonShell.s_outvmap ??= new Dictionary<int, Vector3>(16384);
+        DysonShell.s_ivmap ??= new Dictionary<int, int>(16384);
+        var shellsChanged = false;
+        var mutex = new object();
+
+        for (var idx = 1; idx <= 2; idx++)
+        {
+            Dictionary<(int, int), int> availableFrames = [];
+            HashSet<int> unusedFrameIds = [];
+            var layer = dysonSphere.layersIdBased[idx];
+            if (layer != null)
+            {
+                dysonSphere.RemoveLayer(idx);
+            }
+            var orbitRadius = (radiusList[idx] - 1) / 10 * 10f;
+            layer = dysonSphere.AddLayerOnId(idx, orbitRadius, Quaternion.Euler(0f, 0f, 0f), Mathf.Sqrt(dysonSphere.gravity / orbitRadius) / orbitRadius * 57.2957802f);
+            if (layer == null) return;
+
+            var supposedShells = new List<SupposedShell>(60 * 59 * 58);
+            Vector3[] nodePos = new Vector3[60];
+            for (var i = 0; i < 60; i++)
+            {
+                nodePos[i] = new Vector3((float)Math.Sin(Math.PI * 2 * i / 60), 0, (float)Math.Cos(Math.PI * 2 * i / 60));
+            }
+            for (var i = 0; i < 58; i++)
+            {
+                for (var j = i + 1; j < 59; j++)
+                {
+                    for (var k = j + 1; k < 60; k++)
+                    {
+                        var area = Vector3.Cross(nodePos[j] - nodePos[i], nodePos[k] - nodePos[i]).sqrMagnitude;
+                        supposedShells.Add(new SupposedShell { posA = nodePos[i], posB = nodePos[j], posC = nodePos[k], area = area });
+                    }
+                }
+            }
+            supposedShells.Sort((a, b) => b.area.CompareTo(a.area));
+
+            var options = new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount - 1 };
+
+            var gridScale = (int)(Math.Pow(orbitRadius / 4000.0, 0.75) + 0.5);
+            gridScale = (gridScale < 1) ? 1 : gridScale;
+            var cpPerVertex = gridScale * gridScale * 2;
+            var barrier = 0x7FFFFFFF / cpPerVertex;
+            if (barrier > 30000) barrier = 30000;
+
+            Parallel.For(0, supposedShells.Count, options, (j, _) =>
+            {
+                var sshell = supposedShells[j];
+                var vertCount = CalculateTriangleVertCount([sshell.posA * orbitRadius, sshell.posB * orbitRadius, sshell.posC * orbitRadius]);
+                if (vertCount > barrier)
+                {
+                    sshell.vertCount = -1;
+                }
+                else
+                {
+                    sshell.vertCount = vertCount;
+                }
+            });
+            supposedShells.Sort((a, b) => b.vertCount.CompareTo(a.vertCount));
+            for (var j = 0; j < supposedShells.Count && supposedShells[j].vertCount > 0; j++)
+            {
+                var sshell = supposedShells[j];
+                CheatEnabler.Logger.LogDebug($"Checking Triangle {j}[{orbitRadius}] with {sshell.vertCount} vertices");
+                var result = Parallel.For((radiusList[idx - 1] + 9) / 10, (radiusList[idx] + 9) / 10, options, (k, loopState) =>
+                {
+                    var orbitRadius = k * 10f;
+                    var gridScale = (int)(Math.Pow(orbitRadius / 4000.0, 0.75) + 0.5);
+                    gridScale = (gridScale < 1) ? 1 : gridScale;
+                    var cpPerVertex = gridScale * gridScale * 2;
+                    var barrier = 0x7FFFFFFF / cpPerVertex;
+                    if (barrier > 31000) barrier = 31000;
+                    if (loopState.ShouldExitCurrentIteration) return;
+                    var vertCount = CalculateTriangleVertCount([sshell.posA * orbitRadius, sshell.posB * orbitRadius, sshell.posC * orbitRadius]);
+                    lock (mutex)
+                    {
+                        if (loopState.ShouldExitCurrentIteration) return;
+                        if (vertCount > barrier)
+                        {
+                            CheatEnabler.Logger.LogDebug($"EXCEEDED: Triangle {j}[{orbitRadius}] has {vertCount} vertices");
+                            loopState.Stop();
+                        }
+                    }
+                });
+                if (!result.IsCompleted)
+                {
+                    continue;
+                }
+                layer.nodePool = new DysonNode[64];
+                layer.nodeRecycle = new int[64];
+                layer.nodeRecycleCursor = 0;
+                layer.nodeCapacity = 64;
+                layer.nodeCursor = 1;
+                layer.framePool = new DysonFrame[64];
+                layer.frameRecycle = new int[64];
+                layer.frameRecycleCursor = 0;
+                layer.frameCapacity = 64;
+                layer.frameCursor = 1;
+                layer.shellPool = new DysonShell[64];
+                layer.shellRecycle = new int[64];
+                layer.shellRecycleCursor = 0;
+                layer.shellCapacity = 64;
+                layer.shellCursor = 1;
+                DysonNode[] newNodes = [layer.QuickAddDysonNode(0, sshell.posA * orbitRadius), layer.QuickAddDysonNode(0, sshell.posB * orbitRadius), layer.QuickAddDysonNode(0, sshell.posC * orbitRadius)];
+                DysonFrame[] newFrames = [layer.QuickAddDysonFrame(0, newNodes[0], newNodes[1], false), layer.QuickAddDysonFrame(0, newNodes[1], newNodes[2], false), layer.QuickAddDysonFrame(0, newNodes[2], newNodes[0], false)];
+                layer.QuickAddDysonShell(0, newNodes, newFrames, false);
+                foreach (var node in newNodes)
+                {
+                    node.RecalcSpReq();
+                    node.RecalcCpReq();
+                }
+                shellsChanged = true;
+                break;
+            }
+        }
+
+        dysonSphere.CheckAutoNodes();
+        if (dysonSphere.autoNodeCount <= 0) dysonSphere.PickAutoNode();
+        dysonSphere.modelRenderer.RebuildModels();
+        if (shellsChanged) GameMain.gameScenario.NotifyOnPlanDysonShell();
+        dysonSphere.inEditorRenderMaskS = 0;
+        dysonSphere.inEditorRenderMaskL = 0;
+        dysonSphere.inGameRenderMaskS = 0;
+        dysonSphere.inGameRenderMaskL = 0;
+    }
+
     private static int AlignUpToPowerOfTwo(int value)
     {
         value--;
@@ -1402,5 +1565,6 @@ public static class DysonSphereFunctions
         public Vector3 posC;
 
         public float area;
+        public int vertCount;
     }
 }
