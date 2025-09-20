@@ -475,8 +475,11 @@ public class MyWindowWithTabs : MyWindow
         var swarmPanel = UIRoot.instance.uiGame.dysonEditor.controlPanel.hierarchy.swarmPanel;
         var src = swarmPanel.orbitButtons[0];
         var btn = Instantiate(src);
-        var btnRect = Util.NormalizeRectWithTopLeft(btn, Margin, y, parent);
+        btn.gameObject.GetComponent<Image>().sprite = swarmPanel.buttonDefaultSprite;
         btn.name = "tab-btn-" + index;
+        btn.highlighted = false;
+
+        var btnRect = Util.NormalizeRectWithTopLeft(btn, Margin, y, parent);
         btnRect.sizeDelta = new Vector2(TabWidth, TabHeight);
         btn.transform.Find("frame").gameObject.SetActive(false);
         if (btn.transitions.Length >= 3)

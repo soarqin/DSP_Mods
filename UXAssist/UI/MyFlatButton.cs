@@ -18,6 +18,7 @@ public class MyFlatButton : MonoBehaviour
         var panel = UIRoot.instance.uiGame.dysonEditor.controlPanel.hierarchy.layerPanel;
         var go = Instantiate(panel.layerButtons[0].gameObject);
         var btn = go.GetComponent<UIButton>();
+        go.GetComponent<Image>().sprite = panel.buttonDefaultSprite;
         btn.gameObject.name = "my-flatbutton";
         btn.highlighted = false;
         var img = btn.GetComponent<Image>();
