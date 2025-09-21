@@ -194,7 +194,7 @@ public static class FactoryFunctions
                 bpBuildings.Add(new BPBuildingData { building = building, itemType = itemType, offset = offset });
             }
         }
-        var beltsWithInput = bpBelts.Select(pair => pair.Value.building.outputObj).ToHashSet();
+        HashSet<BlueprintBuilding> beltsWithInput = [..bpBelts.Select(pair => pair.Value.building.outputObj)];
         var beltHeads = bpBelts.Where(pair => !beltsWithInput.Contains(pair.Value.building)).ToDictionary(pair => pair.Key, pair => pair.Value);
         // Sort belt buildings
         List<BlueprintBuilding> sortedBpBelts = [];
