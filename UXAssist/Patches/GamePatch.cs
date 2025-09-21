@@ -80,7 +80,8 @@ public class GamePatch : PatchImpl<GamePatch>
         I18N.Add("Logical frame rate: {0}x", "[UXA] Logical frame rate: {0}x", "[UXA] 逻辑帧速率: {0}x");
 
         EnableWindowResizeEnabled.SettingChanged += (_, _) => EnableWindowResize.Enable(EnableWindowResizeEnabled.Value);
-        LoadLastWindowRectEnabled.SettingChanged += (_, _) => {
+        LoadLastWindowRectEnabled.SettingChanged += (_, _) =>
+        {
             if (LoadLastWindowRectEnabled.Value)
             {
                 FixLastWindowRect();

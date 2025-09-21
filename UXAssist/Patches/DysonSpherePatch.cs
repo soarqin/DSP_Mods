@@ -9,7 +9,7 @@ using GameLogic = UXAssist.Common.GameLogic;
 
 namespace UXAssist.Patches;
 
-public class DysonSpherePatch: PatchImpl<DysonSpherePatch>
+public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
 {
     public static ConfigEntry<bool> StopEjectOnNodeCompleteEnabled;
     public static ConfigEntry<bool> OnlyConstructNodesEnabled;
@@ -261,7 +261,7 @@ public class DysonSpherePatch: PatchImpl<DysonSpherePatch>
         return matcher.InstructionEnumeration();
     }
 
-    private class StopEjectOnNodeComplete: PatchImpl<StopEjectOnNodeComplete>
+    private class StopEjectOnNodeComplete : PatchImpl<StopEjectOnNodeComplete>
     {
         private static HashSet<int>[] _nodeForAbsorb;
         private static bool _initialized;
@@ -492,7 +492,7 @@ public class DysonSpherePatch: PatchImpl<DysonSpherePatch>
     }
 
     [PatchSetCallbackFlag(PatchCallbackFlag.CallOnDisableAfterUnpatch)]
-    private class OnlyConstructNodes: PatchImpl<OnlyConstructNodes>
+    private class OnlyConstructNodes : PatchImpl<OnlyConstructNodes>
     {
         protected override void OnEnable()
         {

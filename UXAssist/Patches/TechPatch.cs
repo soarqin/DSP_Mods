@@ -287,7 +287,7 @@ public static class TechPatch
         }
     }
 
-    private class BatchBuyoutTech: PatchImpl<BatchBuyoutTech>
+    private class BatchBuyoutTech : PatchImpl<BatchBuyoutTech>
     {
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(UITechNode), nameof(UITechNode.UpdateInfoDynamic))]

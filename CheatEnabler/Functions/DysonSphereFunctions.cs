@@ -25,7 +25,7 @@ public static class DysonSphereFunctions
     private static readonly double factor2 = RawToDouble(rawNum2);
     private static readonly double factor3 = RawToDouble(rawNum3);
     private static readonly PrecalculatedTriangle[] PrecalculatedTriangles = [
-        new PrecalculatedTriangle() { MaxOrbitRadius = 6869, PosA = new Vector3() { x = RawToFloat(0x00000000U), y = RawToFloat(0x00000000U), z = RawToFloat(0x45D66000U)}, PosB = new Vector3() { x = RawToFloat(0x2C88BEC4U), y = RawToFloat(0x00000000U), z = RawToFloat(0xC5D66000U)}, PosC = new Vector3() { x = RawToFloat(0xC5D66000U), y = RawToFloat(0x00000000U), z = RawToFloat(0xABB1589BU)} }, 
+        new PrecalculatedTriangle() { MaxOrbitRadius = 6869, PosA = new Vector3() { x = RawToFloat(0x00000000U), y = RawToFloat(0x00000000U), z = RawToFloat(0x45D66000U)}, PosB = new Vector3() { x = RawToFloat(0x2C88BEC4U), y = RawToFloat(0x00000000U), z = RawToFloat(0xC5D66000U)}, PosC = new Vector3() { x = RawToFloat(0xC5D66000U), y = RawToFloat(0x00000000U), z = RawToFloat(0xABB1589BU)} },
         new PrecalculatedTriangle() { MaxOrbitRadius = 13573, PosA = new Vector3() { x = RawToFloat(0x46540800U), y = RawToFloat(0x00000000U), z = RawToFloat(0x2C87400AU)}, PosB = new Vector3() { x = RawToFloat(0x4652DEA6U), y = RawToFloat(0x00000000U), z = RawToFloat(0xC4B14E71U)}, PosC = new Vector3() { x = RawToFloat(0xC6540800U), y = RawToFloat(0x00000000U), z = RawToFloat(0xAC2F683EU)} },
         new PrecalculatedTriangle() { MaxOrbitRadius = 21257, PosA = new Vector3() { x = RawToFloat(0x46A60400U), y = RawToFloat(0x00000000U), z = RawToFloat(0x2CD3CBAAU)}, PosB = new Vector3() { x = RawToFloat(0xC6070C9DU), y = RawToFloat(0x00000000U), z = RawToFloat(0xC697A9AEU)}, PosC = new Vector3() { x = RawToFloat(0xC6A60400U), y = RawToFloat(0x00000000U), z = RawToFloat(0xAC8956FFU)} },
         new PrecalculatedTriangle() { MaxOrbitRadius = 29718, PosA = new Vector3() { x = RawToFloat(0x469B4FBEU), y = RawToFloat(0x00000000U), z = RawToFloat(0x46AC7DAAU)}, PosB = new Vector3() { x = RawToFloat(0x46E81C00U), y = RawToFloat(0x00000000U), z = RawToFloat(0x2D140EBCU)}, PosC = new Vector3() { x = RawToFloat(0xC6E81C00U), y = RawToFloat(0x00000000U), z = RawToFloat(0xACC0046AU)} },
@@ -323,10 +323,10 @@ public static class DysonSphereFunctions
             num += num2;
         }
         var radius = Math.Round(polygon[0].magnitude * 10.0) / 10.0;
-		for (int j = 0; j < polygon.Length; j++)
-		{
-			polygon[j] = polygon[j].normalized * radius;
-		}
+        for (int j = 0; j < polygon.Length; j++)
+        {
+            polygon[j] = polygon[j].normalized * radius;
+        }
         var center = (sum / num).normalized * radius;
         float num3 = 0f;
         for (int k = 0; k < 3; k++)
@@ -459,10 +459,10 @@ public static class DysonSphereFunctions
             num += num2;
         }
         shell.radius = Math.Round(shell.polygon[0].magnitude * 10.0) / 10.0;
-		for (int j = 0; j < shell.polygon.Count; j++)
-		{
-			shell.polygon[j] = shell.polygon[j].normalized * shell.radius;
-		}
+        for (int j = 0; j < shell.polygon.Count; j++)
+        {
+            shell.polygon[j] = shell.polygon[j].normalized * shell.radius;
+        }
         var normalized = (sum / num).normalized;
         shell.center = normalized * shell.radius;
         float num3 = 0f;
@@ -1191,19 +1191,25 @@ public static class DysonSphereFunctions
         for (int i = 1; i <= 10; i++)
         {
             var layer = dysonSphere.layersIdBased[i];
-            if (layer != null) {
+            if (layer != null)
+            {
                 continue;
             }
             var radius = dysonSphere.maxOrbitRadius;
-            for (; radius > 4000; radius -= 10) {
-                if (dysonSphere.CheckLayerRadius(radius) == 0) {
+            for (; radius > 4000; radius -= 10)
+            {
+                if (dysonSphere.CheckLayerRadius(radius) == 0)
+                {
                     break;
                 }
             }
             PrecalculatedTriangle triangle;
-            try {
+            try
+            {
                 triangle = PrecalculatedTriangles.First(t => t.MaxOrbitRadius > radius);
-            } catch (InvalidOperationException) {
+            }
+            catch (InvalidOperationException)
+            {
                 UIMessageBox.Show("CheatEnabler".Translate(), string.Format("No precalculated triangle found for radius {0}.".Translate(), radius), "确定".Translate(), UIMessageBox.ERROR, null);
                 return;
             }
@@ -1389,7 +1395,8 @@ public static class DysonSphereFunctions
     {
         var lastGridScale = 0;
         var radiusList = new List<int>();
-        for (var r = 4000; r <= 250000; r++) {
+        for (var r = 4000; r <= 250000; r++)
+        {
             var gridScale = (int)(Math.Pow(r / 4000.0, 0.75) + 0.5);
             gridScale = (gridScale < 1) ? 1 : gridScale;
             if (gridScale == lastGridScale) continue;

@@ -29,7 +29,7 @@ public static class PlanetPatch
         TerraformAnyway.Enable(false);
     }
 
-    private class WaterPumperPatch: PatchImpl<WaterPumperPatch>
+    private class WaterPumperPatch : PatchImpl<WaterPumperPatch>
     {
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(BuildTool_BlueprintPaste), nameof(BuildTool_BlueprintPaste.CheckBuildConditions))]
@@ -51,7 +51,7 @@ public static class PlanetPatch
         }
     }
 
-    private class TerraformAnyway: PatchImpl<TerraformAnyway>
+    private class TerraformAnyway : PatchImpl<TerraformAnyway>
     {
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(BuildTool_Reform), nameof(BuildTool_Reform.ReformAction))]

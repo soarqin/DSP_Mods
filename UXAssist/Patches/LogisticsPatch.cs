@@ -298,7 +298,8 @@ public static class LogisticsPatch
                 new CodeMatch(OpCodes.Ldc_I4_1),
                 new CodeMatch(OpCodes.Call, AccessTools.PropertyGetter(typeof(GameMain), nameof(GameMain.mainPlayer)))
             );
-            if (matcher.IsValid) {
+            if (matcher.IsValid)
+            {
                 matcher.RemoveInstructions(7).InsertAndAdvance(
                     new CodeInstruction(OpCodes.Ldc_I4_0)
                 );

@@ -29,7 +29,7 @@ public static class ResourcePatch
         FastMining.Enable(false);
     }
 
-    private class InfiniteResource: PatchImpl<InfiniteResource>
+    private class InfiniteResource : PatchImpl<InfiniteResource>
     {
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(FactorySystem), nameof(FactorySystem.GameTick), typeof(long), typeof(bool))]
@@ -59,7 +59,7 @@ public static class ResourcePatch
         }
     }
 
-    private class FastMining: PatchImpl<FastMining>
+    private class FastMining : PatchImpl<FastMining>
     {
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(FactorySystem), "GameTick", typeof(long), typeof(bool))]

@@ -36,13 +36,13 @@ public static class Util
         tex.LoadImage(fileData);
         return tex;
     }
-    
+
     public static Sprite LoadSprite(string path)
     {
         var tex = LoadTexture(path);
         return Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
     }
-    
+
     public static Texture2D LoadEmbeddedTexture(string path, Assembly assembly = null)
     {
         var fileData = LoadEmbeddedResource(path, assembly);
@@ -50,12 +50,12 @@ public static class Util
         tex.LoadImage(fileData);
         return tex;
     }
-    
+
     public static Sprite LoadEmbeddedSprite(string path, Assembly assembly = null)
     {
         var tex = LoadEmbeddedTexture(path, assembly);
         return Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
     }
-    
+
     public static string PluginFolder(Assembly assembly = null) => Path.GetDirectoryName((assembly == null ? Assembly.GetCallingAssembly() : assembly).Location);
 }

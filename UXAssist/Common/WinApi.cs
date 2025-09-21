@@ -127,7 +127,7 @@ public static class WinApi
 
     [DllImport("user32", ExactSpelling = true)]
     public static extern bool MoveWindow(IntPtr hWnd, int x, int y, int nWidth, int nHeight, bool bRepaint);
-    
+
     [DllImport("user32", ExactSpelling = true)]
     public static extern IntPtr MonitorFromRect([In] ref Rect lpRect, uint dwFlags);
 
@@ -183,7 +183,7 @@ public static class WinApi
         public ushort Reserved1;
         public ushort Reserved3;
     }
-    
+
     [StructLayout(LayoutKind.Sequential, Pack = 4)]
     private struct PROCESSOR_RELATIONSHIP
     {
@@ -207,7 +207,7 @@ public static class WinApi
         public uint Size;
         public PROCESSOR_RELATIONSHIP Processor;
     }
-    
+
     [DllImport("kernel32", SetLastError = true)]
     private static extern bool GetLogicalProcessorInformationEx(
         LOGICAL_PROCESSOR_RELATIONSHIP relationshipType,

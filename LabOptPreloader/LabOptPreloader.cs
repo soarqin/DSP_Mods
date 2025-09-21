@@ -7,7 +7,7 @@ namespace LabOptPreloader;
 
 public static class Preloader
 {
-    private static readonly ManualLogSource Logger = BepInEx.Logging.Logger.CreateLogSource("LabOpt Preloader");      
+    private static readonly ManualLogSource Logger = BepInEx.Logging.Logger.CreateLogSource("LabOpt Preloader");
     public static IEnumerable<string> TargetDLLs { get; } = new[] { "Assembly-CSharp.dll" };
 
     public static void Patch(AssemblyDefinition assembly)

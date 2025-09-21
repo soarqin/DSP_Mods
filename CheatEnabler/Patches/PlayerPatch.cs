@@ -33,7 +33,7 @@ public static class PlayerPatch
         WarpWithoutSpaceWarpers.Enable(false);
     }
 
-    private class InstantHandCraft: PatchImpl<InstantHandCraft>
+    private class InstantHandCraft : PatchImpl<InstantHandCraft>
     {
         [HarmonyPostfix]
         [HarmonyPatch(typeof(ForgeTask), MethodType.Constructor, typeof(int), typeof(int))]
@@ -43,7 +43,7 @@ public static class PlayerPatch
         }
     }
 
-    private class InstantTeleport: PatchImpl<InstantTeleport>
+    private class InstantTeleport : PatchImpl<InstantTeleport>
     {
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(UIGlobemap), nameof(UIGlobemap._OnUpdate))]
@@ -66,7 +66,7 @@ public static class PlayerPatch
         }
     }
 
-    private class WarpWithoutSpaceWarpers: PatchImpl<WarpWithoutSpaceWarpers>
+    private class WarpWithoutSpaceWarpers : PatchImpl<WarpWithoutSpaceWarpers>
     {
         [HarmonyPrefix]
         [HarmonyPatch(typeof(Mecha), nameof(Mecha.HasWarper))]
@@ -75,7 +75,7 @@ public static class PlayerPatch
             __result = true;
             return false;
         }
-        
+
         [HarmonyPostfix]
         [HarmonyPatch(typeof(Mecha), nameof(Mecha.UseWarper))]
         private static void Mecha_UseWarper_Postfix(ref bool __result)

@@ -11,7 +11,7 @@ public static class TankPatch
     private static UI.MyCheckBox _tankDustbinCheckBox;
     private static int _lastTankId;
     private static Harmony _patch;
-    
+
     public static void Enable(bool on)
     {
         if (on)

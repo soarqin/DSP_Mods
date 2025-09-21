@@ -19,15 +19,15 @@ public class UniverseGenTweaks : BaseUnityPlugin, IModCanSave
         MoreSettings.Enabled = Config.Bind("MoreSettings", "Enabled", true, "Enable more settings on Universe Generation");
         MoreSettings.MaxStarCount = Config.Bind("MoreSettings", "MaxStarCount", 128,
                 new ConfigDescription("(32 ~ 1024)\nMaximum star count for Universe Generation, enable MoreSettings.Enabled to take effect",
-                    new AcceptableValueRange<int>(32, 1024), new {}));
+                    new AcceptableValueRange<int>(32, 1024), new { }));
 
         EpicDifficulty.Enabled = Config.Bind("EpicDifficulty", "Enabled", true, "Enable Epic difficulty");
         EpicDifficulty.ResourceMultiplier = Config.Bind("EpicDifficulty", "ResourceMultiplier", 0.01f,
             new ConfigDescription("Resource multiplier for Epic difficulty",
-                new AcceptableValueRange<float>(0.0001f, 0.05f), new {}));
+                new AcceptableValueRange<float>(0.0001f, 0.05f), new { }));
         EpicDifficulty.OilMultiplier = Config.Bind("EpicDifficulty", "OilMultiplier", 0.5f,
                 new ConfigDescription("Oil multiplier for Epic difficulty relative to the Very-Hard difficulty",
-                    new AcceptableValueRange<float>(0.1f, 1f), new {}));
+                    new AcceptableValueRange<float>(0.1f, 1f), new { }));
 
         BirthPlanetPatch.SitiVeinsOnBirthPlanet = Config.Bind("Birth", "SiTiVeinsOnBirthPlanet", false,
             "Silicon/Titanium on birth planet");

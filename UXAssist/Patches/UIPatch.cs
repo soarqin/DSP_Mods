@@ -4,7 +4,7 @@ using Common;
 using HarmonyLib;
 
 [PatchGuid(PluginInfo.PLUGIN_GUID)]
-public class UIPatch: PatchImpl<UIPatch>
+public class UIPatch : PatchImpl<UIPatch>
 {
     public static void Start()
     {

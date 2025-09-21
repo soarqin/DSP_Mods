@@ -8,7 +8,7 @@ using Random = UnityEngine.Random;
 namespace UserCloak;
 
 [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
-public class UserCloak: BaseUnityPlugin
+public class UserCloak : BaseUnityPlugin
 {
     private static Harmony _patch;
     private static ConfigEntry<int> _mode;

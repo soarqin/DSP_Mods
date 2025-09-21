@@ -18,7 +18,7 @@ public class LabOptPatch : BaseUnityPlugin
     {
         Harmony.CreateAndPatchAll(typeof(LabOptPatch));
     }
-    
+
     // Patch LabComponent.Export() to save zero value if rootLabId > 0.
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(LabComponent), nameof(LabComponent.Export))]
@@ -274,7 +274,7 @@ public class LabOptPatch : BaseUnityPlugin
         );
         return matcher.InstructionEnumeration();
     }
-    
+
     // Change locks on PlanetFactory.InsertInto(), by calling LabOptPatchFunctions.InsertIntoLab()
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(PlanetFactory), nameof(PlanetFactory.InsertInto))]
@@ -332,7 +332,7 @@ public class LabOptPatch : BaseUnityPlugin
     {
         LabOptPatchFunctions.SetRootId(ref __instance, 0);
     }
-    
+
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(LabOptPatchFunctions), nameof(LabOptPatchFunctions.SetRootId))]
     [HarmonyPatch(typeof(LabOptPatchFunctions), nameof(LabOptPatchFunctions.SetRootLabIdForStacking))]

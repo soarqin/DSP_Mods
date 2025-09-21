@@ -13,7 +13,8 @@ public static class FactoryFunctions
         // Clear entity connection
         var factory = cargoTraffic.factory;
         factory.ReadObjectConn(belt.entityId, 0, out var isOutput, out var otherObjId, out var otherSlot);
-        if (isOutput && factory.entityPool[otherObjId].beltId == belt.outputId) {
+        if (isOutput && factory.entityPool[otherObjId].beltId == belt.outputId)
+        {
             factory.ClearObjectConnDirect(belt.entityId, 0);
             factory.ClearObjectConnDirect(otherObjId, otherSlot);
         }
@@ -194,7 +195,7 @@ public static class FactoryFunctions
                 bpBuildings.Add(new BPBuildingData { building = building, itemType = itemType, offset = offset });
             }
         }
-        HashSet<BlueprintBuilding> beltsWithInput = [..bpBelts.Select(pair => pair.Value.building.outputObj)];
+        HashSet<BlueprintBuilding> beltsWithInput = [.. bpBelts.Select(pair => pair.Value.building.outputObj)];
         var beltHeads = bpBelts.Where(pair => !beltsWithInput.Contains(pair.Value.building)).ToDictionary(pair => pair.Key, pair => pair.Value);
         // Sort belt buildings
         List<BlueprintBuilding> sortedBpBelts = [];

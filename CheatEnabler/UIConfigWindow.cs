@@ -304,17 +304,20 @@ public static class UIConfigWindow
         {
             y += 72f;
             var originalY = y;
-            var btn1 = wnd.AddButton(x, y, 300f, tab4, "Generate illegal dyson shell", 16, "button-generate-illegal-dyson-shells", () => {
+            var btn1 = wnd.AddButton(x, y, 300f, tab4, "Generate illegal dyson shell", 16, "button-generate-illegal-dyson-shells", () =>
+            {
                 UIMessageBox.Show("Generate illegal dyson shell".Translate(), "WARNING: This operation can be very slow, continue?".Translate(), "取消".Translate(), "确定".Translate(), UIMessageBox.WARNING, null,
                     () => { DysonSphereFunctions.CreateIllegalDysonShellWithMaxOutput(); });
             });
             y += 36f;
-            var btn2 = wnd.AddButton(x, y, 300f, tab4, "Keep max production shells and remove others", 16, "button-keep-max-production-shells", () => {
+            var btn2 = wnd.AddButton(x, y, 300f, tab4, "Keep max production shells and remove others", 16, "button-keep-max-production-shells", () =>
+            {
                 UIMessageBox.Show("Keep max production shells and remove others".Translate(), "WARNING: This operation is DANGEROUS, continue?".Translate(), "取消".Translate(), "确定".Translate(), UIMessageBox.WARNING, null,
                     () => { DysonSphereFunctions.KeepMaxProductionShells(); });
             });
             y += 36f;
-            var btn3 = wnd.AddButton(x, y, 300f, tab4, "Duplicate shells from that with highest production", 16, "button-duplicate-shells-from-the-highest-production", () => {
+            var btn3 = wnd.AddButton(x, y, 300f, tab4, "Duplicate shells from that with highest production", 16, "button-duplicate-shells-from-the-highest-production", () =>
+            {
                 UIMessageBox.Show("Duplicate shells from that with highest production".Translate(), "WARNING: This operation can be very slow, continue?".Translate(), "取消".Translate(), "确定".Translate(), UIMessageBox.WARNING, null,
                     () => { DysonSphereFunctions.DuplicateShellsWithHighestProduction(); });
             });
@@ -322,7 +325,8 @@ public static class UIConfigWindow
             var slider1 = wnd.AddSlider(x + 20f, y, tab4, DysonSphereFunctions.ShellsCountForFunctions, new ShellsCountMapper());
 
             y = originalY;
-            var btn4 = wnd.AddButton(x, y, 300f, tab4, "Generate illegal dyson shell quickly", 16, "button-generate-illegal-dyson-shells-quickly", () => {
+            var btn4 = wnd.AddButton(x, y, 300f, tab4, "Generate illegal dyson shell quickly", 16, "button-generate-illegal-dyson-shells-quickly", () =>
+            {
                 UIMessageBox.Show("Generate illegal dyson shell".Translate(), "WARNING: This operation can be very slow, continue?".Translate(), "取消".Translate(), "确定".Translate(), UIMessageBox.WARNING, null,
                     () => { DysonSphereFunctions.CreateIllegalDysonShellQuickly(DysonSphereFunctions.ShellsCountForFunctions.Value); });
             });

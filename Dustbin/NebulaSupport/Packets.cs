@@ -61,19 +61,19 @@ namespace Dustbin.NebulaSupport
                         NebulaModAPI.MultiplayerSession.Network.SendPacket(new SyncPlanetData(Dustbin.ExportData(factory)));
                         return;
                     case < 0:
-                    {
-                        var tankPool = factory.factoryStorage.tankPool;
-                        tankPool[-storageId].IsDustbin = packet.Enable;
-                        TankPatch.Reset();
-                        return;
-                    }
+                        {
+                            var tankPool = factory.factoryStorage.tankPool;
+                            tankPool[-storageId].IsDustbin = packet.Enable;
+                            TankPatch.Reset();
+                            return;
+                        }
                     case > 0:
-                    {
-                        var storagePool = factory.factoryStorage.storagePool;
-                        storagePool[storageId].IsDustbin = packet.Enable;
-                        StoragePatch.Reset();
-                        return;
-                    }
+                        {
+                            var storagePool = factory.factoryStorage.storagePool;
+                            storagePool[storageId].IsDustbin = packet.Enable;
+                            StoragePatch.Reset();
+                            return;
+                        }
                 }
             }
         }

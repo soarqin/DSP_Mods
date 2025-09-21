@@ -24,7 +24,7 @@ public static class PlanetPatch
         PlayerActionsInGlobeView.Enable(false);
     }
 
-    public class PlayerActionsInGlobeView: PatchImpl<PlayerActionsInGlobeView>
+    public class PlayerActionsInGlobeView : PatchImpl<PlayerActionsInGlobeView>
     {
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(VFInput), nameof(VFInput.UpdateGameStates))]
@@ -48,7 +48,7 @@ public static class PlanetPatch
             });
             return matcher.InstructionEnumeration();
         }
-        
+
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(PlayerController), nameof(PlayerController.GetInput))]
         private static IEnumerable<CodeInstruction> PlayerController_GetInput_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)

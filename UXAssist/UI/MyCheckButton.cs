@@ -17,12 +17,12 @@ public class MyCheckButton : MonoBehaviour
 
     private static GameObject _baseObject;
 
-	private static Color openMouseOverColor;
-	private static Color openPressColor;
-	private static Color openNormalColor;
-	private static Color closeMouseOverColor;
-	private static Color closePressColor;
-	private static Color closeNormalColor;
+    private static Color openMouseOverColor;
+    private static Color openPressColor;
+    private static Color openNormalColor;
+    private static Color closeMouseOverColor;
+    private static Color closePressColor;
+    private static Color closeNormalColor;
 
     public static void InitBaseObject()
     {

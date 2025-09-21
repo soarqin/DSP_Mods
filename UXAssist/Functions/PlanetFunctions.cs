@@ -173,7 +173,8 @@ public static class PlanetFunctions
         {
             ref var warning = ref warningPool[i];
             if (warning.id != i) continue;
-            switch (warning.factoryId) {
+            switch (warning.factoryId)
+            {
                 case -4:
                     if (warning.astroId == planetId)
                         warningSystem.RemoveWarningData(i);

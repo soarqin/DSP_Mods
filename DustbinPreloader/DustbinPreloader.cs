@@ -7,7 +7,7 @@ namespace DustbinPreloader;
 
 public static class Preloader
 {
-    private static readonly ManualLogSource Logger = BepInEx.Logging.Logger.CreateLogSource("Dustbin Preloader");      
+    private static readonly ManualLogSource Logger = BepInEx.Logging.Logger.CreateLogSource("Dustbin Preloader");
     public static IEnumerable<string> TargetDLLs { get; } = new[] { "Assembly-CSharp.dll" };
 
     public static void Patch(AssemblyDefinition assembly)

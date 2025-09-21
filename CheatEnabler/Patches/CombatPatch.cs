@@ -30,7 +30,7 @@ public static class CombatPatch
         MechaInvincible.Enable(false);
     }
 
-    private class MechaInvincible: PatchImpl<MechaInvincible>
+    private class MechaInvincible : PatchImpl<MechaInvincible>
     {
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(Player), nameof(Player.invincible), MethodType.Getter)]
@@ -65,7 +65,7 @@ public static class CombatPatch
         }
     }
 
-    private class BuildingsInvincible: PatchImpl<BuildingsInvincible>
+    private class BuildingsInvincible : PatchImpl<BuildingsInvincible>
     {
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(SkillSystem), nameof(SkillSystem.DamageGroundObjectByLocalCaster))]

@@ -187,7 +187,7 @@ public static class GamePatch
         }
     }
 
-    public class UnlockTech: PatchImpl<UnlockTech>
+    public class UnlockTech : PatchImpl<UnlockTech>
     {
         private static void UnlockTechRecursive(GameHistoryData history, [NotNull] TechProto techProto, int maxLevel = 10000)
         {

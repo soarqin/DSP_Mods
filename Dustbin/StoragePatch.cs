@@ -13,7 +13,7 @@ public static class StoragePatch
     private static UI.MyCheckBox _storageDustbinCheckBox;
     private static int _lastStorageId;
     private static Harmony _patch;
-    
+
     public static void Enable(bool on)
     {
         if (on)
@@ -138,7 +138,7 @@ public static class StoragePatch
             _storageDustbinCheckBox.rectTrans.anchoredPosition3D = new Vector3(190, 57 - rectTrans.sizeDelta.y, 0);
         }
     }
-    
+
     /* Adopt fix from starfi5h's NebulaCompatiblilityAssist */
     [HarmonyPostfix]
     [HarmonyPatch(typeof(UIStorageGrid), nameof(UIStorageGrid.OnStorageSizeChanged))]

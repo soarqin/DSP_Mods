@@ -228,7 +228,7 @@ public class MyWindow : ManualBehaviour
         return comboBox;
     }
 
-#region Slider
+    #region Slider
     public class ValueMapper<T>
     {
         public virtual int Min => 1;
@@ -402,7 +402,7 @@ public class MyWindow : ManualBehaviour
     {
         return AddSideSlider(x, y, parent, config, new ArrayMapper<T>(valueList), format, width);
     }
-#endregion
+    #endregion
 
     public InputField AddInputField(float x, float y, RectTransform parent, string text = "", int fontSize = 16, string objName = "input", UnityAction<string> onChanged = null,
         UnityAction<string> onEditEnd = null)
@@ -593,7 +593,7 @@ public abstract class MyWindowManager
     }
     */
 
-    public class Patch: PatchImpl<Patch>
+    public class Patch : PatchImpl<Patch>
     {
         protected override void OnEnable()
         {

@@ -410,30 +410,30 @@ public static class LabOptPatchFunctions
     public static void SetFunctionInternal(ref LabComponent lab, bool researchMode, int recpId, int techId, SignData[] signPool, LabComponent[] labPool)
     {
         // LabOptPatch.Logger.LogDebug($"SetFunctionInternal: id={lab.id} root={(int)RootLabIdField.GetValue(lab)} research={researchMode} recp={recpId} tech={techId}");
-		lab.replicating = false;
-		lab.time = 0;
-		lab.hashBytes = 0;
-		lab.extraHashBytes = 0;
-		lab.extraTime = 0;
-		lab.extraSpeed = 0;
-		lab.extraPowerRatio = 0;
-		lab.productive = false;
-		if (researchMode)
-		{
-			lab.forceAccMode = false;
-			lab.researchMode = true;
-			lab.recipeId = 0;
-			lab.techId = 0;
-			lab.timeSpend = 0;
-			lab.extraTimeSpend = 0;
-			lab.requires = null;
-			lab.requireCounts = null;
-			lab.served = null;
-			lab.incServed = null;
-			lab.products = null;
-			lab.productCounts = null;
-			lab.produced = null;
-			lab.productive = true;
+        lab.replicating = false;
+        lab.time = 0;
+        lab.hashBytes = 0;
+        lab.extraHashBytes = 0;
+        lab.extraTime = 0;
+        lab.extraSpeed = 0;
+        lab.extraPowerRatio = 0;
+        lab.productive = false;
+        if (researchMode)
+        {
+            lab.forceAccMode = false;
+            lab.researchMode = true;
+            lab.recipeId = 0;
+            lab.techId = 0;
+            lab.timeSpend = 0;
+            lab.extraTimeSpend = 0;
+            lab.requires = null;
+            lab.requireCounts = null;
+            lab.served = null;
+            lab.incServed = null;
+            lab.products = null;
+            lab.productCounts = null;
+            lab.produced = null;
+            lab.productive = true;
             var rootLabId = lab.pcId;
             if (rootLabId > 0)
             {
@@ -480,29 +480,29 @@ public static class LabOptPatchFunctions
                 }
             }
             signPool[lab.entityId].iconId0 = (uint)lab.techId;
-			signPool[lab.entityId].iconType = lab.techId == 0 ? 0U : 3U;
-			return;
-		}
-		lab.researchMode = false;
-		lab.recipeId = 0;
-		lab.techId = 0;
-		lab.matrixPoints = null;
-		lab.matrixServed = null;
-		lab.matrixIncServed = null;
-		RecipeProto recipeProto = null;
-		if (recpId > 0)
-		{
-			recipeProto = LDB.recipes.Select(recpId);
-		}
-		if (recipeProto != null && recipeProto.Type == ERecipeType.Research)
-		{
-			lab.recipeId = recipeProto.ID;
-			lab.speed = 10000;
-			lab.speedOverride = lab.speed;
-			lab.timeSpend = recipeProto.TimeSpend * 10000;
-			lab.extraTimeSpend = recipeProto.TimeSpend * 100000;
-			lab.productive = recipeProto.productive;
-			lab.forceAccMode &= lab.productive;
+            signPool[lab.entityId].iconType = lab.techId == 0 ? 0U : 3U;
+            return;
+        }
+        lab.researchMode = false;
+        lab.recipeId = 0;
+        lab.techId = 0;
+        lab.matrixPoints = null;
+        lab.matrixServed = null;
+        lab.matrixIncServed = null;
+        RecipeProto recipeProto = null;
+        if (recpId > 0)
+        {
+            recipeProto = LDB.recipes.Select(recpId);
+        }
+        if (recipeProto != null && recipeProto.Type == ERecipeType.Research)
+        {
+            lab.recipeId = recipeProto.ID;
+            lab.speed = 10000;
+            lab.speedOverride = lab.speed;
+            lab.timeSpend = recipeProto.TimeSpend * 10000;
+            lab.extraTimeSpend = recipeProto.TimeSpend * 100000;
+            lab.productive = recipeProto.productive;
+            lab.forceAccMode &= lab.productive;
             var rootLabId = lab.pcId;
             if (rootLabId > 0)
             {
@@ -544,26 +544,26 @@ public static class LabOptPatchFunctions
                     Array.Clear(lab.produced, 0, lab.produced.Length);
             }
         }
-		else
-		{
-			lab.forceAccMode = false;
-			lab.recipeId = 0;
-			lab.speed = 0;
-			lab.speedOverride = 0;
-			lab.timeSpend = 0;
-			lab.extraTimeSpend = 0;
-			lab.requires = null;
-			lab.requireCounts = null;
-			lab.served = null;
-			lab.incServed = null;
-			lab.needs = null;
-			lab.products = null;
-			lab.productCounts = null;
-			lab.produced = null;
-		}
-		signPool[lab.entityId].iconId0 = (uint)lab.recipeId;
-		signPool[lab.entityId].iconType = lab.recipeId == 0 ? 0U : 2U;
-	}
+        else
+        {
+            lab.forceAccMode = false;
+            lab.recipeId = 0;
+            lab.speed = 0;
+            lab.speedOverride = 0;
+            lab.timeSpend = 0;
+            lab.extraTimeSpend = 0;
+            lab.requires = null;
+            lab.requireCounts = null;
+            lab.served = null;
+            lab.incServed = null;
+            lab.needs = null;
+            lab.products = null;
+            lab.productCounts = null;
+            lab.produced = null;
+        }
+        signPool[lab.entityId].iconId0 = (uint)lab.recipeId;
+        signPool[lab.entityId].iconType = lab.recipeId == 0 ? 0U : 2U;
+    }
 
     public static int InsertIntoLab(PlanetFactory factory, int labId, int itemId, byte itemCount, byte itemInc, ref byte remainInc, int[] needs)
     {

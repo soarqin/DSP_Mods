@@ -75,7 +75,7 @@ public static class EpicDifficulty
         }
         return 0;
     }
-    
+
     public static int OilMultipliersCount()
     {
         return OilMultipliers.Length;
@@ -111,7 +111,7 @@ public static class EpicDifficulty
         __instance.UpdateParametersUIDisplay();
         return false;
     }
-    
+
     [HarmonyPrefix]
     [HarmonyPatch(typeof(UIGalaxySelect), nameof(UIGalaxySelect.UpdateParametersUIDisplay))]
     private static bool UIGalaxySelect_UpdateParametersUIDisplay_Prefix(UIGalaxySelect __instance)

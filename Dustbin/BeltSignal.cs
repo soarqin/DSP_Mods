@@ -52,7 +52,7 @@ public static class BeltSignal
         tex.LoadImage(fileData);
         return tex;
     }
-    
+
     private static Sprite LoadEmbeddedSprite(string path, Assembly assembly = null)
     {
         var tex = LoadEmbeddedTexture(path, assembly);
