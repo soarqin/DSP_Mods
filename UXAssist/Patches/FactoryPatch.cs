@@ -10,7 +10,6 @@ using HarmonyLib;
 using UnityEngine;
 using UnityEngine.UI;
 using UXAssist.Common;
-using GameLogic = UXAssist.Common.GameLogic;
 
 namespace UXAssist.Patches;
 
@@ -276,12 +275,12 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
 
         protected override void OnEnable()
         {
-            GameLogic.OnGameEnd += GameMain_End_Postfix;
+            GameLogicProc.OnGameEnd += GameMain_End_Postfix;
         }
 
         protected override void OnDisable()
         {
-            GameLogic.OnGameEnd -= GameMain_End_Postfix;
+            GameLogicProc.OnGameEnd -= GameMain_End_Postfix;
             if (_sunlight)
             {
                 _sunlight.transform.localEulerAngles = new Vector3(0f, 180f);
@@ -1405,16 +1404,16 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
 
         protected override void OnEnable()
         {
-            GameLogic.OnGameBegin += GameMain_Begin_Postfix;
-            GameLogic.OnGameEnd += GameMain_End_Postfix;
+            GameLogicProc.OnGameBegin += GameMain_Begin_Postfix;
+            GameLogicProc.OnGameEnd += GameMain_End_Postfix;
             FixProto();
         }
 
         protected override void OnDisable()
         {
             UnfixProto();
-            GameLogic.OnGameEnd -= GameMain_End_Postfix;
-            GameLogic.OnGameBegin -= GameMain_Begin_Postfix;
+            GameLogicProc.OnGameEnd -= GameMain_End_Postfix;
+            GameLogicProc.OnGameBegin -= GameMain_Begin_Postfix;
         }
 
         public static void AlternatelyChanged()
@@ -1770,14 +1769,14 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             protected override void OnEnable()
             {
                 AddBeltSignalProtos();
-                GameLogic.OnDataLoaded += VFPreload_InvokeOnLoadWorkEnded_Postfix;
-                GameLogic.OnGameBegin += GameMain_Begin_Postfix;
+                GameLogicProc.OnDataLoaded += VFPreload_InvokeOnLoadWorkEnded_Postfix;
+                GameLogicProc.OnGameBegin += GameMain_Begin_Postfix;
             }
 
             protected override void OnDisable()
             {
-                GameLogic.OnGameBegin -= GameMain_Begin_Postfix;
-                GameLogic.OnDataLoaded -= VFPreload_InvokeOnLoadWorkEnded_Postfix;
+                GameLogicProc.OnGameBegin -= GameMain_Begin_Postfix;
+                GameLogicProc.OnDataLoaded -= VFPreload_InvokeOnLoadWorkEnded_Postfix;
             }
 
             private static void VFPreload_InvokeOnLoadWorkEnded_Postfix()
@@ -1834,12 +1833,12 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         }
 
         [HarmonyTranspiler]
-        [HarmonyPatch(typeof(GameData), "GameTick")]
-        public static IEnumerable<CodeInstruction> GameData_GameTick_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        [HarmonyPatch(typeof(GameLogic), nameof(GameLogic.LogicFrame))]
+        public static IEnumerable<CodeInstruction> GameLogic_LogicFrame_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
         {
             var matcher = new CodeMatcher(instructions, generator);
             matcher.MatchForward(false,
-                new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(PerformanceMonitor), nameof(PerformanceMonitor.EndSample)))
+                new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(DeepProfiler), nameof(DeepProfiler.EndSample)))
             ).Advance(1).Insert(
                 Transpilers.EmitDelegate(() =>
                 {

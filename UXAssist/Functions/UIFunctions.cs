@@ -6,7 +6,6 @@ using System.Linq;
 using System.Collections.Generic;
 using UXAssist.UI;
 using UXAssist.Common;
-using GameLogic = UXAssist.Common.GameLogic;
 
 namespace UXAssist.Functions;
 
@@ -322,7 +321,7 @@ public static class UIFunctions
         }
 
         I18N.OnInitialized += UpdateI18N;
-        GameLogic.OnDataLoaded += () =>
+        GameLogicProc.OnDataLoaded += () =>
         {
             VeinProto veinProto;
             ItemProto itemProto;
@@ -348,7 +347,7 @@ public static class UIFunctions
             UpdateI18N();
         };
 
-        GameLogic.OnGameBegin += () =>
+        GameLogicProc.OnGameBegin += () =>
         {
             if (DSPGame.IsMenuDemo) return;
 
@@ -429,7 +428,7 @@ public static class UIFunctions
                 OnPlanetScanEnded();
             }
         };
-        GameLogic.OnGameEnd += () =>
+        GameLogicProc.OnGameEnd += () =>
         {
             _starOrderNames = null;
             ShowStarName = null;

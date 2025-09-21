@@ -8,7 +8,6 @@ using HarmonyLib;
 using UnityEngine;
 using UnityEngine.UI;
 using UXAssist.Common;
-using GameLogic = UXAssist.Common.GameLogic;
 
 namespace CheatEnabler.Patches;
 
@@ -94,14 +93,14 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         ControlPanelRemoteLogistics.Enable(ControlPanelRemoteLogisticsEnabled.Value);
         Enable(true);
         CargoTrafficPatch.Enable(true);
-        GameLogic.OnGameBegin += GameMain_Begin_Postfix_For_ImmBuild;
-        GameLogic.OnDataLoaded += OnDataLoaded;
+        GameLogicProc.OnGameBegin += GameMain_Begin_Postfix_For_ImmBuild;
+        GameLogicProc.OnDataLoaded += OnDataLoaded;
     }
 
     public static void Uninit()
     {
-        GameLogic.OnDataLoaded -= OnDataLoaded;
-        GameLogic.OnGameBegin -= GameMain_Begin_Postfix_For_ImmBuild;
+        GameLogicProc.OnDataLoaded -= OnDataLoaded;
+        GameLogicProc.OnGameBegin -= GameMain_Begin_Postfix_For_ImmBuild;
         CargoTrafficPatch.Enable(false);
         Enable(false);
         ImmediateBuild.Enable(false);
@@ -629,12 +628,12 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         protected override void OnEnable()
         {
             InitSignalBelts();
-            GameLogic.OnGameBegin += GameMain_Begin_Postfix;
+            GameLogicProc.OnGameBegin += GameMain_Begin_Postfix;
         }
 
         protected override void OnDisable()
         {
-            GameLogic.OnGameBegin -= GameMain_Begin_Postfix;
+            GameLogicProc.OnGameBegin -= GameMain_Begin_Postfix;
             _initialized = false;
             _signalBelts = null;
             _signalBeltsCapacity = 0;
@@ -995,7 +994,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             var data = GameMain.data;
             var factories = data?.factories;
             if (factories == null) return;
-            PerformanceMonitor.BeginSample(ECpuWorkEntry.Belt);
+            DeepProfiler.BeginSample(DPEntry.Belt);
             for (var index = data.factoryCount - 1; index >= 0; index--)
             {
                 var factory = factories[index];
@@ -1123,16 +1122,16 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                 }
             }
 
-            PerformanceMonitor.EndSample(ECpuWorkEntry.Belt);
+            DeepProfiler.EndSample(DPEntry.Belt);
         }
 
         [HarmonyTranspiler]
-        [HarmonyPatch(typeof(GameData), "GameTick")]
-        public static IEnumerable<CodeInstruction> GameData_GameTick_Transpiler(IEnumerable<CodeInstruction> instructions)
+        [HarmonyPatch(typeof(GameLogic), nameof(GameLogic.LogicFrame))]
+        public static IEnumerable<CodeInstruction> GameLogic_LogicFrame_Transpiler(IEnumerable<CodeInstruction> instructions)
         {
             var matcher = new CodeMatcher(instructions);
             matcher.MatchForward(false,
-                new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(PerformanceMonitor), nameof(PerformanceMonitor.EndSample)))
+                new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(DeepProfiler), nameof(DeepProfiler.EndSample)))
             ).Advance(1).Insert(
                 new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(BeltSignalGenerator), nameof(ProcessBeltSignals)))
             );

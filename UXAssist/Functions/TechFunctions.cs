@@ -288,7 +288,7 @@ public static class TechFunctions
             {
                 UnlockTechImmediately(techProto, toLevel, withPrerequisites);
             }
-            history.VarifyTechQueue();
+            history.VerifyTechQueue();
             if (history.currentTech != history.techQueue[0])
             {
                 history.currentTech = history.techQueue[0];

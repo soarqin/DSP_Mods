@@ -4,7 +4,6 @@ using System.Reflection.Emit;
 using BepInEx.Configuration;
 using HarmonyLib;
 using UXAssist.Common;
-using GameLogic = UXAssist.Common.GameLogic;
 
 namespace CheatEnabler.Patches;
 
@@ -134,12 +133,12 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
         {
             UpdateSailLifeTime();
             UpdateSailsCacheForThisGame();
-            GameLogic.OnGameBegin += GameMain_Begin_Postfix;
+            GameLogicProc.OnGameBegin += GameMain_Begin_Postfix;
         }
 
         protected override void OnDisable()
         {
-            GameLogic.OnGameBegin -= GameMain_Begin_Postfix;
+            GameLogicProc.OnGameBegin -= GameMain_Begin_Postfix;
         }
 
         private static void UpdateSailLifeTime()
