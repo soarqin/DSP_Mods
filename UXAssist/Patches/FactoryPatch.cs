@@ -1832,91 +1832,82 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             }
         }
 
-        [HarmonyTranspiler]
-        [HarmonyPatch(typeof(GameLogic), nameof(GameLogic.LogicFrame))]
-        public static IEnumerable<CodeInstruction> GameLogic_LogicFrame_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(GameLogic), nameof(GameLogic.OnFactoryFrameBegin))]
+        public static void GameLogic_OnFactoryFrameBegin_Postfix()
         {
-            var matcher = new CodeMatcher(instructions, generator);
-            matcher.MatchForward(false,
-                new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(DeepProfiler), nameof(DeepProfiler.EndSample), [typeof(int), typeof(long)]))
-            ).Advance(1).Insert(
-                Transpilers.EmitDelegate(() =>
+            var factories = GameMain.data?.factories;
+            if (factories == null) return;
+            var factoriesCount = factories.Length;
+            var propertySystem = DSPGame.propertySystem;
+            List<int> factoriesToRemove = null;
+            foreach (var factoryIndex in SignalBeltFactoryIndices)
+            {
+                if (factoryIndex >= factoriesCount)
                 {
-                    var factories = GameMain.data?.factories;
-                    if (factories == null) return;
-                    var factoriesCount = factories.Length;
-                    var propertySystem = DSPGame.propertySystem;
-                    List<int> factoriesToRemove = null;
-                    foreach (var factoryIndex in SignalBeltFactoryIndices)
+                    if (factoriesToRemove == null)
+                        factoriesToRemove = [factoryIndex];
+                    else
+                        factoriesToRemove.Add(factoryIndex);
+                    continue;
+                }
+                var signalBelts = GetSignalBelts(factoryIndex);
+                if (signalBelts == null) continue;
+                var factory = factories[factoryIndex];
+                if (factory == null) continue;
+                var cargoTraffic = factory.cargoTraffic;
+                var beltCount = cargoTraffic.beltCursor;
+                List<int> beltsToRemove = null;
+                foreach (var kvp in signalBelts)
+                {
+                    if (kvp.Key >= beltCount)
                     {
-                        if (factoryIndex >= factoriesCount)
-                        {
-                            if (factoriesToRemove == null)
-                                factoriesToRemove = [factoryIndex];
-                            else
-                                factoriesToRemove.Add(factoryIndex);
-                            continue;
-                        }
-                        var signalBelts = GetSignalBelts(factoryIndex);
-                        if (signalBelts == null) continue;
-                        var factory = factories[factoryIndex];
-                        if (factory == null) continue;
-                        var cargoTraffic = factory.cargoTraffic;
-                        var beltCount = cargoTraffic.beltCursor;
-                        List<int> beltsToRemove = null;
-                        foreach (var kvp in signalBelts)
-                        {
-                            if (kvp.Key >= beltCount)
-                            {
-                                if (beltsToRemove == null)
-                                    beltsToRemove = [kvp.Key];
-                                else
-                                    beltsToRemove.Add(kvp.Key);
-                                continue;
-                            }
-                            ref var belt = ref cargoTraffic.beltPool[kvp.Key];
-                            var cargoPath = cargoTraffic.GetCargoPath(belt.segPathId);
-                            var itemIdx = kvp.Value;
-                            if (cargoPath == null) continue;
-                            var itemId = DarkFogItemIds[itemIdx];
-                            var consume = (byte)Math.Min(DarkFogItemsInVoid[itemIdx], 4);
-                            if (consume < 4)
-                            {
-                                var metaverse = propertySystem.GetItemAvaliableProperty(_clusterSeedKey, 6006);
-                                if (metaverse > 0)
-                                {
-                                    if (metaverse > 10)
-                                        metaverse = 10;
-                                    propertySystem.AddItemConsumption(_clusterSeedKey, 6006, metaverse);
-                                    var mainPlayer = GameMain.mainPlayer;
-                                    GameMain.history.AddPropertyItemConsumption(6006, metaverse, true);
-                                    var count = DarkFogItemExchangeRate[itemIdx] * metaverse;
-                                    DarkFogItemsInVoid[itemIdx] += count;
-                                    consume = (byte)Math.Min(DarkFogItemsInVoid[itemIdx], 4);
-                                    mainPlayer.mecha.AddProductionStat(itemId, count, mainPlayer.nearestFactory);
-                                }
-                            }
-
-                            if (consume > 0 && cargoPath.TryInsertItem(belt.segIndex + belt.segPivotOffset, itemId, consume, 0))
-                                DarkFogItemsInVoid[itemIdx] -= consume;
-                        }
-                        if (beltsToRemove == null) continue;
-                        foreach (var beltId in beltsToRemove)
-                            signalBelts.Remove(beltId);
-                        if (signalBelts.Count > 0) continue;
-                        if (factoriesToRemove == null)
-                            factoriesToRemove = [factoryIndex];
+                        if (beltsToRemove == null)
+                            beltsToRemove = [kvp.Key];
                         else
-                            factoriesToRemove.Add(factoryIndex);
+                            beltsToRemove.Add(kvp.Key);
+                        continue;
                     }
-                    if (factoriesToRemove == null) return;
-                    foreach (var factoryIndex in factoriesToRemove)
+                    ref var belt = ref cargoTraffic.beltPool[kvp.Key];
+                    var cargoPath = cargoTraffic.GetCargoPath(belt.segPathId);
+                    var itemIdx = kvp.Value;
+                    if (cargoPath == null) continue;
+                    var itemId = DarkFogItemIds[itemIdx];
+                    var consume = (byte)Math.Min(DarkFogItemsInVoid[itemIdx], 4);
+                    if (consume < 4)
                     {
-                        RemovePlanetSignalBelts(factoryIndex);
+                        var metaverse = propertySystem.GetItemAvaliableProperty(_clusterSeedKey, 6006);
+                        if (metaverse > 0)
+                        {
+                            if (metaverse > 10)
+                                metaverse = 10;
+                            propertySystem.AddItemConsumption(_clusterSeedKey, 6006, metaverse);
+                            var mainPlayer = GameMain.mainPlayer;
+                            GameMain.history.AddPropertyItemConsumption(6006, metaverse, true);
+                            var count = DarkFogItemExchangeRate[itemIdx] * metaverse;
+                            DarkFogItemsInVoid[itemIdx] += count;
+                            consume = (byte)Math.Min(DarkFogItemsInVoid[itemIdx], 4);
+                            mainPlayer.mecha.AddProductionStat(itemId, count, mainPlayer.nearestFactory);
+                        }
                     }
-                })
-            );
-            return matcher.InstructionEnumeration();
+
+                    if (consume > 0 && cargoPath.TryInsertItem(belt.segIndex + belt.segPivotOffset, itemId, consume, 0))
+                        DarkFogItemsInVoid[itemIdx] -= consume;
+                }
+                if (beltsToRemove == null) continue;
+                foreach (var beltId in beltsToRemove)
+                    signalBelts.Remove(beltId);
+                if (signalBelts.Count > 0) continue;
+                if (factoriesToRemove == null)
+                    factoriesToRemove = [factoryIndex];
+                else
+                    factoriesToRemove.Add(factoryIndex);
+            }
+            if (factoriesToRemove == null) return;
+            foreach (var factoryIndex in factoriesToRemove)
+            {
+                RemovePlanetSignalBelts(factoryIndex);
+            }
         }
     }
 
