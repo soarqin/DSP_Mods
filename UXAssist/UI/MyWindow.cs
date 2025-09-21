@@ -613,7 +613,7 @@ public abstract class MyWindowManager
 
         /*
         //_Create -> _Init
-        [HarmonyPostfix, HarmonyPatch(typeof(UIGame), "_OnCreate")]
+        [HarmonyPostfix, HarmonyPatch(typeof(UIGame), nameof(UIGame._OnCreate))]
         public static void UIGame__OnCreate_Postfix()
         {
         }
@@ -638,7 +638,7 @@ public abstract class MyWindowManager
         }
 
         /*
-        [HarmonyPostfix, HarmonyPatch(typeof(UIGame), "_OnFree")]
+        [HarmonyPostfix, HarmonyPatch(typeof(UIGame), nameof(UIGame._OnFree))]
         public static void UIGame__OnFree_Postfix()
         {
             foreach (var win in Windows)

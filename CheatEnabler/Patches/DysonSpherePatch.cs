@@ -295,7 +295,7 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
         }
 
         [HarmonyPrefix]
-        [HarmonyPatch(typeof(DysonSwarm), "GameTick")]
+        [HarmonyPatch(typeof(DysonSwarm), nameof(DysonSwarm.GameTick))]
         public static void DysonSwarm_GameTick_Prefix(DysonSwarm __instance, long time)
         {
             var index = __instance.starData.index;

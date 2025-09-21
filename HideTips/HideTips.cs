@@ -152,7 +152,7 @@ public class HideTips : BaseUnityPlugin
 class HideMenuDemo
 {
     [HarmonyPriority(Priority.First), HarmonyPrefix]
-    [HarmonyPatch(typeof(DSPGame), "StartDemoGame", typeof(int))]
+    [HarmonyPatch(typeof(DSPGame), nameof(DSPGame.StartDemoGame), typeof(int))]
     private static bool DSPGame_StartDemoGame_Prefix()
     {
         if (DSPGame.Game != null)
@@ -188,7 +188,7 @@ class HideMenuDemo
     }
 
     [HarmonyPriority(Priority.First), HarmonyPrefix]
-    [HarmonyPatch(typeof(VFPreload), "IsMenuDemoLoaded")]
+    [HarmonyPatch(typeof(VFPreload), nameof(VFPreload.IsMenuDemoLoaded))]
     private static bool VFPreload_IsMenuDemoLoaded_Prefix(ref bool __result)
     {
         __result = true;
@@ -196,18 +196,18 @@ class HideMenuDemo
     }
 
     [HarmonyPriority(Priority.First), HarmonyPrefix]
-    [HarmonyPatch(typeof(DSPGame), "LateUpdate")]
-    [HarmonyPatch(typeof(GameMain), "LateUpdate")]
-    [HarmonyPatch(typeof(GameMain), "FixedUpdate")]
-    [HarmonyPatch(typeof(GameMain), "Update")]
-    [HarmonyPatch(typeof(GameCamera), "LateUpdate")]
+    [HarmonyPatch(typeof(DSPGame), nameof(DSPGame.LateUpdate))]
+    [HarmonyPatch(typeof(GameMain), nameof(GameMain.LateUpdate))]
+    [HarmonyPatch(typeof(GameMain), nameof(GameMain.FixedUpdate))]
+    [HarmonyPatch(typeof(GameMain), nameof(GameMain.Update))]
+    [HarmonyPatch(typeof(GameCamera), nameof(GameCamera.LateUpdate))]
     private static bool DSPGame_LateUpdate_Prefix()
     {
         return !DSPGame.IsMenuDemo;
     }
 
     [HarmonyPriority(Priority.First), HarmonyPrefix]
-    [HarmonyPatch(typeof(GameMain), "Begin")]
+    [HarmonyPatch(typeof(GameMain), nameof(GameMain.Begin))]
     private static bool GameMain_Begin_Prefix()
     {
         if (!DSPGame.IsMenuDemo) return true;

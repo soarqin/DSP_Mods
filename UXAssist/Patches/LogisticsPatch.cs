@@ -850,7 +850,7 @@ public static class LogisticsPatch
 
             var sliderBgPrefab = GameObject.Find("UI Root/Overlay Canvas/In Game/Windows/Station Window/storage-box-0/slider-bg");
 
-            _tipPrefab = Object.Instantiate(GameObject.Find("UI Root/Overlay Canvas/In Game/Scene UIs/Vein Marks/vein-tip-prefab"), _stationTipsRoot.transform);
+            _tipPrefab = Object.Instantiate(GameObject.Find("UI Root/Overlay Canvas/In Game/Scene UIs/Vein Marks/vein-tips/vein-tip-prefab"), _stationTipsRoot.transform);
             _tipPrefab.name = "tipPrefab";
             Object.Destroy(_tipPrefab.GetComponent<UIVeinDetailNode>());
             var image = _tipPrefab.GetComponent<Image>();

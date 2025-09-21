@@ -358,7 +358,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         }
 
         [HarmonyTranspiler]
-        [HarmonyPatch(typeof(StarSimulator), "LateUpdate")]
+        [HarmonyPatch(typeof(StarSimulator), nameof(StarSimulator.LateUpdate))]
         private static IEnumerable<CodeInstruction> StarSimulator_LateUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
         {
             var matcher = new CodeMatcher(instructions, generator);
@@ -384,7 +384,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         }
 
         [HarmonyTranspiler]
-        [HarmonyPatch(typeof(PlanetSimulator), "LateUpdate")]
+        [HarmonyPatch(typeof(PlanetSimulator), nameof(PlanetSimulator.LateUpdate))]
         private static IEnumerable<CodeInstruction> PlanetSimulator_LateUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
         {
             // var vec = (NightlightEnabled ? GameMain.mainPlayer.transform.up : (Quaternion.Inverse(localPlanet.runtimeRotation) * (__instance.planetData.star.uPosition - __instance.planetData.uPosition).normalized));
