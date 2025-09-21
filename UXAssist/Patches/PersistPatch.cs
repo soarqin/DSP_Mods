@@ -41,29 +41,6 @@ public class PersistPatch : PatchImpl<PersistPatch>
         return matcher.InstructionEnumeration();
     }
 
-    // Patch to fix the issue that warning popup on VeinUtil upgraded to level 8000+
-    [HarmonyTranspiler]
-    [HarmonyPatch(typeof(ABN_VeinsUtil), nameof(ABN_VeinsUtil.CheckValue))]
-    private static IEnumerable<CodeInstruction> ABN_VeinsUtil_CheckValue_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
-    {
-        var matcher = new CodeMatcher(instructions, generator);
-        matcher.MatchForward(false,
-            new CodeMatch(OpCodes.Ldelem_R8),
-            new CodeMatch(OpCodes.Conv_R4),
-            new CodeMatch(OpCodes.Add),
-            new CodeMatch(OpCodes.Stloc_1)
-        );
-        // loc1 = Mathf.Round(n * 1000f) / 1000f;
-        matcher.Advance(3).Insert(
-            new CodeInstruction(OpCodes.Ldc_R4, 1000f),
-            new CodeInstruction(OpCodes.Mul),
-            new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(Mathf), nameof(Mathf.Round))),
-            new CodeInstruction(OpCodes.Ldc_R4, 1000f),
-            new CodeInstruction(OpCodes.Div)
-        );
-        return matcher.InstructionEnumeration();
-    }
-
     // Bring popup tip window to top layer
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(UIButton), nameof(UIButton.LateUpdate))]

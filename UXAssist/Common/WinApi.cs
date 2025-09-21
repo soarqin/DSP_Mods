@@ -268,7 +268,7 @@ public static class WinApi
 
         return result;
 
-        int CountBitsSet(ulong mask)
+        static int CountBitsSet(ulong mask)
         {
             var count = 0;
             while (mask != 0)

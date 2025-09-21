@@ -495,7 +495,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         }
 
         [HarmonyPostfix]
-        [HarmonyPatch(typeof(StorageComponent), "GetItemCount", typeof(int))]
+        [HarmonyPatch(typeof(StorageComponent), nameof(StorageComponent.GetItemCount), typeof(int))]
         public static void GetItemCountPatch(StorageComponent __instance, int itemId, ref int __result)
         {
             if (__result > 99) return;

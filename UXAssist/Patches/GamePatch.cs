@@ -19,8 +19,6 @@ public class GamePatch : PatchImpl<GamePatch>
     public static ConfigEntry<bool> EnableWindowResizeEnabled;
     public static ConfigEntry<bool> LoadLastWindowRectEnabled;
 
-    public static ConfigEntry<int> MouseCursorScaleUpMultiplier;
-
     // public static ConfigEntry<bool> AutoSaveOptEnabled;
     public static ConfigEntry<bool> ConvertSavesFromPeaceEnabled;
     public static ConfigEntry<Vector4> LastWindowRect;
@@ -87,11 +85,6 @@ public class GamePatch : PatchImpl<GamePatch>
                 FixLastWindowRect();
             }
         };
-        MouseCursorScaleUpMultiplier.SettingChanged += (_, _) =>
-        {
-            MouseCursorScaleUp.NeedReloadCursors = true;
-            MouseCursorScaleUp.Enable(MouseCursorScaleUpMultiplier.Value > 1);
-        };
         // AutoSaveOptEnabled.SettingChanged += (_, _) => AutoSaveOpt.Enable(AutoSaveOptEnabled.Value);
         ConvertSavesFromPeaceEnabled.SettingChanged += (_, _) => ConvertSavesFromPeace.Enable(ConvertSavesFromPeaceEnabled.Value);
         ProfileBasedSaveFolderEnabled.SettingChanged += (_, _) => RefreshSavePath();
@@ -123,8 +116,6 @@ public class GamePatch : PatchImpl<GamePatch>
             }
         }
         EnableWindowResize.Enable(EnableWindowResizeEnabled.Value);
-        MouseCursorScaleUp.NeedReloadCursors = false;
-        MouseCursorScaleUp.Enable(MouseCursorScaleUpMultiplier.Value > 1);
         // AutoSaveOpt.Enable(AutoSaveOptEnabled.Value);
         ConvertSavesFromPeace.Enable(ConvertSavesFromPeaceEnabled.Value);
         Enable(true);
@@ -136,8 +127,6 @@ public class GamePatch : PatchImpl<GamePatch>
     {
         Enable(false);
         EnableWindowResize.Enable(false);
-        MouseCursorScaleUp.NeedReloadCursors = false;
-        MouseCursorScaleUp.Enable(false);
         // AutoSaveOpt.Enable(false);
         ConvertSavesFromPeace.Enable(false);
     }
@@ -160,7 +149,7 @@ public class GamePatch : PatchImpl<GamePatch>
 
     [HarmonyPostfix]
     [HarmonyPriority(Priority.First)]
-    [HarmonyPatch(typeof(GameConfig), "gameSaveFolder", MethodType.Getter)]
+    [HarmonyPatch(typeof(GameConfig), nameof(GameConfig.gameSaveFolder), MethodType.Getter)]
     public static void GameConfig_gameSaveFolder_Postfix(ref string __result)
     {
         if (!ProfileBasedSaveFolderEnabled.Value || string.IsNullOrEmpty(WindowFunctions.ProfileName)) return;
@@ -298,7 +287,7 @@ public class GamePatch : PatchImpl<GamePatch>
         var matcher = new CodeMatcher(instructions, generator);
         var label1 = generator.DefineLabel();
         matcher.MatchForward(false,
-            new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(Screen), nameof(Screen.SetResolution), [typeof(int), typeof(int), typeof(bool), typeof(int)]))
+            new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(Screen), nameof(Screen.SetResolution), [typeof(int), typeof(int), typeof(FullScreenMode), typeof(RefreshRate)]))
         ).Advance(1).Labels.Add(label1);
         matcher.Start().Insert(
             Transpilers.EmitDelegate(() =>
@@ -599,133 +588,6 @@ public class GamePatch : PatchImpl<GamePatch>
                 Debug.LogException(ex);
             }
             return false;
-        }
-    }
-
-    [PatchSetCallbackFlag(PatchCallbackFlag.CallOnDisableAfterUnpatch)]
-    private class MouseCursorScaleUp : PatchImpl<MouseCursorScaleUp>
-    {
-        public static bool NeedReloadCursors;
-
-        protected override void OnEnable()
-        {
-            if (!NeedReloadCursors) return;
-            if (!UICursor.loaded) return;
-            UICursor.loaded = false;
-            UICursor.LoadCursors();
-        }
-
-        protected override void OnDisable()
-        {
-            if (!NeedReloadCursors) return;
-            if (!UICursor.loaded) return;
-            UICursor.loaded = false;
-            UICursor.LoadCursors();
-        }
-
-        [HarmonyTranspiler]
-        [HarmonyPatch(typeof(UICursor), nameof(UICursor.LoadCursors))]
-        private static IEnumerable<CodeInstruction> UICursor_LoadCursors_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
-        {
-            var matcher = new CodeMatcher(instructions, generator);
-            /*
-            matcher.MatchForward(false,
-                new CodeMatch(OpCodes.Ldc_I4_S),
-                new CodeMatch(OpCodes.Newarr)
-            );
-            var startPos = matcher.Pos;
-            matcher.Advance(2).MatchForward(false,
-                new CodeMatch(OpCodes.Stsfld, AccessTools.Field(typeof(UICursor), nameof(UICursor.cursorTexs)))
-            );
-            var endPos = matcher.Pos + 1;
-            matcher.Start().Advance(startPos).RemoveInstructions(endPos - startPos);
-            matcher.InsertAndAdvance(
-                Transpilers.EmitDelegate(() =>
-                {
-                    var pluginfolder = Util.PluginFolder;
-                    UICursor.cursorTexs =
-                    [
-                        Util.LoadTexture($"{pluginfolder}/assets/cursor/cursor.png"),
-                        Util.LoadTexture($"{pluginfolder}/assets/cursor/cursor-transfer.png"),
-                        Util.LoadTexture($"{pluginfolder}/assets/cursor/cursor-target-in.png"),
-                        Util.LoadTexture($"{pluginfolder}/assets/cursor/cursor-target-out.png"),
-                        Util.LoadTexture($"{pluginfolder}/assets/cursor/cursor-target-a.png"),
-                        Util.LoadTexture($"{pluginfolder}/assets/cursor/cursor-target-b.png"),
-                        Util.LoadTexture($"{pluginfolder}/assets/cursor/cursor-ban.png"),
-                        Util.LoadTexture($"{pluginfolder}/assets/cursor/cursor-delete.png"),
-                        Util.LoadTexture($"{pluginfolder}/assets/cursor/cursor-reform.png"),
-                        Util.LoadTexture($"{pluginfolder}/assets/cursor/cursor-dyson-node-create.png"),
-                        Util.LoadTexture($"{pluginfolder}/assets/cursor/cursor-painter.png"),
-                        Util.LoadTexture($"{pluginfolder}/assets/cursor/cursor-eyedropper.png"),
-                        Util.LoadTexture($"{pluginfolder}/assets/cursor/cursor-eraser.png"),
-                        Util.LoadTexture($"{pluginfolder}/assets/cursor/cursor-upgrade.png"),
-                        Util.LoadTexture($"{pluginfolder}/assets/cursor/cursor-downgrade.png"),
-                        Util.LoadTexture($"{pluginfolder}/assets/cursor/cursor-blank.png"),
-                        Util.LoadTexture($"{pluginfolder}/assets/cursor/cursor-remove.png")
-                    ];
-                })
-            );
-            */
-            matcher.MatchForward(false,
-                new CodeMatch(OpCodes.Stsfld, AccessTools.Field(typeof(UICursor), nameof(UICursor.cursorHots))),
-                new CodeMatch(OpCodes.Ldc_I4_1),
-                new CodeMatch(OpCodes.Stsfld, AccessTools.Field(typeof(UICursor), nameof(UICursor.loaded)))
-            ).Advance(1).InsertAndAdvance(
-                Transpilers.EmitDelegate(() =>
-                {
-                    var multiplier = MouseCursorScaleUpMultiplier.Value;
-                    for (var i = 0; i < UICursor.cursorTexs.Length; i++)
-                    {
-                        var cursor = UICursor.cursorTexs[i];
-                        if (cursor == null) continue;
-                        var newWidth = 32 * multiplier;
-                        var newHeight = 32 * multiplier;
-                        if (cursor.width == newWidth && cursor.height == newHeight) continue;
-                        UICursor.cursorTexs[i] = ResizeTexture2D(cursor, newWidth, newHeight);
-                    }
-
-                    if (multiplier <= 1) return;
-                    for (var i = UICursor.cursorHots.Length - 1; i >= 0; i--)
-                    {
-                        UICursor.cursorHots[i] = new Vector2(UICursor.cursorHots[i].x * multiplier, UICursor.cursorHots[i].y * multiplier);
-                    }
-                })
-            ).MatchForward(false,
-                new CodeMatch(OpCodes.Ldc_I4_0),
-                new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(Cursor), nameof(Cursor.SetCursor), [typeof(Texture2D), typeof(Vector2), typeof(CursorMode)]))
-            ).SetInstruction(new CodeInstruction(OpCodes.Ldc_I4_1));
-            return matcher.InstructionEnumeration();
-
-            Texture2D ResizeTexture2D(Texture2D texture2D, int targetWidth, int targetHeight)
-            {
-                var oldActive = RenderTexture.active;
-                var rt = new RenderTexture(targetWidth, targetHeight, 32)
-                {
-                    antiAliasing = 8
-                };
-                RenderTexture.active = rt;
-                Graphics.Blit(texture2D, rt);
-                rt.ResolveAntiAliasedSurface();
-                var result = new Texture2D(targetWidth, targetHeight, texture2D.format, false);
-                result.ReadPixels(new Rect(0, 0, targetWidth, targetHeight), 0, 0);
-                result.filterMode = FilterMode.Trilinear;
-                result.Apply();
-                RenderTexture.active = oldActive;
-                rt.Release();
-                return result;
-            }
-        }
-
-        [HarmonyTranspiler]
-        [HarmonyPatch(typeof(UICursor), nameof(UICursor.cursorIndexApply), MethodType.Setter)]
-        private static IEnumerable<CodeInstruction> UICursor_set_cursorIndexApply_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
-        {
-            var matcher = new CodeMatcher(instructions, generator);
-            matcher.Start().MatchForward(false,
-                new CodeMatch(OpCodes.Ldc_I4_0),
-                new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(Cursor), nameof(Cursor.SetCursor), [typeof(Texture2D), typeof(Vector2), typeof(CursorMode)]))
-            ).SetInstruction(new CodeInstruction(OpCodes.Ldc_I4_1));
-            return matcher.InstructionEnumeration();
         }
     }
 }

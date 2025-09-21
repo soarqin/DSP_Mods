@@ -153,7 +153,7 @@ public static class EpicDifficulty
     }
 
     [HarmonyTranspiler]
-    [HarmonyPatch(typeof(GameDesc), "get_oilAmountMultiplier")]
+    [HarmonyPatch(typeof(GameDesc), nameof(GameDesc.oilAmountMultiplier), MethodType.Getter)]
     private static IEnumerable<CodeInstruction> GameDesc_get_oilAmountMultiplier_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
     {
         var matcher = new CodeMatcher(instructions, generator);

@@ -64,19 +64,19 @@ public static class GamePatch
         }
 
         [HarmonyPrefix]
-        [HarmonyPatch(typeof(AbnormalityLogic), "NotifyBeforeGameSave")]
-        [HarmonyPatch(typeof(AbnormalityLogic), "NotifyOnAssemblerRecipePick")]
-        [HarmonyPatch(typeof(AbnormalityLogic), "NotifyOnGameBegin")]
-        [HarmonyPatch(typeof(AbnormalityLogic), "NotifyOnMechaForgeTaskComplete")]
-        [HarmonyPatch(typeof(AbnormalityLogic), "NotifyOnUnlockTech")]
-        [HarmonyPatch(typeof(AbnormalityLogic), "NotifyOnUseConsole")]
+        [HarmonyPatch(typeof(AbnormalityLogic), nameof(AbnormalityLogic.NotifyBeforeGameSave))]
+        [HarmonyPatch(typeof(AbnormalityLogic), nameof(AbnormalityLogic.NotifyOnAssemblerRecipePick))]
+        [HarmonyPatch(typeof(AbnormalityLogic), nameof(AbnormalityLogic.NotifyOnGameBegin))]
+        [HarmonyPatch(typeof(AbnormalityLogic), nameof(AbnormalityLogic.NotifyOnMechaForgeTaskComplete))]
+        [HarmonyPatch(typeof(AbnormalityLogic), nameof(AbnormalityLogic.NotifyOnUnlockTech))]
+        [HarmonyPatch(typeof(AbnormalityLogic), nameof(AbnormalityLogic.NotifyOnUseConsole))]
         private static bool DisableAbnormalLogic()
         {
             return false;
         }
 
         [HarmonyPostfix]
-        [HarmonyPatch(typeof(AbnormalityLogic), "InitDeterminators")]
+        [HarmonyPatch(typeof(AbnormalityLogic), nameof(AbnormalityLogic.InitDeterminators))]
         private static void DisableAbnormalDeterminators(AbnormalityLogic __instance)
         {
             _savedDeterminators = __instance.determinators;
