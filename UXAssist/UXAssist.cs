@@ -14,7 +14,6 @@ using UXAssist.Functions;
 using UXAssist.Patches;
 using UXAssist.UI;
 using Util = UXAssist.Common.Util;
-using GameLogic = UXAssist.Common.GameLogic;
 
 namespace UXAssist;
 
@@ -217,7 +216,7 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
         I18N.Add("UXAssist Config", "UXAssist Config", "UX助手设置");
 
         // UI Patches
-        GameLogic.Enable(true);
+        GameLogicProc.Enable(true);
 
         UIConfigWindow.Init();
 
@@ -246,7 +245,7 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
         _patches?.Do(type => type.GetMethod("Uninit")?.Invoke(null, null));
 
         MyWindowManager.Enable(false);
-        GameLogic.Enable(false);
+        GameLogicProc.Enable(false);
     }
 
     private void Update()

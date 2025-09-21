@@ -3,7 +3,7 @@ using HarmonyLib;
 
 namespace UXAssist.Common;
 
-public class GameLogic : PatchImpl<GameLogic>
+public class GameLogicProc : PatchImpl<GameLogicProc>
 {
     public static Action OnDataLoaded;
     public static Action OnGameBegin;

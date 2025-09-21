@@ -5,7 +5,6 @@ using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine.UI;
 using UXAssist.Common;
-using GameLogic = UXAssist.Common.GameLogic;
 
 namespace UXAssist.Patches;
 
@@ -46,11 +45,11 @@ public static class TechPatch
             if (enable)
             {
                 TryPatchProto(true);
-                GameLogic.OnDataLoaded += VFPreload_InvokeOnLoadWorkEnded_Postfix;
+                GameLogicProc.OnDataLoaded += VFPreload_InvokeOnLoadWorkEnded_Postfix;
             }
             else
             {
-                GameLogic.OnDataLoaded -= VFPreload_InvokeOnLoadWorkEnded_Postfix;
+                GameLogicProc.OnDataLoaded -= VFPreload_InvokeOnLoadWorkEnded_Postfix;
                 TryPatchProto(false);
             }
         }
@@ -189,11 +188,11 @@ public static class TechPatch
             {
                 if (DSPGame.GameDesc != null)
                     TryPatchProto(DSPGame.GameDesc.isPeaceMode);
-                GameLogic.OnGameBegin += OnGameBegin;
+                GameLogicProc.OnGameBegin += OnGameBegin;
             }
             else
             {
-                GameLogic.OnGameBegin -= OnGameBegin;
+                GameLogicProc.OnGameBegin -= OnGameBegin;
                 TryPatchProto(false);
             }
         }

@@ -2,7 +2,6 @@
 using BepInEx.Configuration;
 using HarmonyLib;
 using UXAssist.Common;
-using GameLogic = UXAssist.Common.GameLogic;
 
 namespace UniverseGenTweaks;
 public static class BirthPlanetPatch
@@ -75,12 +74,12 @@ public static class BirthPlanetPatch
         HighLuminosityBirthStar.SettingChanged += (_, _) => PatchBirthThemeData();
         PatchBirthThemeData();
         _patch ??= Harmony.CreateAndPatchAll(typeof(BirthPlanetPatch));
-        GameLogic.OnDataLoaded += VFPreload_InvokeOnLoadWorkEnded_Postfix;
+        GameLogicProc.OnDataLoaded += VFPreload_InvokeOnLoadWorkEnded_Postfix;
     }
 
     public static void Uninit()
     {
-        GameLogic.OnDataLoaded -= VFPreload_InvokeOnLoadWorkEnded_Postfix;
+        GameLogicProc.OnDataLoaded -= VFPreload_InvokeOnLoadWorkEnded_Postfix;
         _patch?.UnpatchSelf();
         _patch = null;
     }

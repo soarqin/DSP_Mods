@@ -5,7 +5,6 @@ using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine.UI;
 using UXAssist.Common;
-using GameLogic = UXAssist.Common.GameLogic;
 
 namespace UXAssist.Patches;
 
@@ -269,14 +268,14 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
         protected override void OnEnable()
         {
             InitNodeForAbsorb();
-            GameLogic.OnGameBegin += GameMain_Begin_Postfix;
-            GameLogic.OnGameEnd += GameMain_End_Postfix;
+            GameLogicProc.OnGameBegin += GameMain_Begin_Postfix;
+            GameLogicProc.OnGameEnd += GameMain_End_Postfix;
         }
 
         protected override void OnDisable()
         {
-            GameLogic.OnGameEnd -= GameMain_End_Postfix;
-            GameLogic.OnGameBegin -= GameMain_Begin_Postfix;
+            GameLogicProc.OnGameEnd -= GameMain_End_Postfix;
+            GameLogicProc.OnGameBegin -= GameMain_Begin_Postfix;
             _initialized = false;
             _nodeForAbsorb = null;
         }

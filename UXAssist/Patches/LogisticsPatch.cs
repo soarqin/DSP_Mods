@@ -9,7 +9,6 @@ using UnityEngine.EventSystems;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
 using UXAssist.Common;
-using GameLogic = UXAssist.Common.GameLogic;
 using Object = UnityEngine.Object;
 
 namespace UXAssist.Patches;
@@ -74,14 +73,14 @@ public static class LogisticsPatch
         RealtimeLogisticsInfoPanel.Enable(RealtimeLogisticsInfoPanelEnabled.Value);
         RealtimeLogisticsInfoPanel.EnableBars(RealtimeLogisticsInfoPanelBarsEnabled.Value);
 
-        GameLogic.OnGameBegin += RealtimeLogisticsInfoPanel.OnGameBegin;
-        GameLogic.OnDataLoaded += RealtimeLogisticsInfoPanel.OnDataLoaded;
+        GameLogicProc.OnGameBegin += RealtimeLogisticsInfoPanel.OnGameBegin;
+        GameLogicProc.OnDataLoaded += RealtimeLogisticsInfoPanel.OnDataLoaded;
     }
 
     public static void Uninit()
     {
-        GameLogic.OnDataLoaded -= RealtimeLogisticsInfoPanel.OnDataLoaded;
-        GameLogic.OnGameBegin -= RealtimeLogisticsInfoPanel.OnGameBegin;
+        GameLogicProc.OnDataLoaded -= RealtimeLogisticsInfoPanel.OnDataLoaded;
+        GameLogicProc.OnGameBegin -= RealtimeLogisticsInfoPanel.OnGameBegin;
 
         AutoConfigLogistics.Enable(false);
         AutoConfigLogisticsSetDefaultRemoteLogicToStorage.Enable(false);

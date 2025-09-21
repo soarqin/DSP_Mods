@@ -124,7 +124,7 @@ public static class PlanetFunctions
                 var combatStatId = enemyData.combatStatId;
                 planet.factory.skillSystem.OnRemovingSkillTarget(combatStatId, planet.factory.skillSystem.combatStats.buffer[combatStatId].originAstroId, ETargetType.CombatStat);
                 planet.factory.skillSystem.combatStats.Remove(combatStatId);
-                planet.factory.KillEnemyFinally(player, i, ref CombatStat.empty);
+                planet.factory.KillEnemyFinally(i, ref CombatStat.empty);
             }
             planet.factory.enemySystem.Free();
             UIRoot.instance.uiGame.dfAssaultTip.ClearAllSpots();

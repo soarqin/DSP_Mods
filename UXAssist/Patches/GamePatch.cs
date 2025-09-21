@@ -302,10 +302,10 @@ public class GamePatch : PatchImpl<GamePatch>
         ).Advance(1).Labels.Add(label1);
         matcher.Start().Insert(
             Transpilers.EmitDelegate(() =>
-                _gameOption.fullscreen == DSPGame.globalOption.fullscreen &&
+                _gameOption.displayMode != EOptionDisplayMode.Windowed &&
                 _gameOption.resolution.width == DSPGame.globalOption.resolution.width &&
                 _gameOption.resolution.height == DSPGame.globalOption.resolution.height &&
-                _gameOption.resolution.refreshRate == DSPGame.globalOption.resolution.refreshRate
+                _gameOption.resolution.refreshRateRatio.Equals(DSPGame.globalOption.resolution.refreshRateRatio)
             ),
             new CodeInstruction(OpCodes.Brtrue, label1)
         );
