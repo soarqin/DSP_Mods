@@ -1125,19 +1125,12 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             DeepProfiler.EndSample(DPEntry.Belt);
         }
 
-        [HarmonyTranspiler]
-        [HarmonyPatch(typeof(GameLogic), nameof(GameLogic.LogicFrame))]
-        public static IEnumerable<CodeInstruction> GameLogic_LogicFrame_Transpiler(IEnumerable<CodeInstruction> instructions)
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(GameLogic), nameof(GameLogic.OnFactoryFrameBegin))]
+        public static void GameLogic_OnFactoryFrameBegin_Postfix()
         {
-            var matcher = new CodeMatcher(instructions);
-            matcher.MatchForward(false,
-                new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(DeepProfiler), nameof(DeepProfiler.EndSample), [typeof(int), typeof(long)]))
-            ).Advance(1).Insert(
-                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(BeltSignalGenerator), nameof(ProcessBeltSignals)))
-            );
-            return matcher.InstructionEnumeration();
+            ProcessBeltSignals();
         }
-
 
         /* BEGIN: Item sources calculation */
         private static readonly Dictionary<int, ItemSource> ItemSources = [];
