@@ -1,5 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UXAssist", "UXAssist\UXAssist.csproj", "{9C048229-6A50-4642-BC5E-02CD39D3869A}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CheatEnabler", "CheatEnabler\CheatEnabler.csproj", "{F9F16B62-D1D3-466B-BE22-E64B9EA957C2}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LogisticMiner", "LogisticMiner\LogisticMiner.csproj", "{7149D717-C913-4153-9425-38CB9D087F83}"
@@ -28,8 +30,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DustbinPreloader", "Dustbin
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PoolOpt", "PoolOpt\PoolOpt.csproj", "{8BE61246-2C9D-4088-AA33-5AFF22C5046E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UXAssist", "UXAssist\UXAssist.csproj", "{9C048229-6A50-4642-BC5E-02CD39D3869A}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UserCloak", "UserCloak\UserCloak.csproj", "{096D2E4B-D1CE-424D-9954-C36A23E9E279}"
 EndProject
 Global
@@ -38,6 +38,10 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9C048229-6A50-4642-BC5E-02CD39D3869A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9C048229-6A50-4642-BC5E-02CD39D3869A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9C048229-6A50-4642-BC5E-02CD39D3869A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9C048229-6A50-4642-BC5E-02CD39D3869A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{F9F16B62-D1D3-466B-BE22-E64B9EA957C2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{F9F16B62-D1D3-466B-BE22-E64B9EA957C2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F9F16B62-D1D3-466B-BE22-E64B9EA957C2}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -82,10 +86,6 @@ Global
 		{8BE61246-2C9D-4088-AA33-5AFF22C5046E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8BE61246-2C9D-4088-AA33-5AFF22C5046E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8BE61246-2C9D-4088-AA33-5AFF22C5046E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{9C048229-6A50-4642-BC5E-02CD39D3869A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{9C048229-6A50-4642-BC5E-02CD39D3869A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{9C048229-6A50-4642-BC5E-02CD39D3869A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{9C048229-6A50-4642-BC5E-02CD39D3869A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{096D2E4B-D1CE-424D-9954-C36A23E9E279}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{096D2E4B-D1CE-424D-9954-C36A23E9E279}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{096D2E4B-D1CE-424D-9954-C36A23E9E279}.Release|Any CPU.ActiveCfg = Release|Any CPU
