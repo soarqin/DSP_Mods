@@ -1131,7 +1131,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         {
             var matcher = new CodeMatcher(instructions);
             matcher.MatchForward(false,
-                new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(DeepProfiler), nameof(DeepProfiler.EndSample)))
+                new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(DeepProfiler), nameof(DeepProfiler.EndSample), [typeof(int), typeof(long)]))
             ).Advance(1).Insert(
                 new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(BeltSignalGenerator), nameof(ProcessBeltSignals)))
             );
