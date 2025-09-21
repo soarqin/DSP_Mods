@@ -1141,7 +1141,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
 
 
         /* BEGIN: Item sources calculation */
-        private static readonly Dictionary<int, ItemSource> ItemSources = new();
+        private static readonly Dictionary<int, ItemSource> ItemSources = [];
         private static bool _itemSourcesInitialized;
 
         private class ItemSource
@@ -1212,7 +1212,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                 for (var i = 0; i < len; i++)
                 {
                     if (ItemSources.ContainsKey(res[i])) continue;
-                    var rs = new ItemSource { Count = rescnt[i], From = new Dictionary<int, float>() };
+                    var rs = new ItemSource { Count = rescnt[i], From = [], Extra = null };
                     var it = recipe.Items;
                     var itcnt = recipe.ItemCounts;
                     var len2 = it.Length;
@@ -1223,7 +1223,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
 
                     if (len > 1)
                     {
-                        rs.Extra = new Dictionary<int, float>();
+                        rs.Extra = [];
                         for (var k = 0; k < len; k++)
                         {
                             if (i != k)
