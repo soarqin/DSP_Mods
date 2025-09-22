@@ -132,9 +132,6 @@ public static class WinApi
     public static extern IntPtr MonitorFromRect([In] ref Rect lpRect, uint dwFlags);
 
     [DllImport("kernel32", ExactSpelling = true, SetLastError = true)]
-    public static extern bool GetProcessAffinityMask(IntPtr hProcess, out ulong lpProcessAffinityMask, out ulong lpSystemAffinityMask);
-
-    [DllImport("kernel32", ExactSpelling = true, SetLastError = true)]
     public static extern IntPtr GetCurrentProcess();
 
     [DllImport("kernel32", ExactSpelling = true)]
@@ -142,9 +139,6 @@ public static class WinApi
 
     [DllImport("kernel32", ExactSpelling = true)]
     public static extern IntPtr GetConsoleWindow();
-
-    [DllImport("kernel32", ExactSpelling = true, SetLastError = true)]
-    public static extern bool SetProcessAffinityMask(IntPtr hProcess, ulong dwProcessAffinityMask);
 
     // GetPriorityClass and SetPriorityClass
     [DllImport("kernel32", ExactSpelling = true, SetLastError = true)]
@@ -158,128 +152,6 @@ public static class WinApi
 
     [DllImport("user32", CharSet = CharSet.Unicode)]
     public static extern IntPtr CallWindowProc(IntPtr lpPrevWndFunc, IntPtr hWnd, uint uMsg, IntPtr wParam, IntPtr lParam);
-
-    #endregion
-
-    #region GetLogicalProcessorInformationEx
-
-    [Flags]
-    private enum LOGICAL_PROCESSOR_RELATIONSHIP
-    {
-        RelationProcessorCore,
-        RelationNumaNode,
-        RelationCache,
-        RelationProcessorPackage,
-        RelationGroup,
-        RelationAll = 0xffff
-    }
-
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
-    private struct GROUP_AFFINITY
-    {
-        public nuint Mask;
-        public ushort Group;
-        public ushort Reserved0;
-        public ushort Reserved1;
-        public ushort Reserved3;
-    }
-
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
-    private struct PROCESSOR_RELATIONSHIP
-    {
-        public byte Flags;
-        public byte EfficiencyClass;
-        public ushort Reserved0;
-        public uint Reserved1;
-        public uint Reserved2;
-        public uint Reserved3;
-        public uint Reserved4;
-        public ushort Reserved5;
-        public ushort GroupCount;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1)]
-        public GROUP_AFFINITY[] GroupMask;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    private struct SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX
-    {
-        public LOGICAL_PROCESSOR_RELATIONSHIP Relationship;
-        public uint Size;
-        public PROCESSOR_RELATIONSHIP Processor;
-    }
-
-    [DllImport("kernel32", SetLastError = true)]
-    private static extern bool GetLogicalProcessorInformationEx(
-        LOGICAL_PROCESSOR_RELATIONSHIP relationshipType,
-        IntPtr buffer,
-        ref uint returnLength
-    );
-
-    public struct LogicalProcessorDetails
-    {
-        public int CoreCount;
-        public int ThreadCount;
-        public int PerformanceCoreCount;
-        public int EfficiencyCoreCount;
-        public ulong PerformanceCoreMask;
-        public ulong EfficiencyCoreMask;
-        public bool HybridArchitecture => PerformanceCoreCount > 0 && EfficiencyCoreCount > 0;
-    }
-
-    public static LogicalProcessorDetails GetLogicalProcessorDetails()
-    {
-        uint returnLength = 0;
-        GetLogicalProcessorInformationEx(LOGICAL_PROCESSOR_RELATIONSHIP.RelationProcessorCore, IntPtr.Zero, ref returnLength);
-        var result = new LogicalProcessorDetails();
-        if (Marshal.GetLastWin32Error() != ERROR_INSUFFICIENT_BUFFER) return result;
-        var ptr = Marshal.AllocHGlobal((int)returnLength);
-        try
-        {
-            if (!GetLogicalProcessorInformationEx(LOGICAL_PROCESSOR_RELATIONSHIP.RelationProcessorCore, ptr, ref returnLength))
-                return result;
-            uint offset = 0;
-            var item = ptr;
-            while (offset < returnLength)
-            {
-                var buffer = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX)Marshal.PtrToStructure(item, typeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX));
-                offset += buffer.Size;
-                item += (int)buffer.Size;
-                if (buffer.Relationship != LOGICAL_PROCESSOR_RELATIONSHIP.RelationProcessorCore) continue;
-                result.CoreCount++;
-                var mask = buffer.Processor.GroupMask[0].Mask;
-                var tcount = CountBitsSet(mask);
-                result.ThreadCount += tcount;
-                if (buffer.Processor.EfficiencyClass > 0)
-                {
-                    result.PerformanceCoreCount++;
-                    result.PerformanceCoreMask |= mask;
-                }
-                else
-                {
-                    result.EfficiencyCoreCount++;
-                    result.EfficiencyCoreMask |= mask;
-                }
-            }
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(ptr);
-        }
-
-        return result;
-
-        static int CountBitsSet(ulong mask)
-        {
-            var count = 0;
-            while (mask != 0)
-            {
-                mask &= mask - 1;
-                count++;
-            }
-
-            return count;
-        }
-    }
 
     #endregion
 }

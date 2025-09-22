@@ -47,14 +47,6 @@ public static class UIConfigWindow
         I18N.Add("Normal", "Normal", "正常");
         I18N.Add("Below Normal", "Below Normal", "低于正常");
         I18N.Add("Idle", "Idle", "空闲");
-        I18N.Add("Enabled CPUs", "Enabled CPU Threads", "使用CPU线程");
-        I18N.Add("All CPUs", "All CPUs", "所有CPU");
-        I18N.Add("First {0} CPUs", "First {0} CPUs", "前{0}个CPU");
-        I18N.Add("First 8 CPUs", "First 8 CPUs", "前8个CPU");
-        I18N.Add("First CPU only", "First CPU only", "仅第一个CPU");
-        I18N.Add("All P-Cores", "All P-Cores", "所有性能(P)核心");
-        I18N.Add("All E-Cores", "All E-Cores", "所有能效(E)核心");
-        I18N.Add("CPU Info", "CPU Info", "CPU信息");
         I18N.Add("Unlimited interactive range", "Unlimited interactive range", "无限交互距离");
         I18N.Add("Night Light", "Sunlight at night", "夜间日光灯");
         I18N.Add("Angle X:", "Angle X:", "入射角度X:");
@@ -339,25 +331,6 @@ public static class UIConfigWindow
         }
         y += 36f;
         wnd.AddComboBox(x + 2f, y, tab1, "Process priority").WithItems("High", "Above Normal", "Normal", "Below Normal", "Idle").WithSize(100f, 0f).WithConfigEntry(WindowFunctions.ProcessPriority);
-        var details = WindowFunctions.ProcessorDetails;
-        string[] affinities;
-        if (details.HybridArchitecture)
-        {
-            affinities = new string[5];
-            affinities[3] = "All P-Cores";
-            affinities[4] = "All E-Cores";
-        }
-        else
-        {
-            affinities = new string[3];
-        }
-        affinities[0] = "All CPUs";
-        affinities[1] = string.Format("First {0} CPUs".Translate(), details.ThreadCount / 2);
-        affinities[2] = details.ThreadCount > 16 ? "First 8 CPUs" : "First CPU only";
-        y += 36f;
-        wnd.AddComboBox(x + 2f, y, tab1, "Enabled CPUs").WithItems(affinities).WithSize(200f, 0f).WithConfigEntry(WindowFunctions.ProcessAffinity);
-        y += 36f;
-        ((RectTransform)wnd.AddButton(x, y, tab1, "CPU Info", 16, "button-show-cpu-info", WindowFunctions.ShowCPUInfo).transform).sizeDelta = new Vector2(100f, 25f);
 
         var tab2 = wnd.AddTab(trans, "Factory");
         x = 0f;
