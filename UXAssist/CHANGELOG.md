@@ -3,6 +3,10 @@
 
 ## Changlog
 
+* 1.4.0
+  + Support game version 0.10.33 (does not support older versions now)
+  + Remove `Scale up mouse cursor`: Unity 2022 set cursor size from system settings, software rendering does not affect its size now.
+  + Remove `Set enabled CPU threads` as they are officially supported.
 * 1.3.7
   + `Re-initialize planet`: Fix a possible crash.
   + `Auto-config logistic stations`: Add `Set default remote logic to storage`

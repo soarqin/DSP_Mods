@@ -16,10 +16,7 @@ public static class WindowFunctions
     private static IntPtr _oldWndProc = IntPtr.Zero;
     private static IntPtr _gameWindowHandle = IntPtr.Zero;
 
-    public static WinApi.LogicalProcessorDetails ProcessorDetails { get; private set; }
-
     public static ConfigEntry<int> ProcessPriority;
-    public static ConfigEntry<int> ProcessAffinity;
 
     private static readonly int[] ProrityFlags =
     [
@@ -34,12 +31,6 @@ public static class WindowFunctions
     {
         if (_initialized) return;
         _initialized = true;
-        I18N.Add("Cores: {0}\nThreads: {1}", "Cores: {0}\nThreads: {1}", "核心数: {0}\n线程数: {1}");
-        I18N.Add("\nP-Cores: {0}\nE-Cores: {1}", "\nP-Cores: {0}\nE-Cores: {1}", "\n性能核心: {0}\n能效核心: {1}");
-        I18N.Add("\nPriority: {0}", "\nProcess priority: {0}", "\n进程优先级: {0}");
-        I18N.Add("\nEnabled CPUs: ", "\nEnabled CPUs: ", "\n使用的CPU: ");
-        I18N.Add("Unknown", "Unknown", "未知");
-        ProcessorDetails = WinApi.GetLogicalProcessorDetails();
         SetWindowTitle();
     }
 
@@ -54,37 +45,6 @@ public static class WindowFunctions
 
         ProcessPriority.SettingChanged += (_, _) => WinApi.SetPriorityClass(WinApi.GetCurrentProcess(), ProrityFlags[ProcessPriority.Value]);
         WinApi.SetPriorityClass(WinApi.GetCurrentProcess(), ProrityFlags[ProcessPriority.Value]);
-        ProcessAffinity.SettingChanged += (_, _) => UpdateAffinity();
-        UpdateAffinity();
-        return;
-
-        static void UpdateAffinity()
-        {
-            var process = WinApi.GetCurrentProcess();
-            if (!WinApi.GetProcessAffinityMask(process, out _, out var systemMask))
-            {
-                systemMask = ulong.MaxValue;
-            }
-
-            switch (ProcessAffinity.Value)
-            {
-                case 0:
-                    WinApi.SetProcessAffinityMask(process, systemMask);
-                    break;
-                case 1:
-                    WinApi.SetProcessAffinityMask(process, systemMask & ((1UL << (ProcessorDetails.ThreadCount / 2)) - 1UL));
-                    break;
-                case 2:
-                    WinApi.SetProcessAffinityMask(process, systemMask & (ProcessorDetails.ThreadCount > 16 ? 0xFFUL : 1UL));
-                    break;
-                case 3:
-                    WinApi.SetProcessAffinityMask(process, systemMask & ProcessorDetails.PerformanceCoreMask);
-                    break;
-                case 4:
-                    WinApi.SetProcessAffinityMask(process, systemMask & ProcessorDetails.EfficiencyCoreMask);
-                    break;
-            }
-        }
     }
 
     private static IntPtr GameWndProc(IntPtr hWnd, uint uMsg, IntPtr wParam, IntPtr lParam)
@@ -116,50 +76,6 @@ public static class WindowFunctions
             WinApi.IDLE_PRIORITY_CLASS => "Idle".Translate(),
             _ => "Unknown".Translate()
         };
-    }
-
-    public static void ShowCPUInfo()
-    {
-        var details = ProcessorDetails;
-        var msg = string.Format("Cores: {0}\nThreads: {1}".Translate(), details.CoreCount, details.ThreadCount);
-        var hybrid = details.HybridArchitecture;
-        if (hybrid)
-        {
-            msg += string.Format("\nP-Cores: {0}\nE-Cores: {1}".Translate(), details.PerformanceCoreCount, details.EfficiencyCoreCount);
-        }
-
-        var handle = WinApi.GetCurrentProcess();
-        var prio = GetPriorityName(WinApi.GetPriorityClass(handle));
-        msg += string.Format("\nPriority: {0}".Translate(), prio);
-
-        var aff = 0UL;
-        if (WinApi.GetProcessAffinityMask(handle, out var processMask, out var systemMask))
-            aff = processMask & systemMask;
-
-        msg += "\nEnabled CPUs: ".Translate();
-        var first = true;
-        for (var i = 0; aff != 0UL; i++)
-        {
-            if ((aff & 1UL) != 0)
-            {
-                if (first)
-                    first = false;
-                else
-                    msg += ",";
-                msg += i;
-                if (hybrid)
-                {
-                    if ((details.PerformanceCoreMask & (1UL << i)) != 0)
-                        msg += "(P)";
-                    else if ((details.EfficiencyCoreMask & (1UL << i)) != 0)
-                        msg += "(E)";
-                }
-            }
-
-            aff >>= 1;
-        }
-
-        UIMessageBox.Show("CPU Info".Translate(), msg, "确定".Translate(), -1);
     }
 
     public static void SetWindowTitle()
