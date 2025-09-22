@@ -8,6 +8,7 @@ using HarmonyLib;
 using UnityEngine;
 using UnityEngine.UI;
 using UXAssist.Common;
+using GameLogicProc = UXAssist.Common.GameLogic;
 
 namespace CheatEnabler.Patches;
 

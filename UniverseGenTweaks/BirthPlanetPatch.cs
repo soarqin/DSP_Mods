@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using BepInEx.Configuration;
 using HarmonyLib;
-using UXAssist.Common;
+using GameLogicProc = UXAssist.Common.GameLogic;
 
 namespace UniverseGenTweaks;
 public static class BirthPlanetPatch

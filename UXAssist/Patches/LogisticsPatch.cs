@@ -10,6 +10,7 @@ using UnityEngine.Serialization;
 using UnityEngine.UI;
 using UXAssist.Common;
 using Object = UnityEngine.Object;
+using GameLogicProc = UXAssist.Common.GameLogic;
 
 namespace UXAssist.Patches;
 

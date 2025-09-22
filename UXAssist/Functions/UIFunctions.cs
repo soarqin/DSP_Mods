@@ -6,6 +6,7 @@ using System.Linq;
 using System.Collections.Generic;
 using UXAssist.UI;
 using UXAssist.Common;
+using GameLogicProc = UXAssist.Common.GameLogic;
 
 namespace UXAssist.Functions;
 
