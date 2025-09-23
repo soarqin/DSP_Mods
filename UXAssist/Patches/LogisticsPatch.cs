@@ -727,7 +727,7 @@ public static class LogisticsPatch
         private static readonly Color OrderInColor = new(108f / 255, 187f / 255, 214f / 255);
         private static readonly Color OrderOutColor = new(255f / 255, 161f / 255, 109.5f / 255);
 
-        private static PlanetData _lastPlanet;
+        private static int _lastPlanetId;
 
         private static int _localStorageMax = 5000;
         private static int _remoteStorageMax = 10000;
@@ -769,12 +769,19 @@ public static class LogisticsPatch
             if (_stationTipsRoot == null) return;
             if (!on)
             {
+                RecycleStationTips();
+                _lastPlanetId = 0;
                 _stationTipsRoot.SetActive(false);
                 return;
             }
-            if (DSPGame.IsMenuDemo || !GameMain.isRunning) return;
-            _lastPlanet = GameMain.localPlanet;
-            _stationTipsRoot.SetActive(on && _lastPlanet != null);
+            if (DSPGame.IsMenuDemo || !GameMain.isRunning)
+            {
+                _lastPlanetId = 0;
+                _stationTipsRoot.SetActive(false);
+                return;
+            }
+            _lastPlanetId = GameMain.data?.localPlanet?.id ?? 0;
+            _stationTipsRoot.SetActive(_lastPlanetId != 0);
         }
 
         public static void EnableBars(bool on)
@@ -788,7 +795,7 @@ public static class LogisticsPatch
 
         public static void OnGameBegin()
         {
-            _lastPlanet = null;
+            _lastPlanetId = 0;
         }
 
         public static void OnDataLoaded()
@@ -993,6 +1000,7 @@ public static class LogisticsPatch
 
             tipIconPrefab.gameObject.SetActive(false);
             _tipPrefab.SetActive(false);
+            _stationTipsRoot.SetActive(false);
         }
 
         private static void RecycleStationTips()
@@ -1012,7 +1020,25 @@ public static class LogisticsPatch
                 }
             }
 
+            Array.Resize(ref _stationTips, 16);
             Array.Clear(_stationTips, 0, _stationTips.Length);
+        }
+
+        private static void RecycleStationTip(int index)
+        {
+            var stationTip = _stationTips[index];
+            if (!stationTip) return;
+            if (_stationTipsRecycleCount < 128)
+            {
+                stationTip.ResetStationTip();
+                stationTip.gameObject.SetActive(false);
+                StationTipsRecycle[_stationTipsRecycleCount++] = stationTip;
+            }
+            else
+            {
+                Object.Destroy(stationTip);
+            }
+            _stationTips[index] = null;
         }
 
         private static StationTip AllocateStationTip()
@@ -1033,19 +1059,28 @@ public static class LogisticsPatch
         public static void StationInfoPanelsUpdate()
         {
             if (DSPGame.IsMenuDemo || !GameMain.isRunning) return;
-            var localPlanet = GameMain.localPlanet;
-            if (localPlanet == null)
+            var localPlanet = GameMain.data?.localPlanet;
+            if (localPlanet == null || !localPlanet.factoryLoaded)
             {
-                if (_lastPlanet == null) return;
-                _lastPlanet = null;
+                if (_lastPlanetId == 0) return;
+                RecycleStationTips();
+                _lastPlanetId = 0;
                 _stationTipsRoot.SetActive(false);
                 return;
             }
 
-            if (_lastPlanet != localPlanet)
+            if (_lastPlanetId != localPlanet.id)
             {
                 RecycleStationTips();
-                _lastPlanet = localPlanet;
+                _lastPlanetId = localPlanet.id;
+            }
+
+            var factory = localPlanet.factory;
+            var transport = factory?.transport;
+            if (transport is not { stationCursor: > 1 } || (UIGame.viewMode != EViewMode.Normal && UIGame.viewMode != EViewMode.Globe))
+            {
+                _stationTipsRoot.SetActive(false);
+                return;
             }
 
             if (UpdateStorageMax())
@@ -1056,26 +1091,15 @@ public static class LogisticsPatch
                 }
             }
 
-            var factory = localPlanet.factory;
-            var transport = factory?.transport;
-            if (transport is not { stationCursor: > 1 } || (UIGame.viewMode != EViewMode.Normal && UIGame.viewMode != EViewMode.Globe))
-            {
-                if (_stationTipsRoot.activeSelf)
-                {
-                    _stationTipsRoot.SetActive(false);
-                }
-                return;
-            }
-
             _stationTipsRoot.SetActive(true);
             var localPosition = GameCamera.main.transform.localPosition;
             var forward = GameCamera.main.transform.forward;
             var realRadius = localPlanet.realRadius;
 
             var stationCount = transport.stationCursor;
-            if (stationCount >= _stationTips.Length)
+            if (stationCount > _stationTips.Length)
             {
-                var newSize = stationCount;
+                var newSize = stationCount - 1;
                 newSize |= newSize >> 1;
                 newSize |= newSize >> 2;
                 newSize |= newSize >> 4;
@@ -1088,21 +1112,17 @@ public static class LogisticsPatch
             for (var i = stationCount - 1; i > 0; i--)
             {
                 var stationComponent = transport.stationPool[i];
-                var storageArray = stationComponent?.storage;
+                if (stationComponent == null || i != stationComponent.id)
+                {
+                    RecycleStationTip(i);
+                    continue;
+                }
+                var storageArray = stationComponent.storage;
                 if (storageArray == null)
                 {
-                    _stationTips[i]?.gameObject.SetActive(false);
+                    RecycleStationTip(i);
                     continue;
                 }
-
-#if DEBUG
-                if (i != stationComponent.id)
-                {
-                    UXAssist.Logger.LogWarning($"Station index mismatch: {i} != {stationComponent.id}");
-                    _stationTips[i]?.gameObject.SetActive(false);
-                    continue;
-                }
-#endif
 
                 var position = factory.entityPool[stationComponent.entityId].pos.normalized;
                 var radius = realRadius;
@@ -1412,6 +1432,8 @@ public static class LogisticsPatch
                             _sliderCurrent[i].gameObject.SetActive(true);
                         }
                     }
+                } else {
+                    if (itemCount > itemLimit) itemCount = itemLimit;
                 }
 
                 if (barEnabled)
@@ -1434,7 +1456,6 @@ public static class LogisticsPatch
                                     _pixelPerItem * itemOrdered + 0.49f,
                                     StorageSliderHeight
                                 );
-                                _sliderOrdered[i].gameObject.SetActive(true);
                                 break;
                             case < 0:
                                 if (itemOrdered + itemCount < 0) itemOrdered = -itemCount;
@@ -1459,6 +1480,7 @@ public static class LogisticsPatch
                     {
                         storageState.ItemMax = itemMax;
                         _sliderBg[i].gameObject.SetActive(itemMax > 0);
+                        if (itemMax > itemLimit) itemMax = itemLimit;
                         ((RectTransform)_sliderMax[i].transform).sizeDelta = new Vector2(
                             _pixelPerItem * itemMax,
                             StorageSliderHeight

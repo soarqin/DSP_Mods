@@ -254,10 +254,7 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
         GamePatch.OnInputUpdate();
         FactoryPatch.OnInputUpdate();
         PlayerPatch.OnInputUpdate();
-    }
 
-    private void FixedUpdate()
-    {
         LogisticsPatch.OnUpdate();
     }
 }
