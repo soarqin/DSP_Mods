@@ -1412,6 +1412,7 @@ public static class LogisticsPatch
 
                 var itemCount = storage.count;
                 var itemLimit = _layout == EStationTipLayout.InterstellarLogistics ? _remoteStorageMaxTotal : _localStorageMaxTotal;
+                var barPositionChanged = false;
                 if (storageState.ItemCount != itemCount)
                 {
                     storageState.ItemCount = itemCount;
@@ -1431,6 +1432,7 @@ public static class LogisticsPatch
                             );
                             _sliderCurrent[i].gameObject.SetActive(true);
                         }
+                        barPositionChanged = true;
                     }
                 } else {
                     if (itemCount > itemLimit) itemCount = itemLimit;
@@ -1442,6 +1444,10 @@ public static class LogisticsPatch
                     if (storageState.ItemOrdered != itemOrdered)
                     {
                         storageState.ItemOrdered = itemOrdered;
+                        barPositionChanged = true;
+                    }
+                    if (barPositionChanged)
+                    {
                         switch (itemOrdered)
                         {
                             case > 0:
