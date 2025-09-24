@@ -795,7 +795,9 @@ public static class LogisticsPatch
 
         public static void OnGameBegin()
         {
+            RecycleStationTips();
             _lastPlanetId = 0;
+            _stationTipsRoot.SetActive(false);
         }
 
         public static void OnDataLoaded()
@@ -1083,6 +1085,7 @@ public static class LogisticsPatch
                 return;
             }
 
+            _stationTipsRoot.SetActive(true);
             if (UpdateStorageMax())
             {
                 foreach (var tip in _stationTips)
@@ -1091,7 +1094,6 @@ public static class LogisticsPatch
                 }
             }
 
-            _stationTipsRoot.SetActive(true);
             var localPosition = GameCamera.main.transform.localPosition;
             var forward = GameCamera.main.transform.forward;
             var realRadius = localPlanet.realRadius;
@@ -1122,6 +1124,13 @@ public static class LogisticsPatch
                 {
                     RecycleStationTip(i);
                     continue;
+                }
+
+                var stationTip = _stationTips[i];
+                if (!stationTip)
+                {
+                    stationTip = AllocateStationTip();
+                    _stationTips[i] = stationTip;
                 }
 
                 var position = factory.entityPool[stationComponent.entityId].pos.normalized;
@@ -1155,15 +1164,8 @@ public static class LogisticsPatch
                     || Phys.RayCastSphere(localPosition, vec / magnitude, magnitude, Vector3.zero, realRadius, out _)
                     || storageArray.Select(x => x.itemId).All(x => x == 0))
                 {
-                    _stationTips[i]?.gameObject.SetActive(false);
+                    stationTip.gameObject.SetActive(false);
                     continue;
-                }
-
-                var stationTip = _stationTips[i];
-                if (!stationTip)
-                {
-                    stationTip = AllocateStationTip();
-                    _stationTips[i] = stationTip;
                 }
 
                 stationTip.gameObject.SetActive(true);
