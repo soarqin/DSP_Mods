@@ -797,7 +797,7 @@ public static class LogisticsPatch
         {
             RecycleStationTips();
             _lastPlanetId = 0;
-            _stationTipsRoot.SetActive(false);
+            _stationTipsRoot?.SetActive(false);
         }
 
         public static void OnDataLoaded()
@@ -1436,7 +1436,9 @@ public static class LogisticsPatch
                         }
                         barPositionChanged = true;
                     }
-                } else {
+                }
+                else
+                {
                     if (itemCount > itemLimit) itemCount = itemLimit;
                 }
 
