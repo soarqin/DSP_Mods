@@ -22,6 +22,7 @@ namespace UXAssist;
 [BepInDependency(DSPModSavePlugin.MODGUID)]
 [CommonAPISubmoduleDependency(nameof(CustomKeyBindSystem))]
 [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
+[BepInDependency(ModsCompat.PlanetVeinUtilization.PlanetVeinUtilizationGuid, BepInDependency.DependencyFlags.SoftDependency)]
 public class UXAssist : BaseUnityPlugin, IModCanSave
 {
     public new static readonly ManualLogSource Logger =
@@ -29,6 +30,7 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
 
     private static ConfigFile _dummyConfig;
     private Type[] _patches, _compats;
+    private readonly Harmony _harmony = new(PluginInfo.PLUGIN_GUID);
 
     #region IModCanSave
     private const ushort ModSaveVersion = 1;
@@ -50,6 +52,11 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
     {
     }
     #endregion
+
+    UXAssist()
+    {
+        ModsCompat.PlanetVeinUtilization.Run(_harmony);
+    }
 
     private void Awake()
     {
@@ -203,6 +210,8 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
         DysonSpherePatch.OnlyConstructNodesEnabled = Config.Bind("DysonSphere", "OnlyConstructNodes", false,
             "Construct only nodes but frames");
         DysonSpherePatch.AutoConstructMultiplier = Config.Bind("DysonSphere", "AutoConstructMultiplier", 1, "Dyson Sphere auto-construct speed multiplier");
+        UIPatch.PlanetVeinUtilizationEnabled = Config.Bind("UI", "PlanetVeinUtilization", false,
+            "Planet vein utilization");
 
         I18N.Init();
         I18N.Add("UXAssist Config", "UXAssist Config", "UX助手设置");
@@ -228,7 +237,7 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
 
         _patches?.Do(type => type.GetMethod("Start")?.Invoke(null, null));
 
-        object[] parameters = [UIPatch.GetHarmony()];
+        object[] parameters = [_harmony];
         _compats?.Do(type => type.GetMethod("Start")?.Invoke(null, parameters));
     }
 
@@ -236,7 +245,6 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
     {
         _patches?.Do(type => type.GetMethod("Uninit")?.Invoke(null, null));
 
-        UIPatch.Enable(false);
         MyWindowManager.Enable(false);
         GameLogic.Enable(false);
     }

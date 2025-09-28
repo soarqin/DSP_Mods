@@ -5,15 +5,23 @@ using HarmonyLib;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using BepInEx.Configuration;
 
 [PatchGuid(PluginInfo.PLUGIN_GUID)]
 public class UIPatch : PatchImpl<UIPatch>
 {
+    public static ConfigEntry<bool> PlanetVeinUtilizationEnabled;
+
+    public static void Init()
+    {
+        PlanetVeinUtilizationEnabled.SettingChanged += (_, _) => PlanetVeinUtilization.Enable(PlanetVeinUtilizationEnabled.Value);
+    }
+
     public static void Start()
     {
         Enable(true);
         Functions.UIFunctions.InitMenuButtons();
-        PlanetVeinUtilization.Enable(true);
+        PlanetVeinUtilization.Enable(PlanetVeinUtilizationEnabled.Value);
     }
 
     public static void Uninit()
@@ -24,9 +32,6 @@ public class UIPatch : PatchImpl<UIPatch>
 
     private class PlanetVeinUtilization : PatchImpl<PlanetVeinUtilization>
     {
-
-        private static bool planetPanelInitialized = false;
-        private static bool starPanelInitialized = false;
         private static readonly VeinTypeInfo[] planetVeinCount = new VeinTypeInfo[(int)EVeinType.Max];
         private static readonly VeinTypeInfo[] starVeinCount = new VeinTypeInfo[(int)EVeinType.Max];
         private static readonly Dictionary<int, bool> tmpGroups = [];
@@ -35,6 +40,37 @@ public class UIPatch : PatchImpl<UIPatch>
         {
             InitializeVeinCountArray(planetVeinCount);
             InitializeVeinCountArray(starVeinCount);
+            foreach (VeinTypeInfo vti in planetVeinCount)
+            {
+                vti.Reset();
+                vti.textCtrl?.gameObject.SetActive(true);
+            }
+            UIPlanetDetail_RefreshDynamicProperties_Postfix(UIRoot.instance.uiGame.planetDetail);
+            foreach (VeinTypeInfo vti in starVeinCount)
+            {
+                vti.Reset();
+                vti.textCtrl?.gameObject.SetActive(true);
+            }
+            UIStarDetail_RefreshDynamicProperties_Postfix(UIRoot.instance.uiGame.starDetail);
+        }
+
+        private static Vector2 GetAdjustedSizeDelta(Vector2 origSizeDelta)
+        {
+            return new Vector2(origSizeDelta.x + 40f, origSizeDelta.y);
+        }
+
+        protected override void OnDisable()
+        {
+            foreach (VeinTypeInfo vti in planetVeinCount)
+            {
+                vti.Reset();
+                vti.textCtrl?.gameObject.SetActive(false);
+            }
+            foreach (VeinTypeInfo vti in starVeinCount)
+            {
+                vti.Reset();
+                vti.textCtrl?.gameObject.SetActive(false);
+            }
         }
 
         #region Helper functions
@@ -102,22 +138,12 @@ public class UIPatch : PatchImpl<UIPatch>
                 veinCountArray[i] = new VeinTypeInfo();
             }
         }
-
-        private static Vector2 GetAdjustedSizeDelta(Vector2 origSizeDelta)
-        {
-            return new Vector2(origSizeDelta.x + 45f, origSizeDelta.y);
-        }
         #endregion
 
         #region UIPlanetDetail patches
         [HarmonyPrefix, HarmonyPatch(typeof(UIPlanetDetail), nameof(UIPlanetDetail.OnPlanetDataSet))]
         public static void UIPlanetDetail_OnPlanetDataSet_Prefix(UIPlanetDetail __instance)
         {
-            if (!planetPanelInitialized)
-            {
-                planetPanelInitialized = true;
-                __instance.rectTrans.sizeDelta = GetAdjustedSizeDelta(__instance.rectTrans.sizeDelta);
-            }
             foreach (VeinTypeInfo vti in planetVeinCount)
             {
                 vti.Reset();
@@ -168,9 +194,9 @@ public class UIPatch : PatchImpl<UIPatch>
                     {
                         FormatResource(refId, uiresAmountEntry, vt);
                     }
-                    else
+                    else if (vt.textCtrl != null)
                     {
-                        vt.textCtrl?.gameObject.SetActive(false);
+                        vt.textCtrl.text = "";
                     }
                 }
             }
@@ -181,11 +207,6 @@ public class UIPatch : PatchImpl<UIPatch>
         [HarmonyPrefix, HarmonyPatch(typeof(UIStarDetail), nameof(UIStarDetail.OnStarDataSet))]
         public static void UIStaretail_OnStarDataSet_Prefix(UIStarDetail __instance)
         {
-            if (!starPanelInitialized)
-            {
-                starPanelInitialized = true;
-                __instance.rectTrans.sizeDelta = GetAdjustedSizeDelta(__instance.rectTrans.sizeDelta);
-            }
             foreach (VeinTypeInfo vti in starVeinCount)
             {
                 vti.Reset();
@@ -235,9 +256,9 @@ public class UIPatch : PatchImpl<UIPatch>
                     {
                         FormatResource(refId, uiresAmountEntry, vt);
                     }
-                    else
+                    else if (vt.textCtrl != null)
                     {
-                        vt.textCtrl?.gameObject.SetActive(false);
+                        vt.textCtrl.text = "";
                     }
                 }
             }
@@ -255,7 +276,10 @@ public class UIPatch : PatchImpl<UIPatch>
         {
             numVeinGroups = 0;
             numVeinGroupsWithCollector = 0;
-            if (textCtrl != null) textCtrl.text = "";
+            if (textCtrl != null)
+            {
+                textCtrl.text = "";
+            }
         }
     }
 

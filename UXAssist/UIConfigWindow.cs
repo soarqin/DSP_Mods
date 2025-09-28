@@ -24,7 +24,7 @@ public static class UIConfigWindow
         I18N.Add("Logistics", "Logistics", "物流");
         I18N.Add("Player/Mecha", "Player/Mecha", "玩家/机甲");
         I18N.Add("Dyson Sphere", "Dyson Sphere", "戴森球");
-        I18N.Add("Tech/Combat", "Tech/Combat", "科研/战斗");
+        I18N.Add("Tech/Combat/UI", "Tech/Combat/UI", "科研/战斗/UI");
         I18N.Add("Enable game window resize", "Enable game window resize (maximum box and thick frame)", "可调整游戏窗口大小(可最大化和拖动边框)");
         I18N.Add("Remeber window position and size on last exit", "Remeber window position and size on last exit", "记住上次退出时的窗口位置和大小");
         I18N.Add("Scale up mouse cursor", "Scale up mouse cursor", "放大鼠标指针");
@@ -153,6 +153,7 @@ public static class UIConfigWindow
         I18N.Add("Set \"Sorter Cargo Stacking\" to unresearched state", "Set \"Sorter Cargo Stacking\" to unresearched state", "将\"分拣器货物叠加\"设为未研究状态");
         I18N.Add("Unlock all techs with metadata", "Unlock all techs with metadata", "使用元数据解锁所有科技");
         I18N.Add("Open Dark Fog Communicator", "Open Dark Fog Communicator", "打开黑雾通讯器");
+        I18N.Add("Planet vein utilization", "Planet vein utilization in star map", "宇宙视图行星/星系矿脉数量显示");
         I18N.Apply();
         MyConfigWindow.OnUICreated += CreateUI;
         MyConfigWindow.OnUpdateUI += UpdateUI;
@@ -754,9 +755,12 @@ public static class UIConfigWindow
         wnd.AddSlider(x + txt.preferredWidth + 5f, y + 6f, tab5, DysonSpherePatch.AutoConstructMultiplier, [1, 2, 5, 10, 20, 50, 100], "0", 100f);
         _dysonTab = tab5;
 
-        var tab6 = wnd.AddTab(trans, "Tech/Combat");
+        var tab6 = wnd.AddTab(trans, "Tech/Combat/UI");
         x = 10;
         y = 10;
+        wnd.AddCheckBox(x, y, tab6, UIPatch.PlanetVeinUtilizationEnabled, "Planet vein utilization");
+        y += 36f;
+        y += 36f;
         wnd.AddCheckBox(x, y, tab6, TechPatch.BatchBuyoutTechEnabled, "Buy out techs with their prerequisites");
         y += 36f;
         wnd.AddCheckBox(x, y, tab6, TechPatch.SorterCargoStackingEnabled, "Restore upgrades of \"Sorter Cargo Stacking\" on panel");
