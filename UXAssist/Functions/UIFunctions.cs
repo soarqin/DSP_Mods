@@ -679,18 +679,18 @@ public static class UIFunctions
             switch (_cornerComboBoxIndex)
             {
                 case 1:
-                    starUI.nameText.text = String.Format("{0}-{1:0.00}", _starOrderNames[star.index], GetStarDist(star));
+                    starUI.nameText.text = String.Format("{0:00}-{1}-{2:0.00}", star.index + 1, _starOrderNames[star.index], GetStarDist(star));
                     break;
                 case 2:
                     {
                         var (nongas, total) = GetStarPlanetCount(star);
-                        starUI.nameText.text = String.Format("{0}-{1}-{2}", _starOrderNames[star.index], nongas, total);
+                        starUI.nameText.text = String.Format("{0:00}-{1}-{2}-{3}", star.index + 1, _starOrderNames[star.index], nongas, total);
                         break;
                     }
                 case 3:
                     {
                         var (nongas, total) = GetStarPlanetCount(star);
-                        starUI.nameText.text = String.Format("{0}-{1:0.00}-{2}-{3}", _starOrderNames[star.index], GetStarDist(star), nongas, total);
+                        starUI.nameText.text = String.Format("{0:00}-{1}-{2:0.00}-{3}-{4}", star.index + 1, _starOrderNames[star.index], GetStarDist(star), nongas, total);
                         break;
                     }
                 default:
