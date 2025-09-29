@@ -3,6 +3,8 @@
 
 ## Changlog
 
+* 1.4.1
+  * Fixed a compatible issue with latest game patch.
 * 1.4.0
   * Support game version 0.10.33, with some features removed:
     * Remove `Scale up mouse cursor`: Unity 2022 set cursor size from system settings, software rendering does not affect its size now.
@@ -336,6 +338,8 @@
 
 ## 更新日志
 
+* 1.4.1
+  * 修复了与最新游戏补丁的兼容性问题
 * 1.4.0
   * 支持游戏版本 0.10.33，移除了一些功能：
     * 移除`放大鼠标指针`：Unity 2022 读取系统设置里的鼠标指针大小，软件渲染不再影响其大小

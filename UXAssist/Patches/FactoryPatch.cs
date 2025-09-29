@@ -1150,7 +1150,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                                             var pos = veinPool[veinId].pos;
                                             factory.RemoveVeinWithComponents(veinId);
                                             factory.RecalculateVeinGroup(groupIndex);
-                                            factory.NotifyVeinExhausted(venType, pos);
+                                            factory.NotifyVeinExhausted(venType, groupIndex, pos);
                                             veinCount = __instance.veinCount;
                                         }
                                         else
@@ -1251,7 +1251,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                                         factory.veinAnimPool[veinId].time = amount >= 25000 ? 0f : 1f - amount * VeinData.oilSpeedMultiplier;
                                         if (amount <= 2500)
                                         {
-                                            factory.NotifyVeinExhausted((int)veinPool[veinId].type, veinPool[veinId].pos);
+                                            factory.NotifyVeinExhausted((int)veinPool[veinId].type, groupIndex, veinPool[veinId].pos);
                                         }
                                     }
                                 }
