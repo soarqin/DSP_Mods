@@ -1,4 +1,3 @@
-using BepInEx.Bootstrap;
 using HarmonyLib;
 
 namespace UXAssist.ModsCompat;

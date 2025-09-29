@@ -3,6 +3,9 @@
 
 ## Changlog
 
+* 2.4.0
+  * Support game version 0.10.33
+  * `Generate illegal dyson shell`: This function is open to all users now, enabling certain config entry is not needed any more.
 * 2.3.32
   * `Complete Dyson Sphere Shells instantly`: Fix a crash.
 * 2.3.31
@@ -162,6 +165,9 @@
 
 ## 更新日志
 
+* 2.4.0
+  * 支持游戏版本 0.10.33
+  * `生成仙术戴森壳`：此功能现在对所有用户开放，不再需要启用特定的配置项。
 * 2.3.32
   * `立即完成戴森壳建造`：修复了一个崩溃问题
 * 2.3.31

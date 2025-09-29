@@ -38,9 +38,6 @@
     * Set process priority
     * Increase maximum count of Metadata Instantiations to 20000 (from 2000)
     * Increase capacity of player order queue to 128 (from 16)
-    * Starmap view:
-      * Add a star name filter, you can filter displayed star names by ores or planet types now.
-      * Add a dropdown box to show all stars' distance and/or planet count.
   * Factory
     * Sunlight at night
     * Remove some build conditions
@@ -109,9 +106,6 @@
     * Enable player actions in globe view
     * Hide tips for soil piles changes
     * Enhanced count control for hand-make
-    * Shortcut keys for showing stars' name
-      * Add a shortcut key to always show all star names in starmap when holding, default is `Alt`
-      * Add a shortcut key to toggle between three star name display states in starmap: `Original state`, `Show all names`, `Hide all names`, default is `Tab`, will restore to original state when closing starmap
     * Auto navigation on sailings
       * It keeps Icarus on course to the target planet
       * It will try to bypass any obstacles(planets, stars or dark-fog hives) on the way
@@ -133,6 +127,14 @@
       * This enables batch buying out techs with their prerequisites. Buy-out button is shown for all locked techs/upgrads.
   * Combat
     * Open Dark Fog Communicator anywhere
+  * UI
+    * Embedded [Planet Vein Untilization](https://thunderstore.io/c/dyson-sphere-program/p/testpushpleaseignore/Planet_Vein_Utilization/) due to its lack of maintainance, with minor bug fixes.
+    * Shortcut keys for showing stars' name
+      * Add a shortcut key to always show all star names in starmap when holding, default is `Alt`
+      * Add a shortcut key to toggle between three star name display states in starmap: `Original state`, `Show all names`, `Hide all names`, default is `Tab`, will restore to original state when closing starmap
+    * Starmap view:
+      * Add a star name filter, you can filter displayed star names by ores or planet types now.
+      * Add a dropdown box to show all stars' distance and/or planet count.
 
 ## Notes
 
@@ -147,6 +149,7 @@
 * [LSTM](https://github.com/hetima/DSP_LSTM) & [PlanetFinder](https://github.com/hetima/DSP_PlanetFinder): UI implementations
 * [OffGridConstruction](https://github.com/Velociraptor115-DSPModding/OffGridConstruction): Off-grid building & stepped rotation implementations
 * [CruiseAssist](https://dsp.thunderstore.io/package/tanu/CruiseAssist/) and its extension [AutoPilot](https://dsp.thunderstore.io/package/tanu/AutoPilot/): `Auto navigation on sailings` and `Auto-cruise` implementations
+* [Planet Vein Untilization](https://thunderstore.io/c/dyson-sphere-program/p/testpushpleaseignore/Planet_Vein_Utilization/)
 
 </details>
 
@@ -192,9 +195,6 @@
     * 设置进程优先级
     * 将元数据提取的最大数量增加到20000(原来为2000)
     * 将玩家指令队列的容量增加到128(原来为16)
-    * 星图：
-      * 添加星系名过滤器，现在可以按矿物或行星类型过滤显示的星系名
-      * 添加了一个下拉框用以切换显示所有星系的距离和/或行星数量
   * 工厂
     * 夜间日光灯
     * 移除部分不影响游戏逻辑的建造条件
@@ -264,9 +264,6 @@
     * 在行星视图中允许玩家操作
     * 隐藏沙土数量变动的提示
     * 手动制造物品的数量控制改进
-    * 启用显示所有星系名称的快捷键
-      * 新增一个快捷键，按住后始终在星图显示所有星系名称，默认为`Alt`
-      * 新增一个快捷键，在星图视图切换三种星系名称显示状态：`原始显示状态`，`显示所有名称`，`隐藏所有名称`，默认为`Tab`，关闭星图时会恢复到原始状态
     * 航行时自动导航
       * 它会保持伊卡洛斯飞向目标星球
       * 它会尝试绕过途中的任何障碍物(行星、恒星或黑雾巢穴)
@@ -288,6 +285,14 @@
       * 这使得可以批量买断科技及其所有前置科技。所有未解锁的科技/升级都会显示买断按钮。
   * 战斗
     * 在任意位置打开黑雾通讯器
+  * UI
+    * 启用显示所有星系名称的快捷键
+      * 新增一个快捷键，按住后始终在星图显示所有星系名称，默认为`Alt`
+      * 新增一个快捷键，在星图视图切换三种星系名称显示状态：`原始显示状态`，`显示所有名称`，`隐藏所有名称`，默认为`Tab`，关闭星图时会恢复到原始状态
+    * 星图：
+      * 添加星系名过滤器，现在可以按矿物或行星类型过滤显示的星系名
+      * 添加了一个下拉框用以切换显示所有星系的距离和/或行星数量
+    * 由于缺乏维护，整合内置了[Planet Vein Untilization](https://thunderstore.io/c/dyson-sphere-program/p/testpushpleaseignore/Planet_Vein_Utilization/)，并修复了一些小错误。
 
 ## 注意事项
 
@@ -302,5 +307,6 @@
 * [LSTM](https://github.com/hetima/DSP_LSTM) & [PlanetFinder](https://github.com/hetima/DSP_PlanetFinder): UI实现
 * [OffGridConstruction](https://github.com/Velociraptor115-DSPModding/OffGridConstruction): 脱离网格建造以及小角度旋转的实现
 * [CruiseAssist](https://dsp.thunderstore.io/package/tanu/CruiseAssist/)及其扩展[AutoPilot](https://dsp.thunderstore.io/package/tanu/AutoPilot/): `航行时自动导航`和`自动巡航`的实现
+* [Planet Vein Untilization](https://thunderstore.io/c/dyson-sphere-program/p/testpushpleaseignore/Planet_Vein_Utilization/)
 
 </details>
