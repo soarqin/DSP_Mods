@@ -3,6 +3,8 @@
 
 ## Changlog
 
+* 1.4.2
+  * Fixed a crash issue.
 * 1.4.1
   * Fixed a compatible issue with latest game patch.
 * 1.4.0
@@ -338,6 +340,8 @@
 
 ## 更新日志
 
+* 1.4.2
+  * 修复了一个崩溃问题
 * 1.4.1
   * 修复了与最新游戏补丁的兼容性问题
 * 1.4.0

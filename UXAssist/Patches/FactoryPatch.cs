@@ -1509,13 +1509,13 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             return finalCount;
         }
 
-        private static int PlanetAuxDataSnapDotsNonAllocNotAligned(PlanetAuxData aux, Vector3 begin, Vector3 end, Vector2 interval, float yaw, float gap, Vector3[] snaps)
+        private static int PlanetAuxDataSnapDotsNonAllocNotAligned(PlanetAuxData aux, Vector3 begin, Vector3 end, Vector2 interval, float height, float yaw, float gap, Vector3[] snaps)
         {
             var num = 0;
             var magnitude = begin.magnitude;
             if (aux.activeGrid != null)
             {
-                num = PlanetGridSnapDotsNonAllocNotAligned(aux.activeGrid, begin, end, interval, yaw, aux.planet.realRadius, gap, snaps);
+                num = PlanetGridSnapDotsNonAllocNotAligned(aux.activeGrid, begin, end, interval, yaw, aux.planet.realRadius + height, gap, snaps);
                 for (var i = 0; i < num; i++)
                 {
                     snaps[i] *= magnitude;
