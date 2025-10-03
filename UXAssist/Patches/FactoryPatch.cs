@@ -1401,7 +1401,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
     {
         private static readonly List<bool> OldDragBuild = [];
         private static readonly List<Vector2> OldDragBuildDist = [];
-        private static readonly int[] PowerPoleIds = [2201, 2202, 2212];
+        private static readonly int[] PowerPoleIds = [2202, 2212];
 
         protected override void OnEnable()
         {
@@ -1435,13 +1435,13 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             OldDragBuildDist.Clear();
             foreach (var id in PowerPoleIds)
             {
-                var powerPole = LDB.items.Select(id);
-                if (powerPole?.prefabDesc == null) return;
-                OldDragBuild.Add(powerPole.prefabDesc.dragBuild);
-                OldDragBuildDist.Add(powerPole.prefabDesc.dragBuildDist);
-                powerPole.prefabDesc.dragBuild = true;
-                var distance = (id == 2201 && DragBuildPowerPolesAlternatelyEnabled.Value ? LDB.items.Select(2202) : powerPole).prefabDesc.powerConnectDistance - 0.72f;
-                powerPole.prefabDesc.dragBuildDist = new Vector2(distance, distance);
+                var prefabDesc = LDB.items.Select(id)?.prefabDesc;
+                if (prefabDesc == null) return;
+                OldDragBuild.Add(prefabDesc.dragBuild);
+                OldDragBuildDist.Add(prefabDesc.dragBuildDist);
+                prefabDesc.dragBuild = true;
+                var distance = prefabDesc.powerConnectDistance - 0.72f;
+                prefabDesc.dragBuildDist = new Vector2(distance, distance);
             }
         }
 
@@ -1560,17 +1560,28 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                 new CodeMatch(OpCodes.Ldarg_0),
                 new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(BuildTool_Click), nameof(BuildTool_Click.handPrefabDesc))),
                 new CodeMatch(OpCodes.Stfld, AccessTools.Field(typeof(BuildPreview), nameof(BuildPreview.desc)))
-            ).Advance(2).InsertAndAdvance(new CodeInstruction(OpCodes.Ldloc_S, 6)).SetInstructionAndAdvance(Transpilers.EmitDelegate((BuildTool_Click click, int i) =>
+            );
+            var pos = matcher.Pos;
+            matcher.MatchBack(false,
+                new CodeMatch(ci => ci.IsLdloc()),
+                new CodeMatch(ci => ci.IsLdloc()),
+                new CodeMatch(OpCodes.Mul),
+                new CodeMatch(ci => ci.IsLdloc()),
+                new CodeMatch(OpCodes.Add)
+            );
+            var operand = matcher.Operand;
+            matcher.Start().Advance(pos);
+            matcher.Advance(2).InsertAndAdvance(new CodeInstruction(OpCodes.Ldloc_S, operand)).SetInstructionAndAdvance(Transpilers.EmitDelegate((BuildTool_Click click, int i) =>
             {
                 if (!DragBuildPowerPolesAlternatelyEnabled.Value || (i & 1) == 0) return click.handItem;
                 var id = click.handItem.ID;
-                if (id != 2201 && id != 2202) return click.handItem;
+                if (id != 2202) return click.handItem;
                 return LDB.items.Select(id ^ 3);
-            })).Advance(3).InsertAndAdvance(new CodeInstruction(OpCodes.Ldloc_S, 6)).SetInstructionAndAdvance(Transpilers.EmitDelegate((BuildTool_Click click, int i) =>
+            })).Advance(3).InsertAndAdvance(new CodeInstruction(OpCodes.Ldloc_S, operand)).SetInstructionAndAdvance(Transpilers.EmitDelegate((BuildTool_Click click, int i) =>
             {
                 if (!DragBuildPowerPolesAlternatelyEnabled.Value || (i & 1) == 0) return click.handPrefabDesc;
                 var id = click.handItem.ID;
-                if (id != 2201 && id != 2202) return click.handPrefabDesc;
+                if (id != 2202) return click.handPrefabDesc;
                 return LDB.items.Select(id ^ 3).prefabDesc;
             }));
             return matcher.InstructionEnumeration();
