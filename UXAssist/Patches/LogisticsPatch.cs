@@ -719,6 +719,7 @@ public static class LogisticsPatch
     {
         private static StationTip[] _stationTips = new StationTip[16];
         private static readonly StationTip[] StationTipsRecycle = new StationTip[128];
+        private static readonly Sprite[] StateSprite = [null, null, null];
         private static int _stationTipsRecycleCount;
         private static GameObject _stationTipsRoot;
         private static GameObject _tipPrefab;
@@ -1003,6 +1004,10 @@ public static class LogisticsPatch
             tipIconPrefab.gameObject.SetActive(false);
             _tipPrefab.SetActive(false);
             _stationTipsRoot.SetActive(false);
+
+            StateSprite[0] = Util.LoadEmbeddedSprite("assets/icon/keep.png");
+            StateSprite[1] = Util.LoadEmbeddedSprite("assets/icon/out.png");
+            StateSprite[2] = Util.LoadEmbeddedSprite("assets/icon/in.png");
         }
 
         private static void RecycleStationTips()
@@ -1187,7 +1192,6 @@ public static class LogisticsPatch
             }
         }
 
-
         public class StationTip : MonoBehaviour
         {
             [FormerlySerializedAs("RectTransform")]
@@ -1230,13 +1234,6 @@ public static class LogisticsPatch
                 public ELogisticStorage LocalState;
                 public ELogisticStorage RemoteState;
             }
-
-            private static readonly Sprite[] StateSprite =
-            [
-                Util.LoadEmbeddedSprite("assets/icon/keep.png"),
-                Util.LoadEmbeddedSprite("assets/icon/out.png"),
-                Util.LoadEmbeddedSprite("assets/icon/in.png")
-            ];
 
             private enum EStationTipLayout
             {

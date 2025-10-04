@@ -7,6 +7,8 @@
   * `Build Tesla Tower and Wireless Power Tower alternately`:
     * Fix wrong implementation for latest game patch.
     * Cannot use Tesla Tower as start Power Tower now, due to new rectangular area build mechanism.
+  * `Planet Vein Untilization`: Support mods that add new vein types.
+  * `Real-time logistic stations info panel`: Try to fix possible crash.
 * 1.4.2
   * Fixed a crash issue.
 * 1.4.1
@@ -348,6 +350,8 @@
   * `交替建造电力感应塔和无线输电塔`:
     * 修复了在最新游戏补丁中的错误实现
     * 由于新的矩形建造机制，现在无法使用电力感应塔作为起始电塔
+  * `宇宙视图矿脉数量显示`：兼容添加矿脉类型的mod
+  * `物流站实时信息面板`：尝试修复可能的崩溃问题
 * 1.4.2
   * 修复了一个崩溃问题
 * 1.4.1

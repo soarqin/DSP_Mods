@@ -1,11 +1,13 @@
 namespace UXAssist.Patches;
 
-using Common;
+using System.Linq;
 using HarmonyLib;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using BepInEx.Configuration;
+using Common;
+using GameLogicProc = Common.GameLogic;
 
 [PatchGuid(PluginInfo.PLUGIN_GUID)]
 public class UIPatch : PatchImpl<UIPatch>
@@ -19,6 +21,7 @@ public class UIPatch : PatchImpl<UIPatch>
 
     public static void Start()
     {
+        GameLogicProc.OnGameBegin += PlanetVeinUtilization.OnGameBegin;
         Enable(true);
         Functions.UIFunctions.InitMenuButtons();
         PlanetVeinUtilization.Enable(PlanetVeinUtilizationEnabled.Value);
@@ -28,30 +31,66 @@ public class UIPatch : PatchImpl<UIPatch>
     {
         PlanetVeinUtilization.Enable(false);
         Enable(false);
+        GameLogicProc.OnGameBegin -= PlanetVeinUtilization.OnGameBegin;
     }
 
     private class PlanetVeinUtilization : PatchImpl<PlanetVeinUtilization>
     {
-        private static readonly VeinTypeInfo[] planetVeinCount = new VeinTypeInfo[(int)EVeinType.Max];
-        private static readonly VeinTypeInfo[] starVeinCount = new VeinTypeInfo[(int)EVeinType.Max];
+        private static VeinTypeInfo[] planetVeinCount = null;
+        private static VeinTypeInfo[] starVeinCount = null;
         private static readonly Dictionary<int, bool> tmpGroups = [];
+
+        public static void OnGameBegin()
+        {
+            if (planetVeinCount != null)
+            {
+                foreach (VeinTypeInfo vti in planetVeinCount)
+                {
+                    if (vti.textCtrl != null)
+                    {
+                        Object.Destroy(vti.textCtrl.gameObject);
+                    }
+                }
+                planetVeinCount = null;
+            }
+            if (starVeinCount != null)
+            {
+                foreach (VeinTypeInfo vti in starVeinCount)
+                {
+                    if (vti.textCtrl != null)
+                    {
+                        Object.Destroy(vti.textCtrl.gameObject);
+                    }
+                }
+                starVeinCount = null;
+            }
+            var maxVeinId = LDB.veins.dataArray.Max(vein => vein.ID);
+            planetVeinCount = new VeinTypeInfo[maxVeinId + 1];
+            starVeinCount = new VeinTypeInfo[maxVeinId + 1];
+            InitializeVeinCountArray(planetVeinCount);
+            InitializeVeinCountArray(starVeinCount);
+        }
 
         protected override void OnEnable()
         {
-            InitializeVeinCountArray(planetVeinCount);
-            InitializeVeinCountArray(starVeinCount);
-            foreach (VeinTypeInfo vti in planetVeinCount)
+            if (planetVeinCount != null)
             {
-                vti.Reset();
-                vti.textCtrl?.gameObject.SetActive(true);
+                foreach (VeinTypeInfo vti in planetVeinCount)
+                {
+                    vti.Reset();
+                    vti.textCtrl?.gameObject.SetActive(true);
+                }
+                UIPlanetDetail_RefreshDynamicProperties_Postfix(UIRoot.instance.uiGame.planetDetail);
             }
-            UIPlanetDetail_RefreshDynamicProperties_Postfix(UIRoot.instance.uiGame.planetDetail);
-            foreach (VeinTypeInfo vti in starVeinCount)
+            if (starVeinCount != null)
             {
-                vti.Reset();
-                vti.textCtrl?.gameObject.SetActive(true);
+                foreach (VeinTypeInfo vti in starVeinCount)
+                {
+                    vti.Reset();
+                    vti.textCtrl?.gameObject.SetActive(true);
+                }
+                UIStarDetail_RefreshDynamicProperties_Postfix(UIRoot.instance.uiGame.starDetail);
             }
-            UIStarDetail_RefreshDynamicProperties_Postfix(UIRoot.instance.uiGame.starDetail);
         }
 
         private static Vector2 GetAdjustedSizeDelta(Vector2 origSizeDelta)
@@ -61,15 +100,21 @@ public class UIPatch : PatchImpl<UIPatch>
 
         protected override void OnDisable()
         {
-            foreach (VeinTypeInfo vti in planetVeinCount)
+            if (planetVeinCount != null)
             {
-                vti.Reset();
-                vti.textCtrl?.gameObject.SetActive(false);
+                foreach (VeinTypeInfo vti in planetVeinCount)
+                {
+                    vti.Reset();
+                    vti.textCtrl?.gameObject.SetActive(false);
+                }
             }
-            foreach (VeinTypeInfo vti in starVeinCount)
+            if (starVeinCount != null)
             {
-                vti.Reset();
-                vti.textCtrl?.gameObject.SetActive(false);
+                foreach (VeinTypeInfo vti in starVeinCount)
+                {
+                    vti.Reset();
+                    vti.textCtrl?.gameObject.SetActive(false);
+                }
             }
         }
 
