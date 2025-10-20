@@ -3,6 +3,8 @@
 
 ## Changelog
 
+* 1.2.11
+  * Fix issues which cause universe settings not applied on staring a new game (again again).
 * 1.2.10
   * Fix issues which cause universe settings not applied on staring a new game or loading game (again).
   * Reset star distance/flatten settings on entering galaxy creation screen.
@@ -46,6 +48,8 @@
 
 ## 更新日志
 
+* 1.2.11
+  * (再次再次)修复新建游戏时宇宙设置没有应用的问题
 * 1.2.10
   * (再次)修复新建游戏或加载存档时宇宙设置没有应用的问题
   * 进入宇宙创建界面时重置星系间距/扁平度设置

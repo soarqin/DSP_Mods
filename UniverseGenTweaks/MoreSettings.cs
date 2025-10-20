@@ -99,17 +99,14 @@ public class MoreSettings
         _minDistSlider.maxValue = 50f;
         _minDistSlider.value = (float)(_minDist * 10.0);
 
-        _minStepTitle.name = "min-step";
         _minStepSlider.minValue = (float)(_minDist * 10.0);
         _minStepSlider.maxValue = (float)(_maxStep * 10.0);
         _minStepSlider.value = (float)(_minStep * 10.0);
 
-        _maxStepTitle.name = "max-step";
         _maxStepSlider.minValue = (float)(_minStep * 10.0);
         _maxStepSlider.maxValue = 100f;
         _maxStepSlider.value = (float)(_maxStep * 10.0);
 
-        _flattenTitle.name = "flatten";
         _flattenSlider.minValue = 1f;
         _flattenSlider.maxValue = 50f;
         _flattenSlider.value = (float)(_flatten * 50.0);
@@ -118,6 +115,8 @@ public class MoreSettings
         _minStepText.text = _minStep.ToString();
         _maxStepText.text = _maxStep.ToString();
         _flattenText.text = _flatten.ToString();
+
+        UniverseGenTweaks.Logger.LogDebug($"Updated slider controls: {_minStepSlider.minValue}, {_minStepSlider.maxValue}, {_maxStepSlider.minValue}, {_maxStepSlider.maxValue}");
     }
 
     [HarmonyPostfix]
@@ -136,24 +135,9 @@ public class MoreSettings
         flattenLocalizer.stringKey = "扁平度";
 
         _minDistTitle.name = "min-dist";
-        _minDistSlider.minValue = 10f;
-        _minDistSlider.maxValue = 50f;
-        _minDistSlider.value = (float)(_minDist * 10.0);
-
         _minStepTitle.name = "min-step";
-        _minStepSlider.minValue = (float)(_minDist * 10.0);
-        _minStepSlider.maxValue = (float)(_maxStep * 10.0);
-        _minStepSlider.value = (float)(_minStep * 10.0);
-
         _maxStepTitle.name = "max-step";
-        _maxStepSlider.minValue = (float)(_minStep * 10.0);
-        _maxStepSlider.maxValue = 100f;
-        _maxStepSlider.value = (float)(_maxStep * 10.0);
-
         _flattenTitle.name = "flatten";
-        _flattenSlider.minValue = 1f;
-        _flattenSlider.maxValue = 50f;
-        _flattenSlider.value = (float)(_flatten * 50.0);
 
         TransformDeltaY(_minDistTitle.transform, -36f);
         TransformDeltaY(_minStepTitle.transform, -36f * 2);
@@ -164,25 +148,36 @@ public class MoreSettings
         TransformDeltaY(__instance.sandboxToggle.transform.parent, -36f * 4);
         TransformDeltaY(__instance.propertyMultiplierText.transform, -36f * 4);
         TransformDeltaY(__instance.addrText.transform.parent, -36f * 4);
+
+        RemoveAllListeners();
+        UpdateSliderControls();
+        AddListeners(__instance);
     }
 
     [HarmonyPrefix]
     [HarmonyPatch(typeof(UIGalaxySelect), nameof(UIGalaxySelect._OnOpen))]
-    private static void UIGalaxySelect__OnOpen_Prefix()
+    private static void UIGalaxySelect__OnOpen_Prefix(UIGalaxySelect __instance)
     {
         _minDist = DEFAULT_MIN_DIST;
         _minStep = DEFAULT_MIN_STEP;
         _maxStep = DEFAULT_MAX_STEP;
         _flatten = DEFAULT_FLATTEN;
 
+        RemoveAllListeners();
         UpdateSliderControls();
+        AddListeners(__instance);
     }
 
-    [HarmonyPostfix]
-    [HarmonyPatch(typeof(UIGalaxySelect), nameof(UIGalaxySelect._OnRegEvent))]
-    private static void UIGalaxySelect__OnRegEvent_Postfix(UIGalaxySelect __instance)
+    private static void RemoveAllListeners()
     {
         _minDistSlider.onValueChanged.RemoveAllListeners();
+        _minStepSlider.onValueChanged.RemoveAllListeners();
+        _maxStepSlider.onValueChanged.RemoveAllListeners();
+        _flattenSlider.onValueChanged.RemoveAllListeners();
+    }
+
+    private static void AddListeners(UIGalaxySelect uiGalaxySelect)
+    {
         _minDistSlider.onValueChanged.AddListener(val =>
         {
             var newVal = Mathf.Round(val) / 10.0;
@@ -202,9 +197,8 @@ public class MoreSettings
                 }
             }
             _minStepSlider.minValue = (float)(_minDist * 10.0);
-            __instance.SetStarmapGalaxy();
+            uiGalaxySelect.SetStarmapGalaxy();
         });
-        _minStepSlider.onValueChanged.RemoveAllListeners();
         _minStepSlider.onValueChanged.AddListener(val =>
         {
             var newVal = Mathf.Round(val) / 10.0;
@@ -212,9 +206,8 @@ public class MoreSettings
             _minStep = newVal;
             _maxStepSlider.minValue = (float)(newVal * 10.0);
             _minStepText.text = _minStep.ToString();
-            __instance.SetStarmapGalaxy();
+            uiGalaxySelect.SetStarmapGalaxy();
         });
-        _maxStepSlider.onValueChanged.RemoveAllListeners();
         _maxStepSlider.onValueChanged.AddListener(val =>
         {
             var newVal = Mathf.Round(val) / 10.0;
@@ -222,16 +215,15 @@ public class MoreSettings
             _maxStep = newVal;
             _minStepSlider.maxValue = (float)(newVal * 10.0);
             _maxStepText.text = _maxStep.ToString();
-            __instance.SetStarmapGalaxy();
+            uiGalaxySelect.SetStarmapGalaxy();
         });
-        _flattenSlider.onValueChanged.RemoveAllListeners();
         _flattenSlider.onValueChanged.AddListener(val =>
         {
             var newVal = Mathf.Round(val) / 50.0;
             if (newVal.Equals(_flatten)) return;
             _flatten = newVal;
             _flattenText.text = _flatten.ToString();
-            __instance.SetStarmapGalaxy();
+            uiGalaxySelect.SetStarmapGalaxy();
         });
     }
 
@@ -266,26 +258,21 @@ public class MoreSettings
         [HarmonyPatch(typeof(GameMain), nameof(GameMain.Start))]
         private static void GameMain_Start_Prefix()
         {
-            _gameMinDist = DEFAULT_MIN_DIST;
-            _gameMinStep = DEFAULT_MIN_STEP;
-            _gameMaxStep = DEFAULT_MAX_STEP;
-            _gameFlatten = DEFAULT_FLATTEN;
-        }
-
-        [HarmonyPrefix]
-        [HarmonyPatch(typeof(GameData), nameof(GameData.NewGame))]
-        private static void GameData_NewGame_Prefix()
-        {
-            if (!Enabled.Value) return;
-            _gameMinDist = _minDist;
-            _gameMinStep = _minStep;
-            _gameMaxStep = _maxStep;
-            _gameFlatten = _flatten;
-
-            _minDist = DEFAULT_MIN_DIST;
-            _minStep = DEFAULT_MIN_STEP;
-            _maxStep = DEFAULT_MAX_STEP;
-            _flatten = DEFAULT_FLATTEN;
+            if (DSPGame.GameDesc != null)
+            {
+                if (GameMain.data != null) return;
+                _gameMinDist = _minDist;
+                _gameMinStep = _minStep;
+                _gameMaxStep = _maxStep;
+                _gameFlatten = _flatten;
+            }
+            else
+            {
+                _gameMinDist = DEFAULT_MIN_DIST;
+                _gameMinStep = DEFAULT_MIN_STEP;
+                _gameMaxStep = DEFAULT_MAX_STEP;
+                _gameFlatten = DEFAULT_FLATTEN;
+            }
         }
 
         [HarmonyTranspiler]
