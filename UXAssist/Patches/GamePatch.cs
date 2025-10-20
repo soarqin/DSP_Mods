@@ -220,7 +220,7 @@ public class GamePatch : PatchImpl<GamePatch>
     }
 
     [HarmonyPrefix]
-    [HarmonyPatch(typeof(Screen), nameof(Screen.SetResolution), typeof(int), typeof(int), typeof(FullScreenMode), typeof(int))]
+    [HarmonyPatch(typeof(Screen), nameof(Screen.SetResolution), typeof(int), typeof(int), typeof(FullScreenMode), typeof(RefreshRate))]
     private static void Screen_SetResolution_Prefix(ref int width, ref int height, FullScreenMode fullscreenMode, ref Vector2Int __state)
     {
         if (fullscreenMode is FullScreenMode.ExclusiveFullScreen or FullScreenMode.FullScreenWindow or FullScreenMode.MaximizedWindow) return;
@@ -247,7 +247,7 @@ public class GamePatch : PatchImpl<GamePatch>
     }
 
     [HarmonyPostfix]
-    [HarmonyPatch(typeof(Screen), nameof(Screen.SetResolution), typeof(int), typeof(int), typeof(FullScreenMode), typeof(int))]
+    [HarmonyPatch(typeof(Screen), nameof(Screen.SetResolution), typeof(int), typeof(int), typeof(FullScreenMode), typeof(RefreshRate))]
     private static void Screen_SetResolution_Postfix(FullScreenMode fullscreenMode, Vector2Int __state)
     {
         if (fullscreenMode is FullScreenMode.ExclusiveFullScreen or FullScreenMode.FullScreenWindow or FullScreenMode.MaximizedWindow) return;
@@ -269,36 +269,6 @@ public class GamePatch : PatchImpl<GamePatch>
             y = Mathf.RoundToInt(rect.y);
         }
         ThreadingHelper.Instance.StartCoroutine(SetWindowPositionCoroutine(wnd, x, y));
-    }
-
-    private static GameOption _gameOption;
-
-    [HarmonyPostfix]
-    [HarmonyPatch(typeof(UIOptionWindow), nameof(UIOptionWindow._OnOpen))]
-    private static void UIOptionWindow__OnOpen_Postfix()
-    {
-        _gameOption = DSPGame.globalOption;
-    }
-
-    [HarmonyTranspiler]
-    [HarmonyPatch(typeof(GameOption), nameof(GameOption.Apply))]
-    private static IEnumerable<CodeInstruction> UIOptionWindow_ApplyOptions_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
-    {
-        var matcher = new CodeMatcher(instructions, generator);
-        var label1 = generator.DefineLabel();
-        matcher.MatchForward(false,
-            new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(Screen), nameof(Screen.SetResolution), [typeof(int), typeof(int), typeof(FullScreenMode), typeof(RefreshRate)]))
-        ).Advance(1).Labels.Add(label1);
-        matcher.Start().Insert(
-            Transpilers.EmitDelegate(() =>
-                _gameOption.displayMode != EOptionDisplayMode.Windowed &&
-                _gameOption.resolution.width == DSPGame.globalOption.resolution.width &&
-                _gameOption.resolution.height == DSPGame.globalOption.resolution.height &&
-                _gameOption.resolution.refreshRateRatio.Equals(DSPGame.globalOption.resolution.refreshRateRatio)
-            ),
-            new CodeInstruction(OpCodes.Brtrue, label1)
-        );
-        return matcher.InstructionEnumeration();
     }
 
     private class EnableWindowResize : PatchImpl<EnableWindowResize>
