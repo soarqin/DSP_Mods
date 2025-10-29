@@ -19,10 +19,9 @@ public class Miner : PatchImpl<Miner>
     public static ConfigEntry<int> FuelIlsSlot;
     public static ConfigEntry<int> FuelPlsSlot;
 
-    private static float _frame;
+    private static long _frame;
     private static float _miningCostRateByTech;
-    private static float _miningSpeedScaleByTech;
-    private static float _miningFrames;
+    private static long _miningFrames;
     private static long _miningSpeedScaleLong;
     private static bool _advancedMiningMachineUnlocked;
     private static uint _miningCostBarrier;
@@ -74,7 +73,7 @@ public class Miner : PatchImpl<Miner>
     private static void OnGameBegin()
     {
         VeinManager.Clear();
-        _frame = 0f;
+        _frame = 0L;
         UpdateMiningCostRate();
         UpdateSpeedScale();
         CheckRecipes();
@@ -104,9 +103,8 @@ public class Miner : PatchImpl<Miner>
 
     private static void UpdateSpeedScale()
     {
-        _miningSpeedScaleByTech = GameMain.history.miningSpeedScale;
-        _miningSpeedScaleLong = (long)(_miningSpeedScaleByTech * 100);
-        _miningFrames = _miningSpeedScaleByTech * 600000f;
+        _miningSpeedScaleLong = (long)Math.Round(GameMain.history.miningSpeedScale * 100f);
+        _miningFrames = _miningSpeedScaleLong * 6000L;
     }
 
     [HarmonyPostfix]
@@ -126,33 +124,33 @@ public class Miner : PatchImpl<Miner>
 
     [HarmonyPrefix]
     [HarmonyPatch(typeof(GameLogic), nameof(GameLogic.OnFactoryFrameBegin))]
-    private static void GameLogic_OnFactoryFrameBegin_Prefix()
+    private static void GameData_GameTick_Prefix()
     {
         var main = GameMain.instance;
         if (main.isMenuDemo) return;
-        if (_miningSpeedScaleLong <= 0) return;
+        if (_miningSpeedScaleLong <= 0L) return;
 
-        DeepProfiler.BeginSample(DPEntry.Miner);
         if (main.timei % 60 != 0) return;
         _frame += _miningFrames;
-        var frameCounter = Mathf.FloorToInt(_frame / 1200000f);
+        var frameCounter = _frame / 1200000L;
         if (frameCounter <= 0) return;
-        _frame -= frameCounter * 1200000f;
+        _frame -= frameCounter * 1200000L;
         // LogisticHub.Logger.LogDebug($"FrameCounter: {frameCounter}");
 
+        DeepProfiler.BeginSample(DPEntry.Miner);
         var data = GameMain.data;
+        if (data.factoryCount > _mineIndex.Length)
+            Array.Resize(ref _mineIndex, data.factoryCount);
+        var factoryStatPool = GameMain.statistics.production.factoryStatPool;
         for (var factoryIndex = data.factoryCount - 1; factoryIndex >= 0; factoryIndex--)
         {
             var factory = data.factories[factoryIndex];
             var veins = VeinManager.GetVeins(factoryIndex);
-            if (veins == null) return;
+            if (veins == null) continue;
             var stations = StationManager.GetStations(factoryIndex);
             var planetTransport = factory.transport;
-            var factoryProductionStat = GameMain.statistics.production.factoryStatPool[factoryIndex];
-            var productRegister = factoryProductionStat?.productRegister;
+            var productRegister = factoryStatPool[factoryIndex]?.productRegister;
             var demands = stations.StorageIndices[1];
-            if (_mineIndex == null || factoryIndex >= _mineIndex.Length)
-                Array.Resize(ref _mineIndex, factoryIndex + 1);
             foreach (var (itemIndex, itemId) in VeinList)
             {
                 foreach (var storageIndex in demands[itemIndex])
@@ -176,7 +174,7 @@ public class Miner : PatchImpl<Miner>
 
                     if (itemIndex > 0)
                     {
-                        (amount, energyConsume) = Mine(factory, veins, itemId, miningScale, frameCounter, station.energy);
+                        (amount, energyConsume) = Mine(factory, veins, itemId, miningScale, (int)frameCounter, station.energy);
                         if (amount < 0) continue;
                     }
                     else
@@ -188,7 +186,7 @@ public class Miner : PatchImpl<Miner>
 
                     if (amount <= 0) continue;
                     storage.count += amount;
-                    if (factoryProductionStat != null)
+                    if (productRegister != null)
                         productRegister[itemId] += amount;
                     station.energy -= energyConsume;
                 }
