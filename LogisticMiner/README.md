@@ -27,7 +27,7 @@
       reaches Advanced Mining Machine, otherwise 100.
     * 100/s for water by default.
     * Energy costs: 1MW/vein-group & 10MW/water-slot & 1.8MW/oil-seep(configurable)
-    * Fuels burning slot. Default: 4th for ILS, 3rd for PLS. Set to 0 to disable it.
+    * Fuels burning slot. Default: 4th for ILS, 4th for PLS. Set to 0 to disable it.
 
 ## 使用说明
 
@@ -47,4 +47,4 @@
       倍率可以设置为0(默认)，此时倍率会随科技解锁而变化，默认是100%，解锁高级采矿机后变为300%。
     * 水的采集速度默认为100/s。
     * 能耗：每矿物组 1MW，单格水 10MW，每油井 1.8MW。
-    * 燃料格位置。默认：星际物流塔第4格，行星内物流塔第3格。设为0则关闭燃料补充能量功能。
+    * 燃料格位置。默认：星际物流塔第4格，行星内物流塔第4格。设为0则关闭燃料补充能量功能。

@@ -15,11 +15,11 @@ public class LogisticMiner : BaseUnityPlugin
 
     private static long _oreEnergyConsume = 2000000;
     private static long _oilEnergyConsume = 3600000;
-    private static long _waterEnergyConsume = 20000000;
-    private static int _waterSpeed = 100;
+    private static long _waterEnergyConsume = 2000000;
+    private static int _waterSpeed = 10;
     private static int _miningScale;
     private static int _fuelIlsSlot = 3;
-    private static int _fuelPlsSlot = 2;
+    private static int _fuelPlsSlot = 3;
 
     private static float _frame;
     private static float _miningCostRateByTech;
@@ -31,8 +31,8 @@ public class LogisticMiner : BaseUnityPlugin
     private static uint _miningCostBarrierOil;
 
     private static uint _seed = (uint)Random.Range(int.MinValue, int.MaxValue);
-    private static readonly Dictionary<int, VeinCacheData> PlanetVeinCacheData = new();
-    private static readonly Dictionary<int, (long, bool)> Fuels = new();
+    private static readonly Dictionary<int, VeinCacheData> PlanetVeinCacheData = [];
+    private static readonly Dictionary<int, (long, bool)> Fuels = [];
 
     private bool _cfgEnabled = true;
 
@@ -52,11 +52,11 @@ public class LogisticMiner : BaseUnityPlugin
             .Value;
         _fuelIlsSlot = Config.Bind("General", "ILSFuelSlot", _fuelIlsSlot + 1,
                 new ConfigDescription("Fuel slot for ILS, set to 0 to disable",
-                    new AcceptableValueRange<int>(0, 5), Array.Empty<object>()))
+                    new AcceptableValueRange<int>(0, 5), []))
             .Value - 1;
         _fuelPlsSlot = Config.Bind("General", "PLSFuelSlot", _fuelPlsSlot + 1,
                 new ConfigDescription("Fuel slot for PLS, set to 0 to disable",
-                    new AcceptableValueRange<int>(0, 4), Array.Empty<object>()))
+                    new AcceptableValueRange<int>(0, 4), []))
             .Value - 1;
         if (!_cfgEnabled) return;
 
@@ -98,8 +98,8 @@ public class LogisticMiner : BaseUnityPlugin
     }
 
     [HarmonyPostfix]
-    [HarmonyPatch(typeof(DSPGame), "StartGame", typeof(GameDesc))]
-    [HarmonyPatch(typeof(DSPGame), "StartGame", typeof(string))]
+    [HarmonyPatch(typeof(DSPGame), nameof(DSPGame.StartGame), typeof(GameDesc))]
+    [HarmonyPatch(typeof(DSPGame), nameof(DSPGame.StartGame), typeof(string))]
     private static void OnGameStart()
     {
         Logger.LogInfo("Game Start");
@@ -119,7 +119,7 @@ public class LogisticMiner : BaseUnityPlugin
     }
 
     [HarmonyPostfix]
-    [HarmonyPatch(typeof(GameMain), "Start")]
+    [HarmonyPatch(typeof(GameMain), nameof(GameMain.Start))]
     private static void OnGameLoaded()
     {
         _frame = 0f;
@@ -130,7 +130,7 @@ public class LogisticMiner : BaseUnityPlugin
     }
 
     [HarmonyPostfix]
-    [HarmonyPatch(typeof(GameHistoryData), "UnlockTechFunction")]
+    [HarmonyPatch(typeof(GameHistoryData), nameof(GameHistoryData.UnlockTechFunction))]
     private static void OnUnlockTech(int func)
     {
         switch (func)
@@ -145,7 +145,7 @@ public class LogisticMiner : BaseUnityPlugin
     }
 
     [HarmonyPostfix]
-    [HarmonyPatch(typeof(GameData), "GameTick")]
+    [HarmonyPatch(typeof(GameLogic), nameof(GameLogic.OnFactoryFrameBegin))]
     private static void FrameTick()
     {
         var main = GameMain.instance;
@@ -165,7 +165,7 @@ public class LogisticMiner : BaseUnityPlugin
     }
 
     [HarmonyPostfix]
-    [HarmonyPatch(typeof(GameHistoryData), "UnlockRecipe")]
+    [HarmonyPatch(typeof(GameHistoryData), nameof(GameHistoryData.UnlockRecipe))]
     private static void OnUnlockRecipe(int recipeId)
     {
         if (recipeId == 119)
@@ -175,9 +175,9 @@ public class LogisticMiner : BaseUnityPlugin
     }
 
     [HarmonyPostfix]
-    [HarmonyPatch(typeof(PlanetFactory), "Init")]
-    [HarmonyPatch(typeof(PlanetFactory), "RecalculateVeinGroup")]
-    [HarmonyPatch(typeof(PlanetFactory), "RecalculateAllVeinGroups")]
+    [HarmonyPatch(typeof(PlanetFactory), nameof(PlanetFactory.Init))]
+    [HarmonyPatch(typeof(PlanetFactory), nameof(PlanetFactory.RecalculateVeinGroup))]
+    [HarmonyPatch(typeof(PlanetFactory), nameof(PlanetFactory.RecalculateAllVeinGroups))]
     private static void NeedRecalcVeins(PlanetFactory __instance)
     {
         RecalcVeins(__instance);
@@ -204,7 +204,7 @@ public class LogisticMiner : BaseUnityPlugin
     }
 
     [HarmonyPostfix]
-    [HarmonyPatch(typeof(FactorySystem), "CheckBeforeGameTick")]
+    [HarmonyPatch(typeof(GameLogic), nameof(GameLogic.FactoryBeforeGameTick))]
     private static void FactorySystemLogisticMiner(FactorySystem __instance)
     {
         if (_miningSpeedScaleLong <= 0)
@@ -231,7 +231,7 @@ public class LogisticMiner : BaseUnityPlugin
             var factoryProductionStat =
                 GameMain.statistics.production.factoryStatPool[__instance.factory.index];
             var productRegister = factoryProductionStat?.productRegister;
-            PerformanceMonitor.BeginSample(ECpuWorkEntry.Miner);
+            DeepProfiler.BeginSample(DPEntry.Miner);
             do
             {
                 for (var j = 1; j < planetTransport.stationCursor; j++)
@@ -334,7 +334,7 @@ public class LogisticMiner : BaseUnityPlugin
                 vcd.FrameNext += _miningFrames;
             } while (vcd.FrameNext <= _frame);
 
-            PerformanceMonitor.EndSample(ECpuWorkEntry.Miner);
+            DeepProfiler.EndSample(DPEntry.Miner);
         }
     }
 
@@ -353,9 +353,9 @@ public class LogisticMiner : BaseUnityPlugin
 
         public void GenVeins(PlanetFactory factory)
         {
-            _veins = new Dictionary<int, List<int>>();
+            _veins = [];
             var veinPool = factory.veinPool;
-            var vg = new Dictionary<int, HashSet<int>>();
+            Dictionary<int, HashSet<int>> vg = [];
             for (var i = 0; i < veinPool.Length; i++)
             {
                 if (veinPool[i].amount <= 0 || veinPool[i].type == EVeinType.None) continue;
