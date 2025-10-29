@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using HarmonyLib;
 using UXAssist.Common;
+using GameLogicProc = UXAssist.Common.GameLogic;
 
 namespace LogisticHub.Module;
 
@@ -19,16 +20,25 @@ public class VeinManager : PatchImpl<VeinManager>
     public static void Init()
     {
         Enable(true);
+        GameLogicProc.OnGameBegin += OnGameBegin;
     }
 
     public static void Uninit()
     {
+        GameLogicProc.OnGameBegin -= OnGameBegin;
         Enable(false);
     }
 
-    public static void Clear()
+    private static void OnGameBegin()
     {
         _veins = null;
+        var data = GameMain.data;
+        for (var index = data.factoryCount - 1; index >= 0; index--)
+        {
+            var factory = data.factories[index];
+            if (factory == null || factory.index != index) continue;
+            RecalcVeins(factory);
+        }
     }
 
     public static ProductVeinData[] GetVeins(int planetIndex)

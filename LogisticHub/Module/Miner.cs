@@ -1,7 +1,6 @@
 ﻿using System;
 using BepInEx.Configuration;
 using HarmonyLib;
-using UnityEngine;
 using UXAssist.Common;
 using Random = UnityEngine.Random;
 using GameLogicProc = UXAssist.Common.GameLogic;
@@ -72,7 +71,6 @@ public class Miner : PatchImpl<Miner>
 
     private static void OnGameBegin()
     {
-        VeinManager.Clear();
         _frame = 0L;
         UpdateMiningCostRate();
         UpdateSpeedScale();
@@ -135,7 +133,6 @@ public class Miner : PatchImpl<Miner>
         var frameCounter = _frame / 1200000L;
         if (frameCounter <= 0) return;
         _frame -= frameCounter * 1200000L;
-        // LogisticHub.Logger.LogDebug($"FrameCounter: {frameCounter}");
 
         DeepProfiler.BeginSample(DPEntry.Miner);
         var data = GameMain.data;
@@ -155,6 +152,7 @@ public class Miner : PatchImpl<Miner>
             {
                 foreach (var storageIndex in demands[itemIndex])
                 {
+                    LogisticHub.Logger.LogDebug($"StorageIndex: {storageIndex}");
                     var station = planetTransport.stationPool[storageIndex / 100];
                     if (station == null)
                         continue;
@@ -195,7 +193,7 @@ public class Miner : PatchImpl<Miner>
             for (var i = planetTransport.stationCursor - 1; i > 0; i--)
             {
                 var stationComponent = planetTransport.stationPool[i];
-                if (stationComponent.isCollector || stationComponent.isVeinCollector || stationComponent.energy * 2 >= stationComponent.energyMax) continue;
+                if (stationComponent == null || stationComponent.isCollector || stationComponent.isVeinCollector || stationComponent.energy * 2 >= stationComponent.energyMax) continue;
                 var index = (stationComponent.isStellar ? FuelIlsSlot.Value : FuelPlsSlot.Value) - 1;
                 var storage = stationComponent.storage;
                 if (index < 0 || index >= storage.Length)

@@ -54,32 +54,35 @@ public class StationManager : PatchImpl<StationManager>
 
     public static void Init()
     {
-        GameLogicProc.OnGameBegin += () =>
-        {
-            _stations = null;
-            var data = GameMain.data;
-            for (var index = data.factoryCount - 1; index >= 0; index--)
-            {
-                var factory = data.factories[index];
-                if (factory == null || factory.index != index) continue;
-                var planetIndex = factory.index;
-                var stations = StationsByPlanet(planetIndex);
-                var transport = factory.transport;
-                var pool = transport.stationPool;
-                for (var i = transport.stationCursor - 1; i > 0; i--)
-                {
-                    var station = pool[i];
-                    if (station == null || station.id != i || station.isCollector || station.isVeinCollector) continue;
-                    UpdateStationInfo(stations, station);
-                }
-            }
-        };
+        GameLogicProc.OnGameBegin += OnGameBegin;
         Enable(true);
     }
 
     public static void Uninit()
     {
+        GameLogicProc.OnGameBegin -= OnGameBegin;
         Enable(false);
+    }
+
+    private static void OnGameBegin()
+    {
+        _stations = null;
+        var data = GameMain.data;
+        for (var index = data.factoryCount - 1; index >= 0; index--)
+        {
+            var factory = data.factories[index];
+            if (factory == null || factory.index != index) continue;
+            var planetIndex = factory.index;
+            var stations = StationsByPlanet(planetIndex);
+            var transport = factory.transport;
+            var pool = transport.stationPool;
+            for (var i = transport.stationCursor - 1; i > 0; i--)
+            {
+                var station = pool[i];
+                if (station == null || station.id != i || station.isCollector || station.isVeinCollector) continue;
+                UpdateStationInfo(stations, station);
+            }
+        }
     }
 
     private static int ItemIdToIndex(int itemId)
