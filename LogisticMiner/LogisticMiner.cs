@@ -204,13 +204,12 @@ public class LogisticMiner : BaseUnityPlugin
     }
 
     [HarmonyPostfix]
-    [HarmonyPatch(typeof(GameLogic), nameof(GameLogic.FactoryBeforeGameTick))]
-    private static void FactorySystemLogisticMiner(FactorySystem __instance)
+    [HarmonyPatch(typeof(PlanetFactory), nameof(PlanetFactory.BeforeGameTick))]
+    private static void FactorySystemLogisticMiner(PlanetFactory __instance)
     {
         if (_miningSpeedScaleLong <= 0)
             return;
-        var factory = __instance.factory;
-        var planetId = factory.planetId;
+        var planetId = __instance.planetId;
         lock (PlanetVeinCacheData)
         {
             if (PlanetVeinCacheData.TryGetValue(planetId, out var vcd))
@@ -227,9 +226,9 @@ public class LogisticMiner : BaseUnityPlugin
                 return;
             }
 
-            var planetTransport = __instance.planet.factory.transport;
+            var planetTransport = __instance.transport;
             var factoryProductionStat =
-                GameMain.statistics.production.factoryStatPool[__instance.factory.index];
+                GameMain.statistics.production.factoryStatPool[__instance.index];
             var productRegister = factoryProductionStat?.productRegister;
             DeepProfiler.BeginSample(DPEntry.Miner);
             do
@@ -271,7 +270,7 @@ public class LogisticMiner : BaseUnityPlugin
 
                         if (isVein)
                         {
-                            (amount, energyConsume) = vcd.Mine(factory, stationStore.itemId, miningScale,
+                            (amount, energyConsume) = vcd.Mine(__instance, stationStore.itemId, miningScale,
                                 _miningSpeedScaleLong,
                                 stationComponent.energy);
                             if (amount < 0)
