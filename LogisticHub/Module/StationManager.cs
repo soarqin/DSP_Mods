@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using HarmonyLib;
 using UXAssist.Common;
+using GameLogicProc = UXAssist.Common.GameLogic;
 
 namespace LogisticHub.Module;
 
@@ -54,7 +54,7 @@ public class StationManager : PatchImpl<StationManager>
 
     public static void Init()
     {
-        GameLogic.OnGameBegin += () =>
+        GameLogicProc.OnGameBegin += () =>
         {
             _stations = null;
             var data = GameMain.data;

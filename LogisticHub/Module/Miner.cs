@@ -4,6 +4,7 @@ using HarmonyLib;
 using UnityEngine;
 using UXAssist.Common;
 using Random = UnityEngine.Random;
+using GameLogicProc = UXAssist.Common.GameLogic;
 
 namespace LogisticHub.Module;
 
@@ -62,12 +63,12 @@ public class Miner : PatchImpl<Miner>
 
     protected override void OnEnable()
     {
-        GameLogic.OnGameBegin += OnGameBegin;
+        GameLogicProc.OnGameBegin += OnGameBegin;
     }
 
     protected override void OnDisable()
     {
-        GameLogic.OnGameBegin -= OnGameBegin;
+        GameLogicProc.OnGameBegin -= OnGameBegin;
     }
 
     private static void OnGameBegin()
@@ -124,14 +125,14 @@ public class Miner : PatchImpl<Miner>
     }
 
     [HarmonyPrefix]
-    [HarmonyPatch(typeof(GameData), "GameTick")]
-    private static void GameData_GameTick_Prefix()
+    [HarmonyPatch(typeof(GameLogic), nameof(GameLogic.OnFactoryFrameBegin))]
+    private static void GameLogic_OnFactoryFrameBegin_Prefix()
     {
         var main = GameMain.instance;
         if (main.isMenuDemo) return;
         if (_miningSpeedScaleLong <= 0) return;
 
-        PerformanceMonitor.BeginSample(ECpuWorkEntry.Miner);
+        DeepProfiler.BeginSample(DPEntry.Miner);
         if (main.timei % 60 != 0) return;
         _frame += _miningFrames;
         var frameCounter = Mathf.FloorToInt(_frame / 1200000f);
@@ -229,7 +230,7 @@ public class Miner : PatchImpl<Miner>
             }
         }
 
-        PerformanceMonitor.EndSample(ECpuWorkEntry.Miner);
+        DeepProfiler.EndSample(DPEntry.Miner);
     }
 
     [HarmonyPostfix]

@@ -22,9 +22,9 @@ public class LogisticHub : BaseUnityPlugin
             "Energy consumption for each ore vein group(in 0.5W)");
         Module.Miner.OilEnergyConsume = Config.Bind("Miner", "EnergyConsumptionForOil", 3600000L,
             "Energy consumption for each oil seep(in 0.5W)");
-        Module.Miner.WaterEnergyConsume = Config.Bind("Miner", "EnergyConsumptionForWater", 20000000L,
+        Module.Miner.WaterEnergyConsume = Config.Bind("Miner", "EnergyConsumptionForWater", 2000000L,
             "Energy consumption for water slot(in kW)");
-        Module.Miner.WaterSpeed = Config.Bind("Miner", "WaterMiningSpeed", 100,
+        Module.Miner.WaterSpeed = Config.Bind("Miner", "WaterMiningSpeed", 10,
             "Water mining speed (count per second)");
         Module.Miner.MiningScale = Config.Bind("Miner", "MiningScale", 0,
             """
