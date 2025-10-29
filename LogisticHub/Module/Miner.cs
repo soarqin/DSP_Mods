@@ -124,7 +124,7 @@ public class Miner : PatchImpl<Miner>
 
     [HarmonyPrefix]
     [HarmonyPatch(typeof(GameLogic), nameof(GameLogic.OnFactoryFrameBegin))]
-    private static void GameData_GameTick_Prefix()
+    private static void GameLogic_OnFactoryFrameBegin_Prefix()
     {
         var main = GameMain.instance;
         if (main.isMenuDemo) return;
@@ -139,7 +139,7 @@ public class Miner : PatchImpl<Miner>
 
         DeepProfiler.BeginSample(DPEntry.Miner);
         var data = GameMain.data;
-        if (data.factoryCount > _mineIndex.Length)
+        if (_mineIndex == null || data.factoryCount > _mineIndex.Length)
             Array.Resize(ref _mineIndex, data.factoryCount);
         var factoryStatPool = GameMain.statistics.production.factoryStatPool;
         for (var factoryIndex = data.factoryCount - 1; factoryIndex >= 0; factoryIndex--)

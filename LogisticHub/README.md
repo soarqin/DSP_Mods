@@ -6,7 +6,7 @@
 ## Usage
 
 * Miner(and fuel burning) functions
-  +Inspired by [PlanetMiner](https://dsp.thunderstore.io/package/blacksnipebiu/PlanetMiner)([github](https://github.com/blacksnipebiu/PlanetMiner))  
+  + Inspired by [PlanetMiner](https://dsp.thunderstore.io/package/blacksnipebiu/PlanetMiner)([github](https://github.com/blacksnipebiu/PlanetMiner))  
     But it is heavily optimized to resolve performance, accuracy and other issues in PlanetMiner.
   + (Optimization to PlanetMiner) Only recalculate count of veins when vein chunks are changed (added/removed by foundations/Sandbox-Mode, or exhausted), so this removes Dictionary allocation on each planet for every frame.
   + (Optimization to PlanetMiner) More accurate frame counting by use float number.
