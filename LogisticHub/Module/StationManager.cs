@@ -12,6 +12,7 @@ public class PlanetStations
 
     public void AddStationStorage(bool demand, int id, int stationId, int storageIdx)
     {
+        LogisticHub.Logger.LogDebug($"AddStationStorage: demand={demand}, id={id}, stationId={stationId}, storageIdx={storageIdx}");
         var stations = StorageIndices[demand ? 1 : 0];
         if (stations == null || id >= stations.Length)
         {

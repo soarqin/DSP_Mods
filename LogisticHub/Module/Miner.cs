@@ -148,15 +148,19 @@ public class Miner : PatchImpl<Miner>
             var planetTransport = factory.transport;
             var productRegister = factoryStatPool[factoryIndex]?.productRegister;
             var demands = stations.StorageIndices[1];
+            if (demands == null) continue;
             foreach (var (itemIndex, itemId) in VeinList)
             {
-                foreach (var storageIndex in demands[itemIndex])
+                if (itemIndex >= demands.Length) continue;
+                var demandList = demands[itemIndex];
+                if (demandList == null) continue;
+                foreach (var storageIndex in demandList)
                 {
-                    LogisticHub.Logger.LogDebug($"StorageIndex: {storageIndex}");
                     var station = planetTransport.stationPool[storageIndex / 100];
                     if (station == null)
                         continue;
                     ref var storage = ref station.storage[storageIndex % 100];
+                    if (storage.count >= storage.max) continue;
                     int amount;
                     long energyConsume;
                     var miningScale = MiningScale.Value;
@@ -164,7 +168,6 @@ public class Miner : PatchImpl<Miner>
                     {
                         miningScale = _advancedMiningMachineUnlocked ? 300 : 100;
                     }
-
                     if (miningScale > 100 && storage.count * 2 > storage.max)
                     {
                         miningScale = 100 + ((miningScale - 100) * (storage.max - storage.count) * 2 + storage.max - 1) / storage.max;
