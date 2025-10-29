@@ -1069,10 +1069,10 @@ public static class LogisticsPatch
             var localPlanet = GameMain.data?.localPlanet;
             if (localPlanet == null || !localPlanet.factoryLoaded)
             {
+                _stationTipsRoot.SetActive(false);
                 if (_lastPlanetId == 0) return;
                 RecycleStationTips();
                 _lastPlanetId = 0;
-                _stationTipsRoot.SetActive(false);
                 return;
             }
 
