@@ -11,10 +11,11 @@ public class Miner : PatchImpl<Miner>
 {
     public static ConfigEntry<bool> Enabled;
     public static ConfigEntry<long> OreEnergyConsume;
+    public static ConfigEntry<int> OreMiningScale;
+    public static ConfigEntry<int> OreMiningMultiplier;
     public static ConfigEntry<long> OilEnergyConsume;
     public static ConfigEntry<long> WaterEnergyConsume;
     public static ConfigEntry<int> WaterSpeed;
-    public static ConfigEntry<int> MiningScale;
     public static ConfigEntry<int> FuelIlsSlot;
     public static ConfigEntry<int> FuelPlsSlot;
 
@@ -23,6 +24,8 @@ public class Miner : PatchImpl<Miner>
     private static long _miningFrames;
     private static long _miningSpeedScaleLong;
     private static bool _advancedMiningMachineUnlocked;
+    private static int _miningMultiplier = 3;
+    private static int _miningScale = 100;
     private static uint _miningCostBarrier;
     private static uint _miningCostBarrierOil;
     private static int[] _mineIndex;
@@ -90,6 +93,15 @@ public class Miner : PatchImpl<Miner>
     private static void CheckRecipes()
     {
         _advancedMiningMachineUnlocked = GameMain.history.recipeUnlocked.Contains(119);
+        _miningMultiplier = OreMiningMultiplier.Value;
+        if (OreMiningScale.Value == 0)
+        {
+            _miningScale = _advancedMiningMachineUnlocked ? 300 : 100;
+        }
+        else
+        {
+            _miningScale = OreMiningScale.Value;
+        }
     }
 
     private static void UpdateMiningCostRate()
@@ -163,11 +175,7 @@ public class Miner : PatchImpl<Miner>
                     if (storage.count >= storage.max) continue;
                     int amount;
                     long energyConsume;
-                    var miningScale = MiningScale.Value;
-                    if (miningScale == 0)
-                    {
-                        miningScale = _advancedMiningMachineUnlocked ? 300 : 100;
-                    }
+                    var miningScale = _miningScale;
                     if (miningScale > 100 && storage.count * 2 > storage.max)
                     {
                         miningScale = 100 + ((miningScale - 100) * (storage.max - storage.count) * 2 + storage.max - 1) / storage.max;
@@ -175,7 +183,7 @@ public class Miner : PatchImpl<Miner>
 
                     if (itemIndex > 0)
                     {
-                        (amount, energyConsume) = Mine(factory, veins, itemId, miningScale, (int)frameCounter, station.energy);
+                        (amount, energyConsume) = Mine(factory, veins, itemId, miningScale, (int)frameCounter, _miningMultiplier, station.energy);
                         if (amount < 0) continue;
                     }
                     else
@@ -242,7 +250,7 @@ public class Miner : PatchImpl<Miner>
         }
     }
 
-    private static (int, long) Mine(PlanetFactory factory, ProductVeinData[] allVeins, int productId, int percent, int counter, long energyMax)
+    private static (int, long) Mine(PlanetFactory factory, ProductVeinData[] allVeins, int productId, int percent, int counter, int multiplier, long energyMax)
     {
         var veins = allVeins[productId - 1000];
         if (veins == null)
@@ -257,7 +265,7 @@ public class Miner : PatchImpl<Miner>
         /* if is Oil */
         if (productId == 1007)
         {
-            energy = (OilEnergyConsume.Value * length * percent * percent + 9999L) / 10000L;
+            energy = OilEnergyConsume.Value * length;
             if (energy > energyMax)
                 return (-1, -1L);
             var countf = 0f;
@@ -266,8 +274,7 @@ public class Miner : PatchImpl<Miner>
             {
                 countf += veinsPool[veinIndices[i]].amount * 4 * VeinData.oilSpeedMultiplier;
             }
-
-            count = ((int)countf * counter * percent + 99) / 100;
+            count = (int)(countf * (counter * percent) / 100f);
             if (count == 0)
                 return (-1, -1L);
             barrier = _miningCostBarrierOil;
@@ -275,7 +282,7 @@ public class Miner : PatchImpl<Miner>
         }
         else
         {
-            count = (length * counter * percent + 99) / 100;
+            count = (length * multiplier * counter * percent + 99) / 100;
             if (count == 0)
                 return (-1, -1L);
             energy = (OreEnergyConsume.Value * veins.GroupCount * percent * percent + 9999L) / 10000L;

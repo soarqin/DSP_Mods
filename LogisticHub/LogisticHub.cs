@@ -19,19 +19,21 @@ public class LogisticHub : BaseUnityPlugin
     {
         Module.Miner.Enabled = Config.Bind("Miner", "Enabled", true, "enable/disable this plugin");
         Module.Miner.OreEnergyConsume = Config.Bind("Miner", "EnergyConsumptionForOre", 2000000L,
-            "Energy consumption for each ore vein group(in 0.5W)");
-        Module.Miner.OilEnergyConsume = Config.Bind("Miner", "EnergyConsumptionForOil", 3600000L,
-            "Energy consumption for each oil seep(in 0.5W)");
-        Module.Miner.WaterEnergyConsume = Config.Bind("Miner", "EnergyConsumptionForWater", 2000000L,
-            "Energy consumption for water slot(in kW)");
-        Module.Miner.WaterSpeed = Config.Bind("Miner", "WaterMiningSpeed", 10,
-            "Water mining speed (count per second)");
-        Module.Miner.MiningScale = Config.Bind("Miner", "MiningScale", 0,
+            "Energy consumption for each ore vein group(in W)");
+        Module.Miner.OreMiningMultiplier = Config.Bind("Miner", "OreMiningMultiplier", 3,
+            new ConfigDescription("Mining multiplier for ore veins, multiplies to the number of veins in the group", new AcceptableValueRange<int>(1, 100)));
+        Module.Miner.OreMiningScale = Config.Bind("Miner", "OreMiningScale", 100,
             """
-            0 for Auto(which means having researched makes mining scale 300, otherwise 100).
+            0 for Auto(which means having researched advanced mining machine makes mining scale 300, otherwise 100).
             Mining scale(in percents) for slots below half of slot limits, and the scale reduces to 100% smoothly till reach full.
             Please note that the power consumption increases by the square of the scale which is the same as Advanced Mining Machine.
             """);
+        Module.Miner.OilEnergyConsume = Config.Bind("Miner", "EnergyConsumptionForOil", 1800000L,
+            "Energy consumption for each oil seep(in W)");
+        Module.Miner.WaterEnergyConsume = Config.Bind("Miner", "EnergyConsumptionForWater", 2000000L,
+            "Energy consumption for water slot(in W)");
+        Module.Miner.WaterSpeed = Config.Bind("Miner", "WaterMiningSpeed", 10,
+            "Water mining speed (count per second)");
         Module.Miner.FuelIlsSlot = Config.Bind("Miner", "ILSFuelSlot", 4,
             new ConfigDescription("Fuel slot for ILS, set 0 to disable.", new AcceptableValueRange<int>(0, 5)));
         Module.Miner.FuelPlsSlot = Config.Bind("Miner", "PLSFuelSlot", 4,
