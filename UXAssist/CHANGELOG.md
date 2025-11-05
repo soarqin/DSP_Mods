@@ -3,6 +3,10 @@
 
 ## Changlog
 
+* 1.4.4
+  * `Remember window position and size on last exit`: Fix compatiblity for game patch 0.10.33
+  * `Real-time logistic stations info panel`: Try to fix a display issue.
+  * Patch [CommonAPI](https://thunderstore.io/c/dyson-sphere-program/p/CommonAPI/CommonAPI/) temporarily to fix a known issue that shortcut key settings are not saved to config, while its [PR](https://github.com/limoka/CommonAPI/pull/14) is not merged yet.
 * 1.4.3
   * `Build Tesla Tower and Wireless Power Tower alternately`:
     * Fix wrong implementation for latest game patch.
@@ -346,6 +350,10 @@
 
 ## 更新日志
 
+* 1.4.4
+  * `记住上次退出时的窗口位置和大小`：修复对游戏补丁0.10.33的兼容性
+  * `物流站实时信息面板`：尝试修复一个显示问题
+  * 对[CommonAPI](https://thunderstore.io/c/dyson-sphere-program/p/CommonAPI/CommonAPI/)临时打补丁，修复快捷键设置未能保存到配置文件的已知问题（其[PR](https://github.com/limoka/CommonAPI/pull/14)仍未合并）
 * 1.4.3
   * `交替建造电力感应塔和无线输电塔`:
     * 修复了在最新游戏补丁中的错误实现

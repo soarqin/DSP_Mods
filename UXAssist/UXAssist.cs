@@ -56,6 +56,7 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
     UXAssist()
     {
         ModsCompat.PlanetVeinUtilization.Run(_harmony);
+        ModsCompat.CommonAPIWrapper.Run(_harmony);
     }
 
     private void Awake()
@@ -217,7 +218,8 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
             t => string.Equals(t.Namespace, "UXAssist.Patches", StringComparison.Ordinal) || string.Equals(t.Namespace, "UXAssist.Functions", StringComparison.Ordinal));
         _patches?.Do(type => type.GetMethod("Init")?.Invoke(null, null));
         _compats = Util.GetTypesInNamespace(Assembly.GetExecutingAssembly(), "UXAssist.ModsCompat");
-        _compats?.Do(type => type.GetMethod("Init")?.Invoke(null, null));
+        object[] parameters = [_harmony];
+        _compats?.Do(type => type.GetMethod("Init")?.Invoke(null, parameters));
 
         I18N.Apply();
     }

@@ -4,7 +4,7 @@
     <TargetFramework>net472</TargetFramework>
     <BepInExPluginGuid>org.soardev.uxassist</BepInExPluginGuid>
     <Description>DSP MOD - UXAssist</Description>
-    <Version>1.4.3</Version>
+    <Version>1.4.4</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
     <PackageId>UXAssist</PackageId>
@@ -17,7 +17,7 @@
     <PackageReference Include="BepInEx.PluginInfoProps" Version="1.*" />
     <PackageReference Include="UnityEngine.Modules" Version="2022.3.53" IncludeAssets="compile" />
     <!-- <PackageReference Include="DysonSphereProgram.GameLibs" Version="0.10.32.*-r.*" /> -->
-    <PackageReference Include="DysonSphereProgram.Modding.CommonAPI" Version="1.6.5" />
+    <PackageReference Include="DysonSphereProgram.Modding.CommonAPI" Version="1.*" />
     <PackageReference Include="DysonSphereProgram.Modding.DSPModSave" Version="1.*" />
   </ItemGroup>
 
