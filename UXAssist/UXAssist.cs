@@ -56,6 +56,7 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
     UXAssist()
     {
         ModsCompat.PlanetVeinUtilization.Run(_harmony);
+        ModsCompat.BlueprintTweaks.Run(_harmony);
         ModsCompat.CommonAPIWrapper.Run(_harmony);
     }
 

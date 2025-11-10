@@ -24,6 +24,13 @@ public static class FactoryFunctions
         cargoTraffic.AlterBeltConnections(beltId, 0, i0, i1, i2);
     }
 
+    public static bool ObjectIsBeltOrInserter(PlanetFactory factory, int objId)
+    {
+		if (objId == 0) return false;
+		ItemProto proto = LDB.items.Select(objId > 0 ? factory.entityPool[objId].protoId : factory.prebuildPool[-objId].protoId);
+		return proto != null && (proto.prefabDesc.isBelt || proto.prefabDesc.isInserter);
+    }
+
     public static void DismantleBlueprintSelectedBuildings()
     {
         var player = GameMain.mainPlayer;
@@ -50,7 +57,7 @@ public static class FactoryFunctions
                 for (var j = 0; j < 2; j++)
                 {
                     factory.ReadObjectConn(objId, j, out _, out var connObjId, out _);
-                    if (connObjId == 0 || factory.ObjectIsBelt(connObjId) || blueprintCopyTool.ObjectIsInserter(connObjId)) continue;
+                    if (connObjId == 0 || ObjectIsBeltOrInserter(factory, connObjId)) continue;
                     needCheck = true;
                     break;
                 }
@@ -59,7 +66,7 @@ public static class FactoryFunctions
                     for (var k = 0; k < 16; k++)
                     {
                         factory.ReadObjectConn(objId, k, out _, out var connObjId, out _);
-                        if (connObjId != 0 && (index = buildPreviewsToRemove.BinarySearch(connObjId)) < 0 && (factory.ObjectIsBelt(connObjId) || blueprintCopyTool.ObjectIsInserter(connObjId)))
+                        if (connObjId != 0 && (index = buildPreviewsToRemove.BinarySearch(connObjId)) < 0 && ObjectIsBeltOrInserter(factory, connObjId))
                             buildPreviewsToRemove.Insert(~index, connObjId);
                     }
                 }
@@ -70,7 +77,7 @@ public static class FactoryFunctions
                     for (var j = 0; j < 2; j++)
                     {
                         factory.ReadObjectConn(connObjId, j, out _, out var connObjId2, out _);
-                        if (connObjId2 == 0 || (index = buildPreviewsToRemove.BinarySearch(connObjId2)) >= 0 || factory.ObjectIsBelt(connObjId2) || blueprintCopyTool.ObjectIsInserter(connObjId2)) continue;
+                        if (connObjId2 == 0 || (index = buildPreviewsToRemove.BinarySearch(connObjId2)) >= 0 || ObjectIsBeltOrInserter(factory, connObjId2)) continue;
                         buildPreviewsToRemove.Insert(~index, connObjId);
                         break;
                     }
@@ -81,7 +88,7 @@ public static class FactoryFunctions
             for (var j = 0; j < 16; j++)
             {
                 factory.ReadObjectConn(objId, j, out _, out var connObjId, out _);
-                if (connObjId != 0 && (index = buildPreviewsToRemove.BinarySearch(connObjId)) < 0 && (factory.ObjectIsBelt(connObjId) || blueprintCopyTool.ObjectIsInserter(connObjId)))
+                if (connObjId != 0 && (index = buildPreviewsToRemove.BinarySearch(connObjId)) < 0 && ObjectIsBeltOrInserter(factory, connObjId))
                     buildPreviewsToRemove.Insert(~index, connObjId);
             }
         }

@@ -4,6 +4,7 @@ using System.Reflection.Emit;
 using HarmonyLib;
 using UnityEngine;
 using UXAssist.Common;
+using GameLogicProc = UXAssist.Common.GameLogic;
 
 namespace UXAssist.Patches;
 
@@ -12,10 +13,12 @@ public class PersistPatch : PatchImpl<PersistPatch>
     public static void Start()
     {
         Enable(true);
+        GameLogicProc.OnGameBegin += GameMain_Begin_Postfix;
     }
 
     public static void Uninit()
     {
+        GameLogicProc.OnGameBegin -= GameMain_Begin_Postfix;
         Enable(false);
     }
 
@@ -223,6 +226,8 @@ public class PersistPatch : PatchImpl<PersistPatch>
         return matcher.InstructionEnumeration();
     }
 
+    private static long nextTimei = 0;
+
     private static void EntityFastTakeOutAlt(PlanetFactory factory, int entityId, bool toPackage, out ItemBundle itemBundle, out bool full)
     {
 		if (factory._tmp_items == null)
@@ -235,6 +240,8 @@ public class PersistPatch : PatchImpl<PersistPatch>
 		}
 		itemBundle = factory._tmp_items;
 		full = false;
+        if (GameMain.instance.timei < nextTimei) return;
+        nextTimei = GameMain.instance.timei + 12;
         if (entityId == 0 || factory.entityPool[entityId].id != entityId)
 		{
 			return;
@@ -249,6 +256,31 @@ public class PersistPatch : PatchImpl<PersistPatch>
         var buffer = cargoPath.buffer;
         Dictionary<int, long> takeOutItems = [];
 		var mainPlayer = factory.gameData.mainPlayer;
+        var factorySystem = factory.factorySystem;
+        foreach (var beltId in cargoPath.belts)
+        {
+            ref var b = ref cargoTraffic.beltPool[beltId];
+            if (b.id != beltId) return;
+            // From WriteObjectConn: Only slot 4 to 11 is used for belt <-> inserter connections (slot/otherSlot is -1 there)
+            for (int cidx = 4; cidx < 12; cidx++)
+            {
+                factory.ReadObjectConn(b.entityId, cidx, out var isOutput, out var otherObjId, out var otherSlot);
+                if (otherObjId <= 0) continue;
+                var inserterId = factory.entityPool[otherObjId].inserterId;
+                if (inserterId <= 0) continue;
+                ref var inserter = ref factorySystem.inserterPool[inserterId];
+                if (inserter.id != inserterId) continue;
+                if (inserter.itemId > 0 && inserter.stackCount > 0)
+                {
+                    takeOutItems[inserter.itemId] = (takeOutItems.TryGetValue(inserter.itemId, out var value) ? value : 0)
+                        + ((long)inserter.itemCount | ((long)inserter.itemInc << 32));
+                    inserter.itemId = 0;
+                    inserter.stackCount = 0;
+                    inserter.itemCount = 0;
+                    inserter.itemInc = 0;
+                }
+            }
+        }
         int i = 0;
         while (i <= end)
         {
@@ -284,5 +316,10 @@ public class PersistPatch : PatchImpl<PersistPatch>
                 UIItemup.Up(kvp.Key, added);
             }
         }
+    }
+
+    private static void GameMain_Begin_Postfix()
+    {
+        nextTimei = 0;
     }
 }
