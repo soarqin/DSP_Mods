@@ -15,6 +15,8 @@ class BlueprintTweaks
         if (!BepInEx.Bootstrap.Chainloader.PluginInfos.TryGetValue(BlueprintTweaksGuid, out var pluginInfo)) return false;
         var assembly = pluginInfo.Instance.GetType().Assembly;
         var classType = assembly.GetType("BlueprintTweaks.DragRemoveBuildTool");
+        if (classType == null) return false;
+        if (AccessTools.Method(classType, "DetermineMorePreviews") != null) return true;
         selectObjIdsField = AccessTools.Field(classType, "selectObjIds");
         harmony.Patch(AccessTools.Method(classType, "DeterminePreviews"),
             new HarmonyMethod(AccessTools.Method(typeof(BlueprintTweaks), nameof(PatchDeterminePreviews))));
