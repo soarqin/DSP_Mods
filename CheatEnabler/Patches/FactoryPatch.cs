@@ -94,14 +94,14 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         ControlPanelRemoteLogistics.Enable(ControlPanelRemoteLogisticsEnabled.Value);
         Enable(true);
         CargoTrafficPatch.Enable(true);
-        GameLogicProc.OnGameBegin += GameMain_Begin_Postfix_For_ImmBuild;
+        GameLogicProc.OnGameBegin += OnGameBegin_For_ImmBuild;
         GameLogicProc.OnDataLoaded += OnDataLoaded;
     }
 
     public static void Uninit()
     {
         GameLogicProc.OnDataLoaded -= OnDataLoaded;
-        GameLogicProc.OnGameBegin -= GameMain_Begin_Postfix_For_ImmBuild;
+        GameLogicProc.OnGameBegin -= OnGameBegin_For_ImmBuild;
         CargoTrafficPatch.Enable(false);
         Enable(false);
         ImmediateBuild.Enable(false);
@@ -292,7 +292,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         }
     }
 
-    private static void GameMain_Begin_Postfix_For_ImmBuild()
+    private static void OnGameBegin_For_ImmBuild()
     {
         if (DSPGame.IsMenuDemo) return;
         var factory = GameMain.mainPlayer?.factory;
@@ -629,12 +629,12 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         protected override void OnEnable()
         {
             InitSignalBelts();
-            GameLogicProc.OnGameBegin += GameMain_Begin_Postfix;
+            GameLogicProc.OnGameBegin += OnGameBegin;
         }
 
         protected override void OnDisable()
         {
-            GameLogicProc.OnGameBegin -= GameMain_Begin_Postfix;
+            GameLogicProc.OnGameBegin -= OnGameBegin;
             _initialized = false;
             _signalBelts = null;
             _signalBeltsCapacity = 0;
@@ -865,7 +865,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             set.Remove(v);
         }
 
-        private static void GameMain_Begin_Postfix()
+        private static void OnGameBegin()
         {
             if (DSPGame.IsMenuDemo) return;
             if (BeltSignalGeneratorEnabled.Value) InitSignalBelts();

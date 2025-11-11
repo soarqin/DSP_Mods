@@ -269,14 +269,14 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
         protected override void OnEnable()
         {
             InitNodeForAbsorb();
-            GameLogicProc.OnGameBegin += GameMain_Begin_Postfix;
-            GameLogicProc.OnGameEnd += GameMain_End_Postfix;
+            GameLogicProc.OnGameBegin += OnGameBegin;
+            GameLogicProc.OnGameEnd += OnGameEnd;
         }
 
         protected override void OnDisable()
         {
-            GameLogicProc.OnGameEnd -= GameMain_End_Postfix;
-            GameLogicProc.OnGameBegin -= GameMain_Begin_Postfix;
+            GameLogicProc.OnGameEnd -= OnGameEnd;
+            GameLogicProc.OnGameBegin -= OnGameBegin;
             _initialized = false;
             _nodeForAbsorb = null;
         }
@@ -347,12 +347,12 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
             return comp is { Count: > 0 };
         }
 
-        private static void GameMain_Begin_Postfix()
+        private static void OnGameBegin()
         {
             InitNodeForAbsorb();
         }
 
-        private static void GameMain_End_Postfix()
+        private static void OnGameEnd()
         {
             _initialized = false;
             _nodeForAbsorb = null;

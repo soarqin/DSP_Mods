@@ -26,9 +26,9 @@ public static class FactoryFunctions
 
     public static bool ObjectIsBeltOrInserter(PlanetFactory factory, int objId)
     {
-		if (objId == 0) return false;
-		ItemProto proto = LDB.items.Select(objId > 0 ? factory.entityPool[objId].protoId : factory.prebuildPool[-objId].protoId);
-		return proto != null && (proto.prefabDesc.isBelt || proto.prefabDesc.isInserter);
+        if (objId == 0) return false;
+        ItemProto proto = LDB.items.Select(objId > 0 ? factory.entityPool[objId].protoId : factory.prebuildPool[-objId].protoId);
+        return proto != null && (proto.prefabDesc.isBelt || proto.prefabDesc.isInserter);
     }
 
     public static void DismantleBlueprintSelectedBuildings()

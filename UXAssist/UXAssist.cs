@@ -140,6 +140,12 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
         FactoryPatch.SiloBufferCount = Config.Bind("Factory", "SiloBufferCount", 1, new ConfigDescription("Silo buffer count", new AcceptableValueRange<int>(1, 40)));
         FactoryPatch.ShortcutKeysForBlueprintCopyEnabled = Config.Bind("Factory", "DismantleBlueprintSelection", false,
             "Dismantle blueprint selected buildings");
+        FactoryPatch.PressShiftToTakeWholeBeltItemsEnabled = Config.Bind("Factory", "PressShiftToTakeWholeBeltItems", false,
+            "Press Ctrl+Shift to take items from whole belts");
+        FactoryPatch.PressShiftToTakeWholeBeltItemsIncludeBranches = Config.Bind("Factory", "PressShiftToTakeWholeBeltItemsIncludeBranches", true,
+            "Press Ctrl+Shift to take items from whole belts: Include branches");
+        FactoryPatch.PressShiftToTakeWholeBeltItemsIncludeInserters = Config.Bind("Factory", "PressShiftToTakeWholeBeltItemsIncludeInserters", true,
+            "Press Ctrl+Shift to take items from whole belts: Include inserters");
         LogisticsPatch.AutoConfigLogisticsEnabled = Config.Bind("Factory", "AutoConfigLogistics", false,
             "Auto-config logistic stations");
         LogisticsPatch.AutoConfigLimitAutoReplenishCount = Config.Bind("Factory", "AutoConfigLimitAutoReplenishCount", false,

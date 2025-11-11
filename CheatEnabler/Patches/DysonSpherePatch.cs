@@ -134,12 +134,12 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
         {
             UpdateSailLifeTime();
             UpdateSailsCacheForThisGame();
-            GameLogicProc.OnGameBegin += GameMain_Begin_Postfix;
+            GameLogicProc.OnGameBegin += OnGameBegin;
         }
 
         protected override void OnDisable()
         {
-            GameLogicProc.OnGameBegin -= GameMain_Begin_Postfix;
+            GameLogicProc.OnGameBegin -= OnGameBegin;
         }
 
         private static void UpdateSailLifeTime()
@@ -172,7 +172,7 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
             _sailsCacheCapacity[index] = capacity;
         }
 
-        private static void GameMain_Begin_Postfix()
+        private static void OnGameBegin()
         {
             UpdateSailsCacheForThisGame();
             UpdateSailLifeTime();

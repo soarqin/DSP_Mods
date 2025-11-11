@@ -45,6 +45,9 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
     public static ConfigEntry<int> EjectorBufferCount;
     public static ConfigEntry<int> SiloBufferCount;
     public static ConfigEntry<bool> ShortcutKeysForBlueprintCopyEnabled;
+    public static ConfigEntry<bool> PressShiftToTakeWholeBeltItemsEnabled;
+    public static ConfigEntry<bool> PressShiftToTakeWholeBeltItemsIncludeBranches;
+    public static ConfigEntry<bool> PressShiftToTakeWholeBeltItemsIncludeInserters;
 
     private static PressKeyBind _doNotRenderEntitiesKey;
     private static PressKeyBind _offgridfForPathsKey;
@@ -131,6 +134,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         ReceiverBufferCount.SettingChanged += (_, _) => TweakBuildingBuffer.RefreshReceiverBufferCount();
         EjectorBufferCount.SettingChanged += (_, _) => TweakBuildingBuffer.RefreshEjectorBufferCount();
         SiloBufferCount.SettingChanged += (_, _) => TweakBuildingBuffer.RefreshSiloBufferCount();
+        PressShiftToTakeWholeBeltItemsEnabled.SettingChanged += (_, _) => PressShiftToTakeWholeBeltItems.Enable(PressShiftToTakeWholeBeltItemsEnabled.Value);
     }
 
     public static void Start()
@@ -150,6 +154,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         BeltSignalsForBuyOut.Enable(BeltSignalsForBuyOutEnabled.Value);
         TankFastFillInAndTakeOut.Enable(TankFastFillInAndTakeOutEnabled.Value);
         TweakBuildingBuffer.Enable(TweakBuildingBufferEnabled.Value);
+        PressShiftToTakeWholeBeltItems.Enable(PressShiftToTakeWholeBeltItemsEnabled.Value);
 
         Enable(true);
         UpdateTankFastFillInAndTakeOutMultiplierRealValue();
@@ -159,6 +164,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
     {
         Enable(false);
 
+        PressShiftToTakeWholeBeltItems.Enable(false);
         TweakBuildingBuffer.Enable(false);
         TankFastFillInAndTakeOut.Enable(false);
         BeltSignalsForBuyOut.Enable(false);
@@ -276,12 +282,12 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
 
         protected override void OnEnable()
         {
-            GameLogicProc.OnGameEnd += GameMain_End_Postfix;
+            GameLogicProc.OnGameEnd += OnGameEnd;
         }
 
         protected override void OnDisable()
         {
-            GameLogicProc.OnGameEnd -= GameMain_End_Postfix;
+            GameLogicProc.OnGameEnd -= OnGameEnd;
             if (_sunlight)
             {
                 _sunlight.transform.localEulerAngles = new Vector3(0f, 180f);
@@ -292,7 +298,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             _nightlightInitialized = false;
         }
 
-        private static void GameMain_End_Postfix()
+        private static void OnGameEnd()
         {
             if (_sunlight)
             {
@@ -1405,16 +1411,16 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
 
         protected override void OnEnable()
         {
-            GameLogicProc.OnGameBegin += GameMain_Begin_Postfix;
-            GameLogicProc.OnGameEnd += GameMain_End_Postfix;
+            GameLogicProc.OnGameBegin += OnGameBegin;
+            GameLogicProc.OnGameEnd += OnGameEnd;
             FixProto();
         }
 
         protected override void OnDisable()
         {
             UnfixProto();
-            GameLogicProc.OnGameEnd -= GameMain_End_Postfix;
-            GameLogicProc.OnGameBegin -= GameMain_Begin_Postfix;
+            GameLogicProc.OnGameEnd -= OnGameEnd;
+            GameLogicProc.OnGameBegin -= OnGameBegin;
         }
 
         public static void AlternatelyChanged()
@@ -1465,12 +1471,12 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             OldDragBuildDist.Clear();
         }
 
-        private static void GameMain_Begin_Postfix()
+        private static void OnGameBegin()
         {
             FixProto();
         }
 
-        private static void GameMain_End_Postfix()
+        private static void OnGameEnd()
         {
             UnfixProto();
         }
@@ -1782,12 +1788,12 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             {
                 AddBeltSignalProtos();
                 GameLogicProc.OnDataLoaded += VFPreload_InvokeOnLoadWorkEnded_Postfix;
-                GameLogicProc.OnGameBegin += GameMain_Begin_Postfix;
+                GameLogicProc.OnGameBegin += OnGameBegin;
             }
 
             protected override void OnDisable()
             {
-                GameLogicProc.OnGameBegin -= GameMain_Begin_Postfix;
+                GameLogicProc.OnGameBegin -= OnGameBegin;
                 GameLogicProc.OnDataLoaded -= VFPreload_InvokeOnLoadWorkEnded_Postfix;
             }
 
@@ -1809,7 +1815,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                 RemovePlanetSignalBelts(factory.index);
             }
 
-            private static void GameMain_Begin_Postfix()
+            private static void OnGameBegin()
             {
                 _clusterSeedKey = GameMain.data.GetClusterSeedKey();
                 InitSignalBelts();
@@ -2231,6 +2237,168 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             );
             matcher.Advance(2).Operand = SiloBufferCount.Value;
             return matcher.InstructionEnumeration();
+        }
+    }
+
+    private class PressShiftToTakeWholeBeltItems : PatchImpl<PressShiftToTakeWholeBeltItems>
+    {
+        private static long nextTimei = 0;
+
+        protected override void OnEnable()
+        {
+            GameLogicProc.OnGameBegin += OnGameBegin;
+        }
+
+        protected override void OnDisable()
+        {
+            GameLogicProc.OnGameBegin -= OnGameBegin;
+        }
+
+        private static void OnGameBegin()
+        {
+            nextTimei = 0;
+        }
+
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(VFInput), nameof(VFInput._fastTransferWithEntityDown), MethodType.Getter)]
+        [HarmonyPatch(typeof(VFInput), nameof(VFInput._fastTransferWithEntityPress), MethodType.Getter)]
+        private static IEnumerable<CodeInstruction> VFInput_fastTransferWithEntityDown_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Ldsfld, AccessTools.Field(typeof(VFInput), nameof(VFInput.shift))),
+                new CodeMatch(ci => ci.opcode == OpCodes.Brtrue || ci.opcode == OpCodes.Brtrue_S)
+            );
+            var lables = matcher.Labels;
+            matcher.RemoveInstructions(2);
+            matcher.Labels.AddRange(lables);
+            return matcher.InstructionEnumeration();
+        }
+
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(PlayerAction_Inspect), nameof(PlayerAction_Inspect.GameTick))]
+        private static IEnumerable<CodeInstruction> PlayerAction_Inspect_GameTick_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Ldc_I4_1),
+                new CodeMatch(OpCodes.Stfld, AccessTools.Field(typeof(PlayerAction_Inspect), nameof(PlayerAction_Inspect.fastFillIn)))
+            );
+            matcher.SetAndAdvance(OpCodes.Ldsfld, AccessTools.Field(typeof(VFInput), nameof(VFInput.shift))).Insert(
+                new CodeInstruction(OpCodes.Ldc_I4_0),
+                new CodeInstruction(OpCodes.Ceq)
+            );
+
+            var label0 = generator.DefineLabel();
+            var label1 = generator.DefineLabel();
+            matcher.Start().MatchForward(false,
+                new CodeMatch(ci => ci.IsStloc()),
+                new CodeMatch(OpCodes.Ldc_I4_0),
+                new CodeMatch(ci => ci.IsStloc()),
+                new CodeMatch(OpCodes.Ldloc_0),
+                new CodeMatch(ci => ci.IsLdloc()),
+                new CodeMatch(ci => ci.IsLdloc()),
+                new CodeMatch(ci => ci.IsLdloc()),
+                new CodeMatch(ci => ci.IsLdloc()),
+                new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(PlanetFactory), nameof(PlanetFactory.EntityFastTakeOut)))
+            ).Advance(8).InsertAndAdvance(
+                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(VFInput), nameof(VFInput.shift))),
+                new CodeInstruction(OpCodes.Brfalse_S, label0),
+                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(PressShiftToTakeWholeBeltItems), nameof(EntityFastTakeOutAlt))),
+                new CodeInstruction(OpCodes.Br, label1)
+            ).Labels.Add(label0);
+            matcher.Advance(1).Labels.Add(label1);
+            return matcher.InstructionEnumeration();
+        }
+
+        private static void EntityFastTakeOutAlt(PlanetFactory factory, int entityId, bool toPackage, out ItemBundle itemBundle, out bool full)
+        {
+            if (factory._tmp_items == null)
+            {
+                factory._tmp_items = new ItemBundle();
+            }
+            else
+            {
+                factory._tmp_items.Clear();
+            }
+            itemBundle = factory._tmp_items;
+            full = false;
+            if (GameMain.instance.timei < nextTimei) return;
+            nextTimei = GameMain.instance.timei + 12;
+            if (entityId == 0 || factory.entityPool[entityId].id != entityId)
+            {
+                return;
+            }
+            ref var entityData = ref factory.entityPool[entityId];
+            if (entityData.beltId <= 0) return;
+            var cargoTraffic = factory.cargoTraffic;
+            ref var belt = ref cargoTraffic.beltPool[entityData.beltId];
+            if (belt.id != entityData.beltId) return;
+            var cargoPath = cargoTraffic.GetCargoPath(belt.segPathId);
+            var end = cargoPath.bufferLength - 1;
+            var buffer = cargoPath.buffer;
+            Dictionary<int, long> takeOutItems = [];
+            var mainPlayer = factory.gameData.mainPlayer;
+            var factorySystem = factory.factorySystem;
+            foreach (var beltId in cargoPath.belts)
+            {
+                ref var b = ref cargoTraffic.beltPool[beltId];
+                if (b.id != beltId) return;
+                // From WriteObjectConn: Only slot 4 to 11 is used for belt <-> inserter connections (method argument slot/otherSlot is -1 there)
+                for (int cidx = 4; cidx < 12; cidx++)
+                {
+                    factory.ReadObjectConn(b.entityId, cidx, out var isOutput, out var otherObjId, out var otherSlot);
+                    if (otherObjId <= 0) continue;
+                    var inserterId = factory.entityPool[otherObjId].inserterId;
+                    if (inserterId <= 0) continue;
+                    ref var inserter = ref factorySystem.inserterPool[inserterId];
+                    if (inserter.id != inserterId) continue;
+                    if (inserter.itemId > 0 && inserter.stackCount > 0)
+                    {
+                        takeOutItems[inserter.itemId] = (takeOutItems.TryGetValue(inserter.itemId, out var value) ? value : 0)
+                            + ((long)inserter.itemCount | ((long)inserter.itemInc << 32));
+                        inserter.itemId = 0;
+                        inserter.stackCount = 0;
+                        inserter.itemCount = 0;
+                        inserter.itemInc = 0;
+                    }
+                }
+            }
+            int i = 0;
+            while (i <= end)
+            {
+                if (buffer[i] >= 246)
+                {
+                    i += 250 - buffer[i];
+                    var index = buffer[i + 1] - 1 + (buffer[i + 2] - 1) * 100 + (buffer[i + 3] - 1) * 10000 + (buffer[i + 4] - 1) * 1000000;
+                    ref var cargo = ref cargoPath.cargoContainer.cargoPool[index];
+                    var item = cargo.item;
+                    var stack = cargo.stack;
+                    var inc = cargo.inc;
+                    takeOutItems[item] = (takeOutItems.TryGetValue(item, out var value) ? value : 0)
+                        + ((long)stack | ((long)inc << 32));
+                    Array.Clear(buffer, i - 4, 10);
+                    i += 10;
+                    if (cargoPath.updateLen < i) cargoPath.updateLen = i;
+                    cargoPath.cargoContainer.RemoveCargo(index);
+                }
+                else
+                {
+                    i += 5;
+                    if (i > end && i < end + 5)
+                    {
+                        i = end;
+                    }
+                }
+            }
+            foreach (var kvp in takeOutItems)
+            {
+                var added = mainPlayer.TryAddItemToPackage(kvp.Key, (int)(kvp.Value & 0xFFFFFFFF), (int)(kvp.Value >> 32), true, entityId);
+                if (added > 0)
+                {
+                    UIItemup.Up(kvp.Key, added);
+                }
+            }
         }
     }
 }
