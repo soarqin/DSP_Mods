@@ -2323,71 +2323,105 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             }
             itemBundle = factory._tmp_items;
             full = false;
-            if (GameMain.instance.timei < nextTimei) return;
-            nextTimei = GameMain.instance.timei + 12;
             if (entityId == 0 || factory.entityPool[entityId].id != entityId)
             {
                 return;
             }
+            if (GameMain.instance.timei < nextTimei) return;
+            nextTimei = GameMain.instance.timei + 12;
+
             ref var entityData = ref factory.entityPool[entityId];
             if (entityData.beltId <= 0) return;
             var cargoTraffic = factory.cargoTraffic;
             ref var belt = ref cargoTraffic.beltPool[entityData.beltId];
             if (belt.id != entityData.beltId) return;
-            var cargoPath = cargoTraffic.GetCargoPath(belt.segPathId);
-            var end = cargoPath.bufferLength - 1;
-            var buffer = cargoPath.buffer;
-            Dictionary<int, long> takeOutItems = [];
-            var mainPlayer = factory.gameData.mainPlayer;
-            var factorySystem = factory.factorySystem;
-            foreach (var beltId in cargoPath.belts)
+
+            HashSet<int> pathIds = [belt.segPathId];
+            if (PressShiftToTakeWholeBeltItemsIncludeBranches.Value)
             {
-                ref var b = ref cargoTraffic.beltPool[beltId];
-                if (b.id != beltId) return;
-                // From WriteObjectConn: Only slot 4 to 11 is used for belt <-> inserter connections (method argument slot/otherSlot is -1 there)
-                for (int cidx = 4; cidx < 12; cidx++)
+                List<int> pendingPathIds = [belt.segPathId];
+                while (pendingPathIds.Count > 0)
                 {
-                    factory.ReadObjectConn(b.entityId, cidx, out var isOutput, out var otherObjId, out var otherSlot);
-                    if (otherObjId <= 0) continue;
-                    var inserterId = factory.entityPool[otherObjId].inserterId;
-                    if (inserterId <= 0) continue;
-                    ref var inserter = ref factorySystem.inserterPool[inserterId];
-                    if (inserter.id != inserterId) continue;
-                    if (inserter.itemId > 0 && inserter.stackCount > 0)
+                    var lastIndex = pendingPathIds.Count - 1;
+                    var thisPathId = pendingPathIds[lastIndex];
+                    pendingPathIds.RemoveAt(lastIndex);
+                    var path = cargoTraffic.GetCargoPath(thisPathId);
+                    if (path == null) continue;
+                    foreach (var inputPathId in path.inputPaths)
                     {
-                        takeOutItems[inserter.itemId] = (takeOutItems.TryGetValue(inserter.itemId, out var value) ? value : 0)
-                            + ((long)inserter.itemCount | ((long)inserter.itemInc << 32));
-                        inserter.itemId = 0;
-                        inserter.stackCount = 0;
-                        inserter.itemCount = 0;
-                        inserter.itemInc = 0;
+                        if (pathIds.Contains(inputPathId)) continue;
+                        pathIds.Add(inputPathId);
+                        pendingPathIds.Add(inputPathId);
                     }
+                    if (path.outputPath == null) continue;
+                    var outputPathId = path.outputPath.id;
+                    if (pathIds.Contains(outputPathId)) continue;
+                    pathIds.Add(outputPathId);
+                    pendingPathIds.Add(outputPathId);
                 }
             }
-            int i = 0;
-            while (i <= end)
+
+            var mainPlayer = factory.gameData.mainPlayer;
+            var factorySystem = factory.factorySystem;
+            Dictionary<int, long> takeOutItems = [];
+            foreach (var pathId in pathIds)
             {
-                if (buffer[i] >= 246)
+                var cargoPath = cargoTraffic.GetCargoPath(pathId);
+                if (cargoPath == null) continue;
+                var end = cargoPath.bufferLength - 5;
+                var buffer = cargoPath.buffer;
+                if (PressShiftToTakeWholeBeltItemsIncludeInserters.Value)
                 {
-                    i += 250 - buffer[i];
-                    var index = buffer[i + 1] - 1 + (buffer[i + 2] - 1) * 100 + (buffer[i + 3] - 1) * 10000 + (buffer[i + 4] - 1) * 1000000;
-                    ref var cargo = ref cargoPath.cargoContainer.cargoPool[index];
-                    var item = cargo.item;
-                    var stack = cargo.stack;
-                    var inc = cargo.inc;
-                    takeOutItems[item] = (takeOutItems.TryGetValue(item, out var value) ? value : 0)
-                        + ((long)stack | ((long)inc << 32));
-                    Array.Clear(buffer, i - 4, 10);
-                    i += 10;
-                    if (cargoPath.updateLen < i) cargoPath.updateLen = i;
-                    cargoPath.cargoContainer.RemoveCargo(index);
-                }
-                else
-                {
-                    i += 5;
-                    if (i > end && i < end + 5)
+                    foreach (var beltId in cargoPath.belts)
                     {
-                        i = end;
+                        ref var b = ref cargoTraffic.beltPool[beltId];
+                        if (b.id != beltId) return;
+                        // From WriteObjectConn: Only slot 4 to 11 is used for belt <-> inserter connections (method argument slot/otherSlot is -1 there)
+                        for (int cidx = 4; cidx < 12; cidx++)
+                        {
+                            factory.ReadObjectConn(b.entityId, cidx, out var isOutput, out var otherObjId, out var otherSlot);
+                            if (otherObjId <= 0) continue;
+                            var inserterId = factory.entityPool[otherObjId].inserterId;
+                            if (inserterId <= 0) continue;
+                            ref var inserter = ref factorySystem.inserterPool[inserterId];
+                            if (inserter.id != inserterId) continue;
+                            if (inserter.itemId > 0 && inserter.stackCount > 0)
+                            {
+                                takeOutItems[inserter.itemId] = (takeOutItems.TryGetValue(inserter.itemId, out var value) ? value : 0)
+                                    + ((long)inserter.itemCount | ((long)inserter.itemInc << 32));
+                                inserter.itemId = 0;
+                                inserter.stackCount = 0;
+                                inserter.itemCount = 0;
+                                inserter.itemInc = 0;
+                            }
+                        }
+                    }
+                }
+                for (var i = 0; i <= end;)
+                {
+                    if (buffer[i] >= 246)
+                    {
+                        i += 250 - buffer[i];
+                        var index = buffer[i + 1] - 1 + (buffer[i + 2] - 1) * 100 + (buffer[i + 3] - 1) * 10000 + (buffer[i + 4] - 1) * 1000000;
+                        ref var cargo = ref cargoPath.cargoContainer.cargoPool[index];
+                        var item = cargo.item;
+                        var stack = cargo.stack;
+                        var inc = cargo.inc;
+                        takeOutItems[item] = (takeOutItems.TryGetValue(item, out var value) ? value : 0)
+                            + ((long)stack | ((long)inc << 32));
+                        Array.Clear(buffer, i - 4, 10);
+                        i += 6;
+                        if (cargoPath.updateLen < i) cargoPath.updateLen = i;
+                        i += 4;
+                        cargoPath.cargoContainer.RemoveCargo(index);
+                    }
+                    else
+                    {
+                        i += 5;
+                        if (i > end && i < end + 5)
+                        {
+                            i = end;
+                        }
                     }
                 }
             }
