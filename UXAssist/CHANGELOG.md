@@ -3,6 +3,12 @@
 
 ## Changlog
 
+* 1.4.5
+  * New feature: `Ctrl+Shift+Click to pick items from whole belts`, with 2 suboptions: `Include branches of belts` and `Include connected inserters`
+  * Patch [BlueprintTweaks](https://thunderstore.io/c/dyson-sphere-program/p/kremnev8/BlueprintTweaks/) temporarily to fix `Drag Remove` functions (And wait for limoka to merge the [Pull Request](https://github.com/limoka/DSP-Mods/pull/133)):
+    * Ground rendering is correct now.
+    * Dismantle logic follows offcial's implementation to avoid possible crashes.
+  * Fixed CommonAPI patch to make shortcut key settings saved as expect now, sorry for wrong implementation in last version.
 * 1.4.4
   * `Remember window position and size on last exit`: Fix compatiblity for game patch 0.10.33
   * `Real-time logistic stations info panel`: Try to fix a display issue.
@@ -350,6 +356,12 @@
 
 ## 更新日志
 
+* 1.4.5
+  * 新功能：`按住Ctrl+Shift点击从整条传送带抓取物品`，包含两个子选项：`包含传送带分支` 和 `包含连接的分拣器`
+  * 临时修复 [BlueprintTweaks](https://thunderstore.io/c/dyson-sphere-program/p/kremnev8/BlueprintTweaks/) 的 `拖拽拆除` 功能（等待 limoka 合并 [Pull Request](https://github.com/limoka/DSP-Mods/pull/133)）：
+    * 地面绘制现在已正确
+    * 拆除逻辑遵循官方实现，避免潜在崩溃可能
+  * 修正了 CommonAPI 的补丁，现在快捷键设置可以如预期保存了，不好意思上一版本实现有误
 * 1.4.4
   * `记住上次退出时的窗口位置和大小`：修复对游戏补丁0.10.33的兼容性
   * `物流站实时信息面板`：尝试修复一个显示问题

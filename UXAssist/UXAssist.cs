@@ -142,9 +142,9 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
             "Dismantle blueprint selected buildings");
         FactoryPatch.PressShiftToTakeWholeBeltItemsEnabled = Config.Bind("Factory", "PressShiftToTakeWholeBeltItems", false,
             "Ctrl+Shift+Click to pick items from whole belts");
-        FactoryPatch.PressShiftToTakeWholeBeltItemsIncludeBranches = Config.Bind("Factory", "PressShiftToTakeWholeBeltItemsIncludeBranches", true,
+        FactoryPatch.PressShiftToTakeWholeBeltItemsIncludeBranches = Config.Bind("Factory", "PressShiftToTakeWholeBeltItemsIncludeBranches", false,
             "Include branches of belts");
-        FactoryPatch.PressShiftToTakeWholeBeltItemsIncludeInserters = Config.Bind("Factory", "PressShiftToTakeWholeBeltItemsIncludeInserters", true,
+        FactoryPatch.PressShiftToTakeWholeBeltItemsIncludeInserters = Config.Bind("Factory", "PressShiftToTakeWholeBeltItemsIncludeInserters", false,
             "Include connected inserters");
         LogisticsPatch.AutoConfigLogisticsEnabled = Config.Bind("Factory", "AutoConfigLogistics", false,
             "Auto-config logistic stations");

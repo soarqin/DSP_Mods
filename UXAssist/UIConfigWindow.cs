@@ -71,7 +71,7 @@ public static class UIConfigWindow
         I18N.Add("Drag building power poles in maximum connection range", "Drag building power poles in maximum connection range", "拖动建造电线杆时自动使用最大连接距离间隔");
         I18N.Add("Build Tesla Tower and Wireless Power Tower alternately", "Build Tesla Tower and Wireless Power Tower alternately", "交替建造电力感应塔和无线输电塔");
         I18N.Add("Belt signals for buy out dark fog items automatically", "Belt signals for buy out dark fog items automatically", "用于自动购买黑雾物品的传送带信号");
-        I18N.Add("Ctrl+Shift+Click to pick items from whole belts", "Press Ctrl+Shift to pick items from whole belts", "按住Ctrl+Shift键从整条传送抓取物品");
+        I18N.Add("Ctrl+Shift+Click to pick items from whole belts", "Ctrl+Shift+Click to pick items from whole belts", "按住Ctrl+Shift点击从整条传送带抓取物品");
         I18N.Add("Include branches of belts", "Include branches of belts", "包含传送带分支");
         I18N.Add("Include connected inserters", "Include connected inserters (and their connected belts if above is checked)", "包含连接的分拣器(若勾选上面的选项则包含分拣器连接的传送带)");
         I18N.Add("Auto-config logistic stations", "Auto-config logistic stations", "自动配置物流设施");
@@ -407,12 +407,23 @@ public static class UIConfigWindow
             }
         }
 
-        y += 36f;
-        wnd.AddCheckBox(x, y, tab2, FactoryPatch.PressShiftToTakeWholeBeltItemsEnabled, "Ctrl+Shift+Click to pick items from whole belts");
-        y += 27f;
-        wnd.AddCheckBox(x + 10, y, tab2, FactoryPatch.PressShiftToTakeWholeBeltItemsIncludeBranches, "Include branches of belts", 13);
-        y += 27f;
-        wnd.AddCheckBox(x + 10, y, tab2, FactoryPatch.PressShiftToTakeWholeBeltItemsIncludeInserters, "Include connected inserters", 13);
+        {
+            y += 36f;
+            wnd.AddCheckBox(x, y, tab2, FactoryPatch.PressShiftToTakeWholeBeltItemsEnabled, "Ctrl+Shift+Click to pick items from whole belts");
+            y += 27f;
+            var includeBranches = wnd.AddCheckBox(x + 10, y, tab2, FactoryPatch.PressShiftToTakeWholeBeltItemsIncludeBranches, "Include branches of belts", 13);
+            y += 27f;
+            var includeInserters = wnd.AddCheckBox(x + 10, y, tab2, FactoryPatch.PressShiftToTakeWholeBeltItemsIncludeInserters, "Include connected inserters", 13);
+            FactoryPatch.PressShiftToTakeWholeBeltItemsEnabled.SettingChanged += PressShiftToTakeWholeBeltItemsEnabledChanged;
+            wnd.OnFree += () => { FactoryPatch.PressShiftToTakeWholeBeltItemsEnabled.SettingChanged -= PressShiftToTakeWholeBeltItemsEnabledChanged; };
+            PressShiftToTakeWholeBeltItemsEnabledChanged(null, null);
+
+            void PressShiftToTakeWholeBeltItemsEnabledChanged(object o, EventArgs e)
+            {   
+                includeBranches.SetEnable(FactoryPatch.PressShiftToTakeWholeBeltItemsEnabled.Value);
+                includeInserters.SetEnable(FactoryPatch.PressShiftToTakeWholeBeltItemsEnabled.Value);
+            }
+        }
 
         x = 400f;
         y = 10f;
