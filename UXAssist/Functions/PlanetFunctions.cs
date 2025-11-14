@@ -59,6 +59,7 @@ public static class PlanetFunctions
             uiGame.ShutAllFullScreens();
         }
         player.controller.actionBuild.Close();
+
         var groundCombatModule = player.mecha.groundCombatModule;
         for (var i = 0; i < groundCombatModule.moduleFleets.Length; i++)
         {
@@ -67,6 +68,42 @@ public static class PlanetFunctions
             entry.fleetEnabled = false;
             groundCombatModule.RemoveFleetDirectly(i);
         }
+        var constructionSystem = factory.constructionSystem;
+        var constructionModule = player.mecha.constructionModule;
+        for (var i = 0; i < constructionSystem.drones.cursor; i++)
+        {
+            ref var drone = ref constructionSystem.drones.buffer[i];
+            if (drone.id <= 0) continue;
+            var owner = drone.owner;
+            constructionSystem.ResetDroneTargets(ref drone);
+            if (owner == 0)
+            {
+                factory.RemoveCraftWithComponents(drone.craftId);
+                constructionModule.droneIdleCount++;
+            }
+            else
+            {
+                drone.movement = factory.gameData.history.constructionDroneMovement;
+                factory.craftPool[drone.craftId].pos = constructionSystem.constructionModules[owner].baseEjectPos;
+                constructionSystem.constructionModules[owner].droneIdleCount++;
+            }
+        }
+        for (var i = 0; i < constructionSystem.constructStats.cursor; i++)
+        {
+            ref var constructStat = ref constructionSystem.constructStats.buffer[i];
+            if (constructStat.id <= 0) continue;
+            constructionSystem.RemoveConstructStat(constructStat.id);
+        }
+        constructionModule.autoReconstructTargetTotalCount = 0;
+        constructionModule.buildTargetTotalCount = 0;
+        constructionModule.repairTargetTotalCount = 0;
+        constructionModule.autoReconstructTargets = null;
+        constructionModule.buildTargets = null;
+        constructionModule.repairTargets = null;
+        constructionModule.tmpTargets = null;
+        constructionModule.tmpTargetsHash = null;
+        constructionModule.checkItemCursor = 0;
+
         //planet.data = new PlanetRawData(planet.precision);
         //planet.data.CalcVerts();
         for (var id = factory.entityCursor - 1; id > 0; id--)
@@ -115,18 +152,18 @@ public static class PlanetFunctions
             }
         }
 
-        if (planet.factory.enemyPool != null)
+        if (factory.enemyPool != null)
         {
-            for (var i = planet.factory.enemyCursor - 1; i > 0; i--)
+            for (var i = factory.enemyCursor - 1; i > 0; i--)
             {
-                ref var enemyData = ref planet.factory.enemyPool[i];
+                ref var enemyData = ref factory.enemyPool[i];
                 if (enemyData.id != i) continue;
                 var combatStatId = enemyData.combatStatId;
-                planet.factory.skillSystem.OnRemovingSkillTarget(combatStatId, planet.factory.skillSystem.combatStats.buffer[combatStatId].originAstroId, ETargetType.CombatStat);
-                planet.factory.skillSystem.combatStats.Remove(combatStatId);
-                planet.factory.KillEnemyFinally(i, ref CombatStat.empty);
+                factory.skillSystem.OnRemovingSkillTarget(combatStatId, factory.skillSystem.combatStats.buffer[combatStatId].originAstroId, ETargetType.CombatStat);
+                factory.skillSystem.combatStats.Remove(combatStatId);
+                factory.KillEnemyFinally(i, ref CombatStat.empty);
             }
-            planet.factory.enemySystem.Free();
+            factory.enemySystem.Free();
             UIRoot.instance.uiGame.dfAssaultTip.ClearAllSpots();
         }
 
