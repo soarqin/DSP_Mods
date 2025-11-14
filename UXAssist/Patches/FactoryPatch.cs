@@ -2337,42 +2337,22 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             if (belt.id != entityData.beltId) return;
 
             HashSet<int> pathIds = [belt.segPathId];
-            if (PressShiftToTakeWholeBeltItemsIncludeBranches.Value)
-            {
-                List<int> pendingPathIds = [belt.segPathId];
-                while (pendingPathIds.Count > 0)
-                {
-                    var lastIndex = pendingPathIds.Count - 1;
-                    var thisPathId = pendingPathIds[lastIndex];
-                    pendingPathIds.RemoveAt(lastIndex);
-                    var path = cargoTraffic.GetCargoPath(thisPathId);
-                    if (path == null) continue;
-                    foreach (var inputPathId in path.inputPaths)
-                    {
-                        if (pathIds.Contains(inputPathId)) continue;
-                        pathIds.Add(inputPathId);
-                        pendingPathIds.Add(inputPathId);
-                    }
-                    if (path.outputPath == null) continue;
-                    var outputPathId = path.outputPath.id;
-                    if (pathIds.Contains(outputPathId)) continue;
-                    pathIds.Add(outputPathId);
-                    pendingPathIds.Add(outputPathId);
-                }
-            }
-
-            var mainPlayer = factory.gameData.mainPlayer;
-            var factorySystem = factory.factorySystem;
+            HashSet<int> inserterIds = [];
+            var includeBranches = PressShiftToTakeWholeBeltItemsIncludeBranches.Value;
+            var includeInserters = PressShiftToTakeWholeBeltItemsIncludeInserters.Value;
+            List<int> pendingPathIds = [belt.segPathId];
             Dictionary<int, long> takeOutItems = [];
-            foreach (var pathId in pathIds)
+            var factorySystem = factory.factorySystem;
+            while (pendingPathIds.Count > 0)
             {
-                var cargoPath = cargoTraffic.GetCargoPath(pathId);
-                if (cargoPath == null) continue;
-                var end = cargoPath.bufferLength - 5;
-                var buffer = cargoPath.buffer;
-                if (PressShiftToTakeWholeBeltItemsIncludeInserters.Value)
+                var lastIndex = pendingPathIds.Count - 1;
+                var thisPathId = pendingPathIds[lastIndex];
+                pendingPathIds.RemoveAt(lastIndex);
+                var path = cargoTraffic.GetCargoPath(thisPathId);
+                if (path == null) continue;
+                if (includeInserters)
                 {
-                    foreach (var beltId in cargoPath.belts)
+                    foreach (var beltId in path.belts)
                     {
                         ref var b = ref cargoTraffic.beltPool[beltId];
                         if (b.id != beltId) return;
@@ -2385,18 +2365,62 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                             if (inserterId <= 0) continue;
                             ref var inserter = ref factorySystem.inserterPool[inserterId];
                             if (inserter.id != inserterId) continue;
-                            if (inserter.itemId > 0 && inserter.stackCount > 0)
+                            inserterIds.Add(inserterId);
+                            if (includeBranches)
                             {
-                                takeOutItems[inserter.itemId] = (takeOutItems.TryGetValue(inserter.itemId, out var value) ? value : 0)
-                                    + ((long)inserter.itemCount | ((long)inserter.itemInc << 32));
-                                inserter.itemId = 0;
-                                inserter.stackCount = 0;
-                                inserter.itemCount = 0;
-                                inserter.itemInc = 0;
+                                var pickTargetId = inserter.pickTarget;
+                                if (pickTargetId > 0)
+                                {
+                                    ref var pickTarget = ref factory.entityPool[pickTargetId];
+                                    if (pickTarget.id == pickTargetId && pickTarget.beltId > 0)
+                                    {
+                                        ref var pickTargetBelt = ref cargoTraffic.beltPool[pickTarget.beltId];
+                                        if (pickTargetBelt.id == pickTarget.beltId && !pathIds.Contains(pickTargetBelt.segPathId))
+                                        {
+                                            pathIds.Add(pickTargetBelt.segPathId);
+                                            pendingPathIds.Add(pickTargetBelt.segPathId);
+                                        }
+                                    }
+                                }
+                                var insertTargetId = inserter.insertTarget;
+                                if (insertTargetId > 0)
+                                {
+                                    ref var insertTarget = ref factory.entityPool[insertTargetId];
+                                    if (insertTarget.id == insertTargetId && insertTarget.beltId > 0)
+                                    {
+                                        ref var insertTargetBelt = ref cargoTraffic.beltPool[insertTarget.beltId];
+                                        if (insertTargetBelt.id == insertTarget.beltId && !pathIds.Contains(insertTargetBelt.segPathId))
+                                        {
+                                            pathIds.Add(insertTargetBelt.segPathId);
+                                            pendingPathIds.Add(insertTargetBelt.segPathId);
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
                 }
+                if (!includeBranches) continue;
+                foreach (var inputPathId in path.inputPaths)
+                {
+                    if (pathIds.Contains(inputPathId)) continue;
+                    pathIds.Add(inputPathId);
+                    pendingPathIds.Add(inputPathId);
+                }
+                if (path.outputPath == null) continue;
+                var outputPathId = path.outputPath.id;
+                if (pathIds.Contains(outputPathId)) continue;
+                pathIds.Add(outputPathId);
+                pendingPathIds.Add(outputPathId);
+            }
+
+            var mainPlayer = factory.gameData.mainPlayer;
+            foreach (var pathId in pathIds)
+            {
+                var cargoPath = cargoTraffic.GetCargoPath(pathId);
+                if (cargoPath == null) continue;
+                var end = cargoPath.bufferLength - 5;
+                var buffer = cargoPath.buffer;
                 for (var i = 0; i <= end;)
                 {
                     if (buffer[i] >= 246)
@@ -2423,6 +2447,19 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                             i = end;
                         }
                     }
+                }
+            }
+            foreach (var inserterId in inserterIds)
+            {
+                ref var inserter = ref factorySystem.inserterPool[inserterId];
+                if (inserter.itemId > 0 && inserter.stackCount > 0)
+                {
+                    takeOutItems[inserter.itemId] = (takeOutItems.TryGetValue(inserter.itemId, out var value) ? value : 0)
+                            + ((long)inserter.itemCount | ((long)inserter.itemInc << 32));
+                    inserter.itemId = 0;
+                    inserter.stackCount = 0;
+                    inserter.itemCount = 0;
+                    inserter.itemInc = 0;
                 }
             }
             foreach (var kvp in takeOutItems)

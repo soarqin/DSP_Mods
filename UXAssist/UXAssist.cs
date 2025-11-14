@@ -141,11 +141,11 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
         FactoryPatch.ShortcutKeysForBlueprintCopyEnabled = Config.Bind("Factory", "DismantleBlueprintSelection", false,
             "Dismantle blueprint selected buildings");
         FactoryPatch.PressShiftToTakeWholeBeltItemsEnabled = Config.Bind("Factory", "PressShiftToTakeWholeBeltItems", false,
-            "Press Ctrl+Shift to take items from whole belts");
+            "Ctrl+Shift+Click to pick items from whole belts");
         FactoryPatch.PressShiftToTakeWholeBeltItemsIncludeBranches = Config.Bind("Factory", "PressShiftToTakeWholeBeltItemsIncludeBranches", true,
-            "Press Ctrl+Shift to take items from whole belts: Include branches");
+            "Include branches of belts");
         FactoryPatch.PressShiftToTakeWholeBeltItemsIncludeInserters = Config.Bind("Factory", "PressShiftToTakeWholeBeltItemsIncludeInserters", true,
-            "Press Ctrl+Shift to take items from whole belts: Include inserters");
+            "Include connected inserters");
         LogisticsPatch.AutoConfigLogisticsEnabled = Config.Bind("Factory", "AutoConfigLogistics", false,
             "Auto-config logistic stations");
         LogisticsPatch.AutoConfigLimitAutoReplenishCount = Config.Bind("Factory", "AutoConfigLimitAutoReplenishCount", false,
