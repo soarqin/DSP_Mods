@@ -130,6 +130,20 @@ public static class PlanetFunctions
             planet.audio?.RemoveAudioData(ed.audioId);
         }
 
+        for (var id = factory.prebuildCursor - 1; id > 0; id--)
+        {
+            ref var pb = ref factory.prebuildPool[id];
+            if (pb.id != id) continue;
+            if (pb.colliderId != 0)
+            {
+                planet.physics.RemoveLinkedColliderData(pb.colliderId);
+            }
+            if (pb.modelId != 0)
+            {
+                GameMain.gpuiManager.RemovePrebuildModel(pb.modelIndex, pb.modelId);
+            }
+        }
+
         var hives = GameMain.spaceSector?.dfHives;
         if (hives != null)
         {
@@ -202,7 +216,7 @@ public static class PlanetFunctions
             factory.PlanetReformRevert();
         }
 
-        planet.UnloadFactory();
+        GameMain.data.LeavePlanet();
         var index = factory.index;
         var warningSystem = GameMain.data.warningSystem;
         var warningPool = warningSystem.warningPool;
@@ -275,12 +289,7 @@ public static class PlanetFunctions
         factory.digitalSystem = new DigitalSystem(planet);
 
         //GameMain.data.statistics.production.CreateFactoryStat(index);
-        planet.LoadFactory();
-        while (!planet.factoryLoaded)
-        {
-            PlanetModelingManager.Update();
-            Thread.Sleep(0);
-        }
+        GameMain.data.ArrivePlanet(planet);
     }
 
     public static void BuildOrbitalCollectors()

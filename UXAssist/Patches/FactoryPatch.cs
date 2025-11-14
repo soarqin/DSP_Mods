@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Runtime.CompilerServices;
 using BepInEx.Configuration;
 using CommonAPI.Systems;
 using HarmonyLib;
@@ -310,25 +311,13 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             _nightlightInitialized = false;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void UpdateSunlightAngle()
         {
             if (!_sunlight) return;
-            _sunlight.transform.rotation = Quaternion.LookRotation(-GameMain.mainPlayer.transform.up + GameMain.mainPlayer.transform.forward * NightLightAngleX.Value / 10f +
-                                                                   GameMain.mainPlayer.transform.right * NightLightAngleY.Value / 10f);
-        }
-
-        [HarmonyPostfix]
-        [HarmonyPatch(typeof(GameData), nameof(GameData.ArriveStar))]
-        public static void GameData_ArriveStar_Postfix()
-        {
-            _sunlight = GameMain.universeSimulator?.LocalStarSimulator()?.sunLight;
-        }
-
-        [HarmonyPrefix]
-        [HarmonyPatch(typeof(GameData), nameof(GameData.LeaveStar))]
-        public static void GameData_LeaveStar_Prefix()
-        {
-            _sunlight = null;
+            _sunlight.transform.rotation =
+                Quaternion.LookRotation(-GameMain.mainPlayer.transform.up + GameMain.mainPlayer.transform.forward * NightLightAngleX.Value / 10f +
+                                        GameMain.mainPlayer.transform.right * NightLightAngleY.Value / 10f);
         }
 
         [HarmonyPostfix]
@@ -341,7 +330,6 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             {
                 if (!GameMain.mainPlayer.controller.model.gameObject.activeInHierarchy) return;
                 if (_sail == null) _sail = GameMain.mainPlayer.animator.sails[GameMain.mainPlayer.animator.sailAnimIndex];
-                _sunlight = GameMain.universeSimulator?.LocalStarSimulator()?.sunLight;
                 _nightlightInitialized = true;
             }
 
@@ -362,6 +350,10 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
 
             if (sailing) return;
             _mechaOnEarth = true;
+            if (_sunlight == null)
+            {
+                _sunlight = GameMain.universeSimulator?.LocalStarSimulator()?.sunLight;
+            }
         }
 
         [HarmonyTranspiler]
