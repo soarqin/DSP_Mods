@@ -140,7 +140,7 @@ public static class GamePatch
             var pos = matcher.Pos;
             /* Remove Shift+F4 part of the method */
             matcher.Start().RemoveInstructions(pos).MatchForward(false,
-                new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(GameMain), "get_sandboxToolsEnabled")),
+                new CodeMatch(OpCodes.Call, AccessTools.PropertyGetter(typeof(GameMain), nameof(GameMain.sandboxToolsEnabled))),
                 new CodeMatch(OpCodes.Ldc_I4_0),
                 new CodeMatch(OpCodes.Ceq)
             );
@@ -297,7 +297,7 @@ public static class GamePatch
             matcher.MatchForward(false,
                 new CodeMatch(OpCodes.Ldarg_0),
                 new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(UITechNode), nameof(UITechNode.tree))),
-                new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(UITechTree), "get_selected"))
+                new CodeMatch(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(UITechTree), nameof(UITechTree.selected)))
             );
             var labels = matcher.Labels;
             matcher.Labels = null;
