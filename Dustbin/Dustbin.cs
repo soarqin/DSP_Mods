@@ -58,13 +58,31 @@ public class Dustbin : BaseUnityPlugin, IModCanSave, IMultiplayerMod
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int CalcGetSands(int itemId, int count)
+    public static int CalcGetSands(int itemId, int count, int inc)
     {
         var sandsPerItem = itemId <= 12000 ? Dustbin.SandsFactors[itemId] : 0;
-        if (sandsPerItem <= 0) return count;
+        
+        // Log item information for debugging
+        var itemProto = LDB.items.Select(itemId);
+        if (itemProto != null)
+        {
+            Logger.LogInfo($"Item destroyed - ID: {itemId}, Name: {itemProto.name}, Type: {itemProto.Type}, StackSize: {itemProto.StackSize}, Grade: {itemProto.Grade}, Count: {count}, Inc: {inc}");
+        }
+        else
+        {
+            Logger.LogInfo($"Item destroyed - ID: {itemId}, Name: Unknown, Count: {count}, Inc: {inc}");
+        }
+
+        if (sandsPerItem <= 0)
+        {
+            Logger.LogInfo($"No sands generated for item {itemId} (SandsFactor: {sandsPerItem}, Inc: {inc}) - Returning {count} to indicate item destroyed");
+            return count;
+        }
+        
         var player = GameMain.mainPlayer;
         var addCount = count * sandsPerItem;
         player.sandCount += addCount;
+        Logger.LogInfo($"Sands calculation - ItemID: {itemId}, SandsFactor: {sandsPerItem}, Total sands: {addCount}, Inc: {inc} - Returning {count} to indicate item destroyed");
         return count;
     }
 
