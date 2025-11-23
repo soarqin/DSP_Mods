@@ -62,7 +62,6 @@ public class Dustbin : BaseUnityPlugin, IModCanSave, IMultiplayerMod
     {
         var sandsPerItem = itemId <= 12000 ? Dustbin.SandsFactors[itemId] : 0;
         if (sandsPerItem <= 0) return count;
-        
         var player = GameMain.mainPlayer;
         var addCount = count * sandsPerItem;
         player.sandCount += addCount;
