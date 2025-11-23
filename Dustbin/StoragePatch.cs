@@ -148,20 +148,6 @@ public static class StoragePatch
         _lastStorageId = 0; // Refresh UI to reposition button on client side
     }
 
-    private static void LogTranspilerInfo(string stage, int itemId, int count, int inc, bool isDustbin, bool enteringDustbinLogic)
-    {
-        Dustbin.Logger.LogInfo($"Transpiler {stage} - ItemID: {itemId}, Count: {count}, Inc: {inc}, IsDustbin: {isDustbin}, EnteringDustbinLogic: {enteringDustbinLogic}");
-    }
-
-    private static void LogReturnValue(int returnValue, string context)
-    {
-        Dustbin.Logger.LogInfo($"Return Value - Context: {context}, Value: {returnValue}");
-    }
-
-    private static void LogInserterState(string operation, int itemId, int count, int inc, int storageId)
-    {
-        Dustbin.Logger.LogInfo($"分拣器状态 - 操作: {operation}, 物品ID: {itemId}, 数量: {count}, 增产剂: {inc}, 储物仓ID: {storageId}");
-    }
 
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(StorageComponent), nameof(StorageComponent.AddItem), [typeof(int), typeof(int), typeof(int), typeof(int), typeof(bool)],
@@ -172,66 +158,52 @@ public static class StoragePatch
         var matcher = new CodeMatcher(codes, generator);
         
         // 找到方法开始处
+        // Find the beginning of the method
         matcher.Start();
         
         // 定义标签用于跳转
+        // Define label for jump
         var skipDustbinLogic = generator.DefineLabel();
         
         // 在方法开始处插入安全检查
+        // Insert safety checks at the beginning of the method
         matcher.InsertAndAdvance(
             // 安全检查：确保StorageComponent实例不为null
+            // Safety check: Ensure StorageComponent instance is not null
             new CodeInstruction(OpCodes.Ldarg_0),
             new CodeInstruction(OpCodes.Brfalse, skipDustbinLogic),
             
             // 检查是否是垃圾桶
+            // Check if it's a dustbin
             new CodeInstruction(OpCodes.Ldarg_0),
             new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(StorageComponent), nameof(StorageComponent.IsDustbin))),
             new CodeInstruction(OpCodes.Brfalse, skipDustbinLogic),
             
             // 检查count是否大于0
+            // Check if count is greater than 0
             new CodeInstruction(OpCodes.Ldarg_2),
             new CodeInstruction(OpCodes.Ldc_I4_0),
             new CodeInstruction(OpCodes.Ble, skipDustbinLogic),
             
-            // 记录进入垃圾桶处理逻辑
-            new CodeInstruction(OpCodes.Ldstr, "Processing Dustbin"),
-            new CodeInstruction(OpCodes.Ldarg_1),
-            new CodeInstruction(OpCodes.Ldarg_2),
-            new CodeInstruction(OpCodes.Ldarg_3),
-            new CodeInstruction(OpCodes.Ldarg_0),
-            new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(StorageComponent), nameof(StorageComponent.IsDustbin))),
-            new CodeInstruction(OpCodes.Ldc_I4_1),
-            new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(StoragePatch), nameof(LogTranspilerInfo))),
-            
-            // 记录分拣器状态
-            new CodeInstruction(OpCodes.Ldstr, "Before CalcGetSands"),
-            new CodeInstruction(OpCodes.Ldarg_1),
-            new CodeInstruction(OpCodes.Ldarg_2),
-            new CodeInstruction(OpCodes.Ldarg_3),
-            new CodeInstruction(OpCodes.Ldarg_0),
-            new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(StorageComponent), nameof(StorageComponent.id))),
-            new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(StoragePatch), nameof(LogInserterState))),
-            
             // 调用CalcGetSands处理物品销毁和沙子生成
+            // Call CalcGetSands to handle item destruction and sand generation
             new CodeInstruction(OpCodes.Ldarg_1),
             new CodeInstruction(OpCodes.Ldarg_2),
             new CodeInstruction(OpCodes.Ldarg_3),
             new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(Dustbin), nameof(Dustbin.CalcGetSands))),
             
-            // 记录返回值
-            new CodeInstruction(OpCodes.Dup),
-            new CodeInstruction(OpCodes.Ldstr, "CalcGetSands Return"),
-            new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(StoragePatch), nameof(LogReturnValue))),
-            
             // 设置remainInc为0（第5个参数，索引4）
+            // Set remainInc to 0 (5th parameter, index 4)
             new CodeInstruction(OpCodes.Ldarg, 4),
             new CodeInstruction(OpCodes.Ldc_I4_0),
             new CodeInstruction(OpCodes.Stind_I4),
             
             // 返回count表示成功销毁
+            // Return count to indicate successful destruction
             new CodeInstruction(OpCodes.Ret),
             
             // 跳过垃圾桶逻辑的标签
+            // Label to skip dustbin logic
             new CodeInstruction(OpCodes.Nop).WithLabels(skipDustbinLogic)
         );
         
