@@ -82,7 +82,8 @@ class BlueprintTweaks
             new CodeMatch(OpCodes.Callvirt)
         ).RemoveInstructions(5);
         matcher.InsertAndAdvance(new CodeInstruction(OpCodes.Ldarg_0),
-            Transpilers.EmitDelegate((UIBuildingGrid grid) => {
+            Transpilers.EmitDelegate((UIBuildingGrid grid) =>
+            {
                 grid.material.SetFloat(reformMode, 0f);
                 grid.material.SetFloat(zMin, -0.5f);
             })

@@ -4,6 +4,7 @@ using HarmonyLib;
 using GameLogicProc = UXAssist.Common.GameLogic;
 
 namespace UniverseGenTweaks;
+
 public static class BirthPlanetPatch
 {
     public static ConfigEntry<bool> SitiVeinsOnBirthPlanet;

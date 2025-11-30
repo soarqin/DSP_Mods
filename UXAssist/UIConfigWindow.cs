@@ -419,7 +419,7 @@ public static class UIConfigWindow
             PressShiftToTakeWholeBeltItemsEnabledChanged(null, null);
 
             void PressShiftToTakeWholeBeltItemsEnabledChanged(object o, EventArgs e)
-            {   
+            {
                 includeBranches.SetEnable(FactoryPatch.PressShiftToTakeWholeBeltItemsEnabled.Value);
                 includeInserters.SetEnable(FactoryPatch.PressShiftToTakeWholeBeltItemsEnabled.Value);
             }

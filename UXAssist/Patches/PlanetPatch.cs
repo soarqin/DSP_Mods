@@ -5,6 +5,7 @@ using HarmonyLib;
 using UXAssist.Common;
 
 namespace UXAssist.Patches;
+
 public static class PlanetPatch
 {
     public static ConfigEntry<bool> PlayerActionsInGlobeViewEnabled;

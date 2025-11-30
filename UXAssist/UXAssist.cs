@@ -33,12 +33,13 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
     private readonly Harmony _harmony = new(PluginInfo.PLUGIN_GUID);
 
     #region IModCanSave
-    private const ushort ModSaveVersion = 1;
+    private const ushort ModSaveVersion = 2;
 
     public void Export(BinaryWriter w)
     {
         w.Write(ModSaveVersion);
         FactoryPatch.Export(w);
+        PersistPatch.ExportClusterUploadResults(w);
     }
 
     public void Import(BinaryReader r)
@@ -46,6 +47,10 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
         var version = r.ReadUInt16();
         if (version <= 0) return;
         FactoryPatch.Import(r);
+        if (version > 1)
+        {
+            PersistPatch.ImportClusterUploadResults(r);
+        }
     }
 
     public void IntoOtherSave()
