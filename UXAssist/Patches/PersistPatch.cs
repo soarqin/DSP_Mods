@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Reflection.Emit;
 using HarmonyLib;
@@ -175,69 +174,6 @@ public class PersistPatch : PatchImpl<PersistPatch>
 
     #region Cluster Upload Result
 
-    const int ClusterUploadResultKeepCount = 100;
-    private static readonly ClusterUploadResult[] _clusterUploadResults = new ClusterUploadResult[ClusterUploadResultKeepCount];
-    private static readonly object _clusterUploadResultsLock = new();
-    private static int _clusterUploadResultsHead = 0;
-    private static int _clusterUploadResultsCount = 0;
-    private static ClusterPlayerData[] _topTenPlayerData = null;
-
-    private struct ClusterUploadResult
-    {
-        public DateTime UploadTime;
-        public int Result;
-        public float RequestTime;
-    }
-
-    private static void AddClusterUploadResult(int result, float requestTime)
-    {
-        lock (_clusterUploadResultsLock)
-        {
-            if (_clusterUploadResultsCount >= ClusterUploadResultKeepCount)
-            {
-                _clusterUploadResults[_clusterUploadResultsHead] = new ClusterUploadResult { UploadTime = DateTime.Now, Result = result, RequestTime = requestTime };
-                _clusterUploadResultsHead = (_clusterUploadResultsHead + 1) % ClusterUploadResultKeepCount;
-            }
-            else
-            {
-                _clusterUploadResults[(_clusterUploadResultsHead + _clusterUploadResultsCount) % ClusterUploadResultKeepCount] = new ClusterUploadResult { UploadTime = DateTime.Now, Result = result, RequestTime = requestTime };
-                _clusterUploadResultsCount++;
-            }
-        }
-    }
-
-    public static void ExportClusterUploadResults(BinaryWriter w)
-    {
-        lock (_clusterUploadResultsLock)
-        {
-            w.Write(_clusterUploadResultsCount);
-            w.Write(_clusterUploadResultsHead);
-            for (var i = 0; i < _clusterUploadResultsCount; i++)
-            {
-                ref var result = ref _clusterUploadResults[(i + _clusterUploadResultsHead) % ClusterUploadResultKeepCount];
-                w.Write(result.UploadTime.ToBinary());
-                w.Write(result.Result);
-                w.Write(result.RequestTime);
-            }
-        }
-    }
-
-    public static void ImportClusterUploadResults(BinaryReader r)
-    {
-        lock (_clusterUploadResultsLock)
-        {
-            _clusterUploadResultsCount = r.ReadInt32();
-            _clusterUploadResultsHead = r.ReadInt32();
-            for (var i = 0; i < _clusterUploadResultsCount; i++)
-            {
-                ref var result = ref _clusterUploadResults[(i + _clusterUploadResultsHead) % ClusterUploadResultKeepCount];
-                result.UploadTime = DateTime.FromBinary(r.ReadInt64());
-                result.Result = r.ReadInt32();
-                result.RequestTime = r.ReadSingle();
-            }
-        }
-    }
-
     [HarmonyPostfix]
     [HarmonyPatch(typeof(MilkyWayWebClient), nameof(MilkyWayWebClient.OnUploadLoginErrored))]
     private static void MilkyWayWebClient_OnUploadLoginErrored_Postfix(MilkyWayWebClient __instance, DSPWeb.HTTP_ERROR_TYPE errorType, string errorInfo, int errorCode)
@@ -245,16 +181,16 @@ public class PersistPatch : PatchImpl<PersistPatch>
         switch (errorType)
         {
             case DSPWeb.HTTP_ERROR_TYPE.NETWORK_ERROR:
-                AddClusterUploadResult(-10001, (float)__instance.uploadRequest.reqTime);
+                Functions.UIFunctions.AddClusterUploadResult(-10001, (float)__instance.uploadRequest.reqTime);
                 break;
             case DSPWeb.HTTP_ERROR_TYPE.HTTP_ERROR:
-                AddClusterUploadResult(-10010 - errorCode, (float)__instance.uploadRequest.reqTime);
+                Functions.UIFunctions.AddClusterUploadResult(-10010 - errorCode, (float)__instance.uploadRequest.reqTime);
                 break;
             case DSPWeb.HTTP_ERROR_TYPE.USER_ABORT:
-                AddClusterUploadResult(-10003, (float)__instance.uploadRequest.reqTime);
+                Functions.UIFunctions.AddClusterUploadResult(-10003, (float)__instance.uploadRequest.reqTime);
                 break;
             case DSPWeb.HTTP_ERROR_TYPE.UNEXPECTED_ERROR:
-                AddClusterUploadResult(-10004, (float)__instance.uploadRequest.reqTime);
+                Functions.UIFunctions.AddClusterUploadResult(-10004, (float)__instance.uploadRequest.reqTime);
                 break;
         }
     }
@@ -266,16 +202,16 @@ public class PersistPatch : PatchImpl<PersistPatch>
         switch (errorType)
         {
             case DSPWeb.HTTP_ERROR_TYPE.NETWORK_ERROR:
-                AddClusterUploadResult(-101, (float)__instance.uploadRequest.reqTime);
+                Functions.UIFunctions.AddClusterUploadResult(-101, (float)__instance.uploadRequest.reqTime);
                 break;
             case DSPWeb.HTTP_ERROR_TYPE.HTTP_ERROR:
-                AddClusterUploadResult(-110 - errorCode, (float)__instance.uploadRequest.reqTime);
+                Functions.UIFunctions.AddClusterUploadResult(-110 - errorCode, (float)__instance.uploadRequest.reqTime);
                 break;
             case DSPWeb.HTTP_ERROR_TYPE.USER_ABORT:
-                AddClusterUploadResult(-103, (float)__instance.uploadRequest.reqTime);
+                Functions.UIFunctions.AddClusterUploadResult(-103, (float)__instance.uploadRequest.reqTime);
                 break;
             case DSPWeb.HTTP_ERROR_TYPE.UNEXPECTED_ERROR:
-                AddClusterUploadResult(-104, (float)__instance.uploadRequest.reqTime);
+                Functions.UIFunctions.AddClusterUploadResult(-104, (float)__instance.uploadRequest.reqTime);
                 break;
         }
     }
@@ -286,7 +222,7 @@ public class PersistPatch : PatchImpl<PersistPatch>
     {
         if (!int.TryParse(handler.text, out var rcode))
             rcode = -1;
-        AddClusterUploadResult(rcode, (float)__instance.uploadRequest.reqTime);
+        Functions.UIFunctions.AddClusterUploadResult(rcode, (float)__instance.uploadRequest.reqTime);
     }
 
     [HarmonyTranspiler]
@@ -297,10 +233,11 @@ public class PersistPatch : PatchImpl<PersistPatch>
 
         matcher.MatchForward(false,
             new CodeMatch(OpCodes.Ldarg_1),
-            new CodeMatch(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(BinaryReader), nameof(BinaryReader.ReadInt32)))
+            new CodeMatch(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(BinaryReader), nameof(BinaryReader.ReadInt32))),
+            new CodeMatch(ci => ci.IsStloc())
         ).Advance(2).InsertAndAdvance(
             new CodeInstruction(OpCodes.Dup),
-            Transpilers.EmitDelegate((int count) => _topTenPlayerData = new ClusterPlayerData[count])
+            Transpilers.EmitDelegate(Functions.UIFunctions.SetTopPlayerCount)
         );
 
         matcher.MatchForward(false,
@@ -317,7 +254,7 @@ public class PersistPatch : PatchImpl<PersistPatch>
             new CodeInstruction(OpCodes.Ldloca_S, objloc),
             Transpilers.EmitDelegate((int index, ref ClusterPlayerData playerData) =>
             {
-                if (index < _topTenPlayerData.Length) _topTenPlayerData[index] = playerData;
+                Functions.UIFunctions.SetTopPlayerData(index, ref playerData);
             })
         );
 

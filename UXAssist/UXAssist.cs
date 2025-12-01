@@ -39,7 +39,7 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
     {
         w.Write(ModSaveVersion);
         FactoryPatch.Export(w);
-        PersistPatch.ExportClusterUploadResults(w);
+        UIFunctions.ExportClusterUploadResults(w);
     }
 
     public void Import(BinaryReader r)
@@ -49,7 +49,7 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
         FactoryPatch.Import(r);
         if (version > 1)
         {
-            PersistPatch.ImportClusterUploadResults(r);
+            UIFunctions.ImportClusterUploadResults(r);
         }
     }
 

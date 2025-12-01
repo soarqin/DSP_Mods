@@ -1,11 +1,13 @@
-using CommonAPI.Systems;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
-using System;
-using System.Linq;
-using System.Collections.Generic;
-using UXAssist.UI;
+using CommonAPI.Systems;
 using UXAssist.Common;
+using UXAssist.UI;
 using GameLogicProc = UXAssist.Common.GameLogic;
 
 namespace UXAssist.Functions;
@@ -716,6 +718,160 @@ public static class UIFunctions
                 total++;
             }
             return (nongas, total);
+        }
+    }
+    #endregion
+
+    #region MilkyWayClusterUploadResult
+
+    const int ClusterUploadResultKeepCount = 100;
+    private static readonly ClusterUploadResult[] _clusterUploadResults = new ClusterUploadResult[ClusterUploadResultKeepCount];
+    private static readonly object _clusterUploadResultsLock = new();
+    private static int _clusterUploadResultsHead = 0;
+    private static int _clusterUploadResultsCount = 0;
+
+    private struct ClusterUploadResult
+    {
+        public DateTime UploadTime;
+        public int Result;
+        public float RequestTime;
+    }
+
+    public static void AddClusterUploadResult(int result, float requestTime)
+    {
+        lock (_clusterUploadResultsLock)
+        {
+            if (_clusterUploadResultsCount >= ClusterUploadResultKeepCount)
+            {
+                _clusterUploadResults[_clusterUploadResultsHead] = new ClusterUploadResult { UploadTime = DateTime.Now, Result = result, RequestTime = requestTime };
+                _clusterUploadResultsHead = (_clusterUploadResultsHead + 1) % ClusterUploadResultKeepCount;
+            }
+            else
+            {
+                _clusterUploadResults[(_clusterUploadResultsHead + _clusterUploadResultsCount) % ClusterUploadResultKeepCount] = new ClusterUploadResult { UploadTime = DateTime.Now, Result = result, RequestTime = requestTime };
+                _clusterUploadResultsCount++;
+            }
+        }
+    }
+
+
+    public static void ExportClusterUploadResults(BinaryWriter w)
+    {
+        lock (_clusterUploadResultsLock)
+        {
+            w.Write(_clusterUploadResultsCount);
+            w.Write(_clusterUploadResultsHead);
+            for (var i = 0; i < _clusterUploadResultsCount; i++)
+            {
+                ref var result = ref _clusterUploadResults[(i + _clusterUploadResultsHead) % ClusterUploadResultKeepCount];
+                w.Write(result.UploadTime.ToBinary());
+                w.Write(result.Result);
+                w.Write(result.RequestTime);
+            }
+        }
+    }
+
+    public static void ImportClusterUploadResults(BinaryReader r)
+    {
+        lock (_clusterUploadResultsLock)
+        {
+            _clusterUploadResultsCount = r.ReadInt32();
+            _clusterUploadResultsHead = r.ReadInt32();
+            for (var i = 0; i < _clusterUploadResultsCount; i++)
+            {
+                ref var result = ref _clusterUploadResults[(i + _clusterUploadResultsHead) % ClusterUploadResultKeepCount];
+                result.UploadTime = DateTime.FromBinary(r.ReadInt64());
+                result.Result = r.ReadInt32();
+                result.RequestTime = r.ReadSingle();
+            }
+        }
+    }
+    #endregion
+
+    #region MilkyWayTopTenPlayers
+    private static ClusterPlayerData[] _topTenPlayerData = null;
+    private static readonly StringBuilder _sb = new("         ", 12);
+
+    public static UI.MyCheckButton MilkyWayTopTenPlayersToggler;
+
+    public static void SetTopPlayerCount(int count)
+    {
+        _topTenPlayerData = new ClusterPlayerData[count];
+    }
+
+    public static void SetTopPlayerData(int index, ref ClusterPlayerData playerData)
+    {
+        if (index < 0 || index >= _topTenPlayerData.Length) return;
+        _topTenPlayerData[index] = playerData;
+    }
+
+    public static void InitMilkyWayTopTenPlayers()
+    {
+        var uiRoot = UIRoot.instance;
+        if (!uiRoot) return;
+
+        var rect = uiRoot.uiMilkyWay.transform as RectTransform;
+        var panel = new GameObject("uxassist-milkyway-top-ten-players-panel");
+        var rtrans = panel.AddComponent<RectTransform>();
+        panel.transform.SetParent(rect);
+        rtrans.sizeDelta = new Vector2(0f, 0f);
+        rtrans.localScale = new Vector3(1f, 1f, 1f);
+        rtrans.anchorMax = new Vector2(1f, 1f);
+        rtrans.anchorMin = new Vector2(0f, 0f);
+        rtrans.pivot = new Vector2(0f, 1f);
+        rtrans.anchoredPosition3D = new Vector3(0, 0, 0f);
+
+        MyFlatButton[] buttons = [];
+
+        MilkyWayTopTenPlayersToggler = UI.MyCheckButton.CreateCheckButton(0, 0, rtrans, false, "Show top players".Translate()).WithSize(100f, 24f);
+        MilkyWayTopTenPlayersToggler.OnChecked += UpdateButtons;
+        MilkyWayTopTenPlayersToggler.Checked = false;
+        UpdateButtons();
+
+        void UpdateButtons()
+        {
+            var chk = MilkyWayTopTenPlayersToggler.Checked;
+            if (_topTenPlayerData == null)
+            {
+                MilkyWayTopTenPlayersToggler.gameObject.SetActive(false);
+                return;
+            }
+            var count = _topTenPlayerData.Length;
+            MilkyWayTopTenPlayersToggler.gameObject.SetActive(count > 0);
+            if (count != buttons.Length)
+            {
+                for (var i = count; i < buttons.Length; i++)
+                {
+                    UnityEngine.Object.Destroy(buttons[i].gameObject);
+                }
+                Array.Resize(ref buttons, count);
+            }
+            for (var i = 0; i < count; i++)
+            {
+                var button = buttons[i];
+                if (chk)
+                {
+                    if (button == null)
+                    {
+                        button = MyFlatButton.CreateFlatButton(0f, 20f * i + 24f, rtrans, "").WithSize(20f, 18f);
+                        button.labelText.alignment = TextAnchor.MiddleLeft;
+                        buttons[i] = button;
+                    }
+                    button.SetLabelText(String.Format(">>  {0:00}. {1} {2}W", i + 1, _topTenPlayerData[i].name, ToKMG(_topTenPlayerData[i].genCap * 60L)));
+                    button.gameObject.SetActive(true);
+                }
+                else
+                {
+                    button.gameObject.SetActive(false);
+                }
+            }
+            MilkyWayTopTenPlayersToggler.SetLabelText(chk ? "Hide top players".Translate() : "Show top players".Translate());
+
+            string ToKMG(long value)
+            {
+                StringBuilderUtility.WriteKMG(_sb, 8, value, true);
+                return _sb.ToString();
+            }
         }
     }
     #endregion

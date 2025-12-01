@@ -24,6 +24,7 @@ public class UIPatch : PatchImpl<UIPatch>
         GameLogicProc.OnGameBegin += PlanetVeinUtilization.OnGameBegin;
         Enable(true);
         Functions.UIFunctions.InitMenuButtons();
+        Functions.UIFunctions.InitMilkyWayTopTenPlayers();
         PlanetVeinUtilization.Enable(PlanetVeinUtilizationEnabled.Value);
     }
 
