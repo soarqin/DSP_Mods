@@ -48,7 +48,7 @@ public static class GamePatch
                 p.Value.OnUnregEvent();
             }
 
-            abnormalLogic.determinators = new Dictionary<int, AbnormalityDeterminator>();
+            abnormalLogic.determinators = [];
         }
 
         protected override void OnDisable()
@@ -81,7 +81,7 @@ public static class GamePatch
         {
             _savedDeterminators = __instance.determinators;
             if (!AbnormalDisablerEnabled.Value) return;
-            __instance.determinators = new Dictionary<int, AbnormalityDeterminator>();
+            __instance.determinators = [];
             foreach (var p in _savedDeterminators)
             {
                 p.Value.OnUnregEvent();

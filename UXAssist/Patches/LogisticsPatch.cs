@@ -1222,7 +1222,7 @@ public static class LogisticsPatch
             private float _pixelPerItem;
 
             private StorageItemData[] _storageItems;
-            private static readonly Dictionary<int, Sprite> ItemSprites = new();
+            private static readonly Dictionary<int, Sprite> ItemSprites = [];
             private static readonly Color[] StateColor = [Color.gray, SupplyColor, DemandColor];
 
             private struct StorageItemData

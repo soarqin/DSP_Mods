@@ -1747,7 +1747,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                 if (obj != null) return obj;
             }
 
-            obj = new Dictionary<int, uint>();
+            obj = [];
             _signalBelts[index] = obj;
             return obj;
         }

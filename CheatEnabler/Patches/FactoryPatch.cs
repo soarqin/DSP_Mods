@@ -675,11 +675,12 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
 
         private static void InitSignalBelts()
         {
-            if (!GameMain.isRunning) return;
+            if (DSPGame.IsMenuDemo) return;
+            InitItemSources();
             _signalBelts = new Dictionary<int, BeltSignal>[64];
             _signalBeltsCapacity = 64;
-            _portalFrom = new Dictionary<long, int>();
-            _portalTo = new Dictionary<int, HashSet<long>>();
+            _portalFrom = [];
+            _portalTo = [];
 
             var factories = GameMain.data?.factories;
             if (factories == null) return;
@@ -735,7 +736,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                 if (obj != null) return obj;
             }
 
-            obj = new Dictionary<int, BeltSignal>();
+            obj = [];
             _signalBelts[index] = obj;
             return obj;
         }
@@ -869,7 +870,6 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         {
             if (DSPGame.IsMenuDemo) return;
             if (BeltSignalGeneratorEnabled.Value) InitSignalBelts();
-            InitItemSources();
         }
 
         [HarmonyPostfix]
@@ -1171,7 +1171,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                 for (var i = 0; i < len; i++)
                 {
                     if (ItemSources.ContainsKey(res[i])) continue;
-                    var rs = new ItemSource { Count = rescnt[i], From = new Dictionary<int, float>() };
+                    var rs = new ItemSource { Count = rescnt[i], From = [] };
                     var it = recipe.Items;
                     var itcnt = recipe.ItemCounts;
                     var len2 = it.Length;
@@ -1182,7 +1182,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
 
                     if (len > 1)
                     {
-                        rs.Extra = new Dictionary<int, float>();
+                        rs.Extra = [];
                         for (var k = 0; k < len; k++)
                         {
                             if (i != k)
@@ -1258,7 +1258,38 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             if (itemSource.From == null) return;
             foreach (var p in itemSource.From)
             {
-                CalculateAllProductions(result, extra, p.Key, times * p.Value);
+                var value = p.Value * times;
+                if (extra.TryGetValue(p.Key, out var rcount))
+                {
+                    if (value <= rcount)
+                    {
+                        if (value == rcount)
+                        {
+                            extra.Remove(p.Key);
+                        }
+                        else
+                        {
+                            extra[p.Key] = rcount - value;
+                        }
+                        continue;
+                    }
+                    extra.Remove(p.Key);
+                    value -= rcount;
+                }
+                if (result.TryGetValue(p.Key, out rcount))
+                {
+                    rcount -= value;
+                    if (rcount <= 0)
+                    {
+                        result.Remove(p.Key);
+                    }
+                    else
+                    {
+                        result[p.Key] = rcount;
+                    }
+                    continue;
+                }
+                CalculateAllProductions(result, extra, p.Key, value);
             }
         }
         /* END: Item sources calculation */

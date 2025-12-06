@@ -342,7 +342,7 @@ public class LogisticMiner : BaseUnityPlugin
         public float FrameNext;
 
         /* stores list of indices to veinData, with an extra INT which indicates cout of veinGroups at last */
-        private Dictionary<int, List<int>> _veins = new();
+        private Dictionary<int, List<int>> _veins = [];
         private int _mineIndex = -1;
 
         public bool HasVein(int productId)
