@@ -41,6 +41,8 @@ public static class UIFunctions
         I18N.Add("Show distance", "Show distance", "显示距离");
         I18N.Add("Show planet count", "Show planet count", "显示行星数");
         I18N.Add("Show all information", "Show all information", "显示全部信息");
+        I18N.Add("Show top players", "Show top players", "显示玩家排行榜");
+        I18N.Add("Hide top players", "Hide top players", "隐藏玩家排行榜");
         I18N.OnInitialized += RecreateConfigWindow;
     }
 
@@ -793,6 +795,7 @@ public static class UIFunctions
     private static readonly StringBuilder _sb = new("         ", 12);
 
     public static UI.MyCheckButton MilkyWayTopTenPlayersToggler;
+    public static event Action OnMilkyWayTopTenPlayersUpdated;
 
     public static void SetTopPlayerCount(int count)
     {
@@ -805,6 +808,12 @@ public static class UIFunctions
         _topTenPlayerData[index] = playerData;
     }
 
+    public static void UpdateMilkyWayTopTenPlayers()
+    {
+        if (_topTenPlayerData == null) return;
+        OnMilkyWayTopTenPlayersUpdated?.Invoke();
+    }
+
     public static void InitMilkyWayTopTenPlayers()
     {
         var uiRoot = UIRoot.instance;
@@ -813,7 +822,7 @@ public static class UIFunctions
         var rect = uiRoot.uiMilkyWay.transform as RectTransform;
         var panel = new GameObject("uxassist-milkyway-top-ten-players-panel");
         var rtrans = panel.AddComponent<RectTransform>();
-        panel.transform.SetParent(rect);
+        rtrans.SetParent(rect);
         rtrans.sizeDelta = new Vector2(0f, 0f);
         rtrans.localScale = new Vector3(1f, 1f, 1f);
         rtrans.anchorMax = new Vector2(1f, 1f);
@@ -822,11 +831,25 @@ public static class UIFunctions
         rtrans.anchoredPosition3D = new Vector3(0, 0, 0f);
 
         MyFlatButton[] buttons = [];
+        Text[] textFields = [];
 
         MilkyWayTopTenPlayersToggler = UI.MyCheckButton.CreateCheckButton(0, 0, rtrans, false, "Show top players".Translate()).WithSize(100f, 24f);
         MilkyWayTopTenPlayersToggler.OnChecked += UpdateButtons;
         MilkyWayTopTenPlayersToggler.Checked = false;
         UpdateButtons();
+        OnMilkyWayTopTenPlayersUpdated += UpdateButtons;
+
+        Text CreateTextField(RectTransform parent)
+        {
+            var txt = UnityEngine.Object.Instantiate(UIRoot.instance.uiGame.assemblerWindow.stateText, parent);
+            txt.gameObject.name = "uxassist-milkyway-top-ten-players-text-field";
+            txt.text = "";
+            txt.color = new Color(1f, 1f, 1f, 0.4f);
+            txt.alignment = TextAnchor.MiddleLeft;
+            txt.fontSize = 15;
+            txt.rectTransform.sizeDelta = new Vector2(0, 18);
+            return txt;
+        }
 
         void UpdateButtons()
         {
@@ -843,9 +866,18 @@ public static class UIFunctions
                 for (var i = count; i < buttons.Length; i++)
                 {
                     UnityEngine.Object.Destroy(buttons[i].gameObject);
+                    UnityEngine.Object.Destroy(textFields[i * 4].gameObject);
+                    UnityEngine.Object.Destroy(textFields[i * 4 + 1].gameObject);
+                    UnityEngine.Object.Destroy(textFields[i * 4 + 2].gameObject);
+                    UnityEngine.Object.Destroy(textFields[i * 4 + 3].gameObject);
                 }
                 Array.Resize(ref buttons, count);
+                Array.Resize(ref textFields, count * 4);
             }
+            float maxWidth0 = 0f;
+            float maxWidth1 = 0f;
+            float maxWidth2 = 0f;
+            float maxWidth3 = 0f;
             for (var i = 0; i < count; i++)
             {
                 var button = buttons[i];
@@ -854,15 +886,77 @@ public static class UIFunctions
                     if (button == null)
                     {
                         button = MyFlatButton.CreateFlatButton(0f, 20f * i + 24f, rtrans, "").WithSize(20f, 18f);
-                        button.labelText.alignment = TextAnchor.MiddleLeft;
                         buttons[i] = button;
+                        button.uiButton.data = i;
+                        button.uiButton.onClick += data =>
+                        {
+                            if (data < 0 || data >= _topTenPlayerData.Length) return;
+                            ref var playerData = ref _topTenPlayerData[data];
+                            var seed = playerData.seedKey;
+                            int combatValue = (int)(seed % 1000L);
+                            int resourceMultiplier = (int)(seed / 1000L % 100L);
+                            int starCount = (int)(seed / 100000L % 1000L);
+                            int gameSeed = (int)(seed / 100000000L);
+                            var uiMilkyWaySearchPanel = UIRoot.instance.uiMilkyWay.uiSearchPanel;
+                            uiMilkyWaySearchPanel.selectSeed = gameSeed;
+                            uiMilkyWaySearchPanel.selectStarCnt = starCount;
+                            uiMilkyWaySearchPanel.selectResMulti = resourceMultiplier;
+                            if (combatValue / 100 > 0)
+                            {
+                                uiMilkyWaySearchPanel.selectMode = 1;
+                                uiMilkyWaySearchPanel.selectCombatDiff = combatValue % 100;
+                            }
+                            else
+                            {
+                                uiMilkyWaySearchPanel.selectMode = 0;
+                                uiMilkyWaySearchPanel.selectCombatDiff = 0;
+                            }
+                            uiMilkyWaySearchPanel.RefreshInputText();
+                            uiMilkyWaySearchPanel.OnSearchButtonClick(0);
+                        };
+                        textFields[i * 4] = CreateTextField(rtrans);
+                        textFields[i * 4].alignment = TextAnchor.MiddleRight;
+                        textFields[i * 4 + 1] = CreateTextField(rtrans);
+                        textFields[i * 4 + 2] = CreateTextField(rtrans);
+                        textFields[i * 4 + 3] = CreateTextField(rtrans);
+                        textFields[i * 4 + 3].alignment = TextAnchor.MiddleRight;
                     }
-                    button.SetLabelText(String.Format(">>  {0:00}. {1} {2}W", i + 1, _topTenPlayerData[i].name, ToKMG(_topTenPlayerData[i].genCap * 60L)));
+                    button.SetLabelText(">>");
+                    textFields[i * 4].text = (i + 1).ToString();
+                    textFields[i * 4 + 1].text = _topTenPlayerData[i].name;
+                    textFields[i * 4 + 2].text = SeedToString(_topTenPlayerData[i].seedKey);
+                    textFields[i * 4 + 3].text = String.Format("{0}W", ToKMG(_topTenPlayerData[i].genCap * 60L));
+                    maxWidth0 = Math.Max(maxWidth0, textFields[i * 4].preferredWidth);
+                    maxWidth1 = Math.Max(maxWidth1, textFields[i * 4 + 1].preferredWidth);
+                    maxWidth2 = Math.Max(maxWidth2, textFields[i * 4 + 2].preferredWidth);
+                    maxWidth3 = Math.Max(maxWidth3, textFields[i * 4 + 3].preferredWidth);
                     button.gameObject.SetActive(true);
+                    textFields[i * 4].gameObject.SetActive(true);
+                    textFields[i * 4 + 1].gameObject.SetActive(true);
+                    textFields[i * 4 + 2].gameObject.SetActive(true);
+                    textFields[i * 4 + 3].gameObject.SetActive(true);
                 }
                 else
                 {
-                    button.gameObject.SetActive(false);
+                    if (button != null)
+                    {
+                        button.gameObject.SetActive(false);
+                        textFields[i * 4].gameObject.SetActive(false);
+                        textFields[i * 4 + 1].gameObject.SetActive(false);
+                        textFields[i * 4 + 2].gameObject.SetActive(false);
+                        textFields[i * 4 + 3].gameObject.SetActive(false);
+                    }
+                }
+            }
+            if (chk)
+            {
+                for (var i = 0; i < count; i++)
+                {
+                    var y = 20f * i + 24f;
+                    UI.Util.NormalizeRectWithTopLeft(textFields[i * 4].rectTransform, 24f + maxWidth0 + 5f, y);
+                    UI.Util.NormalizeRectWithTopLeft(textFields[i * 4 + 1].rectTransform, 24f + maxWidth0 + 10f, y);
+                    UI.Util.NormalizeRectWithTopLeft(textFields[i * 4 + 2].rectTransform, 24f + maxWidth0 + 10f + maxWidth1 + 5f, y);
+                    UI.Util.NormalizeRectWithTopLeft(textFields[i * 4 + 3].rectTransform, 24f + maxWidth0 + 10f + maxWidth1 + 5f + maxWidth2 + 5f + maxWidth3, y);
                 }
             }
             MilkyWayTopTenPlayersToggler.SetLabelText(chk ? "Hide top players".Translate() : "Show top players".Translate());
@@ -871,6 +965,24 @@ public static class UIFunctions
             {
                 StringBuilderUtility.WriteKMG(_sb, 8, value, true);
                 return _sb.ToString();
+            }
+
+            string SeedToString(long seed)
+            {
+                int combatValue = (int)(seed % 1000L);
+                int resourceMultiplier = (int)(seed / 1000L % 100L);
+                int starCount = (int)(seed / 100000L % 1000L);
+                int gameSeed = (int)(seed / 100000000L);
+                string text;
+                if (combatValue / 100 > 0)
+                {
+                    text = String.Format("{0:D8}-{1}-Z{2}-{3:00}", gameSeed, starCount, resourceMultiplier, combatValue % 100);
+                }
+                else
+                {
+                    text = String.Format("{0:D8}-{1}-A{2}", gameSeed, starCount, resourceMultiplier);
+                }
+                return text;
             }
         }
     }

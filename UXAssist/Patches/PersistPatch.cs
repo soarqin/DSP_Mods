@@ -261,5 +261,12 @@ public class PersistPatch : PatchImpl<PersistPatch>
         return matcher.InstructionEnumeration();
     }
 
+    [HarmonyPostfix]
+    [HarmonyPatch(typeof(MilkyWayCache), nameof(MilkyWayCache.LoadTopTenPlayerData))]
+    private static void MilkyWayCache_LoadTopTenPlayerData_Postfix(MilkyWayCache __instance)
+    {
+        Functions.UIFunctions.UpdateMilkyWayTopTenPlayers();
+    }
+
     #endregion
 }
