@@ -9,35 +9,15 @@ Add various cheat functions while disabling abnormal determinants
 
 Moved [to another repo](https://github.com/soarqin/DSP_Mods_TO/tree/master/CompressSave)
 
-## [LogisticMiner](LogisticMiner)
-
-Logistic Storages can mine all ores/water on current planet
-物流塔可以采集当前星球的全部矿产(以及水)
-
-## [HideTips](HideTips)
-
-Hide/Disable various tutorial tips/messages
-隐藏/屏蔽各种引导提示/消息
-
 ## [Dustbin](Dustbin)
 
 Can turn Storages and Tanks into Dustbin(Destroy incoming items)
 储物仓和储液罐可以转变为垃圾桶(销毁送进的物品)
 
-## [OverclockEverything](OverclockEverything)
+## [HideTips](HideTips)
 
-Boost nearly all structures
-加速几乎所有建筑功能
-
-## [UniverseGenTweaks](UniverseGenTweaks)
-
-Universe Generator Tweak
-宇宙生成参数调节
-
-## [MechaDronesTweaks](MechaDronesTweaks)
-
-Some tweaks for mecha drones and build functions(Successor to FastDrones MOD)
-机甲建设机和建设功能调整(FastDrones MOD的后继者)
+Hide/Disable various tutorial tips/messages
+隐藏/屏蔽各种引导提示/消息
 
 ## [LabOpt](LabOpt)
 
@@ -46,10 +26,34 @@ Marked as obsoleted temporarily, needs more investigation about LabComponent's m
 优化研究站性能
 暂时标识为过期，需要更多关于LabComponent机制的研究
 
+## [LogisticMiner](LogisticMiner)
+
+Logistic Storages can mine all ores/water on current planet
+物流塔可以采集当前星球的全部矿产(以及水)
+
+## [LuaScriptEngine](LuaScriptEngine)
+Write mod functions in lua scripts  
+用lua脚本编写mod功能
+
+## [MechaDronesTweaks](MechaDronesTweaks)
+
+Some tweaks for mecha drones and build functions(Successor to FastDrones MOD)
+机甲建设机和建设功能调整(FastDrones MOD的后继者)
+
+## [OverclockEverything](OverclockEverything)
+
+Boost nearly all structures
+加速几乎所有建筑功能
+
 ## [PoolOpt](PoolOpt)
 
 Optimize memory pools on loading gamesaves
 加载游戏存档时优化内存池的使用
+
+## [UniverseGenTweaks](UniverseGenTweaks)
+
+Universe Generator Tweak
+宇宙生成参数调节
 
 ## [UserCloak](UserCloak)
 

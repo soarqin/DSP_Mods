@@ -19,18 +19,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OverclockEverything", "Over
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MechaDronesTweaks", "MechaDronesTweaks\MechaDronesTweaks.csproj", "{15B8BC2E-93E0-4454-8F8F-BF1FA8DC90F4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LabOpt", "LabOpt\LabOpt.csproj", "{DD76B77C-68D8-4A4C-B98E-CBEECEDC49FB}"
-	ProjectSection(ProjectDependencies) = postProject
-		{F2D5EBE8-7D9D-4572-9A3E-4DD1114FD99F} = {F2D5EBE8-7D9D-4572-9A3E-4DD1114FD99F}
-	EndProjectSection
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LabOptPreloader", "LabOptPreloader\LabOptPreloader.csproj", "{F2D5EBE8-7D9D-4572-9A3E-4DD1114FD99F}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DustbinPreloader", "DustbinPreloader\DustbinPreloader.csproj", "{B8EB3D8D-5613-42F0-9040-EAA11A38C6AC}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PoolOpt", "PoolOpt\PoolOpt.csproj", "{8BE61246-2C9D-4088-AA33-5AFF22C5046E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UserCloak", "UserCloak\UserCloak.csproj", "{096D2E4B-D1CE-424D-9954-C36A23E9E279}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LuaScriptEngine", "LuaScriptEngine\LuaScriptEngine.csproj", "{E9375F0E-26DC-4CEC-80DC-9C48F23340BC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -70,14 +65,6 @@ Global
 		{15B8BC2E-93E0-4454-8F8F-BF1FA8DC90F4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{15B8BC2E-93E0-4454-8F8F-BF1FA8DC90F4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{15B8BC2E-93E0-4454-8F8F-BF1FA8DC90F4}.Release|Any CPU.Build.0 = Release|Any CPU
-		{DD76B77C-68D8-4A4C-B98E-CBEECEDC49FB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{DD76B77C-68D8-4A4C-B98E-CBEECEDC49FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{DD76B77C-68D8-4A4C-B98E-CBEECEDC49FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{DD76B77C-68D8-4A4C-B98E-CBEECEDC49FB}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F2D5EBE8-7D9D-4572-9A3E-4DD1114FD99F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F2D5EBE8-7D9D-4572-9A3E-4DD1114FD99F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F2D5EBE8-7D9D-4572-9A3E-4DD1114FD99F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F2D5EBE8-7D9D-4572-9A3E-4DD1114FD99F}.Release|Any CPU.Build.0 = Release|Any CPU
 		{B8EB3D8D-5613-42F0-9040-EAA11A38C6AC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{B8EB3D8D-5613-42F0-9040-EAA11A38C6AC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B8EB3D8D-5613-42F0-9040-EAA11A38C6AC}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -90,5 +77,9 @@ Global
 		{096D2E4B-D1CE-424D-9954-C36A23E9E279}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{096D2E4B-D1CE-424D-9954-C36A23E9E279}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{096D2E4B-D1CE-424D-9954-C36A23E9E279}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E9375F0E-26DC-4CEC-80DC-9C48F23340BC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E9375F0E-26DC-4CEC-80DC-9C48F23340BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E9375F0E-26DC-4CEC-80DC-9C48F23340BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E9375F0E-26DC-4CEC-80DC-9C48F23340BC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

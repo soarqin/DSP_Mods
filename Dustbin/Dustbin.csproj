@@ -16,11 +16,21 @@
   <ItemGroup>
     <PackageReference Include="BepInEx.Core" Version="5.*" />
     <PackageReference Include="BepInEx.PluginInfoProps" Version="1.*" />
-    <PackageReference Include="DysonSphereProgram.GameLibs" Version="0.10.32.*-r.*" />
+    <!-- <PackageReference Include="DysonSphereProgram.GameLibs" Version="0.10.32.*-r.*" /> -->
     <PackageReference Include="DysonSphereProgram.Modding.DSPModSave" Version="1.*" />
     <PackageReference Include="DysonSphereProgram.Modding.NebulaMultiplayerModApi" Version="2.0.0" />
-    <PackageReference Include="UnityEngine.Modules" Version="2018.4.12" IncludeAssets="compile" />
+    <PackageReference Include="UnityEngine.Modules" Version="2022.3.53" IncludeAssets="compile" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>..\AssemblyFromGame\Assembly-CSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>..\AssemblyFromGame\UnityEngine.UI.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
   <ItemGroup>
     <EmbeddedResource Include="assets/icon/signal-410.png" />
   </ItemGroup>
@@ -29,13 +39,8 @@
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Reference Include="Assembly-CSharp">
-      <HintPath>GameAssembly\Assembly-CSharp.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-
   <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(Configuration)' == 'Release'">
-    <Exec Command="del /F /Q package\$(ProjectName)-$(Version).zip&#xA;IF NOT EXIST package\plugins (mkdir package\plugins)&#xA;copy /y $(TargetPath) package\plugins\&#xA;cd package&#xA;powershell Compress-Archive -Force -DestinationPath '$(ProjectName)-$(Version).zip' -Path patchers, plugins, icon.png, manifest.json, ../README.md, ../CHANGELOG.md" />
+    <Exec Command="del /F /Q package\$(ProjectName)-$(Version).zip
+IF NOT EXIST package\plugins (mkdir package\plugins)&#xA;copy /y $(TargetPath) package\plugins\&#xA;cd package&#xA;powershell Compress-Archive -Force -DestinationPath '$(ProjectName)-$(Version).zip' -Path patchers, plugins, icon.png, manifest.json, ../README.md, ../CHANGELOG.md" />
   </Target>
 </Project>
