@@ -20,10 +20,6 @@
     <!-- <PackageReference Include="DysonSphereProgram.GameLibs" Version="0.10.32.*-r.*" /> -->
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
-    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
-  </ItemGroup>
-
   <ItemGroup>
     <Reference Include="Assembly-CSharp">
       <HintPath>..\AssemblyFromGame\Assembly-CSharp.dll</HintPath>
@@ -33,11 +29,16 @@
     </Reference>
   </ItemGroup>
 
+  <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\UXAssist\UXAssist.csproj" />
   </ItemGroup>
 
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="del /F /Q package\$(ProjectName)-$(Version).zip&#xA;powershell Compress-Archive -Force -DestinationPath 'package/$(ProjectName)-$(Version).zip' -Path '$(TargetPath)', package/icon.png, package/manifest.json, README.md, CHANGELOG.md" />
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(Configuration)' == 'Release'">
+    <Exec Command="del /F /Q package\$(ProjectName)-$(Version).zip
+powershell Compress-Archive -Force -DestinationPath 'package/$(ProjectName)-$(Version).zip' -Path '$(TargetPath)', package/icon.png, package/manifest.json, README.md, CHANGELOG.md" />
   </Target>
 </Project>
