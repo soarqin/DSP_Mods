@@ -122,6 +122,7 @@ public class UIPatch : PatchImpl<UIPatch>
         #region Helper functions
         private static void ProcessVeinData(VeinTypeInfo[] veinCount, VeinData[] veinPool)
         {
+            if (veinPool == null) return;
             lock (veinPool)
             {
                 foreach (VeinData veinData in veinPool)
@@ -272,21 +273,19 @@ public class UIPatch : PatchImpl<UIPatch>
             }
             foreach (PlanetData planet in __instance.star.planets)
             {
-                if (planet.runtimeVeinGroups == null) { continue; }
                 PlanetFactory factory = planet.factory;
                 if (factory != null)
                 {
                     ProcessVeinData(starVeinCount, factory.veinPool);
+                    continue;
                 }
-                else
+                VeinGroup[] veinGroups = planet.veinGroups;
+                if (veinGroups == null) continue;
+                lock (planet.veinGroupsLock)
                 {
-                    VeinGroup[] veinGroups = planet.runtimeVeinGroups;
-                    lock (planet.veinGroupsLock)
+                    for (int i = 1; i < veinGroups.Length; i++)
                     {
-                        for (int i = 1; i < veinGroups.Length; i++)
-                        {
-                            starVeinCount[(int)veinGroups[i].type].numVeinGroups++;
-                        }
+                        starVeinCount[(int)veinGroups[i].type].numVeinGroups++;
                     }
                 }
             }

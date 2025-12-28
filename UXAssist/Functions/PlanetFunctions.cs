@@ -263,6 +263,19 @@ public static class PlanetFunctions
         factory.factoryStorage = new FactoryStorage(planet);
         factory.powerSystem = new PowerSystem(planet);
         factory.constructionSystem = new ConstructionSystem(planet);
+        if (factory.veinPool != null)
+        {
+            for (var i = 0; i < factory.veinPool.Length; i++)
+            {
+                ref var vein = ref factory.veinPool[i];
+                if (vein.id != i) continue;
+                vein.minerCount = 0;
+                vein.minerId0 = 0;
+                vein.minerId1 = 0;
+                vein.minerId2 = 0;
+                vein.minerId3 = 0;
+            }
+        }
         factory.InitVeinHashAddress();
         factory.RecalculateAllVeinGroups();
         factory.InitVegeHashAddress();
