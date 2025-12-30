@@ -68,6 +68,7 @@ public static class UIConfigWindow
         I18N.Add("Overclock Silos", "Overclock Silos (10x)", "高速发射井(10倍射速)");
         I18N.Add("Unlock Dyson Sphere max orbit radius", "Unlock Dyson Sphere max orbit radius", "解锁戴森球最大轨道半径");
         I18N.Add("Complete Dyson Sphere shells instantly", "Complete Dyson Sphere shells instantly", "立即完成戴森壳建造");
+        I18N.Add("Remove all frames on Dyson Sphere", "Remove all frames on Dyson Sphere", "移除戴森球上的所有框架");
         I18N.Add("Generate illegal dyson shell", "Generate an illegal dyson shell (!!1st shell layer will be replaced!!)", "生成单层仙术戴森壳(!!会先删除第一层戴森壳!!)");
         I18N.Add("Keep max production shells and remove others", "Keep max production shells and remove others", "保留发电量最高的戴森壳并移除其他戴森壳");
         I18N.Add("Duplicate shells from that with highest production", "Duplicate shells from that with highest production", "从发电量最高的壳复制戴森壳");
@@ -301,6 +302,8 @@ public static class UIConfigWindow
         x = 300f;
         y = 10f;
         wnd.AddButton(x, y, 300f, tab4, "Complete Dyson Sphere shells instantly", 16, "button-complete-dyson-sphere-shells-instantly", DysonSphereFunctions.CompleteShellsInstantly);
+        y += 36f;
+        wnd.AddButton(x, y, 300f, tab4, "Remove all frames on Dyson Sphere", 16, "button-remove-all-frames-on-dyson-sphere", DysonSphereFunctions.RemoveAllFrames);
         {
             y += 72f;
             var originalY = y;

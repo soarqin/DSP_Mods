@@ -78,6 +78,7 @@ public static class DysonSphereFunctions
         I18N.Add("There is no Dyson Sphere shell on \"{0}\".", "There is no Dyson Sphere shell on \"{0}\".", "“{0}”上没有可建造的戴森壳");
         I18N.Add("There is no Dyson Sphere data on \"{0}\".", "There is no Dyson Sphere data on \"{0}\".", "“{0}”上没有戴森球数据");
         I18N.Add("This will complete all Dyson Sphere shells on \"{0}\" instantly. Are you sure?", "This will complete all Dyson Sphere shells on \"{0}\" instantly. Are you sure?", "这将立即完成“{0}”上的所有戴森壳。你确定吗？");
+        I18N.Add("This will remove all frames on \"{0}\". Are you sure?", "This will remove all frames on \"{0}\". Are you sure?", "这将移除“{0}”上的所有框架。你确定吗？");
         I18N.Add("No precalculated shell found for radius {0}.", "No precalculated shell found for radius {0}.", "没有找到适合半径 {0} 的预计算壳面");
     }
 
@@ -216,6 +217,70 @@ public static class DysonSphereFunctions
                     if (count > 0L) consumeRegister[ProductionStatistics.SOLAR_SAIL_ID] += (int)count;
                 }
             }
+        });
+    }
+
+    public static void RemoveAllFrames()
+    {
+        StarData star = null;
+        var dysonEditor = UIRoot.instance?.uiGame?.dysonEditor;
+        if (dysonEditor != null && dysonEditor.gameObject.activeSelf)
+        {
+            star = dysonEditor.selection.viewStar;
+        }
+        if (star == null)
+        {
+            star = GameMain.data?.localStar;
+            if (star == null)
+            {
+                UIMessageBox.Show("CheatEnabler".Translate(), "You are not in any system.".Translate(), "确定".Translate(), UIMessageBox.ERROR, null);
+                return;
+            }
+        }
+        var dysonSphere = GameMain.data?.dysonSpheres[star.index];
+        if (dysonSphere == null || dysonSphere.layerCount == 0)
+        {
+            UIMessageBox.Show("CheatEnabler".Translate(), string.Format("There is no Dyson Sphere shell on \"{0}\".".Translate(), star.displayName), "确定".Translate(), UIMessageBox.ERROR, null);
+            return;
+        }
+
+        UIMessageBox.Show("CheatEnabler".Translate(), string.Format("This will remove all frames on \"{0}\". Are you sure?".Translate(), star.displayName), "取消".Translate(), "确定".Translate(), UIMessageBox.QUESTION, null, () =>
+        {
+            var totalFrameSpInfo = AccessTools.Field(typeof(DysonSphereLayer), "totalFrameSP");
+
+            foreach (var dysonSphereLayer in dysonSphere.layersIdBased)
+            {
+                if (dysonSphereLayer == null) continue;
+                for (var i = dysonSphereLayer.nodeCursor - 1; i >= 0; i--)
+                {
+                    var dysonNode = dysonSphereLayer.nodePool[i];
+                    if (dysonNode == null || dysonNode.id != i) continue;
+                    if (dysonNode.frames.Count > 0)
+                        dysonNode.frames.Clear();
+                    dysonNode.RecalcSpReq();
+                }
+                for (var i = dysonSphereLayer.shellCursor - 1; i >= 0; i--)
+                {
+                    var dysonShell = dysonSphereLayer.shellPool[i];
+                    if (dysonShell == null || dysonShell.id != i) continue;
+                    if (dysonShell.frames.Count > 0)
+                        dysonShell.frames.Clear();
+                }
+                for (var i = dysonSphereLayer.frameCursor - 1; i >= 0; i--)
+                {
+                    var dysonFrame = dysonSphereLayer.framePool[i];
+                    if (dysonFrame == null || dysonFrame.id != i) continue;
+                    dysonFrame.Free();
+                    dysonSphereLayer.framePool[i] = null;
+                }
+                dysonSphereLayer.frameCursor = 1;
+                dysonSphereLayer.frameRecycleCursor = 0;
+                dysonSphereLayer.SetFrameCapacity(64);
+                totalFrameSpInfo?.SetValue(dysonSphereLayer, 0);
+            }
+            dysonSphere.CheckAutoNodes();
+            dysonSphere.PickAutoNode();
+            dysonSphere.modelRenderer.RebuildModels();
         });
     }
 
