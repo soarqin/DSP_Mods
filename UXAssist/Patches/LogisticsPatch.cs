@@ -312,7 +312,8 @@ public static class LogisticsPatch
     {
         private static KeyCode _lastKey = KeyCode.None;
         private static long _nextKeyTick;
-        private static bool _skipNextEvent;
+        private static bool _skipNextUIStationStorageEvent;
+        private static bool _skipNextUIControlPanelStationStorageEvent;
 
         private static bool UpdateKeyPressed(KeyCode code)
         {
@@ -388,10 +389,26 @@ public static class LogisticsPatch
             EventSystem.current.RaycastAll(new PointerEventData(EventSystem.current) { position = Input.mousePosition }, targets);
             foreach (var target in targets)
             {
+                StationComponent station = null;
+                int index = -1;
+                PlanetFactory planetFactory = null;
                 var stationStorage = target.gameObject.GetComponentInParent<UIStationStorage>();
-                var station = stationStorage?.station;
+                bool isControlPanelStationStorage = false;
+                if (stationStorage != null)
+                {
+                    station = stationStorage.station;
+                    index = stationStorage.index;
+                    planetFactory = stationStorage.stationWindow?.factory;
+                } else {
+                    var controlPanelStationStorage = target.gameObject.GetComponentInParent<UIControlPanelStationStorage>();
+                    if (controlPanelStationStorage == null) continue;
+                    station = controlPanelStationStorage.station;
+                    index = controlPanelStationStorage.index;
+                    planetFactory = controlPanelStationStorage.factory;
+                    isControlPanelStationStorage = true;
+                }
                 if (station?.storage is null) continue;
-                ref var storage = ref station.storage[stationStorage.index];
+                ref var storage = ref station.storage[index];
                 var oldMax = storage.max;
                 var newMax = oldMax + delta;
                 if (newMax < 0)
@@ -407,9 +424,8 @@ public static class LogisticsPatch
                     }
                     else
                     {
-                        var factory = stationStorage.stationWindow?.factory;
-                        if (factory == null || station.entityId <= 0 || station.entityId >= factory.entityCursor) continue;
-                        var modelProto = LDB.models.Select(factory.entityPool[station.entityId].modelIndex);
+                        if (planetFactory == null || station.entityId <= 0 || station.entityId >= planetFactory.entityCursor) continue;
+                        var modelProto = LDB.models.Select(planetFactory.entityPool[station.entityId].modelIndex);
                         itemCountMax = modelProto == null ? 0 : modelProto.prefabDesc.stationMaxItemCount;
                         itemCountMax += station.isStellar ? GameMain.history.remoteStationExtraStorage : GameMain.history.localStationExtraStorage;
                     }
@@ -421,7 +437,14 @@ public static class LogisticsPatch
                 }
 
                 storage.max = newMax;
-                _skipNextEvent = oldMax / 100 != newMax / 100;
+                if (isControlPanelStationStorage)
+                {
+                    _skipNextUIControlPanelStationStorageEvent = oldMax / 100 != newMax / 100;
+                }
+                else
+                {
+                    _skipNextUIStationStorageEvent = oldMax / 100 != newMax / 100;
+                }
                 break;
             }
         }
@@ -430,8 +453,17 @@ public static class LogisticsPatch
         [HarmonyPatch(typeof(UIStationStorage), nameof(UIStationStorage.OnMaxSliderValueChange))]
         private static bool UIStationStorage_OnMaxSliderValueChange_Prefix()
         {
-            if (!_skipNextEvent) return true;
-            _skipNextEvent = false;
+            if (!_skipNextUIStationStorageEvent) return true;
+            _skipNextUIStationStorageEvent = false;
+            return false;
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(UIControlPanelStationStorage), nameof(UIControlPanelStationStorage.OnMaxSliderValueChange))]
+        private static bool UIControlPanelStationStorage_OnMaxSliderValueChange_Prefix()
+        {
+            if (!_skipNextUIControlPanelStationStorageEvent) return true;
+            _skipNextUIControlPanelStationStorageEvent = false;
             return false;
         }
 
