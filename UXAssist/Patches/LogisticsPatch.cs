@@ -427,7 +427,7 @@ public static class LogisticsPatch
                         if (planetFactory == null || station.entityId <= 0 || station.entityId >= planetFactory.entityCursor) continue;
                         var modelProto = LDB.models.Select(planetFactory.entityPool[station.entityId].modelIndex);
                         itemCountMax = modelProto == null ? 0 : modelProto.prefabDesc.stationMaxItemCount;
-                        itemCountMax += station.isStellar ? GameMain.history.remoteStationExtraStorage : GameMain.history.localStationExtraStorage;
+                        itemCountMax += station.isStellar && !station.isCollector ? GameMain.history.remoteStationExtraStorage : GameMain.history.localStationExtraStorage;
                     }
 
                     if (newMax > itemCountMax)
