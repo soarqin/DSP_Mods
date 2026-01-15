@@ -27,20 +27,30 @@ public static class PlanetFunctions
                 {
                     for (var i = sc.storage.Length - 1; i >= 0; i--)
                     {
-                        var package = player.TryAddItemToPackage(sc.storage[i].itemId, sc.storage[i].count, 0, true, etd.id);
-                        UIItemup.Up(sc.storage[i].itemId, package);
+                        var added = player.TryAddItemToPackage(sc.storage[i].itemId, sc.storage[i].count, 0, true, etd.id);
+                        UIItemup.Up(sc.storage[i].itemId, added);
+                        sc.storage[i].count = 0;
                     }
                 }
-                sc.storage = new StationStore[sc.storage.Length];
-                sc.needs = new int[sc.needs.Length];
+                else
+                {
+                    for (var i = sc.storage.Length - 1; i >= 0; i--)
+                    {
+                        sc.storage[i].count = 0;
+                    }
+                }
             }
             if (toBag)
             {
-                player.controller.actionBuild.DoDismantleObject(etd.id);
+                int protoId = 0;
+                factory.DismantleFinally(player, etd.id, ref protoId);
             }
             else
             {
-                factory.RemoveEntityWithComponents(etd.id, false);
+                var objId = etd.id;
+                factory.BeforeDismantleObject(objId);
+                factory.RemoveEntityWithComponents(objId, false);
+                factory.OnDismantleObject(objId);
             }
         }
     }
@@ -106,28 +116,52 @@ public static class PlanetFunctions
 
         //planet.data = new PlanetRawData(planet.precision);
         //planet.data.CalcVerts();
+        var stationPool = factory.transport?.stationPool;
+        if (stationPool != null)
+        {
+            foreach (var sc in stationPool)
+            {
+                if (sc is not { id: > 0 }) continue;
+                for (var i = sc.storage.Length - 1; i >= 0; i--)
+                {
+                    sc.storage[i].count = 0;
+                }
+            }
+        }
+
+        var physics = planet.physics;
+        var gpuiManager = GameMain.gpuiManager;
+        var blockContainer = factory.blockContainer;
+        var audio = planet.audio;
         for (var id = factory.entityCursor - 1; id > 0; id--)
         {
             ref var ed = ref factory.entityPool[id];
             if (ed.id != id) continue;
+
+            factory.BeforeDismantleObject(id);
+
             if (ed.colliderId != 0)
             {
-                planet.physics.RemoveLinkedColliderData(ed.colliderId);
-                planet.physics.NotifyObjectRemove(EObjectType.Entity, ed.id);
+                physics.RemoveLinkedColliderData(ed.colliderId);
+                physics.NotifyObjectRemove(EObjectType.Entity, ed.id);
             }
 
             if (ed.modelId != 0)
             {
-                GameMain.gpuiManager.RemoveModel(ed.modelIndex, ed.modelId);
+                gpuiManager.RemoveModel(ed.modelIndex, ed.modelId);
             }
 
             if (ed.mmblockId != 0)
             {
-                factory.blockContainer.RemoveMiniBlock(ed.mmblockId);
+                blockContainer.RemoveMiniBlock(ed.mmblockId);
             }
 
-            if (ed.audioId == 0) continue;
-            planet.audio?.RemoveAudioData(ed.audioId);
+            if (ed.audioId != 0)
+            {
+                audio.RemoveAudioData(ed.audioId);
+            }
+
+            factory.OnDismantleObject(id);
         }
 
         for (var id = factory.prebuildCursor - 1; id > 0; id--)
@@ -136,11 +170,11 @@ public static class PlanetFunctions
             if (pb.id != id) continue;
             if (pb.colliderId != 0)
             {
-                planet.physics.RemoveLinkedColliderData(pb.colliderId);
+                physics.RemoveLinkedColliderData(pb.colliderId);
             }
             if (pb.modelId != 0)
             {
-                GameMain.gpuiManager.RemovePrebuildModel(pb.modelIndex, pb.modelId);
+                gpuiManager.RemovePrebuildModel(pb.modelIndex, pb.modelId);
             }
         }
 
@@ -179,19 +213,6 @@ public static class PlanetFunctions
             }
             factory.enemySystem.Free();
             UIRoot.instance.uiGame.dfAssaultTip.ClearAllSpots();
-        }
-
-        var stationPool = factory.transport?.stationPool;
-        if (stationPool != null)
-        {
-            foreach (var sc in stationPool)
-            {
-                if (sc is not { id: > 0 }) continue;
-                sc.storage = new StationStore[sc.storage.Length];
-                sc.needs = new int[sc.needs.Length];
-                int protoId = factory.entityPool[sc.entityId].protoId;
-                factory.DismantleFinally(player, sc.entityId, ref protoId);
-            }
         }
 
         var planetId = planet.id;
