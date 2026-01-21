@@ -225,7 +225,7 @@ public static class BeltSignal
                         int itemId;
                         if ((itemId = cargoPath.TryPickItem(belt.segIndex + belt.segPivotOffset - 5, 12, out var stack, out _)) <= 0) continue;
                         consumeRegister[itemId] += stack;
-                        Dustbin.CalcGetSands(itemId, stack);
+                        Dustbin.CalcGetSands(itemId, stack, 0);
                     }
                 }
             })
