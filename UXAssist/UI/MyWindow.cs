@@ -30,7 +30,7 @@ public class MyWindow : ManualBehaviour
         var go = Instantiate(UIRoot.instance.uiGame.inserterWindow.gameObject);
         go.SetActive(false);
         go.name = "my-window";
-        Destroy(go.GetComponent<UITankWindow>());
+        Destroy(go.GetComponent<UIInserterWindow>());
         for (var i = go.transform.childCount - 1; i >= 0; i--)
         {
             var child = go.transform.GetChild(i).gameObject;
@@ -61,6 +61,11 @@ public class MyWindow : ManualBehaviour
             win._Init(win.data);
         }
         return (T)win;
+    }
+
+    public override void _OnOpen()
+    {
+        AutoFitWindowSize();
     }
 
     public override void _OnFree()
@@ -99,6 +104,15 @@ public class MyWindow : ManualBehaviour
     {
         var trans = GetComponent<RectTransform>();
         trans.sizeDelta = new Vector2(_maxX + Margin + TabWidth + Spacing + Margin, MaxY + TitleHeight + Margin);
+        // var panelBgTrans = trans.Find("panel-bg")?.GetComponent<RectTransform>();
+        // if (panelBgTrans != null)
+        // {
+        //     panelBgTrans.anchorMax = new Vector2(0f, 1f);
+        //     panelBgTrans.anchorMin = new Vector2(0f, 1f);
+        //     panelBgTrans.pivot = new Vector2(0f, 1f);
+        //     panelBgTrans.localPosition = new Vector3(0f, 0f, 0f);
+        //     panelBgTrans.sizeDelta = new Vector2(_maxX + Margin + TabWidth + Spacing + Margin, MaxY + TitleHeight + Margin);
+        // }
     }
 
     private static void AddElement(float x, float y, RectTransform rect, RectTransform parent = null)
@@ -212,9 +226,9 @@ public class MyWindow : ManualBehaviour
         return cb;
     }
 
-    public MyComboBox AddComboBox(float x, float y, RectTransform parent, string label = "", int fontSize = 15)
+    public MyComboBox AddComboBox(float x, float y, RectTransform parent, int fontSize = 15)
     {
-        var comboBox = MyComboBox.CreateComboBox(x, y, parent).WithPrompt(label).WithFontSize(fontSize);
+        var comboBox = MyComboBox.CreateComboBox(x, y, parent).WithFontSize(fontSize);
         _maxX = Math.Max(_maxX, x + comboBox.Width);
         MaxY = Math.Max(MaxY, y + comboBox.Height);
         return comboBox;

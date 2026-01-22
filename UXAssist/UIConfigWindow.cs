@@ -333,7 +333,8 @@ public static class UIConfigWindow
             x = 0f;
         }
         y += 36f;
-        wnd.AddComboBox(x + 2f, y, tab1, "Process priority").WithItems("High", "Above Normal", "Normal", "Below Normal", "Idle").WithSize(100f, 0f).WithConfigEntry(WindowFunctions.ProcessPriority);
+        txt = wnd.AddText2(x + 2f, y, tab1, "Process priority", 15, "process-priority");
+        wnd.AddComboBox(x + 7f + txt.preferredWidth, y, tab1).WithItems("High", "Above Normal", "Normal", "Below Normal", "Idle").WithSize(100f, 0f).WithConfigEntry(WindowFunctions.ProcessPriority);
 
         var tab2 = wnd.AddTab(trans, "Factory");
         x = 0f;

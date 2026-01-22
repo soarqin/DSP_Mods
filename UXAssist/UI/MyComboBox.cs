@@ -10,7 +10,6 @@ public class MyComboBox : MonoBehaviour
 {
     private RectTransform _rectTrans;
     private UIComboBox _comboBox;
-    private Text _text;
     public Action<int> OnSelChanged;
 
     private static GameObject _baseObject;
@@ -34,7 +33,6 @@ public class MyComboBox : MonoBehaviour
         if (fontSource)
         {
             var txtComp = cbctrl.m_ListItemRes.GetComponentInChildren<Text>();
-            UXAssist.Logger.LogDebug($"txtComp: [{txtComp}]");
             if (txtComp)
             {
                 txtComp.font = fontSource.font;
@@ -42,7 +40,6 @@ public class MyComboBox : MonoBehaviour
                 txtComp.fontStyle = fontSource.fontStyle;
             }
             txtComp = rect.Find("Main Button/Text")?.GetComponent<Text>();
-            UXAssist.Logger.LogDebug($"txtComp: [{txtComp}]");
             if (txtComp)
             {
                 txtComp.font = fontSource.font;
@@ -63,8 +60,6 @@ public class MyComboBox : MonoBehaviour
         var cb = gameObject.AddComponent<MyComboBox>();
         var rtrans = Util.NormalizeRectWithTopLeft(cb, x, y, parent);
         cb._rectTrans = rtrans;
-        cb._text = gameObject.transform.Find("Main Button/Text")?.GetComponent<Text>();
-        UXAssist.Logger.LogDebug($"cb._text: [{cb._text}]");
         var box = rtrans.GetComponent<UIComboBox>();
         cb._comboBox = box;
         box.onItemIndexChange.AddListener(() => { cb.OnSelChanged?.Invoke(box.itemIndex); });
@@ -81,21 +76,11 @@ public class MyComboBox : MonoBehaviour
     private void UpdateComboBoxPosition()
     {
         var rtrans = (RectTransform)_comboBox.transform;
-        var oldPosition = rtrans.localPosition;
-        var pwidth = _text.preferredWidth;
-        rtrans.localPosition = new Vector3(pwidth + 5f, oldPosition.y, oldPosition.z);
         _rectTrans.sizeDelta = new Vector2(rtrans.localPosition.x + 5f + rtrans.sizeDelta.x, _rectTrans.sizeDelta.y);
-    }
-
-    public void SetPrompt(string prompt)
-    {
-        _text.text = prompt.Translate();
-        UpdateComboBoxPosition();
     }
 
     public void SetFontSize(int size)
     {
-        _text.fontSize = size;
         _comboBox.ItemButtons.ForEach(b => b.GetComponentInChildren<Text>().fontSize = size);
         _comboBox.m_ListItemRes.GetComponentInChildren<Text>().fontSize = size;
         var txtComp = _comboBox.transform.Find("Main Button")?.GetComponentInChildren<Text>();
@@ -135,12 +120,6 @@ public class MyComboBox : MonoBehaviour
         OnSelChanged += _selChanged;
         _configChanged = (_, _) => SetIndex(config.Value);
         config.SettingChanged += _configChanged;
-    }
-
-    public MyComboBox WithPrompt(string prompt)
-    {
-        SetPrompt(prompt);
-        return this;
     }
 
     public MyComboBox WithFontSize(int size)

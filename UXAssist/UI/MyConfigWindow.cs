@@ -25,9 +25,10 @@ public class MyConfigWindow : MyWindowWithTabs
         base._OnCreate();
         _windowTrans = GetComponent<RectTransform>();
         OnUICreated?.Invoke(this, _windowTrans);
-        AutoFitWindowSize();
         SetCurrentTab(0);
         OnUpdateUI?.Invoke();
+        // Delay 500ms to run AutoFitWindowSize() after the window is created
+        // Invoke(nameof(AutoFitWindowSize), 0f);
     }
 
     public override void _OnDestroy()
