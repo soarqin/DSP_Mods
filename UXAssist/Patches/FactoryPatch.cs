@@ -383,8 +383,8 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         }
 
         [HarmonyTranspiler]
-        [HarmonyPatch(typeof(PlanetSimulator), nameof(PlanetSimulator.LateUpdate))]
-        private static IEnumerable<CodeInstruction> PlanetSimulator_LateUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        [HarmonyPatch(typeof(PlanetSimulator), nameof(PlanetSimulator.LateRefresh))]    
+        private static IEnumerable<CodeInstruction> PlanetSimulator_LateRefresh_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
         {
             // var vec = (NightlightEnabled ? GameMain.mainPlayer.transform.up : (Quaternion.Inverse(localPlanet.runtimeRotation) * (__instance.planetData.star.uPosition - __instance.planetData.uPosition).normalized));
             var matcher = new CodeMatcher(instructions, generator);
@@ -2153,13 +2153,14 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             var matcher = new CodeMatcher(instructions, generator);
             matcher.MatchForward(false,
                 new CodeMatch(OpCodes.Ldarg_0),
-                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(LabComponent), nameof(LabComponent.timeSpend))),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(LabComponent), nameof(LabComponent.recipeExecuteData))),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(RecipeExecuteData), nameof(RecipeExecuteData.timeSpend))),
                 new CodeMatch(OpCodes.Ldc_I4, 5400000),
                 new CodeMatch(ci => ci.opcode == OpCodes.Bgt_S || ci.opcode == OpCodes.Bgt),
                 new CodeMatch(OpCodes.Ldc_I4_3)
             );
             var extraCount = LabBufferExtraCountForAdvancedAssemble.Value;
-            matcher.Advance(4).SetAndAdvance(OpCodes.Ldc_I4, extraCount);
+            matcher.Advance(5).SetAndAdvance(OpCodes.Ldc_I4, extraCount);
             matcher.MatchForward(false,
                 new CodeMatch(OpCodes.Div),
                 new CodeMatch(OpCodes.Mul),

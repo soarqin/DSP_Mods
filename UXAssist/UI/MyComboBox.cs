@@ -19,24 +19,12 @@ public class MyComboBox : MonoBehaviour
     {
         if (_baseObject) return;
         var fontSource = UIRoot.instance.uiGame.buildMenu.uxFacilityCheck.transform.Find("text")?.GetComponent<Text>();
-        var go = Instantiate(UIRoot.instance.optionWindow.resolutionComp.transform.parent.gameObject);
+        var go = Instantiate(UIRoot.instance.optionWindow.resolutionComp.gameObject);
         go.name = "my-combobox";
         go.SetActive(false);
 
-        var txt = go.GetComponent<Text>();
-        if (txt) txt.text = "";
-        if (txt && fontSource)
-        {
-            txt.font = fontSource.font;
-            txt.fontSize = fontSource.fontSize;
-            txt.fontStyle = fontSource.fontStyle;
-            txt.color = new Color(1f, 1f, 1f, 0.6f);
-        }
-        var localizer = go.GetComponent<Localizer>();
-        if (localizer) DestroyImmediate(localizer);
-
         var rect = (RectTransform)go.transform;
-        var cbctrl = rect.transform.Find("ComboBox").GetComponent<UIComboBox>();
+        var cbctrl = rect.GetComponent<UIComboBox>();
         foreach (var button in cbctrl.ItemButtons)
         {
             Destroy(button.gameObject);
@@ -46,13 +34,15 @@ public class MyComboBox : MonoBehaviour
         if (fontSource)
         {
             var txtComp = cbctrl.m_ListItemRes.GetComponentInChildren<Text>();
+            UXAssist.Logger.LogDebug($"txtComp: [{txtComp}]");
             if (txtComp)
             {
                 txtComp.font = fontSource.font;
                 txtComp.fontSize = fontSource.fontSize;
                 txtComp.fontStyle = fontSource.fontStyle;
             }
-            txtComp = cbctrl.transform.Find("Main Button")?.GetComponentInChildren<Text>();
+            txtComp = rect.Find("Main Button/Text")?.GetComponent<Text>();
+            UXAssist.Logger.LogDebug($"txtComp: [{txtComp}]");
             if (txtComp)
             {
                 txtComp.font = fontSource.font;
@@ -73,8 +63,9 @@ public class MyComboBox : MonoBehaviour
         var cb = gameObject.AddComponent<MyComboBox>();
         var rtrans = Util.NormalizeRectWithTopLeft(cb, x, y, parent);
         cb._rectTrans = rtrans;
-        cb._text = gameObject.GetComponent<Text>();
-        var box = rtrans.Find("ComboBox").GetComponent<UIComboBox>();
+        cb._text = gameObject.transform.Find("Main Button/Text")?.GetComponent<Text>();
+        UXAssist.Logger.LogDebug($"cb._text: [{cb._text}]");
+        var box = rtrans.GetComponent<UIComboBox>();
         cb._comboBox = box;
         box.onItemIndexChange.AddListener(() => { cb.OnSelChanged?.Invoke(box.itemIndex); });
         cb.UpdateComboBoxPosition();

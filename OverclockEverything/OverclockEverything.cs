@@ -186,7 +186,7 @@ public class Patch : BaseUnityPlugin, IModCanSave
                     sorter.stt = sorter.stt * om / nm;
                     if (sorter.time > sorter.stt)
                     {
-                        sorter.time = sorter.stt - sorter.speed;
+                        sorter.time = sorter.stt - InserterComponent.speed;
                     }
 
                     if (powerSystem == null) continue;

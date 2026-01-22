@@ -98,10 +98,12 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
         Label? jumpPos = null;
         matcher.MatchForward(false,
             new CodeMatch(OpCodes.Stfld, AccessTools.Field(typeof(UIStarmapStar), nameof(UIStarmapStar.projectedCoord))),
+            new CodeMatch(OpCodes.Ldarg_0)
+        ).Advance(2).MatchForward(false,
+            new CodeMatch(ci => ci.IsStloc()),
             new CodeMatch(ci => ci.IsLdloc()),
             new CodeMatch(ci => ci.Branches(out jumpPos))
-        );
-        matcher.Advance(3);
+        ).Advance(3);
         var labels = matcher.Labels;
         matcher.Labels = [];
         matcher.CreateLabel(out var jumpPos2);
