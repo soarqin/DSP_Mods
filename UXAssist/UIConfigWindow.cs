@@ -47,6 +47,7 @@ public static class UIConfigWindow
         I18N.Add("Normal", "Normal", "正常");
         I18N.Add("Below Normal", "Below Normal", "低于正常");
         I18N.Add("Idle", "Idle", "空闲");
+        I18N.Add("Show recent milkyway upload results", "Show recent milkyway upload results", "显示最近的银河系发电数据上传结果");
         I18N.Add("Unlimited interactive range", "Unlimited interactive range", "无限交互距离");
         I18N.Add("Night Light", "Sunlight at night", "夜间日光灯");
         I18N.Add("Angle X:", "Angle X:", "入射角度X:");
@@ -322,6 +323,8 @@ public static class UIConfigWindow
             wnd.AddInputField(x + 2f, y, 200f, tab1, GamePatch.DefaultProfileName, 15, "input-profile-save-folder");
             y += 18f;
         }
+        y += 36f;
+        wnd.AddButton(x, y, 200f, tab1, "Show recent milkyway upload results", 16, "button-show-recent-milkyway-upload-results", () => UIFunctions.ShowRecentMilkywayUploadResults());
         if (!BulletTimeWrapper.HasBulletTime)
         {
             y += 36f;

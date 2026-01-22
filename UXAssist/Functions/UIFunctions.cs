@@ -41,6 +41,9 @@ public static class UIFunctions
         I18N.Add("Show distance", "Show distance", "显示距离");
         I18N.Add("Show planet count", "Show planet count", "显示行星数");
         I18N.Add("Show all information", "Show all information", "显示全部信息");
+        I18N.Add("No recent milkyway upload results", "No recent milkyway upload results", "没有最近的银河系发电数据上传结果");
+        I18N.Add("Success", "Success", "成功");
+        I18N.Add("Failure: ", "Failure: ", "失败: ");
         I18N.Add("Show top players", "Show top players", "显示玩家排行榜");
         I18N.Add("Hide top players", "Hide top players", "隐藏玩家排行榜");
         I18N.OnInitialized += RecreateConfigWindow;
@@ -756,7 +759,6 @@ public static class UIFunctions
         }
     }
 
-
     public static void ExportClusterUploadResults(BinaryWriter w)
     {
         lock (_clusterUploadResultsLock)
@@ -786,6 +788,34 @@ public static class UIFunctions
                 result.Result = r.ReadInt32();
                 result.RequestTime = r.ReadSingle();
             }
+        }
+    }
+
+    public static void ClearClusterUploadResults()
+    {
+        lock (_clusterUploadResultsLock)
+        {
+            _clusterUploadResultsCount = 0;
+            _clusterUploadResultsHead = 0;
+        }
+    }
+
+    public static void ShowRecentMilkywayUploadResults()
+    {
+        lock (_clusterUploadResultsLock)
+        {
+            if (_clusterUploadResultsCount == 0)
+            {
+                UIMessageBox.Show("UXAssist".Translate(), "No recent milkyway upload results".Translate(), "确定".Translate(), UIMessageBox.INFO, null);
+                return;
+            }
+            StringBuilder sb = new();
+            for (var i = Math.Min(_clusterUploadResultsCount, 10) - 1; i >= 0; i--)
+            {
+                var res = _clusterUploadResults[(i + _clusterUploadResultsHead) % ClusterUploadResultKeepCount];
+                sb.AppendLine($"{res.UploadTime.ToString("yyyy-MM-dd HH:mm:ss")} - {((res.Result is 0 or 20) ? "Success".Translate() : ("Failure: ".Translate() + res.Result.ToString()))} - {res.RequestTime:F2}s");
+            }
+            UIMessageBox.Show("UXAssist".Translate(), sb.ToString(), "确定".Translate(), UIMessageBox.INFO, null);
         }
     }
     #endregion

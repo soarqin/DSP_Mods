@@ -51,6 +51,10 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
         {
             UIFunctions.ImportClusterUploadResults(r);
         }
+        else
+        {
+            UIFunctions.ClearClusterUploadResults();
+        }
     }
 
     public void IntoOtherSave()
