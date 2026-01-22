@@ -1170,6 +1170,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                                         currentVeinIndex++;
                                     }
                                     __instance.currentVeinIndex = veinCount > 1 ? currentVeinIndex % veinCount : 0;
+                                    __instance.time -= __instance.period * times;
                                     break;
                                 }
                             }
@@ -1259,6 +1260,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                                 }
                                 else
                                 {
+                                    __instance.time -= __instance.period * times;
                                     break;
                                 }
                             }
