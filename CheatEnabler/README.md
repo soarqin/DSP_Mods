@@ -49,6 +49,7 @@
     * Eject anyway
     * Unlock Dyson Sphere max orbit radius
     * Complete Dyson Sphere Shells instantly
+    * Remove all frames on Dyson Sphere
     * Buttons for creating illegal Dyson Sphere Shells, you must enable `IllegalDysonShellFunctionsEnabled` of `DysonSphere` section in config to see the last 2 buttons.
       * Generate an illegal dyson shell
       * Keep max production shells and remove others
@@ -123,6 +124,7 @@
     * 全球弹射
     * 解锁戴森球最大轨道半径
     * 立即完成戴森壳建造
+    * 移除戴森球上的所有框架
     * 用于制作仙术戴森壳的按钮，你必须在设置文件里开启`DysonSphere`分类的`IllegalDysonShellFunctionsEnabled`才能看到后面两个按钮
       * 生成单层仙术戴森壳
       * 保留发电量最高的戴森壳并移除其他戴森壳

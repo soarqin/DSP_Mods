@@ -3,6 +3,12 @@
 
 ## Changlog
 
+* 2.4.1
+  * New feature: `Remove all frames on Dyson Sphere`
+    * Can save rockets with very little power generation impact.
+    * Will keep nodes and shells and does not affect solar sails' absorption.
+  * `Terraform without enough soil piles`: Working for blueprint paste and burying Dark Fog Core Driller now.
+  * `Belt signal item generation`: Fix mod compatibility by resolving recursive recipes.
 * 2.4.0
   * Support game version 0.10.33
   * `Generate illegal dyson shell`: This function is open to all users now, enabling certain config entry is not needed any more.
@@ -165,6 +171,12 @@
 
 ## 更新日志
 
+* 2.4.1
+  * 新增功能：`移除戴森球上的所有框架`
+    * 可以节省火箭，且几乎不影响发电效率
+    * 会保留节点和壳面，不影响太阳帆的吸收
+  * `沙土不够时依然可以整改地形`：现在支持蓝图粘贴和掩埋黑雾核心钻机
+  * `传送带信号物品生成`：修复对递归配方的支持，兼容一些mod
 * 2.4.0
   * 支持游戏版本 0.10.33
   * `生成仙术戴森壳`：此功能现在对所有用户开放，不再需要启用特定的配置项。

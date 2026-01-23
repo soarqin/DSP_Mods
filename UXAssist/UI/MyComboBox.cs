@@ -76,7 +76,7 @@ public class MyComboBox : MonoBehaviour
     private void UpdateComboBoxPosition()
     {
         var rtrans = (RectTransform)_comboBox.transform;
-        _rectTrans.sizeDelta = new Vector2(rtrans.localPosition.x + 5f + rtrans.sizeDelta.x, _rectTrans.sizeDelta.y);
+        _rectTrans.sizeDelta = new Vector2(rtrans.sizeDelta.x, _rectTrans.sizeDelta.y);
     }
 
     public void SetFontSize(int size)

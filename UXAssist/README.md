@@ -135,6 +135,10 @@
     * Starmap view:
       * Add a star name filter, you can filter displayed star names by ores or planet types now.
       * Add a dropdown box to show all stars' distance and/or planet count.
+    * Show top players in milkyway
+      * The button is available on top-left corner of Milkyway View
+    * Show recent milkyway upload results
+      * The button is on UXAssist `General` tab.
 
 ## Notes
 
@@ -292,7 +296,11 @@
     * 星图：
       * 添加星系名过滤器，现在可以按矿物或行星类型过滤显示的星系名
       * 添加了一个下拉框用以切换显示所有星系的距离和/或行星数量
-    * 由于缺乏维护，整合内置了[Planet Vein Untilization](https://thunderstore.io/c/dyson-sphere-program/p/testpushpleaseignore/Planet_Vein_Utilization/)，并修复了一些小错误。
+    * 由于原MOD缺乏维护，整合内置了[Planet Vein Untilization](https://thunderstore.io/c/dyson-sphere-program/p/testpushpleaseignore/Planet_Vein_Utilization/)，并修复了一些小错误。
+    * 显示银河系发电量排行
+      * 按钮位于银河视图左上角
+    * 显示最近银河系上传结果
+      * 按钮在UXAssist的`常规`标签页内
 
 ## 注意事项
 

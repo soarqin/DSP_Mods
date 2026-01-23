@@ -1051,16 +1051,15 @@ public static class LogisticsPatch
                 {
                     stationTip.ResetStationTip();
                     stationTip.gameObject.SetActive(false);
-                    StationTipsRecycle[_stationTipsRecycleCount++] = stationTip;
+                    StationTipsRecycle[_stationTipsRecycleCount] = stationTip;
+                    _stationTipsRecycleCount++;
                 }
                 else
                 {
                     Object.Destroy(stationTip);
                 }
             }
-
-            Array.Resize(ref _stationTips, 16);
-            Array.Clear(_stationTips, 0, _stationTips.Length);
+            _stationTips = new StationTip[16];
         }
 
         private static void RecycleStationTip(int index)
@@ -1084,7 +1083,8 @@ public static class LogisticsPatch
         {
             if (_stationTipsRecycleCount > 0)
             {
-                var result = StationTipsRecycle[--_stationTipsRecycleCount];
+                _stationTipsRecycleCount--;
+                var result = StationTipsRecycle[_stationTipsRecycleCount];
                 StationTipsRecycle[_stationTipsRecycleCount] = null;
                 return result;
             }

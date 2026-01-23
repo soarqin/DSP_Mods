@@ -3,6 +3,15 @@
 
 ## Changlog
 
+* 1.5.0
+  * Support game version 0.10.34
+  * New features:
+    * `Show top players in milkyway`: The button is available on top-left corner of Milkyway View
+    * `Show recent milkyway upload results`: The button is on UXAssist `General` tab.
+  * `Night Sunlight`: Fix bugs that sunlight angle is not updated after loading a save.
+  * `Enhanced control for logistic storage capacities`: Working for Logistics Control Panel now.
+  * `Protect veins from exhaustion`: Fix a minor bug.
+  * `Re-intialize planet`: Improve stability and fix some bugs.
 * 1.4.5
   * New feature: `Ctrl+Shift+Click to pick items from whole belts`, with 2 suboptions: `Include branches of belts` and `Include connected inserters`
   * Patch [BlueprintTweaks](https://thunderstore.io/c/dyson-sphere-program/p/kremnev8/BlueprintTweaks/) temporarily to fix `Drag Remove` functions (And wait for limoka to merge the [Pull Request](https://github.com/limoka/DSP-Mods/pull/133)):
@@ -356,6 +365,15 @@
 
 ## 更新日志
 
+* 1.5.0
+  * 支持游戏版本 0.10.34
+  * 新功能：
+    * `显示银河系发电量排行`：按钮位于银河视图左上角
+    * `显示最近银河系上传结果`：按钮在UXAssist的`常规`标签页内
+  * `夜间日光灯`：修复加载存档后日光角度没有更新的问题
+  * `物流塔存储数量限制控制改进`：现在可用于物流控制面板
+  * `保护矿脉不会耗尽`：修复了一个小问题
+  * `初始化本行星`：提升稳定性并修复部分Bug
 * 1.4.5
   * 新功能：`按住Ctrl+Shift点击从整条传送带抓取物品`，包含两个子选项：`包含传送带分支` 和 `包含连接的分拣器`
   * 临时修复 [BlueprintTweaks](https://thunderstore.io/c/dyson-sphere-program/p/kremnev8/BlueprintTweaks/) 的 `拖拽拆除` 功能（等待 limoka 合并 [Pull Request](https://github.com/limoka/DSP-Mods/pull/133)）：
