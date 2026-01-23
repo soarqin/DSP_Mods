@@ -863,7 +863,7 @@ public static class UIFunctions
         MyFlatButton[] buttons = [];
         Text[] textFields = [];
 
-        MilkyWayTopTenPlayersToggler = UI.MyCheckButton.CreateCheckButton(0, 0, rtrans, false, "Show top players".Translate()).WithSize(100f, 24f);
+        MilkyWayTopTenPlayersToggler = UI.MyCheckButton.CreateCheckButton(0, 0, rtrans, false, "Show top players".Translate()).WithSize(120f, 24f);
         MilkyWayTopTenPlayersToggler.OnChecked += UpdateButtons;
         MilkyWayTopTenPlayersToggler.Checked = false;
         UpdateButtons();
