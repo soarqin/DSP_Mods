@@ -1,16 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+
 using BepInEx;
 using BepInEx.Logging;
 using HarmonyLib;
+
+using Newtonsoft.Json.Linq;
 using NLua;
+using OBSWebsocketDotNet;
 
 namespace LuaScriptEngine;
 
 [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
 public class LuaScriptEngine : BaseUnityPlugin
 {
+    private readonly OBSWebsocket _obs = new();
+    private readonly Dictionary<string, string> _scheduledText = [];
+
     private class Timer(LuaFunction func, long startInterval, long repeatInterval = 0L)
     {
         public bool Check(long gameTick)
@@ -100,6 +107,49 @@ public class LuaScriptEngine : BaseUnityPlugin
         LuaState["remove_timer"] = void (Timer timer) =>
         {
             Timers.Remove(timer);
+        };
+        LuaState["obs_connect"] = void (string server, string password) =>
+        {
+            _obs.Connected += (sender, e) =>
+            {
+                Logger.LogDebug("Connected to OBS");
+                foreach (var (sourceName, text) in _scheduledText)
+                {
+                    _obs.SetInputSettings(sourceName, 
+                        new JObject {
+                            {"text", text}
+                        });
+                }
+                _scheduledText.Clear();
+            };
+            _obs.Disconnected += (sender, e) =>
+            {
+                Logger.LogDebug("Disconnected from OBS");
+                _obs.ConnectAsync(server, password);
+            };
+            _obs.ConnectAsync(server, password);
+        };
+        LuaState["obs_set_source_text"] = void (string sourceName, string text) =>
+        {
+            if (_obs.IsConnected)
+            {
+                try
+                {
+                    _obs.SetInputSettings(sourceName, new JObject {
+                        {"text", text}
+                    });
+                }
+                catch (Exception e)
+                {
+                    Logger.LogError($"Error setting source text: {e}");
+                    _obs.Disconnect();
+                    _scheduledText[sourceName] = text;
+                }
+            }
+            else
+            {
+                _scheduledText[sourceName] = text;
+            }
         };
         var assemblyPath = System.IO.Path.Combine(
             System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)!,
