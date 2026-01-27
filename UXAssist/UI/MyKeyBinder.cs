@@ -12,35 +12,25 @@ public class MyKeyBinder : MonoBehaviour
     private ConfigEntry<KeyboardShortcut> _config;
     protected event Action OnFree;
 
-    [SerializeField]
-    public Text functionText;
+    [SerializeField] public Text functionText;
 
-    [SerializeField]
-    public Text keyText;
+    [SerializeField] public Text keyText;
 
-    [SerializeField]
-    public InputField setTheKeyInput;
+    [SerializeField] public InputField setTheKeyInput;
 
-    [SerializeField]
-    public Toggle setTheKeyToggle;
+    [SerializeField] public Toggle setTheKeyToggle;
 
-    [SerializeField]
-    public RectTransform rectTrans;
+    [SerializeField] public RectTransform rectTrans;
 
-    [SerializeField]
-    public UIButton inputUIButton;
+    [SerializeField] public UIButton inputUIButton;
 
-    [SerializeField]
-    public Text conflictText;
+    [SerializeField] public Text conflictText;
 
-    [SerializeField]
-    public Text waitingText;
+    [SerializeField] public Text waitingText;
 
-    [SerializeField]
-    public UIButton setDefaultUIButton;
+    [SerializeField] public UIButton setDefaultUIButton;
 
-    [SerializeField]
-    public UIButton setNoneKeyUIButton;
+    [SerializeField] public UIButton setNoneKeyUIButton;
 
     private bool _nextNotOn;
 
@@ -135,10 +125,12 @@ public class MyKeyBinder : MonoBehaviour
             VFInput.UseEscape();
             return true;
         }
+
         if (Input.GetKey(KeyCode.Mouse0) || Input.GetKey(KeyCode.Mouse1))
         {
             return true;
         }
+
         var anyKey = GetIunptKeys();
         if (anyKey || _lastKey == KeyCode.None) return false;
         var k = GetPressedKey();
@@ -146,20 +138,24 @@ public class MyKeyBinder : MonoBehaviour
         {
             return false;
         }
+
         _lastKey = KeyCode.None;
 
         _config.Value = KeyboardShortcut.Deserialize(k);
         //keyText.text = k;
         return true;
-
     }
 
     private KeyCode _lastKey;
-    private static readonly KeyCode[] ModKeys = { KeyCode.RightShift, KeyCode.LeftShift,
-             KeyCode.RightControl, KeyCode.LeftControl,
-             KeyCode.RightAlt, KeyCode.LeftAlt,
-             KeyCode.LeftCommand,  KeyCode.LeftApple, KeyCode.LeftWindows,
-             KeyCode.RightCommand,  KeyCode.RightApple, KeyCode.RightWindows };
+
+    private static readonly KeyCode[] ModKeys =
+    [
+        KeyCode.RightShift, KeyCode.LeftShift,
+        KeyCode.RightControl, KeyCode.LeftControl,
+        KeyCode.RightAlt, KeyCode.LeftAlt,
+        KeyCode.LeftCommand, KeyCode.LeftApple, KeyCode.LeftWindows,
+        KeyCode.RightCommand, KeyCode.RightApple, KeyCode.RightWindows
+    ];
 
     private string GetPressedKey()
     {
@@ -168,6 +164,7 @@ public class MyKeyBinder : MonoBehaviour
         {
             return null;
         }
+
         var mod = "";
         foreach (var modKey in ModKeys)
         {
@@ -181,6 +178,7 @@ public class MyKeyBinder : MonoBehaviour
         {
             key += mod;
         }
+
         return key;
     }
 
@@ -195,8 +193,8 @@ public class MyKeyBinder : MonoBehaviour
             _lastKey = item;
             anyKey = true;
         }
-        return anyKey;
 
+        return anyKey;
     }
 
     public void Reset()

@@ -464,6 +464,16 @@ public class GamePatch : PatchImpl<GamePatch>
             _needConvert = true;
         }
 
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(GameHistoryData), nameof(GameHistoryData.Import))]
+        private static void GameHistoryData_Import_Postfix(GameHistoryData __instance)
+        {
+            if (_needConvert)
+            {
+                __instance.combatSettings = UIRoot.instance.galaxySelect.uiCombat.combatSettings;
+            }
+        }
+
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(GameData), nameof(GameData.Import))]
         private static IEnumerable<CodeInstruction> GameData_Import_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)

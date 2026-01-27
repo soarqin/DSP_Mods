@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-
 using BepInEx;
 using BepInEx.Logging;
 using HarmonyLib;
-
 using Newtonsoft.Json.Linq;
 using NLua;
 using OBSWebsocketDotNet;
@@ -50,6 +48,7 @@ public class LuaScriptEngine : BaseUnityPlugin
         private readonly long _repeatInterval = repeatInterval;
         private long _nextTick = GameMain.gameTick + startInterval;
     }
+
     public new static readonly ManualLogSource Logger =
         BepInEx.Logging.Logger.CreateLogSource(PluginInfo.PLUGIN_NAME);
 
@@ -98,31 +97,30 @@ public class LuaScriptEngine : BaseUnityPlugin
                     break;
             }
         };
-        LuaState["add_timer"] = Timer(LuaFunction func, long firstInterval, long repeatInterval) =>
+        LuaState["add_timer"] = Timer (LuaFunction func, long firstInterval, long repeatInterval) =>
         {
             var timer = new Timer(func, firstInterval, repeatInterval);
             Timers.Add(timer);
             return timer;
         };
-        LuaState["remove_timer"] = void (Timer timer) =>
-        {
-            Timers.Remove(timer);
-        };
+        LuaState["remove_timer"] = void (Timer timer) => { Timers.Remove(timer); };
         LuaState["obs_connect"] = void (string server, string password) =>
         {
-            _obs.Connected += (sender, e) =>
+            _obs.Connected += (_, _) =>
             {
                 Logger.LogDebug("Connected to OBS");
                 foreach (var (sourceName, text) in _scheduledText)
                 {
-                    _obs.SetInputSettings(sourceName, 
-                        new JObject {
-                            {"text", text}
+                    _obs.SetInputSettings(sourceName,
+                        new JObject
+                        {
+                            { "text", text }
                         });
                 }
+
                 _scheduledText.Clear();
             };
-            _obs.Disconnected += (sender, e) =>
+            _obs.Disconnected += (_, _) =>
             {
                 Logger.LogDebug("Disconnected from OBS");
                 _obs.ConnectAsync(server, password);
@@ -135,8 +133,9 @@ public class LuaScriptEngine : BaseUnityPlugin
             {
                 try
                 {
-                    _obs.SetInputSettings(sourceName, new JObject {
-                        {"text", text}
+                    _obs.SetInputSettings(sourceName, new JObject
+                    {
+                        { "text", text }
                     });
                 }
                 catch (Exception e)
@@ -162,9 +161,10 @@ public class LuaScriptEngine : BaseUnityPlugin
             Logger.LogInfo($"Loading Lua script: {file}");
             LuaState.DoFile(file);
         }
+
         _harmony = Harmony.CreateAndPatchAll(typeof(Patches));
     }
-    
+
     private void OnDestroy()
     {
         Timers.Clear();
@@ -215,26 +215,28 @@ public class LuaScriptEngine : BaseUnityPlugin
                     if (timer == null || !timer.Check(gameTick)) continue;
                     TimersToRemove.Add(timer);
                 }
+
                 if (TimersToRemove.Count > 0)
                 {
                     foreach (var timer in TimersToRemove)
                     {
                         Timers.Remove(timer);
                     }
+
                     TimersToRemove.Clear();
                 }
             }
 
             LoopCall(PreUpdateFuncs);
         }
-        
+
         [HarmonyPostfix]
         [HarmonyPatch(typeof(GameMain), nameof(GameMain.FixedUpdate))]
         private static void GameMain_FixedUpdate_Postfix()
         {
             LoopCall(PostUpdateFuncs);
         }
-        
+
         [HarmonyPrefix]
         [HarmonyPatch(typeof(GameMain), nameof(GameMain.Begin))]
         private static void GameMain_Begin_Prefix()
@@ -247,31 +249,34 @@ public class LuaScriptEngine : BaseUnityPlugin
                     TimersToRemove.Add(timer);
                 }
             }
+
             if (TimersToRemove.Count > 0)
             {
                 foreach (var timer in TimersToRemove)
                 {
                     Timers.Remove(timer);
                 }
+
                 TimersToRemove.Clear();
             }
+
             LoopCall(PreGameBeginFuncs);
         }
-        
+
         [HarmonyPostfix]
         [HarmonyPatch(typeof(GameMain), nameof(GameMain.Begin))]
         private static void GameMain_Begin_Postfix()
         {
             LoopCall(PostGameBeginFuncs);
         }
-        
+
         [HarmonyPrefix]
         [HarmonyPatch(typeof(GameMain), nameof(GameMain.End))]
         private static void GameMain_End_Prefix()
         {
             LoopCall(PreGameEndFuncs);
         }
-        
+
         [HarmonyPostfix]
         [HarmonyPatch(typeof(GameMain), nameof(GameMain.End))]
         private static void GameMain_End_Postfix()
