@@ -217,6 +217,7 @@ public static class DysonSphereFunctions
                     if (count > 0L) consumeRegister[ProductionStatistics.SOLAR_SAIL_ID] += (int)count;
                 }
             }
+            dysonSphere.needRecalculatePower = true;
         });
     }
 
@@ -281,6 +282,7 @@ public static class DysonSphereFunctions
             dysonSphere.CheckAutoNodes();
             dysonSphere.PickAutoNode();
             dysonSphere.modelRenderer.RebuildModels();
+            dysonSphere.needRecalculatePower = true;
         });
     }
 

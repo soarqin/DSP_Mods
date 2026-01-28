@@ -3,6 +3,10 @@
 
 ## Changlog
 
+* 2.4.2
+  * Fix critical bugs:
+    * Dyson Power is not updated actively when `Skip bullet period` or `Skip absorption period` is enabled and no rocket is in fire.
+    * Dyson Power is not updated actively on clicking `Complete Dyson Sphere Shells instantly` or `Remove all frames on Dyson Sphere`.
 * 2.4.1
   * New feature: `Remove all frames on Dyson Sphere`
     * Can save rockets with very little power generation impact.
@@ -171,6 +175,10 @@
 
 ## 更新日志
 
+* 2.4.2
+  * 修复了严重的系列BUG:
+    * 在启用`跳过子弹阶段`或`跳过吸收阶段`并且没有火箭发射时，戴森球的发电量未实时更新
+    * 点击`立即完成戴森壳建造`或`移除戴森球上的所有框架`时，戴森球的发电量未实时更新
 * 2.4.1
   * 新增功能：`移除戴森球上的所有框架`
     * 可以节省火箭，且几乎不影响发电效率

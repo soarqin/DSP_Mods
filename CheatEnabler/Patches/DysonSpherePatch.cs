@@ -337,6 +337,7 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
                                     sphereProductRegister[ProductionStatistics.SOLAR_SAIL_ID] += len;
                                     sphereConsumeRegister[ProductionStatistics.SOLAR_SAIL_ID] += len;
                                     sphereProductRegister[ProductionStatistics.DYSON_CELL_ID] += len;
+                                    __instance.dysonSphere.needRecalculatePower = true;
                                     return;
                                 }
                                 idx--;
@@ -350,6 +351,7 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
                     sphereProductRegister[ProductionStatistics.SOLAR_SAIL_ID] += absorbCnt;
                     sphereConsumeRegister[ProductionStatistics.SOLAR_SAIL_ID] += absorbCnt;
                     sphereProductRegister[ProductionStatistics.DYSON_CELL_ID] += absorbCnt;
+                    __instance.dysonSphere.needRecalculatePower = true;
                 }
             }
             for (; idx >= 0; idx--)
@@ -380,31 +382,19 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
             matcher.MatchForward(false,
                 new CodeMatch(OpCodes.Stfld, AccessTools.Field(typeof(ExpiryOrder), nameof(ExpiryOrder.index)))
             ).Advance(1).RemoveInstructions(matcher.Length - matcher.Pos).Insert(
-                // if (node.ConstructCp() != null)
-                // {
-                //     this.dysonSphere.productRegister[ProductionStatistics.DYSON_CELL_ID]++;
-                // }
-                new CodeInstruction(OpCodes.Ldarg_1),
-                new CodeInstruction(OpCodes.Callvirt, AccessTools.Method(typeof(DysonNode), nameof(DysonNode.ConstructCp))),
-                new CodeInstruction(OpCodes.Brfalse_S, label1),
                 new CodeInstruction(OpCodes.Ldarg_0),
-                new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(DysonSwarm), nameof(DysonSwarm.dysonSphere))),
-                new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(DysonSphere), nameof(DysonSphere.productRegister))),
-                new CodeInstruction(OpCodes.Ldc_I4, ProductionStatistics.DYSON_CELL_ID),
-                new CodeInstruction(OpCodes.Ldelema, typeof(int)),
-                new CodeInstruction(OpCodes.Dup),
-                new CodeInstruction(OpCodes.Ldind_I4),
-                new CodeInstruction(OpCodes.Ldc_I4_1),
-                new CodeInstruction(OpCodes.Add),
-                new CodeInstruction(OpCodes.Stind_I4),
-
-                // this.RemoveSolarSail(index);
-                new CodeInstruction(OpCodes.Ldarg_0).WithLabels(label1),
+                new CodeInstruction(OpCodes.Ldarg_1),
                 new CodeInstruction(OpCodes.Ldloc_1),
-                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(DysonSwarm), nameof(DysonSwarm.RemoveSolarSail))),
-
+                Transpilers.EmitDelegate((DysonSwarm swarm, DysonNode node, int index) => {
+                    if (node.ConstructCp() != null)
+                    {
+                        swarm.dysonSphere.productRegister[ProductionStatistics.DYSON_CELL_ID]++;
+                        swarm.dysonSphere.needRecalculatePower = true;
+                    }
+                    swarm.RemoveSolarSail(index);
+                }),
                 // return false;
-                new CodeInstruction(OpCodes.Ldc_I4_1),
+                new CodeInstruction(OpCodes.Ldc_I4_0),
                 new CodeInstruction(OpCodes.Ret)
             );
             return matcher.InstructionEnumeration();
