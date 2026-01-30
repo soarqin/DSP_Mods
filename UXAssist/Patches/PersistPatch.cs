@@ -181,16 +181,16 @@ public class PersistPatch : PatchImpl<PersistPatch>
         switch (errorType)
         {
             case DSPWeb.HTTP_ERROR_TYPE.NETWORK_ERROR:
-                Functions.UIFunctions.AddClusterUploadResult(-10001, (float)__instance.uploadRequest.reqTime);
+                Functions.UIFunctions.AddClusterUploadResult(-10001, 0f);
                 break;
             case DSPWeb.HTTP_ERROR_TYPE.HTTP_ERROR:
-                Functions.UIFunctions.AddClusterUploadResult(-10010 - errorCode, (float)__instance.uploadRequest.reqTime);
+                Functions.UIFunctions.AddClusterUploadResult(-10010 - errorCode, 0f);
                 break;
             case DSPWeb.HTTP_ERROR_TYPE.USER_ABORT:
-                Functions.UIFunctions.AddClusterUploadResult(-10003, (float)__instance.uploadRequest.reqTime);
+                Functions.UIFunctions.AddClusterUploadResult(-10003, 0f);
                 break;
             case DSPWeb.HTTP_ERROR_TYPE.UNEXPECTED_ERROR:
-                Functions.UIFunctions.AddClusterUploadResult(-10004, (float)__instance.uploadRequest.reqTime);
+                Functions.UIFunctions.AddClusterUploadResult(-10004, 0f);
                 break;
         }
     }
@@ -202,16 +202,16 @@ public class PersistPatch : PatchImpl<PersistPatch>
         switch (errorType)
         {
             case DSPWeb.HTTP_ERROR_TYPE.NETWORK_ERROR:
-                Functions.UIFunctions.AddClusterUploadResult(-101, (float)__instance.uploadRequest.reqTime);
+                Functions.UIFunctions.AddClusterUploadResult(-101, 0f);
                 break;
             case DSPWeb.HTTP_ERROR_TYPE.HTTP_ERROR:
-                Functions.UIFunctions.AddClusterUploadResult(-110 - errorCode, (float)__instance.uploadRequest.reqTime);
+                Functions.UIFunctions.AddClusterUploadResult(-110 - errorCode, 0f);
                 break;
             case DSPWeb.HTTP_ERROR_TYPE.USER_ABORT:
-                Functions.UIFunctions.AddClusterUploadResult(-103, (float)__instance.uploadRequest.reqTime);
+                Functions.UIFunctions.AddClusterUploadResult(-103, 0f);
                 break;
             case DSPWeb.HTTP_ERROR_TYPE.UNEXPECTED_ERROR:
-                Functions.UIFunctions.AddClusterUploadResult(-104, (float)__instance.uploadRequest.reqTime);
+                Functions.UIFunctions.AddClusterUploadResult(-104, 0f);
                 break;
         }
     }
@@ -222,7 +222,7 @@ public class PersistPatch : PatchImpl<PersistPatch>
     {
         if (!int.TryParse(handler.text, out var rcode))
             rcode = -1;
-        Functions.UIFunctions.AddClusterUploadResult(rcode, (float)__instance.uploadRequest.reqTime);
+        Functions.UIFunctions.AddClusterUploadResult(rcode, __instance.uploadRequest == null ? 0f : (float)__instance.uploadRequest.reqTime);
     }
 
     [HarmonyTranspiler]
