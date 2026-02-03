@@ -3,6 +3,10 @@
 
 ## Changlog
 
+* 1.5.2
+  * Fix crash while error occurs on milkyway login/upload.
+* 1.5.1
+  * Support game version 0.10.34.28392
 * 1.5.0
   * Support game version 0.10.34
   * New features:
@@ -365,6 +369,10 @@
 
 ## 更新日志
 
+* 1.5.2
+  * 修复在银河系登录/上传出错时崩溃的问题
+* 1.5.1
+  * 支持游戏版本 0.10.34.28392
 * 1.5.0
   * 支持游戏版本 0.10.34
   * 新功能：
