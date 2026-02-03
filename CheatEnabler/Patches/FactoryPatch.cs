@@ -119,9 +119,6 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
     }
 
     private static HashSet<int> _beltIds = [];
-    private static HashSet<int> _alterBeltRendererIds;
-    private static HashSet<int> _alterPathRendererIds;
-    private static HashSet<int> _refreshPathUVIds;
 
     private static void OnDataLoaded()
     {
@@ -168,16 +165,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         var prebuilds = factory.prebuildPool;
         if (imm)
         {
-            var anyBelt = false;
-            var anyBuilt = false;
-            _alterBeltRendererIds ??= [];
-            _alterPathRendererIds ??= [];
-            _refreshPathUVIds ??= [];
-            CargoTrafficPatch.IsBatchBuilding = true;
-            factory.BeginFlattenTerrain();
-            factory.cargoTraffic._batch_buffer_no_refresh = true;
-            PlanetFactory.batchBuild = true;
-            CargoTrafficPatch.DisableRefreshBatchesBuffers = true;
+            var player = GameMain.mainPlayer;
             for (var i = factory.prebuildCursor - 1; i > 0; i--)
             {
                 ref var pb = ref prebuilds[i];
@@ -187,14 +175,54 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                     if (!architect) continue;
                     pb.itemRequired = 0;
                 }
-                anyBelt = anyBelt || _beltIds.Contains(pb.protoId);
-                factory.BuildFinally(GameMain.mainPlayer, i, false);
-                anyBuilt = true;
+                CargoTrafficPatch.TryStartBatchBuilding(factory);
+                CargoTrafficPatch.InstantBuild(player, factory, i);
             }
+            CargoTrafficPatch.TryEndBatchBuilding(factory);
+        }
+        else if (architect)
+        {
+            for (var i = factory.prebuildCursor - 1; i > 0; i--)
+            {
+                ref var pb = ref prebuilds[i];
+                if (pb.id != i || pb.isDestroyed || pb.itemRequired == 0) continue;
+                pb.itemRequired = 0;
+                factory.AlterPrebuildModelState(i);
+            }
+        }
+    }
+
+    private class CargoTrafficPatch : PatchImpl<CargoTrafficPatch>
+    {
+        private static bool _isBatchBuilding;
+        private static bool _disableRefreshBatchesBuffers;
+        private static bool _anyBelt;
+        private static readonly HashSet<int> _alterBeltRendererIds = [];
+        private static readonly HashSet<int> _alterPathRendererIds = [];
+        private static readonly HashSet<int> _refreshPathUVIds = [];
+
+        public static void StartBatchBuilding(PlanetFactory factory)
+        {
+            factory.BeginFlattenTerrain();
+            factory.cargoTraffic._batch_buffer_no_refresh = true;
+            PlanetFactory.batchBuild = true;
+            _isBatchBuilding = true;
+            _disableRefreshBatchesBuffers = true;
+            _anyBelt = false;
+        }
+
+        public static void TryStartBatchBuilding(PlanetFactory factory)
+        {
+            if (_isBatchBuilding) return;
+            StartBatchBuilding(factory);
+        }
+
+        public static void EndBatchBuilding(PlanetFactory factory)
+        {
             PlanetFactory.batchBuild = false;
             factory.cargoTraffic._batch_buffer_no_refresh = false;
             factory.EndFlattenTerrain();
-            CargoTrafficPatch.IsBatchBuilding = false;
+            _isBatchBuilding = false;
             var cargoTraffic = factory.cargoTraffic;
             var entityPool = factory.entityPool;
             var colChunks = factory.planet.physics?.colChunks;
@@ -213,40 +241,35 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             _alterBeltRendererIds.Clear();
             _alterPathRendererIds.Clear();
             _refreshPathUVIds.Clear();
-            CargoTrafficPatch.DisableRefreshBatchesBuffers = false;
-            if (anyBelt)
+            _disableRefreshBatchesBuffers = false;
+            if (_anyBelt)
             {
                 factory.cargoTraffic.RefreshBeltBatchesBuffers();
                 factory.cargoTraffic.RefreshPathBatchesBuffers();
             }
-            if (anyBuilt)
-            {
-                factory.planet.physics?.raycastLogic?.NotifyBatchObjectRemove();
-                factory.planet.audio?.SetPlanetAudioDirty();
-            }
+            _anyBelt = false;
+            factory.planet.physics?.raycastLogic?.NotifyBatchObjectRemove();
+            factory.planet.audio?.SetPlanetAudioDirty();
         }
-        else if (architect)
-        {
-            for (var i = factory.prebuildCursor - 1; i > 0; i--)
-            {
-                ref var pb = ref prebuilds[i];
-                if (pb.id != i || pb.isDestroyed || pb.itemRequired == 0) continue;
-                pb.itemRequired = 0;
-                factory.AlterPrebuildModelState(i);
-            }
-        }
-    }
 
-    private class CargoTrafficPatch : PatchImpl<CargoTrafficPatch>
-    {
-        public static bool IsBatchBuilding;
-        public static bool DisableRefreshBatchesBuffers;
+        public static void TryEndBatchBuilding(PlanetFactory factory)
+        {
+            if (!_isBatchBuilding) return;
+            EndBatchBuilding(factory);
+        }
+
+        public static void InstantBuild(Player player, PlanetFactory factory, int id)
+        {
+            _anyBelt = _anyBelt || _beltIds.Contains(factory.prebuildPool[id].protoId);
+            factory.BuildFinally(player, id, false);
+        }
+
         [HarmonyPrefix]
         [HarmonyPriority(Priority.First)]
         [HarmonyPatch(typeof(CargoTraffic), nameof(CargoTraffic.AlterBeltRenderer))]
         private static bool CargoTraffic_AlterBeltRenderer_Prefix(int beltId)
         {
-            if (!IsBatchBuilding) return true;
+            if (!_isBatchBuilding) return true;
             _alterBeltRendererIds.Add(beltId);
             return false;
         }
@@ -256,7 +279,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         [HarmonyPatch(typeof(CargoTraffic), nameof(CargoTraffic.AlterPathRenderer))]
         private static bool CargoTraffic_AlterPathRenderer_Prefix(int pathId)
         {
-            if (!IsBatchBuilding) return true;
+            if (!_isBatchBuilding) return true;
             _alterPathRendererIds.Add(pathId);
             return false;
         }
@@ -266,7 +289,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         [HarmonyPatch(typeof(CargoTraffic), nameof(CargoTraffic.RefreshPathUV))]
         private static bool CargoTraffic_RefreshPathUV_Prefix(int pathId)
         {
-            if (!IsBatchBuilding) return true;
+            if (!_isBatchBuilding) return true;
             _refreshPathUVIds.Add(pathId);
             return false;
         }
@@ -277,7 +300,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         [HarmonyPatch(typeof(CargoTraffic), nameof(CargoTraffic.RefreshPathBatchesBuffers))]
         private static bool CargoTraffic_RefreshBeltBatchesBuffers_Prefix()
         {
-            return !DisableRefreshBatchesBuffers;
+            return !_disableRefreshBatchesBuffers;
         }
     }
 
@@ -417,6 +440,43 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                 new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(FactoryPatch), nameof(ArrivePlanet)))
             );
             return matcher.InstructionEnumeration();
+        }
+
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(ConstructionModuleComponent), nameof(ConstructionModuleComponent.PlaceItems))]
+        private static IEnumerable<CodeInstruction> ConstructionModuleComponent_PlaceItems_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Ldarg_1),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(PlanetFactory), nameof(PlanetFactory.constructionSystem))),
+                new CodeMatch(ci => ci.IsLdloc()),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(PrebuildData), nameof(PrebuildData.id))),
+                new CodeMatch(ci => ci.IsLdloc()),
+                new CodeMatch(OpCodes.Ldflda, AccessTools.Field(typeof(PrebuildData), nameof(PrebuildData.pos))),
+                new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(ConstructionSystem), nameof(ConstructionSystem.AddBuildTargetToModules)))
+            );
+            matcher.Repeat(codeMatcher =>
+            {
+                codeMatcher.Advance(4).InsertAndAdvance(
+                    new CodeInstruction(OpCodes.Dup),
+                    new CodeInstruction(OpCodes.Ldarg_1),
+                    Transpilers.EmitDelegate((int objId, PlanetFactory factory) =>
+                    {
+                        CargoTrafficPatch.TryStartBatchBuilding(factory);
+                        CargoTrafficPatch.InstantBuild(GameMain.mainPlayer, factory, objId);
+                    })
+                )
+                .Advance(3);
+            });
+            return matcher.InstructionEnumeration();
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(ConstructionSystem), nameof(ConstructionSystem.GameTick))]
+        private static void ConstructionSystem_GameTick_Postfix(ConstructionSystem __instance)
+        {
+            CargoTrafficPatch.TryEndBatchBuilding(__instance.factory);
         }
 
         /*
