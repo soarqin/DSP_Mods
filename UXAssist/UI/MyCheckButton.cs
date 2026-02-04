@@ -33,7 +33,7 @@ public class MyCheckButton : MonoBehaviour
         openNormalColor = tankWindow.openNormalColor;
         closeMouseOverColor = tankWindow.closeMouseOverColor;
         closePressColor = tankWindow.closePressColor;
-        closeNormalColor = tankWindow.closeNormalColor;
+        closeNormalColor = /*tankWindow.closeNormalColor*/ new Color(0.6557f, 0.9145f, 1f, 0.4f);
 
         var go = Instantiate(UIRoot.instance.uiGame.beltWindow.reverseButton.gameObject);
         go.name = "my-checkbutton";
@@ -259,7 +259,7 @@ public class MyCheckButton : MonoBehaviour
         {
             uiButton.transitions[0].mouseoverColor = closeMouseOverColor;
             uiButton.transitions[0].pressedColor = closePressColor;
-            uiButton.transitions[0].normalColor = new Color(0.6557f, 0.9145f, 1f, 0.0627f);
+            uiButton.transitions[0].normalColor = closeNormalColor;
         }
         uiButton.RefreshTransitionsImmediately();
     }

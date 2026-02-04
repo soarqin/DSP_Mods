@@ -33,6 +33,8 @@ public static class UIFunctions
 
         I18N.Add("Enable auto-cruise", "Enable auto-cruise", "启用自动巡航");
         I18N.Add("Disable auto-cruise", "Disable auto-cruise", "禁用自动巡航");
+        I18N.Add("Enable auto-construct", "Enable auto-construct", "启用自动建造");
+        I18N.Add("Disable auto-construct", "Disable auto-construct", "禁用自动建造");
         I18N.Add("High yield", "High yield", "高产");
         I18N.Add("Perfect", "Perfect", "完美");
         I18N.Add("Union results", "Union results", "结果取并集");
@@ -136,6 +138,7 @@ public static class UIFunctions
             }
         }
         InitToggleAutoCruiseCheckButton();
+        InitToggleAutoConstructCheckButton();
         InitStarmapButtons();
         _initialized = true;
     }
@@ -198,6 +201,42 @@ public static class UIFunctions
         if (ToggleAutoCruise == null) return;
         var active = Patches.PlayerPatch.AutoNavigationEnabled.Value && Patches.PlayerPatch.AutoNavigation.IndicatorAstroId > 0;
         ToggleAutoCruise.gameObject.SetActive(active);
+    }
+    #endregion
+
+    #region ToggleAutoConstructCheckButton
+    public static UI.MyCheckButton ToggleAutoConstruct;
+
+    public static void InitToggleAutoConstructCheckButton()
+    {
+        var lowGroup = GameObject.Find("UI Root/Overlay Canvas/In Game/Low Group");
+        ToggleAutoConstruct = MyCheckButton.CreateCheckButton(0, 0, lowGroup.GetComponent<RectTransform>(), Patches.FactoryPatch.AutoConstructEnabled).WithSize(120f, 40f);
+        UpdateToggleAutoConstructCheckButtonVisiblility();
+        ToggleAutoConstructChecked();
+        ToggleAutoConstruct.OnChecked += ToggleAutoConstructChecked;
+        var rectTrans = ToggleAutoConstruct.rectTrans;
+        rectTrans.anchorMax = new Vector2(0.5f, 0f);
+        rectTrans.anchorMin = new Vector2(0.5f, 0f);
+        rectTrans.pivot = new Vector2(0.5f, 0f);
+        rectTrans.anchoredPosition3D = new Vector3(0f, 140f, 0f);
+        static void ToggleAutoConstructChecked()
+        {
+            if (ToggleAutoConstruct.Checked)
+            {
+                ToggleAutoConstruct.SetLabelText("Disable auto-construct");
+            }
+            else
+            {
+                ToggleAutoConstruct.SetLabelText("Enable auto-construct");
+            }
+        }
+    }
+
+    public static void UpdateToggleAutoConstructCheckButtonVisiblility()
+    {
+        if (ToggleAutoConstruct == null) return;
+        var localPlanet = GameMain.localPlanet;
+        ToggleAutoConstruct.gameObject.SetActive(localPlanet != null && localPlanet.factoryLoaded && localPlanet.factory.prebuildCount > 0);
     }
     #endregion
 

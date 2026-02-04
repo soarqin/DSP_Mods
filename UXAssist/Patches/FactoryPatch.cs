@@ -32,6 +32,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
     public static ConfigEntry<bool> DoNotRenderEntitiesEnabled;
     public static ConfigEntry<bool> DragBuildPowerPolesEnabled;
     public static ConfigEntry<bool> DragBuildPowerPolesAlternatelyEnabled;
+    public static ConfigEntry<bool> AutoConstructEnabled;
     public static ConfigEntry<bool> BeltSignalsForBuyOutEnabled;
     public static ConfigEntry<bool> TankFastFillInAndTakeOutEnabled;
     public static ConfigEntry<int> TankFastFillInAndTakeOutMultiplier;
@@ -123,6 +124,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         DoNotRenderEntitiesEnabled.SettingChanged += (_, _) => DoNotRenderEntities.Enable(DoNotRenderEntitiesEnabled.Value);
         DragBuildPowerPolesEnabled.SettingChanged += (_, _) => DragBuildPowerPoles.Enable(DragBuildPowerPolesEnabled.Value);
         DragBuildPowerPolesAlternatelyEnabled.SettingChanged += (_, _) => DragBuildPowerPoles.AlternatelyChanged();
+        AutoConstructEnabled.SettingChanged += (_, _) => Functions.UIFunctions.UpdateToggleAutoConstructCheckButtonVisiblility();
         BeltSignalsForBuyOutEnabled.SettingChanged += (_, _) => BeltSignalsForBuyOut.Enable(BeltSignalsForBuyOutEnabled.Value);
         TankFastFillInAndTakeOutEnabled.SettingChanged += (_, _) => TankFastFillInAndTakeOut.Enable(TankFastFillInAndTakeOutEnabled.Value);
         TankFastFillInAndTakeOutMultiplier.SettingChanged += (_, _) => UpdateTankFastFillInAndTakeOutMultiplierRealValue();
@@ -273,6 +275,76 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         matcher.Repeat(m => m.SetAndAdvance(OpCodes.Ldc_I4, 900));
         return matcher.InstructionEnumeration();
     }
+
+    #region Auto Construct
+    private static int _lastPrebuildCount = -1;
+
+    [HarmonyPostfix]
+    [HarmonyPatch(typeof(PlanetData), nameof(PlanetData.NotifyFactoryLoaded))]
+    private static void PlanetData_NotifyFactoryLoaded_Postfix()
+    {
+        Functions.UIFunctions.UpdateToggleAutoConstructCheckButtonVisiblility();
+        _lastPrebuildCount = -1;
+    }
+
+    [HarmonyPostfix]
+    [HarmonyPatch(typeof(PlanetData), nameof(PlanetData.UnloadFactory))]
+    private static void PlanetData_UnloadFactory_Postfix()
+    {
+        Functions.UIFunctions.UpdateToggleAutoConstructCheckButtonVisiblility();
+        _lastPrebuildCount = -1;
+    }
+
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(PlayerAction_Rts), nameof(PlayerAction_Rts.GameTick))]
+    private static void PlayerAction_Rts_GameTick_Prefix(PlayerAction_Rts __instance, long timei)
+    {
+        if (timei % 60L != 0) return;
+        var planet = GameMain.localPlanet;
+        if (planet == null || !planet.factoryLoaded) return;
+        var factory = planet.factory;
+        var prebuildCount = factory.prebuildCount;
+        if (_lastPrebuildCount != prebuildCount)
+        {
+            if (_lastPrebuildCount <= 0 || prebuildCount == 0)
+            {
+                Functions.UIFunctions.UpdateToggleAutoConstructCheckButtonVisiblility();
+            }
+            _lastPrebuildCount = prebuildCount;
+        }
+        if (prebuildCount <= 0) return;
+        if (!AutoConstructEnabled.Value) return;
+        var player = __instance.player;
+        if (player.orders.orderCount > 0) return;
+        if (player.movementState == EMovementState.Walk && player.mecha.thrusterLevel >= 1)
+        {
+            player.controller.actionWalk.SwitchToFly();
+            return;
+        }
+        var prebuilds = factory.prebuildPool;
+        var minDist = float.MaxValue;
+        var minIndex = 0;
+        var playerPos = player.position;
+        for (var i = factory.prebuildCursor - 1; i > 0; i--)
+        {
+            ref var prebuild = ref prebuilds[i];
+            if (prebuild.id != i || prebuild.isDestroyed) continue;
+            if (prebuild.itemRequired > 0)
+            {
+                if (player.package.GetItemCount(prebuild.protoId) < prebuild.itemRequired) continue;
+            }
+            var dist = (prebuild.pos - playerPos).sqrMagnitude;
+            if (dist < minDist)
+            {
+                minDist = dist;
+                minIndex = i;
+            }
+        }
+        if (minIndex == 0) return;
+        if ((prebuilds[minIndex].pos - playerPos).sqrMagnitude < 400f) return;
+        player.Order(OrderNode.MoveTo(prebuilds[minIndex].pos), false);
+    }
+    #endregion
 
     public class NightLight : PatchImpl<NightLight>
     {

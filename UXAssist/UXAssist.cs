@@ -130,6 +130,8 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
             "Drag building power poles in maximum connection range");
         FactoryPatch.DragBuildPowerPolesAlternatelyEnabled = Config.Bind("Factory", "DragBuildPowerPolesAlternately", true,
             "Build Tesla Tower and Wireless Power Tower alternately");
+        FactoryPatch.AutoConstructEnabled = Config.Bind("Factory", "AutoConstruct", false,
+            "Fly toward the building to be constructed automatically");
         FactoryPatch.BeltSignalsForBuyOutEnabled = Config.Bind("Factory", "BeltSignalsForBuyOut", false,
             "Belt signals for buy out dark fog items automatically");
         FactoryPatch.TankFastFillInAndTakeOutEnabled = Config.Bind("Factory", "TankFastFillInAndTakeOut", false,
