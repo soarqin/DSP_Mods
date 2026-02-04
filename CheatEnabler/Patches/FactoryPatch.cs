@@ -200,6 +200,8 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         private static readonly HashSet<int> _alterPathRendererIds = [];
         private static readonly HashSet<int> _refreshPathUVIds = [];
 
+        public static bool IsBatchBuilding => _isBatchBuilding;
+
         public static void StartBatchBuilding(PlanetFactory factory)
         {
             factory.BeginFlattenTerrain();
@@ -454,7 +456,6 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             var step = (int)(time / 6 % stepCount);
             var start = 1 + total * step / stepCount;
             var end = 1 + total * (step + 1) / stepCount;
-            var anyToBuild = false;
             for (var i = start; i < end; i++)
             {
                 ref var prebuild = ref factory.prebuildPool[i];
@@ -467,11 +468,14 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                     if (count > 0)
                     {
                         prebuild.itemRequired -= count;
-                        if (prebuild.itemRequired <= 0) anyToBuild = true;
+                        if (prebuild.itemRequired <= 0)
+                        {
+                            CargoTrafficPatch.InstantBuild(player, factory, i);
+                        }
                     }
                 }
             }
-            if (anyToBuild)
+            if (CargoTrafficPatch.IsBatchBuilding)
             {
                 for (var i = start - 1; i > 0; i--)
                 {
@@ -482,7 +486,14 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                         int itemId = prebuild.protoId;
                         int count = prebuild.itemRequired;
                         player.package.TakeTailItems(ref itemId, ref count, out var _, false);
-                        if (count > 0) prebuild.itemRequired -= count;
+                        if (count > 0)
+                        {
+                            prebuild.itemRequired -= count;
+                            if (prebuild.itemRequired <= 0)
+                            {
+                                CargoTrafficPatch.InstantBuild(player, factory, i);
+                            }
+                        }
                     }
                 }
                 for (var i = end; i <= total; i++)
@@ -494,10 +505,17 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                         int itemId = prebuild.protoId;
                         int count = prebuild.itemRequired;
                         player.package.TakeTailItems(ref itemId, ref count, out var _, false);
-                        if (count > 0) prebuild.itemRequired -= count;
+                        if (count > 0)
+                        {
+                            prebuild.itemRequired -= count;
+                            if (prebuild.itemRequired <= 0)
+                            {
+                                CargoTrafficPatch.InstantBuild(player, factory, i);
+                            }
+                        }
                     }
                 }
-                ArrivePlanet(factory);
+                CargoTrafficPatch.EndBatchBuilding(factory);
             }
         }
 
