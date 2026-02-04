@@ -175,12 +175,13 @@ public static class UIFunctions
     public static void InitToggleAutoCruiseCheckButton()
     {
         var lowGroup = GameObject.Find("UI Root/Overlay Canvas/In Game/Low Group");
-        ToggleAutoCruise = MyCheckButton.CreateCheckButton(0, 0, lowGroup.GetComponent<RectTransform>(), Patches.PlayerPatch.AutoCruiseEnabled).WithSize(120f, 40f);
+        ToggleAutoCruise = MyCheckButton.CreateCheckButton(0, 0, lowGroup.GetComponent<RectTransform>(), Patches.PlayerPatch.AutoCruiseEnabled).WithSize(160f, 40f);
         var rectTrans = ToggleAutoCruise.rectTrans;
         rectTrans.anchorMax = new Vector2(0.5f, 0f);
         rectTrans.anchorMin = new Vector2(0.5f, 0f);
         rectTrans.pivot = new Vector2(0.5f, 0f);
         rectTrans.anchoredPosition3D = new Vector3(0f, 185f, 0f);
+        rectTrans.localScale = new Vector3(1f, 1f, 1f);
 
         UpdateToggleAutoCruiseCheckButtonVisiblility();
         ToggleAutoCruiseChecked();
@@ -208,32 +209,46 @@ public static class UIFunctions
 
     #region ToggleAutoConstructCheckButton
     public static UI.MyCheckButton ToggleAutoConstruct;
+    public static GameObject ConstructCountPanel;
     public static Text ConstructCountText;
 
     public static void InitToggleAutoConstructCheckButton()
     {
         var lowGroup = GameObject.Find("UI Root/Overlay Canvas/In Game/Low Group");
         var parent = lowGroup.GetComponent<RectTransform>();
-        ToggleAutoConstruct = MyCheckButton.CreateCheckButton(0, 0, parent, Patches.FactoryPatch.AutoConstructEnabled).WithSize(120f, 40f);
+        ToggleAutoConstruct = MyCheckButton.CreateCheckButton(0, 0, parent, Patches.FactoryPatch.AutoConstructEnabled).WithSize(160f, 40f);
         var rectTrans = ToggleAutoConstruct.rectTrans;
         rectTrans.anchorMax = new Vector2(0.5f, 0f);
         rectTrans.anchorMin = new Vector2(0.5f, 0f);
         rectTrans.pivot = new Vector2(0.5f, 0f);
         rectTrans.anchoredPosition3D = new Vector3(0f, 140f, 0f);
+        rectTrans.localScale = new Vector3(1f, 1f, 1f);
+
+        ConstructCountPanel = new GameObject("uxassist-construct-count-panel");
+        rectTrans = ConstructCountPanel.AddComponent<RectTransform>();
+        rectTrans.SetParent(parent);
+        rectTrans.anchorMax = new Vector2(0.5f, 0f);
+        rectTrans.anchorMin = new Vector2(0.5f, 0f);
+        rectTrans.pivot = new Vector2(0.5f, 0f);
+        rectTrans.anchoredPosition3D = new Vector3(0f, 116f, 0f);
+        rectTrans.localScale = new Vector3(1f, 1f, 1f);
+        rectTrans.sizeDelta = new Vector2(160f, 24f);
+        var bg = ConstructCountPanel.AddComponent<Image>();
+        bg.color = new Color(0.2f, 0.2f, 0.2f, 0.6f);
 
         ConstructCountText = GameObject.Instantiate(UIRoot.instance.uiGame.assemblerWindow.stateText);
         ConstructCountText.gameObject.name = "construct-count-text";
         ConstructCountText.text = String.Format("Buildings to construct: {0}".Translate(), 0);
         ConstructCountText.color = new Color(1f, 1f, 1f, 0.4f);
         ConstructCountText.alignment = TextAnchor.MiddleLeft;
-        ConstructCountText.fontSize = 14;
+        ConstructCountText.fontSize = 16;
         rectTrans = ConstructCountText.rectTransform;
-        rectTrans.SetParent(parent);
-        rectTrans.sizeDelta = new Vector2(120, 20);
-        rectTrans.anchorMax = new Vector2(0.5f, 0f);
-        rectTrans.anchorMin = new Vector2(0.5f, 0f);
-        rectTrans.pivot = new Vector2(0.5f, 0f);
-        rectTrans.anchoredPosition3D = new Vector3(0f, 110f, 0f);
+        rectTrans.SetParent(ConstructCountPanel.transform);
+        rectTrans.sizeDelta = new Vector2(150f, 20f);
+        rectTrans.anchorMax = new Vector2(0.5f, 0.5f);
+        rectTrans.anchorMin = new Vector2(0.5f, 0.5f);
+        rectTrans.pivot = new Vector2(0.5f, 0.5f);
+        rectTrans.anchoredPosition3D = new Vector3(0f, 0f, 0f);
         rectTrans.localScale = new Vector3(1f, 1f, 1f);
 
         UpdateToggleAutoConstructCheckButtonVisiblility();
@@ -258,7 +273,7 @@ public static class UIFunctions
         var localPlanet = GameMain.localPlanet;
         var active = localPlanet != null && localPlanet.factoryLoaded && localPlanet.factory.prebuildCount > 0;
         ToggleAutoConstruct.gameObject.SetActive(active);
-        ConstructCountText.gameObject.SetActive(active);
+        ConstructCountPanel.gameObject.SetActive(active);
     }
 
     public static void UpdateConstructCountText(int count)
