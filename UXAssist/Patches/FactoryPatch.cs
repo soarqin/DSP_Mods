@@ -311,6 +311,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                 Functions.UIFunctions.UpdateToggleAutoConstructCheckButtonVisiblility();
             }
             _lastPrebuildCount = prebuildCount;
+            Functions.UIFunctions.UpdateConstructCountText(prebuildCount);
         }
         if (prebuildCount <= 0) return;
         if (!AutoConstructEnabled.Value) return;
