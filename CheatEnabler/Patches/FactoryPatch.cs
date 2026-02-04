@@ -175,7 +175,6 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                     if (!architect) continue;
                     pb.itemRequired = 0;
                 }
-                CargoTrafficPatch.TryStartBatchBuilding(factory);
                 CargoTrafficPatch.InstantBuild(player, factory, i);
             }
             CargoTrafficPatch.TryEndBatchBuilding(factory);
@@ -209,12 +208,6 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             _isBatchBuilding = true;
             _disableRefreshBatchesBuffers = true;
             _anyBelt = false;
-        }
-
-        public static void TryStartBatchBuilding(PlanetFactory factory)
-        {
-            if (_isBatchBuilding) return;
-            StartBatchBuilding(factory);
         }
 
         public static void EndBatchBuilding(PlanetFactory factory)
@@ -260,6 +253,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
 
         public static void InstantBuild(Player player, PlanetFactory factory, int id)
         {
+            if (!_isBatchBuilding) StartBatchBuilding(factory);
             _anyBelt = _anyBelt || _beltIds.Contains(factory.prebuildPool[id].protoId);
             factory.BuildFinally(player, id, false);
         }
@@ -442,41 +436,69 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             return matcher.InstructionEnumeration();
         }
 
-        [HarmonyTranspiler]
-        [HarmonyPatch(typeof(ConstructionModuleComponent), nameof(ConstructionModuleComponent.PlaceItems))]
-        private static IEnumerable<CodeInstruction> ConstructionModuleComponent_PlaceItems_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
-        {
-            var matcher = new CodeMatcher(instructions, generator);
-            matcher.MatchForward(false,
-                new CodeMatch(OpCodes.Ldarg_1),
-                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(PlanetFactory), nameof(PlanetFactory.constructionSystem))),
-                new CodeMatch(ci => ci.IsLdloc()),
-                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(PrebuildData), nameof(PrebuildData.id))),
-                new CodeMatch(ci => ci.IsLdloc()),
-                new CodeMatch(OpCodes.Ldflda, AccessTools.Field(typeof(PrebuildData), nameof(PrebuildData.pos))),
-                new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(ConstructionSystem), nameof(ConstructionSystem.AddBuildTargetToModules)))
-            );
-            matcher.Repeat(codeMatcher =>
-            {
-                codeMatcher.Advance(4).InsertAndAdvance(
-                    new CodeInstruction(OpCodes.Dup),
-                    new CodeInstruction(OpCodes.Ldarg_1),
-                    Transpilers.EmitDelegate((int objId, PlanetFactory factory) =>
-                    {
-                        CargoTrafficPatch.TryStartBatchBuilding(factory);
-                        CargoTrafficPatch.InstantBuild(GameMain.mainPlayer, factory, objId);
-                    })
-                )
-                .Advance(3);
-            });
-            return matcher.InstructionEnumeration();
-        }
-
-        [HarmonyPostfix]
+        [HarmonyPrefix]
         [HarmonyPatch(typeof(ConstructionSystem), nameof(ConstructionSystem.GameTick))]
-        private static void ConstructionSystem_GameTick_Postfix(ConstructionSystem __instance)
+        private static void ConstructionSystem_GameTick_Prefix(ConstructionSystem __instance, long time)
         {
-            CargoTrafficPatch.TryEndBatchBuilding(__instance.factory);
+            if (time % 6 != 0) return;
+            var factory = __instance.factory;
+            if (factory.prebuildCount <= 0) return;
+            var player = GameMain.mainPlayer;
+            var total = factory.prebuildCursor - 1;
+            var stepCount = total switch {
+                < 256 => 1,
+                < 2048 => 3,
+                < 16384 => 10,
+                _ => 20,
+            };
+            var step = (int)(time / 6 % stepCount);
+            var start = 1 + total * step / stepCount;
+            var end = 1 + total * (step + 1) / stepCount;
+            var anyToBuild = false;
+            for (var i = start; i < end; i++)
+            {
+                ref var prebuild = ref factory.prebuildPool[i];
+                if (prebuild.id != i || prebuild.isDestroyed) continue;
+                if (prebuild.itemRequired > 0)
+                {
+                    int itemId = prebuild.protoId;
+                    int count = prebuild.itemRequired;
+                    player.package.TakeTailItems(ref itemId, ref count, out var _, false);
+                    if (count > 0)
+                    {
+                        prebuild.itemRequired -= count;
+                        if (prebuild.itemRequired <= 0) anyToBuild = true;
+                    }
+                }
+            }
+            if (anyToBuild)
+            {
+                for (var i = start - 1; i > 0; i--)
+                {
+                    ref var prebuild = ref factory.prebuildPool[i];
+                    if (prebuild.id != i || prebuild.isDestroyed) continue;
+                    if (prebuild.itemRequired > 0)
+                    {
+                        int itemId = prebuild.protoId;
+                        int count = prebuild.itemRequired;
+                        player.package.TakeTailItems(ref itemId, ref count, out var _, false);
+                        if (count > 0) prebuild.itemRequired -= count;
+                    }
+                }
+                for (var i = end; i <= total; i++)
+                {
+                    ref var prebuild = ref factory.prebuildPool[i];
+                    if (prebuild.id != i || prebuild.isDestroyed) continue;
+                    if (prebuild.itemRequired > 0)
+                    {
+                        int itemId = prebuild.protoId;
+                        int count = prebuild.itemRequired;
+                        player.package.TakeTailItems(ref itemId, ref count, out var _, false);
+                        if (count > 0) prebuild.itemRequired -= count;
+                    }
+                }
+                ArrivePlanet(factory);
+            }
         }
 
         /*
