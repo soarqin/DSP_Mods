@@ -363,6 +363,7 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
                     /* Update target astro if changed */
                     _speedUp = false;
                     var player = controller.player;
+                    if (player.mecha.thrusterLevel < 2) return;
                     var navi = player.navigation;
                     if (navi.indicatorAstroId != _indicatorAstroId)
                     {
@@ -552,10 +553,7 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
         [HarmonyPatch(typeof(UISailPanel), nameof(UISailPanel._OnOpen))]
         public static void OnOpen_Prefix()
         {
-            if (_aimingEnabled)
-            {
-                UIRoot.instance.uiGame.disableLockCursor = true;
-            }
+            UIRoot.instance.uiGame.disableLockCursor = true;
         }
         */
     }
