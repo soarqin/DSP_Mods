@@ -316,12 +316,8 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         if (prebuildCount <= 0) return;
         if (!AutoConstructEnabled.Value) return;
         var player = __instance.player;
+        if (prebuildCount <= player.mecha.constructionModule.buildTargetTotalCount) return;
         if (player.orders.orderCount > 0) return;
-        if (player.movementState == EMovementState.Walk && player.mecha.thrusterLevel >= 1)
-        {
-            player.controller.actionWalk.SwitchToFly();
-            return;
-        }
         var prebuilds = factory.prebuildPool;
         var minDist = float.MaxValue;
         var minIndex = 0;
@@ -343,6 +339,11 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         }
         if (minIndex == 0) return;
         if ((prebuilds[minIndex].pos - playerPos).sqrMagnitude < 400f) return;
+        if (player.movementState == EMovementState.Walk && player.mecha.thrusterLevel >= 1)
+        {
+            player.controller.actionWalk.SwitchToFly();
+            return;
+        }
         player.Order(OrderNode.MoveTo(prebuilds[minIndex].pos), false);
     }
     #endregion
