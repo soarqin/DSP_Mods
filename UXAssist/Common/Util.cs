@@ -10,7 +10,7 @@ public static class Util
 {
     public static Type[] GetTypesFiltered(Assembly assembly, Func<Type, bool> predicate)
     {
-        return assembly.GetTypes().Where(predicate).ToArray();
+        return [.. assembly.GetTypes().Where(predicate)];
     }
 
     public static Type[] GetTypesInNamespace(Assembly assembly, string nameSpace) => GetTypesFiltered(assembly, t => string.Equals(t.Namespace, nameSpace, StringComparison.Ordinal));

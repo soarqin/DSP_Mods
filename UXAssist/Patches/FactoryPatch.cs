@@ -295,9 +295,9 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         _lastPrebuildCount = -1;
     }
 
-    [HarmonyPrefix]
+    [HarmonyPostfix]
     [HarmonyPatch(typeof(PlayerAction_Rts), nameof(PlayerAction_Rts.GameTick))]
-    private static void PlayerAction_Rts_GameTick_Prefix(PlayerAction_Rts __instance, long timei)
+    private static void PlayerAction_Rts_GameTick_Postfix(PlayerAction_Rts __instance, long timei)
     {
         if (timei % 60L != 0) return;
         var planet = GameMain.localPlanet;
@@ -1694,7 +1694,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                 {
                     ID = 301,
                     Name = "存储单元",
-                    GridIndex = 3601,
+                    GridIndex = 3801,
                     IconPath = "assets/signal/memory.png",
                     _iconSprite = Util.LoadEmbeddedSprite("assets/signal/memory.png", assembly),
                     SID = ""
@@ -1703,7 +1703,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                 {
                     ID = 302,
                     Name = "能量碎片",
-                    GridIndex = 3602,
+                    GridIndex = 3802,
                     IconPath = "assets/signal/energy-fragment.png",
                     _iconSprite = Util.LoadEmbeddedSprite("assets/signal/energy-fragment.png", assembly),
                     SID = ""
@@ -1712,7 +1712,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                 {
                     ID = 303,
                     Name = "硅基神经元",
-                    GridIndex = 3603,
+                    GridIndex = 3803,
                     IconPath = "assets/signal/silicon-neuron.png",
                     _iconSprite = Util.LoadEmbeddedSprite("assets/signal/silicon-neuron.png", assembly),
                     SID = ""
@@ -1721,7 +1721,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                 {
                     ID = 304,
                     Name = "负熵奇点",
-                    GridIndex = 3604,
+                    GridIndex = 3804,
                     IconPath = "assets/signal/negentropy.png",
                     _iconSprite = Util.LoadEmbeddedSprite("assets/signal/negentropy.png", assembly),
                     SID = ""
@@ -1730,7 +1730,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                 {
                     ID = 305,
                     Name = "物质重组器",
-                    GridIndex = 3605,
+                    GridIndex = 3805,
                     IconPath = "assets/signal/reassembler.png",
                     _iconSprite = Util.LoadEmbeddedSprite("assets/signal/reassembler.png", assembly),
                     SID = ""
@@ -1739,7 +1739,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                 {
                     ID = 306,
                     Name = "虚粒子",
-                    GridIndex = 3606,
+                    GridIndex = 3806,
                     IconPath = "assets/signal/virtual-particle.png",
                     _iconSprite = Util.LoadEmbeddedSprite("assets/signal/virtual-particle.png", assembly),
                     SID = ""
@@ -1751,7 +1751,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             }
 
             var index = signals.dataArray.Length;
-            signals.dataArray = signals.dataArray.Concat(protos).ToArray();
+            signals.dataArray = [.. signals.dataArray, .. protos];
             foreach (var proto in protos)
             {
                 signals.dataIndices[proto.ID] = index;
@@ -1767,7 +1767,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             var signals = LDB._signals;
             if (signals.dataIndices.TryGetValue(301, out var index))
             {
-                signals.dataArray = signals.dataArray.Take(index).Concat(signals.dataArray.Skip(index + 6)).ToArray();
+                signals.dataArray = [.. signals.dataArray.Take(index), .. signals.dataArray.Skip(index + 6)];
                 for (var id = 301; id <= 306; id++)
                     signals.dataIndices.Remove(id);
                 var len = signals.dataArray.Length;

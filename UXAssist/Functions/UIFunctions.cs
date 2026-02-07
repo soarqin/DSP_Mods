@@ -221,7 +221,7 @@ public static class UIFunctions
         rectTrans.anchorMax = new Vector2(0.5f, 0f);
         rectTrans.anchorMin = new Vector2(0.5f, 0f);
         rectTrans.pivot = new Vector2(0.5f, 0f);
-        rectTrans.anchoredPosition3D = new Vector3(0f, 140f, 0f);
+        rectTrans.anchoredPosition3D = new Vector3(-165f, 185f, 0f);
         rectTrans.localScale = new Vector3(1f, 1f, 1f);
 
         ConstructCountPanel = new GameObject("uxassist-construct-count-panel");
@@ -230,7 +230,7 @@ public static class UIFunctions
         rectTrans.anchorMax = new Vector2(0.5f, 0f);
         rectTrans.anchorMin = new Vector2(0.5f, 0f);
         rectTrans.pivot = new Vector2(0.5f, 0f);
-        rectTrans.anchoredPosition3D = new Vector3(0f, 116f, 0f);
+        rectTrans.anchoredPosition3D = new Vector3(-165f, 161f, 0f);
         rectTrans.localScale = new Vector3(1f, 1f, 1f);
         rectTrans.sizeDelta = new Vector2(160f, 24f);
         var bg = ConstructCountPanel.AddComponent<Image>();

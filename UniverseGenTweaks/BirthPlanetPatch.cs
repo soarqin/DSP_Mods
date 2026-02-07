@@ -163,8 +163,8 @@ public static class BirthPlanetPatch
 
         if (veins.Count > 0)
         {
-            theme.RareVeins = veins.ToArray();
-            theme.RareSettings = settings.ToArray();
+            theme.RareVeins = [.. veins];
+            theme.RareSettings = [.. settings];
         }
 
         if (HighLuminosityBirthStar.Value)

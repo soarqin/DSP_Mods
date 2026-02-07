@@ -77,7 +77,7 @@ public static class BeltSignal
             SID = ""
         };
         p.name = p.Name.Translate();
-        signals.dataArray = signals.dataArray.AddItem(p).ToArray();
+        signals.dataArray = [.. signals.dataArray.AddItem(p)];
         signals.dataIndices[p.ID] = index;
         _initialized = true;
     }
