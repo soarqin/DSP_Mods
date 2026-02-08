@@ -3,6 +3,7 @@ using System.Linq;
 using System.Reflection.Emit;
 using BepInEx.Configuration;
 using HarmonyLib;
+using UnityEngine;
 using UnityEngine.UI;
 using UXAssist.Common;
 using GameLogicProc = UXAssist.Common.GameLogic;
@@ -63,11 +64,19 @@ public static class TechPatch
             if (on)
             {
                 var delim = -26.0f;
+                var x = 9.0f;
+                var y = -27.0f;
                 var tp3301 = techs.Select(3301);
                 if (tp3301 != null && tp3301.IsObsolete)
                 {
                     _protoPatched = false;
-                    delim = tp3301.Position.y + 1.0f;
+                    var tp3311 = techs.Select(3311);
+                    if (tp3311 != null)
+                    {
+                        x = tp3311.Position.x;
+                        y = tp3311.Position.y;
+                        delim = y + 1.0f;
+                    }
                 }
                 if (_protoPatched) return;
 
@@ -78,9 +87,20 @@ public static class TechPatch
                         case >= 3301 and <= 3305:
                             tp.UnlockValues[0] = tp.ID - 3300 + 1;
                             tp.IsObsolete = false;
+                            tp.Position = new Vector2(x + 4.0f * (tp.ID - 3301), y);
+                            if (tp.ID == 3305)
+                            {
+                                tp.postTechArray = [];
+                                if (UIRoot.instance.uiGame.techTree.nodes.TryGetValue(tp.ID, out var node))
+                                {
+                                    node.outputLine.gameObject.SetActive(false);
+                                }
+                            }
                             continue;
                         case 3306:
                             tp.PreTechs = [];
+                            tp.preTechArray = [];
+                            tp.Position = new Vector2(x + 4.0f * (tp.ID - 3301), y);
                             continue;
                     }
 
@@ -114,6 +134,7 @@ public static class TechPatch
 
                 _protoPatched = false;
             }
+            UIRoot.instance.uiGame.techTree.OnPageChanged();
         }
 
         private static void VFPreload_InvokeOnLoadWorkEnded_Postfix()
@@ -284,6 +305,7 @@ public static class TechPatch
                     }
                 }
             }
+            UIRoot.instance.uiGame.techTree.OnPageChanged();
         }
     }
 
