@@ -134,7 +134,9 @@ public static class TechPatch
 
                 _protoPatched = false;
             }
-            UIRoot.instance.uiGame.techTree.OnPageChanged();
+            var techTree = UIRoot.instance?.uiGame?.techTree;
+            if (techTree != null && techTree.isActiveAndEnabled)
+                techTree.OnPageChanged();
         }
 
         private static void VFPreload_InvokeOnLoadWorkEnded_Postfix()
@@ -305,7 +307,9 @@ public static class TechPatch
                     }
                 }
             }
-            UIRoot.instance.uiGame.techTree.OnPageChanged();
+            var techTree = UIRoot.instance?.uiGame?.techTree;
+            if (techTree != null && techTree.isActiveAndEnabled)
+                techTree.OnPageChanged();
         }
     }
 

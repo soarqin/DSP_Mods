@@ -1541,12 +1541,14 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
 
         private static void OnGameBegin()
         {
+            _powerPoleProto ??= LDB.items.Select(2201);
             FixProto();
         }
 
         private static void OnGameEnd()
         {
             UnfixProto();
+            _powerPoleProto = null;
         }
 
         private static int PlanetGridSnapDotsNonAllocNotAligned(PlanetGrid planetGrid, Vector3 begin, Vector3 end, Vector2 interval, float yaw, float planetRadius, float gap, Vector3[] snaps)
@@ -1645,21 +1647,43 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             );
             var operand = matcher.Operand;
             matcher.Start().Advance(pos);
-            matcher.Advance(2).InsertAndAdvance(new CodeInstruction(OpCodes.Ldloc_S, operand)).SetInstructionAndAdvance(Transpilers.EmitDelegate((BuildTool_Click click, int i) =>
+            matcher.Advance(2).InsertAndAdvance(
+                new CodeInstruction(OpCodes.Ldloc_S, operand)
+            ).SetInstructionAndAdvance(Transpilers.EmitDelegate((BuildTool_Click click, int i) =>
             {
-                if (!DragBuildPowerPolesAlternatelyEnabled.Value || (i & 1) == 0) return click.handItem;
-                var id = click.handItem.ID;
-                if (id != 2202) return click.handItem;
-                return LDB.items.Select(id ^ 3);
-            })).Advance(3).InsertAndAdvance(new CodeInstruction(OpCodes.Ldloc_S, operand)).SetInstructionAndAdvance(Transpilers.EmitDelegate((BuildTool_Click click, int i) =>
+                if (click.handItem.ID != 2202 || (i & 1) == 0 || !DragBuildPowerPolesAlternatelyEnabled.Value)
+                    return click.handItem;
+                return _powerPoleProto;
+            })).Advance(3).InsertAndAdvance(
+                new CodeInstruction(OpCodes.Ldloc_S, operand)
+            ).SetInstructionAndAdvance(Transpilers.EmitDelegate((BuildTool_Click click, int i) =>
             {
-                if (!DragBuildPowerPolesAlternatelyEnabled.Value || (i & 1) == 0) return click.handPrefabDesc;
-                var id = click.handItem.ID;
-                if (id != 2202) return click.handPrefabDesc;
-                return LDB.items.Select(id ^ 3).prefabDesc;
+                if (click.handItem.ID != 2202 || (i & 1) == 0 || !DragBuildPowerPolesAlternatelyEnabled.Value)
+                    return click.handPrefabDesc;
+                return _powerPoleProto.prefabDesc;
+            }));
+            matcher.MatchForward(false,
+                new CodeMatch(ci => ci.IsLdloc()),
+                new CodeMatch(ci => ci.IsLdloc()),
+                new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(BuildPreview), nameof(BuildPreview.Clone)))
+            ).Advance(2).InsertAndAdvance(
+                new CodeInstruction(OpCodes.Ldloc_S, operand)
+            ).SetInstructionAndAdvance(Transpilers.EmitDelegate((BuildPreview to, BuildPreview from, int i) =>
+            {
+                if (from.item.ID != 2202 || (i & 1) == 0 || !DragBuildPowerPolesAlternatelyEnabled.Value)
+                {
+                    to.Clone(from);
+                    return;
+                }
+                to.ResetAll();
+                to.item = _powerPoleProto;
+                to.desc = _powerPoleProto.prefabDesc;
+                to.needModel = _powerPoleProto.prefabDesc.lodCount > 0 && _powerPoleProto.prefabDesc.lodMeshes[0] != null;
             }));
             return matcher.InstructionEnumeration();
         }
+
+        private static ItemProto _powerPoleProto;
     }
 
     private class BeltSignalsForBuyOut : PatchImpl<BeltSignalsForBuyOut>
