@@ -385,7 +385,8 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
                 new CodeInstruction(OpCodes.Ldarg_0),
                 new CodeInstruction(OpCodes.Ldarg_1),
                 new CodeInstruction(OpCodes.Ldloc_1),
-                Transpilers.EmitDelegate((DysonSwarm swarm, DysonNode node, int index) => {
+                Transpilers.EmitDelegate((DysonSwarm swarm, DysonNode node, int index) =>
+                {
                     if (node.ConstructCp() != null)
                     {
                         swarm.dysonSphere.productRegister[ProductionStatistics.DYSON_CELL_ID]++;

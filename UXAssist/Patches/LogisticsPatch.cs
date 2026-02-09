@@ -399,7 +399,9 @@ public static class LogisticsPatch
                     station = stationStorage.station;
                     index = stationStorage.index;
                     planetFactory = stationStorage.stationWindow?.factory;
-                } else {
+                }
+                else
+                {
                     var controlPanelStationStorage = target.gameObject.GetComponentInParent<UIControlPanelStationStorage>();
                     if (controlPanelStationStorage == null) continue;
                     station = controlPanelStationStorage.station;

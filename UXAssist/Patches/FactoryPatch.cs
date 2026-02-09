@@ -457,7 +457,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         }
 
         [HarmonyTranspiler]
-        [HarmonyPatch(typeof(PlanetSimulator), nameof(PlanetSimulator.LateRefresh))]    
+        [HarmonyPatch(typeof(PlanetSimulator), nameof(PlanetSimulator.LateRefresh))]
         private static IEnumerable<CodeInstruction> PlanetSimulator_LateRefresh_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
         {
             // var vec = (NightlightEnabled ? GameMain.mainPlayer.transform.up : (Quaternion.Inverse(localPlanet.runtimeRotation) * (__instance.planetData.star.uPosition - __instance.planetData.uPosition).normalized));

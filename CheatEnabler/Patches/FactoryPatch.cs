@@ -447,7 +447,8 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             if (factory.prebuildCount <= 0) return;
             var player = GameMain.mainPlayer;
             var total = factory.prebuildCursor - 1;
-            var stepCount = total switch {
+            var stepCount = total switch
+            {
                 < 256 => 1,
                 < 2048 => 3,
                 < 16384 => 10,
