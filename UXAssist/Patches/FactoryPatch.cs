@@ -1514,7 +1514,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                 OldDragBuild.Add(prefabDesc.dragBuild);
                 OldDragBuildDist.Add(prefabDesc.dragBuildDist);
                 prefabDesc.dragBuild = true;
-                var distance = prefabDesc.powerConnectDistance - 0.72f;
+                var distance = prefabDesc.powerConnectDistance - 0.8f;
                 prefabDesc.dragBuildDist = new Vector2(distance, distance);
             }
         }
