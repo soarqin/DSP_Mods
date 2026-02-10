@@ -338,13 +338,14 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             }
         }
         if (minIndex == 0) return;
-        if ((prebuilds[minIndex].pos - playerPos).sqrMagnitude < 400f) return;
+        var diff = prebuilds[minIndex].pos - playerPos;
+        if (diff.sqrMagnitude < 400f) return;
         if (player.movementState == EMovementState.Walk && player.mecha.thrusterLevel >= 1)
         {
             player.controller.actionWalk.SwitchToFly();
             return;
         }
-        player.Order(OrderNode.MoveTo(prebuilds[minIndex].pos), false);
+        player.Order(OrderNode.MoveTo(prebuilds[minIndex].pos + diff.normalized * 4f), false);
     }
     #endregion
 
