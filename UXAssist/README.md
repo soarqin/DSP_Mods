@@ -60,6 +60,8 @@
     * Do not render factory entities (except belts and sorters)
       * This also makes players click though factory entities but belts and sorters
     * Drag building power poles in maximum connection range
+    * Auto-construct
+      * Fly to buildings to be contructed automatically
     * Dismantle blueprint selected buildings
       * Press shortcut key in blueprint copy mode to dismantle selected buildings.
       * The default shortcut key is Ctrl+X, you can set it in system options panel.
@@ -220,6 +222,8 @@
     * 不渲染工厂建筑实体(除了传送带和分拣器)
       * 这也使玩家可以点穿工厂实体直接点到传送带和分拣器
     * 拖动建造电线杆时自动使用最大连接距离间隔
+    * 自动建造
+      * 自动飞向待建造的建筑
     * 拆除蓝图选中的建筑
       * 在蓝图复制模式下按快捷键拆除选中的建筑
       * 默认快捷键是Ctrl+X，可以在系统选项面板中设置

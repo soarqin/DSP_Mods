@@ -3,6 +3,14 @@
 
 ## Changlog
 
+* 1.5.3
+  * New feature: `Auto-contruct`
+    * Fly to buildings to be contructed automatically.
+  * `Auto-cruise`: Do not try to fly away planet when `Drive Engine 2` is not researched.
+  * `Re-intialize planet`: Fix logistic station ships rendering issue.
+  * Copying Wireless Power Tower works as expected when `Drag building power poles in maximum connection range` and `Build Tesla Tower and Wireless Power Tower alternately` are enabled.
+  * `Belt signals for buy out dark fog items automatically`: Grid position on panel is moved to avoid conflict with newly added signals.
+  * Fix implementation of ``Restore upgrades of `Sorter Cargo Stacking` on panel`` to make it working again.
 * 1.5.2
   * Fix crash while error occurs on milkyway login/upload.
 * 1.5.1
@@ -369,6 +377,14 @@
 
 ## 更新日志
 
+* 1.5.3
+  * 新功能：`自动建造`
+    * 自动飞行到待建造的建筑处进行建造。
+  * `自动巡航`：在未研究“驾驶舱引擎2”时，不再尝试飞离行星
+  * `初始化行星`：修复物流塔运输船显示异常的问题
+  * 当启用`拖动建造电线杆时自动使用最大连接距离间隔`和`交替建造电力感应塔和无线输电塔`时，对复制无线输电塔也生效了
+  * `用于自动购买黑雾物品的传送带信号`：移动了其面板网格位置，避免与新添加的信号冲突
+  * 修复``在升级面板上恢复`分拣器货物堆叠`的升级``的实现，使其重新工作
 * 1.5.2
   * 修复在银河系登录/上传出错时崩溃的问题
 * 1.5.1
@@ -415,7 +431,7 @@
   * 修复了配置窗口标签按钮的背景图像问题
   * 现在使用C#的`Debug`配置构建，以避免`Release`配置中的优化导致的一些问题
 * 1.3.7
-  * `重新初始化行星`: 修复可能导致崩溃的问题
+  * `初始化行星`: 修复可能导致崩溃的问题
   * `自动配置物流站`: 增加`设置默认远程逻辑为仓储`
 * 1.3.6
   * `拆除蓝图选中的建筑`：
@@ -432,7 +448,7 @@
 * 1.3.3
   * `星图过滤器`：当过滤器UI显示时隐藏顶部重叠窗口
   * `自动配置物流站`：现在可以为战场分析基站设置最大充能功率
-  * `重新初始化行星`：修复崩溃问题
+  * `初始化行星`：修复崩溃问题
   * `航行时自动导航`：
     * 添加快速启用/禁用`自动巡航`的按钮
     * 如果所需科技未研究则不自动使用翘曲器

@@ -114,18 +114,18 @@ public static class PlanetFunctions
         constructionModule.tmpTargetsHash = null;
         constructionModule.checkItemCursor = 0;
 
+        var gameData = GameMain.data;
         //planet.data = new PlanetRawData(planet.precision);
         //planet.data.CalcVerts();
         var stationPool = factory.transport?.stationPool;
         if (stationPool != null)
         {
-            foreach (var sc in stationPool)
+            for (var i = factory.transport.stationCursor - 1; i > 0; i--)
             {
-                if (sc is not { id: > 0 }) continue;
-                for (var i = sc.storage.Length - 1; i >= 0; i--)
-                {
-                    sc.storage[i].count = 0;
-                }
+                var sc = stationPool[i];
+                if (sc.id != i) continue;
+                gameData.galacticTransport.RemoveStationComponent(sc.id);
+                sc.Reset();
             }
         }
 
@@ -237,9 +237,9 @@ public static class PlanetFunctions
             factory.PlanetReformRevert();
         }
 
-        GameMain.data.LeavePlanet();
+        gameData.LeavePlanet();
         var index = factory.index;
-        var warningSystem = GameMain.data.warningSystem;
+        var warningSystem = gameData.warningSystem;
         var warningPool = warningSystem.warningPool;
         for (var i = warningSystem.warningCursor - 1; i >= 0; i--)
         {
@@ -309,8 +309,9 @@ public static class PlanetFunctions
         factory.combatGroundSystem = new CombatGroundSystem(planet);
         factory.defenseSystem = new DefenseSystem(planet);
         factory.planetATField = new PlanetATField(planet);
-        factory.transport = new PlanetTransport(GameMain.data, planet);
+        factory.transport = new PlanetTransport(gameData, planet);
         factory.transport.Init();
+        factory.RefreshHashSystems();
         var mem = new MemoryStream();
         var writer = new BinaryWriter(mem);
         factory.platformSystem.Export(writer);
@@ -323,7 +324,7 @@ public static class PlanetFunctions
         factory.digitalSystem = new DigitalSystem(planet);
 
         //GameMain.data.statistics.production.CreateFactoryStat(index);
-        GameMain.data.ArrivePlanet(planet);
+        gameData.ArrivePlanet(planet);
     }
 
     public static void BuildOrbitalCollectors()
