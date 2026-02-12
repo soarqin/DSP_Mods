@@ -23,6 +23,9 @@ public class LuaState: IDisposable
     private readonly OBSWebsocket _obs = new();
     private readonly Dictionary<string, string> _scheduledText = [];
 
+    private long _lastSeedKey = 0L;
+    private string _lastClusterString = "";
+
     public LuaState()
     {
         var assemblyPath = System.IO.Path.Combine(
@@ -168,6 +171,35 @@ public class LuaState: IDisposable
         #endregion
 
         #region Common Data Retrieval Functions
+        state["get_current_cluster"] = string () =>
+        {
+            var data = GameMain.data;
+            if (data == null) return "";
+            var seedKey = data.GetClusterSeedKey();
+            if (seedKey == _lastSeedKey) return _lastClusterString;
+            _lastSeedKey = seedKey;
+            _lastClusterString = data.gameDesc.clusterString;
+            return _lastClusterString;
+        };
+
+        var getCurrentResearch = () =>
+        {
+            var history = GameMain.history;
+            if (history == null) return (0, 0, 0L, 0L);
+            var current = history.currentTech;
+            if (current == 0) return (0, 0, 0L, 0L);
+            var techStates = history.techStates;
+            if (!techStates.TryGetValue(current, out var value)) return (0, 0, 0L, 0L);
+            return (current, value.curLevel, value.hashUploaded, value.hashNeeded);
+        };
+        state["get_current_research"] = getCurrentResearch;
+        state["get_current_research_str"] = string (string format) =>
+        {
+            var (current, level, hashUploaded, hashNeeded) = getCurrentResearch();
+            if (current == 0) return "";
+            return string.Format(format, LDB.techs.Select(current).name, level, JournalUtility.TranslateKMGValue(hashUploaded), JournalUtility.TranslateKMGValue(hashNeeded));
+        };
+
         var getTechLevel = (NLua.LuaTable techIds) =>
         {
             var techStates = GameMain.history?.techStates;
@@ -205,7 +237,7 @@ public class LuaState: IDisposable
             if (gameData == null) return (0, 0);
             var statPool = GameMain.statistics?.production.factoryStatPool;
             if (statPool == null) return (0, 0);
-            int productTotal = 0, consumeTotal = 0;
+            long productTotal = 0L, consumeTotal = 0L;
             for (var i = gameData.factoryCount - 1; i >= 0; i--)
             {
                 var stat = statPool[i];
@@ -216,12 +248,12 @@ public class LuaState: IDisposable
                 var cursor = ppool.cursor[4];
                 if (cursor > 0)
                 {
-                    productTotal += ppool.count[cursor];
+                    productTotal += ppool.count[cursor - 1];
                 }
                 cursor = ppool.cursor[4 + 6];
                 if (cursor > 0)
                 {
-                    consumeTotal += ppool.count[cursor];
+                    consumeTotal += ppool.count[cursor - 1];
                 }
             }
             return (productTotal, consumeTotal);
@@ -230,7 +262,7 @@ public class LuaState: IDisposable
         state["get_factory_stat_str"] = string (string format, int itemId) =>
         {
             var (productTotal, consumeTotal) = getFactoryStat(itemId);
-            return string.Format(format, productTotal, consumeTotal);
+            return string.Format(format, JournalUtility.TranslateKMGValue(productTotal), JournalUtility.TranslateKMGValue(consumeTotal));
         };
 
         var getDysonSphereTotalGen = () =>
