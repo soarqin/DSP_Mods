@@ -71,6 +71,7 @@ public static class UIConfigWindow
         I18N.Add("Do not render factory entities", "Do not render factory entities (except belts and sorters)", "不渲染工厂建筑实体(除了传送带和分拣器)");
         I18N.Add("Drag building power poles in maximum connection range", "Drag building power poles in maximum connection range", "拖动建造电线杆时自动使用最大连接距离间隔");
         I18N.Add("Build Tesla Tower and Wireless Power Tower alternately", "Build Tesla Tower and Wireless Power Tower alternately", "交替建造电力感应塔和无线输电塔");
+        I18N.Add("Auto-construct button", "Auto-construct button", "自动建造按钮");
         I18N.Add("Belt signals for buy out dark fog items automatically", "Belt signals for buy out dark fog items automatically", "用于自动购买黑雾物品的传送带信号");
         I18N.Add("Ctrl+Shift+Click to pick items from whole belts", "Ctrl+Shift+Click to pick items from whole belts", "按住Ctrl+Shift点击从整条传送带抓取物品");
         I18N.Add("Include branches of belts", "Include branches of belts", "包含传送带分支");
@@ -410,6 +411,9 @@ public static class UIConfigWindow
                 alternatelyCheckBox.SetEnable(FactoryPatch.DragBuildPowerPolesEnabled.Value);
             }
         }
+
+        y += 36f;
+        wnd.AddCheckBox(x, y, tab2, FactoryPatch.AutoConstructButtonEnabled, "Auto-construct button");
 
         {
             y += 36f;

@@ -271,7 +271,7 @@ public static class UIFunctions
     {
         if (ToggleAutoConstruct == null) return;
         var localPlanet = GameMain.localPlanet;
-        var active = localPlanet != null && localPlanet.factoryLoaded && localPlanet.factory.prebuildCount > 0;
+        var active = localPlanet != null && localPlanet.factoryLoaded && localPlanet.factory.prebuildCount > 0 && Patches.FactoryPatch.AutoConstructButtonEnabled.Value;
         ToggleAutoConstruct.gameObject.SetActive(active);
         ConstructCountPanel.gameObject.SetActive(active);
     }

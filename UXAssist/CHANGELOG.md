@@ -3,6 +3,10 @@
 
 ## Changlog
 
+* 1.5.4
+  * `Auto-contruct`:
+    * Add a UI option to hide it completely.
+    * Fix an issue that may cause circling.
 * 1.5.3
   * New feature: `Auto-contruct`
     * Fly to buildings to be contructed automatically.
@@ -377,6 +381,10 @@
 
 ## 更新日志
 
+* 1.5.4
+  * `自动建造`：
+    * 增加了一个 UI 选项，可完全隐藏该功能。
+    * 修复了可能导致盘旋的问题。
 * 1.5.3
   * 新功能：`自动建造`
     * 自动飞行到待建造的建筑处进行建造。
