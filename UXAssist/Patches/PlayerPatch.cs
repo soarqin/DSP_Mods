@@ -337,8 +337,18 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
         private static int _indicatorAstroId;
         private static bool _speedUp;
         private static Vector3 _direction;
+        private static EMovementState _movementState = EMovementState.Walk;
 
         public static int IndicatorAstroId => _indicatorAstroId;
+
+        protected override void OnEnable()
+        {
+            _canUseWarper = false;
+            _indicatorAstroId = 0;
+            _speedUp = false;
+            _direction = Vector3.zero;
+            _movementState = EMovementState.Walk;
+        }
 
         public static void ToggleAutoCruise()
         {
@@ -347,6 +357,16 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
             {
                 UIRoot.instance.uiGame.generalTips.InvokeRealtimeTipAhead((AutoCruiseEnabled.Value ? "AutoCruiseOn" : "AutoCruiseOff").Translate());
             }
+        }
+
+        private static bool UpdateMovementState(PlayerController controller)
+        {
+            var movementStateChanged = controller.movementStateInFrame != _movementState;
+            if (movementStateChanged)
+            {
+                _movementState = controller.movementStateInFrame;
+            }
+            return movementStateChanged;
         }
 
         [HarmonyTranspiler]
@@ -365,7 +385,8 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
                     var player = controller.player;
                     if (player.mecha.thrusterLevel < 2) return;
                     var navi = player.navigation;
-                    if (navi.indicatorAstroId != _indicatorAstroId)
+                    var astroChanged = navi.indicatorAstroId != _indicatorAstroId;
+                    if (astroChanged)
                     {
                         _indicatorAstroId = navi.indicatorAstroId;
                         Functions.UIFunctions.UpdateToggleAutoCruiseCheckButtonVisiblility();
@@ -377,25 +398,33 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
                         case EMovementState.Drift:
                             if (!AutoCruiseEnabled.Value) return;
                             if (GameMain.localStar?.astroId == _indicatorAstroId) return;
+                            UpdateMovementState(controller);
                             /* Press jump key to fly */
                             controller.input0.z = 1f;
                             break;
                         case EMovementState.Fly:
                             if (!AutoCruiseEnabled.Value) return;
                             if (GameMain.localStar?.astroId == _indicatorAstroId) return;
+                            UpdateMovementState(controller);
                             /* Keep pressing jump and pullup key to sail */
-                            controller.input0.y = 1f;
+                            controller.input0.y = -1f;
                             controller.input1.y = 1f;
                             break;
                         case EMovementState.Sail:
                             if (VFInput._pullUp.pressing || VFInput._pushDown.pressing || VFInput._moveLeft.pressing || VFInput._moveRight.pressing ||
                                 (!player.warping && UIRoot.instance.uiGame.disableLockCursor && (VFInput._moveForward.pressing || VFInput._moveBackward.pressing)))
                                 return;
+                            var movementStateChanged = UpdateMovementState(controller);
                             var playerPos = player.uPosition;
                             var isHive = _indicatorAstroId > 1000000;
                             ref var astro = ref isHive ? ref GameMain.spaceSector.astros[_indicatorAstroId - 1000000] : ref GameMain.galaxy.astrosData[_indicatorAstroId];
                             var astroVec = astro.uPos - playerPos;
                             var distance = astroVec.magnitude;
+                            astroVec = astroVec.normalized;
+                            if (astroChanged || movementStateChanged)
+                            {
+                                controller.actionSail.sailPoser.targetURotWanted = Quaternion.LookRotation(astroVec);
+                            }
                             if (distance < astro.type switch
                             {
                                 EAstroType.Planet => 800.0 + astro.uRadius,
@@ -413,7 +442,7 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
                             var autoCruise = AutoCruiseEnabled.Value;
                             if (GameMain.instance.timei % 6 == 0 || _direction == Vector3.zero)
                             {
-                                _direction = astroVec.normalized;
+                                _direction = astroVec;
 
                                 /* Check nearest astroes, try to bypass them */
                                 var localStar = GameMain.localStar;
@@ -477,11 +506,11 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
                             var speed = uVel.magnitude;
                             if (player.warping)
                             {
-                                _speedUp = false;
                                 if (autoCruise)
                                 {
-                                    /* Speed down if too close */
                                     var actionSail = controller.actionSail;
+                                    _speedUp = actionSail.currentWarpSpeed < actionSail.maxWarpSpeed;
+                                    /* Speed down if too close */
                                     if (distance < GalaxyData.LY * 1.5)
                                     {
                                         if (distance < actionSail.currentWarpSpeed * distance switch
@@ -493,8 +522,13 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
                                         })
                                         {
                                             controller.input0.y = -1f;
+                                            _speedUp = false;
                                         }
                                     }
+                                }
+                                else
+                                {
+                                    _speedUp = false;
                                 }
                             }
                             else
@@ -505,6 +539,7 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
                                 {
                                     player.warpCommand = true;
                                     VFAudio.Create("warp-begin", player.transform, Vector3.zero, true);
+                                    controller.actionSail.sailPoser.targetURotWanted = Quaternion.LookRotation(astroVec);
                                 }
                                 else
                                 {
