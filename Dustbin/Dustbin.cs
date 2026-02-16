@@ -58,7 +58,7 @@ public class Dustbin : BaseUnityPlugin, IModCanSave, IMultiplayerMod
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int CalcGetSands(int itemId, int count)
+    public static int CalcGetSands(int itemId, int count, int inc)
     {
         var sandsPerItem = itemId <= 12000 ? Dustbin.SandsFactors[itemId] : 0;
         if (sandsPerItem <= 0) return count;
