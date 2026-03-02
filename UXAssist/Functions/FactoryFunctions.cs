@@ -102,7 +102,7 @@ public static class FactoryFunctions
                 if (stationId > 0)
                 {
                     StationComponent sc = stationPool[stationId];
-                    if (sc.id != stationId) continue;
+                    if (sc is null || sc.id != stationId) continue;
                     for (int i = 0; i < sc.storage.Length; i++)
                     {
                         int package = player.TryAddItemToPackage(sc.storage[i].itemId, sc.storage[i].count, sc.storage[i].inc, true, objId);

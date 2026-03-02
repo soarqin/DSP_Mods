@@ -23,6 +23,7 @@ public static class PlanetFunctions
             if (stationId > 0)
             {
                 var sc = GameMain.localPlanet.factory.transport.stationPool[stationId];
+                if (sc is null || sc.id != stationId) continue;
                 if (toBag)
                 {
                     for (var i = sc.storage.Length - 1; i >= 0; i--)
@@ -123,7 +124,7 @@ public static class PlanetFunctions
             for (var i = factory.transport.stationCursor - 1; i > 0; i--)
             {
                 var sc = stationPool[i];
-                if (sc.id != i) continue;
+                if (sc is null || sc.id != i) continue;
                 gameData.galacticTransport.RemoveStationComponent(sc.id);
                 sc.Reset();
             }
