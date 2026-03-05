@@ -172,6 +172,25 @@ public class PersistPatch : PatchImpl<PersistPatch>
         return false;
     }
 
+    // Fix crash in NeutronStarHandler.OnEnable()
+    [HarmonyTranspiler]
+    [HarmonyPatch(typeof(NeutronStarHandler), nameof(NeutronStarHandler.OnEnable))]
+    private static IEnumerable<CodeInstruction> NeutronStarHandler_OnEnable_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+    {
+        var matcher = new CodeMatcher(instructions, generator);
+        matcher.MatchForward(false,
+            new CodeMatch(OpCodes.Ldarg_0),
+            new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(NeutronStarHandler), nameof(NeutronStarHandler.streamRenderer))),
+            new CodeMatch(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Renderer), nameof(Renderer.sharedMaterial)))
+        ).RemoveInstructions(3).InsertAndAdvance(
+            Transpilers.EmitDelegate(() => {
+                return Configs.builtin.neutronStarPrefab.streamRenderer.sharedMaterial;
+            })
+        );
+
+        return matcher.InstructionEnumeration();
+    }
+
     #region Cluster Upload Result
 
     [HarmonyPostfix]
