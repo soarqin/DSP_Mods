@@ -130,6 +130,9 @@ public static class UIConfigWindow
         I18N.Add("Treat stack items as single in monitor components", "Treat stack items as single in monitor components", "在流速计中将堆叠物品视为单个物品");
         I18N.Add("Initialize This Planet", "Initialize this planet", "初始化本行星");
         I18N.Add("Initialize This Planet Confirm", "This operation will destroy all buildings and revert terrains on this planet, are you sure?", "此操作将会摧毁本行星上的所有建筑并恢复地形，确定吗？");
+        I18N.Add("Return buildings to player when initializing planet", "Return buildings to player when initializing planet", "初始化行星时将建筑归还给玩家");
+        I18N.Add("Return logistic storage items to player when initializing planet", "Return logistic storage items to player when initializing planet", "初始化行星时将物流塔存储的物品归还给玩家");
+        I18N.Add("Return belt and factory items to player when initializing planet", "Return belt and factory items to player when initializing planet", "初始化行星时将传送带和工厂里的物品归还给玩家");
         I18N.Add("Dismantle All Buildings", "Dismantle all buildings", "拆除所有建筑");
         I18N.Add("Dismantle All Buildings Confirm", "This operation will dismantle all buildings on this planet, are you sure?", "此操作将会拆除本行星上的所有建筑，确定吗？");
         I18N.Add("Quick build Orbital Collectors", "Quick build Orbital Collectors", "快速建造轨道采集器");
@@ -439,6 +442,13 @@ public static class UIConfigWindow
             UIMessageBox.Show("Initialize This Planet".Translate(), "Initialize This Planet Confirm".Translate(), "取消".Translate(), "确定".Translate(), UIMessageBox.QUESTION, null,
                 () => { PlanetFunctions.RecreatePlanet(true); })
         );
+        y += 24f;
+        wnd.AddCheckBox(x + 10f, y, tab2, PlanetFunctions.ReturnBuildingsOnInitializeEnabled, "Return buildings to player when initializing planet", 13);
+        y += 24f;
+        wnd.AddCheckBox(x + 10f, y, tab2, PlanetFunctions.ReturnLogisticStorageItemsOnInitializeEnabled, "Return logistic storage items to player when initializing planet", 13);
+        y += 24f;
+        wnd.AddCheckBox(x + 10f, y, tab2, PlanetFunctions.ReturnBeltAFactoryItemsOnInitializeEnabled, "Return belt and factory items to player when initializing planet", 13);
+
         y += 36f;
         wnd.AddButton(x, y, tab2, "Dismantle All Buildings", 16, "button-dismantle-all", () =>
             UIMessageBox.Show("Dismantle All Buildings".Translate(), "Dismantle All Buildings Confirm".Translate(), "取消".Translate(), "确定".Translate(), UIMessageBox.QUESTION, null,

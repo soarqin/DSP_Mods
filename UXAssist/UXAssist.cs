@@ -108,6 +108,12 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
         FactoryPatch.NightLightAngleY = Config.Bind("Factory", "NightLightAngleY", -2f, "Night light angle Y");
         PlanetPatch.PlayerActionsInGlobeViewEnabled = Config.Bind("Planet", "PlayerActionsInGlobeView", false,
             "Enable player actions in globe view");
+        PlanetFunctions.ReturnBuildingsOnInitializeEnabled = Config.Bind("Planet", "ReturnBuildingsOnInitialize", false,
+            "Return buildings to player when initializing planet");
+        PlanetFunctions.ReturnLogisticStorageItemsOnInitializeEnabled = Config.Bind("Planet", "ReturnLogisticStorageItemsOnInitialize", false,
+            "Return logistic storage items to player when initializing planet");
+        PlanetFunctions.ReturnBeltAFactoryItemsOnInitializeEnabled = Config.Bind("Planet", "ReturnBeltAFactoryItemsOnInitialize", false,
+            "Return belt and factory items to player when initializing planet");
         FactoryPatch.RemoveBuildRangeLimitEnabled = Config.Bind("Factory", "RemoveBuildRangeLimit", false,
                 "Remove limit for build range and maximum count of drag building belts/buildings\nNote: this does not affect range limit for mecha drones' action");
         FactoryPatch.LargerAreaForUpgradeAndDismantleEnabled = Config.Bind("Factory", "LargerAreaForUpgradeAndDismantle", false,

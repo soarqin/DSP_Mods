@@ -1,6 +1,6 @@
 ﻿using System;
 using System.IO;
-using System.Threading;
+using System.Collections.Generic;
 using BepInEx.Configuration;
 using UnityEngine;
 
@@ -9,7 +9,12 @@ namespace UXAssist.Functions;
 public static class PlanetFunctions
 {
     public static ConfigEntry<int> OrbitalCollectorMaxBuildCount;
+    public static ConfigEntry<bool> ReturnBuildingsOnInitializeEnabled;
+    public static ConfigEntry<bool> ReturnLogisticStorageItemsOnInitializeEnabled;
+    public static ConfigEntry<bool> ReturnBeltAFactoryItemsOnInitializeEnabled;
+
     private const int OrbitalCollectorItemId = 2105;
+
     public static void DismantleAll(bool toBag)
     {
         var player = GameMain.mainPlayer;
@@ -28,8 +33,8 @@ public static class PlanetFunctions
                 {
                     for (var i = sc.storage.Length - 1; i >= 0; i--)
                     {
-                        var added = player.TryAddItemToPackage(sc.storage[i].itemId, sc.storage[i].count, 0, true, etd.id);
-                        UIItemup.Up(sc.storage[i].itemId, added);
+                        var added = player.TryAddItemToPackage(sc.storage[i].itemId, sc.storage[i].count, sc.storage[i].inc, true, etd.id);
+                        if (added > 0) UIItemup.Up(sc.storage[i].itemId, added);
                         sc.storage[i].count = 0;
                     }
                 }
@@ -116,17 +121,305 @@ public static class PlanetFunctions
         constructionModule.checkItemCursor = 0;
 
         var gameData = GameMain.data;
-        //planet.data = new PlanetRawData(planet.precision);
-        //planet.data.CalcVerts();
+
+        var returnBuildings = ReturnBuildingsOnInitializeEnabled.Value;
+        var returnLogisticStorageItems = ReturnLogisticStorageItemsOnInitializeEnabled.Value;
+        var returnBeltAFactoryItems = ReturnBeltAFactoryItemsOnInitializeEnabled.Value;
+        var returnedItems = new Dictionary<int, (long count, int inc)>();
+
+        static void AddReturnedItem(int itemId, int count, int inc, Dictionary<int, (long count, int inc)> returnedItems)
+        {
+            if (returnedItems.TryGetValue(itemId, out var value))
+            {
+                returnedItems[itemId] = (value.count + count, value.inc + inc);
+            }
+            else
+            {
+                returnedItems[itemId] = (count, inc);
+            }
+        }
+
+        if (returnBuildings || returnBeltAFactoryItems)
+        {
+            var factoryStorage = factory.factoryStorage;
+            var factorySystem = factory.factorySystem;
+            var planetTransport = factory.transport;
+            var defenseSystem = factory.defenseSystem;
+            var powerSystem = factory.powerSystem;
+            var cargoTraffic = factory.cargoTraffic;
+            for (var i = factory.entityCursor - 1; i > 0; i--)
+            {
+                ref var ed = ref factory.entityPool[i];
+                if (ed.id != i) continue;
+                if (ed.protoId <= 0) continue;
+                if (returnBuildings) AddReturnedItem(ed.protoId, 1, 0, returnedItems);
+                if (!returnBeltAFactoryItems) continue;
+                #region Storage Items
+                var storageId = ed.storageId;
+                if (storageId > 0)
+                {
+                    var storage = factoryStorage.storagePool[storageId];
+                    if (storage != null)
+                    {
+                        for (var j = storage.size - 1; j >= 0; j--)
+                        {
+                            var count = storage.grids[j].count;
+                            if (count <= 0) continue;
+                            AddReturnedItem(storage.grids[j].itemId, count, storage.grids[j].inc, returnedItems);
+                        }
+                    }
+                }
+                #endregion
+                #region Tank Items
+                var tankId = ed.tankId;
+                if (tankId > 0)
+                {
+                    ref var tank = ref factoryStorage.tankPool[tankId];
+                    var fluidId = tank.fluidId;
+                    var fluidCount = tank.fluidCount;
+                    if (fluidId > 0 && fluidCount > 0) AddReturnedItem(fluidId, fluidCount, tank.fluidInc, returnedItems);
+                }
+                #endregion
+                #region Miner Items
+                var minerId = ed.minerId;
+                if (minerId > 0)
+                {
+                    ref var miner = ref factorySystem.minerPool[minerId];
+                    var productId = miner.productId;
+                    var productCount = miner.productCount;
+                    if (productId > 0 && productCount > 0) AddReturnedItem(productId, productCount, 0, returnedItems);
+                }
+                #endregion
+                #region Inserter Items
+                var inserterId = ed.inserterId;
+                if (inserterId > 0)
+                {
+                    ref var inserter = ref factorySystem.inserterPool[inserterId];
+                    var itemId = inserter.itemId;
+                    var itemCount = inserter.itemCount;
+                    if (itemId > 0 && itemCount > 0) AddReturnedItem(itemId, itemCount, inserter.itemInc, returnedItems);
+                }
+                #endregion
+                #region Assembler Items
+                var assemblerId = ed.assemblerId;
+                if (assemblerId > 0)
+                {
+                    ref var assembler = ref factorySystem.assemblerPool[assemblerId];
+                    if (assembler.recipeId > 0)
+                    {
+                        var products = assembler.recipeExecuteData.products;
+                        var requires = assembler.recipeExecuteData.requires;
+                        var requireCounts = assembler.recipeExecuteData.requireCounts;
+                        for (var j = products.Length - 1; j >= 0; j--)
+                        {
+                            var product = products[j];
+                            var produced = assembler.produced[j];
+                            if (produced > 0) AddReturnedItem(product, produced, 0, returnedItems);
+                        }
+                        for (var j = requires.Length - 1; j >= 0; j--)
+                        {
+                            var require = requires[j];
+                            var served = assembler.served[j];
+                            var incServed = assembler.incServed[j];
+                            if (incServed > served * 10) incServed = served * 10;
+                            if (assembler.replicating) served += requireCounts[j];
+                            if (served > 0) AddReturnedItem(require, served, incServed, returnedItems);
+                        }
+                    }
+                }
+                #endregion
+                #region Fractionator Items
+                var fractionatorId = ed.fractionatorId;
+                if (fractionatorId > 0)
+                {
+                    ref var fractionator = ref factorySystem.fractionatorPool[fractionatorId];
+                    var fluidId = fractionator.fluidId;
+                    var fluidInputCount = fractionator.fluidInputCount;
+                    if (fluidInputCount > 0) AddReturnedItem(fluidId, fluidInputCount, fractionator.fluidInputInc, returnedItems);
+                    var fluidOutputCount = fractionator.fluidOutputCount;
+                    if (fluidOutputCount > 0) AddReturnedItem(fluidId, fluidOutputCount, fractionator.fluidOutputInc, returnedItems);
+                    var productOutputCount = fractionator.productOutputCount;
+                    if (productOutputCount > 0) AddReturnedItem(fractionator.productId, productOutputCount, 0, returnedItems);
+                }
+                #endregion
+                #region Ejector Items
+                var ejectorId = ed.ejectorId;
+                if (ejectorId > 0)
+                {
+                    ref var ejector = ref factorySystem.ejectorPool[ejectorId];
+                    var bulletCount = ejector.bulletCount;
+                    if (bulletCount > 0) AddReturnedItem(ejector.bulletId, bulletCount, ejector.bulletInc, returnedItems);
+                }
+                #endregion
+                #region Silo Items
+                var siloId = ed.siloId;
+                if (siloId > 0)
+                {
+                    ref var silo = ref factorySystem.siloPool[siloId];
+                    var itemCount = silo.bulletCount;
+                    if (itemCount > 0) AddReturnedItem(silo.bulletId, itemCount, silo.bulletInc, returnedItems);
+                }
+                #endregion
+                #region Lab Items
+                var labId = ed.labId;
+                if (labId > 0)
+                {
+                    ref var lab = ref factorySystem.labPool[labId];
+                    if (lab.recipeId > 0)
+                    {
+                        var products = lab.recipeExecuteData.products;
+                        var requires = lab.recipeExecuteData.requires;
+                        var requireCounts = lab.recipeExecuteData.requireCounts;
+                        for (var j = products.Length - 1; j >= 0; j--)
+                        {
+                            var produced = lab.produced[j];
+                            if (produced > 0) AddReturnedItem(products[j], produced, 0, returnedItems);
+                        }
+                        for (var j = requires.Length - 1; j >= 0; j--)
+                        {
+                            var served = lab.served[j];
+                            var incServed = lab.incServed[j];
+                            if (incServed > served * 10) incServed = served * 10;
+                            if (lab.replicating) served += requireCounts[j];
+                            if (served > 0) AddReturnedItem(requires[j], served, incServed, returnedItems);
+                        }
+                    }
+                    if (lab.researchMode && lab.matrixServed != null)
+                    {
+                        for (var k = lab.matrixServed.Length - 1; k >= 0; k--)
+                        {
+                            var served = lab.matrixServed[k] / 3600;
+                            if (served > 0) AddReturnedItem(LabComponent.matrixIds[k], served, lab.matrixIncServed[k] / 3600, returnedItems);
+                        }
+                    }
+                }
+                #endregion
+                #region Dispenser Items
+                var dispenserId = ed.dispenserId;
+                if (dispenserId > 0)
+                {
+                    var dispenser = planetTransport.dispenserPool[dispenserId];
+                    var holdupPackage = dispenser.holdupPackage;
+                    for (var j = holdupPackage.Length - 1; j >= 0; j--)
+                    {
+                        var count = holdupPackage[j].count;
+                        if (count > 0) AddReturnedItem(holdupPackage[j].itemId, count, holdupPackage[j].inc, returnedItems);
+                    }
+                    var courierCount = dispenser.idleCourierCount + dispenser.workCourierCount;
+                    if (courierCount > 0) AddReturnedItem((int)Common.KnownItemId.Bot, courierCount, 0, returnedItems);
+                }
+                #endregion
+                #region Turret Items
+                var turretId = ed.turretId;
+                if (turretId > 0)
+                {
+                    ref var turret = ref defenseSystem.turrets.buffer[turretId];
+                    var itemCount = turret.itemCount;
+                    if (itemCount > 0) AddReturnedItem(turret.itemId, itemCount, turret.itemInc, returnedItems);
+                }
+                #endregion
+                #region Battle Base Items
+                var battleBaseId = ed.battleBaseId;
+                if (battleBaseId > 0)
+                {
+                    ref var battleBase = ref defenseSystem.battleBases.buffer[battleBaseId];
+                    var combatModule = battleBase.combatModule;
+                    if (combatModule != null && combatModule.moduleFleets[0].fleetId <= 0)
+                    {
+                        var fighters = combatModule.moduleFleets[0].fighters;
+                        for (var j = fighters.Length - 1; j >= 0; j--)
+                        {
+                            var fighterItemId = fighters[j].itemId;
+                            var fighterCount = fighters[j].count;
+                            if (fighterItemId > 0 && fighterCount > 0) AddReturnedItem(fighterItemId, fighterCount, 0, returnedItems);
+                        }
+                    }
+                }
+                #endregion
+                #region Power Generator Items
+                var powerGeneratorId = ed.powerGenId;
+                if (powerGeneratorId > 0)
+                {
+                    ref var powerGen = ref powerSystem.genPool[powerGeneratorId];
+                    if (powerGen.fuelId > 0 && powerGen.fuelCount > 0) AddReturnedItem(powerGen.fuelId, powerGen.fuelCount, powerGen.fuelInc, returnedItems);
+                    if (powerGen.gamma)
+                    {
+                        var productId = powerGen.productId;
+                        var productCount = (int)powerGen.productCount;
+                        if (productId != 0 && productCount > 0) AddReturnedItem(productId, productCount, 0, returnedItems);
+                        int catalystId = powerGen.catalystId;
+                        var catalystPointDiv = powerGen.catalystPoint / 3600;
+                        if (catalystId != 0 && catalystPointDiv > 0) AddReturnedItem(catalystId, catalystPointDiv, powerGen.catalystIncPoint / 3600, returnedItems);
+                    }
+                }
+                #endregion
+                #region Power Exchanger Items
+                var powerExchangerId = ed.powerExcId;
+                if (powerExchangerId > 0)
+                {
+                    ref var powerExchanger = ref powerSystem.excPool[powerExchangerId];
+                    var emptyCount = (int)powerExchanger.emptyCount;
+                    if (emptyCount > 0) AddReturnedItem(powerExchanger.emptyId, emptyCount, powerExchanger.emptyInc, returnedItems);
+                    var fullCount = (int)powerExchanger.fullCount;
+                    if (fullCount > 0) AddReturnedItem(powerExchanger.fullId, fullCount, powerExchanger.fullInc, returnedItems);
+                }
+                #endregion
+                #region Spraycoater Items
+                var spraycoaterId = ed.spraycoaterId;
+                if (spraycoaterId > 0)
+                {
+                    ref var spraycoater = ref cargoTraffic.spraycoaterPool[spraycoaterId];
+                    if (spraycoater.incItemId != 0 && spraycoater.incCount != 0)
+                    {
+                        var itemProto = LDB.items.Select(spraycoater.incItemId);
+                        var count = spraycoater.incCount / itemProto.HpMax;
+                        if (count != 0) AddReturnedItem(spraycoater.incItemId, count, 0, returnedItems);
+                    }
+                }
+                #endregion
+                #region Piler Items
+                var pilerId = ed.pilerId;
+                if (pilerId > 0)
+                {
+                    ref var piler = ref cargoTraffic.pilerPool[pilerId];
+                    var cacheCargoStack = (int)piler.cacheCargoStack1;
+                    if (cacheCargoStack > 0) AddReturnedItem(piler.cacheItemId1, cacheCargoStack, piler.cacheCargoInc1, returnedItems);
+                    var cacheCargoStack2 = (int)piler.cacheCargoStack2;
+                    if (cacheCargoStack2 > 0) AddReturnedItem(piler.cacheItemId2, cacheCargoStack2, piler.cacheCargoInc2, returnedItems);
+                }
+                #endregion
+            }
+        }
+
         var stationPool = factory.transport?.stationPool;
         if (stationPool != null)
         {
+            var galacticTransport = gameData.galacticTransport;
             for (var i = factory.transport.stationCursor - 1; i > 0; i--)
             {
                 var sc = stationPool[i];
                 if (sc is null || sc.id != i) continue;
-                gameData.galacticTransport.RemoveStationComponent(sc.id);
+                if (returnLogisticStorageItems)
+                {
+                    for (var j = 0; j < sc.storage.Length; j++)
+                    {
+                        var count = sc.storage[j].count;
+                        if (count > 0) AddReturnedItem(sc.storage[j].itemId, count, sc.storage[j].inc, returnedItems);
+                    }
+                    var droneCount = sc.idleDroneCount + sc.workDroneCount;
+                    if (droneCount > 0) AddReturnedItem((int)Common.KnownItemId.Drone, droneCount, 0, returnedItems);
+                    var shipCount = sc.idleShipCount + sc.workShipCount;
+                    if (shipCount > 0) AddReturnedItem((int)Common.KnownItemId.Ship, shipCount, 0, returnedItems);
+                    var warperCount = sc.warperCount;
+                    if (warperCount > 0) AddReturnedItem((int)Common.KnownItemId.Warper, warperCount, 0, returnedItems);
+                }
+                galacticTransport.RemoveStation2StationRoute(sc.gid);
+                galacticTransport.RefreshTraffic(sc.gid);
                 sc.Reset();
+            }
+            if (galacticTransport.OnStellarStationRemoved != null)
+            {
+                galacticTransport.OnStellarStationRemoved();
             }
         }
 
@@ -326,6 +619,12 @@ public static class PlanetFunctions
 
         //GameMain.data.statistics.production.CreateFactoryStat(index);
         gameData.ArrivePlanet(planet);
+
+        foreach (var kvp in returnedItems)
+        {
+            var added = player.TryAddItemToPackage(kvp.Key, (int)kvp.Value.count, kvp.Value.inc, true);
+            if (added > 0) UIItemup.Up(kvp.Key, added);
+        }
     }
 
     public static void BuildOrbitalCollectors()

@@ -109,14 +109,6 @@ public static class LogisticsPatch
 
     private class AutoConfigLogistics : PatchImpl<AutoConfigLogistics>
     {
-        enum KnownItemId : int
-        {
-            Drone = 5001,
-            Ship = 5002,
-            Bot = 5003,
-            Warper = 1210,
-        }
-
         protected override void OnEnable()
         {
             ToggleLimitAutoReplenishCount();

@@ -105,8 +105,8 @@ public static class FactoryFunctions
                     if (sc is null || sc.id != stationId) continue;
                     for (int i = 0; i < sc.storage.Length; i++)
                     {
-                        int package = player.TryAddItemToPackage(sc.storage[i].itemId, sc.storage[i].count, sc.storage[i].inc, true, objId);
-                        UIItemup.Up(sc.storage[i].itemId, package);
+                        int added = player.TryAddItemToPackage(sc.storage[i].itemId, sc.storage[i].count, sc.storage[i].inc, true, objId);
+                        if (added > 0) UIItemup.Up(sc.storage[i].itemId, added);
                     }
                     sc.storage = new StationStore[sc.storage.Length];
                     sc.needs = new int[sc.needs.Length];
