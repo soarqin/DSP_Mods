@@ -2579,10 +2579,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             foreach (var kvp in takeOutItems)
             {
                 var added = mainPlayer.TryAddItemToPackage(kvp.Key, (int)(kvp.Value & 0xFFFFFFFF), (int)(kvp.Value >> 32), true, entityId);
-                if (added > 0)
-                {
-                    UIItemup.Up(kvp.Key, added);
-                }
+                if (added > 0) UIItemup.Up(kvp.Key, added);
             }
         }
     }

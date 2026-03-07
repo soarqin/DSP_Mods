@@ -14,33 +14,11 @@ public static class TechFunctions
         I18N.Add("Batch buyout tech", "Batch buyout tech", "批量买断科技");
     }
 
-    public static void GenerateTechListWithPrerequisites(GameHistoryData history, int techId, List<int> techIdList)
+    private static void CheckTechUnlockProperties(GameHistoryData history, TechProto techProto, SortedList<int, int> properties, List<Tuple<TechProto, int, int>> techList, int maxLevel = 10000, bool withPrerequisites = true, HashSet<int> seenTechs = null)
     {
-        var techProto = LDB.techs.Select(techId);
-        if (techProto == null || !techProto.Published) return;
-        var flag = true;
-        for (var i = 0; i < 2; i++)
-        {
-            foreach (var preTechId in (i == 1 ? techProto.PreTechsImplicit : techProto.PreTechs))
-            {
-                if (!history.techStates.ContainsKey(preTechId) || history.techStates[preTechId].unlocked) continue;
-                if (history.techStates[preTechId].maxLevel > history.techStates[preTechId].curLevel)
-                {
-                    flag = false;
-                }
-                GenerateTechListWithPrerequisites(history, preTechId, techIdList);
-            }
-        }
-        if (history.techStates.ContainsKey(techId) && !history.techStates[techId].unlocked && flag)
-        {
-            techIdList.Add(techId);
-        }
-    }
-
-    private static void CheckTechUnlockProperties(GameHistoryData history, TechProto techProto, SortedList<int, int> properties, List<Tuple<TechProto, int, int>> techList, int maxLevel = 10000, bool withPrerequisites = true)
-    {
-        var techStates = history.techStates;
         var techID = techProto.ID;
+        if (seenTechs!.Contains(techID)) return;
+        var techStates = history.techStates;
         if (techStates == null || !techStates.TryGetValue(techID, out var value)) return;
         if (value.unlocked) return;
 
@@ -51,18 +29,19 @@ public static class TechFunctions
             {
                 var preProto = LDB.techs.Select(preid);
                 if (preProto != null)
-                    CheckTechUnlockProperties(history, preProto, properties, techList, techProto.PreTechsMax ? 10000 : preProto.Level, true);
+                    CheckTechUnlockProperties(history, preProto, properties, techList, techProto.PreTechsMax ? 10000 : preProto.Level, true, seenTechs);
             }
             foreach (var preid in techProto.PreTechsImplicit)
             {
                 var preProto = LDB.techs.Select(preid);
                 if (preProto != null)
-                    CheckTechUnlockProperties(history, preProto, properties, techList, techProto.PreTechsMax ? 10000 : preProto.Level, true);
+                    CheckTechUnlockProperties(history, preProto, properties, techList, techProto.PreTechsMax ? 10000 : preProto.Level, true, seenTechs);
             }
         }
 
         if (value.curLevel < techProto.Level) value.curLevel = techProto.Level;
         techList.Add(new Tuple<TechProto, int, int>(techProto, value.curLevel, techProto.Level));
+        seenTechs!.Add(techID);
         while (value.curLevel <= maxLvl)
         {
             if (techProto.PropertyOverrideItemArray != null)
@@ -184,7 +163,7 @@ public static class TechFunctions
                 techProtos.Add(techProto);
             }
         }
-        UnlockProtoWithMetadataAndPrompt([.. techProtos], 16, false);
+        UnlockProtoWithMetadataAndPrompt([.. techProtos], 16, true);
     }
 
     public static void UnlockProtoWithMetadataAndPrompt(TechProto[] techProtos, int toLevel, bool withPrerequisites = true)
@@ -192,9 +171,10 @@ public static class TechFunctions
         var techList = new List<Tuple<TechProto, int, int>>();
         var properties = new SortedList<int, int>();
         var history = GameMain.history;
+        var seenTechs = new HashSet<int>();
         foreach (var techProto in techProtos)
         {
-            CheckTechUnlockProperties(history, techProto, properties, techList, toLevel, withPrerequisites);
+            CheckTechUnlockProperties(history, techProto, properties, techList, toLevel, withPrerequisites, seenTechs);
         }
         var propertySystem = DSPGame.propertySystem;
         var clusterSeedKey = history.gameData.GetClusterSeedKey();

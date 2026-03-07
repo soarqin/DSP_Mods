@@ -134,6 +134,7 @@ public static class TechPatch
 
                 _protoPatched = false;
             }
+            LDB.techs.Signature = ProtoSignature_0_10_30_3100.CalculateSignature(LDB.techs);
             var techTree = UIRoot.instance?.uiGame?.techTree;
             if (techTree != null && techTree.isActiveAndEnabled)
                 techTree.OnPageChanged();
@@ -268,6 +269,7 @@ public static class TechPatch
                 _originTechPosts.Clear();
                 _protoPatched = false;
             }
+            LDB.techs.Signature = ProtoSignature_0_10_30_3100.CalculateSignature(LDB.techs);
             var nodes = UIRoot.instance.uiGame.techTree.nodes;
             var history = GameMain.history;
             foreach (var item in nodes)
