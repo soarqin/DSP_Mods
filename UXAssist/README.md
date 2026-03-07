@@ -65,7 +65,8 @@
     * Dismantle blueprint selected buildings
       * Press shortcut key in blueprint copy mode to dismantle selected buildings.
       * The default shortcut key is Ctrl+X, you can set it in system options panel.
-    * Re-intialize planet (without reseting veins)
+    * Initialize This Planet (without reseting veins)
+      * 3 Options to return certain items
     * Quick dismantle all buildings (without drops)
     * Quick build Orbital Collectors
     * Belt signals for buy out dark fog items automatically
@@ -228,6 +229,7 @@
       * 在蓝图复制模式下按快捷键拆除选中的建筑
       * 默认快捷键是Ctrl+X，可以在系统选项面板中设置
     * 初始化本行星（不重置矿脉）
+      * 有3个可返还特定物品的选项
     * 快速拆除所有建筑（不掉落）
     * 快速建造轨道采集器
     * 用于自动购买黑雾物品的传送带信号

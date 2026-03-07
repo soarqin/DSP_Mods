@@ -77,7 +77,7 @@ public static class PlanetFunctions
         player.controller.actionBuild.Close();
 
         var groundCombatModule = player.mecha.groundCombatModule;
-        for (var i = 0; i < groundCombatModule.moduleFleets.Length; i++)
+        for (var i = groundCombatModule.moduleFleets.Length - 1; i >= 0; i--)
         {
             var entry = groundCombatModule.moduleFleets[i];
             if (entry.fleetId <= 0 || !entry.fleetEnabled) continue;
@@ -86,7 +86,7 @@ public static class PlanetFunctions
         }
         var constructionSystem = factory.constructionSystem;
         var constructionModule = player.mecha.constructionModule;
-        for (var i = 0; i < constructionSystem.drones.cursor; i++)
+        for (var i = constructionSystem.drones.cursor - 1; i > 0; i--)
         {
             ref var drone = ref constructionSystem.drones.buffer[i];
             if (drone.id <= 0) continue;
@@ -104,11 +104,14 @@ public static class PlanetFunctions
                 constructionSystem.constructionModules[owner].droneIdleCount++;
             }
         }
-        for (var i = 0; i < constructionSystem.constructStats.cursor; i++)
+        if (constructionSystem.constructStats?.buffer != null)
         {
-            ref var constructStat = ref constructionSystem.constructStats.buffer[i];
-            if (constructStat.id <= 0) continue;
-            constructionSystem.RemoveConstructStat(constructStat.id);
+            for (var i = constructionSystem.constructStats.cursor - 1; i > 0; i++)
+            {
+                ref var constructStat = ref constructionSystem.constructStats.buffer[i];
+                if (constructStat.id <= 0) continue;
+                constructionSystem.RemoveConstructStat(constructStat.id);
+            }
         }
         constructionModule.autoReconstructTargetTotalCount = 0;
         constructionModule.buildTargetTotalCount = 0;
@@ -286,10 +289,10 @@ public static class PlanetFunctions
                     }
                     if (lab.researchMode && lab.matrixServed != null)
                     {
-                        for (var k = lab.matrixServed.Length - 1; k >= 0; k--)
+                        for (var j = lab.matrixServed.Length - 1; j >= 0; j--)
                         {
-                            var served = lab.matrixServed[k] / 3600;
-                            if (served > 0) AddReturnedItem(LabComponent.matrixIds[k], served, lab.matrixIncServed[k] / 3600, returnedItems);
+                            var served = lab.matrixServed[j] / 3600;
+                            if (served > 0) AddReturnedItem(LabComponent.matrixIds[j], served, lab.matrixIncServed[j] / 3600, returnedItems);
                         }
                     }
                 }
@@ -389,6 +392,38 @@ public static class PlanetFunctions
                 }
                 #endregion
             }
+            if (returnBeltAFactoryItems)
+            {
+                #region Belt Items
+                for (var i = cargoTraffic.pathCursor - 1; i > 0; i--)
+                {
+                    var cargoPath = cargoTraffic.pathPool[i];
+                    if (cargoPath == null) continue;
+                    var end = cargoPath.bufferLength - 5;
+                    var buffer = cargoPath.buffer;
+                    for (var j = 0; j <= end;)
+                    {
+                        if (buffer[j] >= 246)
+                        {
+                            j += 250 - buffer[j];
+                            var bufferIndex = buffer[j + 1] - 1 + (buffer[j + 2] - 1) * 100 + (buffer[j + 3] - 1) * 10000 + (buffer[j + 4] - 1) * 1000000;
+                            ref var cargo = ref cargoPath.cargoContainer.cargoPool[bufferIndex];
+                            var stack = cargo.stack;
+                            if (stack > 0) AddReturnedItem(cargo.item, stack, cargo.inc, returnedItems);
+                            j += 10;
+                        }
+                        else
+                        {
+                            j += 5;
+                            if (j > end && j < end + 5)
+                            {
+                                j = end;
+                            }
+                        }
+                    }
+                }
+                #endregion
+            }
         }
 
         var stationPool = factory.transport?.stationPool;
@@ -401,7 +436,7 @@ public static class PlanetFunctions
                 if (sc is null || sc.id != i) continue;
                 if (returnLogisticStorageItems)
                 {
-                    for (var j = 0; j < sc.storage.Length; j++)
+                    for (var j = sc.storage.Length - 1; j >= 0; j--)
                     {
                         var count = sc.storage[j].count;
                         if (count > 0) AddReturnedItem(sc.storage[j].itemId, count, sc.storage[j].inc, returnedItems);
@@ -580,7 +615,7 @@ public static class PlanetFunctions
         factory.constructionSystem = new ConstructionSystem(planet);
         if (factory.veinPool != null)
         {
-            for (var i = 0; i < factory.veinPool.Length; i++)
+            for (var i = factory.veinPool.Length - 1; i >= 0; i--)
             {
                 ref var vein = ref factory.veinPool[i];
                 if (vein.id != i) continue;
@@ -642,7 +677,7 @@ public static class PlanetFunctions
         var entityPool = factory.entityPool;
         var pos = new Vector3(0f, 0f, planet.realRadius * 1.025f + 0.2f);
         var found = false;
-        for (var i = 1; i < stationCursor; i++)
+        for (var i = stationCursor - 1; i > 0; i--)
         {
             if (stationPool[i] == null || stationPool[i].id != i) continue;
             ref var entity = ref entityPool[stationPool[i].entityId];
@@ -654,7 +689,7 @@ public static class PlanetFunctions
         var prebuildPool = factory.prebuildPool;
         if (!found)
         {
-            for (var i = 1; i < prebuildCursor; i++)
+            for (var i = prebuildCursor - 1; i > 0; i--)
             {
                 if (prebuildPool[i].id != i) continue;
                 pos = prebuildPool[i].pos;
@@ -677,7 +712,7 @@ public static class PlanetFunctions
         {
             /* Check for collision */
             var collide = false;
-            for (var j = 1; j < stationCursor; j++)
+            for (var j = stationCursor - 1; j > 0; j--)
             {
                 if (stationPool[j] == null || stationPool[j].id != j) continue;
                 if ((entityPool[stationPool[j].entityId].pos - pos).sqrMagnitude >= 14297f) continue;

@@ -3,6 +3,15 @@
 
 ## Changlog
 
+* 1.5.5
+  * `Initialize This Planet`:
+    * Fix crash issue.
+    * Add 3 options to return certain items.
+  * Enable `Hide UI` function(`F11` by default) while on Star Map view: Hide all other elements in universe.
+  * Fix warning from abnormal check for following features:
+    * `Unlock all techs with metadata`
+    * `Disable battle-related techs in Peace mode`
+    * ``Restore upgrades of `Sorter Cargo Stacking` on panel``
 * 1.5.4
   * `Auto-contruct`:
     * Add a UI option to hide it completely.
@@ -12,7 +21,7 @@
   * New feature: `Auto-contruct`
     * Fly to buildings to be contructed automatically.
   * `Auto-cruise`: Do not try to fly away planet when `Drive Engine 2` is not researched.
-  * `Re-intialize planet`: Fix logistic station ships rendering issue.
+  * `Initialize This Planet`: Fix logistic station ships rendering issue.
   * Copying Wireless Power Tower works as expected when `Drag building power poles in maximum connection range` and `Build Tesla Tower and Wireless Power Tower alternately` are enabled.
   * `Belt signals for buy out dark fog items automatically`: Grid position on panel is moved to avoid conflict with newly added signals.
   * Fix implementation of ``Restore upgrades of `Sorter Cargo Stacking` on panel`` to make it working again.
@@ -28,7 +37,7 @@
   * `Night Sunlight`: Fix bugs that sunlight angle is not updated after loading a save.
   * `Enhanced control for logistic storage capacities`: Working for Logistics Control Panel now.
   * `Protect veins from exhaustion`: Fix a minor bug.
-  * `Re-intialize planet`: Improve stability and fix some bugs.
+  * `Initialize This Planet`: Improve stability and fix some bugs.
 * 1.4.5
   * New feature: `Ctrl+Shift+Click to pick items from whole belts`, with 2 suboptions: `Include branches of belts` and `Include connected inserters`
   * Patch [BlueprintTweaks](https://thunderstore.io/c/dyson-sphere-program/p/kremnev8/BlueprintTweaks/) temporarily to fix `Drag Remove` functions (And wait for limoka to merge the [Pull Request](https://github.com/limoka/DSP-Mods/pull/133)):
@@ -62,7 +71,7 @@
   * Fix background image issue for tab buttons on config window.
   * Now build in C# `Debug` Configuration, to avoid some issues caused by optimizations in `Release` Configuration.
 * 1.3.7
-  * `Re-initialize planet`: Fix a possible crash.
+  * `Initialize This Planet`: Fix a possible crash.
   * `Auto-config logistic stations`: Add `Set default remote logic to storage`
 * 1.3.6
   * `Dismantle blueprint selected buildings`:
@@ -79,7 +88,7 @@
 * 1.3.3
   * `Starmap filter`: Hide top overlaping windows while the filter UI is shown.
   * `Auto-config logistic stations`: Can set Max. Charging Power for Battlefield Analysis Base now.
-  * `Re-initialize planet`: Fix a crash.
+  * `Initialize This Planet`: Fix a crash.
   * `Auto navigation on sailings`:
     * Add a button to enable/disable `Auto-cruise` quickly.
     * Do not auto-use Warper if required Tech is not researched.
@@ -94,7 +103,7 @@
   * New button: `Unlock all techs with metadata`
   * Add a checkbox to make union of results in starmap filter.
   * Fix some starmap vein/planet filter conditions.
-  * Fix a crash caused by `Re-initialize planet` in peace mode.
+  * Fix a crash caused by `Initialize This Planet` in peace mode.
   * Fix compatibility with `NebulaMultiplayerMod`.
 * 1.3.1
   * Fix an issue that some UI elements are hidden while hitting the newly added combobox on Starmap.
@@ -294,7 +303,7 @@
   * Fix some issues in `Auto nativation` and `Auto-cruise`, now only boosts when core energy at least 10% and warps when core energy at least 50%
 * 1.0.20
   * Fix an infinite-loop issue when `Quick build and dismantle stacking labs` and `No condition build` are both enabled
-  * Fix a crash caused by `Re-initialize planet` in combat mode
+  * Fix a crash caused by `Initialize This Planet` in combat mode
 * 1.0.19
   * New functions:
     * `Quick build and dismantle stacking labs`
@@ -324,7 +333,7 @@
   * Enable `Hide UI` function(`F11` by default) while on Star Map view
   * New function: `Treat stack items as single in monitor components`
 * 1.0.14
-  * Fix crash in `Re-initialize planet` again
+  * Fix crash in `Initialize This Planet` again
   * `Off-grid building and stepped rotation`: Add Z coordinate to display, and adjust the precision to 4 decimal after point
 * 1.0.13
   * `Off-grid building and stepped rotation`: show building coordinates(relative to grids) on building preview and building info panel now
@@ -332,7 +341,7 @@
   * Increase capacity of player order queue to 128 (from 16)
   * Fix issue caused by game updates
     * `Remove some build conditions`: fixed issue that some conditions are not eliminated
-    * `Re-initialize planet`: fixed crash issue
+    * `Initialize This Planet`: fixed crash issue
 * 1.0.12
   * Fix a bug that ejectors aimed at even-numbered orbits stop working when `Stop ejectors when available nodes are all filled up` is enabled.
 * 1.0.11
@@ -359,7 +368,7 @@
   * Fix an issue that window position not restored and can not be resized when function is enabled but game is started with different mod profiles.
 * 1.0.3
   * Add new function: `Quick build Orbital Collectors`.
-  * Add confirmation popup for `Re-intialize planet`, `Quick dismantle all buildings`, `Re-initialize Dyson Spheres` and `Quick dismantle Dyson Shells`.
+  * Add confirmation popup for `Initialize This Planet`, `Quick dismantle all buildings`, `Re-initialize Dyson Spheres` and `Quick dismantle Dyson Shells`.
   * Fix error on `Remove build count and range limit` when building a large amount of belts.
   * Fix an issue that window position not saved correctly when quit game without using in-game menu.
 * 1.0.2
@@ -382,6 +391,15 @@
 
 ## 更新日志
 
+* 1.5.5
+  * `初始化本行星`:
+    * 修复崩溃问题。
+    * 增加了3个可返还特定物品的选项。
+  * 在星图视图中启用`隐藏UI`功能(默认按键为`F11`): 隐藏所有其他宇宙元素。
+  * 修复以下功能的异常检查警告:
+    * `使用元数据解锁所有科技`
+    * `在和平模式下隐藏战斗相关科技`
+    * ``在升级面板上恢复`分拣器货物堆叠`的升级``
 * 1.5.4
   * `自动建造`：
     * 增加了一个 UI 选项，可完全隐藏该功能。
