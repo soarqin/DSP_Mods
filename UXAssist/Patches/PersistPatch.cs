@@ -183,7 +183,8 @@ public class PersistPatch : PatchImpl<PersistPatch>
             new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(NeutronStarHandler), nameof(NeutronStarHandler.streamRenderer))),
             new CodeMatch(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Renderer), nameof(Renderer.sharedMaterial)))
         ).RemoveInstructions(3).InsertAndAdvance(
-            Transpilers.EmitDelegate(() => {
+            Transpilers.EmitDelegate(() =>
+            {
                 return Configs.builtin.neutronStarPrefab.streamRenderer.sharedMaterial;
             })
         );

@@ -23,6 +23,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
     public static ConfigEntry<bool> BeltSignalCountGenEnabled;
     public static ConfigEntry<bool> BeltSignalCountRemEnabled;
     public static ConfigEntry<bool> BeltSignalCountRecipeEnabled;
+    public static ConfigEntry<bool> BeltSignalUseProliferatorEnabled;
     public static ConfigEntry<bool> RemovePowerSpaceLimitEnabled;
     public static ConfigEntry<bool> BoostWindPowerEnabled;
     public static ConfigEntry<bool> BoostSolarPowerEnabled;
@@ -68,6 +69,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         NoCollisionEnabled.SettingChanged += (_, _) => NoCollisionValueChanged();
         BeltSignalGeneratorEnabled.SettingChanged += (_, _) => BeltSignalGenerator.Enable(BeltSignalGeneratorEnabled.Value);
         BeltSignalNumberAltFormat.SettingChanged += (_, _) => BeltSignalGenerator.OnAltFormatChanged();
+        BeltSignalUseProliferatorEnabled.SettingChanged += (_, _) => BeltSignalGenerator.OnUseProliferatorChanged();
         RemovePowerSpaceLimitEnabled.SettingChanged += (_, _) => RemovePowerSpaceLimit.Enable(RemovePowerSpaceLimitEnabled.Value);
         BoostWindPowerEnabled.SettingChanged += (_, _) => BoostWindPower.Enable(BoostWindPowerEnabled.Value);
         BoostSolarPowerEnabled.SettingChanged += (_, _) => BoostSolarPower.Enable(BoostSolarPowerEnabled.Value);
@@ -723,7 +725,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             public byte Stack;
             public byte Inc;
             public int Progress;
-            public Tuple<int, float>[] Sources;
+            public (int itemId, float itemCount, bool isExtra)[] Sources;
             public float[] SourceProgress;
         }
 
@@ -770,6 +772,36 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                         signal.count0 = signalBelt.SpeedLimit + signalBelt.Stack * 10000 + inc * 100000;
                     else
                         signal.count0 = signalBelt.SpeedLimit * 100 + signalBelt.Stack + inc * 10;
+                }
+            }
+        }
+
+        public static void OnUseProliferatorChanged()
+        {
+            if (_signalBelts == null) return;
+            var factories = GameMain.data?.factories;
+            if (factories == null) return;
+            var factoryCount = GameMain.data.factoryCount;
+            var altFormat = BeltSignalNumberAltFormat.Value;
+            for (var i = Math.Min(_signalBelts.Length, factoryCount) - 1; i >= 0; i--)
+            {
+                var factory = factories[i];
+                var cargoTraffic = factory?.cargoTraffic;
+                if (cargoTraffic == null) continue;
+                var entitySignPool = factory.entitySignPool;
+                if (entitySignPool == null) continue;
+                var belts = _signalBelts[i];
+                if (belts == null) continue;
+                foreach (var pair in belts)
+                {
+                    var beltId = pair.Key;
+                    ref var belt = ref cargoTraffic.beltPool[beltId];
+                    if (belt.id != beltId) continue;
+                    var signalBelt = pair.Value;
+                    signalBelt.Progress = 0;
+                    signalBelt.Sources = null;
+                    signalBelt.SourceProgress = null;
+                    AddSourcesToBeltSignal(signalBelt);
                 }
             }
         }
@@ -879,13 +911,15 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             var signalBelts = GetOrCreateSignalBelts(factory);
             if (signalBelts.TryGetValue(beltId, out var oldBeltSignal))
             {
+                if (oldBeltSignal.SignalId == signalId && oldBeltSignal.SpeedLimit == speedLimit && oldBeltSignal.Stack == stack && oldBeltSignal.Inc == inc) return;
                 oldBeltSignal.SpeedLimit = speedLimit;
                 oldBeltSignal.Stack = (byte)stack;
                 oldBeltSignal.Inc = (byte)inc;
                 oldBeltSignal.Progress = 0;
-                if (oldBeltSignal.SignalId == signalId) return;
                 oldBeltSignal.SignalId = signalId;
-                AddSourcesToBeltSignal(oldBeltSignal, signalId);
+                oldBeltSignal.Sources = null;
+                oldBeltSignal.SourceProgress = null;
+                AddSourcesToBeltSignal(oldBeltSignal);
                 return;
             }
 
@@ -896,27 +930,47 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                 Stack = (byte)stack,
                 Inc = (byte)inc
             };
-            if (signalId >= 1000)
-            {
-                AddSourcesToBeltSignal(beltSignal, signalId);
-            }
-
+            AddSourcesToBeltSignal(beltSignal);
             signalBelts[beltId] = beltSignal;
         }
 
-        private static void AddSourcesToBeltSignal(BeltSignal beltSignal, int itemId)
+        private static void AddSourcesToBeltSignal(BeltSignal beltSignal)
         {
+            var itemId = beltSignal.SignalId;
+            if (itemId < 1000) return;
             var result = new Dictionary<int, float>();
             var extra = new Dictionary<int, float>();
-            CalculateAllProductions(result, extra, itemId);
+            var sprayedCount = 0f;
+            CalculateAllProductions(result, extra, ref sprayedCount, itemId);
+
+            var proliferatorCount = 0f;
+            if (result.TryGetValue(1143, out var pv))
+            {
+                proliferatorCount = pv;
+                result.Remove(1143);
+            }
+            if (BeltSignalUseProliferatorEnabled.Value)
+            {
+                if (beltSignal.Inc / beltSignal.Stack >= 4)
+                {
+                    sprayedCount += 1f;
+                }
+                if (sprayedCount > 0)
+                {
+                    proliferatorCount += sprayedCount / ProliferatorSpayCount;
+                }
+            }
+            if (proliferatorCount > 0f)
+            {
+                foreach (var p in ProliferatorSources)
+                {
+                    result[p.Item1] = (result.TryGetValue(p.Item1, out var v) ? v : 0) + p.Item2 * proliferatorCount / ProliferatorDenom;
+                }
+            }
 
             result.Remove(itemId);
 
-            foreach (var p in extra)
-            {
-                result[p.Key] = (result.TryGetValue(p.Key, out var v) ? v : 0) + p.Value;
-            }
-            var cnt = result.Count;
+            var cnt = result.Count + extra.Count;
             if (cnt == 0)
             {
                 beltSignal.Sources = null;
@@ -924,11 +978,15 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                 return;
             }
 
-            var items = new Tuple<int, float>[cnt];
+            var items = new (int itemId, float itemCount, bool isExtra)[cnt];
             var progress = new float[cnt];
+            foreach (var p in extra)
+            {
+                items[--cnt] = (p.Key, p.Value, true);
+            }
             foreach (var p in result)
             {
-                items[--cnt] = Tuple.Create(p.Key, p.Value);
+                items[--cnt] = (p.Key, p.Value, false);
             }
 
             beltSignal.Sources = items;
@@ -1198,13 +1256,13 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                                 var stackf = (float)stack;
                                 for (var i = sources.Length - 1; i >= 0; i--)
                                 {
-                                    var newCnt = progress[i] + sources[i].Item2 * stackf;
+                                    var newCnt = progress[i] + sources[i].itemCount * stackf;
                                     if (newCnt > 0)
                                     {
-                                        var itemId = sources[i].Item1;
+                                        var itemId = sources[i].itemId;
                                         var cnt = Mathf.CeilToInt(newCnt);
                                         productRegister[itemId] += cnt;
-                                        consumeRegister[itemId] += cnt;
+                                        if (!sources[i].isExtra) consumeRegister[itemId] += cnt;
                                         progress[i] = newCnt - cnt;
                                     }
                                     else
@@ -1235,6 +1293,14 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         }
 
         /* BEGIN: Item sources calculation */
+        private static readonly int[] ExtraOreItemIds = [1000, 1116, 1120, 1121, 1208, 5201, 5202, 5203, 5204, 5205, 5206];
+        private static readonly HashSet<int> ExtraProliferationItemIds = [1107, 1111, 1125, 1142, 1143, 1202, 1203, 1204, 1205, 1209, 1210, 1301, 1305, 1401, 1402, 1403, 1405, 1406, 1502, 1503, 1802, 6001, 6003, 6004, 6005, 6006];
+        private static readonly HashSet<int> NoProliferationItemIds = [1126, 6002];
+        // All source items used to create 25 proliferators mk.III (not self-sprayed)
+        private static readonly List<(int, float)> ProliferatorSources = [(1015, 60f), (1124, 20f), (1006, 64f), (1012, 16f), (1112, 32f), (1141, 64f), (1142, 40f), (1143, 25f)];
+        private const float ProliferatorDenom = 21f;
+        // One sprayed proliferator mk.III can spray 75 items, but one is used for spray itself, so the actual count is 74
+        private const float ProliferatorSpayCount = 74f;
         private static readonly Dictionary<int, ItemSource> ItemSources = [];
         private static bool _itemSourcesInitialized;
 
@@ -1261,7 +1327,12 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                 }
             }
 
-            ItemSources[1208] = new ItemSource { Count = 1 };
+            // 水、硫酸、氢、重氢、光子
+            foreach (var itemId in ExtraOreItemIds)
+            {
+                ItemSources[itemId] = new ItemSource { Count = 1 };
+            }
+
             var recipes = LDB.recipes.dataArray;
             foreach (var recipe in recipes)
             {
@@ -1334,7 +1405,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             _itemSourcesInitialized = true;
         }
 
-        private static void CalculateAllProductions(IDictionary<int, float> result, IDictionary<int, float> extra, int itemId, float count = 1f)
+        private static void CalculateAllProductions(IDictionary<int, float> result, IDictionary<int, float> extra, ref float sprayedCount, int itemId, float count = 1f)
         {
             if (!ItemSources.TryGetValue(itemId, out var itemSource))
             {
@@ -1356,10 +1427,16 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                 }
             }
 
-            if (itemSource.From == null) return;
+            if (itemId == 1143 || itemSource.From == null) return;
+            var useProliferator = BeltSignalUseProliferatorEnabled.Value;
+            if (useProliferator && ExtraProliferationItemIds.Contains(itemId))
+            {
+                times *= 0.8f;
+            }
             foreach (var p in itemSource.From)
             {
                 var value = p.Value * times;
+                if (useProliferator && !NoProliferationItemIds.Contains(p.Key)) sprayedCount += value;
                 if (extra.TryGetValue(p.Key, out var rcount))
                 {
                     if (value <= rcount)
@@ -1390,7 +1467,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                     }
                     continue;
                 }
-                CalculateAllProductions(result, extra, p.Key, value);
+                CalculateAllProductions(result, extra, ref sprayedCount, p.Key, value);
             }
         }
         /* END: Item sources calculation */

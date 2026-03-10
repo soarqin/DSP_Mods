@@ -39,6 +39,10 @@ public static class UIConfigWindow
         I18N.Add("Build without condition", "Build without condition check", "无条件建造");
         I18N.Add("No collision", "No collision", "无碰撞");
         I18N.Add("Belt signal generator", "Belt signal generator", "传送带信号物品生成");
+        I18N.Add("Count proliferators used for raws/intermediates and finished products", "Use proliferators for raws/intermediates and finished products", "原料、中间产物以及成品使用增产剂");
+        I18N.Add("Count proliferators used for raws/intermediates and finished products tips",
+            "Following items use extra products: Titanium Alloy, Prism, Frame Material, Proliferator Mk.II, Proliferator Mk.III, Magnetic Coil, Electric Motor, Electromagnetic Turbine, Super-magnetic Ring, Circuit Board, Thruster, Reinforced Thruster, Plasma Exciter, Particle Broadband, Graviton Lens, Quantum Chip, Annihilation Constraint Sphere, Deuteron Fuel Rod, Space Warper, Dyson Sphere Component, Small Carrier Rocket, Electromagnetic Matrix, Structure Matrix, Information Matrix, Gravity Matrix, Universe Matrix\nFollowing items does not use proliferators: Casimir Crystal, Energy Matrix\nOther items use speed up production.",
+            "以下物品使用额外产出: 钛合金, 棱镜, 框架材料, 增产剂 Mk.II, 增产剂 Mk.III, 磁线圈, 电动机, 电磁涡轮, 超级磁场环, 电路板, 推进器, 加力推进器, 电浆激发器, 粒子宽带, 引力透镜, 量子芯片, 湮灭约束球, 氘核燃料棒, 空间翘曲器, 戴森球组件, 小型运载火箭, 电磁矩阵, 结构矩阵, 信息矩阵, 引力矩阵, 宇宙矩阵\n以下物品不使用增产剂: 卡西米尔晶体, 能量矩阵\n其他物品使用加速生产");
         I18N.Add("Belt signal alt format", "Belt signal alt format", "传送带信号替换格式");
         I18N.Add("Belt signal alt format tips",
             "Belt signal number format alternative format:\n  AAAABC by default\n  BCAAAA as alternative\nAAAA=generation speed in minutes, B=proliferate points, C=stack count",
@@ -192,10 +196,13 @@ public static class UIConfigWindow
         y += 26f;
         var cb3 = wnd.AddCheckBox(x, y, tab2, FactoryPatch.BeltSignalCountRecipeEnabled, "Count all raws and intermediates in statistics", 13);
         y += 26f;
-        var cb4 = wnd.AddCheckBox(x, y, tab2, FactoryPatch.BeltSignalNumberAltFormat, "Belt signal alt format", 13);
-        x += cb4.Width + 5f;
+        var cb4 = wnd.AddCheckBox(x, y, tab2, FactoryPatch.BeltSignalUseProliferatorEnabled, "Count proliferators used for raws/intermediates and finished products", 13);
         y += 6f;
-        var tip1 = wnd.AddTipsButton2(x, y, tab2, "Belt signal alt format", "Belt signal alt format tips", "belt-signal-alt-format-tips");
+        var tip1 = wnd.AddTipsButton2(x + cb4.Width + 5f, y, tab2, "Count proliferators used for raws/intermediates and finished products", "Count proliferators used for raws/intermediates and finished products tips", "count-proliferators-used-for-raws-intermediates-and-finished-products-tips");
+        y += 20f;
+        var cb5 = wnd.AddCheckBox(x, y, tab2, FactoryPatch.BeltSignalNumberAltFormat, "Belt signal alt format", 13);
+        y += 6f;
+        var tip2 = wnd.AddTipsButton2(x + cb5.Width + 5f, y, tab2, "Belt signal alt format", "Belt signal alt format tips", "belt-signal-alt-format-tips");
         x = 0f;
         y += 30f;
         wnd.AddCheckBox(x, y, tab2, FactoryPatch.GreaterPowerUsageInLogisticsEnabled, "Increase maximum power usage in Logistic Stations and Advanced Mining Machines");
@@ -212,7 +219,9 @@ public static class UIConfigWindow
                 cb2.gameObject.SetActive(on);
                 cb3.gameObject.SetActive(on);
                 cb4.gameObject.SetActive(on);
+                cb5.gameObject.SetActive(on);
                 tip1.gameObject.SetActive(on);
+                tip2.gameObject.SetActive(on);
             }
         }
         x = 350f;
