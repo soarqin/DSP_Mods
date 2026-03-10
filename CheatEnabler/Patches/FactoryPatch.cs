@@ -1235,6 +1235,11 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         }
 
         /* BEGIN: Item sources calculation */
+        private static readonly int[] ExtraOreItemIds = [1000, 1116, 1120, 1121, 1208, 5201, 5202, 5203, 5204, 5205, 5206];
+        private static readonly HashSet<int> ExtraProliferationItemIds = [1202, 1107, 1111, 1401, 1301, 1301, 1203, 1204, 1402, 1205, 1209, 1305, 1125, 1502, 1403, 1210, 1503, 1143, 1802, 1405, 1406, 6001, 6003, 6004, 6005, 6006];
+        private static readonly List<(int, float)> ProliferatorSources = [(1015, 444f), (1024, 148f), (1006, 592f), (1112, 296f), (1124, 148f), (1141, 592f), (1142, 296f), (1143, 185f)];
+        private const float ProliferatorDivider = 151f;
+        private const float ProliferatorSpayCount = 75f;
         private static readonly Dictionary<int, ItemSource> ItemSources = [];
         private static bool _itemSourcesInitialized;
 
@@ -1261,7 +1266,12 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                 }
             }
 
-            ItemSources[1208] = new ItemSource { Count = 1 };
+            // 水、硫酸、氢、重氢、光子
+            foreach (var itemId in ExtraOreItemIds)
+            {
+                ItemSources[itemId] = new ItemSource { Count = 1 };
+            }
+
             var recipes = LDB.recipes.dataArray;
             foreach (var recipe in recipes)
             {
@@ -1357,6 +1367,10 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             }
 
             if (itemSource.From == null) return;
+            if (ExtraProliferationItemIds.Contains(itemId))
+            {
+                times *= 0.8f;
+            }
             foreach (var p in itemSource.From)
             {
                 var value = p.Value * times;
