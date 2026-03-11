@@ -2441,8 +2441,9 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             {
                 return;
             }
-            if (GameMain.instance.timei < nextTimei) return;
-            nextTimei = GameMain.instance.timei + 12;
+            var main = GameMain.instance;
+            if (main.timei < nextTimei) return;
+            nextTimei = main.timei + 12;
 
             ref var entityData = ref factory.entityPool[entityId];
             if (entityData.beltId <= 0) return;

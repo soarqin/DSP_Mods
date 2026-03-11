@@ -394,8 +394,9 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
                     }
                     swarm.RemoveSolarSail(index);
                 }),
-                // return false;
-                new CodeInstruction(OpCodes.Ldc_I4_0),
+                // return true;
+                //  to avoid conflict with QuickAbsorbPatch
+                new CodeInstruction(OpCodes.Ldc_I4_1),
                 new CodeInstruction(OpCodes.Ret)
             );
             return matcher.InstructionEnumeration();
