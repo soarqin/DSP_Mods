@@ -788,7 +788,7 @@ public static class UIConfigWindow
 			y += 27f;
 			MyCheckBox speedUpCheckBox = wnd.AddCheckBox(x, y, tab4, PlayerPatch.UseSpeedUp, "Auto boost");
 			y   += 27f;
-			txt =  wnd.AddText2(x + 20f, y, tab4, "Use Warp Minimal Energy", 15, "Use Warp Minimal Energy");
+			txt =  wnd.AddText2(x + 20f, y, tab4, "Auto boost Minimal Energy", 15, "Auto boost Minimal Energy");
 			var speedUpEnergySlider = wnd.AddSideSlider(
 				x + 20f + txt.preferredWidth + 5f,
 				y + 6f,
