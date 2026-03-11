@@ -760,8 +760,14 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 		/// </summary>
 		private static bool PreCheckAndRefreshTarget(Player player)
 		{
-			if (! UseNewNavigationAlgorithm.Value || AutoNavigationEnabled.Value)
+			if (! UseNewNavigationAlgorithm.Value)
 			{
+				StopAutoNavigation( );
+				return true;
+			}
+			if (AutoNavigationEnabled.Value)
+			{
+				UseNewNavigationAlgorithm.Value = false;
 				StopAutoNavigation( );
 				return true;
 			}
