@@ -892,7 +892,9 @@ public static class UIFunctions
                 return;
             }
             StringBuilder sb = new();
-            for (var i = Math.Min(_clusterUploadResultsCount, 10) - 1; i >= 0; i--)
+            var start = _clusterUploadResultsCount;
+            var end = start > 10 ? start - 10 : 0;
+            for (var i = start - 1; i >= end; i--)
             {
                 var res = _clusterUploadResults[(i + _clusterUploadResultsHead) % ClusterUploadResultKeepCount];
                 sb.AppendLine($"{res.UploadTime.ToString("yyyy-MM-dd HH:mm:ss")} - {((res.Result is 0 or 20) ? "Success".Translate() : ("Failure: ".Translate() + res.Result.ToString()))} - {res.RequestTime:F2}s");

@@ -433,7 +433,7 @@ public static class PlanetFunctions
             for (var i = factory.transport.stationCursor - 1; i > 0; i--)
             {
                 var sc = stationPool[i];
-                if (sc is null || sc.id != i) continue;
+                if (sc == null || sc.id != i) continue;
                 if (returnLogisticStorageItems)
                 {
                     for (var j = sc.storage.Length - 1; j >= 0; j--)
@@ -448,8 +448,16 @@ public static class PlanetFunctions
                     var warperCount = sc.warperCount;
                     if (warperCount > 0) AddReturnedItem((int)Common.KnownItemId.Warper, warperCount, 0, returnedItems);
                 }
-                galacticTransport.RemoveStation2StationRoute(sc.gid);
-                galacticTransport.RefreshTraffic(sc.gid);
+                var gid = sc.gid;
+                if (galacticTransport.stationPool[gid] != null)
+                {
+                    galacticTransport.stationPool[gid] = null;
+                    int cursor = galacticTransport.stationRecycleCursor;
+                    galacticTransport.stationRecycleCursor = cursor + 1;
+                    galacticTransport.stationRecycle[cursor] = gid;
+                }
+                galacticTransport.RemoveStation2StationRoute(gid);
+                galacticTransport.RefreshTraffic(gid);
                 sc.Reset();
             }
             if (galacticTransport.OnStellarStationRemoved != null)

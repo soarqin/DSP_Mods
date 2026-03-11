@@ -8,7 +8,7 @@ using OBSWebsocketDotNet;
 
 namespace LuaScriptEngine;
 
-public class LuaState: IDisposable
+public class LuaState : IDisposable
 {
     private readonly Lua state = new();
     private readonly List<LuaFunction> PostDataLoadedFuncs = [];

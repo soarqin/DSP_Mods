@@ -39,6 +39,8 @@ public class CheatEnabler : BaseUnityPlugin
             "Belt signal count removals as comsumption in statistics");
         FactoryPatch.BeltSignalCountRecipeEnabled = Config.Bind("Build", "BeltSignalCountRecipe", false,
             "Belt signal count all raws and intermediates in statistics");
+        FactoryPatch.BeltSignalUseProliferatorEnabled = Config.Bind("Build", "BeltSignalUseProliferator", false,
+            "Belt signal count proliferators used for raws/intermediates and finished products");
         FactoryPatch.RemovePowerSpaceLimitEnabled = Config.Bind("Build", "RemovePowerDistanceLimit", false,
             "Remove distance limit for wind turbines and geothermals");
         FactoryPatch.BoostWindPowerEnabled = Config.Bind("Build", "BoostWindPower", false,

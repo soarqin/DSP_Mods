@@ -311,14 +311,17 @@ public static class LogisticsPatch
         {
             if (!Input.GetKey(code))
                 return false;
+            var main = GameMain.instance;
+            if (main == null)
+                return false;
             if (code != _lastKey)
             {
                 _lastKey = code;
-                _nextKeyTick = GameMain.instance.timei + 30;
+                _nextKeyTick = main.timei + 30;
                 return true;
             }
 
-            var currTick = GameMain.instance.timei;
+            var currTick = main.timei;
             if (_nextKeyTick > currTick) return false;
             _nextKeyTick = currTick + 4;
             return true;

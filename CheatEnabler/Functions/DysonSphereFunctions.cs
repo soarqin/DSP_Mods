@@ -1053,6 +1053,16 @@ public static class DysonSphereFunctions
         var nodeCount = nodePos.Count;
         DysonNode[] nodes = [.. shell.nodes];
         DysonFrame[] frames = [.. shell.frames];
+        if (frames.Length == 0)
+        {
+            isEuler = new List<bool>(nodeCount);
+            frames = new DysonFrame[nodeCount];
+            for (var i = 0; i < nodeCount; i++)
+            {
+                isEuler.Add(false);
+                frames[i] = layer.QuickAddDysonFrame(0, nodes[i], nodes[(i + 1) % nodeCount], false);
+            }
+        }
         var cpMax = new long[nodeCount];
         for (var i = 0; i < nodeCount; i++)
         {
