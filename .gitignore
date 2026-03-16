@@ -4,6 +4,9 @@
 # Rider project files
 /.idea/
 
+# VS Code project files
+/.vscode/
+
 # C# generated folders
 bin/
 obj/

@@ -1,37 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
-    <TargetFramework>net472</TargetFramework>
     <AssemblyName>DustbinPreloader</AssemblyName>
-    <Description>DSP MOD - Prealoder for Dustbin</Description>
+    <Description>DSP MOD - Preloader for Dustbin</Description>
     <Version>1.3.1</Version>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <LangVersion>latest</LangVersion>
-    <RestoreAdditionalProjectSources>https://nuget.bepinex.dev/v3/index.json</RestoreAdditionalProjectSources>
+    <PackPreloaderTargetDir>..\Dustbin\package\patchers</PackPreloaderTargetDir>
   </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="BepInEx.Core" Version="5.*" />
-    <PackageReference Include="BepInEx.PluginInfoProps" Version="1.*" />
-    <!-- <PackageReference Include="DysonSphereProgram.GameLibs" Version="0.10.32.*-r.*" /> -->
-    <PackageReference Include="UnityEngine.Modules" Version="2022.3.62" IncludeAssets="compile" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="Assembly-CSharp">
-      <HintPath>..\AssemblyFromGame\Assembly-CSharp.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.UI">
-      <HintPath>..\AssemblyFromGame\UnityEngine.UI.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
-    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
-  </ItemGroup>
-
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(Configuration)' == 'Release'">
-    <Exec Command="IF NOT EXIST ..\Dustbin\package\patchers (mkdir ..\Dustbin\package\patchers)&#xA;copy /y $(TargetPath) ..\Dustbin\package\patchers\" />
-  </Target>
 </Project>

@@ -1,44 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
-    <TargetFramework>net472</TargetFramework>
     <BepInExPluginGuid>org.soardev.cheatenabler</BepInExPluginGuid>
     <Description>DSP MOD - CheatEnabler</Description>
     <Version>2.4.2</Version>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <LangVersion>latest</LangVersion>
     <PackageId>CheatEnabler</PackageId>
     <RootNamespace>CheatEnabler</RootNamespace>
-    <RestoreAdditionalProjectSources>https://nuget.bepinex.dev/v3/index.json</RestoreAdditionalProjectSources>
+    <PackHasChangelog>true</PackHasChangelog>
   </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="BepInEx.Core" Version="5.*" />
-    <PackageReference Include="BepInEx.PluginInfoProps" Version="1.*" />
-    <PackageReference Include="UnityEngine.Modules" Version="2022.3.62" IncludeAssets="compile" />
-    <!-- <PackageReference Include="DysonSphereProgram.GameLibs" Version="0.10.32.*-r.*" /> -->
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="Assembly-CSharp">
-      <HintPath>..\AssemblyFromGame\Assembly-CSharp.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.UI">
-      <HintPath>..\AssemblyFromGame\UnityEngine.UI.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
-    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
-  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\UXAssist\UXAssist.csproj" />
   </ItemGroup>
-
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(Configuration)' == 'Release'">
-    <Exec Command="del /F /Q package\$(ProjectName)-$(Version).zip
-powershell Compress-Archive -Force -DestinationPath 'package/$(ProjectName)-$(Version).zip' -Path '$(TargetPath)', package/icon.png, package/manifest.json, README.md, CHANGELOG.md" />
-  </Target>
 </Project>

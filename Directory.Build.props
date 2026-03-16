@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <!-- Common properties shared by all DSP mod projects -->
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <LangVersion>latest</LangVersion>
+    <RestoreAdditionalProjectSources>https://nuget.bepinex.dev/v3/index.json</RestoreAdditionalProjectSources>
+    <!-- Set to true in projects that include a CHANGELOG.md in the package -->
+    <PackHasChangelog>false</PackHasChangelog>
+    <!-- Set to true in projects that use the plugins/patchers layout (Dustbin, LabOpt) -->
+    <PackUsePluginsLayout>false</PackUsePluginsLayout>
+  </PropertyGroup>
+
+  <!-- Common NuGet packages for all mods -->
+  <ItemGroup>
+    <PackageReference Include="BepInEx.Core" Version="5.*" />
+    <PackageReference Include="BepInEx.PluginInfoProps" Version="1.*" />
+    <PackageReference Include="UnityEngine.Modules" Version="2022.3.62" IncludeAssets="compile" />
+  </ItemGroup>
+
+  <!-- Game DLL references (local copies in AssemblyFromGame/) -->
+  <ItemGroup>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>$(MSBuildThisFileDirectory)AssemblyFromGame\Assembly-CSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>$(MSBuildThisFileDirectory)AssemblyFromGame\UnityEngine.UI.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <!-- .NET Framework reference assemblies (only needed when targeting net*) -->
+  <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+</Project>
