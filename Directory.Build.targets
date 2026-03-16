@@ -21,98 +21,66 @@
   </Target>
 
   <!--
-    Pack target: assembles a Thunderstore-ready zip under package/.
-    Run explicitly with:  dotnet build -t:Pack -c Release
+    ZipMod target: assembles a Thunderstore-ready zip under package/.
+    Run explicitly with:  dotnet build -t:ZipMod -c Release
     It does NOT run automatically on every build.
 
-    Per-project customisation properties (set before this file is imported):
+    "Pack" is reserved by the .NET SDK for NuGet packaging, so this target
+    uses the name "ZipMod" to avoid conflict.
+
+    Per-project customisation properties (set in the project's PropertyGroup):
       PackHasChangelog     – set to 'true' to include CHANGELOG.md in the zip
       PackUsePluginsLayout – set to 'true' for the plugins/patchers folder layout
                              (used by Dustbin and LabOpt)
+
+    Simple layout zips:
+      <AssemblyName>.dll  icon.png  manifest.json  README.md  [CHANGELOG.md]
+    plugins/patchers layout zips:
+      plugins/  patchers/  icon.png  manifest.json  README.md  [CHANGELOG.md]
   -->
-
-  <!-- ── Simple layout ──────────────────────────────────────────────────────
-       Zips:  <ProjectName>.dll  icon.png  manifest.json  README.md
-              (+ CHANGELOG.md when PackHasChangelog=true)
-       Output: package/<ProjectName>-<Version>.zip
-  ──────────────────────────────────────────────────────────────────────── -->
-  <Target Name="Pack" Condition="'$(Configuration)' == 'Release' and '$(PackUsePluginsLayout)' != 'true'">
+  <Target Name="ZipMod" DependsOnTargets="Build" Condition="'$(PackPreloaderTargetDir)' == ''">
     <PropertyGroup>
       <_PackageDir>$(MSBuildProjectDirectory)\package</_PackageDir>
       <_StagingDir>$(MSBuildProjectDirectory)\obj\pack-staging</_StagingDir>
       <_ZipPath>$(_PackageDir)\$(ProjectName)-$(Version).zip</_ZipPath>
     </PropertyGroup>
 
-    <!-- Collect files to include -->
-    <ItemGroup>
-      <_PackFiles Include="$(TargetPath)" />
-      <_PackFiles Include="$(_PackageDir)\icon.png" />
-      <_PackFiles Include="$(_PackageDir)\manifest.json" />
-      <_PackFiles Include="$(MSBuildProjectDirectory)\README.md" />
-      <_PackFiles Include="$(MSBuildProjectDirectory)\CHANGELOG.md" Condition="'$(PackHasChangelog)' == 'true'" />
-    </ItemGroup>
+    <!-- ── plugins/patchers layout: copy DLL into package/plugins/ first ── -->
+    <MakeDir Directories="$(_PackageDir)\plugins"
+             Condition="'$(PackUsePluginsLayout)' == 'true'" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(_PackageDir)\plugins"
+          Condition="'$(PackUsePluginsLayout)' == 'true'" />
 
-    <!-- Prepare staging directory -->
-    <RemoveDir Directories="$(_StagingDir)" />
-    <MakeDir Directories="$(_StagingDir)" />
-    <Copy SourceFiles="@(_PackFiles)" DestinationFolder="$(_StagingDir)" />
-
-    <!-- Delete previous zip if present -->
-    <Delete Files="$(_ZipPath)" Condition="Exists('$(_ZipPath)')" />
-
-    <!-- Create zip using powershell.exe (explicit executable – works from any shell) -->
-    <Exec Command="powershell.exe -NoProfile -Command &quot;Compress-Archive -Path '$(_StagingDir)\*' -DestinationPath '$(_ZipPath)'&quot;" />
-
-    <!-- Clean up staging directory -->
-    <RemoveDir Directories="$(_StagingDir)" />
-
-    <Message Text="Pack: created $(_ZipPath)" Importance="high" />
-  </Target>
-
-  <!-- ── plugins/patchers layout ───────────────────────────────────────────
-       Used by mods that ship a preloader alongside the main plugin.
-       The preloader project copies its DLL into package/patchers/ as part
-       of its own Pack target (or a dedicated CopyToParentPackage target).
-       This target zips:
-         patchers/   plugins/   icon.png   manifest.json   README.md
-         (+ CHANGELOG.md when PackHasChangelog=true)
-       Output: package/<ProjectName>-<Version>.zip
-  ──────────────────────────────────────────────────────────────────────── -->
-  <Target Name="Pack" Condition="'$(Configuration)' == 'Release' and '$(PackUsePluginsLayout)' == 'true'">
-    <PropertyGroup>
-      <_PackageDir>$(MSBuildProjectDirectory)\package</_PackageDir>
-      <_StagingDir>$(MSBuildProjectDirectory)\obj\pack-staging</_StagingDir>
-      <_ZipPath>$(_PackageDir)\$(ProjectName)-$(Version).zip</_ZipPath>
-    </PropertyGroup>
-
-    <!-- Copy main plugin DLL into package/plugins/ -->
-    <MakeDir Directories="$(_PackageDir)\plugins" />
-    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(_PackageDir)\plugins" />
-
-    <!-- Collect loose files for the staging root -->
+    <!-- Collect loose root files (common to both layouts) -->
     <ItemGroup>
       <_PackRootFiles Include="$(_PackageDir)\icon.png" />
       <_PackRootFiles Include="$(_PackageDir)\manifest.json" />
       <_PackRootFiles Include="$(MSBuildProjectDirectory)\README.md" />
-      <_PackRootFiles Include="$(MSBuildProjectDirectory)\CHANGELOG.md" Condition="'$(PackHasChangelog)' == 'true'" />
+      <_PackRootFiles Include="$(MSBuildProjectDirectory)\CHANGELOG.md"
+                      Condition="'$(PackHasChangelog)' == 'true'" />
+      <!-- Simple layout: also include the DLL itself at the root -->
+      <_PackRootFiles Include="$(TargetPath)"
+                      Condition="'$(PackUsePluginsLayout)' != 'true'" />
     </ItemGroup>
 
     <!-- Prepare staging directory -->
     <RemoveDir Directories="$(_StagingDir)" />
     <MakeDir Directories="$(_StagingDir)" />
 
-    <!-- Copy loose root files -->
+    <!-- Copy loose root files into staging root -->
     <Copy SourceFiles="@(_PackRootFiles)" DestinationFolder="$(_StagingDir)" />
 
-    <!-- Copy plugins/ and patchers/ sub-folders (preserve structure) -->
-    <ItemGroup>
+    <!-- plugins/patchers layout: copy sub-folders into staging (preserve structure) -->
+    <ItemGroup Condition="'$(PackUsePluginsLayout)' == 'true'">
       <_PluginFiles Include="$(_PackageDir)\plugins\**\*" />
       <_PatcherFiles Include="$(_PackageDir)\patchers\**\*" />
     </ItemGroup>
     <Copy SourceFiles="@(_PluginFiles)"
-          DestinationFiles="@(_PluginFiles->'$(_StagingDir)\plugins\%(RecursiveDir)%(Filename)%(Extension)')" />
+          DestinationFiles="@(_PluginFiles->'$(_StagingDir)\plugins\%(RecursiveDir)%(Filename)%(Extension)')"
+          Condition="'$(PackUsePluginsLayout)' == 'true'" />
     <Copy SourceFiles="@(_PatcherFiles)"
-          DestinationFiles="@(_PatcherFiles->'$(_StagingDir)\patchers\%(RecursiveDir)%(Filename)%(Extension)')" />
+          DestinationFiles="@(_PatcherFiles->'$(_StagingDir)\patchers\%(RecursiveDir)%(Filename)%(Extension)')"
+          Condition="'$(PackUsePluginsLayout)' == 'true'" />
 
     <!-- Delete previous zip if present -->
     <Delete Files="$(_ZipPath)" Condition="Exists('$(_ZipPath)')" />
@@ -123,7 +91,7 @@
     <!-- Clean up staging directory -->
     <RemoveDir Directories="$(_StagingDir)" />
 
-    <Message Text="Pack: created $(_ZipPath)" Importance="high" />
+    <Message Text="ZipMod: created $(_ZipPath)" Importance="high" />
   </Target>
 
   <!-- ── Preloader helper target ────────────────────────────────────────────
@@ -132,8 +100,8 @@
        Set PackPreloaderTargetDir in the preloader's csproj, e.g.:
          <PackPreloaderTargetDir>..\Dustbin\package\patchers</PackPreloaderTargetDir>
   ──────────────────────────────────────────────────────────────────────── -->
-  <Target Name="CopyToParentPackage"
-          Condition="'$(Configuration)' == 'Release' and '$(PackPreloaderTargetDir)' != ''">
+  <Target Name="CopyToParentPackage" DependsOnTargets="Build"
+          Condition="'$(PackPreloaderTargetDir)' != ''">
     <MakeDir Directories="$(PackPreloaderTargetDir)" />
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(PackPreloaderTargetDir)" />
     <Message Text="CopyToParentPackage: copied $(TargetFileName) to $(PackPreloaderTargetDir)" Importance="high" />

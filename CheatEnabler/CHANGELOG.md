@@ -3,6 +3,16 @@
 
 ## Changlog
 
+* 2.4.3
+  * `Duplicate shells from that with highest production`: Fix crash on using with frameless shells.
+  * `Keep max production shells and remove others`: Fix wrong behaviour when left count > 1.
+  * `Quick absorb`: Fix ant issue that it is not working while `Skip absorption period` is enabled.
+  * `Finish build immediately`: Fixed an issue where prebuilt buildings were not constructed immediately when the building quantity became sufficient.
+  * New option for `Belt signal item generation`: `Use proliferators for raws/intermediates and finished products`
+    * Following items use extra products: `Titanium Alloy`, `Prism`, `Frame Material`, `Proliferator Mk.II`, `Proliferator Mk.III`, `Magnetic Coil`, `Electric Motor`, `Electromagnetic Turbine`, `Super-magnetic Ring`, `Circuit Board`, `Thruster`, `Reinforced Thruster`, `Plasma Exciter`, `Particle Broadband`, `Graviton Lens`, `Quantum Chip`, `Annihilation Constraint Sphere`, `Deuteron Fuel Rod`, `Space Warper`, `Dyson Sphere Component`, `Small Carrier Rocket`, `Electromagnetic Matrix`, `Structure Matrix`, `Information Matrix`, `Gravity Matrix`, `Universe Matrix`
+    * Following items does not use proliferators: `Casimir Crystal`, `Energy Matrix`
+    * Other items use speed up production.
+  * Fix some other minor bugs found by LLM AI.
 * 2.4.2
   * Fix critical bugs:
     * Dyson Power is not updated actively when `Skip bullet period` or `Skip absorption period` is enabled and no rocket is in fire.
@@ -175,6 +185,16 @@
 
 ## 更新日志
 
+* 2.4.3
+  * `从发电量最高的壳复制戴森壳`：修复在无框壳体时可能崩溃的问题。
+  * `保留发电量最高的戴森壳并移除其他戴森壳`：修复当剩余壳体数量大于1时的异常行为。
+  * `快速吸收`：修复开启`跳过吸收阶段`时不生效的问题。
+  * `立即完成建造`：修复建筑数量补足时，之前预建造状态的建筑未能立即完成的问题。
+  * `传送带信号物品生成`新增选项：`原料/中间品和成品使用增产剂`
+    * 以下物品会使用额外产出：`钛合金`、`棱镜`、`框架材料`、`增产剂 Mk.II`、`增产剂 Mk.III`、`磁线圈`、`电动机`、`电磁涡轮`、`超级磁场环`、`电路板`、`推进器`、`加力推进器`、`电浆激发器`、`粒子宽带`、`引力透镜`、`量子芯片`、`湮灭约束球`、`氘燃料棒`、`空间翘曲器`、`戴森球组件`、`小型运载火箭`、`电磁矩阵`、`结构矩阵`、`信息矩阵`、`引力矩阵`、`宇宙矩阵`
+    * 以下物品不使用增产剂：`卡西米尔晶体`、`能量矩阵`
+    * 其他物品使用加速生产
+  * 修复一些由 LLM AI 发现的其他小问题。
 * 2.4.2
   * 修复了严重的系列BUG:
     * 在启用`跳过子弹阶段`或`跳过吸收阶段`并且没有火箭发射时，戴森球的发电量未实时更新

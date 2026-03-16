@@ -3,7 +3,7 @@
   <PropertyGroup>
     <BepInExPluginGuid>org.soardev.cheatenabler</BepInExPluginGuid>
     <Description>DSP MOD - CheatEnabler</Description>
-    <Version>2.4.2</Version>
+    <Version>2.4.3</Version>
     <PackageId>CheatEnabler</PackageId>
     <RootNamespace>CheatEnabler</RootNamespace>
     <PackHasChangelog>true</PackHasChangelog>

@@ -3,6 +3,10 @@
 
 ## Changlog
 
+* 1.5.6
+  * `Initialize This Planet`: Fix known crashes and infinite loop.
+  * `Show recent milkyway upload results`: Fix an issue that it only shows earliest results but latest ones.
+  * Fix some other minor bugs found by LLM AI.
 * 1.5.5
   * `Initialize This Planet`:
     * Fix crash issue.
@@ -391,6 +395,10 @@
 
 ## 更新日志
 
+* 1.5.6
+  * `初始化本行星`：修复已知的崩溃和无限循环问题。
+  * `显示最近银河系上传结果`：修复仅显示最早上传结果而非最新结果的问题。
+  * 修复一些由 LLM AI 发现的其他小问题。
 * 1.5.5
   * `初始化本行星`:
     * 修复崩溃问题。

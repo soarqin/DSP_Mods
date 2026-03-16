@@ -17,7 +17,7 @@ This repository is a collection of **BepInEx mods** for the game **Dyson Sphere 
 - **Patching Library:** HarmonyLib (runtime IL patching via `[HarmonyPatch]` attributes)
 - **Build System:** Visual Studio solution (`DSP_Mods.sln`), SDK-style `.csproj` per mod
 - **Package Manager:** NuGet (standard feed + BepInEx dev feed)
-- **Packaging:** PowerShell `Compress-Archive` in post-build produces Thunderstore-ready `.zip` files
+- **Packaging:** `ZipMod` MSBuild target (explicit, not post-build) produces Thunderstore-ready `.zip` files via `powershell.exe Compress-Archive`
 - **Game DLL references:** `AssemblyFromGame/Assembly-CSharp.dll` and `UnityEngine.UI.dll`
 - **Notable dependencies:** DSPModSave, NebulaMultiplayer API, CommonAPI, NLua, obs-websocket-dotnet, Mono.Cecil
 
@@ -71,7 +71,7 @@ DSP_Mods/
 Common properties and references are factored into two root-level files that MSBuild automatically imports for every project:
 
 - **`Directory.Build.props`** — shared `PropertyGroup` defaults (`TargetFramework`, `AllowUnsafeBlocks`, `LangVersion`, `RestoreAdditionalProjectSources`) and shared `ItemGroup`s (BepInEx packages, game DLL references, `Microsoft.NETFramework.ReferenceAssemblies`).
-- **`Directory.Build.targets`** — defines the `UpdateGameDlls`, `Pack`, and `CopyToParentPackage` targets (see below).
+- **`Directory.Build.targets`** — defines the `UpdateGameDlls`, `ZipMod`, and `CopyToParentPackage` targets (see below).
 - **`UpdateGameDlls.ps1`** — PowerShell script invoked by the `UpdateGameDlls` target; locates the DSP installation via Steam registry and `libraryfolders.vdf`, compares DLL timestamps, and re-publicizes stale DLLs using `assembly-publicizer`.
 
 Individual `.csproj` files only declare what is unique to that project (GUID, version, extra packages, embedded resources).
@@ -103,10 +103,12 @@ Packaging is a **separate, explicit build target** — it does not run on every 
 
 To produce a Thunderstore-ready zip:
 ```
-dotnet build -t:Pack -c Release
+dotnet build -t:ZipMod -c Release
 ```
 
-The `Pack` target (defined in `Directory.Build.targets`) uses pure MSBuild tasks (`MakeDir`, `Copy`, `Delete`) plus `powershell.exe -NoProfile -Command` for `Compress-Archive`. Calling `powershell.exe` as an explicit executable path works correctly from any shell environment (cmd, PowerShell, bash/WSL).
+The `ZipMod` target (defined in `Directory.Build.targets`) uses pure MSBuild tasks (`MakeDir`, `Copy`, `Delete`) plus `powershell.exe -NoProfile -Command` for `Compress-Archive`. Calling `powershell.exe` as an explicit executable path works correctly from any shell environment (cmd, PowerShell, bash/WSL).
+
+> Note: the target is named `ZipMod` rather than `Pack` because `Pack` is a reserved target name in the .NET SDK (used for NuGet packaging) and would be silently intercepted.
 
 **Per-project packaging properties** (set in the project's `PropertyGroup`):
 
@@ -116,11 +118,11 @@ The `Pack` target (defined in `Directory.Build.targets`) uses pure MSBuild tasks
 | `PackUsePluginsLayout` | `false` | Use `plugins/` + `patchers/` folder layout (Dustbin, LabOpt) |
 | `PackPreloaderTargetDir` | *(empty)* | Preloader projects: destination folder for `CopyToParentPackage` |
 
-**Preloader projects** (DustbinPreloader, LabOptPreloader) use `CopyToParentPackage` instead of `Pack`:
+**Preloader projects** (DustbinPreloader, LabOptPreloader) use `CopyToParentPackage` instead of `ZipMod`:
 ```
 dotnet build -t:CopyToParentPackage -c Release
 ```
-This copies the preloader DLL into the sibling main mod's `package/patchers/` directory, ready to be zipped by the main mod's `Pack` target.
+This copies the preloader DLL into the sibling main mod's `package/patchers/` directory, ready to be zipped by the main mod's `ZipMod` target.
 
 ## Key Architectural Patterns
 
