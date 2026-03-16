@@ -1542,7 +1542,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
 
         private static void UnfixProto()
         {
-            if (GetHarmony() == null || OldDragBuild.Count < 3 || DSPGame.IsMenuDemo) return;
+            if (GetHarmony() == null || OldDragBuild.Count < PowerPoleIds.Length || DSPGame.IsMenuDemo) return;
             var i = 0;
             foreach (var id in PowerPoleIds)
             {
@@ -1860,7 +1860,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             if (index < 0) return null;
             if (index >= _signalBelts.Length)
             {
-                Array.Resize(ref _signalBelts, index * 2);
+                Array.Resize(ref _signalBelts, (index + 1) * 2);
             }
             else
             {
@@ -2540,14 +2540,13 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                 {
                     if (buffer[i] >= 246)
                     {
-                        i += 250 - buffer[i];
+                        var delta = 250 - buffer[i];
+                        if (delta > 0) i += delta;
                         var index = buffer[i + 1] - 1 + (buffer[i + 2] - 1) * 100 + (buffer[i + 3] - 1) * 10000 + (buffer[i + 4] - 1) * 1000000;
                         ref var cargo = ref cargoPath.cargoContainer.cargoPool[index];
                         var item = cargo.item;
-                        var stack = cargo.stack;
-                        var inc = cargo.inc;
                         takeOutItems[item] = (takeOutItems.TryGetValue(item, out var value) ? value : 0)
-                            + ((long)stack | ((long)inc << 32));
+                            + ((long)cargo.stack | ((long)cargo.inc << 32));
                         Array.Clear(buffer, i - 4, 10);
                         i += 6;
                         if (cargoPath.updateLen < i) cargoPath.updateLen = i;

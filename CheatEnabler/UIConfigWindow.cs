@@ -385,6 +385,7 @@ public static class UIConfigWindow
 
     private static void UpdateButtons()
     {
+        if (_resignGameBtn == null || _clearBanBtn == null) return;
         var data = GameMain.data;
         if (data == null) return;
         var resignEnabled = data.account != AccountData.me;

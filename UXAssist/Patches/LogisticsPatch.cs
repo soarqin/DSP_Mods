@@ -481,6 +481,7 @@ public static class LogisticsPatch
                             var modelIndex = factory.entityPool[stationPool[i].entityId].modelIndex;
                             var maxCount = LDB.models.Select(modelIndex).prefabDesc.stationMaxItemCount;
                             var oldMaxCount = maxCount + history.localStationExtraStorage - _valuelf;
+                            if (oldMaxCount < 1.0) continue;
                             var intOldMaxCount = (int)Math.Round(oldMaxCount);
                             var intNewMaxCount = maxCount + history.localStationExtraStorage;
                             var ratio = intNewMaxCount / oldMaxCount;
@@ -506,6 +507,7 @@ public static class LogisticsPatch
                             var modelIndex = factory.entityPool[stationPool[i].entityId].modelIndex;
                             var maxCount = LDB.models.Select(modelIndex).prefabDesc.stationMaxItemCount;
                             var oldMaxCount = maxCount + history.remoteStationExtraStorage - _valuelf;
+                            if (oldMaxCount < 1.0) continue;
                             var intOldMaxCount = (int)Math.Round(oldMaxCount);
                             var intNewMaxCount = maxCount + history.remoteStationExtraStorage;
                             var ratio = intNewMaxCount / oldMaxCount;
@@ -681,7 +683,7 @@ public static class LogisticsPatch
             }
 
             var labels = matcher.Labels;
-            matcher.Labels = null;
+            matcher.Labels = [];
             matcher.Insert(
                 new CodeInstruction(OpCodes.Ldarg_0).WithLabels(labels),
                 Transpilers.EmitDelegate((UIGame uiGame) =>
@@ -710,37 +712,37 @@ public static class LogisticsPatch
             controlPanelWindow.DetermineFilterResults();
         }
 
-        private static readonly Action<int>[] OnStationEntryItemIconRightClickActions = new Action<int>[5];
+        private static readonly Dictionary<UIControlPanelStationEntry, Action<int>[]> OnStationEntryItemIconRightClickActionsMap = new();
 
         [HarmonyPostfix]
         [HarmonyPatch(typeof(UIControlPanelStationEntry), nameof(UIControlPanelStationEntry._OnRegEvent))]
         private static void UIControlPanelStationEntry__OnRegEvent_Postfix(UIControlPanelStationEntry __instance)
         {
-            OnStationEntryItemIconRightClickActions[0] = _ => OnStationEntryItemIconRightClick(__instance, 0);
-            OnStationEntryItemIconRightClickActions[1] = _ => OnStationEntryItemIconRightClick(__instance, 1);
-            OnStationEntryItemIconRightClickActions[2] = _ => OnStationEntryItemIconRightClick(__instance, 2);
-            OnStationEntryItemIconRightClickActions[3] = _ => OnStationEntryItemIconRightClick(__instance, 3);
-            OnStationEntryItemIconRightClickActions[4] = _ => OnStationEntryItemIconRightClick(__instance, 4);
-            __instance.storageItem0.itemButton.onRightClick += OnStationEntryItemIconRightClickActions[0];
-            __instance.storageItem1.itemButton.onRightClick += OnStationEntryItemIconRightClickActions[1];
-            __instance.storageItem2.itemButton.onRightClick += OnStationEntryItemIconRightClickActions[2];
-            __instance.storageItem3.itemButton.onRightClick += OnStationEntryItemIconRightClickActions[3];
-            __instance.storageItem4.itemButton.onRightClick += OnStationEntryItemIconRightClickActions[4];
+            var actions = new Action<int>[5];
+            actions[0] = _ => OnStationEntryItemIconRightClick(__instance, 0);
+            actions[1] = _ => OnStationEntryItemIconRightClick(__instance, 1);
+            actions[2] = _ => OnStationEntryItemIconRightClick(__instance, 2);
+            actions[3] = _ => OnStationEntryItemIconRightClick(__instance, 3);
+            actions[4] = _ => OnStationEntryItemIconRightClick(__instance, 4);
+            OnStationEntryItemIconRightClickActionsMap[__instance] = actions;
+            __instance.storageItem0.itemButton.onRightClick += actions[0];
+            __instance.storageItem1.itemButton.onRightClick += actions[1];
+            __instance.storageItem2.itemButton.onRightClick += actions[2];
+            __instance.storageItem3.itemButton.onRightClick += actions[3];
+            __instance.storageItem4.itemButton.onRightClick += actions[4];
         }
 
         [HarmonyPostfix]
         [HarmonyPatch(typeof(UIControlPanelStationEntry), nameof(UIControlPanelStationEntry._OnUnregEvent))]
         private static void UIControlPanelStationEntry__OnUnregEvent_Postfix(UIControlPanelStationEntry __instance)
         {
-            __instance.storageItem0.itemButton.onRightClick -= OnStationEntryItemIconRightClickActions[0];
-            __instance.storageItem1.itemButton.onRightClick -= OnStationEntryItemIconRightClickActions[1];
-            __instance.storageItem2.itemButton.onRightClick -= OnStationEntryItemIconRightClickActions[2];
-            __instance.storageItem3.itemButton.onRightClick -= OnStationEntryItemIconRightClickActions[3];
-            __instance.storageItem4.itemButton.onRightClick -= OnStationEntryItemIconRightClickActions[4];
-            for (var i = 0; i < 5; i++)
-            {
-                OnStationEntryItemIconRightClickActions[i] = null;
-            }
+            if (!OnStationEntryItemIconRightClickActionsMap.TryGetValue(__instance, out var actions)) return;
+            __instance.storageItem0.itemButton.onRightClick -= actions[0];
+            __instance.storageItem1.itemButton.onRightClick -= actions[1];
+            __instance.storageItem2.itemButton.onRightClick -= actions[2];
+            __instance.storageItem3.itemButton.onRightClick -= actions[3];
+            __instance.storageItem4.itemButton.onRightClick -= actions[4];
+            OnStationEntryItemIconRightClickActionsMap.Remove(__instance);
         }
     }
 
@@ -777,7 +779,7 @@ public static class LogisticsPatch
         {
             var history = GameMain.history;
             if (history == null) return false;
-            if (_remoteStorageExtra == history.remoteStationExtraStorage) return false;
+            if (_remoteStorageExtra == history.remoteStationExtraStorage && _localStorageExtra == history.localStationExtraStorage) return false;
             _localStorageExtra = history.localStationExtraStorage;
             _remoteStorageExtra = history.remoteStationExtraStorage;
             _localStorageMaxTotal = _localStorageMax + _localStorageExtra;
@@ -846,14 +848,14 @@ public static class LogisticsPatch
                     {
                         if (!prefabDesc.isCollectStation)
                         {
-                            _remoteStorageMax = prefabDesc.stationMaxItemCount;
+                            _remoteStorageMax = Math.Max(_remoteStorageMax, prefabDesc.stationMaxItemCount);
                         }
                     }
                     else
                     {
                         if (!prefabDesc.isVeinCollector)
                         {
-                            _localStorageMax = prefabDesc.stationMaxItemCount;
+                            _localStorageMax = Math.Max(_localStorageMax, prefabDesc.stationMaxItemCount);
                         }
                     }
                 }
@@ -880,12 +882,36 @@ public static class LogisticsPatch
             rtrans.anchoredPosition3D = new Vector3(0, 0, 0f);
 
             var sliderBgPrefab = GameObject.Find("UI Root/Overlay Canvas/In Game/Windows/Station Window/storage-box-0/slider-bg");
+            if (sliderBgPrefab == null)
+            {
+                UXAssist.Logger.LogWarning("RealtimeLogisticsInfoPanel.InitGUI: slider-bg prefab not found, aborting GUI init");
+                Object.Destroy(_stationTipsRoot);
+                _stationTipsRoot = null;
+                return;
+            }
 
-            _tipPrefab = Object.Instantiate(GameObject.Find("UI Root/Overlay Canvas/In Game/Scene UIs/Vein Marks/vein-tips/vein-tip-prefab"), _stationTipsRoot.transform);
+            var veinTipPrefabGo = GameObject.Find("UI Root/Overlay Canvas/In Game/Scene UIs/Vein Marks/vein-tips/vein-tip-prefab");
+            if (veinTipPrefabGo == null)
+            {
+                UXAssist.Logger.LogWarning("RealtimeLogisticsInfoPanel.InitGUI: vein-tip-prefab not found, aborting GUI init");
+                Object.Destroy(_stationTipsRoot);
+                _stationTipsRoot = null;
+                return;
+            }
+            var keyTipPrefabGo = GameObject.Find("UI Root/Overlay Canvas/In Game/Windows/Key Tips/tip-prefab");
+            if (keyTipPrefabGo == null)
+            {
+                UXAssist.Logger.LogWarning("RealtimeLogisticsInfoPanel.InitGUI: key tip-prefab not found, aborting GUI init");
+                Object.Destroy(_stationTipsRoot);
+                _stationTipsRoot = null;
+                return;
+            }
+
+            _tipPrefab = Object.Instantiate(veinTipPrefabGo, _stationTipsRoot.transform);
             _tipPrefab.name = "tipPrefab";
             Object.Destroy(_tipPrefab.GetComponent<UIVeinDetailNode>());
             var image = _tipPrefab.GetComponent<Image>();
-            image.sprite = GameObject.Find("UI Root/Overlay Canvas/In Game/Windows/Key Tips/tip-prefab").GetComponent<Image>().sprite;
+            image.sprite = keyTipPrefabGo.GetComponent<Image>().sprite;
             image.color = new Color(0, 0, 0, 0.8f);
             image.enabled = true;
             var rectTrans = (RectTransform)_tipPrefab.transform;

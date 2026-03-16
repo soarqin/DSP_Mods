@@ -448,6 +448,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             var factory = __instance.factory;
             if (factory.prebuildCount <= 0) return;
             var player = GameMain.mainPlayer;
+            if (player == null) return;
             var total = factory.prebuildCursor - 1;
             var stepCount = total switch
             {
@@ -588,7 +589,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             [ArgumentType.Ref, ArgumentType.Ref, ArgumentType.Normal, ArgumentType.Out, ArgumentType.Normal])]
         public static bool TakeTailItemsPatch(StorageComponent __instance, int itemId)
         {
-            if (__instance == null || __instance.id != GameMain.mainPlayer.package.id) return true;
+            if (__instance == null || GameMain.mainPlayer == null || __instance.id != GameMain.mainPlayer.package.id) return true;
             if (itemId <= 0) return true;
             if (_canBuildItems == null)
             {
@@ -603,7 +604,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         public static void GetItemCountPatch(StorageComponent __instance, int itemId, ref int __result)
         {
             if (__result > 99) return;
-            if (__instance == null || __instance.id != GameMain.mainPlayer.package.id) return;
+            if (__instance == null || GameMain.mainPlayer == null || __instance.id != GameMain.mainPlayer.package.id) return;
             if (itemId <= 0) return;
             if (_canBuildItems == null)
             {
@@ -1020,7 +1021,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         {
             var v = ((long)factory << 32) | (uint)beltId;
             if (!_portalFrom.TryGetValue(v, out var number)) return;
-            _portalFrom.Remove(beltId);
+            _portalFrom.Remove(v);
             if (!_portalTo.TryGetValue(number, out var set)) return;
             set.Remove(v);
         }
@@ -1649,6 +1650,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             }
 
             // Iterate all factories and update wind turbines power nodes
+            if (GameMain.data == null) return;
             foreach (var factory in GameMain.data.factories)
             {
                 var powerSystem = factory?.powerSystem;

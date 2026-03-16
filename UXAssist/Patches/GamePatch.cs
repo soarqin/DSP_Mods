@@ -521,8 +521,9 @@ public class GamePatch : PatchImpl<GamePatch>
                     __instance.ImportXML(optionPath);
                     return false;
                 }
-                catch
+                catch (Exception ex)
                 {
+                    Debug.LogException(ex);
                 }
             }
             var gameXMLOptionPath = GameConfig.gameXMLOptionPath;

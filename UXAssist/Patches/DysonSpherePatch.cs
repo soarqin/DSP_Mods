@@ -414,7 +414,7 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
             );
             if (jmpTarget == null) return matcher.InstructionEnumeration();
             var labels = matcher.Labels;
-            matcher.Labels = null;
+            matcher.Labels = [];
             matcher.Insert(
                 new CodeInstruction(OpCodes.Ldarg_0).WithLabels(labels),
                 new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(EjectorComponent), nameof(EjectorComponent.runtimeOrbitId))),

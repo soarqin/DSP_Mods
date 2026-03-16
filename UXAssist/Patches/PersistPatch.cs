@@ -53,7 +53,7 @@ public class PersistPatch : PatchImpl<PersistPatch>
         );
         var ldLocOpr = matcher.Operand;
         var labels = matcher.Labels;
-        matcher.Labels = null;
+        matcher.Labels = [];
         matcher.Insert(
             new CodeInstruction(OpCodes.Ldloc_S, ldLocOpr).WithLabels(labels),
             new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Component), nameof(Component.transform))),

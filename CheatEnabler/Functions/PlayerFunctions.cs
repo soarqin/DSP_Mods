@@ -35,6 +35,7 @@ public static class PlayerFunctions
     {
         var maxSqrDistance = 0.0;
         var starPosition = VectorLF3.zero;
+        if (GameMain.galaxy == null) return;
         foreach (var star in GameMain.galaxy.stars)
         {
             var sqrDistance = star.position.sqrMagnitude;

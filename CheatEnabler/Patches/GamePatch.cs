@@ -42,7 +42,8 @@ public static class GamePatch
         protected override void OnEnable()
         {
             if (_savedDeterminators == null) return;
-            var abnormalLogic = GameMain.gameScenario.abnormalityLogic;
+            var abnormalLogic = GameMain.gameScenario?.abnormalityLogic;
+            if (abnormalLogic == null) return;
             foreach (var p in _savedDeterminators)
             {
                 p.Value.OnUnregEvent();

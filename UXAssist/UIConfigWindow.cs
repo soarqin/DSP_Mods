@@ -93,7 +93,6 @@ public static class UIConfigWindow
         I18N.Add("Vessel transport range", "Vessel transport range", "运输船最远路程");
         I18N.Add("Warp distance", "Warp distance", "曲速启用路程");
         I18N.Add("Min. Load of Vessels", "Min. Load of Vessels", "运输船起送量");
-        I18N.Add("Outgoing integration count", "Outgoing integration count", "输出货物集装数量");
         I18N.Add("Include Orbital Collector", "Include Orbital Collector", "包含轨道采集器");
         I18N.Add("Warpers required", "Warpers required", "翘曲器必备");
         I18N.Add("Count of Vessels filled", "Count of Vessels filled", "填充的运输船数量");
@@ -767,8 +766,7 @@ public static class UIConfigWindow
         x = 10;
         y = 10;
         wnd.AddCheckBox(x, y, tab6, UIPatch.PlanetVeinUtilizationEnabled, "Planet vein utilization");
-        y += 36f;
-        y += 36f;
+        y += 72f;
         wnd.AddCheckBox(x, y, tab6, TechPatch.BatchBuyoutTechEnabled, "Buy out techs with their prerequisites");
         y += 36f;
         wnd.AddCheckBox(x, y, tab6, TechPatch.SorterCargoStackingEnabled, "Restore upgrades of \"Sorter Cargo Stacking\" on panel");
@@ -778,8 +776,7 @@ public static class UIConfigWindow
         wnd.AddButton(x, y, 300f, tab6, "Set \"Sorter Cargo Stacking\" to unresearched state", 16, "button-remove-cargo-stacking", TechFunctions.RemoveCargoStackingTechs);
         y += 36f;
         wnd.AddButton(x, y, 300f, tab6, "Unlock all techs with metadata", 16, "button-unlock-all-techs-with-metadata", TechFunctions.UnlockAllProtoWithMetadataAndPrompt);
-        y += 36f;
-        y += 36f;
+        y += 72f;
         wnd.AddButton(x, y, 300f, tab6, "Open Dark Fog Communicator", 16, "button-open-df-communicator", () =>
         {
             if (!(GameMain.data?.gameDesc.isCombatMode ?? false)) return;

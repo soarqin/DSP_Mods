@@ -1101,7 +1101,7 @@ public static class DysonSphereFunctions
             dysonSphere.PickAutoNode();
         }
         dysonSphere.modelRenderer.RebuildModels();
-        GameMain.gameScenario.NotifyOnPlanDysonShell();
+        GameMain.gameScenario?.NotifyOnPlanDysonShell();
         dysonSphere.inEditorRenderMaskS = 0;
         dysonSphere.inEditorRenderMaskL = 0;
         dysonSphere.inGameRenderMaskS = 0;
@@ -1163,8 +1163,9 @@ public static class DysonSphereFunctions
             {
                 var shell = shells[j];
                 retainNodes.UnionWith(shell.nodes.Select(node => node.id));
-                layer.shellPool[1] = shell;
-                shell.id = 1;
+                int shellId = j + 1;
+                layer.shellPool[shellId] = shell;
+                shell.id = shellId;
                 for (var k = 0; k < shell.nodes.Count; k++)
                 {
                     var idA = shell.nodes[k].id;
@@ -1328,7 +1329,7 @@ public static class DysonSphereFunctions
             dysonSphere.CheckAutoNodes();
             if (dysonSphere.autoNodeCount <= 0) dysonSphere.PickAutoNode();
             dysonSphere.modelRenderer.RebuildModels();
-            GameMain.gameScenario.NotifyOnPlanDysonShell();
+            GameMain.gameScenario?.NotifyOnPlanDysonShell();
             return;
         }
     }
@@ -1460,7 +1461,7 @@ public static class DysonSphereFunctions
         dysonSphere.CheckAutoNodes();
         if (dysonSphere.autoNodeCount <= 0) dysonSphere.PickAutoNode();
         dysonSphere.modelRenderer.RebuildModels();
-        if (shellsChanged) GameMain.gameScenario.NotifyOnPlanDysonShell();
+        if (shellsChanged) GameMain.gameScenario?.NotifyOnPlanDysonShell();
         dysonSphere.inEditorRenderMaskS = 0;
         dysonSphere.inEditorRenderMaskL = 0;
         dysonSphere.inGameRenderMaskS = 0;
@@ -1623,7 +1624,7 @@ public static class DysonSphereFunctions
         dysonSphere.CheckAutoNodes();
         if (dysonSphere.autoNodeCount <= 0) dysonSphere.PickAutoNode();
         dysonSphere.modelRenderer.RebuildModels();
-        if (shellsChanged) GameMain.gameScenario.NotifyOnPlanDysonShell();
+        if (shellsChanged) GameMain.gameScenario?.NotifyOnPlanDysonShell();
         dysonSphere.inEditorRenderMaskS = 0;
         dysonSphere.inEditorRenderMaskL = 0;
         dysonSphere.inGameRenderMaskS = 0;

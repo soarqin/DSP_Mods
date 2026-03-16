@@ -24,6 +24,7 @@ public static class PlanetFunctions
         if (factory == null) return;
         foreach (var etd in factory.entityPool)
         {
+            if (etd.id == 0) continue;
             var stationId = etd.stationId;
             if (stationId > 0)
             {
@@ -106,7 +107,7 @@ public static class PlanetFunctions
         }
         if (constructionSystem.constructStats?.buffer != null)
         {
-            for (var i = constructionSystem.constructStats.cursor - 1; i > 0; i++)
+            for (var i = constructionSystem.constructStats.cursor - 1; i > 0; i--)
             {
                 ref var constructStat = ref constructionSystem.constructStats.buffer[i];
                 if (constructStat.id <= 0) continue;
@@ -405,7 +406,8 @@ public static class PlanetFunctions
                     {
                         if (buffer[j] >= 246)
                         {
-                            j += 250 - buffer[j];
+                            var delta = 250 - buffer[j];
+                            if (delta > 0) j += delta;
                             var bufferIndex = buffer[j + 1] - 1 + (buffer[j + 2] - 1) * 100 + (buffer[j + 3] - 1) * 10000 + (buffer[j + 4] - 1) * 1000000;
                             ref var cargo = ref cargoPath.cargoContainer.cargoPool[bufferIndex];
                             var stack = cargo.stack;

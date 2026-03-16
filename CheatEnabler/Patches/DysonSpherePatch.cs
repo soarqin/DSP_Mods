@@ -365,12 +365,12 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
     {
         protected override void OnEnable()
         {
-            _instantAbsorb = QuickAbsorbEnabled.Value;
+            _instantAbsorb = QuickAbsorbEnabled.Value && QuickAbsorbPatch.GetHarmony() != null;
         }
 
         protected override void OnDisable()
         {
-            _instantAbsorb = false;
+            _instantAbsorb = QuickAbsorbEnabled.Value && QuickAbsorbPatch.GetHarmony() != null;
         }
 
         [HarmonyTranspiler]
@@ -407,12 +407,12 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
     {
         protected override void OnEnable()
         {
-            _instantAbsorb = SkipAbsorbEnabled.Value;
+            _instantAbsorb = SkipAbsorbEnabled.Value && SkipAbsorbPatch.GetHarmony() != null;
         }
 
         protected override void OnDisable()
         {
-            _instantAbsorb = false;
+            _instantAbsorb = SkipAbsorbEnabled.Value && SkipAbsorbPatch.GetHarmony() != null;
         }
 
         [HarmonyTranspiler]

@@ -266,7 +266,7 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
                     );
                     matcher.CreateLabelAt(matcher.Pos + 8, out var jumpPos);
                     var labels = matcher.Labels;
-                    matcher.Labels = null;
+                    matcher.Labels = [];
                     matcher.InsertAndAdvance(
                         new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(ShortcutKeysForStarsName), nameof(_showAllStarsNameStatus))).WithLabels(labels),
                         new CodeInstruction(OpCodes.Ldc_I4_1),
@@ -316,7 +316,7 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
                     );
                     matcher.CreateLabelAt(matcher.Pos + 10, out var jumpPos);
                     var labels = matcher.Labels;
-                    matcher.Labels = null;
+                    matcher.Labels = [];
                     matcher.InsertAndAdvance(
                         new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(ShortcutKeysForStarsName), nameof(_showAllStarsNameStatus))).WithLabels(labels),
                         new CodeInstruction(OpCodes.Ldc_I4_1),
