@@ -307,7 +307,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
     private static void PlanetData_NotifyFactoryLoaded_Postfix(PlanetData __instance)
     {
         var main = GameMain.instance;
-        if (main != null && main._running)
+        if (main != null && main._running && __instance.factory?.planet?.data != null)
         {
             ArrivePlanet(__instance.factory);
         }
@@ -317,7 +317,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
     {
         if (DSPGame.IsMenuDemo) return;
         var factory = GameMain.mainPlayer?.factory;
-        if (factory != null)
+        if (factory?.planet?.data != null)
         {
             ArrivePlanet(factory);
         }
@@ -399,7 +399,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         protected override void OnEnable()
         {
             var factory = GameMain.mainPlayer?.factory;
-            if (factory != null)
+            if (factory?.planet?.data != null)
             {
                 ArrivePlanet(factory);
             }
@@ -562,7 +562,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         private static void UXAssist_PlanetFunctions_BuildOrbitalCollectors_Postfix()
         {
             var factory = GameMain.mainPlayer?.factory;
-            if (factory != null)
+            if (factory?.planet?.data != null)
             {
                 ArrivePlanet(factory);
             }
@@ -576,7 +576,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         protected override void OnEnable()
         {
             var factory = GameMain.mainPlayer?.factory;
-            if (factory != null)
+            if (factory?.planet?.data != null)
             {
                 ArrivePlanet(factory);
             }
