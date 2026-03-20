@@ -2007,11 +2007,10 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                     var consume = (byte)Math.Min(DarkFogItemsInVoid[itemIdx], 4);
                     if (consume < 4)
                     {
-                        var metaverse = propertySystem.GetItemAvaliableProperty(_clusterSeedKey, 6006);
-                        if (metaverse > 0)
+                        var metaverseLong = propertySystem.GetItemAvaliableProperty(_clusterSeedKey, 6006);
+                        if (metaverseLong > 0L)
                         {
-                            if (metaverse > 10)
-                                metaverse = 10;
+                            var metaverse = metaverseLong > 10 ? 10 : (int)metaverseLong;
                             propertySystem.AddItemConsumption(_clusterSeedKey, 6006, metaverse);
                             var mainPlayer = GameMain.mainPlayer;
                             GameMain.history.AddPropertyItemConsumption(6006, metaverse, true);

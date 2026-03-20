@@ -130,7 +130,34 @@ if (-not $publicizer) {
 }
 
 # ---------------------------------------------------------------------------
-# 5. For each DLL: compare timestamps, publicize if game copy is newer
+# 5. Acquire an exclusive file lock so that concurrent MSBuild nodes (triggered
+#    by the !Exists fallback condition) cannot write the DLLs simultaneously.
+#    The lock is released automatically in the finally block.
+# ---------------------------------------------------------------------------
+$lockPath   = Join-Path $OUTPUT_DIR '.update.lock'
+$lockStream = $null
+try {
+    # Retry loop: wait up to 60 s for the lock (another node may be updating)
+    $deadline = [DateTime]::UtcNow.AddSeconds(60)
+    while ($true) {
+        try {
+            $lockStream = [System.IO.File]::Open(
+                $lockPath,
+                [System.IO.FileMode]::OpenOrCreate,
+                [System.IO.FileAccess]::ReadWrite,
+                [System.IO.FileShare]::None)
+            break   # lock acquired
+        } catch [System.IO.IOException] {
+            if ([DateTime]::UtcNow -ge $deadline) {
+                Write-Warning 'UpdateGameDlls: Timed out waiting for lock; skipping DLL update.'
+                exit 0
+            }
+            Start-Sleep -Milliseconds 200
+        }
+    }
+
+# ---------------------------------------------------------------------------
+# 6. For each DLL: compare timestamps, publicize if game copy is newer
 # ---------------------------------------------------------------------------
 $updated = 0
 foreach ($dll in $DSP_DLLS) {
@@ -175,4 +202,9 @@ if ($updated -gt 0) {
     Write-Host "UpdateGameDlls: $updated DLL(s) refreshed."
 } else {
     Write-Host 'UpdateGameDlls: All DLLs are up-to-date.'
+}
+
+} finally {
+    # Release the exclusive lock regardless of success or failure
+    if ($lockStream) { $lockStream.Close() }
 }

@@ -78,13 +78,16 @@ Individual `.csproj` files only declare what is unique to that project (GUID, ve
 
 ### Automatic Game DLL Update
 
-`AssemblyFromGame/` holds publicized copies of two game DLLs used as compile-time references. They are refreshed automatically **before every build** by the `UpdateGameDlls` MSBuild target, which calls `UpdateGameDlls.ps1`.
+`AssemblyFromGame/` holds publicized copies of two game DLLs used as compile-time references. They are refreshed automatically **once per solution build** by the `UpdateGameDlls` MSBuild target, which calls `UpdateGameDlls.ps1`.
+
+The target runs only when the `UXAssist` project is being built (the designated trigger project), or when either DLL is missing from `AssemblyFromGame/`. This prevents redundant executions and file-write conflicts when projects are built in parallel (`dotnet build -m`). The PowerShell script additionally acquires an exclusive file lock (`AssemblyFromGame/.update.lock`) so that the rare case where the `!Exists` fallback triggers multiple projects concurrently is also handled safely.
 
 The script:
 1. Reads the Steam installation path from the Windows registry (`HKCU\Software\Valve\Steam`).
 2. Parses `steamapps/libraryfolders.vdf` to find the library that contains DSP (AppID `1366540`).
 3. Locates `<game_root>/DSPGAME_Data/Managed/`.
-4. For each DLL (`Assembly-CSharp.dll`, `UnityEngine.UI.dll`): if the game copy is newer than the local copy, runs `assembly-publicizer … --strip --overwrite` to regenerate the local file and stamps it with the source timestamp.
+4. Acquires an exclusive file lock on `AssemblyFromGame/.update.lock` (waits up to 60 s).
+5. For each DLL (`Assembly-CSharp.dll`, `UnityEngine.UI.dll`): if the game copy is newer than the local copy, runs `assembly-publicizer … --strip --overwrite` to regenerate the local file and stamps it with the source timestamp.
 
 The target can also be run explicitly:
 ```

@@ -12,7 +12,22 @@
     Requires assembly-publicizer on PATH or in %USERPROFILE%\.dotnet\tools\:
         dotnet tool install -g BepInEx.AssemblyPublicizer.Cli
   -->
-  <Target Name="UpdateGameDlls" BeforeTargets="BeforeBuild">
+  <!--
+    The target is conditioned to run only when building the 'UXAssist' project (the
+    designated first-built project in this solution), OR when either game DLL is
+    missing entirely (e.g. after a manual deletion).  This ensures the target fires
+    exactly once per solution build even when projects are built in parallel (-m),
+    while still recovering automatically if the DLLs are absent.
+
+    The PowerShell script additionally acquires an exclusive file lock on
+    AssemblyFromGame/.update.lock so that the rare case where the !Exists fallback
+    triggers multiple projects concurrently is also handled safely.
+  -->
+  <Target Name="UpdateGameDlls" BeforeTargets="BeforeBuild"
+          Condition="'$(MSBuildProjectName)' == 'UXAssist'
+                     Or !Exists('$(MSBuildThisFileDirectory)AssemblyFromGame\Assembly-CSharp.dll')
+                     Or !Exists('$(MSBuildThisFileDirectory)AssemblyFromGame\UnityEngine.UI.dll')"
+          >
     <Exec
       Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory)UpdateGameDlls.ps1&quot; -ProjectRoot &quot;$(MSBuildThisFileDirectory.TrimEnd('\\/'))&quot;"
       ConsoleToMSBuild="true"
