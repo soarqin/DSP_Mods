@@ -3,6 +3,8 @@
 
 ## Changlog
 
+* 1.5.7
+  * Fix compatibility with game update 0.10.34.28505.
 * 1.5.6
   * `Initialize This Planet`: Fix known crashes and infinite loop.
   * `Show recent milkyway upload results`: Fix an issue that it only shows earliest results but latest ones.
@@ -395,6 +397,8 @@
 
 ## 更新日志
 
+* 1.5.7
+  * 修复了与游戏更新0.10.34.28505的兼容性。
 * 1.5.6
   * `初始化本行星`：修复已知的崩溃和无限循环问题。
   * `显示最近银河系上传结果`：修复仅显示最早上传结果而非最新结果的问题。

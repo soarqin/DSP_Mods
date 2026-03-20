@@ -100,8 +100,8 @@
     <!-- Delete previous zip if present -->
     <Delete Files="$(_ZipPath)" Condition="Exists('$(_ZipPath)')" />
 
-    <!-- Create zip using powershell.exe (explicit executable – works from any shell) -->
-    <Exec Command="powershell.exe -NoProfile -Command &quot;Compress-Archive -Path '$(_StagingDir)\*' -DestinationPath '$(_ZipPath)'&quot;" />
+    <!-- Create zip using MSBuild ZipDirectory task – no shell, no quoting issues -->
+    <ZipDirectory SourceDirectory="$(_StagingDir)" DestinationFile="$(_ZipPath)" />
 
     <!-- Clean up staging directory -->
     <RemoveDir Directories="$(_StagingDir)" />
