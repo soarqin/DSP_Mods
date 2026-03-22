@@ -10,4 +10,9 @@
       IgnoreExitCode="false"
       WorkingDirectory="$(MSBuildThisFileDirectory).." />
   </Target>
+
+  <!-- No-op stubs so solution-wide -t:ZipMod / -t:CopyToParentPackage don't fail
+       with MSB4057 "target does not exist in this project". -->
+  <Target Name="ZipMod" />
+  <Target Name="CopyToParentPackage" />
 </Project>
