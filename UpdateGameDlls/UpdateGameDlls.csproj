@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.Build.NoTargets/3.7.56">
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+  </PropertyGroup>
+  <Target Name="UpdateGameDlls" BeforeTargets="BeforeBuild">
+    <Exec
+      Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory)..\UpdateGameDlls.ps1&quot; -ProjectRoot &quot;$(MSBuildThisFileDirectory)..&quot;"
+      ConsoleToMSBuild="true"
+      IgnoreExitCode="false"
+      WorkingDirectory="$(MSBuildThisFileDirectory).." />
+  </Target>
+</Project>
