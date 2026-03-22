@@ -60,6 +60,10 @@
       <_ZipPath>$(_PackageDir)\$(ProjectName)-$(Version).zip</_ZipPath>
     </PropertyGroup>
 
+    <!-- Sync manifest.json version_number from .csproj $(Version) before packaging -->
+    <Exec Condition="Exists('$(_PackageDir)\manifest.json')"
+          Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -Command &quot;$f='$(_PackageDir)\manifest.json'; $c=[IO.File]::ReadAllText($f); $c=$c -replace '(\u0022version_number\u0022\s*:\s*\u0022)[^\u0022]*(\u0022)','${1}$(Version)${2}'; [IO.File]::WriteAllText($f,$c,[Text.UTF8Encoding]::new($true))&quot;" />
+
     <!-- ── plugins/patchers layout: copy DLL into package/plugins/ first ── -->
     <MakeDir Directories="$(_PackageDir)\plugins"
              Condition="'$(PackUsePluginsLayout)' == 'true'" />

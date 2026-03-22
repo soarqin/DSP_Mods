@@ -127,6 +127,16 @@ dotnet build -t:CopyToParentPackage -c Release
 ```
 This copies the preloader DLL into the sibling main mod's `package/patchers/` directory, ready to be zipped by the main mod's `ZipMod` target.
 
+### Version Management
+
+Each mod's `<Version>` property in its `.csproj` file is the **single source of truth** for the version number. The `version_number` field in `package/manifest.json` is automatically synchronized from `<Version>` during the `ZipMod` target — no manual update of `manifest.json` is needed.
+
+**Release workflow:**
+1. Update `<Version>` in the mod's `.csproj` file (e.g., `<Version>1.2.3</Version>`)
+2. Run `dotnet build -t:ZipMod -c Release` — `manifest.json` is updated automatically before packaging
+
+The sync is implemented as an inline PowerShell `Exec` step inside the `ZipMod` target in `Directory.Build.targets`. It uses a regex replace that preserves the original UTF-8 BOM encoding and CRLF line endings of `manifest.json`. Preloader projects (which have no `manifest.json`) are safely skipped via a `Condition="Exists(...)"` guard.
+
 ## Key Architectural Patterns
 
 - **Shared library:** `UXAssist` acts as a common library. `CheatEnabler` and `UniverseGenTweaks` reference `UXAssist.csproj` directly to reuse `Common/`, `UI/`, and config panel infrastructure.
