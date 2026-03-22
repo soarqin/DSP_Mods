@@ -41,6 +41,7 @@ DSP_Mods/
 ├── PoolOpt/                  # Memory pool optimization on save loading
 ├── UniverseGenTweaks/        # Universe generator parameter tweaks
 ├── UserCloak/                # Hides/fakes Steam account info
+├── UpdateGameDlls/           # MSBuild helper project; runs UpdateGameDlls.ps1 before any mod compiles
 └── CompressSave/             # Stub only (moved to external repo)
 ```
 
@@ -70,35 +71,34 @@ DSP_Mods/
 
 Common properties and references are factored into two root-level files that MSBuild automatically imports for every project:
 
-- **`Directory.Build.props`** — shared `PropertyGroup` defaults (`TargetFramework`, `AllowUnsafeBlocks`, `LangVersion`, `RestoreAdditionalProjectSources`) and shared `ItemGroup`s (BepInEx packages, game DLL references, `Microsoft.NETFramework.ReferenceAssemblies`).
-- **`Directory.Build.targets`** — defines the `UpdateGameDlls`, `ZipMod`, and `CopyToParentPackage` targets (see below).
-- **`UpdateGameDlls.ps1`** — PowerShell script invoked by the `UpdateGameDlls` target; locates the DSP installation via Steam registry and `libraryfolders.vdf`, compares DLL timestamps, and re-publicizes stale DLLs using `assembly-publicizer`.
+- **`Directory.Build.props`** — shared `PropertyGroup` defaults (`TargetFramework`, `AllowUnsafeBlocks`, `LangVersion`, `RestoreAdditionalProjectSources`) and shared `ItemGroup`s (BepInEx packages, game DLL references, `Microsoft.NETFramework.ReferenceAssemblies`), and a global `ProjectReference` to the `UpdateGameDlls` helper project (ensuring game DLLs are refreshed before any mod project resolves assembly references).
+- **`Directory.Build.targets`** — defines the `ZipMod` and `CopyToParentPackage` targets (see below).
+- **`UpdateGameDlls.ps1`** — PowerShell script invoked by the `UpdateGameDlls` helper project; locates the DSP installation via Steam registry and `libraryfolders.vdf`, compares DLL timestamps, and re-publicizes stale DLLs using `assembly-publicizer`.
 
 Individual `.csproj` files only declare what is unique to that project (GUID, version, extra packages, embedded resources).
 
 ### Automatic Game DLL Update
 
-`AssemblyFromGame/` holds publicized copies of two game DLLs used as compile-time references. They are refreshed automatically **once per solution build** by the `UpdateGameDlls` MSBuild target, which calls `UpdateGameDlls.ps1`.
+`AssemblyFromGame/` holds publicized copies of two game DLLs used as compile-time references. They are refreshed automatically before any mod project compiles by the `UpdateGameDlls` helper project.
 
-The target runs only when the `UXAssist` project is being built (the designated trigger project), or when either DLL is missing from `AssemblyFromGame/`. This prevents redundant executions and file-write conflicts when projects are built in parallel (`dotnet build -m`). The PowerShell script additionally acquires an exclusive file lock (`AssemblyFromGame/.update.lock`) so that the rare case where the `!Exists` fallback triggers multiple projects concurrently is also handled safely.
+The helper project (`UpdateGameDlls/UpdateGameDlls.csproj`) uses the `Microsoft.Build.NoTargets` SDK and is declared as a global `ProjectReference` in `Directory.Build.props` with `ReferenceOutputAssembly=false`, `SkipGetTargetFrameworkProperties=true`, and `Private=false`. This ensures that MSBuild's dependency graph guarantees the helper project completes before any mod project resolves assembly references, with no need for file locks or conditional triggers.
 
-The script:
+The `UpdateGameDlls.ps1` script:
 1. Reads the Steam installation path from the Windows registry (`HKCU\Software\Valve\Steam`).
 2. Parses `steamapps/libraryfolders.vdf` to find the library that contains DSP (AppID `1366540`).
 3. Locates `<game_root>/DSPGAME_Data/Managed/`.
-4. Acquires an exclusive file lock on `AssemblyFromGame/.update.lock` (waits up to 60 s).
-5. For each DLL (`Assembly-CSharp.dll`, `UnityEngine.UI.dll`): if the game copy is newer than the local copy, runs `assembly-publicizer … --strip --overwrite` to regenerate the local file and stamps it with the source timestamp.
+4. For each DLL (`Assembly-CSharp.dll`, `UnityEngine.UI.dll`): if the game copy is newer than the local copy, runs `assembly-publicizer … --strip --overwrite` to regenerate the local file and stamps it with the source timestamp.
 
-The target can also be run explicitly:
+To explicitly update game DLLs:
 ```
-dotnet build -t:UpdateGameDlls
+dotnet build UpdateGameDlls\UpdateGameDlls.csproj
 ```
 
 **Prerequisite:** `assembly-publicizer` must be installed as a .NET global tool:
 ```
 dotnet tool install -g BepInEx.AssemblyPublicizer.Cli
 ```
-If the tool is missing or DSP is not found, the target prints a warning and continues without failing the build.
+If the tool is missing or DSP is not found, the script prints a warning and continues without failing the build.
 
 ### Packaging
 

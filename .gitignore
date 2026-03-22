@@ -18,6 +18,3 @@ build/
 /*/package/*.zip
 /*/package/patchers/
 /*/package/plugins/
-
-# UpdateGameDlls build-time lock file (created by UpdateGameDlls.ps1)
-AssemblyFromGame/.update.lock
