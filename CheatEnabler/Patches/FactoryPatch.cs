@@ -441,12 +441,13 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         }
 
         [HarmonyPrefix]
-        [HarmonyPatch(typeof(ConstructionSystem), nameof(ConstructionSystem.GameTick))]
-        private static void ConstructionSystem_GameTick_Prefix(ConstructionSystem __instance, long time)
+        [HarmonyPatch(typeof(GameLogic), nameof(GameLogic.FactoryConstructionSystemGameTick))]
+        private static void GameLogic_FactoryConstructionSystemGameTick_Prefix(GameLogic __instance)
         {
+            var time = __instance.timei;
             if (time % 6 != 0) return;
-            var factory = __instance.factory;
-            if (factory.prebuildCount <= 0) return;
+            var factory = GameMain.localPlanet?.factory;
+            if (factory == null || factory.prebuildCount <= 0) return;
             var player = GameMain.mainPlayer;
             if (player == null) return;
             var total = factory.prebuildCursor - 1;
