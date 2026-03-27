@@ -576,7 +576,7 @@ public static class PlanetFunctions
             factory.PlanetReformRevert();
         }
 
-        gameData.LeavePlanet();
+        planet.UnloadFactory();
         var index = factory.index;
         var warningSystem = gameData.warningSystem;
         var warningPool = warningSystem.warningPool;
@@ -663,7 +663,12 @@ public static class PlanetFunctions
         factory.digitalSystem = new DigitalSystem(planet);
 
         //GameMain.data.statistics.production.CreateFactoryStat(index);
-        gameData.ArrivePlanet(planet);
+        planet.LoadFactory();
+        while (!planet.factoryLoaded)
+        {
+            PlanetModelingManager.Update();
+            System.Threading.Thread.Sleep(0);
+        }
 
         foreach (var kvp in returnedItems)
         {
