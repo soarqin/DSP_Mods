@@ -124,8 +124,15 @@ public static class UIConfigWindow
         I18N.Add("Shortcut keys for showing stars' name", "Shortcut keys for showing stars' name", "启用显示所有星系名称的快捷键");
         I18N.Add("Auto navigation on sailings", "Auto navigation on sailings", "宇宙航行时自动导航");
         I18N.Add("Enable auto-cruise", "Enable auto-cruise", "启用自动巡航");
+        I18N.Add("New Navigation Algorithm", "New Navigation Algorithm", "新导航算法");
+        I18N.Add("Stop AutoNavigation on arrival or input", "Stop AutoNavigation on arrival or input", "抵达或输入关闭导航");
         I18N.Add("Auto boost", "Auto boost", "自动加速");
+        I18N.Add("Auto boost Minimal Energy", "Auto boost Minimal Energy (MJ)", "自动加速最低能量(MJ)");
+        I18N.Add("Use Warp", "Use Warp", "启用曲速");
         I18N.Add("Distance to use warp", "Distance to use warp (AU)", "使用曲速的距离(AU)");
+        I18N.Add("Use Warp Minimal Energy", "Use Warp Minimal Energy (MJ)", "使用曲速最低能量(MJ)");
+        I18N.Add("Dark Fog Hive Follow Distance", "Dark Fog Hive Follow Distance (AU)", "黑雾巢穴跟踪距离(AU)");
+        I18N.Add("Dark Fog Carrier Follow Distance", "Dark Fog Carrier Follow Distance (M)", "黑雾火种跟踪距离(M)");
         I18N.Add("Treat stack items as single in monitor components", "Treat stack items as single in monitor components", "在流速计中将堆叠物品视为单个物品");
         I18N.Add("Initialize This Planet", "Initialize this planet", "初始化本行星");
         I18N.Add("Initialize This Planet Confirm", "This operation will destroy all buildings and revert terrains on this planet, are you sure?", "此操作将会摧毁本行星上的所有建筑并恢复地形，确定吗？");
@@ -176,13 +183,45 @@ public static class UIConfigWindow
         public override int ValueToIndex(float value) => Mathf.RoundToInt(value + 10f);
     }
 
-    private class DistanceMapper : MyWindow.ValueMapper<double>
-    {
-        public override int Min => 1;
-        public override int Max => 40;
-        public override double IndexToValue(int index) => index * 0.5;
-        public override int ValueToIndex(double value) => Mathf.RoundToInt((float)(value * 2.0));
-    }
+	private class DistanceMapper : MyWindow.ValueMapper<double>
+	{
+		public override int Min => 1;
+		public override int Max => 40;
+
+		public override double IndexToValue(int index) => index * 0.5;
+
+		public override int ValueToIndex(double value) => Mathf.RoundToInt((float)(value * 2.0));
+	}
+
+	private class DistanceMapperHive : MyWindow.ValueMapper<double>
+	{
+		public override int Min => 1;
+		public override int Max => 50;
+
+		public override double IndexToValue(int index) => index * 0.1;
+
+		public override int ValueToIndex(double value) => Mathf.RoundToInt((float)(value * 10));
+	}
+
+	private class DistanceMapperCarrier : MyWindow.ValueMapper<double>
+	{
+		public override int Min => 100;
+		public override int Max => 3000;
+
+		public override double IndexToValue(int index) => index;
+
+		public override int ValueToIndex(double value) => Mathf.RoundToInt((float)value);
+	}
+
+	private class EnergyMapper : MyWindow.ValueMapper<double>
+	{
+		public override int Min => 50;
+		public override int Max => 1000;
+
+		public override double IndexToValue(int index) => index;
+
+		public override int ValueToIndex(double value) => Mathf.RoundToInt((float)value);
+	}
 
     private class UpsMapper : MyWindow.ValueMapper<double>
     {
@@ -699,24 +738,111 @@ public static class UIConfigWindow
 
         {
             y += 36f;
-            wnd.AddCheckBox(x, y, tab4, PlayerPatch.AutoNavigationEnabled, "Auto navigation on sailings");
-            y += 27f;
+			MyCheckBox autoNavCheckBox = wnd.AddCheckBox(x, y, tab4, PlayerPatch.AutoNavigationEnabled, "Auto navigation on sailings");
+			y += 27f;
             var autoCruiseCheckBox = wnd.AddCheckBox(x + 20f, y, tab4, PlayerPatch.AutoCruiseEnabled, "Enable auto-cruise", 13);
             y += 27f;
             var autoBoostCheckBox = wnd.AddCheckBox(x + 20f, y, tab4, PlayerPatch.AutoBoostEnabled, "Auto boost", 13);
             y += 27f;
             txt = wnd.AddText2(x + 20f, y, tab4, "Distance to use warp", 15, "text-distance-to-warp");
             var navDistanceSlider = wnd.AddSlider(x + 20f + txt.preferredWidth + 5f, y + 6f, tab4, PlayerPatch.DistanceToWarp, new DistanceMapper(), "0.0", 100f);
-            PlayerPatch.AutoNavigationEnabled.SettingChanged += NavSettingChanged;
-            wnd.OnFree += () => { PlayerPatch.AutoNavigationEnabled.SettingChanged -= NavSettingChanged; };
-            NavSettingChanged(null, null);
 
-            void NavSettingChanged(object o, EventArgs e)
-            {
-                autoCruiseCheckBox.SetEnable(PlayerPatch.AutoNavigationEnabled.Value);
-                autoBoostCheckBox.SetEnable(PlayerPatch.AutoNavigationEnabled.Value);
-                navDistanceSlider.SetEnable(PlayerPatch.AutoNavigationEnabled.Value);
-            }
+			y += 36f;
+			MyCheckBox newAlgorithmCheckBox = wnd.AddCheckBox(
+				x,
+				y,
+				tab4,
+				PlayerPatch.UseNewNavigationAlgorithm,
+				"New Navigation Algorithm");
+			y += 27f;
+			MyCheckBox autoStopCheckBox = wnd.AddCheckBox(
+				x,
+				y,
+				tab4,
+				PlayerPatch.StopOnArrivalAndInput,
+				"Stop AutoNavigation on arrival or input");
+			y += 27f;
+			MyCheckBox useWarpCheckBox = wnd.AddCheckBox(x, y, tab4, PlayerPatch.UseWarper, "Use Warp");
+			y   += 27f;
+			txt =  wnd.AddText2(x + 20f, y, tab4, "Use Warp Minimal Energy", 15, "Use Warp Minimal Energy");
+			var warpEnergySlider = wnd.AddSideSlider(
+				x + 20f + txt.preferredWidth + 5f,
+				y + 6f,
+				tab4,
+				PlayerPatch.UseWarperMinimalEnergy,
+				new EnergyMapper( ),
+				"0",
+				200f,
+				- 100f).WithFontSize(13);
+			y   += 27f;
+			txt =  wnd.AddText2(x + 20f, y, tab4, "Distance to use warp", 15, "text-distance-to-warp");
+			var newNavDistanceSlider = wnd.AddSlider(
+				x + 20f + txt.preferredWidth + 5f,
+				y + 6f,
+				tab4,
+				PlayerPatch.UseWarperDistance,
+				new DistanceMapper( ),
+				"0.0",
+				200f);
+			y += 27f;
+			MyCheckBox speedUpCheckBox = wnd.AddCheckBox(x, y, tab4, PlayerPatch.UseSpeedUp, "Auto boost");
+			y   += 27f;
+			txt =  wnd.AddText2(x + 20f, y, tab4, "Auto boost Minimal Energy", 15, "Auto boost Minimal Energy");
+			var speedUpEnergySlider = wnd.AddSideSlider(
+				x + 20f + txt.preferredWidth + 5f,
+				y + 6f,
+				tab4,
+				PlayerPatch.UseSpeedUpMinimalEnergy,
+				new EnergyMapper( ),
+				"0",
+				200f,
+				- 100f).WithFontSize(13);
+			y   += 27f;
+			txt =  wnd.AddText2(x, y, tab4, "Dark Fog Hive Follow Distance", 15, "Dark Fog Hive Follow Distance");
+			var dfHiveSlider = wnd.AddSideSlider(
+				x + txt.preferredWidth + 5f,
+				y + 6f,
+				tab4,
+				PlayerPatch.DFHiveFollowDistance,
+				new DistanceMapperHive( ),
+				"0.0",
+				200f,
+				- 100f).WithFontSize(13);
+			y   += 27f;
+			txt =  wnd.AddText2(x, y, tab4, "Dark Fog Carrier Follow Distance", 15, "Dark Fog Carrier Follow Distance");
+			var dfCarrierSlider = wnd.AddSideSlider(
+				x + txt.preferredWidth + 5f,
+				y + 6f,
+				tab4,
+				PlayerPatch.DFCarrierFollowDistance,
+				new DistanceMapperCarrier( ),
+				"0.0",
+				200f,
+				- 100f).WithFontSize(13);
+
+			PlayerPatch.AutoNavigationEnabled.SettingChanged += NavSettingChanged;
+			PlayerPatch.UseNewNavigationAlgorithm.SettingChanged += NavSettingChanged;
+			wnd.OnFree += ( ) => { PlayerPatch.AutoNavigationEnabled.SettingChanged -= NavSettingChanged; };
+			wnd.OnFree += ( ) => { PlayerPatch.UseNewNavigationAlgorithm.SettingChanged -= NavSettingChanged; };
+			NavSettingChanged(null, null);
+
+			void NavSettingChanged(object o, EventArgs e)
+			{
+				autoNavCheckBox.SetEnable(! PlayerPatch.UseNewNavigationAlgorithm.Value);
+				autoCruiseCheckBox.SetEnable(PlayerPatch.AutoNavigationEnabled.Value);
+				autoBoostCheckBox.SetEnable(PlayerPatch.AutoNavigationEnabled.Value);
+				navDistanceSlider.SetEnable(PlayerPatch.AutoNavigationEnabled.Value);
+
+				newAlgorithmCheckBox.SetEnable(! PlayerPatch.AutoNavigationEnabled.Value);
+				autoStopCheckBox.SetEnable(PlayerPatch.UseNewNavigationAlgorithm.Value);
+				useWarpCheckBox.SetEnable(PlayerPatch.UseNewNavigationAlgorithm.Value);
+				warpEnergySlider.SetEnable(PlayerPatch.UseNewNavigationAlgorithm.Value);
+				newNavDistanceSlider.SetEnable(PlayerPatch.UseNewNavigationAlgorithm.Value);
+				speedUpCheckBox.SetEnable(PlayerPatch.UseNewNavigationAlgorithm.Value);
+				speedUpEnergySlider.SetEnable(PlayerPatch.UseNewNavigationAlgorithm.Value);
+				dfHiveSlider.SetEnable(PlayerPatch.UseNewNavigationAlgorithm.Value);
+				dfCarrierSlider.SetEnable(PlayerPatch.UseNewNavigationAlgorithm.Value);
+			}
         }
 
         var tab5 = wnd.AddTab(trans, "Dyson Sphere");
