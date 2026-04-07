@@ -36,33 +36,8 @@ public static class WindowFunctions
 
     public static void Start()
     {
-        var wndProc = new WinApi.WndProc(GameWndProc);
-        var gameWnd = FindGameWindow();
-        if (gameWnd != IntPtr.Zero)
-        {
-            _oldWndProc = WinApi.SetWindowLongPtr(gameWnd, WinApi.GWLP_WNDPROC, Marshal.GetFunctionPointerForDelegate(wndProc));
-        }
-
         ProcessPriority.SettingChanged += (_, _) => WinApi.SetPriorityClass(WinApi.GetCurrentProcess(), ProrityFlags[ProcessPriority.Value]);
         WinApi.SetPriorityClass(WinApi.GetCurrentProcess(), ProrityFlags[ProcessPriority.Value]);
-    }
-
-    private static IntPtr GameWndProc(IntPtr hWnd, uint uMsg, IntPtr wParam, IntPtr lParam)
-    {
-        switch (uMsg)
-        {
-            case WinApi.WM_ACTIVATE:
-                WinApi.SetPriorityClass(WinApi.GetCurrentProcess(), ProrityFlags[ProcessPriority.Value]);
-                break;
-            case WinApi.WM_DESTROY:
-                if (_oldWndProc != IntPtr.Zero && _gameWindowHandle != IntPtr.Zero)
-                {
-                    WinApi.SetWindowLongPtr(_gameWindowHandle, WinApi.GWLP_WNDPROC, _oldWndProc);
-                }
-                break;
-        }
-
-        return WinApi.CallWindowProc(_oldWndProc, hWnd, uMsg, wParam, lParam);
     }
 
     private static string GetPriorityName(int priority)
