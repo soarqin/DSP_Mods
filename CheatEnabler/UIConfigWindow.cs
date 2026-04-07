@@ -74,6 +74,7 @@ public static class UIConfigWindow
         I18N.Add("Complete Dyson Sphere shells instantly", "Complete Dyson Sphere shells instantly", "立即完成戴森壳建造");
         I18N.Add("Remove all frames on Dyson Sphere", "Remove all frames on Dyson Sphere", "移除戴森球上的所有框架");
         I18N.Add("Generate illegal dyson shell", "Generate an illegal dyson shell (!!1st shell layer will be replaced!!)", "生成单层仙术戴森壳(!!会先删除第一层戴森壳!!)");
+        I18N.Add("Generate illegal dyson shell 2", "Generate illegal dyson shells for all layers without nodes and shells", "为所有没有节点和壳的层级生成仙术戴森壳");
         I18N.Add("Keep max production shells and remove others", "Keep max production shells and remove others", "保留发电量最高的戴森壳并移除其他戴森壳");
         I18N.Add("Duplicate shells from that with highest production", "Duplicate shells from that with highest production", "从发电量最高的壳复制戴森壳");
         I18N.Add("Generate illegal dyson shell quickly", "Generate illegal dyson shell quickly", "快速生成仙术戴森壳");
@@ -316,10 +317,16 @@ public static class UIConfigWindow
         {
             y += 72f;
             var originalY = y;
-            var btn1 = wnd.AddButton(x, y, 300f, tab4, "Generate illegal dyson shell", 16, "button-generate-illegal-dyson-shells", () =>
+            var btn0 = wnd.AddButton(x, y, 300f, tab4, "Generate illegal dyson shell", 16, "button-generate-illegal-dyson-shells", () =>
             {
                 UIMessageBox.Show("Generate illegal dyson shell".Translate(), "WARNING: This operation can be very slow, continue?".Translate(), "取消".Translate(), "确定".Translate(), UIMessageBox.WARNING, null,
                     () => { DysonSphereFunctions.CreateIllegalDysonShellWithMaxOutput(); });
+            });
+            y += 36f;
+            var btn1 = wnd.AddButton(x, y, 300f, tab4, "Generate illegal dyson shell 2", 16, "button-generate-illegal-dyson-shells", () =>
+            {
+                UIMessageBox.Show("Generate illegal dyson shell 2".Translate(), "WARNING: This operation can be very slow, continue?".Translate(), "取消".Translate(), "确定".Translate(), UIMessageBox.WARNING, null,
+                    () => { DysonSphereFunctions.CreateIllegalDysonShellWithMaxOutput2(); });
             });
             y += 36f;
             var btn2 = wnd.AddButton(x, y, 300f, tab4, "Keep max production shells and remove others", 16, "button-keep-max-production-shells", () =>
@@ -352,6 +359,7 @@ public static class UIConfigWindow
             void onIllegalDysonShellFunctionsChanged(object o, EventArgs e)
             {
                 var enabled = Functions.DysonSphereFunctions.IllegalDysonShellFunctionsEnabled.Value;
+                btn0.gameObject.SetActive(enabled);
                 btn1.gameObject.SetActive(enabled);
                 btn2.gameObject.SetActive(enabled);
                 btn3.gameObject.SetActive(enabled);
