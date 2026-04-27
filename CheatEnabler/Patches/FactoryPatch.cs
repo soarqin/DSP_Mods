@@ -446,7 +446,9 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         {
             var time = __instance.timei;
             if (time % 6 != 0) return;
-            var factory = GameMain.localPlanet?.factory;
+            var planet = GameMain.localPlanet;
+            if (planet == null || !planet.factoryLoaded) return;
+            var factory = planet.factory;
             if (factory == null || factory.prebuildCount <= 0) return;
             var player = GameMain.mainPlayer;
             if (player == null) return;
