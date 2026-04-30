@@ -75,12 +75,14 @@ public static class LogisticsPatch
         RealtimeLogisticsInfoPanel.EnableBars(RealtimeLogisticsInfoPanelBarsEnabled.Value);
 
         GameLogicProc.OnGameBegin += RealtimeLogisticsInfoPanel.OnGameBegin;
+        GameLogicProc.OnGameEnd += RealtimeLogisticsInfoPanel.OnGameEnd;
         GameLogicProc.OnDataLoaded += RealtimeLogisticsInfoPanel.OnDataLoaded;
     }
 
     public static void Uninit()
     {
         GameLogicProc.OnDataLoaded -= RealtimeLogisticsInfoPanel.OnDataLoaded;
+        GameLogicProc.OnGameEnd -= RealtimeLogisticsInfoPanel.OnGameEnd;
         GameLogicProc.OnGameBegin -= RealtimeLogisticsInfoPanel.OnGameBegin;
 
         AutoConfigLogistics.Enable(false);
@@ -798,12 +800,13 @@ public static class LogisticsPatch
 
         public static void Enable(bool on)
         {
+            // Toggle the defensive localPlanet setter hook regardless of whether the GUI
+            // root has been initialized yet (InitGUI may run later via OnDataLoaded).
+            LocalPlanetWatcher.Enable(on);
             if (_stationTipsRoot == null) return;
             if (!on)
             {
-                RecycleStationTips();
-                _lastPlanetId = 0;
-                _stationTipsRoot.SetActive(false);
+                HideAndRecycleStationTips();
                 return;
             }
             if (DSPGame.IsMenuDemo || !GameMain.isRunning)
@@ -827,9 +830,12 @@ public static class LogisticsPatch
 
         public static void OnGameBegin()
         {
-            RecycleStationTips();
-            _lastPlanetId = 0;
-            _stationTipsRoot?.SetActive(false);
+            HideAndRecycleStationTips();
+        }
+
+        public static void OnGameEnd()
+        {
+            HideAndRecycleStationTips();
         }
 
         public static void OnDataLoaded()
@@ -1065,22 +1071,32 @@ public static class LogisticsPatch
             StateSprite[2] = Util.LoadEmbeddedSprite("assets/icon/in.png");
         }
 
+        private static void ReleaseStationTip(StationTip stationTip)
+        {
+            if (!stationTip) return;
+            var go = stationTip.gameObject;
+            if (_stationTipsRecycleCount < StationTipsRecycle.Length)
+            {
+                stationTip.ResetStationTip();
+                go.SetActive(false);
+                StationTipsRecycle[_stationTipsRecycleCount++] = stationTip;
+            }
+            else
+            {
+                // Recycle pool is full: destroy the cloned UI GameObject (not just the
+                // StationTip MonoBehaviour). Destroying only the component would leave the
+                // GameObject and all its UI children orphaned under _stationTipsRoot,
+                // causing "ghost" tips to remain visible whenever the root is reactivated.
+                go.SetActive(false);
+                Object.Destroy(go);
+            }
+        }
+
         private static void RecycleStationTips()
         {
             foreach (var stationTip in _stationTips)
             {
-                if (!stationTip) continue;
-                if (_stationTipsRecycleCount < 128)
-                {
-                    stationTip.ResetStationTip();
-                    stationTip.gameObject.SetActive(false);
-                    StationTipsRecycle[_stationTipsRecycleCount] = stationTip;
-                    _stationTipsRecycleCount++;
-                }
-                else
-                {
-                    Object.Destroy(stationTip);
-                }
+                ReleaseStationTip(stationTip);
             }
             _stationTips = new StationTip[16];
         }
@@ -1089,17 +1105,15 @@ public static class LogisticsPatch
         {
             var stationTip = _stationTips[index];
             if (!stationTip) return;
-            if (_stationTipsRecycleCount < 128)
-            {
-                stationTip.ResetStationTip();
-                stationTip.gameObject.SetActive(false);
-                StationTipsRecycle[_stationTipsRecycleCount++] = stationTip;
-            }
-            else
-            {
-                Object.Destroy(stationTip);
-            }
+            ReleaseStationTip(stationTip);
             _stationTips[index] = null;
+        }
+
+        private static void HideAndRecycleStationTips()
+        {
+            _stationTipsRoot?.SetActive(false);
+            RecycleStationTips();
+            _lastPlanetId = 0;
         }
 
         private static StationTip AllocateStationTip()
@@ -1244,6 +1258,26 @@ public static class LogisticsPatch
                 stationTip.transform.localScale = Vector3.one * localScaleMultiple;
 
                 stationTip.UpdateStationInfo(stationComponent);
+            }
+        }
+
+        // Defensive Harmony hook on GameData.localPlanet setter.
+        // It guarantees tips are hidden and recycled when the local planet id changes,
+        // even if UXAssist.Update() is skipped that frame (e.g. by VFInput.inputing
+        // while the player is typing while transitioning between planets, or by a brief
+        // !GameMain.isRunning state during loading). _lastPlanetId is reset to 0 here so
+        // the next StationInfoPanelsUpdate() re-validates factoryLoaded/transport/viewMode
+        // and re-allocates fresh tips for the new planet.
+        private class LocalPlanetWatcher : PatchImpl<LocalPlanetWatcher>
+        {
+            [HarmonyPrefix]
+            [HarmonyPatch(typeof(GameData), nameof(GameData.localPlanet), MethodType.Setter)]
+            private static void GameData_localPlanet_Setter_Prefix(GameData __instance, PlanetData value)
+            {
+                var oldId = __instance.localPlanet?.id ?? 0;
+                var newId = value?.id ?? 0;
+                if (oldId == newId) return;
+                HideAndRecycleStationTips();
             }
         }
 
