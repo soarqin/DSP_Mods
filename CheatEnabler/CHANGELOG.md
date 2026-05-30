@@ -3,6 +3,10 @@
 
 ## Changlog
 
+* 2.4.4
+  * New button `Generate illegal dyson shells for all layers without nodes and shells`, which is used to extend dyson layers.
+    * You must enable `IllegalDysonShellFunctionsEnabled` of `DysonSphere` section in config to see it.
+  * `Finish build immediately`: Fix a possible crash.
 * 2.4.3
   * `Duplicate shells from that with highest production`: Fix crash on using with frameless shells.
   * `Keep max production shells and remove others`: Fix wrong behaviour when left count > 1.
@@ -185,6 +189,10 @@
 
 ## 更新日志
 
+* 2.4.4
+  * 新按钮 `为所有没有节点和壳的层级生成仙术戴森壳`，用于扩展新戴森壳层面的时候。
+    * 你必须在设置文件里开启`DysonSphere`分类的`IllegalDysonShellFunctionsEnabled`才能看到它。
+  * `立即完成建造`: 修复一个可能的崩溃问题。
 * 2.4.3
   * `从发电量最高的壳复制戴森壳`：修复在无框壳体时可能崩溃的问题。
   * `保留发电量最高的戴森壳并移除其他戴森壳`：修复当剩余壳体数量大于1时的异常行为。

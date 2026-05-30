@@ -3,6 +3,10 @@
 
 ## Changlog
 
+* 1.5.8
+  * `Initialize This Planet`: Fix a possible crash.
+  * `Remember window position and size on last exit`: Remove a window hook that are not useful anymore.
+  * `Real-time logistic stations info panel`: Fix display issue (finally!) when count of logistic towers > 128.
 * 1.5.7
   * Fix compatibility with game update 0.10.34.28505.
 * 1.5.6
@@ -397,6 +401,10 @@
 
 ## 更新日志
 
+* 1.5.8
+  * `初始化本行星`：修复可能的崩溃。
+  * `记住上次退出时的窗口位置和大小`：移除不再有用的窗口钩子。
+  * `物流站实时信息面板`：修复物流塔数量 > 128 时的显示问题。
 * 1.5.7
   * 修复了与游戏更新0.10.34.28505的兼容性。
 * 1.5.6
