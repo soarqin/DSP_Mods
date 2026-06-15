@@ -192,7 +192,7 @@ public class PersistPatch : PatchImpl<PersistPatch>
         return matcher.InstructionEnumeration();
     }
 
-    // Disable rendering when hideAllUI0 is true
+    // Disable rendering when Player is hidden (Press F11 twice)
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(GameLogic), nameof(GameLogic.LateUpdate))]
     [HarmonyPatch(typeof(GameLogic), nameof(GameLogic.Draw))]
@@ -203,9 +203,10 @@ public class PersistPatch : PatchImpl<PersistPatch>
         matcher.Start();
         matcher.CreateLabel(out var label);
         matcher.InsertAndAdvance(
-            new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(UIRoot), nameof(UIRoot.instance))),
-            new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(UIRoot), nameof(UIRoot.uiGame))),
-            new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(UIGame), nameof(UIGame.hideAllUI0))),
+            Transpilers.EmitDelegate(bool () =>
+            {
+                return GameMain.localPlanet == null && !GameMain.mainPlayer.controller.modelVisible;
+            }),
             new CodeInstruction(OpCodes.Brfalse, label),
             new CodeInstruction(OpCodes.Ret)
         );
@@ -213,55 +214,11 @@ public class PersistPatch : PatchImpl<PersistPatch>
         return matcher.InstructionEnumeration();
     }
 
-    static bool _preHideAllUI0 = false;
-    static bool _localPlanetChanged = false;
-    [HarmonyPrefix]
-    [HarmonyPatch(typeof(UIGame), nameof(UIGame._OnLateUpdate))]
-    private static void UIGame__OnLateUpdate_Prefix(UIGame __instance)
-    {
-        _preHideAllUI0 = __instance.hideAllUI0;
-    }
-
-    [HarmonyPostfix]
-    [HarmonyPatch(typeof(UIGame), nameof(UIGame._OnLateUpdate))]
-    private static void UIGame__OnLateUpdate_Postfix(UIGame __instance)
-    {
-        var hideAllUI0 = __instance.hideAllUI0;
-        if (_localPlanetChanged)
-        {
-            _localPlanetChanged = false;
-        }
-        else
-        {
-            if (_preHideAllUI0 == hideAllUI0) return;
-        }
-        var show = GameMain.localPlanet != null || !hideAllUI0;
-        GameMain.data?.mainPlayer?.effect.sailEffect.gameObject.SetActive(!hideAllUI0);
-        var universeSimulator = GameMain.universeSimulator;
-        if (universeSimulator == null) return;
-        universeSimulator.gameObject.SetActive(show);
-        var planetSimulators = universeSimulator.planetSimulators;
-        if (planetSimulators == null) return;
-        foreach (var planet in planetSimulators)
-        {
-            if (planet == null) continue;
-            planet.gameObject.SetActive(show);
-        }
-    }
-
     [HarmonyPostfix]
     [HarmonyPatch(typeof(UniverseSimulator), nameof(UniverseSimulator.SetPlanetSimulator))]
     private static void UniverseSimulator_SetPlanetSimulator_Postfix(UniverseSimulator __instance, PlanetSimulator sim)
     {
-        if (GameMain.localPlanet == null && UIRoot.instance.uiGame.hideAllUI0) sim.gameObject.SetActive(false);
-    }
-
-    [HarmonyPrefix]
-    [HarmonyPatch(typeof(GameData), nameof(GameData.localPlanet), MethodType.Setter)]
-    private static void GameData_localPlanet_Setter_Prefix(GameData __instance, PlanetData value)
-    {
-        var oldPlanet = __instance.localPlanet;
-        if (oldPlanet == null && value != null || oldPlanet != null && value == null) _localPlanetChanged = true;
+        if (GameMain.localPlanet == null && !GameMain.mainPlayer.controller.modelVisible) sim.gameObject.SetActive(false);
     }
 
     #region Cluster Upload Result
