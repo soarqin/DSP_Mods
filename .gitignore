@@ -10,6 +10,8 @@
 # C# generated folders
 bin/
 obj/
+*.dll
+!/AssemblyFromGame/*.dll
 
 # C++ build folders
 build/
@@ -18,3 +20,6 @@ build/
 /*/package/*.zip
 /*/package/patchers/
 /*/package/plugins/
+
+# Agent files
+/.omo/
