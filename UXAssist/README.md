@@ -104,6 +104,9 @@
     * Real-time logistic stations info panel
     * Auto-config logistic stations
       * Auto-config buildings include: Logistics Distributor, PLS, ILS, Advanced Mining Machine
+      * Apply settings to all existing facilities on the current planet
+        * Each setting on the Logistics tab has an `Apply` button that pushes that single value to all facilities of that type on the current planet.
+        * Each category header (Logistics Distributor, Battlefield Analysis Base, PLS, ILS, Advanced Mining Machine) has an `Apply All` button that pushes every setting of that category to all facilities of that type on the current planet.
   * Player/Mecha
     * Unlimited interactive range
     * Enable player actions in globe view
@@ -268,6 +271,9 @@
       * 注意：如果你启用了`Auxilaryfunction`中的`展示物流站信息`，此功能将被隐藏
     * 自动配置物流站
       * 自动配置的建筑包括：物流配送器、行星物流站、星际物流站、高级采矿机
+      * 将设置应用到当前行星上所有已建成的物流设施
+        * 物流标签页上每一项设置右侧都有一个`应用`按钮，按下后将该项数值应用到当前行星上所有该类型的物流设施。
+        * 每个大分类标题（物流配送器、战场分析基站、行星物流站、星际物流站、大型采矿机）右侧都有一个`应用全部`按钮，按下后将该分类的所有设置数值应用到当前行星上所有该类型的物流设施。
   * 玩家/机甲
     * 无限交互距离
     * 移除建造数量和范围限制

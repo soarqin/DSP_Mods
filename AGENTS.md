@@ -51,7 +51,7 @@ DSP_Mods/
 
 | Mod | GUID | Description |
 |-----|------|-------------|
-| **UXAssist** | `org.soardev.uxassist` | Core QoL mod and shared library. Window resize, profile-based saves, FPS control, factory/logistics/navigation/Dyson Sphere tweaks, UI improvements, config panel UI, and `Common/` + `UI/` widget library shared by other mods. |
+| **UXAssist** | `org.soardev.uxassist` | Core QoL mod and shared library. Window resize, profile-based saves, FPS control, factory/logistics/navigation/Dyson Sphere tweaks, UI improvements, config panel UI, and `Common/` + `UI/` widget library shared by other mods. The Logistics tab can also push auto-config values to all existing facilities of a type on the current planet (per-setting `Apply` and per-category `Apply All` buttons; logic in `LogisticsPatch.Apply*`/`ForEach*`, wired in `UIConfigWindow`). |
 | **CheatEnabler** | `org.soardev.cheatenabler` | Cheat pack (depends on UXAssist). Instant build, architect mode, infinite resources, power boosts, Dyson Sphere cheats, mecha invincibility, and more. |
 | **LogisticMiner** | — | Makes logistic stations automatically mine ores and water from the current planet. |
 | **HideTips** | — | Suppresses all tutorial popups, random tips, achievement/milestone cards, and skips the prologue cutscene. |

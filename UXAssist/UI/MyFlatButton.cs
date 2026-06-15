@@ -79,6 +79,15 @@ public class MyFlatButton : MonoBehaviour
         return this;
     }
 
+    public MyFlatButton WithFontSize(int fontSize)
+    {
+        if (labelText != null)
+        {
+            labelText.fontSize = fontSize;
+        }
+        return this;
+    }
+
     public MyFlatButton WithTip(string tip, float delay = 1f)
     {
         uiButton.tips.type = UIButton.ItemTipType.Other;
