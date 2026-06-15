@@ -45,7 +45,6 @@ public static class WinApi
     public const int GWLP_ID = -12;
     public const int GWL_STYLE = -16;
     public const int GWLP_USERDATA = -21;
-    public const int GWLP_WNDPROC = -4;
     public const int DWLP_DLGPROC = 0x4;
     public const int DWLP_MSGRESULT = 0;
     public const int DWLP_USER = 0x8;
@@ -99,22 +98,17 @@ public static class WinApi
 
     #region Functions
 
-    public delegate IntPtr WndProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
+    [DllImport("user32", CharSet = CharSet.Unicode)]
+    public static extern IntPtr FindWindowEx(IntPtr hwndParent, IntPtr hwndChildAfter, string lpClassName, string lpWindowName);
 
-    [DllImport("kernel32", ExactSpelling = true)]
-    public static extern int GetLastError();
+    [DllImport("user32", ExactSpelling = true, SetLastError = true)]
+    public static extern int GetWindowThreadProcessId(IntPtr hwnd, out int lpdwProcessId);
 
     [DllImport("user32", CharSet = CharSet.Unicode)]
     public static extern int GetWindowLong(IntPtr hwnd, int nIndex);
 
     [DllImport("user32", CharSet = CharSet.Unicode)]
     public static extern int SetWindowLong(IntPtr hwnd, int nIndex, int dwNewLong);
-
-    [DllImport("user32", CharSet = CharSet.Unicode)]
-    public static extern IntPtr FindWindowEx(IntPtr hwndParent, IntPtr hwndChildAfter, string lpClassName, string lpWindowName);
-
-    [DllImport("user32", ExactSpelling = true, SetLastError = true)]
-    public static extern int GetWindowThreadProcessId(IntPtr hwnd, out int lpdwProcessId);
 
     [DllImport("user32", ExactSpelling = true)]
     public static extern bool GetWindowRect(IntPtr hwnd, out Rect lpRect);
@@ -126,32 +120,7 @@ public static class WinApi
     public static extern bool SetWindowText(IntPtr hwnd, string lpString);
 
     [DllImport("user32", ExactSpelling = true)]
-    public static extern bool MoveWindow(IntPtr hWnd, int x, int y, int nWidth, int nHeight, bool bRepaint);
-
-    [DllImport("user32", ExactSpelling = true)]
     public static extern IntPtr MonitorFromRect([In] ref Rect lpRect, uint dwFlags);
-
-    [DllImport("kernel32", ExactSpelling = true, SetLastError = true)]
-    public static extern IntPtr GetCurrentProcess();
-
-    [DllImport("kernel32", ExactSpelling = true)]
-    public static extern int GetCurrentProcessId();
-
-    [DllImport("kernel32", ExactSpelling = true)]
-    public static extern IntPtr GetConsoleWindow();
-
-    // GetPriorityClass and SetPriorityClass
-    [DllImport("kernel32", ExactSpelling = true, SetLastError = true)]
-    public static extern int GetPriorityClass(IntPtr hProcess);
-
-    [DllImport("kernel32", ExactSpelling = true, SetLastError = true)]
-    public static extern bool SetPriorityClass(IntPtr hProcess, int dwPriorityClass);
-
-    [DllImport("user32", CharSet = CharSet.Unicode)]
-    public static extern IntPtr SetWindowLongPtr(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
-
-    [DllImport("user32", CharSet = CharSet.Unicode)]
-    public static extern IntPtr CallWindowProc(IntPtr lpPrevWndFunc, IntPtr hWnd, uint uMsg, IntPtr wParam, IntPtr lParam);
 
     #endregion
 }
