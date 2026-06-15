@@ -5,6 +5,8 @@
 - Update `AGENTS.md` after completing every task.
 - Do not record a changelog in `AGENTS.md`; modify the document content directly instead.
 - All documentation and code comments must be written in English.
+- When you need to inspect game method implementations, decompile the **original** game DLL rather than the publicized copy in `AssemblyFromGame/` (which was built with `--strip` and has all method bodies removed). Locate the original DLL using the same logic as `UpdateGameDlls.ps1`: read the Steam installation path from the Windows registry (`HKCU\Software\Valve\Steam`), parse `steamapps/libraryfolders.vdf` to find the library containing DSP (AppID `1366540`), then decompile `<game_root>/DSPGAME_Data/Managed/Assembly-CSharp.dll` directly.
+- When looking up in-game terminology, use the localization files under `<game_root>/Locale/` (located via the same Steam registry + `libraryfolders.vdf` method). The `Names` directory contains the dictionary keys; `1033` is the English translation directory; `2052` is the Simplified Chinese translation directory.
 
 ## Project Overview
 
