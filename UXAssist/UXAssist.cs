@@ -198,6 +198,8 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
             "Logistics capacity related tweaks");
         LogisticsPatch.AllowOverflowInLogisticsEnabled = Config.Bind("Factory", "AllowOverflowInLogistics", false,
             "Allow overflow in logistic stations");
+        LogisticsPatch.GreaterPowerUsageInLogisticsEnabled = Config.Bind("Build", "GreaterPowerUsageInLogistics", false,
+            "Increase maximum power usage in Logistic Stations and Advanced Mining Machines");
         LogisticsPatch.LogisticsConstrolPanelImprovementEnabled = Config.Bind("Factory", "LogisticsConstrolPanelImprovement", false,
             "Logistics control panel improvement");
         LogisticsPatch.RealtimeLogisticsInfoPanelEnabled = Config.Bind("Factory", "RealtimeLogisticsInfoPanel", false,

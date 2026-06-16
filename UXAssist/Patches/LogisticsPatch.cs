@@ -48,6 +48,7 @@ public static class LogisticsPatch
 
     public static ConfigEntry<bool> LogisticsCapacityTweaksEnabled;
     public static ConfigEntry<bool> AllowOverflowInLogisticsEnabled;
+    public static ConfigEntry<bool> GreaterPowerUsageInLogisticsEnabled;
     public static ConfigEntry<bool> LogisticsConstrolPanelImprovementEnabled;
     public static ConfigEntry<bool> RealtimeLogisticsInfoPanelEnabled;
     public static ConfigEntry<bool> RealtimeLogisticsInfoPanelBarsEnabled;
@@ -59,6 +60,7 @@ public static class LogisticsPatch
         SetDefaultRemoteLogicToStorage.SettingChanged += (_, _) => AutoConfigLogisticsSetDefaultRemoteLogicToStorage.Enable(SetDefaultRemoteLogicToStorage.Value);
         LogisticsCapacityTweaksEnabled.SettingChanged += (_, _) => LogisticsCapacityTweaks.Enable(LogisticsCapacityTweaksEnabled.Value);
         AllowOverflowInLogisticsEnabled.SettingChanged += (_, _) => AllowOverflowInLogistics.Enable(AllowOverflowInLogisticsEnabled.Value);
+        GreaterPowerUsageInLogisticsEnabled.SettingChanged += (_, _) => GreaterPowerUsageInLogistics.Enable(GreaterPowerUsageInLogisticsEnabled.Value);
         LogisticsConstrolPanelImprovementEnabled.SettingChanged += (_, _) => LogisticsConstrolPanelImprovement.Enable(LogisticsConstrolPanelImprovementEnabled.Value);
         RealtimeLogisticsInfoPanelEnabled.SettingChanged += (_, _) => RealtimeLogisticsInfoPanel.Enable(RealtimeLogisticsInfoPanelEnabled.Value);
         RealtimeLogisticsInfoPanelBarsEnabled.SettingChanged += (_, _) => RealtimeLogisticsInfoPanel.EnableBars(RealtimeLogisticsInfoPanelBarsEnabled.Value);
@@ -70,6 +72,7 @@ public static class LogisticsPatch
         AutoConfigLogisticsSetDefaultRemoteLogicToStorage.Enable(SetDefaultRemoteLogicToStorage.Value);
         LogisticsCapacityTweaks.Enable(LogisticsCapacityTweaksEnabled.Value);
         AllowOverflowInLogistics.Enable(AllowOverflowInLogisticsEnabled.Value);
+        GreaterPowerUsageInLogistics.Enable(GreaterPowerUsageInLogisticsEnabled.Value);
         LogisticsConstrolPanelImprovement.Enable(LogisticsConstrolPanelImprovementEnabled.Value);
         RealtimeLogisticsInfoPanel.Enable(RealtimeLogisticsInfoPanelEnabled.Value);
         RealtimeLogisticsInfoPanel.EnableBars(RealtimeLogisticsInfoPanelBarsEnabled.Value);
@@ -89,6 +92,7 @@ public static class LogisticsPatch
         AutoConfigLogisticsSetDefaultRemoteLogicToStorage.Enable(false);
         LogisticsCapacityTweaks.Enable(false);
         AllowOverflowInLogistics.Enable(false);
+        GreaterPowerUsageInLogistics.Enable(false);
         LogisticsConstrolPanelImprovement.Enable(false);
         RealtimeLogisticsInfoPanel.Enable(false);
     }
@@ -777,6 +781,156 @@ public static class LogisticsPatch
         private static void BuildTool_BlueprintPaste_CreatePrebuilds_Postfix()
         {
             _blueprintPasting = false;
+        }
+    }
+
+    private class GreaterPowerUsageInLogistics : PatchImpl<GreaterPowerUsageInLogistics>
+    {
+        protected override void OnEnable()
+        {
+            var window = UIRoot.instance?.uiGame?.stationWindow;
+            if (window == null) return;
+            window._Close();
+            window.maxMiningSpeedSlider.maxValue = 27f;
+        }
+
+        protected override void OnDisable()
+        {
+            var window = UIRoot.instance?.uiGame?.stationWindow;
+            if (window == null) return;
+            window._Close();
+            window.maxMiningSpeedSlider.maxValue = 20f;
+        }
+
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(UIStationWindow), nameof(UIStationWindow.OnStationIdChange))]
+        private static IEnumerable<CodeInstruction> UIStationWindow_OnStationIdChange_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            matcher.Start().Insert(
+                new CodeInstruction(OpCodes.Ldarg_0),
+                Transpilers.EmitDelegate((UIStationWindow window) =>
+                {
+                    window.maxMiningSpeedSlider.maxValue = 27f;
+                })
+            ).MatchForward(false,
+                new CodeMatch(OpCodes.Ldarg_0),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(UIStationWindow), nameof(UIStationWindow.maxChargePowerSlider))),
+                new CodeMatch(ci => ci.IsLdloc()),
+                new CodeMatch(ci => ci.opcode == OpCodes.Ldc_I4 && ci.OperandIs(0xC350)),
+                new CodeMatch(OpCodes.Conv_I8)
+            );
+            var pos = matcher.Pos + 1;
+            matcher.Advance(5).MatchForward(false,
+                new CodeMatch(OpCodes.Conv_R4),
+                new CodeMatch(OpCodes.Callvirt, AccessTools.PropertySetter(typeof(Slider), nameof(Slider.value)))
+            );
+            var pos2 = matcher.Pos + 2;
+            matcher.Start().Advance(pos);
+            var ldvar = matcher.InstructionAt(1).Clone();
+            var locWorkEnergyPerTick = matcher.InstructionAt(-2).operand;
+            matcher.RemoveInstructions(pos2 - pos).InsertAndAdvance(
+                ldvar,
+                new CodeInstruction(OpCodes.Ldloc_S, locWorkEnergyPerTick),
+                Transpilers.EmitDelegate((UIStationWindow window, long maxWorkEnergy, long workEnergyPerTick) =>
+                {
+                    var maxSliderValue = maxWorkEnergy / 50000L;
+                    window.maxChargePowerSlider.maxValue = maxSliderValue + 9;
+                    window.maxChargePowerSlider.minValue = maxWorkEnergy / 500000L;
+                    if (workEnergyPerTick <= maxWorkEnergy)
+                        window.maxChargePowerSlider.Set(workEnergyPerTick / 50000L, false);
+                    else
+                        window.maxChargePowerSlider.Set(maxSliderValue + (workEnergyPerTick - 1) / maxWorkEnergy + 1, false);
+                })
+            );
+
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Ldarg_0),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(UIStationWindow), nameof(UIStationWindow.maxMiningSpeedSlider))),
+                new CodeMatch(OpCodes.Ldarg_0),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(UIStationWindow), nameof(UIStationWindow.factorySystem))),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(FactorySystem), nameof(FactorySystem.minerPool))),
+                new CodeMatch(ci => ci.IsLdloc()),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(StationComponent), nameof(StationComponent.minerId))),
+                new CodeMatch(OpCodes.Ldelema, typeof(MinerComponent)),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(MinerComponent), nameof(MinerComponent.speed)))
+            );
+            pos = matcher.Pos + 9;
+            matcher.Advance(5).MatchForward(false,
+                new CodeMatch(OpCodes.Conv_R4),
+                new CodeMatch(OpCodes.Callvirt, AccessTools.PropertySetter(typeof(Slider), nameof(Slider.value)))
+            );
+            pos2 = matcher.Pos;
+            matcher.Start().Advance(pos).RemoveInstructions(pos2 - pos).Insert(
+                Transpilers.EmitDelegate((int speed) =>
+                {
+                    if (speed <= 30000)
+                        return (speed - 10000) / 1000;
+                    return (speed - 30000) / 10000 + 20;
+                })
+            );
+            return matcher.InstructionEnumeration();
+        }
+
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(UIStationWindow), nameof(UIStationWindow.OnMaxMiningSpeedChange))]
+        private static IEnumerable<CodeInstruction> UIStationWindow_OnMaxMiningSpeedChange_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            matcher.MatchForward(false,
+                new CodeMatch(ci => ci.opcode == OpCodes.Ldc_I4 && ci.OperandIs(10000)),
+                new CodeMatch(OpCodes.Ldarg_1)
+            );
+            var pos = matcher.Pos;
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Stloc_1)
+            );
+            var pos2 = matcher.Pos;
+            matcher.Start().Advance(pos);
+            var labels = matcher.Labels;
+            matcher.RemoveInstructions(pos2 - pos);
+            matcher.Insert(
+                new CodeInstruction(OpCodes.Ldarg_1).WithLabels(labels),
+                Transpilers.EmitDelegate((float value) =>
+                {
+                    var intval = (int)(value + 0.5f);
+                    if (intval <= 20)
+                        return intval * 1000 + 10000;
+                    return (intval - 20) * 10000 + 30000;
+                })
+            );
+            return matcher.InstructionEnumeration();
+        }
+
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(UIStationWindow), nameof(UIStationWindow.OnMaxChargePowerSliderValueChange))]
+        private static IEnumerable<CodeInstruction> UIStationWindow_OnMaxChargePowerSliderValueChange_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Ldarg_0),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(UIStationWindow), nameof(UIStationWindow.factory))),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(PlanetFactory), nameof(PlanetFactory.powerSystem))),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(PowerSystem), nameof(PowerSystem.consumerPool)))
+            );
+            var labels = matcher.Labels;
+            matcher.Labels = null;
+            matcher.Insert(
+                new CodeInstruction(OpCodes.Ldarg_0).WithLabels(labels),
+                new CodeInstruction(OpCodes.Ldarg_1),
+                Transpilers.EmitDelegate((UIStationWindow window, float value) =>
+                {
+                    float prevMax = window.workEnergyPrefab * 5L / 50000L;
+                    if (value <= prevMax)
+                    {
+                        return value;
+                    }
+
+                    return prevMax * (value - prevMax + 1);
+                }),
+                new CodeInstruction(OpCodes.Starg_S, 1)
+            );
+            return matcher.InstructionEnumeration();
         }
     }
 

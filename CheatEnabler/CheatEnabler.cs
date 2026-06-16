@@ -53,8 +53,6 @@ public class CheatEnabler : BaseUnityPlugin
             "Boost geothermal power");
         FactoryPatch.WindTurbinesPowerGlobalCoverageEnabled = Config.Bind("Build", "PowerGlobalCoverage", false,
             "Global power coverage");
-        FactoryPatch.GreaterPowerUsageInLogisticsEnabled = Config.Bind("Build", "GreaterPowerUsageInLogistics", false,
-            "Increase maximum power usage in Logistic Stations and Advanced Mining Machines");
         FactoryPatch.ControlPanelRemoteLogisticsEnabled = Config.Bind("Build", "ControlPanelRemoteLogistics", false,
             "Retrieve/Place items from/to remote planets on logistics control panel");
         ResourcePatch.InfiniteResourceEnabled = Config.Bind("Planet", "AlwaysInfiniteResource", false,

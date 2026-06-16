@@ -105,6 +105,8 @@ public static class UIConfigWindow
         I18N.Add("Apply all config to planet tips", "Apply all settings of this category to all facilities of this type on the current planet", "将本分类的所有设置数值应用到当前行星上所有该类型物流设施");
 
         I18N.Add("Allow overflow for Logistic Stations and Advanced Mining Machines", "Allow overflow for Logistic Stations and Advanced Mining Machines", "允许物流站和大型采矿机物品溢出");
+        I18N.Add("Increase maximum power usage in Logistic Stations and Advanced Mining Machines", "Increase maximum power usage in Logistic Stations and Advanced Mining Machines",
+            "提升物流塔和大型采矿机的最大功耗");
         I18N.Add("Enhance control for logistic storage capacities", "Enhance control for logistic storage capacities", "物流塔存储容量控制改进");
         I18N.Add("Enhance control for logistic storage capacities tips",
             "Logistic storage capacity limits are not scaled on upgrading 'Logistics Carrier Capacity', if they are not set to maximum capacity or already greater than upgraded maximum capacity.\nUse arrow keys to adjust logistic storage capacities:\n  \u2190/\u2192: -/+10  \u2193\u2191: -/+100",
@@ -534,6 +536,8 @@ public static class UIConfigWindow
         wnd.AddTipsButton2(x + checkBoxForMeasureTextWidth.Width + 5f, y + 6f, tab3, "Enhance control for logistic storage capacities", "Enhance control for logistic storage capacities tips", "enhanced-logistic-capacities-tips");
         y += 36f;
         wnd.AddCheckBox(x, y, tab3, LogisticsPatch.AllowOverflowInLogisticsEnabled, "Allow overflow for Logistic Stations and Advanced Mining Machines");
+        y += 30f;
+        wnd.AddCheckBox(x, y, tab2, LogisticsPatch.GreaterPowerUsageInLogisticsEnabled, "Increase maximum power usage in Logistic Stations and Advanced Mining Machines");
         y += 36f;
         checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab3, LogisticsPatch.LogisticsConstrolPanelImprovementEnabled, "Logistics Control Panel Improvement");
         wnd.AddTipsButton2(x + checkBoxForMeasureTextWidth.Width + 5f, y + 6f, tab3, "Logistics Control Panel Improvement", "Logistics Control Panel Improvement tips", "lcp-improvement-tips");
