@@ -487,6 +487,8 @@ public static class LogisticsPatch
         private static long _nextKeyTick;
         private static bool _skipNextUIStationStorageEvent;
         private static bool _skipNextUIControlPanelStationStorageEvent;
+        private static bool _refreshingUIStationStorage;
+        private static bool _refreshingUIControlPanelStationStorage;
 
         private static bool UpdateKeyPressed(KeyCode code)
         {
@@ -628,10 +630,38 @@ public static class LogisticsPatch
         }
 
         [HarmonyPrefix]
+        [HarmonyPatch(typeof(UIStationStorage), "RefreshValues")]
+        private static void UIStationStorage_RefreshValues_Prefix()
+        {
+            _refreshingUIStationStorage = true;
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(UIStationStorage), "RefreshValues")]
+        private static void UIStationStorage_RefreshValues_Postfix()
+        {
+            _refreshingUIStationStorage = false;
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(UIControlPanelStationStorage), "RefreshValues")]
+        private static void UIControlPanelStationStorage_RefreshValues_Prefix()
+        {
+            _refreshingUIControlPanelStationStorage = true;
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(UIControlPanelStationStorage), "RefreshValues")]
+        private static void UIControlPanelStationStorage_RefreshValues_Postfix()
+        {
+            _refreshingUIControlPanelStationStorage = false;
+        }
+
+        [HarmonyPrefix]
         [HarmonyPatch(typeof(UIStationStorage), nameof(UIStationStorage.OnMaxSliderValueChange))]
         private static bool UIStationStorage_OnMaxSliderValueChange_Prefix()
         {
-            if (!_skipNextUIStationStorageEvent) return true;
+            if (!_refreshingUIStationStorage && !_skipNextUIStationStorageEvent) return true;
             _skipNextUIStationStorageEvent = false;
             return false;
         }
@@ -640,7 +670,7 @@ public static class LogisticsPatch
         [HarmonyPatch(typeof(UIControlPanelStationStorage), nameof(UIControlPanelStationStorage.OnMaxSliderValueChange))]
         private static bool UIControlPanelStationStorage_OnMaxSliderValueChange_Prefix()
         {
-            if (!_skipNextUIControlPanelStationStorageEvent) return true;
+            if (!_refreshingUIControlPanelStationStorage && !_skipNextUIControlPanelStationStorageEvent) return true;
             _skipNextUIControlPanelStationStorageEvent = false;
             return false;
         }
