@@ -7,6 +7,7 @@ using UXAssist.Functions;
 using UXAssist.ModsCompat;
 using UXAssist.Patches;
 using UXAssist.Patches.Factory;
+using UXAssist.Patches.Logistics;
 using UXAssist.UI;
 
 namespace UXAssist;
