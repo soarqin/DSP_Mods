@@ -3,9 +3,11 @@ using System.Reflection.Emit;
 using BepInEx.Configuration;
 using HarmonyLib;
 using UXAssist.Common;
+using UXAssist.Common.ModFeatures;
 
 namespace CheatEnabler.Patches;
 
+[ModFeature("Resource")]
 public static class ResourcePatch
 {
     public static ConfigEntry<bool> InfiniteResourceEnabled;

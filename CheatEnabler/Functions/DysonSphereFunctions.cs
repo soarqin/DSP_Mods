@@ -7,9 +7,11 @@ using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine;
 using UXAssist.Common;
+using UXAssist.Common.ModFeatures;
 
 namespace CheatEnabler.Functions;
 
+[ModFeature("DysonSphereFunctions")]
 public static class DysonSphereFunctions
 {
     public static ConfigEntry<bool> IllegalDysonShellFunctionsEnabled;

@@ -5,9 +5,11 @@ using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine.Bindings;
 using UXAssist.Common;
+using UXAssist.Common.ModFeatures;
 
 namespace CheatEnabler.Patches;
 
+[ModFeature("Game")]
 public static class GamePatch
 {
     public static ConfigEntry<bool> DevShortcutsEnabled;

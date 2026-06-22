@@ -4,10 +4,12 @@ using System.Reflection.Emit;
 using BepInEx.Configuration;
 using HarmonyLib;
 using UXAssist.Common;
+using UXAssist.Common.ModFeatures;
 using GameLogicProc = UXAssist.Common.GameLogic;
 
 namespace CheatEnabler.Patches;
 
+[ModFeature("DysonSphere")]
 public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
 {
     public static ConfigEntry<bool> SkipBulletEnabled;

@@ -55,8 +55,9 @@ public static class ModFeatureRegistry
         if (!_discoveredAssemblies.Add(assembly)) return;
 
         var staticTypes = Util.GetTypesFiltered(assembly, t =>
-            t.IsClass && t.IsAbstract && t.IsSealed &&
-            Attribute.IsDefined(t, typeof(ModFeatureAttribute)));
+            t.IsClass && !t.IsInterface &&
+            Attribute.IsDefined(t, typeof(ModFeatureAttribute)) &&
+            !typeof(IModFeature).IsAssignableFrom(t));
 
         foreach (var type in staticTypes.OrderBy(GetOrder))
         {

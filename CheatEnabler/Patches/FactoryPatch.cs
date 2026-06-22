@@ -8,10 +8,12 @@ using HarmonyLib;
 using UnityEngine;
 using UnityEngine.UI;
 using UXAssist.Common;
+using UXAssist.Common.ModFeatures;
 using GameLogicProc = UXAssist.Common.GameLogic;
 
 namespace CheatEnabler.Patches;
 
+[ModFeature("Factory")]
 public class FactoryPatch : PatchImpl<FactoryPatch>
 {
     public static ConfigEntry<bool> ImmediateEnabled;

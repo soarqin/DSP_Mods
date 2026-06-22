@@ -1,7 +1,9 @@
 ﻿using Random = UnityEngine.Random;
+using UXAssist.Common.ModFeatures;
 
 namespace CheatEnabler.Functions;
 
+[ModFeature("PlanetFunctions")]
 public static class PlanetFunctions
 {
     public static void BuryAllVeins(bool bury)

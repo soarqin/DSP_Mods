@@ -4,9 +4,11 @@ using System.Reflection.Emit;
 using BepInEx.Configuration;
 using HarmonyLib;
 using UXAssist.Common;
+using UXAssist.Common.ModFeatures;
 
 namespace CheatEnabler.Patches;
 
+[ModFeature("Planet")]
 public static class PlanetPatch
 {
     public static ConfigEntry<bool> WaterPumpAnywhereEnabled;

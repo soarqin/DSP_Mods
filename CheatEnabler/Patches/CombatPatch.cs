@@ -4,9 +4,11 @@ using System.Reflection.Emit;
 using BepInEx.Configuration;
 using HarmonyLib;
 using UXAssist.Common;
+using UXAssist.Common.ModFeatures;
 
 namespace CheatEnabler.Patches;
 
+[ModFeature("Combat")]
 public static class CombatPatch
 {
     public static ConfigEntry<bool> MechaInvincibleEnabled;

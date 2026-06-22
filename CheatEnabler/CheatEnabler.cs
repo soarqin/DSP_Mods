@@ -4,6 +4,7 @@ using BepInEx;
 using CheatEnabler.Patches;
 using HarmonyLib;
 using UXAssist.Common;
+using UXAssist.Common.ModFeatures;
 
 namespace CheatEnabler;
 
@@ -96,26 +97,23 @@ public class CheatEnabler : BaseUnityPlugin
         CombatPatch.BuildingsInvincibleEnabled = Config.Bind("Battle", "BuildingsInvincible", false,
             "Buildings invincible");
         UIConfigWindow.Init();
-        _patches = Util.GetTypesFiltered(Assembly.GetExecutingAssembly(),
-            t => string.Equals(t.Namespace, "CheatEnabler.Patches", StringComparison.Ordinal) || string.Equals(t.Namespace, "CheatEnabler.Functions", StringComparison.Ordinal));
-        _patches?.Do(type => type.GetMethod("Init")?.Invoke(null, null));
+        ModFeatureRegistry.Discover(Assembly.GetExecutingAssembly());
+        ModFeatureRegistry.InitAll();
     }
-
-    private Type[] _patches;
 
     private void Start()
     {
-        _patches?.Do(type => type.GetMethod("Start")?.Invoke(null, null));
+        ModFeatureRegistry.StartAll();
     }
 
     private void OnDestroy()
     {
-        _patches?.Do(type => type.GetMethod("Uninit")?.Invoke(null, null));
+        ModFeatureRegistry.UninitAll();
     }
 
     private void Update()
     {
         if (VFInput.inputing) return;
-        FactoryPatch.OnInputUpdate();
+        ModFeatureRegistry.OnInputUpdateAll();
     }
 }
