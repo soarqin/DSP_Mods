@@ -27,6 +27,6 @@ public static class DysonSphereFunctions
     public static void KeepMaxProductionShells() => IllegalShellFunctions.KeepMaxProductionShells();
     public static void CreateIllegalDysonShellQuickly(int triangleCount) => IllegalShellFunctions.CreateIllegalDysonShellQuickly(triangleCount);
     public static void CreateIllegalDysonShellWithMaxOutput() => IllegalShellFunctions.CreateIllegalDysonShellWithMaxOutput();
-    public static void CreateIllegalDysonShellWithMaxOutput2() => IllegalShellFunctions.CreateIllegalDysonShellWithMaxOutput2();
+    public static void CreateIllegalDysonShellWithMaxOutputForAllLayers() => IllegalShellFunctions.CreateIllegalDysonShellWithMaxOutputForAllLayers();
     public static void CreateIllegalDysonShellsSpecially() => IllegalShellFunctions.CreateIllegalDysonShellsSpecially();
 }

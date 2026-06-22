@@ -13,14 +13,54 @@ namespace CheatEnabler.Functions.DysonSphere;
 [ModFeature("IllegalShellFunctions")]
 public static class IllegalShellFunctions
 {
+    private static void EnsureDysonShellMaps()
+    {
+        DysonShell.s_vmap ??= new Dictionary<int, Vector3>(16384);
+        DysonShell.s_outvmap ??= new Dictionary<int, Vector3>(16384);
+        DysonShell.s_ivmap ??= new Dictionary<int, int>(16384);
+    }
+
+    private static void ResetLayerPools(DysonSphereLayer layer)
+    {
+        layer.nodePool = new DysonNode[64];
+        layer.nodeRecycle = new int[64];
+        layer.nodeRecycleCursor = 0;
+        layer.nodeCapacity = 64;
+        layer.nodeCursor = 1;
+        layer.framePool = new DysonFrame[64];
+        layer.frameRecycle = new int[64];
+        layer.frameRecycleCursor = 0;
+        layer.frameCapacity = 64;
+        layer.frameCursor = 1;
+        layer.shellPool = new DysonShell[64];
+        layer.shellRecycle = new int[64];
+        layer.shellRecycleCursor = 0;
+        layer.shellCapacity = 64;
+        layer.shellCursor = 1;
+    }
+
+    private static void FinalizeDysonSphereChanges(global::DysonSphere sphere, DysonSphereLayer layer, bool notify = false, bool resetRenderMasks = false)
+    {
+        if (sphere == null) return;
+        sphere.CheckAutoNodes();
+        if (sphere.autoNodeCount <= 0) sphere.PickAutoNode();
+        sphere.modelRenderer.RebuildModels();
+        if (notify) GameMain.gameScenario?.NotifyOnPlanDysonShell();
+        if (resetRenderMasks)
+        {
+            sphere.inEditorRenderMaskS = 0;
+            sphere.inEditorRenderMaskL = 0;
+            sphere.inGameRenderMaskS = 0;
+            sphere.inGameRenderMaskL = 0;
+        }
+    }
+
     public static void DuplicateShellsWithHighestProduction()
     {
         var resolved = DysonSphereResolver.ResolveEditorOrLocalSphere();
         if (resolved == null) return;
         var (dysonSphere, star) = resolved.Value;
-        DysonShell.s_vmap ??= new Dictionary<int, Vector3>(16384);
-        DysonShell.s_outvmap ??= new Dictionary<int, Vector3>(16384);
-        DysonShell.s_ivmap ??= new Dictionary<int, int>(16384);
+        EnsureDysonShellMaps();
         DysonSphereLayer layer = null;
         var nodePos = new List<Vector3>();
         var isEuler = new List<bool>();
@@ -98,17 +138,7 @@ public static class IllegalShellFunctions
             node.RecalcSpReq();
             node.RecalcCpReq();
         }
-        dysonSphere.CheckAutoNodes();
-        if (dysonSphere.autoNodeCount <= 0)
-        {
-            dysonSphere.PickAutoNode();
-        }
-        dysonSphere.modelRenderer.RebuildModels();
-        GameMain.gameScenario?.NotifyOnPlanDysonShell();
-        dysonSphere.inEditorRenderMaskS = 0;
-        dysonSphere.inEditorRenderMaskL = 0;
-        dysonSphere.inGameRenderMaskS = 0;
-        dysonSphere.inGameRenderMaskL = 0;
+        FinalizeDysonSphereChanges(dysonSphere, layer, true, true);
     }
 
     public static void KeepMaxProductionShells()
@@ -213,29 +243,16 @@ public static class IllegalShellFunctions
                 node.RecalcCpReq();
             }
         }
-        dysonSphere.CheckAutoNodes();
-        if (dysonSphere.autoNodeCount <= 0)
-        {
-            dysonSphere.PickAutoNode();
-        }
-        dysonSphere.modelRenderer.RebuildModels();
+        FinalizeDysonSphereChanges(dysonSphere, null);
     }
 
     public static void CreateIllegalDysonShellQuickly(int triangleCount)
     {
-        var star = DysonSphereResolver.ResolveEditorOrLocalStar();
-        if (star == null) return;
+        var resolved = DysonSphereResolver.ResolveEditorOrLocalSphere(requireLayer: false);
+        if (resolved == null) return;
+        var (dysonSphere, _) = resolved.Value;
 
-        var dysonSphere = GameMain.data?.dysonSpheres[star.index];
-        if (dysonSphere == null)
-        {
-            UIMessageBox.Show("CheatEnabler".Translate(), string.Format("There is no Dyson Sphere data on \"{0}\".".Translate(), star.displayName), "确定".Translate(), UIMessageBox.ERROR, null);
-            return;
-        }
-
-        DysonShell.s_vmap ??= new Dictionary<int, Vector3>(16384);
-        DysonShell.s_outvmap ??= new Dictionary<int, Vector3>(16384);
-        DysonShell.s_ivmap ??= new Dictionary<int, int>(16384);
+        EnsureDysonShellMaps();
 
         for (int i = 1; i <= 10; i++)
         {
@@ -298,19 +315,14 @@ public static class IllegalShellFunctions
                 node.RecalcSpReq();
                 node.RecalcCpReq();
             }
-            dysonSphere.CheckAutoNodes();
-            if (dysonSphere.autoNodeCount <= 0) dysonSphere.PickAutoNode();
-            dysonSphere.modelRenderer.RebuildModels();
-            GameMain.gameScenario?.NotifyOnPlanDysonShell();
+            FinalizeDysonSphereChanges(dysonSphere, layer, true);
             return;
         }
     }
 
     private static bool CreateIllegalDysonShellWithMaxOutputForLayer(DysonSphereLayer layer)
     {
-        DysonShell.s_vmap ??= new Dictionary<int, Vector3>(16384);
-        DysonShell.s_outvmap ??= new Dictionary<int, Vector3>(16384);
-        DysonShell.s_ivmap ??= new Dictionary<int, int>(16384);
+        EnsureDysonShellMaps();
         var shellsChanged = false;
         var mutex = new object();
         var supposedShells = new List<SupposedShell>(60 * 59 * 58);
@@ -370,21 +382,7 @@ public static class IllegalShellFunctions
         });
         if (maxJ >= 0)
         {
-            layer.nodePool = new DysonNode[64];
-            layer.nodeRecycle = new int[64];
-            layer.nodeRecycleCursor = 0;
-            layer.nodeCapacity = 64;
-            layer.nodeCursor = 1;
-            layer.framePool = new DysonFrame[64];
-            layer.frameRecycle = new int[64];
-            layer.frameRecycleCursor = 0;
-            layer.frameCapacity = 64;
-            layer.frameCursor = 1;
-            layer.shellPool = new DysonShell[64];
-            layer.shellRecycle = new int[64];
-            layer.shellRecycleCursor = 0;
-            layer.shellCapacity = 64;
-            layer.shellCursor = 1;
+            ResetLayerPools(layer);
             var sshell = supposedShells[maxJ];
             DysonNode[] newNodes = [layer.QuickAddDysonNode(0, sshell.posA), layer.QuickAddDysonNode(0, sshell.posB), layer.QuickAddDysonNode(0, sshell.posC)];
             DysonFrame[] newFrames = [layer.QuickAddDysonFrame(0, newNodes[0], newNodes[1], false), layer.QuickAddDysonFrame(0, newNodes[1], newNodes[2], false), layer.QuickAddDysonFrame(0, newNodes[2], newNodes[0], false)];
@@ -401,15 +399,10 @@ public static class IllegalShellFunctions
 
     public static void CreateIllegalDysonShellWithMaxOutput()
     {
-        var star = DysonSphereResolver.ResolveEditorOrLocalStar();
-        if (star == null) return;
+        var resolved = DysonSphereResolver.ResolveEditorOrLocalSphere(requireLayer: false);
+        if (resolved == null) return;
+        var (dysonSphere, star) = resolved.Value;
         UXAssist.Functions.DysonSphereFunctions.InitCurrentDysonLayer(star, 0);
-        var dysonSphere = GameMain.data?.dysonSpheres[star.index];
-        if (dysonSphere == null)
-        {
-            UIMessageBox.Show("CheatEnabler".Translate(), string.Format("There is no Dyson Sphere data on \"{0}\".".Translate(), star.displayName), "确定".Translate(), UIMessageBox.ERROR, null);
-            return;
-        }
         var layer = dysonSphere.layersIdBased[1];
         if (layer != null)
         {
@@ -421,42 +414,23 @@ public static class IllegalShellFunctions
 
         var shellsChanged = CreateIllegalDysonShellWithMaxOutputForLayer(layer);
 
-        dysonSphere.CheckAutoNodes();
-        if (dysonSphere.autoNodeCount <= 0) dysonSphere.PickAutoNode();
-        dysonSphere.modelRenderer.RebuildModels();
-        if (shellsChanged) GameMain.gameScenario?.NotifyOnPlanDysonShell();
-        dysonSphere.inEditorRenderMaskS = 0;
-        dysonSphere.inEditorRenderMaskL = 0;
-        dysonSphere.inGameRenderMaskS = 0;
-        dysonSphere.inGameRenderMaskL = 0;
+        FinalizeDysonSphereChanges(dysonSphere, layer, shellsChanged, true);
     }
 
-    public static void CreateIllegalDysonShellWithMaxOutput2()
+    public static void CreateIllegalDysonShellWithMaxOutputForAllLayers()
     {
-        var star = DysonSphereResolver.ResolveEditorOrLocalStar();
-        if (star == null) return;
-        var dysonSphere = GameMain.data?.dysonSpheres[star.index];
-        if (dysonSphere == null)
-        {
-            UIMessageBox.Show("CheatEnabler".Translate(), string.Format("There is no Dyson Sphere data on \"{0}\".".Translate(), star.displayName), "确定".Translate(), UIMessageBox.ERROR, null);
-            return;
-        }
+        var resolved = DysonSphereResolver.ResolveEditorOrLocalSphere(requireLayer: false);
+        if (resolved == null) return;
+        var (dysonSphere, _) = resolved.Value;
         var shellsChanged = false;
-		for (int i = dysonSphere.layersSorted.Length - 1; i >= 0; i--)
-		{
+        for (int i = dysonSphere.layersSorted.Length - 1; i >= 0; i--)
+        {
             var layer = dysonSphere.layersSorted[i];
-			if (layer == null) continue;
+            if (layer == null) continue;
             shellsChanged = CreateIllegalDysonShellWithMaxOutputForLayer(layer) || shellsChanged;
-		}
+        }
 
-        dysonSphere.CheckAutoNodes();
-        if (dysonSphere.autoNodeCount <= 0) dysonSphere.PickAutoNode();
-        dysonSphere.modelRenderer.RebuildModels();
-        if (shellsChanged) GameMain.gameScenario?.NotifyOnPlanDysonShell();
-        dysonSphere.inEditorRenderMaskS = 0;
-        dysonSphere.inEditorRenderMaskL = 0;
-        dysonSphere.inGameRenderMaskS = 0;
-        dysonSphere.inGameRenderMaskL = 0;
+        FinalizeDysonSphereChanges(dysonSphere, dysonSphere.layersSorted.FirstOrDefault(l => l != null), shellsChanged, true);
     }
 
     public static void CreateIllegalDysonShellsSpecially()
@@ -473,31 +447,12 @@ public static class IllegalShellFunctions
             CheatEnabler.Logger.LogDebug($"Grid Scale: {gridScale} from {r}");
         }
         radiusList.Add(250000);
-        StarData star = null;
-        var dysonEditor = UIRoot.instance?.uiGame?.dysonEditor;
-        if (dysonEditor != null && dysonEditor.gameObject.activeSelf)
-        {
-            star = dysonEditor.selection.viewStar;
-        }
-        if (star == null)
-        {
-            star = GameMain.localStar;
-            if (star == null)
-            {
-                UIMessageBox.Show("CheatEnabler".Translate(), "You are not in any system.".Translate(), "确定".Translate(), UIMessageBox.ERROR, null);
-                return;
-            }
-        }
+        var resolved = DysonSphereResolver.ResolveEditorOrLocalSphere(requireLayer: false);
+        if (resolved == null) return;
+        var (dysonSphere, star) = resolved.Value;
         UXAssist.Functions.DysonSphereFunctions.InitCurrentDysonLayer(star, 0);
-        var dysonSphere = GameMain.data?.dysonSpheres[star.index];
-        if (dysonSphere == null)
-        {
-            UIMessageBox.Show("CheatEnabler".Translate(), string.Format("There is no Dyson Sphere data on \"{0}\".".Translate(), star.displayName), "确定".Translate(), UIMessageBox.ERROR, null);
-            return;
-        }
-        DysonShell.s_vmap ??= new Dictionary<int, Vector3>(16384);
-        DysonShell.s_outvmap ??= new Dictionary<int, Vector3>(16384);
-        DysonShell.s_ivmap ??= new Dictionary<int, int>(16384);
+
+        EnsureDysonShellMaps();
         var shellsChanged = false;
         var mutex = new object();
 
@@ -583,21 +538,7 @@ public static class IllegalShellFunctions
                 {
                     continue;
                 }
-                layer.nodePool = new DysonNode[64];
-                layer.nodeRecycle = new int[64];
-                layer.nodeRecycleCursor = 0;
-                layer.nodeCapacity = 64;
-                layer.nodeCursor = 1;
-                layer.framePool = new DysonFrame[64];
-                layer.frameRecycle = new int[64];
-                layer.frameRecycleCursor = 0;
-                layer.frameCapacity = 64;
-                layer.frameCursor = 1;
-                layer.shellPool = new DysonShell[64];
-                layer.shellRecycle = new int[64];
-                layer.shellRecycleCursor = 0;
-                layer.shellCapacity = 64;
-                layer.shellCursor = 1;
+                ResetLayerPools(layer);
                 DysonNode[] newNodes = [layer.QuickAddDysonNode(0, sshell.posA * orbitRadius), layer.QuickAddDysonNode(0, sshell.posB * orbitRadius), layer.QuickAddDysonNode(0, sshell.posC * orbitRadius)];
                 DysonFrame[] newFrames = [layer.QuickAddDysonFrame(0, newNodes[0], newNodes[1], false), layer.QuickAddDysonFrame(0, newNodes[1], newNodes[2], false), layer.QuickAddDysonFrame(0, newNodes[2], newNodes[0], false)];
                 layer.QuickAddDysonShell(0, newNodes, newFrames, false);
@@ -611,13 +552,6 @@ public static class IllegalShellFunctions
             }
         }
 
-        dysonSphere.CheckAutoNodes();
-        if (dysonSphere.autoNodeCount <= 0) dysonSphere.PickAutoNode();
-        dysonSphere.modelRenderer.RebuildModels();
-        if (shellsChanged) GameMain.gameScenario?.NotifyOnPlanDysonShell();
-        dysonSphere.inEditorRenderMaskS = 0;
-        dysonSphere.inEditorRenderMaskL = 0;
-        dysonSphere.inGameRenderMaskS = 0;
-        dysonSphere.inGameRenderMaskL = 0;
+        FinalizeDysonSphereChanges(dysonSphere, dysonSphere.layersIdBased[2], shellsChanged, true);
     }
 }

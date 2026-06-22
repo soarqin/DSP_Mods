@@ -290,7 +290,7 @@ public static class GeometryHelpers
         }
         return vmap.Count;
     }
-    public static bool MyGenerateGeometry(this DysonShell shell)
+    public static bool GenerateCustomShellGeometry(this DysonShell shell)
     {
         VectorLF3 sum = VectorLF3.zero;
         double num = 0.0;
@@ -718,7 +718,7 @@ public static class GeometryHelpers
             shell.nodes.Add(dysonNode);
             shell.frames.Add(dysonFrame);
         }
-        if (!shell.MyGenerateGeometry() || (limit && DysonShell.s_vmap.Count < 32000))
+        if (!shell.GenerateCustomShellGeometry() || (limit && DysonShell.s_vmap.Count < 32000))
         {
             CheatEnabler.Logger.LogDebug($"Stripped VertCount: {DysonShell.s_vmap.Count}");
             shell.Free();

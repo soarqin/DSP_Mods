@@ -323,7 +323,7 @@ public static class UIConfigWindow
             var btn1 = wnd.AddButton(x, y, 300f, tab4, "Generate illegal dyson shell 2", 16, "button-generate-illegal-dyson-shells", () =>
             {
                 UIMessageBox.Show("Generate illegal dyson shell 2".Translate(), "WARNING: This operation can be very slow, continue?".Translate(), "取消".Translate(), "确定".Translate(), UIMessageBox.WARNING, null,
-                    () => { DysonSphereFunctions.CreateIllegalDysonShellWithMaxOutput2(); });
+                    () => { DysonSphereFunctions.CreateIllegalDysonShellWithMaxOutputForAllLayers(); });
             });
             y += 36f;
             var btn2 = wnd.AddButton(x, y, 300f, tab4, "Keep max production shells and remove others", 16, "button-keep-max-production-shells", () =>
