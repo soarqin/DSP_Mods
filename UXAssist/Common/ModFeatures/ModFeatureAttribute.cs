@@ -3,7 +3,7 @@ using System;
 namespace UXAssist.Common.ModFeatures;
 
 /// <summary>
-/// Marks a static class as a mod feature so that <see cref="ModFeatureRegistry"/> can discover it.
+/// Marks a class as a mod feature so that <see cref="ModFeatureRegistry"/> can discover it.
 /// Lifecycle methods (<c>Init</c>, <c>Start</c>, <c>Uninit</c>, <c>OnInputUpdate</c>, <c>OnUpdate</c>) are optional.
 /// </summary>
 [AttributeUsage(AttributeTargets.Class, Inherited = false)]

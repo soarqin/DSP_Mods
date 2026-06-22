@@ -6,8 +6,9 @@ using System.Reflection;
 namespace UXAssist.Common.ModFeatures;
 
 /// <summary>
-/// Registry that discovers static mod features from assemblies and holds registered instance mod features.
-/// Static lifecycle methods are optional; if a method is missing it is simply skipped.
+/// Registry that discovers mod feature classes marked with <see cref="ModFeatureAttribute"/> from assemblies
+/// and holds registered instance mod features. Discovered features invoke static lifecycle methods;
+/// static lifecycle methods are optional and are skipped if missing.
 /// </summary>
 public static class ModFeatureRegistry
 {
@@ -46,7 +47,7 @@ public static class ModFeatureRegistry
     private static readonly HashSet<Assembly> _discoveredAssemblies = [];
 
     /// <summary>
-    /// Discovers static mod feature classes marked with <see cref="ModFeatureAttribute"/> in the given assembly.
+    /// Discovers mod feature classes marked with <see cref="ModFeatureAttribute"/> in the given assembly.
     /// Each assembly is only discovered once.
     /// </summary>
     /// <param name="assembly">The assembly to scan.</param>
@@ -55,7 +56,7 @@ public static class ModFeatureRegistry
         if (!_discoveredAssemblies.Add(assembly)) return;
 
         var staticTypes = Util.GetTypesFiltered(assembly, t =>
-            t.IsClass && !t.IsInterface &&
+            t.IsClass &&
             Attribute.IsDefined(t, typeof(ModFeatureAttribute)) &&
             !typeof(IModFeature).IsAssignableFrom(t));
 
@@ -81,7 +82,7 @@ public static class ModFeatureRegistry
 
     /// <summary>
     /// Calls <see cref="IModFeature.Init"/> on all registered instance features
-    /// and invokes the cached static <c>Init</c> methods on all discovered static features.
+    /// and invokes the cached static <c>Init</c> methods on all discovered mod feature classes.
     /// </summary>
     public static void InitAll()
     {
@@ -91,7 +92,7 @@ public static class ModFeatureRegistry
 
     /// <summary>
     /// Calls <see cref="IModFeature.Start"/> on all registered instance features
-    /// and invokes the cached static <c>Start</c> methods on all discovered static features.
+    /// and invokes the cached static <c>Start</c> methods on all discovered mod feature classes.
     /// </summary>
     public static void StartAll()
     {
@@ -101,7 +102,7 @@ public static class ModFeatureRegistry
 
     /// <summary>
     /// Calls <see cref="IModFeature.Uninit"/> on all registered instance features
-    /// and invokes the cached static <c>Uninit</c> methods on all discovered static features.
+    /// and invokes the cached static <c>Uninit</c> methods on all discovered mod feature classes.
     /// </summary>
     public static void UninitAll()
     {
@@ -111,7 +112,7 @@ public static class ModFeatureRegistry
 
     /// <summary>
     /// Calls <see cref="IModFeature.OnInputUpdate"/> on all registered instance features
-    /// and invokes the cached static <c>OnInputUpdate</c> delegates on all discovered static features.
+    /// and invokes the cached static <c>OnInputUpdate</c> delegates on all discovered mod feature classes.
     /// This method is meant to be called every frame; no reflection is performed here.
     /// </summary>
     public static void OnInputUpdateAll()
@@ -122,7 +123,7 @@ public static class ModFeatureRegistry
 
     /// <summary>
     /// Calls <see cref="IModFeature.OnUpdate"/> on all registered instance features
-    /// and invokes the cached static <c>OnUpdate</c> delegates on all discovered static features.
+    /// and invokes the cached static <c>OnUpdate</c> delegates on all discovered mod feature classes.
     /// This method is meant to be called every frame; no reflection is performed here.
     /// </summary>
     public static void OnUpdateAll()
