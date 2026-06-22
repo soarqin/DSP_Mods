@@ -14,6 +14,9 @@ public static class UIFunctions
         AutoConstructUI.Init();
         StarmapFilterUI.Init();
         MilkyWayUI.Init();
+
+        UXAssist.RegisterExporter(ExportClusterUploadResults);
+        UXAssist.RegisterImporter((r, version) => ImportClusterUploadResults(r, version));
     }
 
     public static void Start()
@@ -97,9 +100,12 @@ public static class UIFunctions
         MilkyWayUI.Export(w);
     }
 
-    public static void ImportClusterUploadResults(BinaryReader r)
+    public static void ImportClusterUploadResults(BinaryReader r, ushort version)
     {
-        MilkyWayUI.Import(r);
+        if (version > 1)
+            MilkyWayUI.Import(r);
+        else
+            MilkyWayUI.ClearClusterUploadResults();
     }
 
     public static void ClearClusterUploadResults()

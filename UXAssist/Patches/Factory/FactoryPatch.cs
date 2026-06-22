@@ -135,6 +135,9 @@ public static class FactoryPatch
         EjectorBufferCount.SettingChanged += (_, _) => BuildingBufferPatch.TweakBuildingBuffer.RefreshEjectorBufferCount();
         SiloBufferCount.SettingChanged += (_, _) => BuildingBufferPatch.TweakBuildingBuffer.RefreshSiloBufferCount();
         PressShiftToTakeWholeBeltItemsEnabled.SettingChanged += (_, _) => BuildToolPatch.PressShiftToTakeWholeBeltItems.Enable(PressShiftToTakeWholeBeltItemsEnabled.Value);
+
+        UXAssist.RegisterExporter(Export);
+        UXAssist.RegisterImporter((r, version) => Import(r, version));
     }
 
     public static void Start()
@@ -219,7 +222,7 @@ public static class FactoryPatch
         BeltSignalPatch.Export(w);
     }
 
-    public static void Import(BinaryReader r)
+    public static void Import(BinaryReader r, ushort version)
     {
         BeltSignalPatch.Import(r);
     }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using BepInEx;
@@ -38,26 +39,23 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
     #region IModCanSave
     private const ushort ModSaveVersion = 2;
 
+    private static readonly List<Action<BinaryWriter>> _exporters = [];
+    private static readonly List<Action<BinaryReader, ushort>> _importers = [];
+
+    public static void RegisterExporter(Action<BinaryWriter> e) => _exporters.Add(e);
+    public static void RegisterImporter(Action<BinaryReader, ushort> i) => _importers.Add(i);
+
     public void Export(BinaryWriter w)
     {
         w.Write(ModSaveVersion);
-        FactoryPatch.Export(w);
-        UIFunctions.ExportClusterUploadResults(w);
+        foreach (var e in _exporters) e(w);
     }
 
     public void Import(BinaryReader r)
     {
         var version = r.ReadUInt16();
         if (version <= 0) return;
-        FactoryPatch.Import(r);
-        if (version > 1)
-        {
-            UIFunctions.ImportClusterUploadResults(r);
-        }
-        else
-        {
-            UIFunctions.ClearClusterUploadResults();
-        }
+        foreach (var i in _importers) i(r, version);
     }
 
     public void IntoOtherSave()
@@ -284,17 +282,10 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
     private void Update()
     {
         if (VFInput.inputing) return;
-        if (DSPGame.IsMenuDemo)
-        {
-            UIFunctions.OnInputUpdate();
-            return;
-        }
-        LogisticsPatch.OnInputUpdate();
-        UIFunctions.OnInputUpdate();
+        ModFeatureRegistry.OnInputUpdateAll();
+        if (DSPGame.IsMenuDemo) return;
         GamePatch.OnInputUpdate();
-        FactoryPatch.OnInputUpdate();
         PlayerPatch.OnInputUpdate();
-
-        LogisticsPatch.OnUpdate();
+        ModFeatureRegistry.OnUpdateAll();
     }
 }
