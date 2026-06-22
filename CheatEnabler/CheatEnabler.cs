@@ -2,6 +2,7 @@
 using System.Reflection;
 using BepInEx;
 using CheatEnabler.Patches;
+using CheatEnabler.Patches.Factory;
 using HarmonyLib;
 using UXAssist.Common;
 using UXAssist.Common.ModFeatures;

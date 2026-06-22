@@ -1,5 +1,6 @@
 ﻿using CheatEnabler.Functions;
 using CheatEnabler.Patches;
+using CheatEnabler.Patches.Factory;
 using UnityEngine;
 using UXAssist.UI;
 using UXAssist.Common;
