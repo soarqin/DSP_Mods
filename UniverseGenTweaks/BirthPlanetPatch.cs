@@ -1,10 +1,12 @@
 ﻿using System.Collections.Generic;
 using BepInEx.Configuration;
 using HarmonyLib;
+using UXAssist.Common.ModFeatures;
 using GameLogicProc = UXAssist.Common.GameLogic;
 
 namespace UniverseGenTweaks;
 
+[ModFeature("UniverseGenBirthPlanet", Order = 12)]
 public static class BirthPlanetPatch
 {
     public static ConfigEntry<bool> SitiVeinsOnBirthPlanet;

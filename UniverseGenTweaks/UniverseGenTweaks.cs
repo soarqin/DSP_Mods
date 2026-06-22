@@ -1,7 +1,9 @@
 ﻿using System.IO;
+using System.Reflection;
 using BepInEx;
 using BepInEx.Configuration;
 using crecheng.DSPModSave;
+using UXAssist.Common.ModFeatures;
 
 namespace UniverseGenTweaks;
 
@@ -51,17 +53,13 @@ public class UniverseGenTweaks : BaseUnityPlugin, IModCanSave
             "Birth star has high luminosity");
 
         UIConfigWindow.Init();
-
-        MoreSettings.Init();
-        EpicDifficulty.Init();
-        BirthPlanetPatch.Init();
+        ModFeatureRegistry.Discover(Assembly.GetExecutingAssembly());
+        ModFeatureRegistry.InitAll();
     }
 
     private void OnDestroy()
     {
-        BirthPlanetPatch.Uninit();
-        EpicDifficulty.Uninit();
-        MoreSettings.Uninit();
+        ModFeatureRegistry.UninitAll();
     }
 
     #region IModCanSave

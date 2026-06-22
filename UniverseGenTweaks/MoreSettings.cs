@@ -6,10 +6,12 @@ using HarmonyLib;
 using UnityEngine;
 using UnityEngine.UI;
 using UXAssist.Common;
+using UXAssist.Common.ModFeatures;
 using Object = UnityEngine.Object;
 
 namespace UniverseGenTweaks;
 
+[ModFeature("UniverseGenMoreSettings", Order = 10)]
 public class MoreSettings
 {
 

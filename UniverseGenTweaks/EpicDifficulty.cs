@@ -5,9 +5,11 @@ using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine.UI;
 using UXAssist.Common;
+using UXAssist.Common.ModFeatures;
 
 namespace UniverseGenTweaks;
 
+[ModFeature("UniverseGenEpicDifficulty", Order = 11)]
 public static class EpicDifficulty
 {
     public static ConfigEntry<bool> Enabled;
