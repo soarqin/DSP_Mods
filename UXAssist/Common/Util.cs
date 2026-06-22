@@ -15,6 +15,11 @@ public static class Util
 
     public static Type[] GetTypesInNamespace(Assembly assembly, string nameSpace) => GetTypesFiltered(assembly, t => string.Equals(t.Namespace, nameSpace, StringComparison.Ordinal));
 
+    public static Type[] GetTypesInNamespacePrefix(Assembly assembly, string prefix)
+    {
+        return GetTypesFiltered(assembly, t => t.Namespace != null && t.Namespace.StartsWith(prefix, StringComparison.Ordinal));
+    }
+
     public static byte[] LoadEmbeddedResource(string path, Assembly assembly = null)
     {
         if (assembly == null)
