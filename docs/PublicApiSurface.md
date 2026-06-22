@@ -210,6 +210,125 @@ P/Invoke functions:
 - `public static extern bool SetWindowText(IntPtr hwnd, string lpString)`
 - `public static extern IntPtr MonitorFromRect([In] ref Rect lpRect, uint dwFlags)`
 
+## New public types introduced in Phase 1
+
+### `UXAssist.Common.ModFeatures`
+
+#### `ModFeatureAttribute`
+
+```csharp
+public sealed class ModFeatureAttribute : Attribute
+```
+
+- `public string Name { get; }`
+- `public int Order { get; set; }`
+- `public ModFeatureAttribute(string name = null)`
+
+#### `IModFeature`
+
+```csharp
+public interface IModFeature
+```
+
+- `void Init()`
+- `void Start()`
+- `void Uninit()`
+- `void OnInputUpdate()`
+- `void OnUpdate()`
+
+#### `ModFeatureRegistry`
+
+```csharp
+public static class ModFeatureRegistry
+```
+
+- `public static void Discover(Assembly assembly)`
+- `public static void Register<T>() where T : class, IModFeature, new()`
+- `public static void InitAll()`
+- `public static void StartAll()`
+- `public static void UninitAll()`
+- `public static void OnInputUpdateAll()`
+- `public static void OnUpdateAll()`
+
+### `UXAssist.Common.Config`
+
+#### `FactoryConfigProvider`
+
+```csharp
+public static class FactoryConfigProvider
+```
+
+- `public static ConfigEntry<bool> UnlimitInteractiveEnabled { get; }`
+- `public static ConfigEntry<bool> RemoveSomeConditionEnabled { get; }`
+- `public static ConfigEntry<bool> NightLightEnabled { get; }`
+- `public static ConfigEntry<float> NightLightAngleX { get; }`
+- `public static ConfigEntry<float> NightLightAngleY { get; }`
+- `public static ConfigEntry<bool> RemoveBuildRangeLimitEnabled { get; }`
+- `public static ConfigEntry<bool> LargerAreaForUpgradeAndDismantleEnabled { get; }`
+- `public static ConfigEntry<bool> LargerAreaForTerraformEnabled { get; }`
+- `public static ConfigEntry<bool> OffGridBuildingEnabled { get; }`
+- `public static ConfigEntry<bool> TreatStackingAsSingleEnabled { get; }`
+- `public static ConfigEntry<bool> QuickBuildAndDismantleLabsEnabled { get; }`
+- `public static ConfigEntry<bool> ProtectVeinsFromExhaustionEnabled { get; }`
+- `public static ConfigEntry<bool> DoNotRenderEntitiesEnabled { get; }`
+- `public static ConfigEntry<bool> DragBuildPowerPolesEnabled { get; }`
+- `public static ConfigEntry<bool> DragBuildPowerPolesAlternatelyEnabled { get; }`
+- `public static ConfigEntry<bool> AutoConstructButtonEnabled { get; }`
+- `public static ConfigEntry<bool> BeltSignalsForBuyOutEnabled { get; }`
+- `public static ConfigEntry<bool> TankFastFillInAndTakeOutEnabled { get; }`
+- `public static ConfigEntry<int> TankFastFillInAndTakeOutMultiplier { get; }`
+- `public static ConfigEntry<bool> CutConveyorBeltEnabled { get; }`
+- `public static ConfigEntry<bool> TweakBuildingBufferEnabled { get; }`
+- `public static ConfigEntry<int> AssemblerBufferTimeMultiplier { get; }`
+- `public static ConfigEntry<int> AssemblerBufferMininumMultiplier { get; }`
+- `public static ConfigEntry<int> LabBufferMaxCountForAssemble { get; }`
+- `public static ConfigEntry<int> LabBufferExtraCountForAdvancedAssemble { get; }`
+- `public static ConfigEntry<int> LabBufferMaxCountForResearch { get; }`
+- `public static ConfigEntry<int> ReceiverBufferCount { get; }`
+- `public static ConfigEntry<int> EjectorBufferCount { get; }`
+- `public static ConfigEntry<int> SiloBufferCount { get; }`
+- `public static ConfigEntry<bool> ShortcutKeysForBlueprintCopyEnabled { get; }`
+- `public static ConfigEntry<bool> PressShiftToTakeWholeBeltItemsEnabled { get; }`
+- `public static ConfigEntry<bool> PressShiftToTakeWholeBeltItemsIncludeBranches { get; }`
+- `public static ConfigEntry<bool> PressShiftToTakeWholeBeltItemsIncludeInserters { get; }`
+
+#### `LogisticsConfigProvider`
+
+```csharp
+public static class LogisticsConfigProvider
+```
+
+- `public static ConfigEntry<bool> AutoConfigLogisticsEnabled { get; }`
+- `public static ConfigEntry<bool> AutoConfigLimitAutoReplenishCount { get; }`
+- `public static ConfigEntry<int> AutoConfigDispenserChargePower { get; }`
+- `public static ConfigEntry<int> AutoConfigDispenserCourierCount { get; }`
+- `public static ConfigEntry<int> AutoConfigBattleBaseChargePower { get; }`
+- `public static ConfigEntry<int> AutoConfigPLSChargePower { get; }`
+- `public static ConfigEntry<int> AutoConfigPLSMaxTripDrone { get; }`
+- `public static ConfigEntry<int> AutoConfigPLSDroneMinDeliver { get; }`
+- `public static ConfigEntry<int> AutoConfigPLSMinPilerValue { get; }`
+- `public static ConfigEntry<int> AutoConfigPLSDroneCount { get; }`
+- `public static ConfigEntry<bool> SetDefaultRemoteLogicToStorage { get; }`
+- `public static ConfigEntry<int> AutoConfigILSChargePower { get; }`
+- `public static ConfigEntry<int> AutoConfigILSMaxTripDrone { get; }`
+- `public static ConfigEntry<int> AutoConfigILSMaxTripShip { get; }`
+- `public static ConfigEntry<int> AutoConfigILSWarperDistance { get; }`
+- `public static ConfigEntry<int> AutoConfigILSDroneMinDeliver { get; }`
+- `public static ConfigEntry<int> AutoConfigILSShipMinDeliver { get; }`
+- `public static ConfigEntry<int> AutoConfigILSMinPilerValue { get; }`
+- `public static ConfigEntry<bool> AutoConfigILSIncludeOrbitCollector { get; }`
+- `public static ConfigEntry<bool> AutoConfigILSWarperNecessary { get; }`
+- `public static ConfigEntry<int> AutoConfigILSDroneCount { get; }`
+- `public static ConfigEntry<int> AutoConfigILSShipCount { get; }`
+- `public static ConfigEntry<int> AutoConfigVeinCollectorHarvestSpeed { get; }`
+- `public static ConfigEntry<int> AutoConfigVeinCollectorMinPilerValue { get; }`
+- `public static ConfigEntry<bool> LogisticsCapacityTweaksEnabled { get; }`
+- `public static ConfigEntry<bool> AllowOverflowInLogisticsEnabled { get; }`
+- `public static ConfigEntry<bool> GreaterPowerUsageInLogisticsEnabled { get; }`
+- `public static ConfigEntry<bool> LogisticsConstrolPanelImprovementEnabled { get; }`
+- `public static ConfigEntry<bool> RealtimeLogisticsInfoPanelEnabled { get; }`
+- `public static ConfigEntry<bool> RealtimeLogisticsInfoPanelBarsEnabled { get; }`
+
 ## UXAssist.UI
 
 ### `MyWindowManager`
