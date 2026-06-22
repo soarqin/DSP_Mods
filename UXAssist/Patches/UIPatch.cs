@@ -355,21 +355,21 @@ public class UIPatch : PatchImpl<UIPatch>
     [HarmonyPatch(typeof(UIStarmapStar), nameof(UIStarmapStar.OnStarDisplayNameChange))]
     private static bool UIStarmapStar_OnStarDisplayNameChange_Prefix()
     {
-        return Functions.UIFunctions.CornerComboBoxIndex == 0;
+        return Functions.UI.StarmapFilterUI.CornerComboBoxIndex == 0;
     }
 
     [HarmonyPostfix]
     [HarmonyPatch(typeof(UIStarmapStar), nameof(UIStarmapStar._OnClose))]
     private static void UIStarmapStar__OnClose_Postfix(UIStarmapStar __instance)
     {
-        Functions.UIFunctions.StarmapFilterToggler?.SetCheckedWithEvent(false);
+        Functions.UI.StarmapFilterUI.StarmapFilterToggler?.SetCheckedWithEvent(false);
     }
 
     [HarmonyPrefix]
     [HarmonyPatch(typeof(UIMechaLab), nameof(UIMechaLab.DetermineVisible))]
     private static bool UIMechaLab_DetermineVisible_Prefix(UIMechaLab __instance, ref bool __result)
     {
-        if (!UIRoot.instance.uiGame.starmap.active || !Functions.UIFunctions.StarmapFilterToggler.Checked)
+        if (!UIRoot.instance.uiGame.starmap.active || !Functions.UI.StarmapFilterUI.StarmapFilterToggler.Checked)
         {
             return true;
         }
@@ -382,7 +382,7 @@ public class UIPatch : PatchImpl<UIPatch>
     [HarmonyPatch(typeof(UIGoalPanel), nameof(UIGoalPanel.DetermineVisiable))]
     private static bool UIGoalPanel_DetermineVisiable_Prefix(UIGoalPanel __instance)
     {
-        if (!UIRoot.instance.uiGame.starmap.active || !Functions.UIFunctions.StarmapFilterToggler.Checked)
+        if (!UIRoot.instance.uiGame.starmap.active || !Functions.UI.StarmapFilterUI.StarmapFilterToggler.Checked)
         {
             return true;
         }

@@ -238,7 +238,6 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
             "Planet vein utilization");
 
         I18N.Init();
-        I18N.Add("UXAssist Config", "UXAssist Config", "UX助手设置");
 
         // UI Patches
         GameLogicProc.Enable(true);
@@ -246,7 +245,8 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
         UIConfigWindow.Init();
 
         _patches = Util.GetTypesFiltered(Assembly.GetExecutingAssembly(),
-            t => string.Equals(t.Namespace, "UXAssist.Patches", StringComparison.Ordinal) || string.Equals(t.Namespace, "UXAssist.Functions", StringComparison.Ordinal));
+            t => (string.Equals(t.Namespace, "UXAssist.Patches", StringComparison.Ordinal) || string.Equals(t.Namespace, "UXAssist.Functions", StringComparison.Ordinal))
+                 && !Attribute.IsDefined(t, typeof(ModFeatureAttribute)));
         _patches?.Do(type => type.GetMethod("Init")?.Invoke(null, null));
         _compats = Util.GetTypesInNamespace(Assembly.GetExecutingAssembly(), "UXAssist.ModsCompat");
         object[] parameters = [_harmony];

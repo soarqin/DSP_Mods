@@ -114,7 +114,7 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
             new CodeInstruction(OpCodes.Brtrue, jumpPos.Value),
             new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(PlayerPatch.ShortcutKeysForStarsName), nameof(ShortcutKeysForStarsName.ForceShowAllStarsName))),
             new CodeInstruction(OpCodes.Brtrue, jumpPos.Value),
-            new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(Functions.UIFunctions), nameof(Functions.UIFunctions.ShowStarName))),
+            new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(Functions.UI.StarmapFilterUI), nameof(Functions.UI.StarmapFilterUI.ShowStarName))),
             new CodeInstruction(OpCodes.Ldarg_0),
             new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(UIStarmapStar), nameof(UIStarmapStar.star))),
             new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(StarData), nameof(StarData.index))),
