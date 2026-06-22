@@ -6,8 +6,8 @@ using UXAssist.Common;
 using UXAssist.Functions;
 using UXAssist.ModsCompat;
 using UXAssist.Patches;
-using UXAssist.Patches.Factory;
 using UXAssist.Patches.Logistics;
+using UXAssist.Common.Config;
 using UXAssist.UI;
 
 namespace UXAssist;
@@ -354,93 +354,93 @@ public static class UIConfigWindow
         var tab2 = wnd.AddTab(trans, "Factory");
         x = 0f;
         y = 10f;
-        wnd.AddCheckBox(x, y, tab2, FactoryPatch.RemoveSomeConditionEnabled, "Remove some build conditions");
+        wnd.AddCheckBox(x, y, tab2, FactoryConfigProvider.RemoveSomeConditionEnabled, "Remove some build conditions");
         y += 36f;
-        wnd.AddCheckBox(x, y, tab2, FactoryPatch.RemoveBuildRangeLimitEnabled, "Remove build range limit");
+        wnd.AddCheckBox(x, y, tab2, FactoryConfigProvider.RemoveBuildRangeLimitEnabled, "Remove build range limit");
         y += 36f;
-        checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab2, FactoryPatch.NightLightEnabled, "Night Light");
+        checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab2, FactoryConfigProvider.NightLightEnabled, "Night Light");
         x += checkBoxForMeasureTextWidth.Width + 5f + 10f;
         txt = wnd.AddText2(x, y + 2f, tab2, "Angle X:", 13, "text-nightlight-angle-x");
         x += txt.preferredWidth + 5f;
-        wnd.AddSlider(x, y + 7f, tab2, FactoryPatch.NightLightAngleX, new AngleMapper(), "0", 60f).WithSmallerHandle();
+        wnd.AddSlider(x, y + 7f, tab2, FactoryConfigProvider.NightLightAngleX, new AngleMapper(), "0", 60f).WithSmallerHandle();
         x += 70f;
         txt = wnd.AddText2(x, y + 2f, tab2, "Y:", 13, "text-nightlight-angle-y");
-        wnd.AddSlider(x + txt.preferredWidth + 5f, y + 7f, tab2, FactoryPatch.NightLightAngleY, new AngleMapper(), "0", 60f).WithSmallerHandle();
+        wnd.AddSlider(x + txt.preferredWidth + 5f, y + 7f, tab2, FactoryConfigProvider.NightLightAngleY, new AngleMapper(), "0", 60f).WithSmallerHandle();
         x = 0;
         y += 36f;
-        wnd.AddCheckBox(x, y, tab2, FactoryPatch.LargerAreaForUpgradeAndDismantleEnabled, "Larger area for upgrade and dismantle");
+        wnd.AddCheckBox(x, y, tab2, FactoryConfigProvider.LargerAreaForUpgradeAndDismantleEnabled, "Larger area for upgrade and dismantle");
         y += 36f;
-        wnd.AddCheckBox(x, y, tab2, FactoryPatch.LargerAreaForTerraformEnabled, "Larger area for terraform");
+        wnd.AddCheckBox(x, y, tab2, FactoryConfigProvider.LargerAreaForTerraformEnabled, "Larger area for terraform");
         y += 36f;
-        wnd.AddCheckBox(x, y, tab2, FactoryPatch.OffGridBuildingEnabled, "Off-grid building and stepped rotation");
+        wnd.AddCheckBox(x, y, tab2, FactoryConfigProvider.OffGridBuildingEnabled, "Off-grid building and stepped rotation");
         y += 36f;
-        wnd.AddCheckBox(x, y, tab2, FactoryPatch.CutConveyorBeltEnabled, "Cut conveyor belt (with shortcut key)");
+        wnd.AddCheckBox(x, y, tab2, FactoryConfigProvider.CutConveyorBeltEnabled, "Cut conveyor belt (with shortcut key)");
         y += 36f;
-        checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab2, FactoryPatch.TreatStackingAsSingleEnabled, "Treat stack items as single in monitor components");
+        checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab2, FactoryConfigProvider.TreatStackingAsSingleEnabled, "Treat stack items as single in monitor components");
         y += 36f;
-        wnd.AddCheckBox(x, y, tab2, FactoryPatch.QuickBuildAndDismantleLabsEnabled, "Quick build and dismantle stacking labs");
+        wnd.AddCheckBox(x, y, tab2, FactoryConfigProvider.QuickBuildAndDismantleLabsEnabled, "Quick build and dismantle stacking labs");
 
         {
             y += 36f;
-            var cb = wnd.AddCheckBox(x, y, tab2, FactoryPatch.TankFastFillInAndTakeOutEnabled, "Fast fill in to and take out from tanks");
+            var cb = wnd.AddCheckBox(x, y, tab2, FactoryConfigProvider.TankFastFillInAndTakeOutEnabled, "Fast fill in to and take out from tanks");
             x += cb.Width + 5f;
             txt = wnd.AddText2(x, y + 2f, tab2, "Speed Ratio", 13, "text-tank-fast-fill-speed-ratio");
-            var tankSlider = wnd.AddSlider(x + txt.preferredWidth + 5f, y + 7f, tab2, FactoryPatch.TankFastFillInAndTakeOutMultiplier, [2, 5, 10, 20, 50, 100, 500, 1000], "G", 100f).WithSmallerHandle();
-            FactoryPatch.TankFastFillInAndTakeOutEnabled.SettingChanged += TankSettingChanged;
-            wnd.OnFree += () => { FactoryPatch.TankFastFillInAndTakeOutEnabled.SettingChanged -= TankSettingChanged; };
+            var tankSlider = wnd.AddSlider(x + txt.preferredWidth + 5f, y + 7f, tab2, FactoryConfigProvider.TankFastFillInAndTakeOutMultiplier, [2, 5, 10, 20, 50, 100, 500, 1000], "G", 100f).WithSmallerHandle();
+            FactoryConfigProvider.TankFastFillInAndTakeOutEnabled.SettingChanged += TankSettingChanged;
+            wnd.OnFree += () => { FactoryConfigProvider.TankFastFillInAndTakeOutEnabled.SettingChanged -= TankSettingChanged; };
             TankSettingChanged(null, null);
 
             void TankSettingChanged(object o, EventArgs e)
             {
-                tankSlider.SetEnable(FactoryPatch.TankFastFillInAndTakeOutEnabled.Value);
+                tankSlider.SetEnable(FactoryConfigProvider.TankFastFillInAndTakeOutEnabled.Value);
             }
         }
 
         x = 0;
         y += 36f;
-        wnd.AddCheckBox(x, y, tab2, FactoryPatch.DoNotRenderEntitiesEnabled, "Do not render factory entities");
+        wnd.AddCheckBox(x, y, tab2, FactoryConfigProvider.DoNotRenderEntitiesEnabled, "Do not render factory entities");
         y += 36f;
-        checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab2, FactoryPatch.ShortcutKeysForBlueprintCopyEnabled, "Shortcut keys for Blueprint Copy mode");
+        checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab2, FactoryConfigProvider.ShortcutKeysForBlueprintCopyEnabled, "Shortcut keys for Blueprint Copy mode");
         wnd.AddTipsButton2(x + checkBoxForMeasureTextWidth.Width + 5f, y + 6f, tab2, "Shortcut keys for Blueprint Copy mode", "Shortcut keys for Blueprint Copy mode tips", "shortcut-keys-for-blueprint-copy-mode-tips");
         y += 36f;
-        wnd.AddCheckBox(x, y, tab2, FactoryPatch.BeltSignalsForBuyOutEnabled, "Belt signals for buy out dark fog items automatically");
+        wnd.AddCheckBox(x, y, tab2, FactoryConfigProvider.BeltSignalsForBuyOutEnabled, "Belt signals for buy out dark fog items automatically");
 
         y += 36f;
-        checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab2, FactoryPatch.ProtectVeinsFromExhaustionEnabled, "Protect veins from exhaustion");
+        checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab2, FactoryConfigProvider.ProtectVeinsFromExhaustionEnabled, "Protect veins from exhaustion");
         wnd.AddTipsButton2(x + checkBoxForMeasureTextWidth.Width + 5f, y + 6f, tab2, "Protect veins from exhaustion", "Protect veins from exhaustion tips", "protect-veins-tips");
         {
             y += 36f;
-            wnd.AddCheckBox(x, y, tab2, FactoryPatch.DragBuildPowerPolesEnabled, "Drag building power poles in maximum connection range");
+            wnd.AddCheckBox(x, y, tab2, FactoryConfigProvider.DragBuildPowerPolesEnabled, "Drag building power poles in maximum connection range");
             y += 27f;
-            var alternatelyCheckBox = wnd.AddCheckBox(x + 20f, y, tab2, FactoryPatch.DragBuildPowerPolesAlternatelyEnabled, "Build Tesla Tower and Wireless Power Tower alternately", 13);
-            FactoryPatch.DragBuildPowerPolesEnabled.SettingChanged += AlternatelyCheckBoxChanged;
-            wnd.OnFree += () => { FactoryPatch.DragBuildPowerPolesEnabled.SettingChanged -= AlternatelyCheckBoxChanged; };
+            var alternatelyCheckBox = wnd.AddCheckBox(x + 20f, y, tab2, FactoryConfigProvider.DragBuildPowerPolesAlternatelyEnabled, "Build Tesla Tower and Wireless Power Tower alternately", 13);
+            FactoryConfigProvider.DragBuildPowerPolesEnabled.SettingChanged += AlternatelyCheckBoxChanged;
+            wnd.OnFree += () => { FactoryConfigProvider.DragBuildPowerPolesEnabled.SettingChanged -= AlternatelyCheckBoxChanged; };
             AlternatelyCheckBoxChanged(null, null);
 
             void AlternatelyCheckBoxChanged(object o, EventArgs e)
             {
-                alternatelyCheckBox.SetEnable(FactoryPatch.DragBuildPowerPolesEnabled.Value);
+                alternatelyCheckBox.SetEnable(FactoryConfigProvider.DragBuildPowerPolesEnabled.Value);
             }
         }
 
         y += 36f;
-        wnd.AddCheckBox(x, y, tab2, FactoryPatch.AutoConstructButtonEnabled, "Auto-construct button");
+        wnd.AddCheckBox(x, y, tab2, FactoryConfigProvider.AutoConstructButtonEnabled, "Auto-construct button");
 
         {
             y += 36f;
-            wnd.AddCheckBox(x, y, tab2, FactoryPatch.PressShiftToTakeWholeBeltItemsEnabled, "Ctrl+Shift+Click to pick items from whole belts");
+            wnd.AddCheckBox(x, y, tab2, FactoryConfigProvider.PressShiftToTakeWholeBeltItemsEnabled, "Ctrl+Shift+Click to pick items from whole belts");
             y += 27f;
-            var includeBranches = wnd.AddCheckBox(x + 10, y, tab2, FactoryPatch.PressShiftToTakeWholeBeltItemsIncludeBranches, "Include branches of belts", 13);
+            var includeBranches = wnd.AddCheckBox(x + 10, y, tab2, FactoryConfigProvider.PressShiftToTakeWholeBeltItemsIncludeBranches, "Include branches of belts", 13);
             y += 27f;
-            var includeInserters = wnd.AddCheckBox(x + 10, y, tab2, FactoryPatch.PressShiftToTakeWholeBeltItemsIncludeInserters, "Include connected inserters", 13);
-            FactoryPatch.PressShiftToTakeWholeBeltItemsEnabled.SettingChanged += PressShiftToTakeWholeBeltItemsEnabledChanged;
-            wnd.OnFree += () => { FactoryPatch.PressShiftToTakeWholeBeltItemsEnabled.SettingChanged -= PressShiftToTakeWholeBeltItemsEnabledChanged; };
+            var includeInserters = wnd.AddCheckBox(x + 10, y, tab2, FactoryConfigProvider.PressShiftToTakeWholeBeltItemsIncludeInserters, "Include connected inserters", 13);
+            FactoryConfigProvider.PressShiftToTakeWholeBeltItemsEnabled.SettingChanged += PressShiftToTakeWholeBeltItemsEnabledChanged;
+            wnd.OnFree += () => { FactoryConfigProvider.PressShiftToTakeWholeBeltItemsEnabled.SettingChanged -= PressShiftToTakeWholeBeltItemsEnabledChanged; };
             PressShiftToTakeWholeBeltItemsEnabledChanged(null, null);
 
             void PressShiftToTakeWholeBeltItemsEnabledChanged(object o, EventArgs e)
             {
-                includeBranches.SetEnable(FactoryPatch.PressShiftToTakeWholeBeltItemsEnabled.Value);
-                includeInserters.SetEnable(FactoryPatch.PressShiftToTakeWholeBeltItemsEnabled.Value);
+                includeBranches.SetEnable(FactoryConfigProvider.PressShiftToTakeWholeBeltItemsEnabled.Value);
+                includeInserters.SetEnable(FactoryConfigProvider.PressShiftToTakeWholeBeltItemsEnabled.Value);
             }
         }
 
@@ -472,7 +472,7 @@ public static class UIConfigWindow
 
         {
             y += 36f;
-            wnd.AddCheckBox(x, y, tab2, FactoryPatch.TweakBuildingBufferEnabled, "Tweak building buffers");
+            wnd.AddCheckBox(x, y, tab2, FactoryConfigProvider.TweakBuildingBufferEnabled, "Tweak building buffers");
             y += 27f;
             txt = wnd.AddText2(x + 20f, y, tab2, "Assembler buffer time multiplier(in seconds)", 13);
             var nx1 = txt.preferredWidth + 5f;
@@ -499,34 +499,34 @@ public static class UIConfigWindow
             var nx8 = txt.preferredWidth + 5f;
             y -= 189f;
             var mx = Mathf.Max(nx1, nx2, nx3, nx4, nx5, nx6, nx7, nx8) + 20f;
-            var assemblerBufferTimeMultiplierSlider = wnd.AddSlider(x + mx, y + 5f, tab2, FactoryPatch.AssemblerBufferTimeMultiplier, new MyWindow.RangeValueMapper<int>(2, 10), "0", 120f).WithSmallerHandle();
+            var assemblerBufferTimeMultiplierSlider = wnd.AddSlider(x + mx, y + 5f, tab2, FactoryConfigProvider.AssemblerBufferTimeMultiplier, new MyWindow.RangeValueMapper<int>(2, 10), "0", 120f).WithSmallerHandle();
             y += 27f;
-            var assemblerBufferMininumMultiplierSlider = wnd.AddSlider(x + mx, y + 5f, tab2, FactoryPatch.AssemblerBufferMininumMultiplier, new MyWindow.RangeValueMapper<int>(2, 10), "0", 120f).WithSmallerHandle();
+            var assemblerBufferMininumMultiplierSlider = wnd.AddSlider(x + mx, y + 5f, tab2, FactoryConfigProvider.AssemblerBufferMininumMultiplier, new MyWindow.RangeValueMapper<int>(2, 10), "0", 120f).WithSmallerHandle();
             y += 27f;
-            var labBufferMaxCountForAssembleSlider = wnd.AddSlider(x + mx, y + 5f, tab2, FactoryPatch.LabBufferMaxCountForAssemble, new MyWindow.RangeValueMapper<int>(2, 20), "0", 120f).WithSmallerHandle();
+            var labBufferMaxCountForAssembleSlider = wnd.AddSlider(x + mx, y + 5f, tab2, FactoryConfigProvider.LabBufferMaxCountForAssemble, new MyWindow.RangeValueMapper<int>(2, 20), "0", 120f).WithSmallerHandle();
             y += 27f;
-            var labBufferExtraCountForAdvancedAssembleSlider = wnd.AddSlider(x + mx, y + 5f, tab2, FactoryPatch.LabBufferExtraCountForAdvancedAssemble, new MyWindow.RangeValueMapper<int>(1, 10), "0", 120f).WithSmallerHandle();
+            var labBufferExtraCountForAdvancedAssembleSlider = wnd.AddSlider(x + mx, y + 5f, tab2, FactoryConfigProvider.LabBufferExtraCountForAdvancedAssemble, new MyWindow.RangeValueMapper<int>(1, 10), "0", 120f).WithSmallerHandle();
             y += 27f;
-            var labBufferMaxCountForResearchSlider = wnd.AddSlider(x + mx, y + 5f, tab2, FactoryPatch.LabBufferMaxCountForResearch, new MyWindow.RangeValueMapper<int>(2, 20), "0", 120f).WithSmallerHandle();
+            var labBufferMaxCountForResearchSlider = wnd.AddSlider(x + mx, y + 5f, tab2, FactoryConfigProvider.LabBufferMaxCountForResearch, new MyWindow.RangeValueMapper<int>(2, 20), "0", 120f).WithSmallerHandle();
             y += 27f;
-            var receiverBufferCountSlider = wnd.AddSlider(x + mx, y + 5f, tab2, FactoryPatch.ReceiverBufferCount, new MyWindow.RangeValueMapper<int>(1, 20), "0", 120f).WithSmallerHandle();
+            var receiverBufferCountSlider = wnd.AddSlider(x + mx, y + 5f, tab2, FactoryConfigProvider.ReceiverBufferCount, new MyWindow.RangeValueMapper<int>(1, 20), "0", 120f).WithSmallerHandle();
             y += 27f;
-            var ejectorBufferCountSlider = wnd.AddSlider(x + mx, y + 5f, tab2, FactoryPatch.EjectorBufferCount, new MyWindow.RangeValueWithMultiplierMapper<int>(1, 80, 5), "0", 120f).WithSmallerHandle();
+            var ejectorBufferCountSlider = wnd.AddSlider(x + mx, y + 5f, tab2, FactoryConfigProvider.EjectorBufferCount, new MyWindow.RangeValueWithMultiplierMapper<int>(1, 80, 5), "0", 120f).WithSmallerHandle();
             y += 27f;
-            var siloBufferCountSlider = wnd.AddSlider(x + mx, y + 5f, tab2, FactoryPatch.SiloBufferCount, new MyWindow.RangeValueMapper<int>(1, 40), "0", 120f).WithSmallerHandle();
-            FactoryPatch.TweakBuildingBufferEnabled.SettingChanged += TweakBuildingBufferChanged;
-            wnd.OnFree += () => { FactoryPatch.TweakBuildingBufferEnabled.SettingChanged -= TweakBuildingBufferChanged; };
+            var siloBufferCountSlider = wnd.AddSlider(x + mx, y + 5f, tab2, FactoryConfigProvider.SiloBufferCount, new MyWindow.RangeValueMapper<int>(1, 40), "0", 120f).WithSmallerHandle();
+            FactoryConfigProvider.TweakBuildingBufferEnabled.SettingChanged += TweakBuildingBufferChanged;
+            wnd.OnFree += () => { FactoryConfigProvider.TweakBuildingBufferEnabled.SettingChanged -= TweakBuildingBufferChanged; };
             TweakBuildingBufferChanged(null, null);
             void TweakBuildingBufferChanged(object o, EventArgs e)
             {
-                assemblerBufferTimeMultiplierSlider.SetEnable(FactoryPatch.TweakBuildingBufferEnabled.Value);
-                assemblerBufferMininumMultiplierSlider.SetEnable(FactoryPatch.TweakBuildingBufferEnabled.Value);
-                labBufferMaxCountForAssembleSlider.SetEnable(FactoryPatch.TweakBuildingBufferEnabled.Value);
-                labBufferExtraCountForAdvancedAssembleSlider.SetEnable(FactoryPatch.TweakBuildingBufferEnabled.Value);
-                labBufferMaxCountForResearchSlider.SetEnable(FactoryPatch.TweakBuildingBufferEnabled.Value);
-                receiverBufferCountSlider.SetEnable(FactoryPatch.TweakBuildingBufferEnabled.Value);
-                ejectorBufferCountSlider.SetEnable(FactoryPatch.TweakBuildingBufferEnabled.Value);
-                siloBufferCountSlider.SetEnable(FactoryPatch.TweakBuildingBufferEnabled.Value);
+                assemblerBufferTimeMultiplierSlider.SetEnable(FactoryConfigProvider.TweakBuildingBufferEnabled.Value);
+                assemblerBufferMininumMultiplierSlider.SetEnable(FactoryConfigProvider.TweakBuildingBufferEnabled.Value);
+                labBufferMaxCountForAssembleSlider.SetEnable(FactoryConfigProvider.TweakBuildingBufferEnabled.Value);
+                labBufferExtraCountForAdvancedAssembleSlider.SetEnable(FactoryConfigProvider.TweakBuildingBufferEnabled.Value);
+                labBufferMaxCountForResearchSlider.SetEnable(FactoryConfigProvider.TweakBuildingBufferEnabled.Value);
+                receiverBufferCountSlider.SetEnable(FactoryConfigProvider.TweakBuildingBufferEnabled.Value);
+                ejectorBufferCountSlider.SetEnable(FactoryConfigProvider.TweakBuildingBufferEnabled.Value);
+                siloBufferCountSlider.SetEnable(FactoryConfigProvider.TweakBuildingBufferEnabled.Value);
             }
         }
 
@@ -534,27 +534,27 @@ public static class UIConfigWindow
         x = 0f;
         y = 10f;
 
-        checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab3, LogisticsPatch.LogisticsCapacityTweaksEnabled, "Enhance control for logistic storage capacities");
+        checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab3, LogisticsConfigProvider.LogisticsCapacityTweaksEnabled, "Enhance control for logistic storage capacities");
         wnd.AddTipsButton2(x + checkBoxForMeasureTextWidth.Width + 5f, y + 6f, tab3, "Enhance control for logistic storage capacities", "Enhance control for logistic storage capacities tips", "enhanced-logistic-capacities-tips");
         y += 36f;
-        wnd.AddCheckBox(x, y, tab3, LogisticsPatch.AllowOverflowInLogisticsEnabled, "Allow overflow for Logistic Stations and Advanced Mining Machines");
+        wnd.AddCheckBox(x, y, tab3, LogisticsConfigProvider.AllowOverflowInLogisticsEnabled, "Allow overflow for Logistic Stations and Advanced Mining Machines");
         y += 30f;
-        wnd.AddCheckBox(x, y, tab3, LogisticsPatch.GreaterPowerUsageInLogisticsEnabled, "Increase maximum power usage in Logistic Stations and Advanced Mining Machines");
+        wnd.AddCheckBox(x, y, tab3, LogisticsConfigProvider.GreaterPowerUsageInLogisticsEnabled, "Increase maximum power usage in Logistic Stations and Advanced Mining Machines");
         y += 36f;
-        checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab3, LogisticsPatch.LogisticsConstrolPanelImprovementEnabled, "Logistics Control Panel Improvement");
+        checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab3, LogisticsConfigProvider.LogisticsConstrolPanelImprovementEnabled, "Logistics Control Panel Improvement");
         wnd.AddTipsButton2(x + checkBoxForMeasureTextWidth.Width + 5f, y + 6f, tab3, "Logistics Control Panel Improvement", "Logistics Control Panel Improvement tips", "lcp-improvement-tips");
         {
             y += 36f;
-            var realtimeLogisticsInfoPanelCheckBox = wnd.AddCheckBox(x, y, tab3, LogisticsPatch.RealtimeLogisticsInfoPanelEnabled, "Real-time logistic stations info panel");
+            var realtimeLogisticsInfoPanelCheckBox = wnd.AddCheckBox(x, y, tab3, LogisticsConfigProvider.RealtimeLogisticsInfoPanelEnabled, "Real-time logistic stations info panel");
             y += 27f;
-            var realtimeLogisticsInfoPanelBarsCheckBox = wnd.AddCheckBox(x + 20f, y, tab3, LogisticsPatch.RealtimeLogisticsInfoPanelBarsEnabled, "Show status bars for storage items", 13);
+            var realtimeLogisticsInfoPanelBarsCheckBox = wnd.AddCheckBox(x + 20f, y, tab3, LogisticsConfigProvider.RealtimeLogisticsInfoPanelBarsEnabled, "Show status bars for storage items", 13);
             if (AuxilaryfunctionWrapper.ShowStationInfo != null)
             {
                 AuxilaryfunctionWrapper.ShowStationInfo.SettingChanged += RealtimeLogisticsInfoPanelChanged;
                 wnd.OnFree += () => { AuxilaryfunctionWrapper.ShowStationInfo.SettingChanged -= RealtimeLogisticsInfoPanelChanged; };
             }
-            LogisticsPatch.RealtimeLogisticsInfoPanelEnabled.SettingChanged += RealtimeLogisticsInfoPanelChanged;
-            wnd.OnFree += () => { LogisticsPatch.RealtimeLogisticsInfoPanelEnabled.SettingChanged -= RealtimeLogisticsInfoPanelChanged; };
+            LogisticsConfigProvider.RealtimeLogisticsInfoPanelEnabled.SettingChanged += RealtimeLogisticsInfoPanelChanged;
+            wnd.OnFree += () => { LogisticsConfigProvider.RealtimeLogisticsInfoPanelEnabled.SettingChanged -= RealtimeLogisticsInfoPanelChanged; };
             RealtimeLogisticsInfoPanelChanged(null, null);
 
             void RealtimeLogisticsInfoPanelChanged(object o, EventArgs e)
@@ -562,25 +562,25 @@ public static class UIConfigWindow
                 if (AuxilaryfunctionWrapper.ShowStationInfo == null)
                 {
                     realtimeLogisticsInfoPanelCheckBox.SetEnable(true);
-                    realtimeLogisticsInfoPanelBarsCheckBox.SetEnable(LogisticsPatch.RealtimeLogisticsInfoPanelEnabled.Value);
+                    realtimeLogisticsInfoPanelBarsCheckBox.SetEnable(LogisticsConfigProvider.RealtimeLogisticsInfoPanelEnabled.Value);
                     return;
                 }
 
                 var on = !AuxilaryfunctionWrapper.ShowStationInfo.Value;
                 realtimeLogisticsInfoPanelCheckBox.SetEnable(on);
-                realtimeLogisticsInfoPanelBarsCheckBox.SetEnable(on & LogisticsPatch.RealtimeLogisticsInfoPanelEnabled.Value);
+                realtimeLogisticsInfoPanelBarsCheckBox.SetEnable(on & LogisticsConfigProvider.RealtimeLogisticsInfoPanelEnabled.Value);
                 if (!on)
                 {
-                    LogisticsPatch.RealtimeLogisticsInfoPanelEnabled.Value = false;
+                    LogisticsConfigProvider.RealtimeLogisticsInfoPanelEnabled.Value = false;
                 }
             }
         }
         y += 36f;
-        wnd.AddCheckBox(x, y, tab3, LogisticsPatch.AutoConfigLogisticsEnabled, "Auto-config logistic stations");
+        wnd.AddCheckBox(x, y, tab3, LogisticsConfigProvider.AutoConfigLogisticsEnabled, "Auto-config logistic stations");
         y += 26f;
-        wnd.AddCheckBox(x + 10f, y, tab3, LogisticsPatch.AutoConfigLimitAutoReplenishCount, "Limit auto-replenish count to values below", 13).WithSmallerBox();
+        wnd.AddCheckBox(x + 10f, y, tab3, LogisticsConfigProvider.AutoConfigLimitAutoReplenishCount, "Limit auto-replenish count to values below", 13).WithSmallerBox();
         y += 18f;
-        wnd.AddCheckBox(x + 10f, y, tab3, LogisticsPatch.SetDefaultRemoteLogicToStorage, "Set default remote logic to storage", 13).WithSmallerBox();
+        wnd.AddCheckBox(x + 10f, y, tab3, LogisticsConfigProvider.SetDefaultRemoteLogicToStorage, "Set default remote logic to storage", 13).WithSmallerBox();
         y += 16f;
         var maxWidth = 0f;
         wnd.AddText2(10f, y, tab3, "Dispenser", 14, "text-dispenser");
@@ -684,75 +684,75 @@ public static class UIConfigWindow
         AddCategoryApplyButton(ilsCatY, "btn-apply-all-ils", LogisticsPatch.ApplyAllILS);
         AddCategoryApplyButton(ammCatY, "btn-apply-all-amm", LogisticsPatch.ApplyAllVeinCollector);
 
-        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigDispenserChargePower, new AutoConfigDispenserChargePowerMapper(), "G", 150f, -100f).WithFontSize(13);
+        wnd.AddSideSlider(nx, y, tab3, LogisticsConfigProvider.AutoConfigDispenserChargePower, new AutoConfigDispenserChargePowerMapper(), "G", 150f, -100f).WithFontSize(13);
         AddApplyButton(y, "btn-apply-dispenser-charge-power", LogisticsPatch.ApplyDispenserChargePower);
         y += 18f;
-        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigDispenserCourierCount, new MyWindow.RangeValueMapper<int>(0, 10), "G", 150f, -100f).WithFontSize(13);
+        wnd.AddSideSlider(nx, y, tab3, LogisticsConfigProvider.AutoConfigDispenserCourierCount, new MyWindow.RangeValueMapper<int>(0, 10), "G", 150f, -100f).WithFontSize(13);
         AddApplyButton(y, "btn-apply-dispenser-courier-count", LogisticsPatch.ApplyDispenserCourierCount);
         y += 36f;
-        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigBattleBaseChargePower, new AutoConfigBattleBaseChargePowerMapper(), "G", 150f, -100f).WithFontSize(13);
+        wnd.AddSideSlider(nx, y, tab3, LogisticsConfigProvider.AutoConfigBattleBaseChargePower, new AutoConfigBattleBaseChargePowerMapper(), "G", 150f, -100f).WithFontSize(13);
         AddApplyButton(y, "btn-apply-battle-base-charge-power", LogisticsPatch.ApplyBattleBaseChargePower);
         y += 36f;
-        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigPLSChargePower, new AutoConfigPLSChargePowerMapper(), "G", 150f, -100f).WithFontSize(13);
+        wnd.AddSideSlider(nx, y, tab3, LogisticsConfigProvider.AutoConfigPLSChargePower, new AutoConfigPLSChargePowerMapper(), "G", 150f, -100f).WithFontSize(13);
         AddApplyButton(y, "btn-apply-pls-charge-power", LogisticsPatch.ApplyPLSChargePower);
         y += 18f;
-        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigPLSMaxTripDrone, new MyWindow.RangeValueMapper<int>(1, 180), "0°", 150f, -100f).WithFontSize(13);
+        wnd.AddSideSlider(nx, y, tab3, LogisticsConfigProvider.AutoConfigPLSMaxTripDrone, new MyWindow.RangeValueMapper<int>(1, 180), "0°", 150f, -100f).WithFontSize(13);
         AddApplyButton(y, "btn-apply-pls-trip-range-drones", LogisticsPatch.ApplyPLSTripRangeDrones);
         y += 18f;
-        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigPLSDroneMinDeliver, new AutoConfigCarrierMinDeliverMapper(), "G", 150f, -100f).WithFontSize(13);
+        wnd.AddSideSlider(nx, y, tab3, LogisticsConfigProvider.AutoConfigPLSDroneMinDeliver, new AutoConfigCarrierMinDeliverMapper(), "G", 150f, -100f).WithFontSize(13);
         AddApplyButton(y, "btn-apply-pls-drone-min-deliver", LogisticsPatch.ApplyPLSDroneMinDeliver);
         y += 18f;
-        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigPLSMinPilerValue, new AutoConfigMinPilerValueMapper(), "G", 150f, -100f).WithFontSize(13);
+        wnd.AddSideSlider(nx, y, tab3, LogisticsConfigProvider.AutoConfigPLSMinPilerValue, new AutoConfigMinPilerValueMapper(), "G", 150f, -100f).WithFontSize(13);
         AddApplyButton(y, "btn-apply-pls-min-piler-value", LogisticsPatch.ApplyPLSMinPilerValue);
         y += 18f;
-        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigPLSDroneCount, new MyWindow.RangeValueMapper<int>(0, 50), "G", 150f, -100f).WithFontSize(13);
+        wnd.AddSideSlider(nx, y, tab3, LogisticsConfigProvider.AutoConfigPLSDroneCount, new MyWindow.RangeValueMapper<int>(0, 50), "G", 150f, -100f).WithFontSize(13);
         AddApplyButton(y, "btn-apply-pls-drone-count", LogisticsPatch.ApplyPLSDroneCount);
         y += 36f;
-        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigILSChargePower, new AutoConfigILSChargePowerMapper(), "G", 150f, -100f).WithFontSize(13);
+        wnd.AddSideSlider(nx, y, tab3, LogisticsConfigProvider.AutoConfigILSChargePower, new AutoConfigILSChargePowerMapper(), "G", 150f, -100f).WithFontSize(13);
         AddApplyButton(y, "btn-apply-ils-charge-power", LogisticsPatch.ApplyILSChargePower);
         y += 18f;
-        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigILSMaxTripDrone, new MyWindow.RangeValueMapper<int>(1, 180), "0°", 150f, -100f).WithFontSize(13);
+        wnd.AddSideSlider(nx, y, tab3, LogisticsConfigProvider.AutoConfigILSMaxTripDrone, new MyWindow.RangeValueMapper<int>(1, 180), "0°", 150f, -100f).WithFontSize(13);
         AddApplyButton(y, "btn-apply-ils-trip-range-drones", LogisticsPatch.ApplyILSTripRangeDrones);
         y += 18f;
-        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigILSMaxTripShip, new AutoConfigILSMaxTripShipMapper(), "G", 150f, -100f).WithFontSize(13);
+        wnd.AddSideSlider(nx, y, tab3, LogisticsConfigProvider.AutoConfigILSMaxTripShip, new AutoConfigILSMaxTripShipMapper(), "G", 150f, -100f).WithFontSize(13);
         AddApplyButton(y, "btn-apply-ils-trip-range-ships", LogisticsPatch.ApplyILSTripRangeShips);
-        var includeOrbitCollectorCheckBox = wnd.AddCheckBox(checkBoxX, y + 4f, tab3, LogisticsPatch.AutoConfigILSIncludeOrbitCollector, "Include Orbital Collector", 13).WithSmallerBox();
+        var includeOrbitCollectorCheckBox = wnd.AddCheckBox(checkBoxX, y + 4f, tab3, LogisticsConfigProvider.AutoConfigILSIncludeOrbitCollector, "Include Orbital Collector", 13).WithSmallerBox();
         var includeOrbitCollectorY = y;
         y += 18f;
-        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigILSWarperDistance, new AutoConfigILSWarperDistanceMapper(), "G", 150f, -100f).WithFontSize(13);
+        wnd.AddSideSlider(nx, y, tab3, LogisticsConfigProvider.AutoConfigILSWarperDistance, new AutoConfigILSWarperDistanceMapper(), "G", 150f, -100f).WithFontSize(13);
         AddApplyButton(y, "btn-apply-ils-warp-distance", LogisticsPatch.ApplyILSWarpDistance);
-        var warperNecessaryCheckBox = wnd.AddCheckBox(checkBoxX, y + 4f, tab3, LogisticsPatch.AutoConfigILSWarperNecessary, "Warpers required", 13).WithSmallerBox();
+        var warperNecessaryCheckBox = wnd.AddCheckBox(checkBoxX, y + 4f, tab3, LogisticsConfigProvider.AutoConfigILSWarperNecessary, "Warpers required", 13).WithSmallerBox();
         // Align both checkbox "Apply" buttons in a common column after the widest checkbox label.
         var checkBoxApplyBtnX = checkBoxX + Mathf.Max(includeOrbitCollectorCheckBox.Width, warperNecessaryCheckBox.Width) + 10f;
         AddApplyButtonAt(checkBoxApplyBtnX, includeOrbitCollectorY, "btn-apply-ils-include-orbit-collector", LogisticsPatch.ApplyILSIncludeOrbitCollector);
         AddApplyButtonAt(checkBoxApplyBtnX, y, "btn-apply-ils-warper-necessary", LogisticsPatch.ApplyILSWarperNecessary);
         y += 18f;
-        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigILSDroneMinDeliver, new AutoConfigCarrierMinDeliverMapper(), "G", 150f, -100f).WithFontSize(13);
+        wnd.AddSideSlider(nx, y, tab3, LogisticsConfigProvider.AutoConfigILSDroneMinDeliver, new AutoConfigCarrierMinDeliverMapper(), "G", 150f, -100f).WithFontSize(13);
         AddApplyButton(y, "btn-apply-ils-drone-min-deliver", LogisticsPatch.ApplyILSDroneMinDeliver);
         y += 18f;
-        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigILSShipMinDeliver, new AutoConfigCarrierMinDeliverMapper(), "G", 150f, -100f).WithFontSize(13);
+        wnd.AddSideSlider(nx, y, tab3, LogisticsConfigProvider.AutoConfigILSShipMinDeliver, new AutoConfigCarrierMinDeliverMapper(), "G", 150f, -100f).WithFontSize(13);
         AddApplyButton(y, "btn-apply-ils-ship-min-deliver", LogisticsPatch.ApplyILSShipMinDeliver);
         y += 18f;
-        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigILSMinPilerValue, new AutoConfigMinPilerValueMapper(), "G", 150f, -100f).WithFontSize(13);
+        wnd.AddSideSlider(nx, y, tab3, LogisticsConfigProvider.AutoConfigILSMinPilerValue, new AutoConfigMinPilerValueMapper(), "G", 150f, -100f).WithFontSize(13);
         AddApplyButton(y, "btn-apply-ils-min-piler-value", LogisticsPatch.ApplyILSMinPilerValue);
         y += 18f;
-        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigILSDroneCount, new MyWindow.RangeValueMapper<int>(0, 100), "G", 150f, -100f).WithFontSize(13);
+        wnd.AddSideSlider(nx, y, tab3, LogisticsConfigProvider.AutoConfigILSDroneCount, new MyWindow.RangeValueMapper<int>(0, 100), "G", 150f, -100f).WithFontSize(13);
         AddApplyButton(y, "btn-apply-ils-drone-count", LogisticsPatch.ApplyILSDroneCount);
         y += 18f;
-        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigILSShipCount, new MyWindow.RangeValueMapper<int>(0, 10), "G", 150f, -100f).WithFontSize(13);
+        wnd.AddSideSlider(nx, y, tab3, LogisticsConfigProvider.AutoConfigILSShipCount, new MyWindow.RangeValueMapper<int>(0, 10), "G", 150f, -100f).WithFontSize(13);
         AddApplyButton(y, "btn-apply-ils-ship-count", LogisticsPatch.ApplyILSShipCount);
         y += 36f;
-        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigVeinCollectorHarvestSpeed, new AutoConfigVeinCollectorHarvestSpeedMapper(), "G", 150f, -100f).WithFontSize(13);
+        wnd.AddSideSlider(nx, y, tab3, LogisticsConfigProvider.AutoConfigVeinCollectorHarvestSpeed, new AutoConfigVeinCollectorHarvestSpeedMapper(), "G", 150f, -100f).WithFontSize(13);
         AddApplyButton(y, "btn-apply-amm-harvest-speed", LogisticsPatch.ApplyVeinCollectorHarvestSpeed);
         y += 18f;
-        wnd.AddSideSlider(nx, y, tab3, LogisticsPatch.AutoConfigVeinCollectorMinPilerValue, new AutoConfigMinPilerValueMapper(), "G", 150f, -100f).WithFontSize(13);
+        wnd.AddSideSlider(nx, y, tab3, LogisticsConfigProvider.AutoConfigVeinCollectorMinPilerValue, new AutoConfigMinPilerValueMapper(), "G", 150f, -100f).WithFontSize(13);
         AddApplyButton(y, "btn-apply-amm-min-piler-value", LogisticsPatch.ApplyVeinCollectorMinPilerValue);
         x = 0f;
 
         var tab4 = wnd.AddTab(trans, "Player/Mecha");
         x = 0f;
         y = 10f;
-        wnd.AddCheckBox(x, y, tab4, FactoryPatch.UnlimitInteractiveEnabled, "Unlimited interactive range");
+        wnd.AddCheckBox(x, y, tab4, FactoryConfigProvider.UnlimitInteractiveEnabled, "Unlimited interactive range");
         y += 36f;
         wnd.AddCheckBox(x, y, tab4, PlanetPatch.PlayerActionsInGlobeViewEnabled, "Enable player actions in globe view");
         y += 36f;
