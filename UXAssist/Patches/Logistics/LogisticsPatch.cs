@@ -97,6 +97,7 @@ public static class LogisticsPatch
 
     public static void OnInputUpdate()
     {
+        if (DSPGame.IsMenuDemo) return;
         if (VFInput.onGUI && LogisticsCapacityTweaksEnabled.Value)
         {
             LogisticsCapacityTweaks.UpdateInput();

@@ -196,6 +196,7 @@ public static class FactoryPatch
 
     public static void OnInputUpdate()
     {
+        if (DSPGame.IsMenuDemo) return;
         if (_doNotRenderEntitiesKey.keyValue)
             DoNotRenderEntitiesEnabled.Value = !DoNotRenderEntitiesEnabled.Value;
         if (CutConveyorBeltEnabled.Value && _cutConveyorBeltKey.keyValue)
