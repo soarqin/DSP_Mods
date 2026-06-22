@@ -10,8 +10,10 @@ using crecheng.DSPModSave;
 using HarmonyLib;
 using UnityEngine;
 using UXAssist.Common;
+using UXAssist.Common.ModFeatures;
 using UXAssist.Functions;
 using UXAssist.Patches;
+using UXAssist.Patches.Factory;
 using UXAssist.UI;
 using Util = UXAssist.Common.Util;
 using GameLogicProc = UXAssist.Common.GameLogic;
@@ -128,8 +130,8 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
             "Quick build and dismantle stacking labs");
         FactoryPatch.ProtectVeinsFromExhaustionEnabled = Config.Bind("Factory", "ProtectVeinsFromExhaustion", false,
             "Protect veins from exhaustion");
-        FactoryPatch.ProtectVeinsFromExhaustion.KeepVeinAmount = Config.Bind("Factory", "KeepVeinAmount", 1000, new ConfigDescription("Keep veins amount (0 to disable)", new AcceptableValueRange<int>(0, 10000))).Value;
-        FactoryPatch.ProtectVeinsFromExhaustion.KeepOilSpeed = Config.Bind("Factory", "KeepOilSpeed", 1.0f, new ConfigDescription("Keep minimal oil speed (< 0.1 to disable)", new AcceptableValueRange<float>(0.0f, 10.0f))).Value;
+        VeinProtectionPatch.ProtectVeinsFromExhaustion.KeepVeinAmount = Config.Bind("Factory", "KeepVeinAmount", 1000, new ConfigDescription("Keep veins amount (0 to disable)", new AcceptableValueRange<int>(0, 10000))).Value;
+        VeinProtectionPatch.ProtectVeinsFromExhaustion.KeepOilSpeed = Config.Bind("Factory", "KeepOilSpeed", 1.0f, new ConfigDescription("Keep minimal oil speed (< 0.1 to disable)", new AcceptableValueRange<float>(0.0f, 10.0f))).Value;
         FactoryPatch.DoNotRenderEntitiesEnabled = Config.Bind("Factory", "DoNotRenderEntities", false,
             "Do not render factory entities");
         FactoryPatch.DragBuildPowerPolesEnabled = Config.Bind("Factory", "DragBuildPowerPoles", false,
@@ -249,6 +251,9 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
         object[] parameters = [_harmony];
         _compats?.Do(type => type.GetMethod("Init")?.Invoke(null, parameters));
 
+        ModFeatureRegistry.Discover(Assembly.GetExecutingAssembly());
+        ModFeatureRegistry.InitAll();
+
         I18N.Apply();
     }
 
@@ -256,6 +261,8 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
     {
         MyWindowManager.InitBaseObjects();
         MyWindowManager.Enable(true);
+
+        ModFeatureRegistry.StartAll();
 
         _patches?.Do(type => type.GetMethod("Start")?.Invoke(null, null));
 
@@ -265,6 +272,8 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
 
     private void OnDestroy()
     {
+        ModFeatureRegistry.UninitAll();
+
         _patches?.Do(type => type.GetMethod("Uninit")?.Invoke(null, null));
 
         MyWindowManager.Enable(false);

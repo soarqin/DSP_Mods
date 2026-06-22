@@ -8,6 +8,7 @@ using UnityEngine.UI;
 using CommonAPI.Systems;
 using UXAssist.Common;
 using UXAssist.UI;
+using UXAssist.Patches.Factory;
 using GameLogicProc = UXAssist.Common.GameLogic;
 
 namespace UXAssist.Functions;
@@ -216,7 +217,7 @@ public static class UIFunctions
     {
         var lowGroup = GameObject.Find("UI Root/Overlay Canvas/In Game/Low Group");
         var parent = lowGroup.GetComponent<RectTransform>();
-        ToggleAutoConstruct = MyCheckButton.CreateCheckButton(0, 0, parent, Patches.FactoryPatch.AutoConstructEnabled).WithSize(160f, 40f);
+        ToggleAutoConstruct = MyCheckButton.CreateCheckButton(0, 0, parent, FactoryPatch.AutoConstructEnabled).WithSize(160f, 40f);
         var rectTrans = ToggleAutoConstruct.rectTrans;
         rectTrans.anchorMax = new Vector2(0.5f, 0f);
         rectTrans.anchorMin = new Vector2(0.5f, 0f);
@@ -271,7 +272,7 @@ public static class UIFunctions
     {
         if (ToggleAutoConstruct == null) return;
         var localPlanet = GameMain.localPlanet;
-        var active = localPlanet != null && localPlanet.factoryLoaded && localPlanet.factory.prebuildCount > 0 && Patches.FactoryPatch.AutoConstructButtonEnabled.Value;
+        var active = localPlanet != null && localPlanet.factoryLoaded && localPlanet.factory.prebuildCount > 0 && FactoryPatch.AutoConstructButtonEnabled.Value;
         ToggleAutoConstruct.gameObject.SetActive(active);
         ConstructCountPanel.gameObject.SetActive(active);
     }
