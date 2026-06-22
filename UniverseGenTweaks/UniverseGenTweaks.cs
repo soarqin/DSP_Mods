@@ -68,14 +68,14 @@ public class UniverseGenTweaks : BaseUnityPlugin, IModCanSave
     public void Export(BinaryWriter w)
     {
         w.Write(ModSaveVersion);
-        MoreSettings.Export(w);
+        GalaxyGenSave.Export(w);
     }
 
     public void Import(BinaryReader r)
     {
         var version = r.ReadUInt16();
         if (version <= 0) return;
-        MoreSettings.Import(r);
+        GalaxyGenSave.Import(r);
     }
 
     public void IntoOtherSave()
