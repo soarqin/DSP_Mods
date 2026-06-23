@@ -246,7 +246,7 @@ internal class BeltSignalGenerator : PatchImpl<BeltSignalGenerator>
         if (result.TryGetValue(ItemIds.ProliferatorMkIII, out var pv))
         {
             proliferatorCount = pv;
-            result.Remove(1143);
+            result.Remove(ItemIds.ProliferatorMkIII);
         }
         if (FactoryPatch.BeltSignalUseProliferatorEnabled.Value)
         {

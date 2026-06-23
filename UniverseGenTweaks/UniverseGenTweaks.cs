@@ -3,6 +3,7 @@ using System.Reflection;
 using BepInEx;
 using BepInEx.Configuration;
 using crecheng.DSPModSave;
+using UXAssist.Common.GameConstants;
 using UXAssist.Common.ModFeatures;
 
 namespace UniverseGenTweaks;
@@ -19,9 +20,9 @@ public class UniverseGenTweaks : BaseUnityPlugin, IModCanSave
     private void Awake()
     {
         MoreSettings.Enabled = Config.Bind("MoreSettings", "Enabled", true, "Enable more settings on Universe Generation");
-        MoreSettings.MaxStarCount = Config.Bind("MoreSettings", "MaxStarCount", 128,
-                new ConfigDescription("(32 ~ 1024)\nMaximum star count for Universe Generation, enable MoreSettings.Enabled to take effect",
-                    new AcceptableValueRange<int>(32, 1024), new { }));
+        MoreSettings.MaxStarCount = Config.Bind("MoreSettings", "MaxStarCount", UniverseGenConstants.DefaultMaxStarCount,
+                new ConfigDescription($"({UniverseGenConstants.MinStarCount} ~ {UniverseGenConstants.MaxStarCount})\nMaximum star count for Universe Generation, enable MoreSettings.Enabled to take effect",
+                    new AcceptableValueRange<int>(UniverseGenConstants.MinStarCount, UniverseGenConstants.MaxStarCount), new { }));
 
         EpicDifficulty.Enabled = Config.Bind("EpicDifficulty", "Enabled", true, "Enable Epic difficulty");
         EpicDifficulty.ResourceMultiplier = Config.Bind("EpicDifficulty", "ResourceMultiplier", 0.01f,

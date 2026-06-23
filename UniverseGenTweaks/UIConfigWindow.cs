@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UXAssist.UI;
 using UXAssist.Common;
+using UXAssist.Common.GameConstants;
 
 namespace UniverseGenTweaks;
 
@@ -51,10 +52,10 @@ public static class UIConfigWindow
         MyWindow.AddText(x, y, tab1, "Maximum star count", 16);
         x += 20f;
         y += 26f;
-        var sl0 = MySlider.CreateSlider(x, y, tab1, MoreSettings.MaxStarCount.Value, 64f, 1024f, "G", 240f);
+        var sl0 = MySlider.CreateSlider(x, y, tab1, MoreSettings.MaxStarCount.Value, UniverseGenConstants.StarCountSliderMin, UniverseGenConstants.StarCountSliderMax, "G", 240f);
         sl0.OnValueChanged += () =>
         {
-            sl0.Value = MoreSettings.MaxStarCount.Value = (Mathf.RoundToInt(sl0.Value) + 7) & ~7;
+            sl0.Value = MoreSettings.MaxStarCount.Value = (Mathf.RoundToInt(sl0.Value) + UniverseGenConstants.StarCountAlignmentMask) & ~UniverseGenConstants.StarCountAlignmentMask;
         };
         x -= 30f;
         y += 36f;

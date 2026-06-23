@@ -5,6 +5,7 @@ using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine.UI;
 using UXAssist.Common;
+using UXAssist.Common.GameConstants;
 using UXAssist.Common.ModFeatures;
 
 namespace UniverseGenTweaks;
@@ -87,7 +88,7 @@ public static class EpicDifficulty
     [HarmonyPatch(typeof(UIGalaxySelect), nameof(UIGalaxySelect._OnInit))]
     private static void PatchGalaxyUI_OnInit(UIGalaxySelect __instance)
     {
-        __instance.resourceMultiplierSlider.maxValue = 11f;
+        __instance.resourceMultiplierSlider.maxValue = UniverseGenConstants.ResourceMultiplierSliderMax;
     }
 
     [HarmonyPrefix]
@@ -165,10 +166,10 @@ public static class EpicDifficulty
             matcher.Start().InsertAndAdvance(
                 new CodeInstruction(OpCodes.Ldarg_0),
                 new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(GameDesc), nameof(GameDesc.resourceMultiplier))),
-                new CodeInstruction(OpCodes.Ldc_R4, 0.05f),
+                new CodeInstruction(OpCodes.Ldc_R4, UniverseGenConstants.OilMultiplierThreshold),
                 new CodeInstruction(OpCodes.Ble_S, label1)
             ).End().Advance(1).Insert(
-                new CodeInstruction(OpCodes.Ldc_R4, 0.5f * OilMultiplier.Value).WithLabels(label1),
+                new CodeInstruction(OpCodes.Ldc_R4, UniverseGenConstants.OilMultiplierBase * OilMultiplier.Value).WithLabels(label1),
                 new CodeInstruction(OpCodes.Ret)
             );
         }

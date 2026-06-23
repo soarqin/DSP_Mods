@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using UXAssist.Common;
+using UXAssist.Common.GameConstants;
 using UXAssist.Common.ModFeatures;
 
 namespace CheatEnabler.Functions;
@@ -101,10 +102,10 @@ public static class PlayerFunctions
         var propertySystem = DSPGame.propertySystem;
         if (propertySystem == null) return;
         PurgePropertySystem(propertySystem);
-        var itemCnt = new int[6];
-        foreach (var cons in propertySystem.propertyDatas.SelectMany(data => data.totalConsumption.Where(cons => cons.id is >= 6001 and <= 6006)))
+        var itemCnt = new int[ItemIds.Metaverse - ItemIds.HydrogenFuelRod + 1];
+        foreach (var cons in propertySystem.propertyDatas.SelectMany(data => data.totalConsumption.Where(cons => cons.id is >= ItemIds.HydrogenFuelRod and <= ItemIds.Metaverse)))
         {
-            itemCnt[cons.id - 6001] += cons.count;
+            itemCnt[cons.id - ItemIds.HydrogenFuelRod] += cons.count;
         }
 
         if (itemCnt.All(cnt => cnt == 0))
@@ -113,11 +114,11 @@ public static class PlayerFunctions
             return;
         }
         var msg = "ClearAllMetadataConsumptionDetails".Translate();
-        for (var i = 0; i < 6; i++)
+        for (var i = 0; i < itemCnt.Length; i++)
         {
             if (itemCnt[i] > 0)
             {
-                msg += $"\n  {LDB.items.Select(i + 6001).propertyName} x{itemCnt[i]}";
+                msg += $"\n  {LDB.items.Select(i + ItemIds.HydrogenFuelRod).propertyName} x{itemCnt[i]}";
             }
         }
         UIMessageBox.Show("Remove all metadata consumption records".Translate(), msg, "取消".Translate(), "确定".Translate(), UIMessageBox.QUESTION, null, () =>
@@ -141,7 +142,7 @@ public static class PlayerFunctions
         var propertySystem = DSPGame.propertySystem;
         if (propertySystem == null) return;
         PurgePropertySystem(propertySystem);
-        var itemCnt = new int[6];
+        var itemCnt = new int[ItemIds.Metaverse - ItemIds.HydrogenFuelRod + 1];
         var seedKey = DSPGame.GameDesc.seedKey64;
         var clusterPropertyData = propertySystem.propertyDatas.FirstOrDefault(cpd => cpd.seedKey == seedKey);
         if (clusterPropertyData == null)
@@ -150,9 +151,9 @@ public static class PlayerFunctions
             return;
         }
         var currentGamePropertyData = GameMain.data.history.propertyData;
-        foreach (var cons in currentGamePropertyData.totalConsumption.Where(cons => cons.id is >= 6001 and <= 6006))
+        foreach (var cons in currentGamePropertyData.totalConsumption.Where(cons => cons.id is >= ItemIds.HydrogenFuelRod and <= ItemIds.Metaverse))
         {
-            itemCnt[cons.id - 6001] += cons.count;
+            itemCnt[cons.id - ItemIds.HydrogenFuelRod] += cons.count;
         }
 
         if (itemCnt.All(cnt => cnt == 0))
@@ -161,11 +162,11 @@ public static class PlayerFunctions
             return;
         }
         var msg = "ClearCurrentMetadataConsumptionDetails".Translate();
-        for (var i = 0; i < 6; i++)
+        for (var i = 0; i < itemCnt.Length; i++)
         {
             if (itemCnt[i] > 0)
             {
-                msg += $"\n  {LDB.items.Select(i + 6001).propertyName} x{itemCnt[i]}";
+                msg += $"\n  {LDB.items.Select(i + ItemIds.HydrogenFuelRod).propertyName} x{itemCnt[i]}";
             }
         }
         UIMessageBox.Show("Remove metadata consumption record in current game".Translate(), msg, "取消".Translate(), "确定".Translate(), UIMessageBox.QUESTION, null, () =>
@@ -174,8 +175,8 @@ public static class PlayerFunctions
             {
                 if (clusterPropertyData.totalConsumption[i].count == 0) continue;
                 var id = clusterPropertyData.totalConsumption[i].id;
-                if (id < 6001 || id > 6006) continue;
-                var currentGameCount = itemCnt[id - 6001];
+                if (id < ItemIds.HydrogenFuelRod || id > ItemIds.Metaverse) continue;
+                var currentGameCount = itemCnt[id - ItemIds.HydrogenFuelRod];
                 if (currentGameCount == 0) continue;
                 var totalCount = clusterPropertyData.totalConsumption[i].count;
                 clusterPropertyData.totalConsumption[i] = new IDCNT(id, totalCount > currentGameCount ? totalCount - currentGameCount : 0);

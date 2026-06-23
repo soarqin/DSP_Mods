@@ -80,15 +80,15 @@ public static class GalaxySelectUIPatch
             _maxStepTitle.name = "max-step";
             _flattenTitle.name = "flatten";
 
-            TransformDeltaY(_minDistTitle.transform, -36f);
-            TransformDeltaY(_minStepTitle.transform, -36f * 2);
-            TransformDeltaY(_maxStepTitle.transform, -36f * 3);
-            TransformDeltaY(_flattenTitle.transform, -36f * 4);
-            TransformDeltaY(__instance.darkFogToggle.transform.parent, -36f * 4);
-            TransformDeltaY(__instance.resourceMultiplierSlider.transform.parent, -36f * 4);
-            TransformDeltaY(__instance.sandboxToggle.transform.parent, -36f * 4);
-            TransformDeltaY(__instance.propertyMultiplierText.transform, -36f * 4);
-            TransformDeltaY(__instance.addrText.transform.parent, -36f * 4);
+            TransformDeltaY(_minDistTitle.transform, UniverseGenConstants.SliderRowSpacing);
+            TransformDeltaY(_minStepTitle.transform, UniverseGenConstants.SliderRowSpacing * 2);
+            TransformDeltaY(_maxStepTitle.transform, UniverseGenConstants.SliderRowSpacing * 3);
+            TransformDeltaY(_flattenTitle.transform, UniverseGenConstants.SliderRowSpacing * 4);
+            TransformDeltaY(__instance.darkFogToggle.transform.parent, UniverseGenConstants.SliderRowSpacing * 4);
+            TransformDeltaY(__instance.resourceMultiplierSlider.transform.parent, UniverseGenConstants.SliderRowSpacing * 4);
+            TransformDeltaY(__instance.sandboxToggle.transform.parent, UniverseGenConstants.SliderRowSpacing * 4);
+            TransformDeltaY(__instance.propertyMultiplierText.transform, UniverseGenConstants.SliderRowSpacing * 4);
+            TransformDeltaY(__instance.addrText.transform.parent, UniverseGenConstants.SliderRowSpacing * 4);
 
             RemoveAllListeners();
             UpdateSliderControls();
@@ -138,21 +138,21 @@ public static class GalaxySelectUIPatch
 
     private static void UpdateSliderControls()
     {
-        _minDistSlider.minValue = 10f;
-        _minDistSlider.maxValue = 50f;
-        _minDistSlider.value = (float)(GalaxyGenSettingsPatch.MinDist * 10.0);
+        _minDistSlider.minValue = UniverseGenConstants.MinDistSliderMin;
+        _minDistSlider.maxValue = UniverseGenConstants.MinDistSliderMax;
+        _minDistSlider.value = (float)(GalaxyGenSettingsPatch.MinDist * UniverseGenConstants.StepSliderScale);
 
-        _minStepSlider.minValue = (float)(GalaxyGenSettingsPatch.MinDist * 10.0);
-        _minStepSlider.maxValue = (float)(GalaxyGenSettingsPatch.MaxStep * 10.0);
-        _minStepSlider.value = (float)(GalaxyGenSettingsPatch.MinStep * 10.0);
+        _minStepSlider.minValue = (float)(GalaxyGenSettingsPatch.MinDist * UniverseGenConstants.StepSliderScale);
+        _minStepSlider.maxValue = (float)(GalaxyGenSettingsPatch.MaxStep * UniverseGenConstants.StepSliderScale);
+        _minStepSlider.value = (float)(GalaxyGenSettingsPatch.MinStep * UniverseGenConstants.StepSliderScale);
 
-        _maxStepSlider.minValue = (float)(GalaxyGenSettingsPatch.MinStep * 10.0);
-        _maxStepSlider.maxValue = 100f;
-        _maxStepSlider.value = (float)(GalaxyGenSettingsPatch.MaxStep * 10.0);
+        _maxStepSlider.minValue = (float)(GalaxyGenSettingsPatch.MinStep * UniverseGenConstants.StepSliderScale);
+        _maxStepSlider.maxValue = UniverseGenConstants.MaxStepSliderMax;
+        _maxStepSlider.value = (float)(GalaxyGenSettingsPatch.MaxStep * UniverseGenConstants.StepSliderScale);
 
-        _flattenSlider.minValue = 1f;
-        _flattenSlider.maxValue = 50f;
-        _flattenSlider.value = (float)(GalaxyGenSettingsPatch.Flatten * 50.0);
+        _flattenSlider.minValue = UniverseGenConstants.FlattenSliderMin;
+        _flattenSlider.maxValue = UniverseGenConstants.FlattenSliderMax;
+        _flattenSlider.value = (float)(GalaxyGenSettingsPatch.Flatten * UniverseGenConstants.FlattenSliderScale);
 
         _minDistText.text = GalaxyGenSettingsPatch.MinDist.ToString();
         _minStepText.text = GalaxyGenSettingsPatch.MinStep.ToString();
@@ -174,7 +174,7 @@ public static class GalaxySelectUIPatch
     {
         _minDistSlider.onValueChanged.AddListener(val =>
         {
-            var newVal = Mathf.Round(val) / 10.0;
+            var newVal = Mathf.Round(val) / UniverseGenConstants.StepSliderScale;
             if (newVal.Equals(GalaxyGenSettingsPatch.MinDist)) return;
             GalaxyGenSettingsPatch.MinDist = newVal;
             _minDistText.text = GalaxyGenSettingsPatch.MinDist.ToString();
@@ -195,7 +195,7 @@ public static class GalaxySelectUIPatch
         });
         _minStepSlider.onValueChanged.AddListener(val =>
         {
-            var newVal = Mathf.Round(val) / 10.0;
+            var newVal = Mathf.Round(val) / UniverseGenConstants.StepSliderScale;
             if (newVal.Equals(GalaxyGenSettingsPatch.MinStep)) return;
             GalaxyGenSettingsPatch.MinStep = newVal;
             _maxStepSlider.minValue = (float)(newVal * 10.0);
@@ -204,7 +204,7 @@ public static class GalaxySelectUIPatch
         });
         _maxStepSlider.onValueChanged.AddListener(val =>
         {
-            var newVal = Mathf.Round(val) / 10.0;
+            var newVal = Mathf.Round(val) / UniverseGenConstants.StepSliderScale;
             if (newVal.Equals(GalaxyGenSettingsPatch.MaxStep)) return;
             GalaxyGenSettingsPatch.MaxStep = newVal;
             _minStepSlider.maxValue = (float)(newVal * 10.0);
@@ -213,7 +213,7 @@ public static class GalaxySelectUIPatch
         });
         _flattenSlider.onValueChanged.AddListener(val =>
         {
-            var newVal = Mathf.Round(val) / 50.0;
+            var newVal = Mathf.Round(val) / UniverseGenConstants.FlattenSliderScale;
             if (newVal.Equals(GalaxyGenSettingsPatch.Flatten)) return;
             GalaxyGenSettingsPatch.Flatten = newVal;
             _flattenText.text = GalaxyGenSettingsPatch.Flatten.ToString();
