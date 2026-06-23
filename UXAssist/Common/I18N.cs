@@ -4,34 +4,60 @@ using HarmonyLib;
 
 namespace UXAssist.Common;
 
+/// <summary>
+/// Provides bilingual localization helpers that integrate with the game's <see cref="Localization"/> system.
+/// </summary>
 public static class I18N
 {
     private static bool _initialized;
     private static bool _dirty;
 
+    /// <summary>
+    /// Invoked after the game has finished loading the active language and all registered strings have been applied.
+    /// </summary>
     public static Action OnInitialized;
 
+    /// <summary>
+    /// Registers the localization hooks with Harmony.
+    /// </summary>
     public static void Init()
     {
         Harmony.CreateAndPatchAll(typeof(I18N));
     }
 
+    /// <summary>
+    /// Returns whether the localization system has finished its initial load.
+    /// </summary>
+    /// <returns><c>true</c> if localization is initialized; otherwise <c>false</c>.</returns>
     public static bool Initialized() => _initialized;
-    private static readonly List<Tuple<string, string, int>> Keys = [];
-    private static readonly Dictionary<int, List<string>> Strings = [];
 
-    public static void Add(string key, string enus, string zhcn = null)
+    /// <summary>
+    /// Holds the English and Simplified Chinese localized values for a single entry.
+    /// </summary>
+    private sealed class LocalizedString
     {
-        if (zhcn == null && key == enus) return;
-        Keys.Add(Tuple.Create(key, enus, -1));
-        if (Strings.TryGetValue(2052, out var zhcnList))
+        public string En { get; }
+        public string Zh { get; }
+
+        public LocalizedString(string en, string zh)
         {
-            zhcnList.Add(string.IsNullOrEmpty(zhcn) ? enus : zhcn);
+            En = en;
+            Zh = zh;
         }
-        else
-        {
-            Strings.Add(2052, [string.IsNullOrEmpty(zhcn) ? enus : zhcn]);
-        }
+    }
+
+    private static readonly Dictionary<string, LocalizedString> Entries = new();
+
+    /// <summary>
+    /// Registers a localized string pair.
+    /// </summary>
+    /// <param name="key">The lookup key.</param>
+    /// <param name="en">The English text.</param>
+    /// <param name="zh">The Simplified Chinese text.</param>
+    public static void Add(string key, string en, string zh)
+    {
+        if (zh is null && key == en) return;
+        Entries[key] = new LocalizedString(en, string.IsNullOrEmpty(zh) ? en : zh);
         _dirty = true;
     }
 
@@ -39,25 +65,17 @@ public static class I18N
     {
         var indexer = Localization.namesIndexer;
         var index = indexer.Count;
-        var len = Keys.Count;
-        for (var i = 0; i < len; i++)
+        foreach (var key in Entries.Keys)
         {
-            var (key, def, value) = Keys[i];
-            if (value >= 0) continue;
-            if (indexer.TryGetValue(key, out var idx))
-            {
-                Keys[i] = Tuple.Create(key, def, idx);
-                continue;
-            }
+            if (indexer.TryGetValue(key, out _)) continue;
             indexer[key] = index;
-            Keys[i] = Tuple.Create(key, def, index);
             index++;
         }
         _dirty = false;
         var strings = Localization.strings;
         if (strings == null) return;
-        var len2 = strings.Length;
-        for (var i = 0; i < len2; i++)
+        var len = strings.Length;
+        for (var i = 0; i < len; i++)
         {
             ApplyLanguage(i);
             if (i != Localization.currentLanguageIndex) continue;
@@ -90,29 +108,38 @@ public static class I18N
             }
         }
 
-        var keyLength = Keys.Count;
-        if (Strings.TryGetValue(Localization.Languages[index].lcId, out var list))
+        var isChinese = Localization.Languages[index].lcId == 2052;
+        foreach (var entry in Entries)
         {
-            for (var j = 0; j < keyLength; j++)
-            {
-                strs[Keys[j].Item3] = list[j];
-            }
-        }
-        else
-        {
-            for (var j = 0; j < keyLength; j++)
-            {
-                strs[Keys[j].Item3] = Keys[j].Item2;
-            }
+            if (!Localization.namesIndexer.TryGetValue(entry.Key, out var idx)) continue;
+            strs[idx] = isChinese ? entry.Value.Zh : entry.Value.En;
         }
     }
 
+    /// <summary>
+    /// Applies any pending localization changes to the game's localization tables.
+    /// </summary>
     public static void Apply()
     {
         if (!_initialized) return;
-        if (Keys.Count == 0) return;
+        if (Entries.Count == 0) return;
         if (!_dirty) return;
         ApplyIndexers();
+    }
+
+    /// <summary>
+    /// Returns the localized text for the given key in the currently active language,
+    /// falling back to the key itself when no entry is registered.
+    /// </summary>
+    /// <param name="key">The lookup key.</param>
+    /// <returns>The localized text, or <paramref name="key"/> if no entry exists.</returns>
+    public static string Translate(string key)
+    {
+        if (!Entries.TryGetValue(key, out var loc)) return key;
+        var languageIndex = Localization.currentLanguageIndex;
+        if (languageIndex >= 0 && languageIndex < Localization.Languages.Length && Localization.Languages[languageIndex].lcId == 2052)
+            return loc.Zh;
+        return loc.En;
     }
 
     [HarmonyPostfix, HarmonyPriority(Priority.Last), HarmonyPatch(typeof(Localization), nameof(Localization.LoadSettings))]
