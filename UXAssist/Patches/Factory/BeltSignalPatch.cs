@@ -6,10 +6,12 @@ using System.Reflection;
 using HarmonyLib;
 using UXAssist.Common;
 using UXAssist.Common.GameConstants;
+using UXAssist.Common.ModFeatures;
 using GameLogicProc = UXAssist.Common.GameLogic;
 
 namespace UXAssist.Patches.Factory;
 
+[ModFeature("BeltSignalsForBuyOut")]
 internal static class BeltSignalPatch
 {
     public static void Enable(bool enable)
@@ -41,6 +43,16 @@ internal static class BeltSignalPatch
             storage[i] = r.ReadInt32();
     }
 
+    public static void Init()
+    {
+        GameLogicProc.OnGameEnd += BeltSignalsForBuyOut.ResetState;
+    }
+
+    public static void Uninit()
+    {
+        GameLogicProc.OnGameEnd -= BeltSignalsForBuyOut.ResetState;
+    }
+
     internal class BeltSignalsForBuyOut : PatchImpl<BeltSignalsForBuyOut>
     {
         private static bool _initialized;
@@ -51,6 +63,15 @@ internal static class BeltSignalPatch
         public static readonly int[] DarkFogItemsInVoid = [0, 0, 0, 0, 0, 0];
         private static Dictionary<int, uint>[] _signalBelts = new Dictionary<int, uint>[64];
         private static readonly HashSet<int> SignalBeltFactoryIndices = [];
+
+        internal static void ResetState()
+        {
+            _clusterSeedKey = 0L;
+            _signalBelts = null;
+            SignalBeltFactoryIndices.Clear();
+            for (var i = 0; i < DarkFogItemsInVoid.Length; i++)
+                DarkFogItemsInVoid[i] = 0;
+        }
 
         public static void InitPersist()
         {

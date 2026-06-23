@@ -2,9 +2,12 @@ using System;
 using System.Collections.Generic;
 using HarmonyLib;
 using UXAssist.Common;
+using UXAssist.Common.ModFeatures;
+using GameLogicProc = UXAssist.Common.GameLogic;
 
 namespace UXAssist.Patches.Factory;
 
+[ModFeature("VeinProtection")]
 internal static class VeinProtectionPatch
 {
     public static void Enable(bool enable)
@@ -17,6 +20,16 @@ internal static class VeinProtectionPatch
         ProtectVeinsFromExhaustion.InitConfig();
     }
 
+    public static void Init()
+    {
+        GameLogicProc.OnGameEnd += ProtectVeinsFromExhaustion.ResetState;
+    }
+
+    public static void Uninit()
+    {
+        GameLogicProc.OnGameEnd -= ProtectVeinsFromExhaustion.ResetState;
+    }
+
     internal class ProtectVeinsFromExhaustion : PatchImpl<ProtectVeinsFromExhaustion>
     {
         public static int KeepVeinAmount = 100;
@@ -26,6 +39,11 @@ internal static class VeinProtectionPatch
         public static void InitConfig()
         {
             _keepOilAmount = Math.Max((int)(KeepOilSpeed / 0.00004f + 0.5f), 2500);
+        }
+
+        internal static void ResetState()
+        {
+            InitConfig();
         }
 
         [HarmonyPrefix]

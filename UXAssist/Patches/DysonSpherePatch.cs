@@ -25,6 +25,7 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
         _totalNodeSpInfo = AccessTools.Field(typeof(DysonSphereLayer), "totalNodeSP");
         _totalFrameSpInfo = AccessTools.Field(typeof(DysonSphereLayer), "totalFrameSP");
         _totalCpInfo = AccessTools.Field(typeof(DysonSphereLayer), "totalCP");
+        GameLogicProc.OnGameEnd += StopEjectOnNodeComplete.ResetState;
     }
 
     public static void Start()
@@ -35,6 +36,7 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
 
     public static void Uninit()
     {
+        GameLogicProc.OnGameEnd -= StopEjectOnNodeComplete.ResetState;
         StopEjectOnNodeComplete.Enable(false);
         OnlyConstructNodes.Enable(false);
         Enable(false);
@@ -344,6 +346,12 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
         {
             var comp = _nodeForAbsorb[starIndex];
             return comp is { Count: > 0 };
+        }
+
+        internal static void ResetState()
+        {
+            _initialized = false;
+            _nodeForAbsorb = null;
         }
 
         private static void OnGameBegin()

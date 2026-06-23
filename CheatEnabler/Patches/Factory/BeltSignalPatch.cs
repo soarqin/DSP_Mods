@@ -4,11 +4,13 @@ using System.Linq;
 using HarmonyLib;
 using UnityEngine;
 using UXAssist.Common;
+using UXAssist.Common.ModFeatures;
 using GameLogicProc = UXAssist.Common.GameLogic;
 using UXAssist.Common.GameConstants;
 
 namespace CheatEnabler.Patches.Factory;
 
+[ModFeature("BeltSignalGenerator")]
 internal class BeltSignalGenerator : PatchImpl<BeltSignalGenerator>
 {
     private static Dictionary<int, BeltSignal>[] _signalBelts;
@@ -16,6 +18,25 @@ internal class BeltSignalGenerator : PatchImpl<BeltSignalGenerator>
     private static Dictionary<int, HashSet<long>> _portalTo;
     private static int _signalBeltsCapacity;
     private static bool _initialized;
+
+    public static void Init()
+    {
+        GameLogicProc.OnGameEnd += ResetState;
+    }
+
+    public static void Uninit()
+    {
+        GameLogicProc.OnGameEnd -= ResetState;
+    }
+
+    private static void ResetState()
+    {
+        _initialized = false;
+        _signalBelts = null;
+        _portalFrom = null;
+        _portalTo = null;
+        _signalBeltsCapacity = 0;
+    }
 
     private class BeltSignal
     {

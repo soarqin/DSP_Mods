@@ -6,6 +6,7 @@ using HarmonyLib;
 using UnityEngine.Bindings;
 using UXAssist.Common;
 using UXAssist.Common.ModFeatures;
+using GameLogicProc = UXAssist.Common.GameLogic;
 
 namespace CheatEnabler.Patches;
 
@@ -21,6 +22,7 @@ public static class GamePatch
         DevShortcutsEnabled.SettingChanged += (_, _) => DevShortcuts.Enable(DevShortcutsEnabled.Value);
         AbnormalDisablerEnabled.SettingChanged += (_, _) => AbnormalDisabler.Enable(AbnormalDisablerEnabled.Value);
         UnlockTechEnabled.SettingChanged += (_, _) => UnlockTech.Enable(UnlockTechEnabled.Value);
+        GameLogicProc.OnGameEnd += ResetState;
     }
 
     public static void Start()
@@ -32,9 +34,16 @@ public static class GamePatch
 
     public static void Uninit()
     {
+        GameLogicProc.OnGameEnd -= ResetState;
         UnlockTech.Enable(false);
         AbnormalDisabler.Enable(false);
         DevShortcuts.Enable(false);
+    }
+
+    private static void ResetState()
+    {
+        AbnormalDisabler.ResetState();
+        DevShortcuts.ResetState();
     }
 
     public class AbnormalDisabler : PatchImpl<AbnormalDisabler>
@@ -64,6 +73,11 @@ public static class GamePatch
             {
                 p.Value.OnRegEvent();
             }
+        }
+
+        internal static void ResetState()
+        {
+            _savedDeterminators = null;
         }
 
         [HarmonyPrefix]
@@ -104,6 +118,11 @@ public static class GamePatch
         protected override void OnDisable()
         {
             if (_test != null) _test.active = false;
+        }
+
+        internal static void ResetState()
+        {
+            _test = null;
         }
 
         [HarmonyPostfix]

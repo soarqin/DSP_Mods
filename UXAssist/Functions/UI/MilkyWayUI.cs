@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UXAssist.Common;
 using UXAssist.UI;
+using GameLogicProc = UXAssist.Common.GameLogic;
 
 namespace UXAssist.Functions.UI;
 
@@ -31,7 +32,8 @@ internal static class MilkyWayUI
 
     public static void Init()
     {
-                                            }
+        GameLogicProc.OnGameEnd += ResetState;
+    }
 
     public static void Start()
     {
@@ -39,6 +41,13 @@ internal static class MilkyWayUI
 
     public static void Uninit()
     {
+        GameLogicProc.OnGameEnd -= ResetState;
+    }
+
+    private static void ResetState()
+    {
+        ClearClusterUploadResults();
+        _topTenPlayerData = null;
     }
 
     public static void OnInputUpdate()
