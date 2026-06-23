@@ -13,7 +13,7 @@ public static class I18N
     private static bool _dirty;
 
     /// <summary>
-    /// Invoked after the game has finished loading the active language and all registered strings have been applied.
+    /// Invoked whenever the active language is applied or changed and all registered strings have been applied.
     /// </summary>
     public static Action OnInitialized;
 
@@ -52,12 +52,14 @@ public static class I18N
     /// Registers a localized string pair.
     /// </summary>
     /// <param name="key">The lookup key.</param>
-    /// <param name="en">The English text.</param>
-    /// <param name="zh">The Simplified Chinese text.</param>
-    public static void Add(string key, string en, string zh)
+    /// <param name="enus">The English text.</param>
+    /// <param name="zhcn">The Simplified Chinese text.</param>
+    public static void Add(string key, string enus, string zhcn = null)
     {
-        if (zh is null && key == en) return;
-        Entries[key] = new LocalizedString(en, string.IsNullOrEmpty(zh) ? en : zh);
+        // Skip identity fallback entries: if no Chinese translation is provided and the key equals the English text,
+        // there is no need to register a separate entry because the key already serves as the fallback text.
+        if (zhcn is null && key == enus) return;
+        Entries[key] = new LocalizedString(enus, string.IsNullOrEmpty(zhcn) ? enus : zhcn);
         _dirty = true;
     }
 
@@ -133,7 +135,7 @@ public static class I18N
     /// </summary>
     /// <param name="key">The lookup key.</param>
     /// <returns>The localized text, or <paramref name="key"/> if no entry exists.</returns>
-    public static string Translate(string key)
+    internal static string Translate(string key)
     {
         if (!Entries.TryGetValue(key, out var loc)) return key;
         var languageIndex = Localization.currentLanguageIndex;
