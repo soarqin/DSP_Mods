@@ -1,78 +1,45 @@
 ﻿using System;
-using System.IO;
-using System.Linq;
 using System.Reflection;
 using UnityEngine;
+using UXAssist.Common.Utils;
 
 namespace UXAssist.Common;
 
 public static class Util
 {
-    /// <summary>
-    /// Returns all types from the assembly matching the predicate, tolerating partially loadable assemblies.
-    /// </summary>
+    [Obsolete("Use ReflectionUtil.GetTypesFiltered")]
     public static Type[] GetTypesFiltered(Assembly assembly, Func<Type, bool> predicate)
-    {
-        try
-        {
-            return [.. assembly.GetTypes().Where(predicate)];
-        }
-        catch (ReflectionTypeLoadException ex)
-        {
-            return [.. ex.Types.Where(t => t != null).Where(predicate)];
-        }
-    }
+        => ReflectionUtil.GetTypesFiltered(assembly, predicate);
 
-    public static Type[] GetTypesInNamespace(Assembly assembly, string nameSpace) => GetTypesFiltered(assembly, t => string.Equals(t.Namespace, nameSpace, StringComparison.Ordinal));
+    [Obsolete("Use ReflectionUtil.GetTypesInNamespace")]
+    public static Type[] GetTypesInNamespace(Assembly assembly, string nameSpace)
+        => ReflectionUtil.GetTypesInNamespace(assembly, nameSpace);
 
+    [Obsolete("Use ReflectionUtil.GetTypesInNamespacePrefix")]
     public static Type[] GetTypesInNamespacePrefix(Assembly assembly, string prefix)
-    {
-        return GetTypesFiltered(assembly, t =>
-            t.Namespace != null &&
-            (t.Namespace == prefix || t.Namespace.StartsWith(prefix + ".", StringComparison.Ordinal)));
-    }
+        => ReflectionUtil.GetTypesInNamespacePrefix(assembly, prefix);
 
+    [Obsolete("Use ResourceUtil.LoadEmbeddedResource")]
     public static byte[] LoadEmbeddedResource(string path, Assembly assembly = null)
-    {
-        if (assembly == null)
-        {
-            assembly = Assembly.GetCallingAssembly();
-        }
-        var info = assembly.GetName();
-        var name = info.Name;
-        using var stream = assembly.GetManifestResourceStream($"{name}.{path.Replace('/', '.')}")!;
-        var buffer = new byte[stream.Length];
-        _ = stream.Read(buffer, 0, buffer.Length);
-        return buffer;
-    }
+        => ResourceUtil.LoadEmbeddedResource(path, assembly);
 
+    [Obsolete("Use ResourceUtil.LoadTexture")]
     public static Texture2D LoadTexture(string path)
-    {
-        var fileData = File.ReadAllBytes(path);
-        var tex = new Texture2D(2, 2);
-        tex.LoadImage(fileData);
-        return tex;
-    }
+        => ResourceUtil.LoadTexture(path);
 
+    [Obsolete("Use ResourceUtil.LoadSprite")]
     public static Sprite LoadSprite(string path)
-    {
-        var tex = LoadTexture(path);
-        return Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
-    }
+        => ResourceUtil.LoadSprite(path);
 
+    [Obsolete("Use ResourceUtil.LoadEmbeddedTexture")]
     public static Texture2D LoadEmbeddedTexture(string path, Assembly assembly = null)
-    {
-        var fileData = LoadEmbeddedResource(path, assembly);
-        var tex = new Texture2D(2, 2);
-        tex.LoadImage(fileData);
-        return tex;
-    }
+        => ResourceUtil.LoadEmbeddedTexture(path, assembly);
 
+    [Obsolete("Use ResourceUtil.LoadEmbeddedSprite")]
     public static Sprite LoadEmbeddedSprite(string path, Assembly assembly = null)
-    {
-        var tex = LoadEmbeddedTexture(path, assembly);
-        return Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
-    }
+        => ResourceUtil.LoadEmbeddedSprite(path, assembly);
 
-    public static string PluginFolder(Assembly assembly = null) => Path.GetDirectoryName((assembly == null ? Assembly.GetCallingAssembly() : assembly).Location);
+    [Obsolete("Use PathUtil.PluginFolder")]
+    public static string PluginFolder(Assembly assembly = null)
+        => PathUtil.PluginFolder(assembly);
 }
