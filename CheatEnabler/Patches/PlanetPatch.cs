@@ -34,6 +34,9 @@ public static class PlanetPatch
 
     private class WaterPumperPatch : PatchImpl<WaterPumperPatch>
     {
+        // Harmony transpiler: BuildTool_CheckBuildConditions_Transpiler
+        // Target: BuildTool_BlueprintPaste.CheckBuildConditions, BuildTool_Click.CheckBuildConditions
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(BuildTool_BlueprintPaste), nameof(BuildTool_BlueprintPaste.CheckBuildConditions))]
         [HarmonyPatch(typeof(BuildTool_Click), nameof(BuildTool_Click.CheckBuildConditions))]
@@ -56,6 +59,9 @@ public static class PlanetPatch
 
     private class TerraformAnyway : PatchImpl<TerraformAnyway>
     {
+        // Harmony transpiler: BuildTool_BlueprintPaste_DetermineReforms_Patch
+        // Target: BuildTool_BlueprintPaste.DetermineReforms
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(BuildTool_BlueprintPaste), nameof(BuildTool_BlueprintPaste.DetermineReforms))]
         private static IEnumerable<CodeInstruction> BuildTool_BlueprintPaste_DetermineReforms_Patch(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -79,7 +85,9 @@ public static class PlanetPatch
             matcher.Opcode = OpCodes.Br;
             return matcher.InstructionEnumeration();
         }
-
+        // Harmony transpiler: BuildTool_Reform_RemoveBasePit_Patch
+        // Target: BuildTool_Reform.RemoveBasePit
+        // Fallback: Checks CodeMatcher.IsInvalid/IsValid and returns original instructions on mismatch.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(BuildTool_Reform), nameof(BuildTool_Reform.RemoveBasePit))]
         private static IEnumerable<CodeInstruction> BuildTool_Reform_RemoveBasePit_Patch(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -104,7 +112,9 @@ public static class PlanetPatch
             );
             return matcher.InstructionEnumeration();
         }
-
+        // Harmony transpiler: UIRemoveBasePitButton_OnRemoveButtonClick_Patch
+        // Target: UIRemoveBasePitButton.OnRemoveButtonClick, UIRemoveBasePitButton._OnUpdate
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(UIRemoveBasePitButton), nameof(UIRemoveBasePitButton.OnRemoveButtonClick))]
         [HarmonyPatch(typeof(UIRemoveBasePitButton), nameof(UIRemoveBasePitButton._OnUpdate))]
@@ -141,7 +151,9 @@ public static class PlanetPatch
             );
             return matcher.InstructionEnumeration();
         }
-
+        // Harmony transpiler: BuildTool_Reform_ReformAction_Patch
+        // Target: BuildTool_Reform.ReformAction
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(BuildTool_Reform), nameof(BuildTool_Reform.ReformAction))]
         private static IEnumerable<CodeInstruction> BuildTool_Reform_ReformAction_Patch(IEnumerable<CodeInstruction> instructions, ILGenerator generator)

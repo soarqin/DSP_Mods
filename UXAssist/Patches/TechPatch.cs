@@ -263,6 +263,9 @@ public static class TechPatch
 
     private class BatchBuyoutTech : PatchImpl<BatchBuyoutTech>
     {
+        // Harmony transpiler: UITechNode_UpdateInfoDynamic_Transpiler
+        // Target: UITechNode.UpdateInfoDynamic
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(UITechNode), nameof(UITechNode.UpdateInfoDynamic))]
         private static IEnumerable<CodeInstruction> UITechNode_UpdateInfoDynamic_Transpiler(IEnumerable<CodeInstruction> instructions)

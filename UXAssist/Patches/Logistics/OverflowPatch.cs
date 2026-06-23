@@ -11,6 +11,9 @@ internal class AllowOverflowInLogistics : PatchImpl<AllowOverflowInLogistics>
     private static bool _blueprintPasting;
 
     // Do not check for overflow when try to send hand items into storages
+    // Harmony transpiler: UIStationStorage_OnItemIconMouseDown_Transpiler
+    // Target: UIControlPanelStationStorage.OnItemIconMouseDown, UIStationStorage.OnItemIconMouseDown
+    // Fallback: None — patch will fail loudly if the target method body changes.
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(UIControlPanelStationStorage), nameof(UIControlPanelStationStorage.OnItemIconMouseDown))]
     [HarmonyPatch(typeof(UIStationStorage), nameof(UIStationStorage.OnItemIconMouseDown))]
@@ -39,6 +42,9 @@ internal class AllowOverflowInLogistics : PatchImpl<AllowOverflowInLogistics>
     }
 
     // Remove storage limit check
+    // Harmony transpiler: PlanetTransport_SetStationStorage_Transpiler
+    // Target: PlanetTransport.SetStationStorage
+    // Fallback: None — patch will fail loudly if the target method body changes.
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(PlanetTransport), nameof(PlanetTransport.SetStationStorage))]
     private static IEnumerable<CodeInstruction> PlanetTransport_SetStationStorage_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)

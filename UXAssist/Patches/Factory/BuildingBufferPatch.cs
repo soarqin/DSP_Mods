@@ -67,7 +67,9 @@ internal static class BuildingBufferPatch
             patch.Unpatch(AccessTools.Method(typeof(SiloComponent), nameof(SiloComponent.InternalUpdate)), AccessTools.Method(typeof(TweakBuildingBuffer), nameof(SiloComponent_InternalUpdate_Transpiler)));
             patch.Patch(AccessTools.Method(typeof(SiloComponent), nameof(SiloComponent.InternalUpdate)), null, null, new HarmonyMethod(typeof(TweakBuildingBuffer), nameof(SiloComponent_InternalUpdate_Transpiler)));
         }
-
+        // Harmony transpiler: PowerGeneratorComponent_GameTick_Gamma_Transpiler
+        // Target: PowerGeneratorComponent.GameTick_Gamma
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(PowerGeneratorComponent), nameof(PowerGeneratorComponent.GameTick_Gamma))]
         private static IEnumerable<CodeInstruction> PowerGeneratorComponent_GameTick_Gamma_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -89,7 +91,9 @@ internal static class BuildingBufferPatch
             matcher.Advance(2).RemoveInstructions(2).Insert(new CodeInstruction(OpCodes.Ldc_I4, FactoryPatch.ReceiverBufferCount.Value * 3600));
             return matcher.InstructionEnumeration();
         }
-
+        // Harmony transpiler: AssemblerComponent_UpdateNeeds_Transpiler
+        // Target: AssemblerComponent.UpdateNeeds
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(AssemblerComponent), nameof(AssemblerComponent.UpdateNeeds))]
         private static IEnumerable<CodeInstruction> AssemblerComponent_UpdateNeeds_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -125,7 +129,9 @@ internal static class BuildingBufferPatch
             matcher.Advance(2).Operand = FactoryPatch.AssemblerBufferMininumMultiplier.Value;
             return matcher.InstructionEnumeration();
         }
-
+        // Harmony transpiler: LabComponent_UpdateNeedsAssemble_Transpiler
+        // Target: LabComponent.UpdateNeedsAssemble
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(LabComponent), nameof(LabComponent.UpdateNeedsAssemble))]
         private static IEnumerable<CodeInstruction> LabComponent_UpdateNeedsAssemble_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -163,7 +169,9 @@ internal static class BuildingBufferPatch
             matcher.Advance(2).SetAndAdvance(OpCodes.Ldc_I4, maxCount);
             return matcher.InstructionEnumeration();
         }
-
+        // Harmony transpiler: LabComponent_UpdateNeedsResearch_Transpiler
+        // Target: LabComponent.UpdateNeedsResearch
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(LabComponent), nameof(LabComponent.UpdateNeedsResearch))]
         private static IEnumerable<CodeInstruction> LabComponent_UpdateNeedsResearch_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -183,7 +191,9 @@ internal static class BuildingBufferPatch
             matcher.Repeat(m => m.SetAndAdvance(OpCodes.Ldc_I4, FactoryPatch.LabBufferMaxCountForResearch.Value * 3600));
             return matcher.InstructionEnumeration();
         }
-
+        // Harmony transpiler: EjectorComponent_InternalUpdate_Transpiler
+        // Target: EjectorComponent.InternalUpdate
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(EjectorComponent), nameof(EjectorComponent.InternalUpdate))]
         private static IEnumerable<CodeInstruction> EjectorComponent_InternalUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -197,7 +207,9 @@ internal static class BuildingBufferPatch
             matcher.Advance(2).Set(OpCodes.Ldc_I4, FactoryPatch.EjectorBufferCount.Value);
             return matcher.InstructionEnumeration();
         }
-
+        // Harmony transpiler: SiloComponent_InternalUpdate_Transpiler
+        // Target: SiloComponent.InternalUpdate
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(SiloComponent), nameof(SiloComponent.InternalUpdate))]
         private static IEnumerable<CodeInstruction> SiloComponent_InternalUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)

@@ -80,8 +80,9 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
         ShortcutKeysForStarsName.Enable(false);
         AutoNavigation.Enable(false);
     }
-
-
+    // Harmony transpiler: UIStarmapStar__OnLateUpdate_Transpiler
+    // Target: UIStarmapStar._OnLateUpdate
+    // Fallback: None — patch will fail loudly if the target method body changes.
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(UIStarmapStar), nameof(UIStarmapStar._OnLateUpdate))]
     private static IEnumerable<CodeInstruction> UIStarmapStar__OnLateUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -126,6 +127,9 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 
     private class EnhancedMechaForgeCountControl : PatchImpl<EnhancedMechaForgeCountControl>
     {
+        // Harmony transpiler: UIReplicatorWindow_OnOkButtonClick_Transpiler
+        // Target: UIReplicatorWindow.OnOkButtonClick
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(UIReplicatorWindow), nameof(UIReplicatorWindow.OnOkButtonClick))]
         private static IEnumerable<CodeInstruction> UIReplicatorWindow_OnOkButtonClick_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -137,7 +141,9 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
             matcher.Repeat(m => m.SetAndAdvance(OpCodes.Ldc_I4, 1000));
             return matcher.InstructionEnumeration();
         }
-
+        // Harmony transpiler: UIReplicatorWindow_OnPlusButtonClick_Transpiler
+        // Target: UIReplicatorWindow.OnPlusButtonClick, UIReplicatorWindow.OnMinusButtonClick
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(UIReplicatorWindow), nameof(UIReplicatorWindow.OnPlusButtonClick))]
         [HarmonyPatch(typeof(UIReplicatorWindow), nameof(UIReplicatorWindow.OnMinusButtonClick))]
@@ -177,6 +183,9 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 
     private class HideTipsForSandsChanges : PatchImpl<HideTipsForSandsChanges>
     {
+        // Harmony transpiler: Player_SetSandCount_Transpiler
+        // Target: Player.SetSandCount
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(Player), nameof(Player.SetSandCount))]
         private static IEnumerable<CodeInstruction> Player_SetSandCount_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -223,6 +232,9 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
             ShowAllStarsNameStatus = 0;
         }
         /*
+                // Harmony transpiler: UIStarmapPlanet__OnLateUpdate_Transpiler
+                // Target: UIStarmapPlanet._OnLateUpdate
+                // Fallback: None — patch will fail loudly if the target method body changes.
                 [HarmonyTranspiler]
                 [HarmonyPatch(typeof(UIStarmapPlanet), nameof(UIStarmapPlanet._OnLateUpdate))]
                 private static IEnumerable<CodeInstruction> UIStarmapPlanet__OnLateUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -270,7 +282,9 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
                     );
                     return matcher.InstructionEnumeration();
                 }
-
+                // Harmony transpiler: UIStarmapDFHive__OnLateUpdate_Transpiler
+                // Target: UIStarmapDFHive._OnLateUpdate
+                // Fallback: None — patch will fail loudly if the target method body changes.
                 [HarmonyTranspiler]
                 [HarmonyPatch(typeof(UIStarmapDFHive), nameof(UIStarmapDFHive._OnLateUpdate))]
                 private static IEnumerable<CodeInstruction> UIStarmapDFHive__OnLateUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -360,7 +374,9 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
             }
             return movementStateChanged;
         }
-
+        // Harmony transpiler: PlayerController_GameTick_Transpiler
+        // Target: PlayerController.GameTick
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(PlayerController), nameof(PlayerController.GameTick))]
         private static IEnumerable<CodeInstruction> PlayerController_GameTick_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -559,7 +575,9 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
             );
             return matcher.InstructionEnumeration();
         }
-
+        // Harmony transpiler: VFInput_sailSpeedUp_Transpiler
+        // Target: VFInput._sailSpeedUp (getter)
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(VFInput), nameof(VFInput._sailSpeedUp), MethodType.Getter)]
         private static IEnumerable<CodeInstruction> VFInput_sailSpeedUp_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)

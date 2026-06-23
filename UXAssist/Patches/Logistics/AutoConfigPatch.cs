@@ -28,6 +28,9 @@ internal class AutoConfigLogistics : PatchImpl<AutoConfigLogistics>
 
     private class LimitAutoReplenishCount : PatchImpl<LimitAutoReplenishCount>
     {
+        // Harmony transpiler: PlanetFactory_StationAutoReplenishIfNeeded_Transpiler
+        // Target: PlanetFactory.EntityAutoReplenishIfNeeded, PlanetFactory.StationAutoReplenishIfNeeded
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(PlanetFactory), nameof(PlanetFactory.EntityAutoReplenishIfNeeded))]
         [HarmonyPatch(typeof(PlanetFactory), nameof(PlanetFactory.StationAutoReplenishIfNeeded))]
@@ -116,6 +119,9 @@ internal class AutoConfigLogistics : PatchImpl<AutoConfigLogistics>
 
 internal class AutoConfigLogisticsSetDefaultRemoteLogicToStorage : PatchImpl<AutoConfigLogisticsSetDefaultRemoteLogicToStorage>
 {
+    // Harmony transpiler: UIStationStorage_OnItemPickerReturn_Transpiler
+    // Target: UIControlPanelStationStorage.OnItemPickerReturn, UIStationStorage.OnItemPickerReturn
+    // Fallback: None — patch will fail loudly if the target method body changes.
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(UIControlPanelStationStorage), nameof(UIControlPanelStationStorage.OnItemPickerReturn))]
     [HarmonyPatch(typeof(UIStationStorage), nameof(UIStationStorage.OnItemPickerReturn))]

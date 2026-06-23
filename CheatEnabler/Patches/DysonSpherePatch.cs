@@ -67,7 +67,9 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
     // {
     //     CheatEnabler.Logger.LogDebug($"[DysonShell.ImportFromBlueprint] vertCount={__instance.vertexCount}, cpPerVertex={__instance.cpPerVertex}, cpMax={__instance.cellPointMax}");
     // }
-
+    // Harmony transpiler: DysonNode_OrderConstructCp_Transpiler
+    // Target: DysonNode.OrderConstructCp
+    // Fallback: None — patch will fail loudly if the target method body changes.
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(DysonNode), nameof(DysonNode.OrderConstructCp))]
     private static IEnumerable<CodeInstruction> DysonNode_OrderConstructCp_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -82,7 +84,9 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
         );
         return matcher.InstructionEnumeration();
     }
-
+    // Harmony transpiler: DysonSwarm_AbsorbSail_Transpiler
+    // Target: DysonSwarm.AbsorbSail
+    // Fallback: None — patch will fail loudly if the target method body changes.
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(DysonSwarm), nameof(DysonSwarm.AbsorbSail))]
     private static IEnumerable<CodeInstruction> DysonSwarm_AbsorbSail_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -189,7 +193,9 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
                 UpdateSailLifeTime();
             }
         }
-
+        // Harmony transpiler: EjectorComponent_InternalUpdate_Transpiler
+        // Target: EjectorComponent.InternalUpdate
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(EjectorComponent), nameof(EjectorComponent.InternalUpdate))]
         private static IEnumerable<CodeInstruction> EjectorComponent_InternalUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -374,7 +380,9 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
         {
             _instantAbsorb = QuickAbsorbEnabled.Value && QuickAbsorbPatch.GetHarmony() != null;
         }
-
+        // Harmony transpiler: DysonSwarm_AbsorbSail_Transpiler2
+        // Target: DysonSwarm.AbsorbSail
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(DysonSwarm), nameof(DysonSwarm.AbsorbSail))]
         private static IEnumerable<CodeInstruction> DysonSwarm_AbsorbSail_Transpiler2(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -416,7 +424,9 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
         {
             _instantAbsorb = SkipAbsorbEnabled.Value && SkipAbsorbPatch.GetHarmony() != null;
         }
-
+        // Harmony transpiler: DysonSphereLayer_GameTick_Transpiler
+        // Target: DysonSphereLayer.GameTick
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(DysonSphereLayer), nameof(DysonSphereLayer.GameTick))]
         private static IEnumerable<CodeInstruction> DysonSphereLayer_GameTick_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -458,6 +468,9 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
 
     private class EjectAnywayPatch : PatchImpl<EjectAnywayPatch>
     {
+        // Harmony transpiler: EjectorComponent_InternalUpdate_Transpiler
+        // Target: EjectorComponent.InternalUpdate
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(EjectorComponent), nameof(EjectorComponent.InternalUpdate))]
         private static IEnumerable<CodeInstruction> EjectorComponent_InternalUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -488,6 +501,9 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
 
     private class OverclockEjector : PatchImpl<OverclockEjector>
     {
+        // Harmony transpiler: EjectComponent_InternalUpdate_Transpiler
+        // Target: EjectorComponent.InternalUpdate
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(EjectorComponent), nameof(EjectorComponent.InternalUpdate))]
         private static IEnumerable<CodeInstruction> EjectComponent_InternalUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -510,7 +526,9 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
             matcher.Start().Advance(pos).RemoveInstructions(end - pos);
             return matcher.InstructionEnumeration();
         }
-
+        // Harmony transpiler: UIEjectAndSiloWindow__OnUpdate_Transpiler
+        // Target: UIEjectorWindow._OnUpdate
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(UIEjectorWindow), nameof(UIEjectorWindow._OnUpdate))]
         private static IEnumerable<CodeInstruction> UIEjectAndSiloWindow__OnUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -541,6 +559,9 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
 
     private class OverclockSilo : PatchImpl<OverclockSilo>
     {
+        // Harmony transpiler: SiloComponent_InternalUpdate_Transpiler
+        // Target: SiloComponent.InternalUpdate
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(SiloComponent), nameof(SiloComponent.InternalUpdate))]
         private static IEnumerable<CodeInstruction> SiloComponent_InternalUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -563,7 +584,9 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
             matcher.Start().Advance(pos).RemoveInstructions(end - pos);
             return matcher.InstructionEnumeration();
         }
-
+        // Harmony transpiler: UIEjectAndSiloWindow__OnUpdate_Transpiler
+        // Target: UISiloWindow._OnUpdate
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(UISiloWindow), nameof(UISiloWindow._OnUpdate))]
         private static IEnumerable<CodeInstruction> UIEjectAndSiloWindow__OnUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -612,7 +635,9 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
             if (dysonEditor == null || !dysonEditor.gameObject.activeSelf) return;
             dysonEditor.selection?.onViewStarChange?.Invoke();
         }
-
+        // Harmony transpiler: MaxOrbitRadiusPatch_Transpiler
+        // Target: DysonSphere.CheckLayerRadius, DysonSphere.CheckSwarmRadius, DysonSphere.QueryLayerRadius, DysonSphere.QuerySwarmRadius, UIDEAddLayerDialogue.OnViewStarChange, UIDEAddSwarmDialogue.OnViewStarChange, UIDysonEditor.OnViewStarChange, UIDESwarmOrbitInfo._OnInit, UIDysonOrbitPreview.UpdateAscNodeGizmos
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(DysonSphere), nameof(DysonSphere.CheckLayerRadius))]
         [HarmonyPatch(typeof(DysonSphere), nameof(DysonSphere.CheckSwarmRadius))]

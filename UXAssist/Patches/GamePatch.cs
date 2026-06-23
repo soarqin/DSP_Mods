@@ -413,7 +413,9 @@ public class GamePatch : PatchImpl<GamePatch>
                 entry.indexText.text = (i + 1).ToString();
             }
         }
-
+        // Harmony transpiler: UILoadGameWindow_ReplaceSaveName_Transpiler
+        // Target: UILoadGameWindow.DoLoadSelectedGame, UILoadGameWindow.OnSelectedChange
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(UILoadGameWindow), nameof(UILoadGameWindow.DoLoadSelectedGame))]
         [HarmonyPatch(typeof(UILoadGameWindow), nameof(UILoadGameWindow.OnSelectedChange))]
@@ -426,7 +428,9 @@ public class GamePatch : PatchImpl<GamePatch>
             matcher.Repeat(m => m.SetAndAdvance(OpCodes.Ldfld, AccessTools.Field(typeof(UIGameSaveEntry), nameof(UIGameSaveEntry._saveName))));
             return matcher.InstructionEnumeration();
         }
-
+        // Harmony transpiler: GameSave_RemoveValidateOnLoad_Transpiler
+        // Target: GameSave.LoadCurrentGame, GameSave.LoadGameDesc, GameSave.ReadHeader, GameSave.ReadHeaderAndDescAndProperty, GameSave.SaveExist, GameSave.SavePath
+        // Fallback: Checks CodeMatcher.IsInvalid/IsValid and returns original instructions on mismatch.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(GameSave), nameof(GameSave.LoadCurrentGame))]
         [HarmonyPatch(typeof(GameSave), nameof(GameSave.LoadGameDesc))]
@@ -469,7 +473,9 @@ public class GamePatch : PatchImpl<GamePatch>
                 __instance.combatSettings = UIRoot.instance.galaxySelect.uiCombat.combatSettings;
             }
         }
-
+        // Harmony transpiler: GameData_Import_Transpiler
+        // Target: GameData.Import
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(GameData), nameof(GameData.Import))]
         private static IEnumerable<CodeInstruction> GameData_Import_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)

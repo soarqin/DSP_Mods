@@ -24,6 +24,9 @@ internal static class BuildToolPatch
 
     private class BuildGizmoPatch : PatchImpl<BuildGizmoPatch>
     {
+        // Harmony transpiler: ConnGizmoGraph_Constructor_Transpiler
+        // Target: ConnGizmoGraph..ctor
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(ConnGizmoGraph), MethodType.Constructor)]
         private static IEnumerable<CodeInstruction> ConnGizmoGraph_Constructor_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -35,7 +38,9 @@ internal static class BuildToolPatch
             matcher.Repeat(m => m.SetAndAdvance(OpCodes.Ldc_I4, 2048));
             return matcher.InstructionEnumeration();
         }
-
+        // Harmony transpiler: ConnGizmoGraph_SetPointCount_Transpiler
+        // Target: ConnGizmoGraph.SetPointCount
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(ConnGizmoGraph), nameof(ConnGizmoGraph.SetPointCount))]
         private static IEnumerable<CodeInstruction> ConnGizmoGraph_SetPointCount_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -47,7 +52,9 @@ internal static class BuildToolPatch
             matcher.Repeat(m => m.SetAndAdvance(OpCodes.Ldc_I4, 2048));
             return matcher.InstructionEnumeration();
         }
-
+        // Harmony transpiler: BuildTool_Path__OnInit_Transpiler
+        // Target: BuildTool_Path._OnInit
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(BuildTool_Path), nameof(BuildTool_Path._OnInit))]
         private static IEnumerable<CodeInstruction> BuildTool_Path__OnInit_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -59,7 +66,9 @@ internal static class BuildToolPatch
             matcher.Repeat(m => m.SetAndAdvance(OpCodes.Ldc_I4, 2048));
             return matcher.InstructionEnumeration();
         }
-
+        // Harmony transpiler: BuildTool_Reform_Constructor_Transpiler
+        // Target: BuildTool_Reform..ctor
+        // Fallback: Checks CodeMatcher.IsInvalid/IsValid and returns original instructions on mismatch.
         [HarmonyTranspiler, HarmonyPatch(typeof(BuildTool_Reform), MethodType.Constructor)]
         private static IEnumerable<CodeInstruction> BuildTool_Reform_Constructor_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
         {
@@ -133,7 +142,9 @@ internal static class BuildToolPatch
 
             __instance.actionBuild.model.cursorText = $"({_lastOffsetText})\n" + __instance.actionBuild.model.cursorText;
         }
-
+        // Harmony transpiler: UIEntityBriefInfo__OnUpdate_Transpiler
+        // Target: UIEntityBriefInfo._OnUpdate
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(UIEntityBriefInfo), nameof(UIEntityBriefInfo._OnUpdate))]
         private static IEnumerable<CodeInstruction> UIEntityBriefInfo__OnUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -188,7 +199,9 @@ internal static class BuildToolPatch
             ifBlockEntryLabel = thisIfBlockEntryLabel;
             elseBlockEntryLabel = thisElseBlockEntryLabel;
         }
-
+        // Harmony transpiler: AllowOffGridConstruction
+        // Target: BuildTool_Click.UpdateRaycast, BuildTool_Click.DeterminePreviews
+        // Fallback: Checks CodeMatcher.IsInvalid/IsValid and returns original instructions on mismatch.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(BuildTool_Click), nameof(BuildTool_Click.UpdateRaycast))]
         [HarmonyPatch(typeof(BuildTool_Click), nameof(BuildTool_Click.DeterminePreviews))]
@@ -206,7 +219,9 @@ internal static class BuildToolPatch
 
             return matcher.InstructionEnumeration();
         }
-
+        // Harmony transpiler: PreventDraggingWhenOffGrid
+        // Target: BuildTool_Click.DeterminePreviews
+        // Fallback: Checks CodeMatcher.IsInvalid/IsValid and returns original instructions on mismatch.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(BuildTool_Click), nameof(BuildTool_Click.DeterminePreviews))]
         public static IEnumerable<CodeInstruction> PreventDraggingWhenOffGrid(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -233,7 +248,9 @@ internal static class BuildToolPatch
 
             return matcher.InstructionEnumeration();
         }
-
+        // Harmony transpiler: AllowOffGridConstructionForPath
+        // Target: BuildTool_Path.UpdateRaycast
+        // Fallback: Checks CodeMatcher.IsInvalid/IsValid and returns original instructions on mismatch.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(BuildTool_Path), nameof(BuildTool_Path.UpdateRaycast))]
         public static IEnumerable<CodeInstruction> AllowOffGridConstructionForPath(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -339,6 +356,9 @@ internal static class BuildToolPatch
 
     internal class TreatStackingAsSingle : PatchImpl<TreatStackingAsSingle>
     {
+        // Harmony transpiler: MonitorComponent_InternalUpdate_Transpiler
+        // Target: MonitorComponent.InternalUpdate
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(MonitorComponent), nameof(MonitorComponent.InternalUpdate))]
         private static IEnumerable<CodeInstruction> MonitorComponent_InternalUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -491,7 +511,9 @@ internal static class BuildToolPatch
 
             return num;
         }
-
+        // Harmony transpiler: BuildTool_Click_DeterminePreviews_Transpiler
+        // Target: BuildTool_Click.DeterminePreviews
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(BuildTool_Click), nameof(BuildTool_Click.DeterminePreviews))]
         private static IEnumerable<CodeInstruction> BuildTool_Click_DeterminePreviews_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -580,7 +602,9 @@ internal static class BuildToolPatch
             new(OpCodes.Call, AccessTools.Method(typeof(Math), nameof(Math.Min), [typeof(int), typeof(int)]))
         ];
         private static readonly CodeInstruction GetRealCount = new(OpCodes.Ldsfld, AccessTools.Field(typeof(FactoryPatch), nameof(FactoryPatch._tankFastFillInAndTakeOutMultiplierRealValue)));
-
+        // Harmony transpiler: PlanetFactory_EntityFastFillIn_Transpiler
+        // Target: PlanetFactory.EntityFastFillIn
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(PlanetFactory), nameof(PlanetFactory.EntityFastFillIn))]
         private static IEnumerable<CodeInstruction> PlanetFactory_EntityFastFillIn_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -600,7 +624,9 @@ internal static class BuildToolPatch
             ).RemoveInstructions(5).Insert(MultiplierWithCountCheck);
             return matcher.InstructionEnumeration();
         }
-
+        // Harmony transpiler: PlanetFactory_EntityFastTakeOut_Transpiler
+        // Target: PlanetFactory.EntityFastTakeOut
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(PlanetFactory), nameof(PlanetFactory.EntityFastTakeOut))]
         private static IEnumerable<CodeInstruction> PlanetFactory_EntityFastTakeOut_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -621,7 +647,9 @@ internal static class BuildToolPatch
             ).RemoveInstructions(5).Insert(MultiplierWithCountCheck);
             return matcher.InstructionEnumeration();
         }
-
+        // Harmony transpiler: UITankWindow__OnUpdate_Transpiler
+        // Target: UITankWindow._OnUpdate
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(UITankWindow), nameof(UITankWindow._OnUpdate))]
         private static IEnumerable<CodeInstruction> UITankWindow__OnUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -694,7 +722,9 @@ internal static class BuildToolPatch
         {
             nextTimei = 0;
         }
-
+        // Harmony transpiler: VFInput_fastTransferWithEntityDown_Transpiler
+        // Target: VFInput._fastTransferWithEntityDown (getter), VFInput._fastTransferWithEntityPress (getter)
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(VFInput), nameof(VFInput._fastTransferWithEntityDown), MethodType.Getter)]
         [HarmonyPatch(typeof(VFInput), nameof(VFInput._fastTransferWithEntityPress), MethodType.Getter)]
@@ -710,7 +740,9 @@ internal static class BuildToolPatch
             matcher.Labels.AddRange(lables);
             return matcher.InstructionEnumeration();
         }
-
+        // Harmony transpiler: PlayerAction_Inspect_GameTick_Transpiler
+        // Target: PlayerAction_Inspect.GameTick
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(PlayerAction_Inspect), nameof(PlayerAction_Inspect.GameTick))]
         private static IEnumerable<CodeInstruction> PlayerAction_Inspect_GameTick_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)

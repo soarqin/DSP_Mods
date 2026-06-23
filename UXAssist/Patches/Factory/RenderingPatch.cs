@@ -40,7 +40,9 @@ internal static class RenderingPatch
         {
             __instance.renderEntity = true;
         }
-
+        // Harmony transpiler: RaycastLogic_GameTick_Transpiler
+        // Target: RaycastLogic.GameTick
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(RaycastLogic), nameof(RaycastLogic.GameTick))]
         private static IEnumerable<CodeInstruction> RaycastLogic_GameTick_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -156,7 +158,9 @@ internal static class RenderingPatch
                 _sunlight = GameMain.universeSimulator?.LocalStarSimulator()?.sunLight;
             }
         }
-
+        // Harmony transpiler: StarSimulator_LateUpdate_Transpiler
+        // Target: StarSimulator.LateUpdate
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(StarSimulator), nameof(StarSimulator.LateUpdate))]
         private static IEnumerable<CodeInstruction> StarSimulator_LateUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -182,7 +186,9 @@ internal static class RenderingPatch
             ).Advance(1).Labels.Add(label2);
             return matcher.InstructionEnumeration();
         }
-
+        // Harmony transpiler: PlanetSimulator_LateRefresh_Transpiler
+        // Target: PlanetSimulator.LateRefresh
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(PlanetSimulator), nameof(PlanetSimulator.LateRefresh))]
         private static IEnumerable<CodeInstruction> PlanetSimulator_LateRefresh_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)

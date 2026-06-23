@@ -4,6 +4,7 @@ using UnityEngine;
 using UXAssist.Common;
 using UXAssist.Common.GameConstants;
 using UXAssist.Common.ModFeatures;
+using UXAssist.Common.Utils;
 using CheatEnabler;
 
 namespace CheatEnabler.Functions.DysonSphere;
@@ -19,8 +20,6 @@ public static class FrameRemovalFunctions
 
         UIMessageBox.Show(Localization.CheatEnabler.Translate(), string.Format(Localization.ThisWillRemoveAllFramesOn0AreYouSure.Translate(), star.displayName), Localization.Cancel.Translate(), Localization.OK.Translate(), UIMessageBox.QUESTION, null, () =>
         {
-            var totalFrameSpInfo = AccessTools.Field(typeof(DysonSphereLayer), "totalFrameSP");
-
             foreach (var dysonSphereLayer in dysonSphere.layersIdBased)
             {
                 if (dysonSphereLayer == null) continue;
@@ -49,7 +48,7 @@ public static class FrameRemovalFunctions
                 dysonSphereLayer.frameCursor = 1;
                 dysonSphereLayer.frameRecycleCursor = 0;
                 dysonSphereLayer.SetFrameCapacity(DysonSphereConstants.DefaultLayerPoolCapacity);
-                totalFrameSpInfo?.SetValue(dysonSphereLayer, 0);
+                DysonSphereReflection.SetTotalFrameSP(dysonSphereLayer, 0);
             }
             dysonSphere.CheckAutoNodes();
             dysonSphere.PickAutoNode();

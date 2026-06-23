@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
-using System.Reflection;
 using System.Reflection.Emit;
 using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine.UI;
 using UXAssist.Common;
+using UXAssist.Common.Utils;
 using GameLogicProc = UXAssist.Common.GameLogic;
 
 namespace UXAssist.Patches;
@@ -15,16 +15,11 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
     public static ConfigEntry<bool> OnlyConstructNodesEnabled;
     public static ConfigEntry<int> AutoConstructMultiplier;
 
-    private static FieldInfo _totalNodeSpInfo, _totalFrameSpInfo, _totalCpInfo;
-
     public static void Init()
     {
                 Enable(true);
         StopEjectOnNodeCompleteEnabled.SettingChanged += (_, _) => StopEjectOnNodeComplete.Enable(StopEjectOnNodeCompleteEnabled.Value);
         OnlyConstructNodesEnabled.SettingChanged += (_, _) => OnlyConstructNodes.Enable(OnlyConstructNodesEnabled.Value);
-        _totalNodeSpInfo = AccessTools.Field(typeof(DysonSphereLayer), "totalNodeSP");
-        _totalFrameSpInfo = AccessTools.Field(typeof(DysonSphereLayer), "totalFrameSP");
-        _totalCpInfo = AccessTools.Field(typeof(DysonSphereLayer), "totalCP");
         GameLogicProc.OnGameEnd += StopEjectOnNodeComplete.ResetState;
     }
 
@@ -93,8 +88,9 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
                         }
 
                         // Make compatible with DSPOptimizations
-                        if (_totalNodeSpInfo != null)
-                            _totalNodeSpInfo.SetValue(dysonSphereLayer, (long)_totalNodeSpInfo.GetValue(dysonSphereLayer) + diff - 1);
+                        var currentNodeSp = DysonSphereReflection.GetTotalNodeSP(dysonSphereLayer);
+                        if (currentNodeSp.HasValue)
+                            DysonSphereReflection.SetTotalNodeSP(dysonSphereLayer, currentNodeSp.Value + diff - 1);
                         __instance.UpdateProgress(dysonNode);
                     }
 
@@ -127,8 +123,9 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
                                 }
 
                                 // Make compatible with DSPOptimizations
-                                if (_totalFrameSpInfo != null)
-                                    _totalFrameSpInfo.SetValue(dysonSphereLayer, (long)_totalFrameSpInfo.GetValue(dysonSphereLayer) + diff - 1);
+                                var currentFrameSp = DysonSphereReflection.GetTotalFrameSP(dysonSphereLayer);
+                                if (currentFrameSp.HasValue)
+                                    DysonSphereReflection.SetTotalFrameSP(dysonSphereLayer, currentFrameSp.Value + diff - 1);
                                 __instance.UpdateProgress(dysonFrame);
                             }
 
@@ -153,8 +150,9 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
                                 }
 
                                 // Make compatible with DSPOptimizations
-                                if (_totalFrameSpInfo != null)
-                                    _totalFrameSpInfo.SetValue(dysonSphereLayer, (long)_totalFrameSpInfo.GetValue(dysonSphereLayer) + diff - 1);
+                                var currentFrameSp2 = DysonSphereReflection.GetTotalFrameSP(dysonSphereLayer);
+                                if (currentFrameSp2.HasValue)
+                                    DysonSphereReflection.SetTotalFrameSP(dysonSphereLayer, currentFrameSp2.Value + diff - 1);
                                 __instance.UpdateProgress(dysonFrame);
                             }
 
@@ -199,9 +197,10 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
                         dysonShell.nodecps[nodeIndex] += diff;
                         dysonShell.nodecps[dysonShell.nodecps.Length - 1] += diff;
                         // Make compatible with DSPOptimizations
-                        if (_totalCpInfo != null)
+                        var currentCp = DysonSphereReflection.GetTotalCP(dysonSphereLayer);
+                        if (currentCp.HasValue)
                         {
-                            _totalCpInfo.SetValue(dysonSphereLayer, (long)_totalCpInfo.GetValue(dysonSphereLayer) + diff);
+                            DysonSphereReflection.SetTotalCP(dysonSphereLayer, currentCp.Value + diff);
                             dysonShell.SetMaterialDynamicVars();
                         }
                         shellIndex = (shellIndex + 1) % shellCount;
@@ -233,7 +232,9 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
 
         return false;
     }
-
+    // Harmony transpiler: DysonSpherePatch_DysonNode_ConstructCp_Transpiler
+    // Target: DysonNode.ConstructCp
+    // Fallback: None — patch will fail loudly if the target method body changes.
     [HarmonyTranspiler]
     [HarmonyPriority(Priority.First)]
     [HarmonyPatch(typeof(DysonNode), nameof(DysonNode.ConstructCp))]
@@ -390,7 +391,9 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
             _nodeForAbsorb[starIndex].Clear();
             _nodeForAbsorb[starIndex] = null;
         }
-
+        // Harmony transpiler: EjectorComponent_InternalUpdate_Transpiler
+        // Target: EjectorComponent.InternalUpdate
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(EjectorComponent), nameof(EjectorComponent.InternalUpdate))]
         private static IEnumerable<CodeInstruction> EjectorComponent_InternalUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -429,7 +432,9 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
             );
             return matcher.InstructionEnumeration();
         }
-
+        // Harmony transpiler: DysonNode_ConstructSp_Transpiler
+        // Target: DysonNode.ConstructSp
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(DysonNode), nameof(DysonNode.ConstructSp))]
         private static IEnumerable<CodeInstruction> DysonNode_ConstructSp_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -446,7 +451,9 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
             );
             return matcher.InstructionEnumeration();
         }
-
+        // Harmony transpiler: DysonNode_ConstructCp_Transpiler
+        // Target: DysonNode.ConstructCp
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(DysonNode), nameof(DysonNode.ConstructCp))]
         private static IEnumerable<CodeInstruction> DysonNode_ConstructCp_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -467,7 +474,9 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
             );
             return matcher.InstructionEnumeration();
         }
-
+        // Harmony transpiler: UIEjectorWindow__OnUpdate_Transpiler
+        // Target: UIEjectorWindow._OnUpdate
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(UIEjectorWindow), nameof(UIEjectorWindow._OnUpdate))]
         static IEnumerable<CodeInstruction> UIEjectorWindow__OnUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -527,7 +536,9 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
                 sphere.PickAutoNode();
             }
         }
-
+        // Harmony transpiler: DysonNode_spReqOrder_Getter_Transpiler
+        // Target: DysonNode.spReqOrder (getter)
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(DysonNode), nameof(DysonNode.spReqOrder), MethodType.Getter)]
         private static IEnumerable<CodeInstruction> DysonNode_spReqOrder_Getter_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)

@@ -57,6 +57,9 @@ public static class GalaxyGenSettingsPatch
 
     private static class Patch
     {
+        // Harmony transpiler: UIGalaxySelect_OnStarCountSliderValueChange_Transpiler
+        // Target: UIGalaxySelect.OnStarCountSliderValueChange
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(UIGalaxySelect), nameof(UIGalaxySelect.OnStarCountSliderValueChange))]
         private static IEnumerable<CodeInstruction> UIGalaxySelect_OnStarCountSliderValueChange_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -94,7 +97,9 @@ public static class GalaxyGenSettingsPatch
                 GameFlatten = UniverseGenConstants.DefaultFlatten;
             }
         }
-
+        // Harmony transpiler: GalaxyData_Constructor_Transpiler
+        // Target: GalaxyData..ctor
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(GalaxyData), MethodType.Constructor)]
         private static IEnumerable<CodeInstruction> GalaxyData_Constructor_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -107,7 +112,9 @@ public static class GalaxyGenSettingsPatch
             matcher.Repeat(m => m.SetAndAdvance(OpCodes.Ldc_I4, UniverseGenConstants.ExpandedGalaxyCapacity));
             return matcher.InstructionEnumeration();
         }
-
+        // Harmony transpiler: SectorModel_CreateGalaxyAstroBuffer_Transpiler
+        // Target: SectorModel.CreateGalaxyAstroBuffer, SpaceColliderLogic.UpdateCollidersPose
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(SectorModel), nameof(SectorModel.CreateGalaxyAstroBuffer))]
         [HarmonyPatch(typeof(SpaceColliderLogic), nameof(SpaceColliderLogic.UpdateCollidersPose))]
@@ -121,7 +128,9 @@ public static class GalaxyGenSettingsPatch
             matcher.Repeat(m => m.SetAndAdvance(OpCodes.Ldc_I4, UniverseGenConstants.ExpandedSectorCapacity));
             return matcher.InstructionEnumeration();
         }
-
+        // Harmony transpiler: UniverseGen_CreateGalaxy_Transpiler
+        // Target: UniverseGen.CreateGalaxy
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(UniverseGen), nameof(UniverseGen.CreateGalaxy))]
         private static IEnumerable<CodeInstruction> UniverseGen_CreateGalaxy_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -152,6 +161,9 @@ public static class GalaxyGenSettingsPatch
 
         /* Patch `rand() * (maxStepLen - minStepLen) + minDist` to `rand() * (maxStepLen - minStepLen) + minStepLen`,
            this should be a bugged line in original game code. */
+        // Harmony transpiler: UniverseGen_RandomPoses_Transpiler
+        // Target: UniverseGen.RandomPoses
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(UniverseGen), nameof(UniverseGen.RandomPoses))]
         private static IEnumerable<CodeInstruction> UniverseGen_RandomPoses_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -164,7 +176,9 @@ public static class GalaxyGenSettingsPatch
             matcher.Repeat(m => m.Advance(1).SetInstructionAndAdvance(new CodeInstruction(OpCodes.Ldarg_3)));
             return matcher.InstructionEnumeration();
         }
-
+        // Harmony transpiler: UIVirtualStarmap__OnLateUpdate_Transpiler
+        // Target: UIVirtualStarmap._OnLateUpdate
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(UIVirtualStarmap), nameof(UIVirtualStarmap._OnLateUpdate))]
         private static IEnumerable<CodeInstruction> UIVirtualStarmap__OnLateUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -193,7 +207,9 @@ public static class GalaxyGenSettingsPatch
             );
             return matcher.InstructionEnumeration();
         }
-
+        // Harmony transpiler: UIGalaxySelect_UpdateUIDisplay_Transpiler
+        // Target: UIGalaxySelect.UpdateUIDisplay
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(UIGalaxySelect), nameof(UIGalaxySelect.UpdateUIDisplay))]
         private static IEnumerable<CodeInstruction> UIGalaxySelect_UpdateUIDisplay_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)

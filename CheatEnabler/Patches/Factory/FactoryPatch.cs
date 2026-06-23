@@ -202,7 +202,9 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         }
         GameMain.data?.warningSystem?.UpdateCriticalWarningText();
     }
-
+    // Harmony transpiler: WarningSystem_hasCriticalWarning_Transpiler
+    // Target: WarningSystem.hasCriticalWarning (getter)
+    // Fallback: None — patch will fail loudly if the target method body changes.
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(WarningSystem), nameof(WarningSystem.hasCriticalWarning), MethodType.Getter)]
     private static IEnumerable<CodeInstruction> WarningSystem_hasCriticalWarning_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -228,7 +230,9 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         );
         return matcher.InstructionEnumeration();
     }
-
+    // Harmony transpiler: WarningSystem_UpdateCriticalWarningText_Transpiler
+    // Target: WarningSystem.UpdateCriticalWarningText
+    // Fallback: None — patch will fail loudly if the target method body changes.
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(WarningSystem), nameof(WarningSystem.UpdateCriticalWarningText))]
     private static IEnumerable<CodeInstruction> WarningSystem_UpdateCriticalWarningText_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)

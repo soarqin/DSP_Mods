@@ -21,6 +21,9 @@ public class PersistPatch : PatchImpl<PersistPatch>
     }
 
     // Check for noModifier while pressing hotkeys on build bar
+    // Harmony transpiler: UIBuildMenu__OnUpdate_Transpiler
+    // Target: UIBuildMenu._OnUpdate
+    // Fallback: None — patch will fail loudly if the target method body changes.
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(UIBuildMenu), nameof(UIBuildMenu._OnUpdate))]
     private static IEnumerable<CodeInstruction> UIBuildMenu__OnUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -41,6 +44,9 @@ public class PersistPatch : PatchImpl<PersistPatch>
     }
 
     // Bring popup tip window to top layer
+    // Harmony transpiler: UIButton_LateUpdate_Transpiler
+    // Target: UIButton.LateUpdate
+    // Fallback: None — patch will fail loudly if the target method body changes.
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(UIButton), nameof(UIButton.LateUpdate))]
     private static IEnumerable<CodeInstruction> UIButton_LateUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -65,6 +71,9 @@ public class PersistPatch : PatchImpl<PersistPatch>
     }
 
     // Sort blueprint data when pasting
+    // Harmony transpiler: BuildTool_BlueprintCopy_UseToPasteNow_Transpiler
+    // Target: BuildTool_BlueprintCopy.UseToPasteNow
+    // Fallback: None — patch will fail loudly if the target method body changes.
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(BuildTool_BlueprintCopy), nameof(BuildTool_BlueprintCopy.UseToPasteNow))]
     private static IEnumerable<CodeInstruction> BuildTool_BlueprintCopy_UseToPasteNow_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -91,6 +100,9 @@ public class PersistPatch : PatchImpl<PersistPatch>
     }
 
     // Increase maximum value of property realizing, 2000 -> 20000
+    // Harmony transpiler: UIProductEntry_UpdateUIElements_Transpiler
+    // Target: UIPropertyEntry.UpdateUIElements, UIPropertyEntry.OnRealizeButtonClick, UIPropertyEntry.OnInputValueEnd
+    // Fallback: None — patch will fail loudly if the target method body changes.
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(UIPropertyEntry), nameof(UIPropertyEntry.UpdateUIElements))]
     [HarmonyPatch(typeof(UIPropertyEntry), nameof(UIPropertyEntry.OnRealizeButtonClick))]
@@ -104,7 +116,9 @@ public class PersistPatch : PatchImpl<PersistPatch>
         matcher.Repeat(m => { m.SetAndAdvance(OpCodes.Ldc_I4, 20000); });
         return matcher.InstructionEnumeration();
     }
-
+    // Harmony transpiler: UIProductEntry_OnInputValueEnd_Transpiler
+    // Target: UIPropertyEntry.OnInputValueEnd
+    // Fallback: None — patch will fail loudly if the target method body changes.
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(UIPropertyEntry), nameof(UIPropertyEntry.OnInputValueEnd))]
     private static IEnumerable<CodeInstruction> UIProductEntry_OnInputValueEnd_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -118,6 +132,9 @@ public class PersistPatch : PatchImpl<PersistPatch>
     }
 
     // Increase capacity of player order queue, 16 -> 128
+    // Harmony transpiler: PlayerOrder_Constructor_Transpiler
+    // Target: PlayerOrder..ctor
+    // Fallback: None — patch will fail loudly if the target method body changes.
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(PlayerOrder), MethodType.Constructor, typeof(Player))]
     private static IEnumerable<CodeInstruction> PlayerOrder_Constructor_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -131,6 +148,9 @@ public class PersistPatch : PatchImpl<PersistPatch>
     }
 
     // Increase Player Command Queue from 16 to 128
+    // Harmony transpiler: PlayerOrder_ExtendCount_Transpiler
+    // Target: PlayerOrder._trimEnd, PlayerOrder.Enqueue
+    // Fallback: None — patch will fail loudly if the target method body changes.
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(PlayerOrder), nameof(PlayerOrder._trimEnd))]
     [HarmonyPatch(typeof(PlayerOrder), nameof(PlayerOrder.Enqueue))]
@@ -145,6 +165,9 @@ public class PersistPatch : PatchImpl<PersistPatch>
     }
 
     // Allow F11 in star map
+    // Harmony transpiler: UIGame__OnLateUpdate_Transpiler
+    // Target: UIGame._OnLateUpdate
+    // Fallback: None — patch will fail loudly if the target method body changes.
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(UIGame), nameof(UIGame._OnLateUpdate))]
     private static IEnumerable<CodeInstruction> UIGame__OnLateUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -173,6 +196,9 @@ public class PersistPatch : PatchImpl<PersistPatch>
     }
 
     // Fix crash in NeutronStarHandler.OnEnable()
+    // Harmony transpiler: NeutronStarHandler_OnEnable_Transpiler
+    // Target: NeutronStarHandler.OnEnable
+    // Fallback: None — patch will fail loudly if the target method body changes.
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(NeutronStarHandler), nameof(NeutronStarHandler.OnEnable))]
     private static IEnumerable<CodeInstruction> NeutronStarHandler_OnEnable_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -193,6 +219,9 @@ public class PersistPatch : PatchImpl<PersistPatch>
     }
 
     // Disable rendering when Player is hidden (Press F11 twice)
+    // Harmony transpiler: GameLogic_LateUpdate_Transpiler
+    // Target: GameLogic.LateUpdate, GameLogic.Draw, GameLogic.DrawPost
+    // Fallback: None — patch will fail loudly if the target method body changes.
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(GameLogic), nameof(GameLogic.LateUpdate))]
     [HarmonyPatch(typeof(GameLogic), nameof(GameLogic.Draw))]
@@ -273,7 +302,9 @@ public class PersistPatch : PatchImpl<PersistPatch>
             rcode = -1;
         Functions.UIFunctions.AddClusterUploadResult(rcode, __instance.uploadRequest == null ? 0f : (float)__instance.uploadRequest.reqTime);
     }
-
+    // Harmony transpiler: MilkyWayCache_LoadTopTenPlayerData_Transpiler
+    // Target: MilkyWayCache.LoadTopTenPlayerData
+    // Fallback: None — patch will fail loudly if the target method body changes.
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(MilkyWayCache), nameof(MilkyWayCache.LoadTopTenPlayerData))]
     private static IEnumerable<CodeInstruction> MilkyWayCache_LoadTopTenPlayerData_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)

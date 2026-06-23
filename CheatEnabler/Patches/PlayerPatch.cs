@@ -47,6 +47,9 @@ public static class PlayerPatch
 
     private class InstantTeleport : PatchImpl<InstantTeleport>
     {
+        // Harmony transpiler: UIGlobemap__OnUpdate_Transpiler
+        // Target: UIGlobemap._OnUpdate, UIStarmap.DoRightClickFastTravel, UIStarmap.OnFastTravelButtonClick, UIStarmap.OnScreenClick, UIStarmap.SandboxRightClickFastTravelLogic, UIStarmap.StartFastTravelToPlanet, UIStarmap.StartFastTravelToUPosition, UIStarmap.UpdateCursorView, UIStarmap._OnUpdate
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(UIGlobemap), nameof(UIGlobemap._OnUpdate))]
         [HarmonyPatch(typeof(UIStarmap), nameof(UIStarmap.DoRightClickFastTravel))]

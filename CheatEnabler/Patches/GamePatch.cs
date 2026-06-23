@@ -149,7 +149,9 @@ public static class GamePatch
         {
             __instance.Update();
         }
-
+        // Harmony transpiler: PlayerAction_Test_Update_Transpiler
+        // Target: PlayerAction_Test.Update
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(PlayerAction_Test), nameof(PlayerAction_Test.Update))]
         private static IEnumerable<CodeInstruction> PlayerAction_Test_Update_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -182,7 +184,9 @@ public static class GamePatch
             matcher.Labels = labels;
             return matcher.InstructionEnumeration();
         }
-
+        // Harmony transpiler: GameCamera_Logic_Transpiler
+        // Target: GameCamera.FrameLogic
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(GameCamera), nameof(GameCamera.FrameLogic))]
         private static IEnumerable<CodeInstruction> GameCamera_Logic_Transpiler(IEnumerable<CodeInstruction> instructions)
@@ -310,7 +314,9 @@ public static class GamePatch
                 history.currentTech = history.techQueue[0];
             }
         }
-
+        // Harmony transpiler: UITechNode_OnPointerDown_Transpiler
+        // Target: UITechNode.OnPointerDown
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(UITechNode), nameof(UITechNode.OnPointerDown))]
         private static IEnumerable<CodeInstruction> UITechNode_OnPointerDown_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)

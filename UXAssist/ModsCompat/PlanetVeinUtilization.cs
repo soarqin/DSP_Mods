@@ -1,4 +1,5 @@
 using HarmonyLib;
+using UXAssist.Common.ModCompat;
 
 namespace UXAssist.ModsCompat;
 
@@ -8,9 +9,8 @@ class PlanetVeinUtilization
 
     public static bool Run(Harmony harmony)
     {
-        if (!BepInEx.Bootstrap.Chainloader.PluginInfos.TryGetValue(PlanetVeinUtilizationGuid, out var pluginInfo)) return false;
-        var assembly = pluginInfo.Instance.GetType().Assembly;
-        var classType = assembly.GetType("PlanetVeinUtilization.PlanetVeinUtilization");
+        if (!ModCompatHelper.TryGetLoadedPluginInfo(PlanetVeinUtilizationGuid, out var pluginInfo)) return false;
+        if (!ModCompatHelper.TryGetPluginType(pluginInfo, "PlanetVeinUtilization.PlanetVeinUtilization", out var classType)) return false;
         harmony.Patch(AccessTools.Method(classType, "Awake"),
             new HarmonyMethod(typeof(PlanetVeinUtilization).GetMethod("PatchPlanetVeinUtilizationAwake")));
         return true;

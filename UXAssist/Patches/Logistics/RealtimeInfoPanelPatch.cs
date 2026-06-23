@@ -87,7 +87,9 @@ internal class LogisticsConstrolPanelImprovement : PatchImpl<LogisticsConstrolPa
         filterPanel.SetNewFilter(filter);
         return true;
     }
-
+    // Harmony transpiler: UIGame_On_I_Switch_Transpiler
+    // Target: UIGame.On_I_Switch
+    // Fallback: None — patch will fail loudly if the target method body changes.
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(UIGame), nameof(UIGame.On_I_Switch))]
     private static IEnumerable<CodeInstruction> UIGame_On_I_Switch_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)

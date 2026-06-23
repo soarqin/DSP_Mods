@@ -1,5 +1,5 @@
-﻿using BepInEx.Bootstrap;
-using HarmonyLib;
+﻿using HarmonyLib;
+using UXAssist.Common.ModCompat;
 
 namespace UXAssist.ModsCompat;
 
@@ -10,6 +10,6 @@ public static class BulletTimeWrapper
 
     public static void Start(Harmony _)
     {
-        HasBulletTime = Chainloader.PluginInfos.TryGetValue(BulletTimeGuid, out var _);
+        HasBulletTime = ModCompatHelper.TryGetLoadedPluginInfo(BulletTimeGuid, out var _);
     }
 }

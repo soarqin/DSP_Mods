@@ -286,7 +286,9 @@ internal class GreaterPowerUsageInLogistics : PatchImpl<GreaterPowerUsageInLogis
         window._Close();
         window.maxMiningSpeedSlider.maxValue = LogisticsConstants.MiningSpeedSliderMaxDefault;
     }
-
+    // Harmony transpiler: UIStationWindow_OnStationIdChange_Transpiler
+    // Target: UIStationWindow.OnStationIdChange
+    // Fallback: None — patch will fail loudly if the target method body changes.
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(UIStationWindow), nameof(UIStationWindow.OnStationIdChange))]
     private static IEnumerable<CodeInstruction> UIStationWindow_OnStationIdChange_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -356,7 +358,9 @@ internal class GreaterPowerUsageInLogistics : PatchImpl<GreaterPowerUsageInLogis
         );
         return matcher.InstructionEnumeration();
     }
-
+    // Harmony transpiler: UIStationWindow_OnMaxMiningSpeedChange_Transpiler
+    // Target: UIStationWindow.OnMaxMiningSpeedChange
+    // Fallback: None — patch will fail loudly if the target method body changes.
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(UIStationWindow), nameof(UIStationWindow.OnMaxMiningSpeedChange))]
     private static IEnumerable<CodeInstruction> UIStationWindow_OnMaxMiningSpeedChange_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -386,7 +390,9 @@ internal class GreaterPowerUsageInLogistics : PatchImpl<GreaterPowerUsageInLogis
         );
         return matcher.InstructionEnumeration();
     }
-
+    // Harmony transpiler: UIStationWindow_OnMaxChargePowerSliderValueChange_Transpiler
+    // Target: UIStationWindow.OnMaxChargePowerSliderValueChange
+    // Fallback: None — patch will fail loudly if the target method body changes.
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(UIStationWindow), nameof(UIStationWindow.OnMaxChargePowerSliderValueChange))]
     private static IEnumerable<CodeInstruction> UIStationWindow_OnMaxChargePowerSliderValueChange_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)

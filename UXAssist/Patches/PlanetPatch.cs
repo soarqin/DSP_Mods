@@ -27,6 +27,9 @@ public static class PlanetPatch
 
     public class PlayerActionsInGlobeView : PatchImpl<PlayerActionsInGlobeView>
     {
+        // Harmony transpiler: VFInput_UpdateGameStates_Transpiler
+        // Target: VFInput.UpdateGameStates
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(VFInput), nameof(VFInput.UpdateGameStates))]
         private static IEnumerable<CodeInstruction> VFInput_UpdateGameStates_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -49,7 +52,9 @@ public static class PlanetPatch
             });
             return matcher.InstructionEnumeration();
         }
-
+        // Harmony transpiler: PlayerController_GetInput_Transpiler
+        // Target: PlayerController.GetInput
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(PlayerController), nameof(PlayerController.GetInput))]
         private static IEnumerable<CodeInstruction> PlayerController_GetInput_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -62,7 +67,9 @@ public static class PlanetPatch
             ).Advance(1).Opcode = OpCodes.Ldc_I4_4;
             return matcher.InstructionEnumeration();
         }
-
+        // Harmony transpiler: PlayerAction_Rts_GameTick_Transpiler
+        // Target: PlayerAction_Rts.GameTick
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(PlayerAction_Rts), nameof(PlayerAction_Rts.GameTick))]
         private static IEnumerable<CodeInstruction> PlayerAction_Rts_GameTick_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)

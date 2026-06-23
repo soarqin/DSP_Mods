@@ -16,7 +16,9 @@ internal class NoConditionBuild : PatchImpl<NoConditionBuild>
     {
         GameMain.data?.warningSystem?.UpdateCriticalWarningText();
     }
-
+    // Harmony transpiler: BuildTool_CheckBuildConditions_Transpiler
+    // Target: BuildTool_Addon.CheckBuildConditions, BuildTool_Inserter.CheckBuildConditions
+    // Fallback: None — patch will fail loudly if the target method body changes.
     [HarmonyTranspiler, HarmonyPriority(Priority.Last)]
     [HarmonyPatch(typeof(BuildTool_Addon), nameof(BuildTool_Addon.CheckBuildConditions))]
     [HarmonyPatch(typeof(BuildTool_Inserter), nameof(BuildTool_Inserter.CheckBuildConditions))]
@@ -25,7 +27,9 @@ internal class NoConditionBuild : PatchImpl<NoConditionBuild>
         yield return new CodeInstruction(OpCodes.Ldc_I4_1);
         yield return new CodeInstruction(OpCodes.Ret);
     }
-
+    // Harmony transpiler: BuildTool_Path_CheckBuildConditions_Transpiler
+    // Target: BuildTool_Path.CheckBuildConditions
+    // Fallback: None — patch will fail loudly if the target method body changes.
     [HarmonyTranspiler, HarmonyPriority(Priority.First)]
     [HarmonyPatch(typeof(BuildTool_Path), nameof(BuildTool_Path.CheckBuildConditions))]
     private static IEnumerable<CodeInstruction> BuildTool_Path_CheckBuildConditions_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -60,7 +64,9 @@ internal class NoConditionBuild : PatchImpl<NoConditionBuild>
         );
         return matcher.InstructionEnumeration();
     }
-
+    // Harmony transpiler: BuildTool_Click_CheckBuildConditions_Transpiler
+    // Target: BuildTool_BlueprintPaste.CheckBuildConditions, BuildTool_Click.CheckBuildConditions
+    // Fallback: None — patch will fail loudly if the target method body changes.
     [HarmonyTranspiler, HarmonyPriority(Priority.Last)]
     [HarmonyPatch(typeof(BuildTool_BlueprintPaste), nameof(BuildTool_BlueprintPaste.CheckBuildConditions))]
     [HarmonyPatch(typeof(BuildTool_Click), nameof(BuildTool_Click.CheckBuildConditions))]

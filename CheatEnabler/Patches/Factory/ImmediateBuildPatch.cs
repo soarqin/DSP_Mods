@@ -124,7 +124,9 @@ internal class ImmediateBuild : PatchImpl<ImmediateBuild>
             FactoryPatch.ArrivePlanet(factory);
         }
     }
-
+    // Harmony transpiler: Transpiler
+    // Target: BuildTool_Addon.CreatePrebuilds, BuildTool_BlueprintPaste.CreatePrebuilds, BuildTool_Click.CreatePrebuilds, BuildTool_Inserter.CreatePrebuilds, BuildTool_Path.CreatePrebuilds
+    // Fallback: None — patch will fail loudly if the target method body changes.
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(BuildTool_Addon), nameof(BuildTool_Addon.CreatePrebuilds))]
     [HarmonyPatch(typeof(BuildTool_BlueprintPaste), nameof(BuildTool_BlueprintPaste.CreatePrebuilds))]

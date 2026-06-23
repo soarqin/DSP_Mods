@@ -34,6 +34,9 @@ public static class CombatPatch
 
     private class MechaInvincible : PatchImpl<MechaInvincible>
     {
+        // Harmony transpiler: Player_get_invincible_Transpiler
+        // Target: Player.invincible (getter)
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(Player), nameof(Player.invincible), MethodType.Getter)]
         private static IEnumerable<CodeInstruction> Player_get_invincible_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -45,7 +48,9 @@ public static class CombatPatch
             );
             return matcher.InstructionEnumeration();
         }
-
+        // Harmony transpiler: SkillSystem_DamageObject_Transpiler
+        // Target: SkillSystem.DamageGroundObjectByLocalCaster, SkillSystem.DamageGroundObjectByRemoteCaster, SkillSystem.DamageObject
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(SkillSystem), nameof(SkillSystem.DamageGroundObjectByLocalCaster))]
         [HarmonyPatch(typeof(SkillSystem), nameof(SkillSystem.DamageGroundObjectByRemoteCaster))]
@@ -69,6 +74,9 @@ public static class CombatPatch
 
     private class BuildingsInvincible : PatchImpl<BuildingsInvincible>
     {
+        // Harmony transpiler: SkillSystem_DamageObject_Transpiler
+        // Target: SkillSystem.DamageGroundObjectByLocalCaster, SkillSystem.DamageGroundObjectByRemoteCaster
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(SkillSystem), nameof(SkillSystem.DamageGroundObjectByLocalCaster))]
         [HarmonyPatch(typeof(SkillSystem), nameof(SkillSystem.DamageGroundObjectByRemoteCaster))]

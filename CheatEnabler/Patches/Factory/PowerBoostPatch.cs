@@ -9,6 +9,9 @@ namespace CheatEnabler.Patches.Factory;
 
 internal class RemovePowerSpaceLimit : PatchImpl<RemovePowerSpaceLimit>
 {
+    // Harmony transpiler: BuildTool_CheckBuildConditions_Transpiler
+    // Target: BuildTool_Click.CheckBuildConditions, BuildTool_BlueprintPaste.CheckBuildConditions
+    // Fallback: None — patch will fail loudly if the target method body changes.
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(BuildTool_Click), nameof(BuildTool_Click.CheckBuildConditions))]
     [HarmonyPatch(typeof(BuildTool_BlueprintPaste), nameof(BuildTool_BlueprintPaste.CheckBuildConditions))]
@@ -39,6 +42,9 @@ internal class RemovePowerSpaceLimit : PatchImpl<RemovePowerSpaceLimit>
 
 internal class BoostWindPower : PatchImpl<BoostWindPower>
 {
+    // Harmony transpiler: PowerGeneratorComponent_EnergyCap_Wind_Transpiler
+    // Target: PowerGeneratorComponent.EnergyCap_Wind
+    // Fallback: None — patch will fail loudly if the target method body changes.
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(PowerGeneratorComponent), nameof(PowerGeneratorComponent.EnergyCap_Wind))]
     private static IEnumerable<CodeInstruction> PowerGeneratorComponent_EnergyCap_Wind_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -64,6 +70,9 @@ internal class BoostWindPower : PatchImpl<BoostWindPower>
 
 internal class BoostSolarPower : PatchImpl<BoostSolarPower>
 {
+    // Harmony transpiler: PowerGeneratorComponent_EnergyCap_PV_Transpiler
+    // Target: PowerGeneratorComponent.EnergyCap_PV
+    // Fallback: None — patch will fail loudly if the target method body changes.
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(PowerGeneratorComponent), nameof(PowerGeneratorComponent.EnergyCap_PV))]
     private static IEnumerable<CodeInstruction> PowerGeneratorComponent_EnergyCap_PV_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -88,6 +97,9 @@ internal class BoostSolarPower : PatchImpl<BoostSolarPower>
 
 internal class BoostFuelPower : PatchImpl<BoostFuelPower>
 {
+    // Harmony transpiler: PowerGeneratorComponent_EnergyCap_Fuel_Transpiler
+    // Target: PowerGeneratorComponent.EnergyCap_Fuel
+    // Fallback: None — patch will fail loudly if the target method body changes.
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(PowerGeneratorComponent), nameof(PowerGeneratorComponent.EnergyCap_Fuel))]
     private static IEnumerable<CodeInstruction> PowerGeneratorComponent_EnergyCap_Fuel_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -129,6 +141,9 @@ internal class BoostFuelPower : PatchImpl<BoostFuelPower>
 
 internal class BoostGeothermalPower : PatchImpl<BoostGeothermalPower>
 {
+    // Harmony transpiler: PowerGeneratorComponent_EnergyCap_GTH_Transpiler
+    // Target: PowerGeneratorComponent.EnergyCap_GTH
+    // Fallback: None — patch will fail loudly if the target method body changes.
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(PowerGeneratorComponent), nameof(PowerGeneratorComponent.EnergyCap_GTH))]
     private static IEnumerable<CodeInstruction> PowerGeneratorComponent_EnergyCap_GTH_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)

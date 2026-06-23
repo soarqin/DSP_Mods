@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
 using UnityEngine;
+using UXAssist.Common.ModCompat;
 using UXAssist.Functions;
 
 namespace UXAssist.ModsCompat;
@@ -17,13 +18,12 @@ class BlueprintTweaks
 
     public static bool Run(Harmony harmony)
     {
-        if (!BepInEx.Bootstrap.Chainloader.PluginInfos.TryGetValue(BlueprintTweaksGuid, out var pluginInfo)) return false;
-        var assembly = pluginInfo.Instance.GetType().Assembly;
-        var classTypeDragRemoveBuildTool = assembly.GetType("BlueprintTweaks.DragRemoveBuildTool");
-        if (classTypeDragRemoveBuildTool == null) return false;
-        if (AccessTools.Method(classTypeDragRemoveBuildTool, "DetermineMorePreviews") != null) return true;
-        classTypeBlueprintTweaksPlugin = assembly.GetType("BlueprintTweaks.BlueprintTweaksPlugin");
-        classTypeUIBuildingGridPatch2 = assembly.GetType("BlueprintTweaks.UIBuildingGridPatch2");
+        if (!ModCompatHelper.TryGetLoadedPluginInfo(BlueprintTweaksGuid, out var pluginInfo)) return false;
+        if (!ModCompatHelper.TryGetPluginType(pluginInfo, "BlueprintTweaks.DragRemoveBuildTool", out var classTypeDragRemoveBuildTool)) return false;
+        if (ModCompatHelper.TryGetMethod(classTypeDragRemoveBuildTool, "DetermineMorePreviews", out _)) return true;
+        ModCompatHelper.TryGetPluginType(pluginInfo, "BlueprintTweaks.BlueprintTweaksPlugin", out classTypeBlueprintTweaksPlugin);
+        ModCompatHelper.TryGetPluginType(pluginInfo, "BlueprintTweaks.UIBuildingGridPatch2", out classTypeUIBuildingGridPatch2);
+        if (classTypeBlueprintTweaksPlugin == null || classTypeUIBuildingGridPatch2 == null) return false;
         var UIBuildingGrid_Update = AccessTools.Method(typeof(UIBuildingGrid), nameof(UIBuildingGrid.Update));
         harmony.Patch(AccessTools.Method(classTypeUIBuildingGridPatch2, "UpdateGrid"), null, null, new HarmonyMethod(AccessTools.Method(typeof(BlueprintTweaks), nameof(PatchUpdateGrid))));
         selectObjIdsField = AccessTools.Field(classTypeDragRemoveBuildTool, "selectObjIds");

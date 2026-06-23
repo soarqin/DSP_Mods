@@ -5,6 +5,12 @@
     <TargetFramework>net472</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- CS0618: expected from the legacy Util forwarding facade; suppress so new warnings fail the build. -->
+    <NoWarn>0618</NoWarn>
+    <AnalysisLevel>none</AnalysisLevel>
+    <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
     <RestoreAdditionalProjectSources>https://nuget.bepinex.dev/v3/index.json</RestoreAdditionalProjectSources>
     <!-- Set to true in projects that include a CHANGELOG.md in the package -->
     <PackHasChangelog>false</PackHasChangelog>

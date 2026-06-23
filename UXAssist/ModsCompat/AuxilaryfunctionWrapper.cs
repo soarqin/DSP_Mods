@@ -1,7 +1,7 @@
 ﻿using System;
-using BepInEx.Bootstrap;
 using BepInEx.Configuration;
 using HarmonyLib;
+using UXAssist.Common.ModCompat;
 using UXAssist.Patches;
 
 namespace UXAssist.ModsCompat;
@@ -13,27 +13,28 @@ public static class AuxilaryfunctionWrapper
 
     public static void Start(Harmony harmony)
     {
-        if (!Chainloader.PluginInfos.TryGetValue(AuxilaryfunctionGuid, out var pluginInfo)) return;
-        var assembly = pluginInfo.Instance.GetType().Assembly;
-        try
+        if (!ModCompatHelper.TryGetLoadedPluginInfo(AuxilaryfunctionGuid, out var pluginInfo)) return;
+        if (!ModCompatHelper.TryGetPluginType(pluginInfo, "Auxilaryfunction.Auxilaryfunction", out var classType))
         {
-            var classType = assembly.GetType("Auxilaryfunction.Auxilaryfunction");
-            ShowStationInfo = (ConfigEntry<bool>)AccessTools.Field(classType, "ShowStationInfo").GetValue(pluginInfo.Instance);
+            UXAssist.Logger.LogWarning("Failed to locate Auxilaryfunction main type");
+            return;
         }
-        catch
+        if (!ModCompatHelper.TryGetFieldValue<ConfigEntry<bool>>(classType, "ShowStationInfo", pluginInfo.Instance, out ShowStationInfo))
         {
             UXAssist.Logger.LogWarning("Failed to get ShowStationInfo from Auxilaryfunction");
         }
-        try
+        if (!ModCompatHelper.TryGetPluginType(pluginInfo, "Auxilaryfunction.Patch.SpeedUpPatch", out var speedUpPatchType))
         {
-            var classType = assembly.GetType("Auxilaryfunction.Patch.SpeedUpPatch");
-            harmony.Patch(AccessTools.PropertySetter(classType, "Enable"),
-                new HarmonyMethod(AccessTools.Method(typeof(AuxilaryfunctionWrapper), nameof(PatchSpeedUpPatchEnable))));
+            UXAssist.Logger.LogWarning("Failed to locate Auxilaryfunction SpeedUpPatch");
+            return;
         }
-        catch
+        if (!ModCompatHelper.TryGetPropertySetter(speedUpPatchType, "Enable", out var setter))
         {
-            UXAssist.Logger.LogWarning("Failed to patch SpeedUpPatch.set_Enable() from Auxilaryfunction");
+            UXAssist.Logger.LogWarning("Failed to resolve SpeedUpPatch.set_Enable() from Auxilaryfunction");
+            return;
         }
+        harmony.Patch(setter,
+            new HarmonyMethod(AccessTools.Method(typeof(AuxilaryfunctionWrapper), nameof(PatchSpeedUpPatchEnable))));
     }
 
     public static void PatchSpeedUpPatchEnable(bool value)

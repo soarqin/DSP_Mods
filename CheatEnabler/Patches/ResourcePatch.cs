@@ -34,6 +34,9 @@ public static class ResourcePatch
     private class InfiniteResource : PatchImpl<InfiniteResource>
     {
         static private readonly float InfiniteResourceRate = 0f;
+        // Harmony transpiler: Transpiler
+        // Target: FactorySystem.GameTick, GameLogic._miner_parallel, PlanetTransport.GameTick, UIChartAstroResource.CalculateMaxAmount, UIChartVeinGroup.CalculateMaxAmount, UIControlPanelAdvancedMinerEntry._OnUpdate, UIControlPanelVeinCollectorPanel._OnUpdate, UIMinerWindow._OnUpdate, UIMiningUpgradeLabel.Update, UIVeinCollectorPanel._OnUpdate
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(FactorySystem), nameof(FactorySystem.GameTick), typeof(long), typeof(bool))]
         [HarmonyPatch(typeof(GameLogic), nameof(GameLogic._miner_parallel))]
@@ -75,7 +78,9 @@ public static class ResourcePatch
     private class FastMining : PatchImpl<FastMining>
     {
         static private readonly float FastMiningSpeed = 2400f;
-
+        // Harmony transpiler: Transpiler
+        // Target: AstroResourceStatPlan.AddPlanetResources, BuildingGizmo.Update, FactorySystem.GameTick, GameLogic._miner_parallel, ItemProto.GetPropValue, PlanetTransport.GameTick, ProductionExtraInfoCalculator.CalculateFactory, UIChartAstroResource.CalculateMaxAmount, UIChartVeinGroup.CalculateMaxAmount, UIControlPanelStationStorage.RefreshValues, UIControlPanelVeinCollectorPanel._OnUpdate, UIMinerWindow._OnUpdate, UIMiningUpgradeLabel.Update, UIPlanetDetail.OnPlanetDataSet, UIPlanetDetail.RefreshDynamicProperties, UIReferenceSpeedTip.AddEntryDataWithFactory, UIStarDetail.OnStarDataSet, UIStarDetail.RefreshDynamicProperties, UIStationStorage.RefreshValues, UIVeinCollectorPanel._OnUpdate
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(AstroResourceStatPlan), nameof(AstroResourceStatPlan.AddPlanetResources))]
         [HarmonyPatch(typeof(BuildingGizmo), nameof(BuildingGizmo.Update))]

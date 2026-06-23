@@ -212,7 +212,9 @@ internal static class ImmediateBuildPatch
                 currLevel++;
             }
         }
-
+        // Harmony transpiler: BuildTool_Dismantle_DeterminePreviews_Transpiler
+        // Target: BuildTool_Dismantle.DeterminePreviews
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(BuildTool_Dismantle), nameof(BuildTool_Dismantle.DeterminePreviews))]
         private static IEnumerable<CodeInstruction> BuildTool_Dismantle_DeterminePreviews_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -233,7 +235,9 @@ internal static class ImmediateBuildPatch
             );
             return matcher.InstructionEnumeration();
         }
-
+        // Harmony transpiler: BuildTool_Click__OnTick_Transpiler
+        // Target: BuildTool_Click._OnTick
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(BuildTool_Click), nameof(BuildTool_Click._OnTick))]
         private static IEnumerable<CodeInstruction> BuildTool_Click__OnTick_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)

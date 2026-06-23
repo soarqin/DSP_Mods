@@ -4,6 +4,7 @@ using HarmonyLib;
 using UnityEngine;
 using UXAssist.Common;
 using UXAssist.Common.ModFeatures;
+using UXAssist.Common.Utils;
 using CheatEnabler;
 
 namespace CheatEnabler.Functions.DysonSphere;
@@ -19,10 +20,6 @@ public static class ShellCompletionFunctions
 
         UIMessageBox.Show(Localization.CheatEnabler.Translate(), string.Format(Localization.ThisWillCompleteAllDysonSphereShellsOn0InstantlyAreYouSure.Translate(), star.displayName), Localization.Cancel.Translate(), Localization.OK.Translate(), UIMessageBox.QUESTION, null, () =>
         {
-            var totalNodeSpInfo = AccessTools.Field(typeof(DysonSphereLayer), "totalNodeSP");
-            var totalFrameSpInfo = AccessTools.Field(typeof(DysonSphereLayer), "totalFrameSP");
-            var totalCpInfo = AccessTools.Field(typeof(DysonSphereLayer), "totalCP");
-
             var rocketCount = 0L;
             var solarSailCount = 0L;
             foreach (var dysonSphereLayer in dysonSphere.layersIdBased)
@@ -75,16 +72,16 @@ public static class ShellCompletionFunctions
                         shell.nodecps[nodeIndex] = cpMax;
                         shell.nodecps[shell.nodecps.Length - 1] += diff;
                         solarSailCount += diff;
-                        if (totalCpInfo != null)
+                        if (DysonSphereReflection.HasTotalCP)
                         {
                             shell.SetMaterialDynamicVars();
                         }
                     }
                 }
 
-                totalNodeSpInfo?.SetValue(dysonSphereLayer, totalNodeSp);
-                totalFrameSpInfo?.SetValue(dysonSphereLayer, totalFrameSp);
-                totalCpInfo?.SetValue(dysonSphereLayer, totalCp);
+                DysonSphereReflection.SetTotalNodeSP(dysonSphereLayer, totalNodeSp);
+                DysonSphereReflection.SetTotalFrameSP(dysonSphereLayer, totalFrameSp);
+                DysonSphereReflection.SetTotalCP(dysonSphereLayer, totalCp);
             }
             dysonSphere.CheckAutoNodes();
 

@@ -20,6 +20,9 @@ internal static class ArchitectModePatch
 
     internal class UnlimitInteractive : PatchImpl<UnlimitInteractive>
     {
+        // Harmony transpiler: PlayerAction_Inspect_GetObjectSelectDistance_Transpiler
+        // Target: PlayerAction_Inspect.GetObjectSelectDistance
+        // Fallback: Checks CodeMatcher.IsInvalid/IsValid and returns original instructions on mismatch.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(PlayerAction_Inspect), nameof(PlayerAction_Inspect.GetObjectSelectDistance))]
         private static IEnumerable<CodeInstruction> PlayerAction_Inspect_GetObjectSelectDistance_Transpiler(IEnumerable<CodeInstruction> instructions)
@@ -31,6 +34,9 @@ internal static class ArchitectModePatch
 
     internal class RemoveSomeConditionBuild : PatchImpl<RemoveSomeConditionBuild>
     {
+        // Harmony transpiler: BuildTool_Click_CheckBuildConditions_Transpiler
+        // Target: BuildTool_BlueprintPaste.CheckBuildConditions, BuildTool_Click.CheckBuildConditions
+        // Fallback: Checks CodeMatcher.IsInvalid/IsValid and returns original instructions on mismatch.
         [HarmonyTranspiler, HarmonyPriority(Priority.First)]
         [HarmonyPatch(typeof(BuildTool_BlueprintPaste), nameof(BuildTool_BlueprintPaste.CheckBuildConditions))]
         [HarmonyPatch(typeof(BuildTool_Click), nameof(BuildTool_Click.CheckBuildConditions))]
@@ -65,7 +71,9 @@ internal static class ArchitectModePatch
             matcher.Opcode = OpCodes.Brfalse;
             return matcher.InstructionEnumeration();
         }
-
+        // Harmony transpiler: BuildTool_Path_CheckBuildConditions_Transpiler
+        // Target: BuildTool_Path.CheckBuildConditions
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler, HarmonyPriority(Priority.First)]
         [HarmonyPatch(typeof(BuildTool_Path), nameof(BuildTool_Path.CheckBuildConditions))]
         private static IEnumerable<CodeInstruction> BuildTool_Path_CheckBuildConditions_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -140,7 +148,9 @@ internal static class ArchitectModePatch
             if (controller == null) return;
             controller.actionBuild?.clickTool?._OnInit();
         }
-
+        // Harmony transpiler: BuildTool_Click__OnInit_Transpiler
+        // Target: BuildTool_Click._OnInit
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(BuildTool_Click), nameof(BuildTool_Click._OnInit))]
         private static IEnumerable<CodeInstruction> BuildTool_Click__OnInit_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -152,7 +162,9 @@ internal static class ArchitectModePatch
             matcher.Repeat(m => m.SetAndAdvance(OpCodes.Ldc_I4, 512));
             return matcher.InstructionEnumeration();
         }
-
+        // Harmony transpiler: BuildAreaLimitRemoval_Transpiler
+        // Target: BuildTool_Addon.CheckBuildConditions, BuildTool_Click.CheckBuildConditions, BuildTool_Dismantle.DetermineMoreChainTargets, BuildTool_Dismantle.DeterminePreviews, BuildTool_Inserter.CheckBuildConditions, BuildTool_Path.CheckBuildConditions, BuildTool_Reform.ReformAction, BuildTool_Upgrade.DetermineMoreChainTargets, BuildTool_Upgrade.DeterminePreviews
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(BuildTool_Addon), nameof(BuildTool_Addon.CheckBuildConditions))]
         [HarmonyPatch(typeof(BuildTool_Click), nameof(BuildTool_Click.CheckBuildConditions))]
@@ -185,6 +197,9 @@ internal static class ArchitectModePatch
 
     internal class LargerAreaForUpgradeAndDismantle : PatchImpl<LargerAreaForUpgradeAndDismantle>
     {
+        // Harmony transpiler: BuildTools_CursorSizePatch_Transpiler
+        // Target: BuildTool_Dismantle.DeterminePreviews, BuildTool_Upgrade.DeterminePreviews
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(BuildTool_Dismantle), nameof(BuildTool_Dismantle.DeterminePreviews))]
         [HarmonyPatch(typeof(BuildTool_Upgrade), nameof(BuildTool_Upgrade.DeterminePreviews))]
@@ -201,6 +216,9 @@ internal static class ArchitectModePatch
 
     internal class LargerAreaForTerraform : PatchImpl<LargerAreaForTerraform>
     {
+        // Harmony transpiler: BuildTool_Reform_ReformAction_Transpiler
+        // Target: BuildTool_Reform.ReformAction
+        // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler, HarmonyPatch(typeof(BuildTool_Reform), nameof(BuildTool_Reform.ReformAction))]
         private static IEnumerable<CodeInstruction> BuildTool_Reform_ReformAction_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
         {
