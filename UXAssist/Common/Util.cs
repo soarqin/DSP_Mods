@@ -21,7 +21,7 @@ public static class Util
 
     [Obsolete("Use ResourceUtil.LoadEmbeddedResource")]
     public static byte[] LoadEmbeddedResource(string path, Assembly assembly = null)
-        => ResourceUtil.LoadEmbeddedResource(path, assembly);
+        => ResourceUtil.LoadEmbeddedResource(path, assembly ?? Assembly.GetCallingAssembly());
 
     [Obsolete("Use ResourceUtil.LoadTexture")]
     public static Texture2D LoadTexture(string path)
@@ -33,13 +33,13 @@ public static class Util
 
     [Obsolete("Use ResourceUtil.LoadEmbeddedTexture")]
     public static Texture2D LoadEmbeddedTexture(string path, Assembly assembly = null)
-        => ResourceUtil.LoadEmbeddedTexture(path, assembly);
+        => ResourceUtil.LoadEmbeddedTexture(path, assembly ?? Assembly.GetCallingAssembly());
 
     [Obsolete("Use ResourceUtil.LoadEmbeddedSprite")]
     public static Sprite LoadEmbeddedSprite(string path, Assembly assembly = null)
-        => ResourceUtil.LoadEmbeddedSprite(path, assembly);
+        => ResourceUtil.LoadEmbeddedSprite(path, assembly ?? Assembly.GetCallingAssembly());
 
     [Obsolete("Use PathUtil.PluginFolder")]
     public static string PluginFolder(Assembly assembly = null)
-        => PathUtil.PluginFolder(assembly);
+        => PathUtil.PluginFolder(assembly ?? Assembly.GetCallingAssembly());
 }
