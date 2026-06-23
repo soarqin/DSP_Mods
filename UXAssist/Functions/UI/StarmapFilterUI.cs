@@ -94,7 +94,7 @@ internal static class StarmapFilterUI
         rtrans.pivot = new Vector2(0f, 1f);
         rtrans.anchoredPosition3D = new Vector3(0, 0, 0f);
 
-        var cornerComboBox = MyCornerComboBox.CreateComboBox(135, 0, rtrans, true).WithItems("Show original name".Translate(), "Show distance".Translate(), "Show planet count".Translate(), "Show all information".Translate());
+        var cornerComboBox = MyCornerComboBox.CreateComboBox(135, 0, rtrans, true).WithItems(I18NKeys.ShowOriginalName.Translate(), I18NKeys.ShowDistance.Translate(), I18NKeys.ShowPlanetCount.Translate(), I18NKeys.ShowAllInformation.Translate());
         cornerComboBox.SetIndex(CornerComboBoxIndex);
         cornerComboBox.OnSelChanged += (index) =>
         {
@@ -132,13 +132,13 @@ internal static class StarmapFilterUI
             MyCheckButton.CreateCheckButton(24, 354, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
             MyCheckButton.CreateCheckButton(24, 378, rtrans, false).WithIcon().WithSize(150, 24).WithIconWidth(24),
         ];
-        var unionCheckBox = MyCheckBox.CreateCheckBox(312, 0, rtrans, false, "Union results".Translate(), 15).WithSmallerBox(24f);
+        var unionCheckBox = MyCheckBox.CreateCheckBox(312, 0, rtrans, false, I18NKeys.UnionResults.Translate(), 15).WithSmallerBox(24f);
         unionCheckBox.gameObject.SetActive(false);
         unionCheckBox.OnChecked += () =>
         {
             UpdateStarmapStarFilters();
         };
-        var allOresText = MyWindow.AddText(20, 190, rtrans, "All 6 Basic Ores".Translate(), 12);
+        var allOresText = MyWindow.AddText(20, 190, rtrans, I18NKeys.All6BasicOres.Translate(), 12);
         allOresText.gameObject.SetActive(false);
         StarmapFilterToggler.OnChecked += UpdateButtons;
         foreach (var button in buttons)
@@ -277,10 +277,10 @@ internal static class StarmapFilterUI
             {
                 var items = cornerComboBox.Items;
                 cornerComboBox.UpdateLabelText();
-                items[0] = "Show original name".Translate();
-                items[1] = "Show distance".Translate();
-                items[2] = "Show planet count".Translate();
-                items[3] = "Show all information".Translate();
+                items[0] = I18NKeys.ShowOriginalName.Translate();
+                items[1] = I18NKeys.ShowDistance.Translate();
+                items[2] = I18NKeys.ShowPlanetCount.Translate();
+                items[3] = I18NKeys.ShowAllInformation.Translate();
             }
             if (buttons != null)
             {
@@ -307,10 +307,10 @@ internal static class StarmapFilterUI
                     switch (i)
                     {
                         case 5:
-                            buttons[12 + i].SetLabelText($"{themeProto.DisplayName.Translate()} ({"High yield".Translate()})");
+                            buttons[12 + i].SetLabelText($"{themeProto.DisplayName.Translate()} ({I18NKeys.HighYield.Translate()})");
                             break;
                         case 6:
-                            buttons[12 + i].SetLabelText($"{themeProto.DisplayName.Translate()} ({"Perfect".Translate()})");
+                            buttons[12 + i].SetLabelText($"{themeProto.DisplayName.Translate()} ({I18NKeys.Perfect.Translate()})");
                             break;
                         default:
                             buttons[12 + i].SetLabelText(themeProto.DisplayName.Translate());
@@ -318,7 +318,7 @@ internal static class StarmapFilterUI
                     }
                 }
             }
-            if (allOresText != null) allOresText.text = "All 6 Basic Ores".Translate();
+            if (allOresText != null) allOresText.text = I18NKeys.All6BasicOres.Translate();
         }
         void UpdateButtons()
         {

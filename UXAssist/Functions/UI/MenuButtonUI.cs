@@ -80,13 +80,13 @@ internal static class MenuButtonUI
             var l = btn.text.GetComponent<Localizer>();
             if (l != null)
             {
-                l.stringKey = "UXAssist Config";
-                l.translation = "UXAssist Config".Translate();
+                l.stringKey = I18NKeys.UXAssistConfig;
+                l.translation = I18NKeys.UXAssistConfig.Translate();
             }
 
-            btn.text.text = "UXAssist Config".Translate();
+            btn.text.text = I18NKeys.UXAssistConfig.Translate();
             btn.text.fontSize = btn.text.fontSize * 7 / 8;
-            I18N.OnInitialized += () => { btn.text.text = "UXAssist Config".Translate(); };
+            I18N.OnInitialized += () => { btn.text.text = I18NKeys.UXAssistConfig.Translate(); };
             var vec = ((RectTransform)mainMenu.exitButton.transform).anchoredPosition3D;
             var vec2 = ((RectTransform)mainMenu.creditsButton.transform).anchoredPosition3D;
             var transform1 = (RectTransform)btn.transform;
@@ -116,8 +116,8 @@ internal static class MenuButtonUI
                 rect.anchoredPosition3D = new Vector3(64f, -5f, 0f);
                 b.onClick.RemoveAllListeners();
                 btn.onClick += _ => { ToggleConfigWindow(); };
-                btn.tips.tipTitle = "UXAssist Config";
-                I18N.OnInitialized += () => { btn.tips.tipTitle = "UXAssist Config".Translate(); };
+                btn.tips.tipTitle = I18NKeys.UXAssistConfig;
+                I18N.OnInitialized += () => { btn.tips.tipTitle = I18NKeys.UXAssistConfig.Translate(); };
                 btn.tips.tipText = null;
                 btn.tips.corner = 9;
                 btn.tips.offset = new Vector2(-20f, -20f);

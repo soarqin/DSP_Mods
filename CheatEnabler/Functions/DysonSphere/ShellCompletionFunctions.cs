@@ -17,7 +17,7 @@ public static class ShellCompletionFunctions
         if (resolved == null) return;
         var (dysonSphere, star) = resolved.Value;
 
-        UIMessageBox.Show("CheatEnabler".Translate(), string.Format("This will complete all Dyson Sphere shells on \"{0}\". Are you sure?".Translate(), star.displayName), Localization.Cancel.Translate(), Localization.Ok.Translate(), UIMessageBox.QUESTION, null, () =>
+        UIMessageBox.Show(Localization.CheatEnabler.Translate(), string.Format("This will complete all Dyson Sphere shells on \"{0}\". Are you sure?".Translate(), star.displayName), Localization.Cancel.Translate(), Localization.OK.Translate(), UIMessageBox.QUESTION, null, () =>
         {
             var totalNodeSpInfo = AccessTools.Field(typeof(DysonSphereLayer), "totalNodeSP");
             var totalFrameSpInfo = AccessTools.Field(typeof(DysonSphereLayer), "totalFrameSP");

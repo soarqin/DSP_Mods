@@ -55,7 +55,7 @@ public static class WindowFunctions
             WinApi.NORMAL_PRIORITY_CLASS => "Normal".Translate(),
             WinApi.BELOW_NORMAL_PRIORITY_CLASS => "Below Normal".Translate(),
             WinApi.IDLE_PRIORITY_CLASS => "Idle".Translate(),
-            _ => "Unknown".Translate()
+            _ => I18NKeys.Unknown.Translate()
         };
     }
 

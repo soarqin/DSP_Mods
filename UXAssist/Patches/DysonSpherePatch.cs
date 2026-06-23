@@ -468,6 +468,7 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
             var label1 = generator.DefineLabel();
             var label2 = generator.DefineLabel();
             matcher.MatchForward(false,
+                // "待机" is the compiled Chinese string for "Standby" in the original game IL.
                 // this.stateText.text = "Standby".Translate();
                 new CodeMatch(OpCodes.Ldstr, "待机"),
                 new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(Localization), nameof(Localization.Translate))),

@@ -4,6 +4,7 @@ namespace UXAssist.Common;
 
 public static class I18NKeys
 {
+    public const string Unknown = "Unknown";
     public const string DoYouWantToUseMetadataToBuyoutTheFollowingTech = "Do you want to use metadata to buyout the following tech?";
     public const string TheFollowingIsTheRequiredMetadataForBuyout = "The following is the required metadata for buyout:";
     public const string BatchBuyoutTech = "Batch buyout tech";
@@ -183,11 +184,11 @@ public static class I18NKeys
     public const string FirstTimeUsingMetadataDescription = "First time using metadata description";
     public const string FirstTimeUsingMetadataTitle = "First time using metadata";
     public const string TechLevelPrefix = "Tech level prefix";
-    public const string Ok = "OK";
     public const string AutoSaveEntry = "Auto-save entry";
 
     public static void Register()
     {
+        I18N.Add(Unknown, "Unknown", "未知");
         I18N.Add(DoYouWantToUseMetadataToBuyoutTheFollowingTech, "Do you want to use metadata to buyout the following tech?", "要使用元数据买断以下科技吗？");
         I18N.Add(TheFollowingIsTheRequiredMetadataForBuyout, "The following is the required metadata for buyout:", "以下是买断所需元数据：");
         I18N.Add(BatchBuyoutTech, "Batch buyout tech", "批量买断科技");
@@ -415,8 +416,7 @@ You can set 2 shortcut keys in Settings panel:
         I18N.Add(InsufficientMetadata, "Insufficient metadata", "元数据不足");
         I18N.Add(FirstTimeUsingMetadataDescription, "Using metadata will disable achievements in this save. Are you sure?", "使用元数据会禁用本存档成就，确定吗？");
         I18N.Add(FirstTimeUsingMetadataTitle, "First time using metadata", "初次使用元数据");
-        I18N.Add(TechLevelPrefix, " Lv.", "杠等级");
-        I18N.Add(Ok, "OK", "确定");
+        I18N.Add(TechLevelPrefix, " Lv.", "等级");
         I18N.Add(AutoSaveEntry, "Auto-save entry", "自动存档条目");
     }
 }

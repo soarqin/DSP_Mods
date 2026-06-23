@@ -4,6 +4,7 @@ namespace CheatEnabler;
 
 public static class Localization
 {
+    public const string CheatEnabler = "CheatEnabler";
     public const string YouAreNotInAnySystem = "You are not in any system.";
     public const string ThereIsNoDysonSphereShellOn0 = "There is no Dyson Sphere shell on \"{0}\".";
     public const string ThereIsNoDysonSphereDataOn0 = "There is no Dyson Sphere data on \"{0}\".";
@@ -90,10 +91,10 @@ public static class Localization
     public const string EnableWarpWithoutSpaceWarpers = "Enable warp without space warpers";
     public const string TeleportToOuterSpace = "Teleport to outer space";
     public const string TeleportToSelectedAstronomical = "Teleport to selected astronomical";
-    public const string Ok = "OK";
 
     public static void Register()
     {
+        I18N.Add(CheatEnabler, "CheatEnabler", "作弊器");
         I18N.Add(YouAreNotInAnySystem, "You are not in any system.", "你不在任何星系中");
         I18N.Add(ThereIsNoDysonSphereShellOn0, "There is no Dyson Sphere shell on \"{0}\".", "“{0}”上没有可建造的戴森壳");
         I18N.Add(ThereIsNoDysonSphereDataOn0, "There is no Dyson Sphere data on \"{0}\".", "“{0}”上没有戴森球数据");
@@ -274,6 +275,5 @@ AAAA=生成速度，B=增产点数，C=堆叠数量
         I18N.Add(EnableWarpWithoutSpaceWarpers, "Enable warp without space warpers", "无需空间翘曲器即可曲速飞行");
         I18N.Add(TeleportToOuterSpace, "Teleport to outer space", "传送到外太空");
         I18N.Add(TeleportToSelectedAstronomical, "Teleport to selected astronomical", "传送到选中的天体");
-        I18N.Add(Ok, "OK", "确定");
     }
 }

@@ -184,13 +184,13 @@ public static class TechFunctions
         }
         if (!enough)
         {
-            UIMessageBox.Show(I18NKeys.Metadata.Translate(), I18NKeys.InsufficientMetadata.Translate(), I18NKeys.Ok.Translate(), UIMessageBox.ERROR);
+            UIMessageBox.Show(I18NKeys.Metadata.Translate(), I18NKeys.InsufficientMetadata.Translate(), I18NKeys.OK.Translate(), UIMessageBox.ERROR);
             return;
         }
 
         if (!history.hasUsedPropertyBanAchievement)
         {
-            UIMessageBox.Show(I18NKeys.FirstTimeUsingMetadataTitle.Translate(), I18NKeys.FirstTimeUsingMetadataDescription.Translate(), I18NKeys.Cancel.Translate(), I18NKeys.Ok.Translate(), UIMessageBox.QUESTION, null, DoUnlockCalculatedTechs);
+            UIMessageBox.Show(I18NKeys.FirstTimeUsingMetadataTitle.Translate(), I18NKeys.FirstTimeUsingMetadataDescription.Translate(), I18NKeys.Cancel.Translate(), I18NKeys.OK.Translate(), UIMessageBox.QUESTION, null, DoUnlockCalculatedTechs);
             return;
         }
 
@@ -233,7 +233,7 @@ public static class TechFunctions
                 if (consumption.Value <= 0) continue;
                 msg += $"\n  {LDB.items.Select(consumption.Key).propertyName}x{consumption.Value}";
             }
-            UIMessageBox.Show("Batch buyout tech".Translate(), msg, I18NKeys.Cancel.Translate(), I18NKeys.Ok.Translate(), UIMessageBox.QUESTION, null, UnlockWithPropertiesImmediately);
+            UIMessageBox.Show("Batch buyout tech".Translate(), msg, I18NKeys.Cancel.Translate(), I18NKeys.OK.Translate(), UIMessageBox.QUESTION, null, UnlockWithPropertiesImmediately);
             return;
 
             void AddToMsg(ref string str, Tuple<TechProto, int, int> tuple)

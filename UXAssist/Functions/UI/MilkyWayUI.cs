@@ -113,7 +113,7 @@ internal static class MilkyWayUI
         {
             if (_clusterUploadResultsCount == 0)
             {
-                UIMessageBox.Show("UXAssist".Translate(), "No recent milkyway upload results".Translate(), I18NKeys.Ok.Translate(), UIMessageBox.INFO, null);
+                UIMessageBox.Show(I18NKeys.UXAssist.Translate(), I18NKeys.NoRecentMilkywayUploadResults.Translate(), I18NKeys.OK.Translate(), UIMessageBox.INFO, null);
                 return;
             }
             StringBuilder sb = new();
@@ -122,9 +122,9 @@ internal static class MilkyWayUI
             for (var i = start - 1; i >= end; i--)
             {
                 var res = _clusterUploadResults[(i + _clusterUploadResultsHead) % ClusterUploadResultKeepCount];
-                sb.AppendLine($"{res.UploadTime.ToString("yyyy-MM-dd HH:mm:ss")} - {((res.Result is 0 or 20) ? "Success".Translate() : ("Failure: ".Translate() + res.Result.ToString()))} - {res.RequestTime:F2}s");
+                sb.AppendLine($"{res.UploadTime.ToString("yyyy-MM-dd HH:mm:ss")} - {((res.Result is 0 or 20) ? I18NKeys.Success.Translate() : (I18NKeys.Failure.Translate() + res.Result.ToString()))} - {res.RequestTime:F2}s");
             }
-            UIMessageBox.Show("UXAssist".Translate(), sb.ToString(), I18NKeys.Ok.Translate(), UIMessageBox.INFO, null);
+            UIMessageBox.Show(I18NKeys.UXAssist.Translate(), sb.ToString(), I18NKeys.OK.Translate(), UIMessageBox.INFO, null);
         }
     }
 
@@ -164,7 +164,7 @@ internal static class MilkyWayUI
         MyFlatButton[] buttons = [];
         Text[] textFields = [];
 
-        MilkyWayTopTenPlayersToggler = MyCheckButton.CreateCheckButton(0, 0, rtrans, false, "Show top players".Translate()).WithSize(120f, 24f);
+        MilkyWayTopTenPlayersToggler = MyCheckButton.CreateCheckButton(0, 0, rtrans, false, I18NKeys.ShowTopPlayers.Translate()).WithSize(120f, 24f);
         MilkyWayTopTenPlayersToggler.OnChecked += UpdateButtons;
         MilkyWayTopTenPlayersToggler.Checked = false;
         UpdateButtons();
@@ -290,7 +290,7 @@ internal static class MilkyWayUI
                     global::UXAssist.UI.Util.NormalizeRectWithTopLeft(textFields[i * 4 + 3].rectTransform, 24f + maxWidth0 + 10f + maxWidth1 + 5f + maxWidth2 + 5f + maxWidth3, y);
                 }
             }
-            MilkyWayTopTenPlayersToggler.SetLabelText(chk ? "Hide top players".Translate() : "Show top players".Translate());
+            MilkyWayTopTenPlayersToggler.SetLabelText(chk ? I18NKeys.HideTopPlayers.Translate() : I18NKeys.ShowTopPlayers.Translate());
 
             string ToKMG(long value)
             {

@@ -88,7 +88,7 @@ public static class IllegalShellFunctions
         }
         if (nodePos.Count == 0)
         {
-            UIMessageBox.Show("CheatEnabler".Translate(), string.Format("There is no Dyson Sphere shell on \"{0}\".".Translate(), star.displayName), Localization.Ok.Translate(), UIMessageBox.ERROR, null);
+            UIMessageBox.Show(Localization.CheatEnabler.Translate(), string.Format("There is no Dyson Sphere shell on \"{0}\".".Translate(), star.displayName), Localization.OK.Translate(), UIMessageBox.ERROR, null);
             return;
         }
         var currentShellCount = layer.shellCount;
@@ -278,7 +278,7 @@ public static class IllegalShellFunctions
             }
             catch (InvalidOperationException)
             {
-                UIMessageBox.Show("CheatEnabler".Translate(), string.Format(Localization.NoPrecalculatedShellFoundForRadius0.Translate(), radius), Localization.Ok.Translate(), UIMessageBox.ERROR, null);
+                UIMessageBox.Show(Localization.CheatEnabler.Translate(), string.Format(Localization.NoPrecalculatedShellFoundForRadius0.Translate(), radius), Localization.OK.Translate(), UIMessageBox.ERROR, null);
                 return;
             }
             layer = dysonSphere.AddLayerOnId(i, radius, Quaternion.Euler(0f, 0f, 0f), Mathf.Sqrt(dysonSphere.gravity / radius) / radius * DysonSphereConstants.RadiansToDegrees);

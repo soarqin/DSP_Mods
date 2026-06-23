@@ -58,7 +58,7 @@ internal static class AutoConstructUI
 
         ConstructCountText = GameObject.Instantiate(UIRoot.instance.uiGame.assemblerWindow.stateText);
         ConstructCountText.gameObject.name = "construct-count-text";
-        ConstructCountText.text = String.Format("Buildings to construct: {0}".Translate(), 0);
+        ConstructCountText.text = String.Format(I18NKeys.BuildingsToConstruct0.Translate(), 0);
         ConstructCountText.color = new Color(1f, 1f, 1f, 0.4f);
         ConstructCountText.alignment = TextAnchor.MiddleLeft;
         ConstructCountText.fontSize = 16;
@@ -78,11 +78,11 @@ internal static class AutoConstructUI
         {
             if (ToggleAutoConstruct.Checked)
             {
-                ToggleAutoConstruct.SetLabelText("Disable auto-construct");
+                ToggleAutoConstruct.SetLabelText(I18NKeys.DisableAutoConstruct);
             }
             else
             {
-                ToggleAutoConstruct.SetLabelText("Enable auto-construct");
+                ToggleAutoConstruct.SetLabelText(I18NKeys.EnableAutoConstruct);
             }
         }
     }
