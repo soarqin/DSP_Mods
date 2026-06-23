@@ -3,6 +3,7 @@ using System.Reflection.Emit;
 using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine;
+using UXAssist.Common.GameConstants;
 using UXAssist.Common.ModFeatures;
 
 namespace UniverseGenTweaks;
@@ -10,20 +11,15 @@ namespace UniverseGenTweaks;
 [ModFeature("UniverseGenGalaxyGen", Order = 11)]
 public static class GalaxyGenSettingsPatch
 {
-    internal const double DefaultMinDist = 2;
-    internal const double DefaultMinStep = 2;
-    internal const double DefaultMaxStep = 3.2;
-    internal const double DefaultFlatten = 0.18;
+    internal static double MinDist = UniverseGenConstants.DefaultMinDist;
+    internal static double MinStep = UniverseGenConstants.DefaultMinStep;
+    internal static double MaxStep = UniverseGenConstants.DefaultMaxStep;
+    internal static double Flatten = UniverseGenConstants.DefaultFlatten;
 
-    internal static double MinDist = DefaultMinDist;
-    internal static double MinStep = DefaultMinStep;
-    internal static double MaxStep = DefaultMaxStep;
-    internal static double Flatten = DefaultFlatten;
-
-    internal static double GameMinDist = DefaultMinDist;
-    internal static double GameMinStep = DefaultMinStep;
-    internal static double GameMaxStep = DefaultMaxStep;
-    internal static double GameFlatten = DefaultFlatten;
+    internal static double GameMinDist = UniverseGenConstants.DefaultMinDist;
+    internal static double GameMinStep = UniverseGenConstants.DefaultMinStep;
+    internal static double GameMaxStep = UniverseGenConstants.DefaultMaxStep;
+    internal static double GameFlatten = UniverseGenConstants.DefaultFlatten;
 
     private static Harmony _patch;
     private static Harmony _permanentPatch;
@@ -68,7 +64,7 @@ public static class GalaxyGenSettingsPatch
             // Increase hard-coded maximum star count from 80 to MaxStarCount.Value
             var matcher = new CodeMatcher(instructions, generator);
             matcher.MatchForward(false,
-                new CodeMatch(ci => ci.opcode == OpCodes.Ldc_I4_S && ci.OperandIs(80))
+                new CodeMatch(ci => ci.opcode == OpCodes.Ldc_I4_S && ci.OperandIs(UniverseGenConstants.VanillaMaxStarCount))
             ).SetAndAdvance(OpCodes.Ldsfld, AccessTools.Field(typeof(MoreSettings), nameof(MoreSettings.MaxStarCount))).Insert(
                 new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(ConfigEntry<int>), nameof(ConfigEntry<int>.Value)))
             );
@@ -92,10 +88,10 @@ public static class GalaxyGenSettingsPatch
             }
             else
             {
-                GameMinDist = DefaultMinDist;
-                GameMinStep = DefaultMinStep;
-                GameMaxStep = DefaultMaxStep;
-                GameFlatten = DefaultFlatten;
+                GameMinDist = UniverseGenConstants.DefaultMinDist;
+                GameMinStep = UniverseGenConstants.DefaultMinStep;
+                GameMaxStep = UniverseGenConstants.DefaultMaxStep;
+                GameFlatten = UniverseGenConstants.DefaultFlatten;
             }
         }
 
@@ -106,9 +102,9 @@ public static class GalaxyGenSettingsPatch
             // 25700 -> 102500
             var matcher = new CodeMatcher(instructions, generator);
             matcher.MatchForward(false,
-                new CodeMatch(ci => ci.opcode == OpCodes.Ldc_I4 && ci.OperandIs(25700))
+                new CodeMatch(ci => ci.opcode == OpCodes.Ldc_I4 && ci.OperandIs(UniverseGenConstants.VanillaGalaxyCapacity))
             );
-            matcher.Repeat(m => m.SetAndAdvance(OpCodes.Ldc_I4, 102500));
+            matcher.Repeat(m => m.SetAndAdvance(OpCodes.Ldc_I4, UniverseGenConstants.ExpandedGalaxyCapacity));
             return matcher.InstructionEnumeration();
         }
 
@@ -120,9 +116,9 @@ public static class GalaxyGenSettingsPatch
             // 25600 -> 102500
             var matcher = new CodeMatcher(instructions, generator);
             matcher.MatchForward(false,
-                new CodeMatch(ci => ci.opcode == OpCodes.Ldc_I4 && ci.OperandIs(25600))
+                new CodeMatch(ci => ci.opcode == OpCodes.Ldc_I4 && ci.OperandIs(UniverseGenConstants.VanillaSectorCapacity))
             );
-            matcher.Repeat(m => m.SetAndAdvance(OpCodes.Ldc_I4, 102500));
+            matcher.Repeat(m => m.SetAndAdvance(OpCodes.Ldc_I4, UniverseGenConstants.ExpandedSectorCapacity));
             return matcher.InstructionEnumeration();
         }
 

@@ -2,6 +2,7 @@ using HarmonyLib;
 using UnityEngine;
 using UnityEngine.UI;
 using UXAssist.Common;
+using UXAssist.Common.GameConstants;
 using UXAssist.Common.ModFeatures;
 using Object = UnityEngine.Object;
 
@@ -98,10 +99,10 @@ public static class GalaxySelectUIPatch
         [HarmonyPatch(typeof(UIGalaxySelect), nameof(UIGalaxySelect._OnOpen))]
         private static void UIGalaxySelect__OnOpen_Prefix(UIGalaxySelect __instance)
         {
-            GalaxyGenSettingsPatch.MinDist = GalaxyGenSettingsPatch.DefaultMinDist;
-            GalaxyGenSettingsPatch.MinStep = GalaxyGenSettingsPatch.DefaultMinStep;
-            GalaxyGenSettingsPatch.MaxStep = GalaxyGenSettingsPatch.DefaultMaxStep;
-            GalaxyGenSettingsPatch.Flatten = GalaxyGenSettingsPatch.DefaultFlatten;
+            GalaxyGenSettingsPatch.MinDist = UniverseGenConstants.DefaultMinDist;
+            GalaxyGenSettingsPatch.MinStep = UniverseGenConstants.DefaultMinStep;
+            GalaxyGenSettingsPatch.MaxStep = UniverseGenConstants.DefaultMaxStep;
+            GalaxyGenSettingsPatch.Flatten = UniverseGenConstants.DefaultFlatten;
 
             RemoveAllListeners();
             UpdateSliderControls();

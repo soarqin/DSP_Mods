@@ -6,6 +6,7 @@ using CheatEnabler.Functions;
 using static CheatEnabler.Functions.DysonSphere.GeometryHelpers;
 using UnityEngine;
 using UXAssist.Common;
+using UXAssist.Common.GameConstants;
 using UXAssist.Common.ModFeatures;
 
 namespace CheatEnabler.Functions.DysonSphere;
@@ -22,20 +23,20 @@ public static class IllegalShellFunctions
 
     private static void ResetLayerPools(DysonSphereLayer layer)
     {
-        layer.nodePool = new DysonNode[64];
-        layer.nodeRecycle = new int[64];
+        layer.nodePool = new DysonNode[DysonSphereConstants.DefaultLayerPoolCapacity];
+        layer.nodeRecycle = new int[DysonSphereConstants.DefaultLayerPoolCapacity];
         layer.nodeRecycleCursor = 0;
-        layer.nodeCapacity = 64;
+        layer.nodeCapacity = DysonSphereConstants.DefaultLayerPoolCapacity;
         layer.nodeCursor = 1;
-        layer.framePool = new DysonFrame[64];
-        layer.frameRecycle = new int[64];
+        layer.framePool = new DysonFrame[DysonSphereConstants.DefaultLayerPoolCapacity];
+        layer.frameRecycle = new int[DysonSphereConstants.DefaultLayerPoolCapacity];
         layer.frameRecycleCursor = 0;
-        layer.frameCapacity = 64;
+        layer.frameCapacity = DysonSphereConstants.DefaultLayerPoolCapacity;
         layer.frameCursor = 1;
-        layer.shellPool = new DysonShell[64];
-        layer.shellRecycle = new int[64];
+        layer.shellPool = new DysonShell[DysonSphereConstants.DefaultLayerPoolCapacity];
+        layer.shellRecycle = new int[DysonSphereConstants.DefaultLayerPoolCapacity];
         layer.shellRecycleCursor = 0;
-        layer.shellCapacity = 64;
+        layer.shellCapacity = DysonSphereConstants.DefaultLayerPoolCapacity;
         layer.shellCursor = 1;
     }
 
@@ -119,7 +120,7 @@ public static class IllegalShellFunctions
             for (var j = 0; j < nodeCount; j++)
             {
                 totalCpMax[j] += cpMax[j];
-                if (totalCpMax[j] > int.MaxValue)
+                if (totalCpMax[j] > DysonSphereConstants.TotalCpMaxCeiling)
                 {
                     totalCpMax[j] = cpMax[j];
                     dirtyFrames.Add(j > 0 ? j - 1 : nodeCount - 1);
@@ -166,7 +167,7 @@ public static class IllegalShellFunctions
                 shells[j] = null;
             }
             var poolCapacity = GeometryHelpers.AlignUpToPowerOfTwo(retainCount + 1);
-            if (poolCapacity < 64) poolCapacity = 64;
+            if (poolCapacity < DysonSphereConstants.DefaultLayerPoolCapacity) poolCapacity = DysonSphereConstants.DefaultLayerPoolCapacity;
             layer.shellPool = new DysonShell[poolCapacity];
             layer.shellRecycle = new int[poolCapacity];
             layer.shellRecycleCursor = 0;
@@ -192,7 +193,7 @@ public static class IllegalShellFunctions
             var nodes = layer.nodePool.Where(node => node != null && retainNodes.Contains(node.id)).ToArray();
             var frames = layer.framePool.Where(frame => frame != null && retainFrames.Contains((frame.nodeA.id, frame.nodeB.id))).ToArray();
             poolCapacity = GeometryHelpers.AlignUpToPowerOfTwo(frames.Length + 1);
-            if (poolCapacity < 64) poolCapacity = 64;
+            if (poolCapacity < DysonSphereConstants.DefaultLayerPoolCapacity) poolCapacity = DysonSphereConstants.DefaultLayerPoolCapacity;
             layer.framePool = new DysonFrame[poolCapacity];
             layer.frameRecycle = new int[poolCapacity];
             layer.frameRecycleCursor = 0;
@@ -212,7 +213,7 @@ public static class IllegalShellFunctions
                 }
             }
             poolCapacity = GeometryHelpers.AlignUpToPowerOfTwo(nodes.Length + 1);
-            if (poolCapacity < 64) poolCapacity = 64;
+            if (poolCapacity < DysonSphereConstants.DefaultLayerPoolCapacity) poolCapacity = DysonSphereConstants.DefaultLayerPoolCapacity;
             layer.nodePool = new DysonNode[poolCapacity];
             layer.nodeRecycle = new int[poolCapacity];
             layer.nodeRecycleCursor = 0;
@@ -262,7 +263,7 @@ public static class IllegalShellFunctions
                 continue;
             }
             var radius = dysonSphere.maxOrbitRadius;
-            for (; radius > 4000; radius -= 10)
+            for (; radius > DysonSphereConstants.MinOrbitRadiusSearch; radius -= DysonSphereConstants.OrbitRadiusSearchStep)
             {
                 if (dysonSphere.CheckLayerRadius(radius) == 0)
                 {
@@ -279,7 +280,7 @@ public static class IllegalShellFunctions
                 UIMessageBox.Show("CheatEnabler".Translate(), string.Format("No precalculated triangle found for radius {0}.".Translate(), radius), "确定".Translate(), UIMessageBox.ERROR, null);
                 return;
             }
-            layer = dysonSphere.AddLayerOnId(i, radius, Quaternion.Euler(0f, 0f, 0f), Mathf.Sqrt(dysonSphere.gravity / radius) / radius * 57.2957802f);
+            layer = dysonSphere.AddLayerOnId(i, radius, Quaternion.Euler(0f, 0f, 0f), Mathf.Sqrt(dysonSphere.gravity / radius) / radius * DysonSphereConstants.RadiansToDegrees);
             if (layer == null) return;
             Vector3[] nodePos = [triangle.PosA.normalized * radius, triangle.PosB.normalized * radius, triangle.PosC.normalized * radius];
             DysonNode[] nodes = [layer.QuickAddDysonNode(0, nodePos[0]), layer.QuickAddDysonNode(0, nodePos[1]), layer.QuickAddDysonNode(0, nodePos[2])];
@@ -296,7 +297,7 @@ public static class IllegalShellFunctions
                 for (var k = 0; k < 3; k++)
                 {
                     totalCpMax[k] += cpMax[k];
-                    if (totalCpMax[k] > int.MaxValue)
+                    if (totalCpMax[k] > DysonSphereConstants.TotalCpMaxCeiling)
                     {
                         totalCpMax[k] = cpMax[k];
                         dirtyFrames.Add(k > 0 ? k - 1 : 2);
@@ -325,17 +326,17 @@ public static class IllegalShellFunctions
         EnsureDysonShellMaps();
         var shellsChanged = false;
         var mutex = new object();
-        var supposedShells = new List<SupposedShell>(60 * 59 * 58);
-        Vector3[] nodePos = new Vector3[60];
-        for (var i = 0; i < 60; i++)
+        var supposedShells = new List<SupposedShell>(DysonSphereConstants.MaxShellSearchCombinations);
+        Vector3[] nodePos = new Vector3[DysonSphereConstants.MaxShellSearchNodeCount];
+        for (var i = 0; i < DysonSphereConstants.MaxShellSearchNodeCount; i++)
         {
-            nodePos[i] = new Vector3((float)Math.Sin(Math.PI * 2 * i / 60), 0, (float)Math.Cos(Math.PI * 2 * i / 60)) * layer.orbitRadius;
+            nodePos[i] = new Vector3((float)Math.Sin(Math.PI * 2 * i / DysonSphereConstants.MaxShellSearchNodeCount), 0, (float)Math.Cos(Math.PI * 2 * i / DysonSphereConstants.MaxShellSearchNodeCount)) * layer.orbitRadius;
         }
-        for (var i = 0; i < 58; i++)
+        for (var i = 0; i < DysonSphereConstants.MaxShellSearchNodeCount - 2; i++)
         {
-            for (var j = i + 1; j < 59; j++)
+            for (var j = i + 1; j < DysonSphereConstants.MaxShellSearchNodeCount - 1; j++)
             {
-                for (var k = j + 1; k < 60; k++)
+                for (var k = j + 1; k < DysonSphereConstants.MaxShellSearchNodeCount; k++)
                 {
                     var area = Vector3.Cross(nodePos[j] - nodePos[i], nodePos[k] - nodePos[i]).sqrMagnitude;
                     supposedShells.Add(new SupposedShell { posA = nodePos[i], posB = nodePos[j], posC = nodePos[k], area = area });
@@ -348,11 +349,11 @@ public static class IllegalShellFunctions
         var maxJ = -1;
         var options = new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount - 1 };
 
-        var gridScale = (int)(Math.Pow(layer.orbitRadius / 4000.0, 0.75) + 0.5);
+        var gridScale = (int)(Math.Pow(layer.orbitRadius / DysonSphereConstants.GridScaleBaseRadius, 0.75) + 0.5);
         gridScale = (gridScale < 1) ? 1 : gridScale;
-        var cpPerVertex = gridScale * gridScale * 2;
-        var barrier = 0x7FFFFFFF / cpPerVertex;
-        if (barrier > 32767) barrier = 32767;
+        var cpPerVertex = gridScale * gridScale * DysonSphereConstants.CpPerVertexFactor;
+        var barrier = DysonSphereConstants.TotalCpMaxCeiling / cpPerVertex;
+        if (barrier > DysonSphereConstants.MaxShellVertices) barrier = DysonSphereConstants.MaxShellVertices;
         var truncValue = barrier / 1000 * 1000;
         CheatEnabler.Logger.LogDebug($"cpPerVertex: {cpPerVertex}, Barrier: {barrier}, TruncValue: {truncValue}");
 
@@ -409,7 +410,7 @@ public static class IllegalShellFunctions
             dysonSphere.RemoveLayer(1);
         }
         var maxOrbitRadius = Patches.DysonSpherePatch.UnlockMaxOrbitRadiusEnabled.Value ? Patches.DysonSpherePatch.UnlockMaxOrbitRadiusValue.Value : dysonSphere.maxOrbitRadius;
-        layer = dysonSphere.AddLayerOnId(1, maxOrbitRadius, Quaternion.Euler(0f, 0f, 0f), Mathf.Sqrt(dysonSphere.gravity / maxOrbitRadius) / maxOrbitRadius * 57.2957802f);
+        layer = dysonSphere.AddLayerOnId(1, maxOrbitRadius, Quaternion.Euler(0f, 0f, 0f), Mathf.Sqrt(dysonSphere.gravity / maxOrbitRadius) / maxOrbitRadius * DysonSphereConstants.RadiansToDegrees);
         if (layer == null) return;
 
         var shellsChanged = CreateIllegalDysonShellWithMaxOutputForLayer(layer);
@@ -437,16 +438,16 @@ public static class IllegalShellFunctions
     {
         var lastGridScale = 0;
         var radiusList = new List<int>();
-        for (var r = 4000; r <= 250000; r++)
+        for (var r = DysonSphereConstants.MinOrbitRadiusSearch; r <= DysonSphereConstants.MaxOrbitRadius; r++)
         {
-            var gridScale = (int)(Math.Pow(r / 4000.0, 0.75) + 0.5);
+            var gridScale = (int)(Math.Pow(r / DysonSphereConstants.GridScaleBaseRadius, 0.75) + 0.5);
             gridScale = (gridScale < 1) ? 1 : gridScale;
             if (gridScale == lastGridScale) continue;
             lastGridScale = gridScale;
             radiusList.Add(r);
             CheatEnabler.Logger.LogDebug($"Grid Scale: {gridScale} from {r}");
         }
-        radiusList.Add(250000);
+        radiusList.Add(DysonSphereConstants.MaxOrbitRadius);
         var resolved = DysonSphereResolver.ResolveEditorOrLocalSphere(requireLayer: false);
         if (resolved == null) return;
         var (dysonSphere, star) = resolved.Value;
@@ -466,20 +467,20 @@ public static class IllegalShellFunctions
                 dysonSphere.RemoveLayer(idx);
             }
             var orbitRadius = (radiusList[idx] - 1) / 10 * 10f;
-            layer = dysonSphere.AddLayerOnId(idx, orbitRadius, Quaternion.Euler(0f, 0f, 0f), Mathf.Sqrt(dysonSphere.gravity / orbitRadius) / orbitRadius * 57.2957802f);
+            layer = dysonSphere.AddLayerOnId(idx, orbitRadius, Quaternion.Euler(0f, 0f, 0f), Mathf.Sqrt(dysonSphere.gravity / orbitRadius) / orbitRadius * DysonSphereConstants.RadiansToDegrees);
             if (layer == null) return;
 
-            var supposedShells = new List<SupposedShell>(60 * 59 * 58);
-            Vector3[] nodePos = new Vector3[60];
-            for (var i = 0; i < 60; i++)
+            var supposedShells = new List<SupposedShell>(DysonSphereConstants.MaxShellSearchCombinations);
+            Vector3[] nodePos = new Vector3[DysonSphereConstants.MaxShellSearchNodeCount];
+            for (var i = 0; i < DysonSphereConstants.MaxShellSearchNodeCount; i++)
             {
-                nodePos[i] = new Vector3((float)Math.Sin(Math.PI * 2 * i / 60), 0, (float)Math.Cos(Math.PI * 2 * i / 60));
+                nodePos[i] = new Vector3((float)Math.Sin(Math.PI * 2 * i / DysonSphereConstants.MaxShellSearchNodeCount), 0, (float)Math.Cos(Math.PI * 2 * i / DysonSphereConstants.MaxShellSearchNodeCount));
             }
-            for (var i = 0; i < 58; i++)
+            for (var i = 0; i < DysonSphereConstants.MaxShellSearchNodeCount - 2; i++)
             {
-                for (var j = i + 1; j < 59; j++)
+                for (var j = i + 1; j < DysonSphereConstants.MaxShellSearchNodeCount - 1; j++)
                 {
-                    for (var k = j + 1; k < 60; k++)
+                    for (var k = j + 1; k < DysonSphereConstants.MaxShellSearchNodeCount; k++)
                     {
                         var area = Vector3.Cross(nodePos[j] - nodePos[i], nodePos[k] - nodePos[i]).sqrMagnitude;
                         supposedShells.Add(new SupposedShell { posA = nodePos[i], posB = nodePos[j], posC = nodePos[k], area = area });
@@ -490,10 +491,10 @@ public static class IllegalShellFunctions
 
             var options = new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount - 1 };
 
-            var gridScale = (int)(Math.Pow(orbitRadius / 4000.0, 0.75) + 0.5);
+            var gridScale = (int)(Math.Pow(orbitRadius / DysonSphereConstants.GridScaleBaseRadius, 0.75) + 0.5);
             gridScale = (gridScale < 1) ? 1 : gridScale;
-            var cpPerVertex = gridScale * gridScale * 2;
-            var barrier = 0x7FFFFFFF / cpPerVertex;
+            var cpPerVertex = gridScale * gridScale * DysonSphereConstants.CpPerVertexFactor;
+            var barrier = DysonSphereConstants.TotalCpMaxCeiling / cpPerVertex;
             if (barrier > 30000) barrier = 30000;
 
             Parallel.For(0, supposedShells.Count, options, (j, _) =>
@@ -517,10 +518,10 @@ public static class IllegalShellFunctions
                 var result = Parallel.For((radiusList[idx - 1] + 9) / 10, (radiusList[idx] + 9) / 10, options, (k, loopState) =>
                 {
                     var orbitRadius = k * 10f;
-                    var gridScale = (int)(Math.Pow(orbitRadius / 4000.0, 0.75) + 0.5);
+                    var gridScale = (int)(Math.Pow(orbitRadius / DysonSphereConstants.GridScaleBaseRadius, 0.75) + 0.5);
                     gridScale = (gridScale < 1) ? 1 : gridScale;
-                    var cpPerVertex = gridScale * gridScale * 2;
-                    var barrier = 0x7FFFFFFF / cpPerVertex;
+                    var cpPerVertex = gridScale * gridScale * DysonSphereConstants.CpPerVertexFactor;
+                    var barrier = DysonSphereConstants.TotalCpMaxCeiling / cpPerVertex;
                     if (barrier > 31000) barrier = 31000;
                     if (loopState.ShouldExitCurrentIteration) return;
                     var vertCount = GeometryHelpers.CalculateTriangleVertCount([sshell.posA * orbitRadius, sshell.posB * orbitRadius, sshell.posC * orbitRadius]);

@@ -5,6 +5,7 @@ using HarmonyLib;
 using UnityEngine;
 using UXAssist.Common;
 using GameLogicProc = UXAssist.Common.GameLogic;
+using UXAssist.Common.GameConstants;
 
 namespace CheatEnabler.Patches.Factory;
 
@@ -242,7 +243,7 @@ internal class BeltSignalGenerator : PatchImpl<BeltSignalGenerator>
         CalculateAllProductions(result, extra, ref sprayedCount, itemId);
 
         var proliferatorCount = 0f;
-        if (result.TryGetValue(1143, out var pv))
+        if (result.TryGetValue(ItemIds.ProliferatorMkIII, out var pv))
         {
             proliferatorCount = pv;
             result.Remove(1143);
@@ -260,7 +261,7 @@ internal class BeltSignalGenerator : PatchImpl<BeltSignalGenerator>
         }
         if (proliferatorCount > 0f)
         {
-            foreach (var p in ProliferatorSources)
+            foreach (var p in ItemIds.ProliferatorSources)
             {
                 result[p.Item1] = (result.TryGetValue(p.Item1, out var v) ? v : 0) + p.Item2 * proliferatorCount / ProliferatorDenom;
             }
@@ -591,11 +592,7 @@ internal class BeltSignalGenerator : PatchImpl<BeltSignalGenerator>
     }
 
     /* BEGIN: Item sources calculation */
-    private static readonly int[] ExtraOreItemIds = [1000, 1116, 1120, 1121, 1208, 5201, 5202, 5203, 5204, 5205, 5206];
-    private static readonly HashSet<int> ExtraProliferationItemIds = [1107, 1111, 1125, 1142, 1143, 1202, 1203, 1204, 1205, 1209, 1210, 1301, 1305, 1401, 1402, 1403, 1405, 1406, 1502, 1503, 1802, 6001, 6003, 6004, 6005, 6006];
-    private static readonly HashSet<int> NoProliferationItemIds = [1126, 6002];
-    // All source items used to create 25 proliferators mk.III (not self-sprayed)
-    private static readonly List<(int, float)> ProliferatorSources = [(1015, 60f), (1124, 20f), (1006, 64f), (1012, 16f), (1112, 32f), (1141, 64f), (1142, 40f), (1143, 25f)];
+    // Item ID constants are provided by UXAssist.Common.GameConstants.ItemIds.
     private const float ProliferatorDenom = 21f;
     // One sprayed proliferator mk.III can spray 75 items, but one is used for spray itself, so the actual count is 74
     private const float ProliferatorSpayCount = 74f;
@@ -626,7 +623,7 @@ internal class BeltSignalGenerator : PatchImpl<BeltSignalGenerator>
         }
 
         // 水、硫酸、氢、重氢、光子
-        foreach (var itemId in ExtraOreItemIds)
+        foreach (var itemId in ItemIds.ExtraOreItemIds)
         {
             ItemSources[itemId] = new ItemSource { Count = 1 };
         }
@@ -725,16 +722,16 @@ internal class BeltSignalGenerator : PatchImpl<BeltSignalGenerator>
             }
         }
 
-        if (itemId == 1143 || itemSource.From == null) return;
+        if (itemId == ItemIds.ProliferatorMkIII || itemSource.From == null) return;
         var useProliferator = FactoryPatch.BeltSignalUseProliferatorEnabled.Value;
-        if (useProliferator && ExtraProliferationItemIds.Contains(itemId))
+        if (useProliferator && ItemIds.ExtraProliferationItemIds.Contains(itemId))
         {
             times *= 0.8f;
         }
         foreach (var p in itemSource.From)
         {
             var value = p.Value * times;
-            if (useProliferator && !NoProliferationItemIds.Contains(p.Key)) sprayedCount += value;
+            if (useProliferator && !ItemIds.NoProliferationItemIds.Contains(p.Key)) sprayedCount += value;
             if (extra.TryGetValue(p.Key, out var rcount))
             {
                 if (value <= rcount)

@@ -3,6 +3,7 @@ using System.Reflection.Emit;
 using HarmonyLib;
 using UnityEngine;
 using UXAssist.Common;
+using UXAssist.Common.GameConstants;
 
 namespace CheatEnabler.Patches.Factory;
 
@@ -157,7 +158,7 @@ internal static class WindTurbinesPowerGlobalCoverage
     private static PrefabDesc _prefabdesc;
     private static float _oldCoverRadius;
     private static float _oldConnectDistance;
-    private const int WindTurbineId = 2203;
+    private const int WindTurbineId = ItemIds.WindTurbine;
     private const float WindTurbineNewCoverageDistance = 500f;
 
     public static void Enable(bool enable)

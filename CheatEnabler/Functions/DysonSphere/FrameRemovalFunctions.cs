@@ -2,6 +2,7 @@ using System;
 using HarmonyLib;
 using UnityEngine;
 using UXAssist.Common;
+using UXAssist.Common.GameConstants;
 using UXAssist.Common.ModFeatures;
 
 namespace CheatEnabler.Functions.DysonSphere;
@@ -46,7 +47,7 @@ public static class FrameRemovalFunctions
                 }
                 dysonSphereLayer.frameCursor = 1;
                 dysonSphereLayer.frameRecycleCursor = 0;
-                dysonSphereLayer.SetFrameCapacity(64);
+                dysonSphereLayer.SetFrameCapacity(DysonSphereConstants.DefaultLayerPoolCapacity);
                 totalFrameSpInfo?.SetValue(dysonSphereLayer, 0);
             }
             dysonSphere.CheckAutoNodes();

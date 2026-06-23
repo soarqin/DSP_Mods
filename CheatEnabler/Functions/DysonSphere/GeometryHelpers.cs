@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using UnityEngine;
 using UXAssist.Common;
+using UXAssist.Common.GameConstants;
 
 namespace CheatEnabler.Functions.DysonSphere;
 
@@ -39,7 +40,7 @@ public static class GeometryHelpers
         new PrecalculatedTriangle() { MaxOrbitRadius = 209946, PosA = new Vector3() { x = RawToFloat(0x00000000U), y = RawToFloat(0x00000000U), z = RawToFloat(0x484D0500U)}, PosB = new Vector3() { x = RawToFloat(0x48092F52U), y = RawToFloat(0x00000000U), z = RawToFloat(0x48185BF5U)}, PosC = new Vector3() { x = RawToFloat(0x2F02C70CU), y = RawToFloat(0x00000000U), z = RawToFloat(0xC84D0500U)} },
         new PrecalculatedTriangle() { MaxOrbitRadius = 224422, PosA = new Vector3() { x = RawToFloat(0x00000000U), y = RawToFloat(0x00000000U), z = RawToFloat(0x485B2900U)}, PosB = new Vector3() { x = RawToFloat(0x4812A593U), y = RawToFloat(0x00000000U), z = RawToFloat(0x4822DE24U)}, PosC = new Vector3() { x = RawToFloat(0x2F0BCC2BU), y = RawToFloat(0x00000000U), z = RawToFloat(0xC85B2900U)} },
         new PrecalculatedTriangle() { MaxOrbitRadius = 239136, PosA = new Vector3() { x = RawToFloat(0x00000000U), y = RawToFloat(0x00000000U), z = RawToFloat(0x48698680U)}, PosB = new Vector3() { x = RawToFloat(0x481C424DU), y = RawToFloat(0x00000000U), z = RawToFloat(0x482D8B0EU)}, PosC = new Vector3() { x = RawToFloat(0x2F14F5F7U), y = RawToFloat(0x00000000U), z = RawToFloat(0xC8698680U)} },
-        new PrecalculatedTriangle() { MaxOrbitRadius = 250000, PosA = new Vector3() { x = RawToFloat(0x00000000U), y = RawToFloat(0x00000000U), z = RawToFloat(0x48742180U)}, PosB = new Vector3() { x = RawToFloat(0x48235AFEU), y = RawToFloat(0x00000000U), z = RawToFloat(0x48356CB1U)}, PosC = new Vector3() { x = RawToFloat(0x2F1BB9CEU), y = RawToFloat(0x00000000U), z = RawToFloat(0xC8742180U)} },
+        new PrecalculatedTriangle() { MaxOrbitRadius = DysonSphereConstants.MaxOrbitRadius, PosA = new Vector3() { x = RawToFloat(0x00000000U), y = RawToFloat(0x00000000U), z = RawToFloat(0x48742180U)}, PosB = new Vector3() { x = RawToFloat(0x48235AFEU), y = RawToFloat(0x00000000U), z = RawToFloat(0x48356CB1U)}, PosC = new Vector3() { x = RawToFloat(0x2F1BB9CEU), y = RawToFloat(0x00000000U), z = RawToFloat(0xC8742180U)} },
     ];
 
     public struct PrecalculatedTriangle
@@ -181,11 +182,11 @@ public static class GeometryHelpers
                 num3 = num4;
             }
         }
-        var gridScale = (int)(Math.Pow(radius / 4000.0, 0.75) + 0.5);
+        var gridScale = (int)(Math.Pow(radius / DysonSphereConstants.GridScaleBaseRadius, 0.75) + 0.5);
         gridScale = ((gridScale < 1) ? 1 : gridScale);
-        var gridSize = gridScale * 80f;
+        var gridSize = gridScale * DysonSphereConstants.GridSizeBase;
         var gridSizeDouble = (double)gridSize;
-        var cpPerVertex = gridScale * gridScale * 2;
+        var cpPerVertex = gridScale * gridScale * DysonSphereConstants.CpPerVertexFactor;
 
         var num5 = (int)((double)num3 / factor3 / gridSizeDouble + 2.5);
         var xaxis = VectorLF3.Cross(center, Vector3.up).normalized;
@@ -317,11 +318,11 @@ public static class GeometryHelpers
                 num3 = num4;
             }
         }
-        shell.gridScale = (int)(Math.Pow(shell.radius / 4000.0, 0.75) + 0.5);
+        shell.gridScale = (int)(Math.Pow(shell.radius / DysonSphereConstants.GridScaleBaseRadius, 0.75) + 0.5);
         shell.gridScale = ((shell.gridScale < 1) ? 1 : shell.gridScale);
-        shell.gridSize = shell.gridScale * 80f;
+        shell.gridSize = shell.gridScale * DysonSphereConstants.GridSizeBase;
         var gridSizeDouble = (double)shell.gridSize;
-        shell.cpPerVertex = shell.gridScale * shell.gridScale * 2;
+        shell.cpPerVertex = shell.gridScale * shell.gridScale * DysonSphereConstants.CpPerVertexFactor;
         int num5 = (int)((double)num3 / factor3 / gridSizeDouble + 2.5);
         shell.xaxis = VectorLF3.Cross(normalized, Vector3.up).normalized;
         if (shell.xaxis.magnitude < 0.1)
@@ -427,7 +428,7 @@ public static class GeometryHelpers
             }
         }
         int count2 = DysonShell.s_vmap.Count;
-        if (count2 > 32767)
+        if (count2 > DysonSphereConstants.MaxShellVertices)
         {
             return false;
         }
@@ -694,7 +695,7 @@ public static class GeometryHelpers
         shell.id = shellId;
         shell.layerId = layer.id;
         shell.protoId = protoId;
-        shell.randSeed = layer.id * 10000 + shellId;
+        shell.randSeed = layer.id * DysonSphereConstants.ShellRandSeedMultiplier + shellId;
         for (int j = 0; j < nodes.Length; j++)
         {
             DysonNode dysonNode = nodes[j];
@@ -718,7 +719,7 @@ public static class GeometryHelpers
             shell.nodes.Add(dysonNode);
             shell.frames.Add(dysonFrame);
         }
-        if (!shell.GenerateCustomShellGeometry() || (limit && DysonShell.s_vmap.Count < 32000))
+        if (!shell.GenerateCustomShellGeometry() || (limit && DysonShell.s_vmap.Count < DysonSphereConstants.MinShellVertexThreshold))
         {
             CheatEnabler.Logger.LogDebug($"Stripped VertCount: {DysonShell.s_vmap.Count}");
             shell.Free();
