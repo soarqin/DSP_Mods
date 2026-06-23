@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -60,15 +60,7 @@ internal static class StarmapFilterUI
 
     public static void Init()
     {
-        I18N.Add("High yield", "High yield", "高产");
-        I18N.Add("Perfect", "Perfect", "完美");
-        I18N.Add("Union results", "Union results", "结果取并集");
-        I18N.Add("All 6 Basic Ores", "All 6 Basic Ores", "六种基础矿物齐全");
-        I18N.Add("Show original name", "Show original name", "显示原始名称");
-        I18N.Add("Show distance", "Show distance", "显示距离");
-        I18N.Add("Show planet count", "Show planet count", "显示行星数");
-        I18N.Add("Show all information", "Show all information", "显示全部信息");
-    }
+                                                                    }
 
     public static void Start()
     {

@@ -65,8 +65,7 @@ public class GamePatch : PatchImpl<GamePatch>
             canOverride = true
         }
         );
-        I18N.Add("KEYUPSSpeedDown", "[UXA] Decrease logical frame rate", "[UXA] 降低逻辑帧率");
-        _speedUpKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
+                _speedUpKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
         {
             key = new CombineKey((int)KeyCode.Equals, CombineKey.CTRL_COMB, ECombineKeyAction.OnceClick, false),
             conflictGroup = KeyBindConflict.MOVEMENT | KeyBindConflict.UI | KeyBindConflict.FLYING | KeyBindConflict.SAILING | KeyBindConflict.BUILD_MODE_1 | KeyBindConflict.KEYBOARD_KEYBIND,
@@ -74,10 +73,7 @@ public class GamePatch : PatchImpl<GamePatch>
             canOverride = true
         }
         );
-        I18N.Add("KEYUPSSpeedUp", "[UXA] Increase logical frame rate", "[UXA] 提升逻辑帧率");
-        I18N.Add("Logical frame rate: {0}x", "[UXA] Logical frame rate: {0}x", "[UXA] 逻辑帧速率: {0}x");
-
-        EnableWindowResizeEnabled.SettingChanged += (_, _) => EnableWindowResize.Enable(EnableWindowResizeEnabled.Value);
+                        EnableWindowResizeEnabled.SettingChanged += (_, _) => EnableWindowResize.Enable(EnableWindowResizeEnabled.Value);
         LoadLastWindowRectEnabled.SettingChanged += (_, _) =>
         {
             if (LoadLastWindowRectEnabled.Value)
@@ -361,7 +357,7 @@ public class GamePatch : PatchImpl<GamePatch>
             entries2.Sort((x, y) => -x.fileDate.CompareTo(y.fileDate));
             if (entries2.Count > 10)
                 entries2.RemoveRange(10, entries2.Count - 10);
-            var autoSaveText = ">>  " + "自动存档条目".Translate();
+            var autoSaveText = ">>  " + I18NKeys.AutoSaveEntry.Translate();
             foreach (var entry in entries2)
             {
                 entry.indexText.text = "";

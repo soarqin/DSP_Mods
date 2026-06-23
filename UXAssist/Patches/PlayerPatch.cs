@@ -31,9 +31,7 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
             canOverride = true
         }
         );
-        I18N.Add("KEYShowAllStarsName", "[UXA] Keep pressing to show all Stars' name", "[UXA] 按住显示所有星系名称");
-
-        _toggleAllStarsNameKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
+                _toggleAllStarsNameKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
         {
             key = new CombineKey((int)KeyCode.Tab, 0, ECombineKeyAction.OnceClick, false),
             conflictGroup = KeyBindConflict.UI | KeyBindConflict.KEYBOARD_KEYBIND,
@@ -41,20 +39,14 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
             canOverride = true
         }
         );
-        I18N.Add("KEYToggleAllStarsName", "[UXA] Toggle display of all Stars' name", "[UXA] 切换所有星系名称显示状态");
-
-        _autoDriveKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
+                _autoDriveKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
         {
             key = new CombineKey(0, 0, ECombineKeyAction.OnceClick, true),
             conflictGroup = KeyBindConflict.MOVEMENT | KeyBindConflict.FLYING | KeyBindConflict.SAILING | KeyBindConflict.BUILD_MODE_1 | KeyBindConflict.KEYBOARD_KEYBIND,
             name = "ToggleAutoCruise",
             canOverride = true
         });
-        I18N.Add("KEYToggleAutoCruise", "[UXA] Toggle auto-cruise", "[UXA] 切换自动巡航");
-        I18N.Add("AutoCruiseOn", "Auto-cruise enabled", "已启用自动巡航");
-        I18N.Add("AutoCruiseOff", "Auto-cruise disabled", "已禁用自动巡航");
-
-        EnhancedMechaForgeCountControlEnabled.SettingChanged += (_, _) => EnhancedMechaForgeCountControl.Enable(EnhancedMechaForgeCountControlEnabled.Value);
+                                EnhancedMechaForgeCountControlEnabled.SettingChanged += (_, _) => EnhancedMechaForgeCountControl.Enable(EnhancedMechaForgeCountControlEnabled.Value);
         HideTipsForSandsChangesEnabled.SettingChanged += (_, _) => HideTipsForSandsChanges.Enable(HideTipsForSandsChangesEnabled.Value);
         ShortcutKeysForStarsNameEnabled.SettingChanged += (_, _) => ShortcutKeysForStarsName.Enable(ShortcutKeysForStarsNameEnabled.Value);
         AutoNavigationEnabled.SettingChanged += (_, _) => AutoNavigation.Enable(AutoNavigationEnabled.Value);

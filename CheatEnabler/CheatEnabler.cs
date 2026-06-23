@@ -18,6 +18,8 @@ public class CheatEnabler : BaseUnityPlugin
 
     private void Awake()
     {
+        I18N.Init();
+
         GamePatch.DevShortcutsEnabled = Config.Bind("General", "DevShortcuts", false, "Enable DevMode shortcuts");
         GamePatch.AbnormalDisablerEnabled = Config.Bind("General", "DisableAbnormalChecks", false,
             "disable all abnormal checks");
@@ -97,9 +99,12 @@ public class CheatEnabler : BaseUnityPlugin
             "Mecha and Drones/Fleets invincible");
         CombatPatch.BuildingsInvincibleEnabled = Config.Bind("Battle", "BuildingsInvincible", false,
             "Buildings invincible");
+        Localization.Register();
         UIConfigWindow.Init();
         ModFeatureRegistry.Discover(Assembly.GetExecutingAssembly());
         ModFeatureRegistry.InitAll();
+
+        I18N.Apply();
     }
 
     private void Start()

@@ -11,28 +11,7 @@ public static class PlayerFunctions
 {
     public static void Init()
     {
-        I18N.Add("ClearAllMetadataConsumptionDetails",
-            """
-            Metadata consumption records of all gamesaves are about to be cleared.
-            You will gain following metadata back:
-            """,
-            """
-            所有存档的元数据消耗记录即将被清除，
-            此操作将返还以下元数据：
-            """);
-        I18N.Add("ClearCurrentMetadataConsumptionDetails",
-            """
-            Metadata consumption records of current gamesave are about to be cleared.
-            You will gain following metadata back:
-            """,
-            """
-            当前存档的元数据消耗记录即将被清除，
-            此操作将返还以下元数据：
-            """);
-        I18N.Add("NoMetadataConsumptionRecord",
-            "No metadata consumption records found.",
-            "未找到元数据消耗记录。");
-    }
+                            }
 
     public static void TeleportToOuterSpace()
     {

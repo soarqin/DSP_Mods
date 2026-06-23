@@ -17,11 +17,15 @@ public static class I18N
     /// </summary>
     public static Action OnInitialized;
 
+    private static bool _initCalled;
+
     /// <summary>
     /// Registers the localization hooks with Harmony.
     /// </summary>
     public static void Init()
     {
+        if (_initCalled) return;
+        _initCalled = true;
         Harmony.CreateAndPatchAll(typeof(I18N));
     }
 

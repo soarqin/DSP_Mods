@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using CommonAPI.Systems;
 using UXAssist.Common;
@@ -24,9 +24,7 @@ internal static class MenuButtonUI
             name = "OpenUXAssistConfigWindow",
             canOverride = true
         });
-        I18N.Add("KEYOpenUXAssistConfigWindow", "[UXA] Open UXAssist Config Window", "[UXA] 打开UX助手设置面板");
-        I18N.Add("UXAssist Config", "UXAssist Config", "UX助手设置");
-        I18N.OnInitialized += RecreateConfigWindow;
+                        I18N.OnInitialized += RecreateConfigWindow;
     }
 
     public static void Start()

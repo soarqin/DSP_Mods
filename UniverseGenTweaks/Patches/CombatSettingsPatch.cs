@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Reflection;
 using HarmonyLib;
 using UnityEngine;
@@ -147,12 +147,12 @@ public static class CombatSettingsPatch
         };
         text = (int)(__instance.aggresiveSlider.value + 0.5f) switch
         {
-            0 => "活靶子".Translate(),
-            1 => "被动".Translate(),
-            2 => "消极".Translate(),
-            3 => "正常".Translate(),
-            4 => "积极".Translate(),
-            5 => "狂暴".Translate(),
+            0 => Localization.AggressivenessSittingDuck.Translate(),
+            1 => Localization.AggressivenessPassive.Translate(),
+            2 => Localization.AggressivenessNegative.Translate(),
+            3 => Localization.AggressivenessNormal.Translate(),
+            4 => Localization.AggressivenessAggressive.Translate(),
+            5 => Localization.AggressivenessRampage.Translate(),
             _ => text
         };
         __instance.aggresiveText.text = text;
@@ -305,11 +305,11 @@ public static class CombatSettingsPatch
         var gameDesc = new GameDesc();
         var difficulty = __instance.combatSettings.difficulty;
         var text2 = difficulty >= 9.9999f ? difficulty.ToString("0.00") : difficulty.ToString("0.000");
-        __instance.difficultyText.text = string.Format("难度系数值".Translate(), text2);
+        __instance.difficultyText.text = string.Format(Localization.DifficultyValueFormat.Translate(), text2);
         __instance.difficultTipGroupDF.SetActive((__instance.combatSettings.aggressiveLevel == EAggressiveLevel.Rampage && difficulty > 4.5f) || difficulty > 6f);
         __instance.gameDesc.CopyTo(gameDesc);
         gameDesc.combatSettings = __instance.combatSettings;
-        __instance.propertyMultiplierText.text = "元数据生成倍率".Translate() + " " + gameDesc.propertyMultiplier.ToString("0%");
+        __instance.propertyMultiplierText.text = Localization.PropertyMultiplier.Translate() + " " + gameDesc.propertyMultiplier.ToString("0%");
         return false;
     }
 

@@ -236,6 +236,7 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
             "Planet vein utilization");
 
         I18N.Init();
+        I18NKeys.Register();
 
         // UI Patches
         GameLogicProc.Enable(true);

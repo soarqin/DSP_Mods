@@ -19,8 +19,7 @@ public static class TechPatch
 
     public static void Init()
     {
-        I18N.Add("分拣器运货量", "Sorter Mk.III cargo stacking : ", "极速分拣器每次可运送 ");
-        SorterCargoStackingEnabled.SettingChanged += (_, _) => SorterCargoStacking.Enable(SorterCargoStackingEnabled.Value);
+                SorterCargoStackingEnabled.SettingChanged += (_, _) => SorterCargoStacking.Enable(SorterCargoStackingEnabled.Value);
         DisableBattleRelatedTechsInPeaceModeEnabled.SettingChanged += (_, _) => DisableBattleRelatedTechsInPeaceMode.Enable(DisableBattleRelatedTechsInPeaceModeEnabled.Value);
         BatchBuyoutTechEnabled.SettingChanged += (_, _) => BatchBuyoutTech.Enable(BatchBuyoutTechEnabled.Value);
     }

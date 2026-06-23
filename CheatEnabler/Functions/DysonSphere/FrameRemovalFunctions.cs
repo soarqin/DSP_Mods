@@ -1,9 +1,10 @@
-using System;
+﻿using System;
 using HarmonyLib;
 using UnityEngine;
 using UXAssist.Common;
 using UXAssist.Common.GameConstants;
 using UXAssist.Common.ModFeatures;
+using CheatEnabler;
 
 namespace CheatEnabler.Functions.DysonSphere;
 
@@ -16,7 +17,7 @@ public static class FrameRemovalFunctions
         if (resolved == null) return;
         var (dysonSphere, star) = resolved.Value;
 
-        UIMessageBox.Show("CheatEnabler".Translate(), string.Format("This will remove all frames on \"{0}\". Are you sure?".Translate(), star.displayName), "取消".Translate(), "确定".Translate(), UIMessageBox.QUESTION, null, () =>
+        UIMessageBox.Show("CheatEnabler".Translate(), string.Format("This will remove all frames on \"{0}\". Are you sure?".Translate(), star.displayName), Localization.Cancel.Translate(), Localization.Ok.Translate(), UIMessageBox.QUESTION, null, () =>
         {
             var totalFrameSpInfo = AccessTools.Field(typeof(DysonSphereLayer), "totalFrameSP");
 

@@ -23,9 +23,6 @@ public static class EpicDifficulty
 
     public static void Init()
     {
-        I18N.Add("究极少", "Micro", "究极少");
-        I18N.Add("史诗难度", "Epic Difficulty !!", "史诗难度 !!");
-        I18N.Apply();
         Enabled.SettingChanged += (_, _) => Enable(Enabled.Value);
         Enable(Enabled.Value);
     }
@@ -139,18 +136,18 @@ public static class EpicDifficulty
         text = resourceMultiplier switch
         {
             < 100f and > 0.1f => resourceMultiplier + "x",
-            >= 100f => "无限".Translate(),
-            < 0.09f => "究极少".Translate(),
-            < 0.11f => "极少".Translate(),
+            >= 100f => Localization.Unlimited.Translate(),
+            < 0.09f => Localization.Micro.Translate(),
+            < 0.11f => Localization.Scarce.Translate(),
             _ => text
         };
         __instance.resourceMultiplierText.text = text;
-        __instance.propertyMultiplierText.text = "元数据生成倍率".Translate() + " " + __instance.gameDesc.propertyMultiplier.ToString("P0");
+        __instance.propertyMultiplierText.text = Localization.PropertyMultiplier.Translate() + " " + __instance.gameDesc.propertyMultiplier.ToString("P0");
         __instance.addrText.text = __instance.gameDesc.clusterString;
         var showDifficultTip = resourceMultiplier < 0.11f && !__instance.gameDesc.isSandboxMode;
         __instance.difficultTipGroup.SetActive(showDifficultTip);
         if (!showDifficultTip) return false;
-        __instance.difficultTipGroup.transform.Find("difficult-tip-text").GetComponent<Text>().text = (resourceMultiplier < 0.09f ? "史诗难度" : "非常困难").Translate();
+        __instance.difficultTipGroup.transform.Find("difficult-tip-text").GetComponent<Text>().text = (resourceMultiplier < 0.09f ? Localization.EpicDifficultyLabel : Localization.VeryHard).Translate();
 
         return false;
     }

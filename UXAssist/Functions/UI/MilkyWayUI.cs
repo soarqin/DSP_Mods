@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Text;
 using UnityEngine;
@@ -31,12 +31,7 @@ internal static class MilkyWayUI
 
     public static void Init()
     {
-        I18N.Add("No recent milkyway upload results", "No recent milkyway upload results", "没有最近的银河系发电数据上传结果");
-        I18N.Add("Success", "Success", "成功");
-        I18N.Add("Failure: ", "Failure: ", "失败: ");
-        I18N.Add("Show top players", "Show top players", "显示玩家排行榜");
-        I18N.Add("Hide top players", "Hide top players", "隐藏玩家排行榜");
-    }
+                                            }
 
     public static void Start()
     {
@@ -118,7 +113,7 @@ internal static class MilkyWayUI
         {
             if (_clusterUploadResultsCount == 0)
             {
-                UIMessageBox.Show("UXAssist".Translate(), "No recent milkyway upload results".Translate(), "确定".Translate(), UIMessageBox.INFO, null);
+                UIMessageBox.Show("UXAssist".Translate(), "No recent milkyway upload results".Translate(), I18NKeys.Ok.Translate(), UIMessageBox.INFO, null);
                 return;
             }
             StringBuilder sb = new();
@@ -129,7 +124,7 @@ internal static class MilkyWayUI
                 var res = _clusterUploadResults[(i + _clusterUploadResultsHead) % ClusterUploadResultKeepCount];
                 sb.AppendLine($"{res.UploadTime.ToString("yyyy-MM-dd HH:mm:ss")} - {((res.Result is 0 or 20) ? "Success".Translate() : ("Failure: ".Translate() + res.Result.ToString()))} - {res.RequestTime:F2}s");
             }
-            UIMessageBox.Show("UXAssist".Translate(), sb.ToString(), "确定".Translate(), UIMessageBox.INFO, null);
+            UIMessageBox.Show("UXAssist".Translate(), sb.ToString(), I18NKeys.Ok.Translate(), UIMessageBox.INFO, null);
         }
     }
 

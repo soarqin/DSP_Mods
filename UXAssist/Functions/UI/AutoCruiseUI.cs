@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UXAssist.Common;
 using UXAssist.UI;
 
@@ -10,9 +10,7 @@ internal static class AutoCruiseUI
 
     public static void Init()
     {
-        I18N.Add("Enable auto-cruise", "Enable auto-cruise", "启用自动巡航");
-        I18N.Add("Disable auto-cruise", "Disable auto-cruise", "禁用自动巡航");
-    }
+                    }
 
     public static void Start()
     {

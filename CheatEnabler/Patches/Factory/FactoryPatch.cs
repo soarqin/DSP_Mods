@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
@@ -55,16 +55,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             canOverride = true
         }
         );
-        I18N.Add("KEYToggleNoCondition", "[CE] Toggle No Condition Build", "[CE] 切换无条件建造");
-        I18N.Add("KEYToggleNoCollision", "[CE] Toggle No Collision", "[CE] 切换无碰撞");
-        I18N.Add("NoConditionOn", "No condition build is enabled!", "无条件建造已开启");
-        I18N.Add("NoConditionOff", "No condition build is disabled!", "无条件建造已关闭");
-        I18N.Add("NoCollisionOn", "No collision is enabled!", "无碰撞已开启");
-        I18N.Add("NoCollisionOff", "No collision is disabled!", "无碰撞已关闭");
-        I18N.Add("Build without condition is enabled!", "!!Build without condition is enabled!!", "！！无条件建造已开启！！");
-        I18N.Add("No collision is enabled!", "!!No collision is enabled!!", "！！无碰撞已开启！！");
-
-        ImmediateEnabled.SettingChanged += (_, _) => ImmediateBuild.Enable(ImmediateEnabled.Value);
+                                                                        ImmediateEnabled.SettingChanged += (_, _) => ImmediateBuild.Enable(ImmediateEnabled.Value);
         ArchitectModeEnabled.SettingChanged += (_, _) => ArchitectMode.Enable(ArchitectModeEnabled.Value);
         NoConditionEnabled.SettingChanged += (_, _) => NoConditionBuild.Enable(NoConditionEnabled.Value);
         NoCollisionEnabled.SettingChanged += (_, _) => NoCollisionValueChanged();

@@ -3,6 +3,7 @@ using System.Reflection;
 using BepInEx;
 using BepInEx.Configuration;
 using crecheng.DSPModSave;
+using UXAssist.Common;
 using UXAssist.Common.GameConstants;
 using UXAssist.Common.ModFeatures;
 
@@ -19,6 +20,8 @@ public class UniverseGenTweaks : BaseUnityPlugin, IModCanSave
 
     private void Awake()
     {
+        I18N.Init();
+
         MoreSettings.Enabled = Config.Bind("MoreSettings", "Enabled", true, "Enable more settings on Universe Generation");
         MoreSettings.MaxStarCount = Config.Bind("MoreSettings", "MaxStarCount", UniverseGenConstants.DefaultMaxStarCount,
                 new ConfigDescription($"({UniverseGenConstants.MinStarCount} ~ {UniverseGenConstants.MaxStarCount})\nMaximum star count for Universe Generation, enable MoreSettings.Enabled to take effect",
@@ -53,9 +56,12 @@ public class UniverseGenTweaks : BaseUnityPlugin, IModCanSave
         BirthPlanetPatch.HighLuminosityBirthStar = Config.Bind("Birth", "HighLuminosityBirthStar", false,
             "Birth star has high luminosity");
 
+        Localization.Register();
         UIConfigWindow.Init();
         ModFeatureRegistry.Discover(Assembly.GetExecutingAssembly());
         ModFeatureRegistry.InitAll();
+
+        I18N.Apply();
     }
 
     private void OnDestroy()

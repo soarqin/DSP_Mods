@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -8,6 +8,7 @@ using UnityEngine;
 using UXAssist.Common;
 using UXAssist.Common.GameConstants;
 using UXAssist.Common.ModFeatures;
+using CheatEnabler;
 
 namespace CheatEnabler.Functions.DysonSphere;
 
@@ -87,7 +88,7 @@ public static class IllegalShellFunctions
         }
         if (nodePos.Count == 0)
         {
-            UIMessageBox.Show("CheatEnabler".Translate(), string.Format("There is no Dyson Sphere shell on \"{0}\".".Translate(), star.displayName), "确定".Translate(), UIMessageBox.ERROR, null);
+            UIMessageBox.Show("CheatEnabler".Translate(), string.Format("There is no Dyson Sphere shell on \"{0}\".".Translate(), star.displayName), Localization.Ok.Translate(), UIMessageBox.ERROR, null);
             return;
         }
         var currentShellCount = layer.shellCount;
@@ -277,7 +278,7 @@ public static class IllegalShellFunctions
             }
             catch (InvalidOperationException)
             {
-                UIMessageBox.Show("CheatEnabler".Translate(), string.Format("No precalculated triangle found for radius {0}.".Translate(), radius), "确定".Translate(), UIMessageBox.ERROR, null);
+                UIMessageBox.Show("CheatEnabler".Translate(), string.Format(Localization.NoPrecalculatedShellFoundForRadius0.Translate(), radius), Localization.Ok.Translate(), UIMessageBox.ERROR, null);
                 return;
             }
             layer = dysonSphere.AddLayerOnId(i, radius, Quaternion.Euler(0f, 0f, 0f), Mathf.Sqrt(dysonSphere.gravity / radius) / radius * DysonSphereConstants.RadiansToDegrees);

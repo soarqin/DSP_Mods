@@ -1,4 +1,4 @@
-namespace UXAssist.Functions;
+﻿namespace UXAssist.Functions;
 
 using System;
 using System.Collections.Generic;
@@ -9,10 +9,7 @@ public static class TechFunctions
 {
     public static void Init()
     {
-        I18N.Add("Do you want to use metadata to buyout the following tech?", "Do you want to use metadata to buyout the following tech?", "要使用元数据买断以下科技吗？");
-        I18N.Add("The following is the required metadata for buyout:", "The following is the required metadata for buyout:", "以下是买断所需元数据：");
-        I18N.Add("Batch buyout tech", "Batch buyout tech", "批量买断科技");
-    }
+                            }
 
     private static void CheckTechUnlockProperties(GameHistoryData history, TechProto techProto, SortedList<int, int> properties, List<Tuple<TechProto, int, int>> techList, int maxLevel = 10000, bool withPrerequisites = true, HashSet<int> seenTechs = null)
     {
@@ -187,13 +184,13 @@ public static class TechFunctions
         }
         if (!enough)
         {
-            UIMessageBox.Show("元数据".Translate(), "元数据不足".Translate(), "确定".Translate(), UIMessageBox.ERROR);
+            UIMessageBox.Show(I18NKeys.Metadata.Translate(), I18NKeys.InsufficientMetadata.Translate(), I18NKeys.Ok.Translate(), UIMessageBox.ERROR);
             return;
         }
 
         if (!history.hasUsedPropertyBanAchievement)
         {
-            UIMessageBox.Show("初次使用元数据标题".Translate(), "初次使用元数据描述".Translate(), "取消".Translate(), "确定".Translate(), UIMessageBox.QUESTION, null, DoUnlockCalculatedTechs);
+            UIMessageBox.Show(I18NKeys.FirstTimeUsingMetadataTitle.Translate(), I18NKeys.FirstTimeUsingMetadataDescription.Translate(), I18NKeys.Cancel.Translate(), I18NKeys.Ok.Translate(), UIMessageBox.QUESTION, null, DoUnlockCalculatedTechs);
             return;
         }
 
@@ -236,7 +233,7 @@ public static class TechFunctions
                 if (consumption.Value <= 0) continue;
                 msg += $"\n  {LDB.items.Select(consumption.Key).propertyName}x{consumption.Value}";
             }
-            UIMessageBox.Show("Batch buyout tech".Translate(), msg, "取消".Translate(), "确定".Translate(), UIMessageBox.QUESTION, null, UnlockWithPropertiesImmediately);
+            UIMessageBox.Show("Batch buyout tech".Translate(), msg, I18NKeys.Cancel.Translate(), I18NKeys.Ok.Translate(), UIMessageBox.QUESTION, null, UnlockWithPropertiesImmediately);
             return;
 
             void AddToMsg(ref string str, Tuple<TechProto, int, int> tuple)
@@ -246,10 +243,10 @@ public static class TechFunctions
                     if (tuple.Item2 <= 0)
                         str += $"\n  {tuple.Item1.name}";
                     else
-                        str += $"\n  {tuple.Item1.name}{"杠等级".Translate()}{tuple.Item2}";
+                        str += $"\n  {tuple.Item1.name}{I18NKeys.TechLevelPrefix.Translate()}{tuple.Item2}";
                 }
                 else
-                    str += $"\n  {tuple.Item1.name}{"杠等级".Translate()}{tuple.Item2}->{tuple.Item3}";
+                    str += $"\n  {tuple.Item1.name}{I18NKeys.TechLevelPrefix.Translate()}{tuple.Item2}->{tuple.Item3}";
             }
         }
 

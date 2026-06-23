@@ -11,25 +11,6 @@ public static class UIConfigWindow
 
     public static void Init()
     {
-        I18N.Add("UniverseGen", "UniverseGen", "宇宙生成");
-        I18N.Add("Birth Star", "Birth Star", "母星系");
-        I18N.Add("Enable more settings on UniverseGen", "Enable more settings on UniverseGen", "启用更多宇宙生成设置");
-        I18N.Add("* Requires game restart to take effect", "* Requires game restart to take effect", "* 需要重启游戏才能生效");
-        I18N.Add("Maximum star count", "Maximum star count", "最大恒星数");
-        I18N.Add("Enable Epic difficulty", "Enable Epic difficulty", "启用史诗难度");
-        I18N.Add("Resource multiplier", "Resource multiplier", "资源倍率");
-        I18N.Add("Oil multiplier (relative to Very Hard)", "Oil multiplier (relative to Very Hard)", "石油倍率（相对于非常困难）");
-        I18N.Add("Silicon/Titanium on birth planet", "Silicon/Titanium on birth planet", "母星有硅和钛");
-        I18N.Add("Fire ice on birth planet", "Fire ice on birth planet", "母星有可燃冰");
-        I18N.Add("Kimberlite on birth planet", "Kimberlite on birth planet", "母星有金伯利矿");
-        I18N.Add("Fractal silicon on birth planet", "Fractal silicon on birth planet", "母星有分形硅");
-        I18N.Add("Organic crystal on birth planet", "Organic crystal on birth planet", "母星有有机晶体");
-        I18N.Add("Optical grating crystal on birth planet", "Optical grating crystal on birth planet", "母星有光栅石");
-        I18N.Add("Spiniform stalagmite crystal on birth planet", "Spiniform stalagmite crystal on birth planet", "母星有刺笋结晶");
-        I18N.Add("Unipolar magnet on birth planet", "Unipolar magnet on birth planet", "母星有单极磁石");
-        I18N.Add("Birth planet is solid flat (no water at all)", "Birth planet is solid flat (no water at all)", "母星是纯平的（没有水）");
-        I18N.Add("Birth star has high luminosity", "Birth star has high luminosity", "母星系恒星高亮");
-        I18N.Apply();
         MyConfigWindow.OnUICreated += CreateUI;
     }
 

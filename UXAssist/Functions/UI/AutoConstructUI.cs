@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using UnityEngine;
 using UnityEngine.UI;
 using UXAssist.Common;
@@ -14,10 +14,7 @@ internal static class AutoConstructUI
 
     public static void Init()
     {
-        I18N.Add("Enable auto-construct", "Enable auto-construct", "启用自动建造");
-        I18N.Add("Disable auto-construct", "Disable auto-construct", "禁用自动建造");
-        I18N.Add("Buildings to construct: {0}", "Buildings to construct: {0}", "待建造数量: {0}");
-    }
+                            }
 
     public static void Start()
     {

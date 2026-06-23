@@ -19,8 +19,7 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
 
     public static void Init()
     {
-        I18N.Add("[UXAssist] No node to fill", "[UXAssist] No node to fill", "[UXAssist] 无可建造节点");
-        Enable(true);
+                Enable(true);
         StopEjectOnNodeCompleteEnabled.SettingChanged += (_, _) => StopEjectOnNodeComplete.Enable(StopEjectOnNodeCompleteEnabled.Value);
         OnlyConstructNodesEnabled.SettingChanged += (_, _) => OnlyConstructNodes.Enable(OnlyConstructNodesEnabled.Value);
         _totalNodeSpInfo = AccessTools.Field(typeof(DysonSphereLayer), "totalNodeSP");

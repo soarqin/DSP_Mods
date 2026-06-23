@@ -1,4 +1,4 @@
-using HarmonyLib;
+﻿using HarmonyLib;
 using UnityEngine;
 using UnityEngine.UI;
 using UXAssist.Common;
@@ -27,11 +27,6 @@ public static class GalaxySelectUIPatch
 
     public static void Init()
     {
-        I18N.Add("恒星最小距离", "Star Distance Min", "恒星最小距离");
-        I18N.Add("步进最小距离", "Step Distance Min", "步进最小距离");
-        I18N.Add("步进最大距离", "Step Distance Max", "步进最大距离");
-        I18N.Add("扁平度", "Flatness", "扁平度");
-        I18N.Apply();
         MoreSettings.Enabled.SettingChanged += OnEnabledChanged;
         Enable(MoreSettings.Enabled.Value);
     }
@@ -70,10 +65,10 @@ public static class GalaxySelectUIPatch
             CreateSliderWithText(__instance.starCountSlider, out _minStepTitle, out _minStepSlider, out _minStepText, out var minStepLocalizer);
             CreateSliderWithText(__instance.starCountSlider, out _maxStepTitle, out _maxStepSlider, out _maxStepText, out var maxStepLocalizer);
             CreateSliderWithText(__instance.starCountSlider, out _flattenTitle, out _flattenSlider, out _flattenText, out var flattenLocalizer);
-            minDistLocalizer.stringKey = "恒星最小距离";
-            minStepLocalizer.stringKey = "步进最小距离";
-            maxStepLocalizer.stringKey = "步进最大距离";
-            flattenLocalizer.stringKey = "扁平度";
+            minDistLocalizer.stringKey = Localization.StarDistanceMin;
+            minStepLocalizer.stringKey = Localization.StepDistanceMin;
+            maxStepLocalizer.stringKey = Localization.StepDistanceMax;
+            flattenLocalizer.stringKey = Localization.Flatness;
 
             _minDistTitle.name = "min-dist";
             _minStepTitle.name = "min-step";
