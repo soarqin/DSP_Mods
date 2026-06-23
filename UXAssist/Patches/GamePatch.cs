@@ -133,13 +133,13 @@ public class GamePatch : PatchImpl<GamePatch>
         if (_speedDownKey.keyValue)
         {
             GameUpsFactor.Value = Maths.Clamp(Math.Round((GameUpsFactor.Value - 0.5) * 2.0) / 2.0, 0.1, 10.0);
-            UIRoot.instance.uiGame.generalTips.InvokeRealtimeTipAhead(string.Format("Logical frame rate: {0}x".Translate(), GameUpsFactor.Value));
+            UIRoot.instance.uiGame.generalTips.InvokeRealtimeTipAhead(string.Format(I18NKeys.LogicalFrameRate0X.Translate(), GameUpsFactor.Value));
         }
 
         if (_speedUpKey.keyValue)
         {
             GameUpsFactor.Value = Maths.Clamp(Math.Round((GameUpsFactor.Value + 0.5) * 2.0) / 2.0, 0.1, 10.0);
-            UIRoot.instance.uiGame.generalTips.InvokeRealtimeTipAhead(string.Format("Logical frame rate: {0}x".Translate(), GameUpsFactor.Value));
+            UIRoot.instance.uiGame.generalTips.InvokeRealtimeTipAhead(string.Format(I18NKeys.LogicalFrameRate0X.Translate(), GameUpsFactor.Value));
         }
     }
 

@@ -204,7 +204,7 @@ public static class TechFunctions
                 UnlockWithPropertiesImmediately();
                 return;
             }
-            var msg = "Do you want to use metadata to buyout the following tech?".Translate();
+            var msg = I18NKeys.DoYouWantToUseMetadataToBuyoutTheFollowingTech.Translate();
 
             if (techList.Count <= 10)
             {
@@ -227,13 +227,13 @@ public static class TechFunctions
             }
 
             msg += "\n\n";
-            msg += "The following is the required metadata for buyout:".Translate();
+            msg += I18NKeys.TheFollowingIsTheRequiredMetadataForBuyout.Translate();
             foreach (var consumption in properties)
             {
                 if (consumption.Value <= 0) continue;
                 msg += $"\n  {LDB.items.Select(consumption.Key).propertyName}x{consumption.Value}";
             }
-            UIMessageBox.Show("Batch buyout tech".Translate(), msg, I18NKeys.Cancel.Translate(), I18NKeys.OK.Translate(), UIMessageBox.QUESTION, null, UnlockWithPropertiesImmediately);
+            UIMessageBox.Show(I18NKeys.BatchBuyoutTech.Translate(), msg, I18NKeys.Cancel.Translate(), I18NKeys.OK.Translate(), UIMessageBox.QUESTION, null, UnlockWithPropertiesImmediately);
             return;
 
             void AddToMsg(ref string str, Tuple<TechProto, int, int> tuple)

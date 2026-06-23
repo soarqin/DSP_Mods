@@ -99,6 +99,6 @@ internal static class AutoConstructUI
     public static void UpdateConstructCountText(int count)
     {
         if (ConstructCountText == null) return;
-        ConstructCountText.text = String.Format("Buildings to construct: {0}".Translate(), count);
+        ConstructCountText.text = String.Format(I18NKeys.BuildingsToConstruct0.Translate(), count);
     }
 }

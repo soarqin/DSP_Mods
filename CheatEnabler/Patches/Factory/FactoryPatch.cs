@@ -123,7 +123,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             NoConditionEnabled.Value = !NoConditionEnabled.Value;
             if (!DSPGame.IsMenuDemo && GameMain.isRunning)
             {
-                UIRoot.instance.uiGame.generalTips.InvokeRealtimeTipAhead((NoConditionEnabled.Value ? "NoConditionOn" : "NoConditionOff").Translate());
+                UIRoot.instance.uiGame.generalTips.InvokeRealtimeTipAhead((NoConditionEnabled.Value ? Localization.NoConditionOn : Localization.NoConditionOff).Translate());
             }
         }
         if (_noCollisionKey.keyValue)
@@ -131,7 +131,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
             NoCollisionEnabled.Value = !NoCollisionEnabled.Value;
             if (!DSPGame.IsMenuDemo && GameMain.isRunning)
             {
-                UIRoot.instance.uiGame.generalTips.InvokeRealtimeTipAhead((NoCollisionEnabled.Value ? "NoCollisionOn" : "NoCollisionOff").Translate());
+                UIRoot.instance.uiGame.generalTips.InvokeRealtimeTipAhead((NoCollisionEnabled.Value ? Localization.NoCollisionOn : Localization.NoCollisionOff).Translate());
             }
         }
     }
@@ -248,11 +248,11 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                     {
                         if (NoConditionEnabled.Value)
                         {
-                            w.criticalWarningTexts = "Build without condition is enabled!".Translate() + "\r\n";
+                            w.criticalWarningTexts = Localization.BuildWithoutConditionIsEnabled.Translate() + "\r\n";
                         }
                         else if (NoCollisionEnabled.Value)
                         {
-                            w.criticalWarningTexts = "No collision is enabled!".Translate() + "\r\n";
+                            w.criticalWarningTexts = Localization.NoCollisionIsEnabled.Translate() + "\r\n";
                         }
                     }
                 )

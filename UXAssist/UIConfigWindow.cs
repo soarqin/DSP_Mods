@@ -536,8 +536,8 @@ public static class UIConfigWindow
         void AddApplyButton(float rowY, string objName, UnityAction onClick) => AddApplyButtonAt(applyBtnX, rowY, objName, onClick);
 
         void AddCategoryApplyButton(float catY, string objName, UnityAction onClick) =>
-            wnd.AddFlatButton(applyAllBtnX, catY + 7f, tab3, "Apply all config to planet", applyBtnFontSize, objName, onClick).WithSize(applyAllBtnWidth, applyBtnHeight)
-                .WithFontSize(applyBtnFontSize).WithTip("Apply all config to planet tips".Translate());
+            wnd.AddFlatButton(applyAllBtnX, catY + 7f, tab3, I18NKeys.ApplyAllConfigToPlanet, applyBtnFontSize, objName, onClick).WithSize(applyAllBtnWidth, applyBtnHeight)
+                .WithFontSize(applyBtnFontSize).WithTip(I18NKeys.ApplyAllConfigToPlanetTips.Translate());
 
         AddCategoryApplyButton(dispenserCatY, "btn-apply-all-dispenser", LogisticsPatch.ApplyAllDispenser);
         AddCategoryApplyButton(battleBaseCatY, "btn-apply-all-battle-base", LogisticsPatch.ApplyAllBattleBase);

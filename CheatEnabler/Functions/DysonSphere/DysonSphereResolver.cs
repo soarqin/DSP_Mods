@@ -28,7 +28,7 @@ public static class DysonSphereResolver
         var star = GameMain.localStar;
         if (star == null)
         {
-            UIMessageBox.Show(Localization.CheatEnabler.Translate(), "You are not in any system.".Translate(), Localization.OK.Translate(), UIMessageBox.ERROR, null);
+            UIMessageBox.Show(Localization.CheatEnabler.Translate(), Localization.YouAreNotInAnySystem.Translate(), Localization.OK.Translate(), UIMessageBox.ERROR, null);
         }
         return star;
     }
@@ -40,12 +40,12 @@ public static class DysonSphereResolver
         var sphere = GameMain.data?.dysonSpheres[star.index];
         if (sphere == null)
         {
-            UIMessageBox.Show(Localization.CheatEnabler.Translate(), string.Format("There is no Dyson Sphere data on \"{0}\".".Translate(), star.displayName), Localization.OK.Translate(), UIMessageBox.ERROR, null);
+            UIMessageBox.Show(Localization.CheatEnabler.Translate(), string.Format(Localization.ThereIsNoDysonSphereDataOn0.Translate(), star.displayName), Localization.OK.Translate(), UIMessageBox.ERROR, null);
             return null;
         }
         if (requireLayer && sphere.layerCount == 0)
         {
-            UIMessageBox.Show(Localization.CheatEnabler.Translate(), string.Format("There is no Dyson Sphere shell on \"{0}\".".Translate(), star.displayName), Localization.OK.Translate(), UIMessageBox.ERROR, null);
+            UIMessageBox.Show(Localization.CheatEnabler.Translate(), string.Format(Localization.ThereIsNoDysonSphereShellOn0.Translate(), star.displayName), Localization.OK.Translate(), UIMessageBox.ERROR, null);
             return null;
         }
         return (sphere, star);

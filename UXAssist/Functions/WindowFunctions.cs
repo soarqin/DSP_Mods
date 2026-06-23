@@ -50,11 +50,11 @@ public static class WindowFunctions
     {
         return priority switch
         {
-            WinApi.HIGH_PRIORITY_CLASS => "High".Translate(),
-            WinApi.ABOVE_NORMAL_PRIORITY_CLASS => "Above Normal".Translate(),
-            WinApi.NORMAL_PRIORITY_CLASS => "Normal".Translate(),
-            WinApi.BELOW_NORMAL_PRIORITY_CLASS => "Below Normal".Translate(),
-            WinApi.IDLE_PRIORITY_CLASS => "Idle".Translate(),
+            WinApi.HIGH_PRIORITY_CLASS => I18NKeys.High.Translate(),
+            WinApi.ABOVE_NORMAL_PRIORITY_CLASS => I18NKeys.AboveNormal.Translate(),
+            WinApi.NORMAL_PRIORITY_CLASS => I18NKeys.Normal.Translate(),
+            WinApi.BELOW_NORMAL_PRIORITY_CLASS => I18NKeys.BelowNormal.Translate(),
+            WinApi.IDLE_PRIORITY_CLASS => I18NKeys.Idle.Translate(),
             _ => I18NKeys.Unknown.Translate()
         };
     }
