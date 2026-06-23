@@ -137,7 +137,7 @@ public static class PlayerFunctions
 
         if (itemCnt.All(cnt => cnt == 0))
         {
-            UIMessageBox.Show("Remove metadata consumption record in current game".Translate(), "NoMetadataConsumptionRecord".Translate(), "OK".Translate(), UIMessageBox.INFO);
+            UIMessageBox.Show(Localization.RemoveMetadataConsumptionRecordInCurrentGame.Translate(), Localization.NoMetadataConsumptionRecord.Translate(), Localization.OK.Translate(), UIMessageBox.INFO);
             return;
         }
         var msg = Localization.ClearCurrentMetadataConsumptionDetails.Translate();

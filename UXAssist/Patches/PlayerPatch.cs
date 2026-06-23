@@ -347,7 +347,7 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
             AutoCruiseEnabled.Value = !AutoCruiseEnabled.Value;
             if (!DSPGame.IsMenuDemo && GameMain.isRunning)
             {
-                UIRoot.instance.uiGame.generalTips.InvokeRealtimeTipAhead((AutoCruiseEnabled.Value ? "AutoCruiseOn" : "AutoCruiseOff").Translate());
+                UIRoot.instance.uiGame.generalTips.InvokeRealtimeTipAhead((AutoCruiseEnabled.Value ? I18NKeys.AutoCruiseOn : I18NKeys.AutoCruiseOff).Translate());
             }
         }
 

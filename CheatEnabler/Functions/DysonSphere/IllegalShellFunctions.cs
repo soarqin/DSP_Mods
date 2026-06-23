@@ -88,7 +88,7 @@ public static class IllegalShellFunctions
         }
         if (nodePos.Count == 0)
         {
-            UIMessageBox.Show(Localization.CheatEnabler.Translate(), string.Format("There is no Dyson Sphere shell on \"{0}\".".Translate(), star.displayName), Localization.OK.Translate(), UIMessageBox.ERROR, null);
+            UIMessageBox.Show(Localization.CheatEnabler.Translate(), string.Format(Localization.ThereIsNoDysonSphereShellOn0.Translate(), star.displayName), Localization.OK.Translate(), UIMessageBox.ERROR, null);
             return;
         }
         var currentShellCount = layer.shellCount;
