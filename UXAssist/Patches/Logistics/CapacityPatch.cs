@@ -7,6 +7,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using UXAssist.Common;
+using UXAssist.Common.GameConstants;
 
 namespace UXAssist.Patches.Logistics;
 
@@ -29,13 +30,13 @@ internal class LogisticsCapacityTweaks : PatchImpl<LogisticsCapacityTweaks>
         if (code != _lastKey)
         {
             _lastKey = code;
-            _nextKeyTick = main.timei + 30;
+            _nextKeyTick = main.timei + LogisticsConstants.KeyRepeatInitialDelay;
             return true;
         }
 
         var currTick = main.timei;
         if (_nextKeyTick > currTick) return false;
-        _nextKeyTick = currTick + 4;
+        _nextKeyTick = currTick + LogisticsConstants.KeyRepeatInterval;
         return true;
     }
 
@@ -54,38 +55,38 @@ internal class LogisticsCapacityTweaks : PatchImpl<LogisticsCapacityTweaks>
         if (UpdateKeyPressed(KeyCode.LeftArrow))
         {
             if (ctrl)
-                delta = -100000;
+                delta = -LogisticsConstants.MassiveAdjustment;
             else if (alt)
-                delta = -1000;
+                delta = -LogisticsConstants.LargeAdjustment;
             else
-                delta = -10;
+                delta = -LogisticsConstants.SmallAdjustment;
         }
         else if (UpdateKeyPressed(KeyCode.RightArrow))
         {
             if (ctrl)
-                delta = 100000;
+                delta = LogisticsConstants.MassiveAdjustment;
             else if (alt)
-                delta = 1000;
+                delta = LogisticsConstants.LargeAdjustment;
             else
-                delta = 10;
+                delta = LogisticsConstants.SmallAdjustment;
         }
         else if (UpdateKeyPressed(KeyCode.DownArrow))
         {
             if (ctrl)
-                delta = -1000000;
+                delta = -LogisticsConstants.GargantuanAdjustment;
             else if (alt)
-                delta = -10000;
+                delta = -LogisticsConstants.HugeAdjustment;
             else
-                delta = -100;
+                delta = -LogisticsConstants.MediumAdjustment;
         }
         else if (UpdateKeyPressed(KeyCode.UpArrow))
         {
             if (ctrl)
-                delta = 1000000;
+                delta = LogisticsConstants.GargantuanAdjustment;
             else if (alt)
-                delta = 10000;
+                delta = LogisticsConstants.HugeAdjustment;
             else
-                delta = 100;
+                delta = LogisticsConstants.MediumAdjustment;
         }
         else
         {
@@ -129,7 +130,7 @@ internal class LogisticsCapacityTweaks : PatchImpl<LogisticsCapacityTweaks>
                 int itemCountMax;
                 if (LogisticsPatch.AllowOverflowInLogisticsEnabled.Value)
                 {
-                    itemCountMax = 90000000;
+                    itemCountMax = LogisticsConstants.OverflowStorageMax;
                 }
                 else
                 {
@@ -230,7 +231,7 @@ internal class LogisticsCapacityTweaks : PatchImpl<LogisticsCapacityTweaks>
                         {
                             var max = storage[j].max;
                             if (max + 10 < intOldMaxCount || max >= intNewMaxCount) continue;
-                            storage[j].max = Mathf.RoundToInt((float)(max * ratio / 50.0)) * 50;
+                            storage[j].max = Mathf.RoundToInt((float)(max * ratio / LogisticsConstants.LocalStorageRounding)) * LogisticsConstants.LocalStorageRounding;
                         }
                     }
 
@@ -256,7 +257,7 @@ internal class LogisticsCapacityTweaks : PatchImpl<LogisticsCapacityTweaks>
                         {
                             var max = storage[j].max;
                             if (max + 10 < intOldMaxCount || max >= intNewMaxCount) continue;
-                            storage[j].max = Mathf.RoundToInt((float)(max * ratio / 100.0)) * 100;
+                            storage[j].max = Mathf.RoundToInt((float)(max * ratio / LogisticsConstants.RemoteStorageRounding)) * LogisticsConstants.RemoteStorageRounding;
                         }
                     }
 
@@ -275,7 +276,7 @@ internal class GreaterPowerUsageInLogistics : PatchImpl<GreaterPowerUsageInLogis
         var window = UIRoot.instance?.uiGame?.stationWindow;
         if (window == null) return;
         window._Close();
-        window.maxMiningSpeedSlider.maxValue = 27f;
+        window.maxMiningSpeedSlider.maxValue = LogisticsConstants.MiningSpeedSliderMaxExtended;
     }
 
     protected override void OnDisable()
@@ -283,7 +284,7 @@ internal class GreaterPowerUsageInLogistics : PatchImpl<GreaterPowerUsageInLogis
         var window = UIRoot.instance?.uiGame?.stationWindow;
         if (window == null) return;
         window._Close();
-        window.maxMiningSpeedSlider.maxValue = 20f;
+        window.maxMiningSpeedSlider.maxValue = LogisticsConstants.MiningSpeedSliderMaxDefault;
     }
 
     [HarmonyTranspiler]
@@ -295,13 +296,13 @@ internal class GreaterPowerUsageInLogistics : PatchImpl<GreaterPowerUsageInLogis
             new CodeInstruction(OpCodes.Ldarg_0),
             Transpilers.EmitDelegate((UIStationWindow window) =>
             {
-                window.maxMiningSpeedSlider.maxValue = 27f;
+                window.maxMiningSpeedSlider.maxValue = LogisticsConstants.MiningSpeedSliderMaxExtended;
             })
         ).MatchForward(false,
             new CodeMatch(OpCodes.Ldarg_0),
             new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(UIStationWindow), nameof(UIStationWindow.maxChargePowerSlider))),
             new CodeMatch(ci => ci.IsLdloc()),
-            new CodeMatch(ci => ci.opcode == OpCodes.Ldc_I4 && ci.OperandIs(0xC350)),
+            new CodeMatch(ci => ci.opcode == OpCodes.Ldc_I4 && ci.OperandIs(LogisticsConstants.ChargePowerSliderScale)),
             new CodeMatch(OpCodes.Conv_I8)
         );
         var pos = matcher.Pos + 1;
@@ -318,11 +319,11 @@ internal class GreaterPowerUsageInLogistics : PatchImpl<GreaterPowerUsageInLogis
             new CodeInstruction(OpCodes.Ldloc_S, locWorkEnergyPerTick),
             Transpilers.EmitDelegate((UIStationWindow window, long maxWorkEnergy, long workEnergyPerTick) =>
             {
-                var maxSliderValue = maxWorkEnergy / 50000L;
+                var maxSliderValue = maxWorkEnergy / LogisticsConstants.ChargePowerSliderScale;
                 window.maxChargePowerSlider.maxValue = maxSliderValue + 9;
-                window.maxChargePowerSlider.minValue = maxWorkEnergy / 500000L;
+                window.maxChargePowerSlider.minValue = maxWorkEnergy / LogisticsConstants.ChargePowerSliderMinScale;
                 if (workEnergyPerTick <= maxWorkEnergy)
-                    window.maxChargePowerSlider.Set(workEnergyPerTick / 50000L, false);
+                    window.maxChargePowerSlider.Set(workEnergyPerTick / LogisticsConstants.ChargePowerSliderScale, false);
                 else
                     window.maxChargePowerSlider.Set(maxSliderValue + (workEnergyPerTick - 1) / maxWorkEnergy + 1, false);
             })
@@ -348,9 +349,9 @@ internal class GreaterPowerUsageInLogistics : PatchImpl<GreaterPowerUsageInLogis
         matcher.Start().Advance(pos).RemoveInstructions(pos2 - pos).Insert(
             Transpilers.EmitDelegate((int speed) =>
             {
-                if (speed <= 30000)
-                    return (speed - 10000) / 1000;
-                return (speed - 30000) / 10000 + 20;
+                if (speed <= LogisticsConstants.MaxMiningSpeedBase)
+                    return (speed - LogisticsConstants.MinMiningSpeedBase) / LogisticsConstants.MiningSpeedFineStep;
+                return (speed - LogisticsConstants.MaxMiningSpeedBase) / LogisticsConstants.MiningSpeedCoarseStep + LogisticsConstants.MiningSpeedSliderMaxDefault;
             })
         );
         return matcher.InstructionEnumeration();
@@ -362,7 +363,7 @@ internal class GreaterPowerUsageInLogistics : PatchImpl<GreaterPowerUsageInLogis
     {
         var matcher = new CodeMatcher(instructions, generator);
         matcher.MatchForward(false,
-            new CodeMatch(ci => ci.opcode == OpCodes.Ldc_I4 && ci.OperandIs(10000)),
+            new CodeMatch(ci => ci.opcode == OpCodes.Ldc_I4 && ci.OperandIs(LogisticsConstants.MinMiningSpeedBase)),
             new CodeMatch(OpCodes.Ldarg_1)
         );
         var pos = matcher.Pos;
@@ -378,9 +379,9 @@ internal class GreaterPowerUsageInLogistics : PatchImpl<GreaterPowerUsageInLogis
             Transpilers.EmitDelegate((float value) =>
             {
                 var intval = (int)(value + 0.5f);
-                if (intval <= 20)
-                    return intval * 1000 + 10000;
-                return (intval - 20) * 10000 + 30000;
+                if (intval <= LogisticsConstants.MiningSpeedSliderMaxDefault)
+                    return intval * LogisticsConstants.MiningSpeedFineStep + LogisticsConstants.MinMiningSpeedBase;
+                return (intval - LogisticsConstants.MiningSpeedSliderMaxDefault) * LogisticsConstants.MiningSpeedCoarseStep + LogisticsConstants.MaxMiningSpeedBase;
             })
         );
         return matcher.InstructionEnumeration();

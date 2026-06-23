@@ -144,5 +144,6 @@ The sync is implemented as an inline PowerShell `Exec` step inside the `ZipMod` 
 - **Shared library:** `UXAssist` acts as a common library. `CheatEnabler` and `UniverseGenTweaks` reference `UXAssist.csproj` directly to reuse `Common/`, `UI/`, and config panel infrastructure.
 - **Preloader pattern:** `DustbinPreloader` and `LabOptPreloader` use Mono.Cecil to inject new fields into game assemblies at BepInEx preload time, enabling their corresponding main mods to read/write those fields via normal C# without reflection.
 - **Internationalization:** `UXAssist/Common/I18N.cs` provides bilingual (EN + ZH) string lookup used across UXAssist and CheatEnabler.
+- **Centralized game constants:** Hard-coded item IDs, tech IDs, logistics capacities, and Dyson sphere geometry defaults live in `UXAssist/Common/GameConstants` (`ItemIds`, `TechIds`, `LogisticsConstants`, `DysonSphereConstants`). Prefer these constants over inline literals in UXAssist patches.
 - **Transpiler patches:** Performance-critical mods (LabOpt, MechaDronesTweaks) use `[HarmonyTranspiler]` to rewrite IL instructions directly for maximum efficiency.
 - **Save persistence:** Mods that need to persist data use the `IModCanSave` interface from DSPModSave.

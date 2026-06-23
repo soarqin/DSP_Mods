@@ -5,6 +5,7 @@ using HarmonyLib;
 using UnityEngine;
 using UXAssist.Common;
 using UXAssist.Common.ModFeatures;
+using UXAssist.Common.GameConstants;
 using GameLogicProc = UXAssist.Common.GameLogic;
 
 namespace UXAssist.Patches.Logistics;
@@ -178,7 +179,7 @@ public static class LogisticsPatch
     {
         ref var entity = ref factory.entityPool[station.entityId];
         if (entity.id != station.entityId || entity.minerId <= 0 || entity.minerId >= factory.factorySystem.minerCursor) return false;
-        factory.factorySystem.minerPool[entity.minerId].speed = 10000 + AutoConfigVeinCollectorHarvestSpeed.Value * 1000;
+        factory.factorySystem.minerPool[entity.minerId].speed = LogisticsConstants.MinMiningSpeedBase + AutoConfigVeinCollectorHarvestSpeed.Value * LogisticsConstants.MiningSpeedFineStep;
         return true;
     }
 
@@ -186,7 +187,7 @@ public static class LogisticsPatch
         station.pilerCount = AutoConfigVeinCollectorMinPilerValue.Value;
 
     internal static void DispenserSetChargePower(PlanetFactory factory, DispenserComponent dispenser) =>
-        factory.powerSystem.consumerPool[dispenser.pcId].workEnergyPerTick = (long)(5000.0 * AutoConfigDispenserChargePower.Value + 0.5);
+        factory.powerSystem.consumerPool[dispenser.pcId].workEnergyPerTick = (long)(LogisticsConstants.DispenserChargePowerMultiplier * AutoConfigDispenserChargePower.Value + 0.5);
 
     internal static void DispenserFillCouriers(PlanetFactory factory, DispenserComponent dispenser)
     {
@@ -195,7 +196,7 @@ public static class LogisticsPatch
     }
 
     internal static void BattleBaseSetChargePower(PlanetFactory factory, BattleBaseComponent battleBase) =>
-        factory.powerSystem.consumerPool[battleBase.pcId].workEnergyPerTick = (long)(5000.0 * AutoConfigBattleBaseChargePower.Value + 0.5);
+        factory.powerSystem.consumerPool[battleBase.pcId].workEnergyPerTick = (long)(LogisticsConstants.DispenserChargePowerMultiplier * AutoConfigBattleBaseChargePower.Value + 0.5);
 
     // === Per-facility "apply all settings" (also used as auto-config-on-build entry point) ===
 

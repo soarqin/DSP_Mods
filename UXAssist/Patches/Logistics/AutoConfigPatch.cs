@@ -5,6 +5,7 @@ using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine;
 using UXAssist.Common;
+using UXAssist.Common.GameConstants;
 
 namespace UXAssist.Patches.Logistics;
 
@@ -85,7 +86,7 @@ internal class AutoConfigLogistics : PatchImpl<AutoConfigLogistics>
     {
         if (__instance.handPrefabDesc.isDispenser)
         {
-            __instance.handBpParams[bpIndex][2] = (int)(long)(5000.0 * LogisticsPatch.AutoConfigDispenserChargePower.Value + 0.5);
+            __instance.handBpParams[bpIndex][2] = (int)(long)(LogisticsConstants.DispenserChargePowerMultiplier * LogisticsPatch.AutoConfigDispenserChargePower.Value + 0.5);
         }
     }
 

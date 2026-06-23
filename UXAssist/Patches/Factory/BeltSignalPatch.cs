@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using HarmonyLib;
 using UXAssist.Common;
+using UXAssist.Common.GameConstants;
 using GameLogicProc = UXAssist.Common.GameLogic;
 
 namespace UXAssist.Patches.Factory;
@@ -45,7 +46,7 @@ internal static class BeltSignalPatch
         private static bool _initialized;
         private static bool _loaded;
         private static long _clusterSeedKey;
-        private static readonly int[] DarkFogItemIds = [5201, 5206, 5202, 5204, 5203, 5205];
+        private static readonly int[] DarkFogItemIds = ItemIds.DarkFogItemIds;
         private static readonly int[] DarkFogItemExchangeRate = [20, 60, 30, 30, 30, 10];
         public static readonly int[] DarkFogItemsInVoid = [0, 0, 0, 0, 0, 0];
         private static Dictionary<int, uint>[] _signalBelts = new Dictionary<int, uint>[64];
@@ -340,13 +341,13 @@ internal static class BeltSignalPatch
                     var consume = (byte)Math.Min(DarkFogItemsInVoid[itemIdx], 4);
                     if (consume < 4)
                     {
-                        var metaverseLong = propertySystem.GetItemAvaliableProperty(_clusterSeedKey, 6006);
+                        var metaverseLong = propertySystem.GetItemAvaliableProperty(_clusterSeedKey, ItemIds.Metaverse);
                         if (metaverseLong > 0L)
                         {
                             var metaverse = metaverseLong > 10 ? 10 : (int)metaverseLong;
-                            propertySystem.AddItemConsumption(_clusterSeedKey, 6006, metaverse);
+                            propertySystem.AddItemConsumption(_clusterSeedKey, ItemIds.Metaverse, metaverse);
                             var mainPlayer = GameMain.mainPlayer;
-                            GameMain.history.AddPropertyItemConsumption(6006, metaverse, true);
+                            GameMain.history.AddPropertyItemConsumption(ItemIds.Metaverse, metaverse, true);
                             var count = DarkFogItemExchangeRate[itemIdx] * metaverse;
                             DarkFogItemsInVoid[itemIdx] += count;
                             consume = (byte)Math.Min(DarkFogItemsInVoid[itemIdx], 4);

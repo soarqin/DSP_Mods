@@ -8,6 +8,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
 using UXAssist.Common;
+using UXAssist.Common.GameConstants;
 using Object = UnityEngine.Object;
 
 namespace UXAssist.Patches.Logistics;
@@ -181,19 +182,18 @@ internal static class RealtimeLogisticsInfoPanel
 
     private static int _lastPlanetId;
 
-    private static int _localStorageMax = 5000;
-    private static int _remoteStorageMax = 10000;
+    private static int _localStorageMax = LogisticsConstants.DefaultLocalStorageMax;
+    private static int _remoteStorageMax = LogisticsConstants.DefaultRemoteStorageMax;
     private static int _localStorageExtra;
     private static int _remoteStorageExtra;
     private static int _localStorageMaxTotal = _localStorageMax;
     private static int _remoteStorageMaxTotal = _remoteStorageMax;
-    private static float _localStoragePixelPerItem = StorageSliderWidth / _localStorageMaxTotal;
-    private static float _remoteStoragePixelPerItem = StorageSliderWidth / _remoteStorageMaxTotal;
+    private static float _localStoragePixelPerItem = LogisticsConstants.StorageSliderWidth / _localStorageMaxTotal;
+    private static float _remoteStoragePixelPerItem = LogisticsConstants.StorageSliderWidth / _remoteStorageMaxTotal;
 
-    private static int _storageMaxSlotCount = 5;
+    private static int _storageMaxSlotCount = LogisticsConstants.DefaultStorageSlotCount;
     private const int CarrierSlotCount = 3;
-    private const float StorageSliderWidth = 70f;
-    private const float StorageSliderHeight = 5f;
+
 
     private static bool UpdateStorageMax()
     {
@@ -204,8 +204,8 @@ internal static class RealtimeLogisticsInfoPanel
         _remoteStorageExtra = history.remoteStationExtraStorage;
         _localStorageMaxTotal = _localStorageMax + _localStorageExtra;
         _remoteStorageMaxTotal = _remoteStorageMax + _remoteStorageExtra;
-        _localStoragePixelPerItem = StorageSliderWidth / _localStorageMaxTotal;
-        _remoteStoragePixelPerItem = StorageSliderWidth / _remoteStorageMaxTotal;
+        _localStoragePixelPerItem = LogisticsConstants.StorageSliderWidth / _localStorageMaxTotal;
+        _remoteStoragePixelPerItem = LogisticsConstants.StorageSliderWidth / _remoteStorageMaxTotal;
         return true;
     }
 
@@ -258,9 +258,9 @@ internal static class RealtimeLogisticsInfoPanel
 
     internal static void OnDataLoaded()
     {
-        _storageMaxSlotCount = 5;
-        _localStorageMax = 5000;
-        _remoteStorageMax = 10000;
+        _storageMaxSlotCount = LogisticsConstants.DefaultStorageSlotCount;
+        _localStorageMax = LogisticsConstants.DefaultLocalStorageMax;
+        _remoteStorageMax = LogisticsConstants.DefaultRemoteStorageMax;
         foreach (var model in LDB.models.dataArray)
         {
             var prefabDesc = model?.prefabDesc;
@@ -361,25 +361,25 @@ internal static class RealtimeLogisticsInfoPanel
             var sliderBg = Object.Instantiate(sliderBgPrefab.gameObject, new Vector3(0, 0, 0), Quaternion.identity, _tipPrefab.transform);
             sliderBg.name = "sliderBg" + index;
             rectTrans = (RectTransform)sliderBg.transform;
-            rectTrans.sizeDelta = new Vector2(StorageSliderWidth, StorageSliderHeight);
+            rectTrans.sizeDelta = new Vector2(LogisticsConstants.StorageSliderWidth, LogisticsConstants.StorageSliderHeight);
             rectTrans.anchorMax = new Vector2(0f, 1f);
             rectTrans.anchorMin = new Vector2(0f, 1f);
             rectTrans.pivot = new Vector2(0f, 1f);
             rectTrans.anchoredPosition3D = new Vector3(30f, y - 22f, 0f);
             rectTrans = (RectTransform)sliderBg.transform.Find("current-fg").transform;
-            rectTrans.sizeDelta = new Vector2(0f, StorageSliderHeight);
+            rectTrans.sizeDelta = new Vector2(0f, LogisticsConstants.StorageSliderHeight);
             rectTrans.anchorMax = new Vector2(0f, 1f);
             rectTrans.anchorMin = new Vector2(0f, 1f);
             rectTrans.pivot = new Vector2(0f, 1f);
             rectTrans.localPosition = new Vector3(0f, 0f, 0f);
             rectTrans = (RectTransform)sliderBg.transform.Find("ordered-fg").transform;
-            rectTrans.sizeDelta = new Vector2(0f, StorageSliderHeight);
+            rectTrans.sizeDelta = new Vector2(0f, LogisticsConstants.StorageSliderHeight);
             rectTrans.anchorMax = new Vector2(0f, 1f);
             rectTrans.anchorMin = new Vector2(0f, 1f);
             rectTrans.pivot = new Vector2(0f, 1f);
             rectTrans.localPosition = new Vector3(0f, 0f, 0f);
             rectTrans = (RectTransform)sliderBg.transform.Find("max-fg").transform;
-            rectTrans.sizeDelta = new Vector2(StorageSliderWidth, StorageSliderHeight);
+            rectTrans.sizeDelta = new Vector2(LogisticsConstants.StorageSliderWidth, LogisticsConstants.StorageSliderHeight);
             rectTrans.anchorMax = new Vector2(0f, 1f);
             rectTrans.anchorMin = new Vector2(0f, 1f);
             rectTrans.pivot = new Vector2(0f, 1f);
@@ -934,7 +934,7 @@ internal static class RealtimeLogisticsInfoPanel
                     {
                         ((RectTransform)_sliderCurrent[i].transform).sizeDelta = new Vector2(
                             _pixelPerItem * itemCount,
-                            StorageSliderHeight
+                            LogisticsConstants.StorageSliderHeight
                         );
                         _sliderCurrent[i].gameObject.SetActive(true);
                     }
@@ -968,7 +968,7 @@ internal static class RealtimeLogisticsInfoPanel
                             );
                             rectTrans.sizeDelta = new Vector2(
                                 _pixelPerItem * itemOrdered + 0.49f,
-                                StorageSliderHeight
+                                LogisticsConstants.StorageSliderHeight
                             );
                             break;
                         case < 0:
@@ -981,7 +981,7 @@ internal static class RealtimeLogisticsInfoPanel
                             );
                             rectTrans.sizeDelta = new Vector2(
                                 _pixelPerItem * -itemOrdered + 0.49f,
-                                StorageSliderHeight
+                                LogisticsConstants.StorageSliderHeight
                             );
                             break;
                     }
@@ -997,7 +997,7 @@ internal static class RealtimeLogisticsInfoPanel
                     if (itemMax > itemLimit) itemMax = itemLimit;
                     ((RectTransform)_sliderMax[i].transform).sizeDelta = new Vector2(
                         _pixelPerItem * itemMax,
-                        StorageSliderHeight
+                        LogisticsConstants.StorageSliderHeight
                     );
                 }
             }

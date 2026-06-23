@@ -6,6 +6,7 @@ using HarmonyLib;
 using UnityEngine;
 using UnityEngine.UI;
 using UXAssist.Common;
+using UXAssist.Common.GameConstants;
 using GameLogicProc = UXAssist.Common.GameLogic;
 
 namespace UXAssist.Patches;
@@ -66,7 +67,7 @@ public static class TechPatch
                 var delim = -26.0f;
                 var x = 9.0f;
                 var y = -27.0f;
-                var tp3301 = techs.Select(3301);
+                var tp3301 = techs.Select(TechIds.SorterCargoStackingCustomStart);
                 if (tp3301 != null && tp3301.IsObsolete)
                 {
                     _protoPatched = false;
@@ -84,11 +85,11 @@ public static class TechPatch
                 {
                     switch (tp.ID)
                     {
-                        case >= 3301 and <= 3305:
-                            tp.UnlockValues[0] = tp.ID - 3300 + 1;
+                        case >= TechIds.SorterCargoStackingCustomStart and <= TechIds.SorterCargoStackingCustomEnd - 1:
+                            tp.UnlockValues[0] = tp.ID - TechIds.SorterCargoStackingCustomStart + 2;
                             tp.IsObsolete = false;
-                            tp.Position = new Vector2(x + 4.0f * (tp.ID - 3301), y);
-                            if (tp.ID == 3305)
+                            tp.Position = new Vector2(x + 4.0f * (tp.ID - TechIds.SorterCargoStackingCustomStart), y);
+                            if (tp.ID == TechIds.SorterCargoStackingCustomEnd - 1)
                             {
                                 tp.postTechArray = [];
                                 if (UIRoot.instance.uiGame.techTree.nodes.TryGetValue(tp.ID, out var node))
@@ -97,10 +98,10 @@ public static class TechPatch
                                 }
                             }
                             continue;
-                        case 3306:
+                        case TechIds.SorterCargoStackingCustomEnd:
                             tp.PreTechs = [];
                             tp.preTechArray = [];
-                            tp.Position = new Vector2(x + 4.0f * (tp.ID - 3301), y);
+                            tp.Position = new Vector2(x + 4.0f * (tp.ID - TechIds.SorterCargoStackingCustomStart), y);
                             continue;
                     }
 
@@ -113,7 +114,7 @@ public static class TechPatch
             else
             {
                 var delim = -28.0f;
-                var tp3301 = techs.Select(3301);
+                var tp3301 = techs.Select(TechIds.SorterCargoStackingCustomStart);
                 if (tp3301 != null && !tp3301.IsObsolete)
                 {
                     _protoPatched = true;
@@ -122,7 +123,7 @@ public static class TechPatch
                 if (!_protoPatched) return;
                 foreach (var tp in techs.dataArray)
                 {
-                    if (tp.ID is >= 3301 and <= 3306)
+                    if (tp.ID is >= TechIds.SorterCargoStackingCustomStart and <= TechIds.SorterCargoStackingCustomEnd)
                     {
                         tp.IsObsolete = true;
                         continue;
@@ -154,61 +155,7 @@ public static class TechPatch
 
         public static void Enable(bool enable)
         {
-            if (_techsToDisableSet == null)
-            {
-                (int, int)[] techListToDisable =
-                [
-                    // Explosive Unit, Crystal Explosive Unit
-                    // 爆破单元，晶石爆破单元
-                    (1803, 1804),
-                    // Implosion Cannon
-                    // 聚爆加农炮
-                    (1807, 1807),
-                    // Signal Tower, Planetary Defense System, Jammer Tower, Plasma Turret, Titanium Ammo Box, Superalloy Ammo Box, High-Explosive Shell Set, Supersonic Missile Set, Crystal Shell Set, Gravity Missile Set, Antimatter Capsule, Precision Drone, Prototype, Attack Drone, Corvette, Destroyer, Suppressing Capsule, EM Capsule Mk.III
-                    // 信号塔, 行星防御系统, 干扰塔, 磁化电浆炮, 钛化弹箱, 超合金弹箱, 高爆炮弹组, 超音速导弹组, 晶石炮弹组, 引力导弹组, 反物质胶囊, 地面战斗机-A型, 地面战斗机-E型, 地面战斗机-F型, 太空战斗机-A型, 太空战斗机-F型, 电磁胶囊II, 电磁胶囊III
-                    (1809, 1825),
-                    // Auto Reconstruction Marking
-                    // 自动标记重建
-                    (2951, 2956),
-                    // Energy Shield
-                    // 能量护盾
-                    (2801, 2807),
-                    // Kinetic Weapon Damage
-                    // 动能武器伤害
-                    (5001, 5006),
-                    // Energy Weapon Damage
-                    // 能量武器伤害
-                    (5101, 5106),
-                    // Explosive Weapon Damage
-                    // 爆炸武器伤害
-                    (5201, 5206),
-                    // Combat Drone Damage
-                    // 战斗无人机伤害
-                    (5301, 5305),
-                    // Combat Drone Attack Speed
-                    // 战斗无人机攻击速度
-                    (5401, 5405),
-                    // Combat Drone Engine
-                    // 战斗无人机引擎
-                    (5601, 5605),
-                    // Combat Drone Durability
-                    // 战斗无人机耐久
-                    (5701, 5705),
-                    // Ground Squadron Expansion
-                    // 地面编队扩容
-                    (5801, 5807),
-                    // Space Fleet Expansion
-                    // 太空编队扩容
-                    (5901, 5907),
-                    // Enhanced Structure
-                    // 结构强化
-                    (6001, 6006),
-                    // Planetary Shield
-                    // 行星护盾
-                    (6101, 6106),
-                ];
-                _techsToDisableSet = [.. techListToDisable.SelectMany(t => Enumerable.Range(t.Item1, t.Item2 - t.Item1 + 1))];
-            }
+            _techsToDisableSet ??= new HashSet<int>(TechIds.CombatTechs);
             if (enable)
             {
                 if (DSPGame.GameDesc != null)

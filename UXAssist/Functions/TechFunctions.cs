@@ -281,7 +281,7 @@ public static class TechFunctions
         var history = GameMain.data?.history;
         if (history == null) return;
         history.inserterStackCountObsolete = 1;
-        for (var id = 3301; id <= 3305; id++)
+        for (var id = global::UXAssist.Common.GameConstants.TechIds.SorterCargoStackingCustomStart; id <= global::UXAssist.Common.GameConstants.TechIds.SorterCargoStackingCustomEnd - 1; id++)
         {
             history.techStates.TryGetValue(id, out var state);
             if (!state.unlocked) continue;
