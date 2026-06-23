@@ -121,7 +121,7 @@ public static class PlayerFunctions
                 msg += $"\n  {LDB.items.Select(i + ItemIds.HydrogenFuelRod).propertyName} x{itemCnt[i]}";
             }
         }
-        UIMessageBox.Show("Remove all metadata consumption records".Translate(), msg, "取消".Translate(), "确定".Translate(), UIMessageBox.QUESTION, null, () =>
+        UIMessageBox.Show("Remove all metadata consumption records".Translate(), msg, "Cancel".Translate(), "OK".Translate(), UIMessageBox.QUESTION, null, () =>
         {
             foreach (var data in propertySystem.propertyDatas)
             {
@@ -169,7 +169,7 @@ public static class PlayerFunctions
                 msg += $"\n  {LDB.items.Select(i + ItemIds.HydrogenFuelRod).propertyName} x{itemCnt[i]}";
             }
         }
-        UIMessageBox.Show("Remove metadata consumption record in current game".Translate(), msg, "取消".Translate(), "确定".Translate(), UIMessageBox.QUESTION, null, () =>
+        UIMessageBox.Show("Remove metadata consumption record in current game".Translate(), msg, "Cancel".Translate(), "OK".Translate(), UIMessageBox.QUESTION, null, () =>
         {
             for (var i = 0; i < clusterPropertyData.totalConsumption.Count; i++)
             {

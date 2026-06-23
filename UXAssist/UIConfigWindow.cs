@@ -76,6 +76,12 @@ public static class UIConfigWindow
         I18N.Add("Build Tesla Tower and Wireless Power Tower alternately", "Build Tesla Tower and Wireless Power Tower alternately", "交替建造电力感应塔和无线输电塔");
         I18N.Add("Auto-construct button", "Auto-construct button", "自动建造按钮");
         I18N.Add("Belt signals for buy out dark fog items automatically", "Belt signals for buy out dark fog items automatically", "用于自动购买黑雾物品的传送带信号");
+        I18N.Add("Memory Unit", "Memory Unit", "存储单元");
+        I18N.Add("Energy Fragment", "Energy Fragment", "能量碎片");
+        I18N.Add("Silicon Neuron", "Silicon Neuron", "硅基神经元");
+        I18N.Add("Negentropy Singularity", "Negentropy Singularity", "负熵奇点");
+        I18N.Add("Matter Reassembler", "Matter Reassembler", "物质重组器");
+        I18N.Add("Virtual Particle", "Virtual Particle", "虚粒子");
         I18N.Add("Ctrl+Shift+Click to pick items from whole belts", "Ctrl+Shift+Click to pick items from whole belts", "按住Ctrl+Shift点击从整条传送带抓取物品");
         I18N.Add("Include branches of belts", "Include branches of belts", "包含传送带分支");
         I18N.Add("Include connected inserters", "Include connected inserters (and their connected belts if above is checked)", "包含连接的分拣器(若勾选上面的选项则包含分拣器连接的传送带)");
@@ -101,6 +107,9 @@ public static class UIConfigWindow
         I18N.Add("Count of Vessels filled", "Count of Vessels filled", "填充的运输船数量");
         I18N.Add("Collecting Speed", "Collecting Speed", "开采速度");
         I18N.Add("Min. Piler Value", "Outgoing integration count", "输出货物集装数量");
+        I18N.Add("Use tech max for piler", "Use tech max for piler", "集装使用科技上限");
+        I18N.Add("Cancel", "Cancel", "取消");
+        I18N.Add("OK", "OK", "确定");
         I18N.Add("Apply config to planet", "Apply", "应用");
         I18N.Add("Apply all config to planet", "Apply All", "应用全部");
         I18N.Add("Apply config to planet tips", "Apply this value to all facilities of this type on the current planet", "将此项数值应用到当前行星上所有该类型物流设施");
@@ -248,7 +257,7 @@ public static class UIConfigWindow
     {
         public override string FormatValue(string format, int value)
         {
-            return value == 0 ? "集装使用科技上限".Translate().Trim() : value.ToString();
+            return value == 0 ? "Use tech max for piler".Translate().Trim() : value.ToString();
         }
     }
 
@@ -447,7 +456,7 @@ public static class UIConfigWindow
         x = 400f;
         y = 10f;
         wnd.AddButton(x, y, tab2, "Initialize This Planet", 16, "button-init-planet", () =>
-            UIMessageBox.Show("Initialize This Planet".Translate(), "Initialize This Planet Confirm".Translate(), "取消".Translate(), "确定".Translate(), UIMessageBox.QUESTION, null,
+            UIMessageBox.Show("Initialize This Planet".Translate(), "Initialize This Planet Confirm".Translate(), "Cancel".Translate(), "OK".Translate(), UIMessageBox.QUESTION, null,
                 () => { PlanetFunctions.RecreatePlanet(true); })
         );
         y += 24f;
@@ -459,7 +468,7 @@ public static class UIConfigWindow
 
         y += 36f;
         wnd.AddButton(x, y, tab2, "Dismantle All Buildings", 16, "button-dismantle-all", () =>
-            UIMessageBox.Show("Dismantle All Buildings".Translate(), "Dismantle All Buildings Confirm".Translate(), "取消".Translate(), "确定".Translate(), UIMessageBox.QUESTION, null,
+            UIMessageBox.Show("Dismantle All Buildings".Translate(), "Dismantle All Buildings Confirm".Translate(), "Cancel".Translate(), "OK".Translate(), UIMessageBox.QUESTION, null,
                 () => { PlanetFunctions.DismantleAll(false); })
         );
         y += 72f;
@@ -794,7 +803,7 @@ public static class UIConfigWindow
         x = 400f;
         y = 10f;
         _dysonInitBtn = wnd.AddButton(x, y, tab5, "Initialize Dyson Sphere", 16, "init-dyson-sphere", () =>
-            UIMessageBox.Show("Initialize Dyson Sphere".Translate(), "Initialize Dyson Sphere Confirm".Translate(), "取消".Translate(), "确定".Translate(), UIMessageBox.QUESTION, null,
+            UIMessageBox.Show("Initialize Dyson Sphere".Translate(), "Initialize Dyson Sphere Confirm".Translate(), "Cancel".Translate(), "OK".Translate(), UIMessageBox.QUESTION, null,
                 () => { DysonSphereFunctions.InitCurrentDysonLayer(null, -1); })
         );
         y += 36f;
@@ -806,7 +815,7 @@ public static class UIConfigWindow
             var btn = wnd.AddFlatButton(x, y, tab5, id.ToString(), 12, "dismantle-layer-" + id, () =>
                 {
                     var star = DysonSphereFunctions.CurrentStarForDysonSystem();
-                    UIMessageBox.Show("Dismantle selected layer".Translate(), "Dismantle selected layer Confirm".Translate(), "取消".Translate(), "确定".Translate(), UIMessageBox.QUESTION, null,
+                    UIMessageBox.Show("Dismantle selected layer".Translate(), "Dismantle selected layer Confirm".Translate(), "Cancel".Translate(), "OK".Translate(), UIMessageBox.QUESTION, null,
                         () => { DysonSphereFunctions.InitCurrentDysonLayer(star, id); });
                 }
             ).WithSize(40f, 20f);

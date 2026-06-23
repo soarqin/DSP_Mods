@@ -182,7 +182,7 @@ public class MyKeyBinder : MonoBehaviour
         return key;
     }
 
-    //通常キーが押されているかチェック _lastKey に保存
+    // Check if any regular key is pressed and store it in _lastKey
     private bool GetIunptKeys()
     {
         var anyKey = false;
@@ -201,7 +201,7 @@ public class MyKeyBinder : MonoBehaviour
     {
         conflictText.gameObject.SetActive(false);
         waitingText.gameObject.SetActive(false);
-        setDefaultUIButton.button.Select(); // InputFieldのフォーカス外す
+        setDefaultUIButton.button.Select(); // Remove focus from the InputField
         _lastKey = KeyCode.None;
     }
 

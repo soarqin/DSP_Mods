@@ -72,7 +72,7 @@ internal static class BeltSignalPatch
                 new SignalProto
                 {
                     ID = 301,
-                    Name = "存储单元",
+                    Name = "Memory Unit",
                     GridIndex = 3801,
                     IconPath = "assets/signal/memory.png",
                     _iconSprite = Util.LoadEmbeddedSprite("assets/signal/memory.png", assembly),
@@ -81,7 +81,7 @@ internal static class BeltSignalPatch
                 new SignalProto
                 {
                     ID = 302,
-                    Name = "能量碎片",
+                    Name = "Energy Fragment",
                     GridIndex = 3802,
                     IconPath = "assets/signal/energy-fragment.png",
                     _iconSprite = Util.LoadEmbeddedSprite("assets/signal/energy-fragment.png", assembly),
@@ -90,7 +90,7 @@ internal static class BeltSignalPatch
                 new SignalProto
                 {
                     ID = 303,
-                    Name = "硅基神经元",
+                    Name = "Silicon Neuron",
                     GridIndex = 3803,
                     IconPath = "assets/signal/silicon-neuron.png",
                     _iconSprite = Util.LoadEmbeddedSprite("assets/signal/silicon-neuron.png", assembly),
@@ -99,7 +99,7 @@ internal static class BeltSignalPatch
                 new SignalProto
                 {
                     ID = 304,
-                    Name = "负熵奇点",
+                    Name = "Negentropy Singularity",
                     GridIndex = 3804,
                     IconPath = "assets/signal/negentropy.png",
                     _iconSprite = Util.LoadEmbeddedSprite("assets/signal/negentropy.png", assembly),
@@ -108,7 +108,7 @@ internal static class BeltSignalPatch
                 new SignalProto
                 {
                     ID = 305,
-                    Name = "物质重组器",
+                    Name = "Matter Reassembler",
                     GridIndex = 3805,
                     IconPath = "assets/signal/reassembler.png",
                     _iconSprite = Util.LoadEmbeddedSprite("assets/signal/reassembler.png", assembly),
@@ -117,7 +117,7 @@ internal static class BeltSignalPatch
                 new SignalProto
                 {
                     ID = 306,
-                    Name = "虚粒子",
+                    Name = "Virtual Particle",
                     GridIndex = 3806,
                     IconPath = "assets/signal/virtual-particle.png",
                     _iconSprite = Util.LoadEmbeddedSprite("assets/signal/virtual-particle.png", assembly),

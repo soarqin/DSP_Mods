@@ -469,7 +469,7 @@ public class DysonSpherePatch : PatchImpl<DysonSpherePatch>
             var label1 = generator.DefineLabel();
             var label2 = generator.DefineLabel();
             matcher.MatchForward(false,
-                // this.stateText.text = "轨道未设置".Translate();
+                // this.stateText.text = "Standby".Translate();
                 new CodeMatch(OpCodes.Ldstr, "待机"),
                 new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(Localization), nameof(Localization.Translate))),
                 new CodeMatch(OpCodes.Callvirt, AccessTools.PropertySetter(typeof(Text), nameof(Text.text)))

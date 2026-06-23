@@ -20,6 +20,12 @@ public static class UIConfigWindow
         I18N.Add("Factory", "Factory", "工厂");
         I18N.Add("Planet", "Planet", "行星");
         I18N.Add("Mecha/Combat", "Mecha/Combat", "机甲/战斗");
+        I18N.Add("Cancel", "Cancel", "取消");
+        I18N.Add("OK", "OK", "确定");
+        I18N.Add("Bury all veins", "Bury all veins", "掩埋所有矿脉");
+        I18N.Add("Restore buried veins", "Restore buried veins", "还原所有矿脉");
+        I18N.Add("Reform entire planet", "Reform entire planet", "铺满星球地基");
+        I18N.Add("Revert planet terrain", "Revert planet terrain", "还原星球地形");
         I18N.Add("Enable Dev Shortcuts", "Enable Dev Shortcuts", "开发模式快捷键");
         I18N.Add("Disable Abnormal Checks", "Disable Abnormal Checks", "关闭数据异常检查");
         I18N.Add("Hotkey", "Hotkey", "快捷键");
@@ -255,11 +261,11 @@ public static class UIConfigWindow
         wnd.AddCheckBox(x, y, tab3, PlayerPatch.InstantTeleportEnabled, "Instant teleport (like that in Sandbox mode)");
         x = 400f;
         y = 10f;
-        wnd.AddButton(x, y, 200f, tab3, "矿物掩埋标题", 16, "button-bury-all", () => { PlanetFunctions.BuryAllVeins(true); });
+        wnd.AddButton(x, y, 200f, tab3, "Bury all veins", 16, "button-bury-all", () => { PlanetFunctions.BuryAllVeins(true); });
         y += 36f;
-        wnd.AddButton(x, y, 200f, tab3, "矿物还原标题", 16, "button-bury-restore-all", () => { PlanetFunctions.BuryAllVeins(false); });
+        wnd.AddButton(x, y, 200f, tab3, "Restore buried veins", 16, "button-bury-restore-all", () => { PlanetFunctions.BuryAllVeins(false); });
         y += 36f;
-        wnd.AddButton(x, y, 200f, tab3, "铺满地基提示", 16, "button-reform-all", () =>
+        wnd.AddButton(x, y, 200f, tab3, "Reform entire planet", 16, "button-reform-all", () =>
         {
             var player = GameMain.mainPlayer;
             if (player == null) return;
@@ -269,7 +275,7 @@ public static class UIConfigWindow
             GameMain.localPlanet.factory.PlanetReformAll(reformTool.brushType, reformTool.brushColor, reformTool.buryVeins);
         });
         y += 36f;
-        wnd.AddButton(x, y, 200f, tab3, "还原地形提示", 16, "button-reform-revert-all", () =>
+        wnd.AddButton(x, y, 200f, tab3, "Revert planet terrain", 16, "button-reform-revert-all", () =>
         {
             var factory = GameMain.localPlanet?.factory;
             if (factory == null) return;
@@ -316,25 +322,25 @@ public static class UIConfigWindow
             var originalY = y;
             var btn0 = wnd.AddButton(x, y, 300f, tab4, "Generate illegal dyson shell", 16, "button-generate-illegal-dyson-shells", () =>
             {
-                UIMessageBox.Show("Generate illegal dyson shell".Translate(), "WARNING: This operation can be very slow, continue?".Translate(), "取消".Translate(), "确定".Translate(), UIMessageBox.WARNING, null,
+                UIMessageBox.Show("Generate illegal dyson shell".Translate(), "WARNING: This operation can be very slow, continue?".Translate(), "Cancel".Translate(), "OK".Translate(), UIMessageBox.WARNING, null,
                     () => { DysonSphereFunctions.CreateIllegalDysonShellWithMaxOutput(); });
             });
             y += 36f;
             var btn1 = wnd.AddButton(x, y, 300f, tab4, "Generate illegal dyson shell 2", 16, "button-generate-illegal-dyson-shells", () =>
             {
-                UIMessageBox.Show("Generate illegal dyson shell 2".Translate(), "WARNING: This operation can be very slow, continue?".Translate(), "取消".Translate(), "确定".Translate(), UIMessageBox.WARNING, null,
+                UIMessageBox.Show("Generate illegal dyson shell 2".Translate(), "WARNING: This operation can be very slow, continue?".Translate(), "Cancel".Translate(), "OK".Translate(), UIMessageBox.WARNING, null,
                     () => { DysonSphereFunctions.CreateIllegalDysonShellWithMaxOutputForAllLayers(); });
             });
             y += 36f;
             var btn2 = wnd.AddButton(x, y, 300f, tab4, "Keep max production shells and remove others", 16, "button-keep-max-production-shells", () =>
             {
-                UIMessageBox.Show("Keep max production shells and remove others".Translate(), "WARNING: This operation is DANGEROUS, continue?".Translate(), "取消".Translate(), "确定".Translate(), UIMessageBox.WARNING, null,
+                UIMessageBox.Show("Keep max production shells and remove others".Translate(), "WARNING: This operation is DANGEROUS, continue?".Translate(), "Cancel".Translate(), "OK".Translate(), UIMessageBox.WARNING, null,
                     () => { DysonSphereFunctions.KeepMaxProductionShells(); });
             });
             y += 36f;
             var btn3 = wnd.AddButton(x, y, 300f, tab4, "Duplicate shells from that with highest production", 16, "button-duplicate-shells-from-the-highest-production", () =>
             {
-                UIMessageBox.Show("Duplicate shells from that with highest production".Translate(), "WARNING: This operation can be very slow, continue?".Translate(), "取消".Translate(), "确定".Translate(), UIMessageBox.WARNING, null,
+                UIMessageBox.Show("Duplicate shells from that with highest production".Translate(), "WARNING: This operation can be very slow, continue?".Translate(), "Cancel".Translate(), "OK".Translate(), UIMessageBox.WARNING, null,
                     () => { DysonSphereFunctions.DuplicateShellsWithHighestProduction(); });
             });
             y += 30f;
@@ -343,7 +349,7 @@ public static class UIConfigWindow
             y = originalY;
             var btn4 = wnd.AddButton(x, y, 300f, tab4, "Generate illegal dyson shell quickly", 16, "button-generate-illegal-dyson-shells-quickly", () =>
             {
-                UIMessageBox.Show("Generate illegal dyson shell quickly".Translate(), "WARNING: This operation can be very slow, continue?".Translate(), "取消".Translate(), "确定".Translate(), UIMessageBox.WARNING, null,
+                UIMessageBox.Show("Generate illegal dyson shell quickly".Translate(), "WARNING: This operation can be very slow, continue?".Translate(), "Cancel".Translate(), "OK".Translate(), UIMessageBox.WARNING, null,
                     () => { DysonSphereFunctions.CreateIllegalDysonShellQuickly(DysonSphereFunctions.ShellsCountForFunctions.Value); });
             });
             y += 30f;

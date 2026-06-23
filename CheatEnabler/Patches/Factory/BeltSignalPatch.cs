@@ -622,7 +622,7 @@ internal class BeltSignalGenerator : PatchImpl<BeltSignalGenerator>
             }
         }
 
-        // 水、硫酸、氢、重氢、光子
+        // Water, sulfuric acid, hydrogen, deuterium, photons
         foreach (var itemId in ItemIds.ExtraOreItemIds)
         {
             ItemSources[itemId] = new ItemSource { Count = 1 };
