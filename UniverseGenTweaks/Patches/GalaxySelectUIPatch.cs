@@ -30,19 +30,12 @@ public static class GalaxySelectUIPatch
     {
         MoreSettings.Enabled.SettingChanged += OnEnabledChanged;
         Enable(MoreSettings.Enabled.Value);
-        GameLogicProc.OnGameEnd += ResetState;
     }
 
     public static void Uninit()
     {
-        GameLogicProc.OnGameEnd -= ResetState;
         MoreSettings.Enabled.SettingChanged -= OnEnabledChanged;
         Enable(false);
-    }
-
-    private static void ResetState()
-    {
-        // No per-game mutable fields in this file; UI references are lifecycle-safe.
     }
 
     private static void OnEnabledChanged(object sender, System.EventArgs e)

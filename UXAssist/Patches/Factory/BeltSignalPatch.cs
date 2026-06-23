@@ -67,7 +67,7 @@ internal static class BeltSignalPatch
         internal static void ResetState()
         {
             _clusterSeedKey = 0L;
-            _signalBelts = null;
+            _signalBelts = new Dictionary<int, uint>[64];
             SignalBeltFactoryIndices.Clear();
             for (var i = 0; i < DarkFogItemsInVoid.Length; i++)
                 DarkFogItemsInVoid[i] = 0;
