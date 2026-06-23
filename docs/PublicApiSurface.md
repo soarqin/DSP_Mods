@@ -44,6 +44,14 @@ Inherited from `PatchImpl<GameLogic>`:
 - `protected virtual void OnEnable()`
 - `protected virtual void OnDisable()`
 
+### `GameEvent`
+
+```csharp
+public static class GameEvent
+```
+
+- `public static void InvokeSafe(this Action action, ManualLogSource logger, string name)`
+
 ### `PatchGuidAttribute`
 
 ```csharp
@@ -646,6 +654,39 @@ public class MyKeyBinder : MonoBehaviour
 - `public void OnSetNoneKeyClick(int data)`
 - `public void SettingChanged()`
 - `protected void OnDestroy()`
+
+### `ConfigTabGroup`
+
+```csharp
+public class ConfigTabGroup
+```
+
+- `public IReadOnlyList<Group> Groups { get; }`
+- `public int CurrentTabIndex { get; }`
+- `public int TabCount { get; }`
+- `public void AddGroup(string label)`
+- `public int AddTab(RectTransform rectTransform, UIButton button)`
+- `public void SetCurrentTab(int index)`
+
+Nested types:
+
+- `public class Tab`
+  - `public RectTransform RectTransform { get; set; }`
+  - `public UIButton Button { get; set; }`
+- `public class Group`
+  - `public string Label { get; set; }`
+  - `public List<Tab> Tabs { get; }`
+
+### `LayoutHelper`
+
+```csharp
+public static class LayoutHelper
+```
+
+- `public static Text AddText(float x, float y, RectTransform parent, string label, int fontSize = 14, string objName = "label")`
+- `public static UIButton AddTipsButton(float x, float y, RectTransform parent, string label, string tip, string content, string objName = "tips-button")`
+- `public static UIButton AddButton(float x, float y, RectTransform parent, string text = "", int fontSize = 16, string objName = "button", UnityAction onClick = null)`
+- `public static UIButton AddButton(float x, float y, float width, RectTransform parent, string text = "", int fontSize = 16, string objName = "button", UnityAction onClick = null)`
 
 ### `Util`
 
