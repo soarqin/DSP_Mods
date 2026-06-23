@@ -181,16 +181,16 @@ public static class GalaxySelectUIPatch
             if (GalaxyGenSettingsPatch.MinStep < GalaxyGenSettingsPatch.MinDist)
             {
                 GalaxyGenSettingsPatch.MinStep = GalaxyGenSettingsPatch.MinDist;
-                _minStepSlider.value = (float)(GalaxyGenSettingsPatch.MinStep * 10.0);
+                _minStepSlider.value = (float)(GalaxyGenSettingsPatch.MinStep * UniverseGenConstants.StepSliderScale);
                 _minStepText.text = GalaxyGenSettingsPatch.MinStep.ToString();
                 if (GalaxyGenSettingsPatch.MaxStep < GalaxyGenSettingsPatch.MinStep)
                 {
                     GalaxyGenSettingsPatch.MaxStep = GalaxyGenSettingsPatch.MinStep;
-                    _maxStepSlider.value = (float)(GalaxyGenSettingsPatch.MaxStep * 10.0);
+                    _maxStepSlider.value = (float)(GalaxyGenSettingsPatch.MaxStep * UniverseGenConstants.StepSliderScale);
                     _maxStepText.text = GalaxyGenSettingsPatch.MaxStep.ToString();
                 }
             }
-            _minStepSlider.minValue = (float)(GalaxyGenSettingsPatch.MinDist * 10.0);
+            _minStepSlider.minValue = (float)(GalaxyGenSettingsPatch.MinDist * UniverseGenConstants.StepSliderScale);
             uiGalaxySelect.SetStarmapGalaxy();
         });
         _minStepSlider.onValueChanged.AddListener(val =>
@@ -198,7 +198,7 @@ public static class GalaxySelectUIPatch
             var newVal = Mathf.Round(val) / UniverseGenConstants.StepSliderScale;
             if (newVal.Equals(GalaxyGenSettingsPatch.MinStep)) return;
             GalaxyGenSettingsPatch.MinStep = newVal;
-            _maxStepSlider.minValue = (float)(newVal * 10.0);
+            _maxStepSlider.minValue = (float)(newVal * UniverseGenConstants.StepSliderScale);
             _minStepText.text = GalaxyGenSettingsPatch.MinStep.ToString();
             uiGalaxySelect.SetStarmapGalaxy();
         });
@@ -207,7 +207,7 @@ public static class GalaxySelectUIPatch
             var newVal = Mathf.Round(val) / UniverseGenConstants.StepSliderScale;
             if (newVal.Equals(GalaxyGenSettingsPatch.MaxStep)) return;
             GalaxyGenSettingsPatch.MaxStep = newVal;
-            _minStepSlider.maxValue = (float)(newVal * 10.0);
+            _minStepSlider.maxValue = (float)(newVal * UniverseGenConstants.StepSliderScale);
             _maxStepText.text = GalaxyGenSettingsPatch.MaxStep.ToString();
             uiGalaxySelect.SetStarmapGalaxy();
         });
