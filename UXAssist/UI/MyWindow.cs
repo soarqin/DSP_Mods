@@ -425,7 +425,7 @@ public class MyWindow : ManualBehaviour
 
 public class MyWindowWithTabs : MyWindow
 {
-    private readonly List<Tuple<RectTransform, UIButton>> _tabs = [];
+    private readonly ConfigTabGroup _tabGroup = new();
     private float _tabY = 54f;
 
     public override void TryClose()
@@ -471,7 +471,7 @@ public class MyWindowWithTabs : MyWindow
         btnText.fontSize = 16;
         btn.data = index;
 
-        _tabs.Add(Tuple.Create(tabRect, btn));
+        _tabGroup.AddTab(tabRect, btn);
         btn.onClick += OnTabButtonClick;
 
         MaxY = Math.Max(MaxY, y + TabHeight);
@@ -480,7 +480,7 @@ public class MyWindowWithTabs : MyWindow
 
     public RectTransform AddTab(RectTransform parent, string label)
     {
-        var result = AddTabInternal(_tabY, _tabs.Count, parent, label);
+        var result = AddTabInternal(_tabY, _tabGroup.TabCount, parent, label);
         _tabY += 28f;
         return result;
     }
@@ -497,27 +497,14 @@ public class MyWindowWithTabs : MyWindow
 
     public void AddTabGroup(RectTransform parent, string label, string objName = "tabl-group-label")
     {
+        _tabGroup.AddGroup(label);
         LayoutHelper.AddText(28, _tabY - 2, parent, label, 16, objName);
         _tabY += 28f;
     }
 
-    protected void SetCurrentTab(int index) => OnTabButtonClick(index);
+    protected void SetCurrentTab(int index) => _tabGroup.SetCurrentTab(index);
 
-    private void OnTabButtonClick(int index)
-    {
-        foreach (var (rectTransform, btn) in _tabs)
-        {
-            if (btn.data != index)
-            {
-                btn.highlighted = false;
-                rectTransform.gameObject.SetActive(false);
-                continue;
-            }
-
-            btn.highlighted = true;
-            rectTransform.gameObject.SetActive(true);
-        }
-    }
+    private void OnTabButtonClick(int index) => _tabGroup.SetCurrentTab(index);
 }
 
 public abstract class MyWindowManager
