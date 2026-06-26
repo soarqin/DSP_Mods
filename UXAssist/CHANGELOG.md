@@ -3,6 +3,8 @@
 
 ## Changlog
 
+* 1.5.9
+  * `Do not render factory entities (except belts and sorters)`: Add sub-option `Hide sorters too` to also hide sorters, leaving only belts visible.
 * 1.5.8
   * `Initialize This Planet`: Fix a possible crash.
   * `Remember window position and size on last exit`: Remove a window hook that are not useful anymore.
@@ -401,6 +403,8 @@
 
 ## 更新日志
 
+* 1.5.9
+  * `不渲染工厂建筑实体(除了传送带和分拣器)`：新增子选项`同时隐藏分拣器`，可一并隐藏分拣器，只保留传送带可见。
 * 1.5.8
   * `初始化本行星`：修复可能的崩溃。
   * `记住上次退出时的窗口位置和大小`：移除不再有用的窗口钩子。

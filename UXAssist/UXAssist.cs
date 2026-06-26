@@ -133,6 +133,8 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
         VeinProtectionPatch.ProtectVeinsFromExhaustion.KeepOilSpeed = Config.Bind("Factory", "KeepOilSpeed", 1.0f, new ConfigDescription("Keep minimal oil speed (< 0.1 to disable)", new AcceptableValueRange<float>(0.0f, 10.0f))).Value;
         FactoryPatch.DoNotRenderEntitiesEnabled = Config.Bind("Factory", "DoNotRenderEntities", false,
             "Do not render factory entities");
+        FactoryPatch.DoNotRenderEntitiesHideSortersEnabled = Config.Bind("Factory", "DoNotRenderEntitiesHideSorters", false,
+            "Hide sorters too when not rendering factory entities (leaves only belts visible)");
         FactoryPatch.DragBuildPowerPolesEnabled = Config.Bind("Factory", "DragBuildPowerPoles", false,
             "Drag building power poles in maximum connection range");
         FactoryPatch.DragBuildPowerPolesAlternatelyEnabled = Config.Bind("Factory", "DragBuildPowerPolesAlternately", true,

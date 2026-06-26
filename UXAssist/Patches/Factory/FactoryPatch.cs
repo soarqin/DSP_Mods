@@ -25,6 +25,7 @@ public static class FactoryPatch
     public static ConfigEntry<bool> QuickBuildAndDismantleLabsEnabled;
     public static ConfigEntry<bool> ProtectVeinsFromExhaustionEnabled;
     public static ConfigEntry<bool> DoNotRenderEntitiesEnabled;
+    public static ConfigEntry<bool> DoNotRenderEntitiesHideSortersEnabled;
     public static ConfigEntry<bool> DragBuildPowerPolesEnabled;
     public static ConfigEntry<bool> DragBuildPowerPolesAlternatelyEnabled;
     public static ConfigEntry<bool> AutoConstructButtonEnabled;
@@ -112,6 +113,7 @@ public static class FactoryPatch
         QuickBuildAndDismantleLabsEnabled.SettingChanged += (_, _) => ImmediateBuildPatch.QuickBuildAndDismantleLab.Enable(QuickBuildAndDismantleLabsEnabled.Value);
         ProtectVeinsFromExhaustionEnabled.SettingChanged += (_, _) => VeinProtectionPatch.ProtectVeinsFromExhaustion.Enable(ProtectVeinsFromExhaustionEnabled.Value);
         DoNotRenderEntitiesEnabled.SettingChanged += (_, _) => RenderingPatch.DoNotRenderEntities.Enable(DoNotRenderEntitiesEnabled.Value);
+        DoNotRenderEntitiesHideSortersEnabled.SettingChanged += (_, _) => RenderingPatch.DoNotRenderEntities.HideSorters = DoNotRenderEntitiesHideSortersEnabled.Value;
         DragBuildPowerPolesEnabled.SettingChanged += (_, _) => BuildToolPatch.DragBuildPowerPoles.Enable(DragBuildPowerPolesEnabled.Value);
         DragBuildPowerPolesAlternatelyEnabled.SettingChanged += (_, _) => BuildToolPatch.DragBuildPowerPoles.AlternatelyChanged();
         AutoConstructButtonEnabled.SettingChanged += (_, _) => Functions.UIFunctions.UpdateToggleAutoConstructCheckButtonVisiblility();
@@ -147,6 +149,7 @@ public static class FactoryPatch
         ImmediateBuildPatch.QuickBuildAndDismantleLab.Enable(QuickBuildAndDismantleLabsEnabled.Value);
         VeinProtectionPatch.ProtectVeinsFromExhaustion.Enable(ProtectVeinsFromExhaustionEnabled.Value);
         RenderingPatch.DoNotRenderEntities.Enable(DoNotRenderEntitiesEnabled.Value);
+        RenderingPatch.DoNotRenderEntities.HideSorters = DoNotRenderEntitiesHideSortersEnabled.Value;
         BuildToolPatch.DragBuildPowerPoles.Enable(DragBuildPowerPolesEnabled.Value);
         ImmediateBuildPatch.AutoConstructButton.Enable(AutoConstructButtonEnabled.Value);
         BeltSignalPatch.BeltSignalsForBuyOut.Enable(BeltSignalsForBuyOutEnabled.Value);
