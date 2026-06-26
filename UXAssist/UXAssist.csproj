@@ -3,7 +3,7 @@
   <PropertyGroup>
     <BepInExPluginGuid>org.soardev.uxassist</BepInExPluginGuid>
     <Description>DSP MOD - UXAssist</Description>
-    <Version>1.5.8</Version>
+    <Version>1.5.9</Version>
     <PackageId>UXAssist</PackageId>
     <RootNamespace>UXAssist</RootNamespace>
     <PackHasChangelog>true</PackHasChangelog>

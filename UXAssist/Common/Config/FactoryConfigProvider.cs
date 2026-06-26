@@ -18,6 +18,7 @@ public static class FactoryConfigProvider
     public static ConfigEntry<bool> QuickBuildAndDismantleLabsEnabled => FactoryPatch.QuickBuildAndDismantleLabsEnabled;
     public static ConfigEntry<bool> ProtectVeinsFromExhaustionEnabled => FactoryPatch.ProtectVeinsFromExhaustionEnabled;
     public static ConfigEntry<bool> DoNotRenderEntitiesEnabled => FactoryPatch.DoNotRenderEntitiesEnabled;
+    public static ConfigEntry<bool> DoNotRenderEntitiesHideSortersEnabled => FactoryPatch.DoNotRenderEntitiesHideSortersEnabled;
     public static ConfigEntry<bool> DragBuildPowerPolesEnabled => FactoryPatch.DragBuildPowerPolesEnabled;
     public static ConfigEntry<bool> DragBuildPowerPolesAlternatelyEnabled => FactoryPatch.DragBuildPowerPolesAlternatelyEnabled;
     public static ConfigEntry<bool> AutoConstructButtonEnabled => FactoryPatch.AutoConstructButtonEnabled;

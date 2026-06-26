@@ -59,6 +59,7 @@
       * Close this function to resume mining and pumping, usually when you have enough level on `Veins Utilization`
     * Do not render factory entities (except belts and sorters)
       * This also makes players click though factory entities but belts and sorters
+      * `Hide sorters too`: also hide sorters, leaving only belts (and their cargo) visible
     * Drag building power poles in maximum connection range
     * Auto-construct
       * Fly to buildings to be contructed automatically
@@ -225,6 +226,7 @@
       * 关闭此功能以恢复开采，一般是当你在`矿物利用`上有足够的等级时。
     * 不渲染工厂建筑实体(除了传送带和分拣器)
       * 这也使玩家可以点穿工厂实体直接点到传送带和分拣器
+      * `同时隐藏分拣器`：连分拣器也一并隐藏，只保留传送带（及其上的货物）可见
     * 拖动建造电线杆时自动使用最大连接距离间隔
     * 自动建造
       * 自动飞向待建造的建筑

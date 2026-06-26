@@ -88,6 +88,7 @@ public static class I18NKeys
     public const string ProtectVeinsFromExhaustion = "Protect veins from exhaustion";
     public const string ProtectVeinsFromExhaustionTips = "Protect veins from exhaustion tips";
     public const string DoNotRenderFactoryEntities = "Do not render factory entities";
+    public const string HideSortersToo = "Hide sorters too";
     public const string DragBuildingPowerPolesInMaximumConnectionRange = "Drag building power poles in maximum connection range";
     public const string BuildTeslaTowerAndWirelessPowerTowerAlternately = "Build Tesla Tower and Wireless Power Tower alternately";
     public const string AutoConstructButton = "Auto-construct button";
@@ -299,6 +300,7 @@ Close this function to resume mining and pumping, usually when you have enough l
 
 """);
         I18N.Add(DoNotRenderFactoryEntities, "Do not render factory entities (except belts and sorters)", "不渲染工厂建筑实体(除了传送带和分拣器)");
+        I18N.Add(HideSortersToo, "Hide sorters too", "同时隐藏分拣器");
         I18N.Add(DragBuildingPowerPolesInMaximumConnectionRange, "Drag building power poles in maximum connection range", "拖动建造电线杆时自动使用最大连接距离间隔");
         I18N.Add(BuildTeslaTowerAndWirelessPowerTowerAlternately, "Build Tesla Tower and Wireless Power Tower alternately", "交替建造电力感应塔和无线输电塔");
         I18N.Add(AutoConstructButton, "Auto-construct button", "自动建造按钮");
