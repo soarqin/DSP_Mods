@@ -19,12 +19,21 @@ internal static class RenderingPatch
 
     internal class DoNotRenderEntities : PatchImpl<DoNotRenderEntities>
     {
+        public static bool HideSorters;
+
         [HarmonyPrefix]
         [HarmonyPatch(typeof(ObjectRenderer), nameof(ObjectRenderer.Render))]
         [HarmonyPatch(typeof(DynamicRenderer), nameof(DynamicRenderer.Render))]
         private static bool ObjectRenderer_Render_Prefix()
         {
             return false;
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(InserterRenderer), nameof(InserterRenderer.Render))]
+        private static bool InserterRenderer_Render_Prefix()
+        {
+            return !HideSorters;
         }
 
         [HarmonyPrefix]
@@ -69,7 +78,7 @@ internal static class RenderingPatch
                 new CodeInstruction(OpCodes.Ldarg_0),
                 new CodeInstruction(OpCodes.Ldloc_S, 33),
                 new CodeInstruction(OpCodes.Ldloc_S, 35),
-                Transpilers.EmitDelegate((RaycastLogic l, ColliderData[] colliderPool, int j) => l.factory.entityPool[colliderPool[j].objId].inserterId > 0),
+                Transpilers.EmitDelegate((RaycastLogic l, ColliderData[] colliderPool, int j) => !HideSorters && l.factory.entityPool[colliderPool[j].objId].inserterId > 0),
                 new CodeInstruction(OpCodes.Brfalse, branch1)
             );
             matcher.Labels.Add(branch2);

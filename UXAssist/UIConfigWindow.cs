@@ -259,7 +259,19 @@ public static class UIConfigWindow
 
         x = 0;
         y += 36f;
-        wnd.AddCheckBox(x, y, tab2, FactoryConfigProvider.DoNotRenderEntitiesEnabled, I18NKeys.DoNotRenderFactoryEntities);
+        {
+            wnd.AddCheckBox(x, y, tab2, FactoryConfigProvider.DoNotRenderEntitiesEnabled, I18NKeys.DoNotRenderFactoryEntities);
+            y += 27f;
+            var hideSortersCheckBox = wnd.AddCheckBox(x + 20f, y, tab2, FactoryConfigProvider.DoNotRenderEntitiesHideSortersEnabled, I18NKeys.HideSortersToo, 13);
+            FactoryConfigProvider.DoNotRenderEntitiesEnabled.SettingChanged += DoNotRenderEntitiesEnabledChanged;
+            wnd.OnFree += () => { FactoryConfigProvider.DoNotRenderEntitiesEnabled.SettingChanged -= DoNotRenderEntitiesEnabledChanged; };
+            DoNotRenderEntitiesEnabledChanged(null, null);
+
+            void DoNotRenderEntitiesEnabledChanged(object o, EventArgs e)
+            {
+                hideSortersCheckBox.SetEnable(FactoryConfigProvider.DoNotRenderEntitiesEnabled.Value);
+            }
+        }
         y += 36f;
         checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab2, FactoryConfigProvider.ShortcutKeysForBlueprintCopyEnabled, I18NKeys.ShortcutKeysForBlueprintCopyMode);
         wnd.AddTipsButton2(x + checkBoxForMeasureTextWidth.Width + 5f, y + 6f, tab2, I18NKeys.ShortcutKeysForBlueprintCopyMode, I18NKeys.ShortcutKeysForBlueprintCopyModeTips, "shortcut-keys-for-blueprint-copy-mode-tips");
