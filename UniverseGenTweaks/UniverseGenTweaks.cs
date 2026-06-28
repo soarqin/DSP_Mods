@@ -58,15 +58,10 @@ public class UniverseGenTweaks : BaseUnityPlugin, IModCanSave
 
         Localization.Register();
         UIConfigWindow.Init();
+        // Register features (Init runs eagerly here); UXAssist drives the deferred lifecycle (Start/Uninit/Update).
         ModFeatureRegistry.Discover(Assembly.GetExecutingAssembly());
-        ModFeatureRegistry.InitAll();
 
         I18N.Apply();
-    }
-
-    private void OnDestroy()
-    {
-        ModFeatureRegistry.UninitAll();
     }
 
     #region IModCanSave

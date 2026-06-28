@@ -1,9 +1,7 @@
-﻿using System;
-using System.Reflection;
+﻿using System.Reflection;
 using BepInEx;
 using CheatEnabler.Patches;
 using CheatEnabler.Patches.Factory;
-using HarmonyLib;
 using UXAssist.Common;
 using UXAssist.Common.ModFeatures;
 
@@ -101,25 +99,9 @@ public class CheatEnabler : BaseUnityPlugin
             "Buildings invincible");
         Localization.Register();
         UIConfigWindow.Init();
+        // Register features (Init runs eagerly here); UXAssist drives the deferred lifecycle (Start/Uninit/Update).
         ModFeatureRegistry.Discover(Assembly.GetExecutingAssembly());
-        ModFeatureRegistry.InitAll();
 
         I18N.Apply();
-    }
-
-    private void Start()
-    {
-        ModFeatureRegistry.StartAll();
-    }
-
-    private void OnDestroy()
-    {
-        ModFeatureRegistry.UninitAll();
-    }
-
-    private void Update()
-    {
-        if (VFInput.inputing) return;
-        ModFeatureRegistry.OnInputUpdateAll();
     }
 }

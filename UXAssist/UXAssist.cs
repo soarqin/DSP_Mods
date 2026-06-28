@@ -251,8 +251,11 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
         object[] parameters = [_harmony];
         _compats?.Do(type => type.GetMethod("Init")?.Invoke(null, parameters));
 
+        // Register UXAssist's own features (Init runs eagerly here, preserving the original Awake timing
+        // that keybind registration relies on). Dependent mods register theirs during their own Awake
+        // phase. Start is deferred to UXAssist.Start below so that all dependents have registered before
+        // any feature starts.
         ModFeatureRegistry.Discover(Assembly.GetExecutingAssembly());
-        ModFeatureRegistry.InitAll();
 
         I18N.Apply();
     }
@@ -262,6 +265,8 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
         MyWindowManager.InitBaseObjects();
         MyWindowManager.Enable(true);
 
+        // UXAssist is the sole lifecycle driver. All dependents have already registered (and initialized)
+        // their features during their Awake phase (BepInEx runs every plugin's Awake before any plugin's Start).
         ModFeatureRegistry.StartAll();
 
         _patches?.Do(type => type.GetMethod("Start")?.Invoke(null, null));
