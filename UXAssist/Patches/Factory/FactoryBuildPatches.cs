@@ -7,15 +7,9 @@ using GameLogicProc = UXAssist.Common.GameLogic;
 
 namespace UXAssist.Patches.Factory;
 
-internal static class ImmediateBuildPatch
+internal static class FactoryBuildPatches
 {
-    public static void Enable(bool enable)
-    {
-        AutoConstructButton.Enable(enable);
-        QuickBuildAndDismantleLab.Enable(enable);
-    }
-
-    internal class AutoConstructButton : PatchImpl<AutoConstructButton>
+    internal class AutoConstructPatch : PatchImpl<AutoConstructPatch>
     {
         private static int _lastPrebuildCount = -1;
 

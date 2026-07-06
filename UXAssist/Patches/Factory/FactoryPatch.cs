@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using BepInEx.Configuration;
 using CommonAPI.Systems;
@@ -109,12 +109,12 @@ public static class FactoryPatch
         LargerAreaForTerraformEnabled.SettingChanged += (_, _) => ArchitectModePatch.LargerAreaForTerraform.Enable(LargerAreaForTerraformEnabled.Value);
         OffGridBuildingEnabled.SettingChanged += (_, _) => BuildToolPatch.OffGridBuilding.Enable(OffGridBuildingEnabled.Value);
         TreatStackingAsSingleEnabled.SettingChanged += (_, _) => BuildToolPatch.TreatStackingAsSingle.Enable(TreatStackingAsSingleEnabled.Value);
-        QuickBuildAndDismantleLabsEnabled.SettingChanged += (_, _) => ImmediateBuildPatch.QuickBuildAndDismantleLab.Enable(QuickBuildAndDismantleLabsEnabled.Value);
+        QuickBuildAndDismantleLabsEnabled.SettingChanged += (_, _) => FactoryBuildPatches.QuickBuildAndDismantleLab.Enable(QuickBuildAndDismantleLabsEnabled.Value);
         ProtectVeinsFromExhaustionEnabled.SettingChanged += (_, _) => VeinProtectionPatch.ProtectVeinsFromExhaustion.Enable(ProtectVeinsFromExhaustionEnabled.Value);
         DoNotRenderEntitiesEnabled.SettingChanged += (_, _) => RenderingPatch.DoNotRenderEntities.Enable(DoNotRenderEntitiesEnabled.Value);
         DragBuildPowerPolesEnabled.SettingChanged += (_, _) => BuildToolPatch.DragBuildPowerPoles.Enable(DragBuildPowerPolesEnabled.Value);
         DragBuildPowerPolesAlternatelyEnabled.SettingChanged += (_, _) => BuildToolPatch.DragBuildPowerPoles.AlternatelyChanged();
-        AutoConstructButtonEnabled.SettingChanged += (_, _) => Functions.UIFunctions.UpdateToggleAutoConstructCheckButtonVisiblility();
+        AutoConstructButtonEnabled.SettingChanged += (_, _) => FactoryBuildPatches.AutoConstructPatch.Enable(AutoConstructButtonEnabled.Value);
         AutoConstructEnabled.SettingChanged += (_, _) => Functions.UIFunctions.UpdateToggleAutoConstructCheckButtonVisiblility();
         BeltSignalsForBuyOutEnabled.SettingChanged += (_, _) => BeltSignalPatch.BeltSignalsForBuyOut.Enable(BeltSignalsForBuyOutEnabled.Value);
         TankFastFillInAndTakeOutEnabled.SettingChanged += (_, _) => BuildToolPatch.TankFastFillInAndTakeOut.Enable(TankFastFillInAndTakeOutEnabled.Value);
@@ -144,11 +144,11 @@ public static class FactoryPatch
         ArchitectModePatch.LargerAreaForTerraform.Enable(LargerAreaForTerraformEnabled.Value);
         BuildToolPatch.OffGridBuilding.Enable(OffGridBuildingEnabled.Value);
         BuildToolPatch.TreatStackingAsSingle.Enable(TreatStackingAsSingleEnabled.Value);
-        ImmediateBuildPatch.QuickBuildAndDismantleLab.Enable(QuickBuildAndDismantleLabsEnabled.Value);
+        FactoryBuildPatches.QuickBuildAndDismantleLab.Enable(QuickBuildAndDismantleLabsEnabled.Value);
         VeinProtectionPatch.ProtectVeinsFromExhaustion.Enable(ProtectVeinsFromExhaustionEnabled.Value);
         RenderingPatch.DoNotRenderEntities.Enable(DoNotRenderEntitiesEnabled.Value);
         BuildToolPatch.DragBuildPowerPoles.Enable(DragBuildPowerPolesEnabled.Value);
-        ImmediateBuildPatch.AutoConstructButton.Enable(AutoConstructButtonEnabled.Value);
+        FactoryBuildPatches.AutoConstructPatch.Enable(AutoConstructButtonEnabled.Value);
         BeltSignalPatch.BeltSignalsForBuyOut.Enable(BeltSignalsForBuyOutEnabled.Value);
         BuildToolPatch.TankFastFillInAndTakeOut.Enable(TankFastFillInAndTakeOutEnabled.Value);
         BuildingBufferPatch.TweakBuildingBuffer.Enable(TweakBuildingBufferEnabled.Value);
@@ -166,11 +166,11 @@ public static class FactoryPatch
         BuildingBufferPatch.TweakBuildingBuffer.Enable(false);
         BuildToolPatch.TankFastFillInAndTakeOut.Enable(false);
         BeltSignalPatch.BeltSignalsForBuyOut.Enable(false);
-        ImmediateBuildPatch.AutoConstructButton.Enable(false);
+        FactoryBuildPatches.AutoConstructPatch.Enable(false);
         BuildToolPatch.DragBuildPowerPoles.Enable(false);
         RenderingPatch.DoNotRenderEntities.Enable(false);
         VeinProtectionPatch.ProtectVeinsFromExhaustion.Enable(false);
-        ImmediateBuildPatch.QuickBuildAndDismantleLab.Enable(false);
+        FactoryBuildPatches.QuickBuildAndDismantleLab.Enable(false);
         BuildToolPatch.TreatStackingAsSingle.Enable(false);
         BuildToolPatch.OffGridBuilding.Enable(false);
         ArchitectModePatch.LargerAreaForTerraform.Enable(false);
