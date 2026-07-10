@@ -11,55 +11,39 @@ internal static class FactoryBuildPatches
 {
     internal class AutoConstructPatch : PatchImpl<AutoConstructPatch>
     {
-        private static int _lastPrebuildCount = -1;
-
         protected override void OnEnable()
         {
             Functions.UIFunctions.UpdateToggleAutoConstructCheckButtonVisiblility();
+            // Diagnostic aid for reports of the auto-construct button not showing up:
+            // log the visibility predicate inputs once per enable.
+            var planet = GameMain.localPlanet;
+            var factoryLoaded = planet != null && planet.factoryLoaded;
+            UXAssist.Logger.LogInfo(
+                $"AutoConstruct button enabled: buttonCreated={Functions.UI.AutoConstructUI.ToggleAutoConstruct != null}, " +
+                $"localPlanet={planet != null}, factoryLoaded={factoryLoaded}, " +
+                $"prebuildCount={(factoryLoaded ? planet.factory.prebuildCount : 0)}");
         }
 
         protected override void OnDisable()
         {
             Functions.UIFunctions.UpdateToggleAutoConstructCheckButtonVisiblility();
-            _lastPrebuildCount = -1;
         }
 
-        [HarmonyPostfix]
-        [HarmonyPatch(typeof(PlanetData), nameof(PlanetData.NotifyFactoryLoaded))]
-        private static void PlanetData_NotifyFactoryLoaded_Postfix()
-        {
-            Functions.UIFunctions.UpdateToggleAutoConstructCheckButtonVisiblility();
-            _lastPrebuildCount = -1;
-        }
-
-        [HarmonyPostfix]
-        [HarmonyPatch(typeof(PlanetData), nameof(PlanetData.UnloadFactory))]
-        private static void PlanetData_UnloadFactory_Postfix()
-        {
-            Functions.UIFunctions.UpdateToggleAutoConstructCheckButtonVisiblility();
-            _lastPrebuildCount = -1;
-        }
-
+        // Button visibility and the pending-construction count text are reconciled periodically
+        // in AutoConstructUI.OnUpdate() (independent of Harmony patch state), so this postfix
+        // only implements the auto-construct fly-to-target behavior. This also keeps the patch
+        // surface small: PlanetData.NotifyFactoryLoaded/UnloadFactory no longer need postfixes.
         [HarmonyPostfix]
         [HarmonyPatch(typeof(PlayerAction_Rts), nameof(PlayerAction_Rts.GameTick))]
         private static void PlayerAction_Rts_GameTick_Postfix(PlayerAction_Rts __instance, long timei)
         {
             if (timei % 60L != 0) return;
+            if (!FactoryPatch.AutoConstructEnabled.Value) return;
             var planet = GameMain.localPlanet;
             if (planet == null || !planet.factoryLoaded) return;
             var factory = planet.factory;
             var prebuildCount = factory.prebuildCount;
-            if (_lastPrebuildCount != prebuildCount)
-            {
-                if (_lastPrebuildCount <= 0 || prebuildCount == 0)
-                {
-                    Functions.UIFunctions.UpdateToggleAutoConstructCheckButtonVisiblility();
-                }
-                _lastPrebuildCount = prebuildCount;
-                Functions.UIFunctions.UpdateConstructCountText(prebuildCount);
-            }
             if (prebuildCount <= 0) return;
-            if (!FactoryPatch.AutoConstructEnabled.Value) return;
             var player = __instance.player;
             if (prebuildCount <= player.mecha.constructionModule.buildTargetTotalCount) return;
             if (player.orders.orderCount > 0) return;

@@ -11,6 +11,7 @@ internal static class AutoConstructUI
     public static MyCheckButton ToggleAutoConstruct;
     public static GameObject ConstructCountPanel;
     public static Text ConstructCountText;
+    private static int _lastPrebuildCount = -1;
 
     public static void Init()
     {
@@ -30,6 +31,21 @@ internal static class AutoConstructUI
 
     public static void OnUpdate()
     {
+        // Self-healing state sync: the event-driven refreshes (config SettingChanged handlers,
+        // patch OnEnable/OnDisable) are one-shot and can be lost, e.g. when an exception thrown
+        // by an earlier handler aborts the delegate chain, or when Harmony patch application
+        // fails. Periodically reconcile the button visibility and the pending-construction count
+        // with the actual game state so a missed event never leaves the UI stuck. This also
+        // works while the game is paused, unlike the PlayerAction_Rts.GameTick polling.
+        if (Time.frameCount % 30 != 0) return;
+        if (ToggleAutoConstruct == null) return;
+        UpdateToggleAutoConstructCheckButtonVisiblility();
+        var localPlanet = GameMain.localPlanet;
+        if (localPlanet == null || !localPlanet.factoryLoaded) return;
+        var prebuildCount = localPlanet.factory.prebuildCount;
+        if (prebuildCount == _lastPrebuildCount) return;
+        _lastPrebuildCount = prebuildCount;
+        UpdateConstructCountText(prebuildCount);
     }
 
     public static void InitToggleAutoConstructCheckButton()

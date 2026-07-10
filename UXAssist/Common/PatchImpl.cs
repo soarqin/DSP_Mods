@@ -40,7 +40,30 @@ public class PatchImpl<T> where T : PatchImpl<T>, new()
             var guid = typeof(T).GetCustomAttribute<PatchGuidAttribute>()?.Guid ?? $"PatchImpl.{typeof(T).FullName ?? typeof(T).ToString()}";
             var callOnEnableBefore = typeof(T).GetCustomAttributes<PatchSetCallbackFlagAttribute>().Any(n => n.Flag == PatchCallbackFlag.CallOnEnableBeforePatch);
             if (callOnEnableBefore) thisInstance.OnEnable();
-            thisInstance._patch = Harmony.CreateAndPatchAll(typeof(T), guid);
+            // Fail-soft patch application: applying patches at runtime can fail through no
+            // fault of ours (e.g. Harmony re-runs another mod's fragile transpiler on a shared
+            // target method). An escaping exception would abort the caller, which is usually a
+            // ConfigEntry.SettingChanged handler chain, leaving later handlers (such as config
+            // UI state sync) unexecuted. Log the failure and roll back instead of throwing.
+            var patch = new Harmony(guid);
+            try
+            {
+                patch.PatchAll(typeof(T));
+            }
+            catch (Exception e)
+            {
+                UXAssist.Logger.LogError($"Failed to apply Harmony patches for {typeof(T).FullName}: {e}");
+                try
+                {
+                    patch.UnpatchSelf();
+                }
+                catch (Exception e2)
+                {
+                    UXAssist.Logger.LogError($"Failed to roll back partially applied patches for {typeof(T).FullName}: {e2}");
+                }
+                return;
+            }
+            thisInstance._patch = patch;
             if (!callOnEnableBefore) thisInstance.OnEnable();
             return;
         }
