@@ -2,6 +2,7 @@
 using CheatEnabler.Patches;
 using CheatEnabler.Patches.Factory;
 using UnityEngine;
+using UnityEngine.UI;
 using UXAssist.UI;
 using UXAssist.Common;
 using System;
@@ -41,34 +42,34 @@ public static class UIConfigWindow
         }
     }
 
-    class ShellsCountMapper : MyWindow.RangeValueMapper<int>
+    private static InputField AddShellsCountInput(MyConfigWindow wnd, float x, float y, RectTransform parent, string objName)
     {
-        public ShellsCountMapper() : base(1, 139)
-        {
-        }
+        var config = DysonSphereFunctions.ShellsCountForFunctions;
+        var count = Mathf.Clamp(config.Value, DysonSphereFunctions.MinShellsCountForFunctions, DysonSphereFunctions.MaxShellsCountForFunctions);
+        if (config.Value != count) config.Value = count;
 
-        public override int ValueToIndex(int value)
+        InputField input = null;
+        input = wnd.AddInputField(x, y, parent, count.ToString(), 15, objName, onEditEnd: value =>
         {
-            return value switch
-            {
-                < 4 => value,
-                < 64 => value / 4 + 3,
-                < 256 => value / 16 + 15,
-                < 4096 => value / 64 + 27,
-                _ => value / 256 + 75,
-            };
-        }
+            if (!int.TryParse(value, out var parsed)) parsed = config.Value;
+            parsed = Mathf.Clamp(parsed, DysonSphereFunctions.MinShellsCountForFunctions, DysonSphereFunctions.MaxShellsCountForFunctions);
+            config.Value = parsed;
+            input.text = parsed.ToString();
+        });
+        input.contentType = InputField.ContentType.IntegerNumber;
+        input.characterLimit = 5;
 
-        public override int IndexToValue(int index)
+        config.SettingChanged += OnShellsCountChanged;
+        wnd.OnFree += () => config.SettingChanged -= OnShellsCountChanged;
+        return input;
+
+        void OnShellsCountChanged(object o, EventArgs e)
         {
-            return index switch
-            {
-                < 4 => index,
-                < 19 => (index - 3) * 4,
-                < 31 => (index - 15) * 16,
-                < 91 => (index - 27) * 64,
-                _ => (index - 75) * 256,
-            };
+            var normalized = Mathf.Clamp(config.Value, DysonSphereFunctions.MinShellsCountForFunctions, DysonSphereFunctions.MaxShellsCountForFunctions);
+            if (config.Value != normalized) config.Value = normalized;
+
+            var value = normalized.ToString();
+            if (input.text != value) input.text = value;
         }
     }
 
@@ -266,7 +267,7 @@ public static class UIConfigWindow
                     () => { DysonSphereFunctions.DuplicateShellsWithHighestProduction(); });
             });
             y += 30f;
-            var slider1 = wnd.AddSlider(x + 20f, y, tab4, DysonSphereFunctions.ShellsCountForFunctions, new ShellsCountMapper());
+            var input1 = AddShellsCountInput(wnd, x + 20f, y, tab4, "input-shells-count-illegal");
 
             y = originalY;
             var btn4 = wnd.AddButton(x, y, 300f, tab4, "Generate illegal dyson shell quickly", 16, "button-generate-illegal-dyson-shells-quickly", () =>
@@ -276,7 +277,7 @@ public static class UIConfigWindow
             });
             y += 30f;
             var txt2 = wnd.AddText2(x, y, tab4, "Shells count", 15, "text-shells-count");
-            var slider2 = wnd.AddSlider(x + txt2.preferredWidth + 5f, y + 6f, tab4, DysonSphereFunctions.ShellsCountForFunctions, new ShellsCountMapper());
+            var input2 = AddShellsCountInput(wnd, x + txt2.preferredWidth + 5f, y, tab4, "input-shells-count-quick");
 
             Functions.DysonSphereFunctions.IllegalDysonShellFunctionsEnabled.SettingChanged += onIllegalDysonShellFunctionsChanged;
             wnd.OnFree += () => { Functions.DysonSphereFunctions.IllegalDysonShellFunctionsEnabled.SettingChanged -= onIllegalDysonShellFunctionsChanged; };
@@ -288,11 +289,11 @@ public static class UIConfigWindow
                 btn1.gameObject.SetActive(enabled);
                 btn2.gameObject.SetActive(enabled);
                 btn3.gameObject.SetActive(enabled);
-                slider1.gameObject.SetActive(enabled);
+                input1.gameObject.SetActive(enabled);
 
                 btn4.gameObject.SetActive(!enabled);
                 txt2.gameObject.SetActive(!enabled);
-                slider2.gameObject.SetActive(!enabled);
+                input2.gameObject.SetActive(!enabled);
             }
         }
 

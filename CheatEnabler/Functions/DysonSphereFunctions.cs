@@ -8,6 +8,9 @@ namespace CheatEnabler.Functions;
 [ModFeature("CheatDysonSphere", Order = 20)]
 public static class DysonSphereFunctions
 {
+    public const int MinShellsCountForFunctions = 1;
+    public const int MaxShellsCountForFunctions = 99_999;
+
     public static ConfigEntry<bool> IllegalDysonShellFunctionsEnabled;
     public static ConfigEntry<int> ShellsCountForFunctions;
 

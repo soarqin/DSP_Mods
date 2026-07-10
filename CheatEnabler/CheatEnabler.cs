@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
 using BepInEx;
+using BepInEx.Configuration;
 using CheatEnabler.Patches;
 using CheatEnabler.Patches.Factory;
 using UXAssist.Common;
@@ -92,7 +93,9 @@ public class CheatEnabler : BaseUnityPlugin
         Functions.DysonSphereFunctions.IllegalDysonShellFunctionsEnabled = Config.Bind("DysonSphere", "IllegalDysonShellFunctions", false,
             "Enable illegal dyson shell functions");
         Functions.DysonSphereFunctions.ShellsCountForFunctions = Config.Bind("DysonSphere", "ShellsCountForFunctions", 2048,
-            "Shells count for various functions");
+            new ConfigDescription("Shells count for various functions", new AcceptableValueRange<int>(
+                Functions.DysonSphereFunctions.MinShellsCountForFunctions,
+                Functions.DysonSphereFunctions.MaxShellsCountForFunctions)));
         CombatPatch.MechaInvincibleEnabled = Config.Bind("Battle", "MechaInvincible", false,
             "Mecha and Drones/Fleets invincible");
         CombatPatch.BuildingsInvincibleEnabled = Config.Bind("Battle", "BuildingsInvincible", false,
