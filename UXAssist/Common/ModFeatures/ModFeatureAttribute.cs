@@ -10,12 +10,12 @@ namespace UXAssist.Common.ModFeatures;
 /// <remarks>
 /// <para>
 /// <strong>Timing contract</strong> (same as <see cref="IModFeature"/>): <c>Init</c> runs eagerly at
-/// discovery time, synchronously inside <see cref="ModFeatureRegistry.Discover"/>, during the
-/// registering mod's BepInEx <c>Awake</c> phase — before the game scene loads, before any plugin's
-/// <c>Start</c>. This is the phase where early setup that must precede game initialization (e.g.
-/// keybind registration) must run. <c>Start</c> runs once during the host mod's (UXAssist) <c>Start</c>,
-/// after all mods' <c>Awake</c> have completed. The per-frame methods are called by UXAssist with at
-/// most one invocation per frame.
+/// discovery time, synchronously inside <see cref="ModFeatureRegistry.Discover"/>, normally during the
+/// registering mod's BepInEx <c>Awake</c> phase. This is the phase where early setup such as keybind
+/// registration must run. A late-discovered feature can initialize after the host lifecycle has begun.
+/// <c>Start</c> runs once during the host mod's (UXAssist) <c>Start</c>.
+/// If a feature is discovered after that lifecycle has already begun, the registry starts it immediately
+/// after <c>Init</c>. The per-frame methods are called by UXAssist with at most one invocation per frame.
 /// </para>
 /// </remarks>
 [AttributeUsage(AttributeTargets.Class, Inherited = false)]

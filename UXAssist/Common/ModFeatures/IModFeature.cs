@@ -11,18 +11,17 @@ namespace UXAssist.Common.ModFeatures;
 /// </para>
 /// <list type="bullet">
 /// <item><see cref="Init"/> runs <strong>eagerly</strong> at registration time — synchronously inside
-/// <see cref="ModFeatureRegistry.Register{T}"/>, during the registering mod's BepInEx <c>Awake</c> phase.
-/// It therefore completes <em>before</em> the game scene loads, <em>before</em> any game object's
-/// <c>Start</c>, and <em>before</em> the host mod's <see cref="Start"/>. This is the only phase where
-/// early setup that must precede game initialization (e.g. keybind registration via CommonAPI's
+/// <see cref="ModFeatureRegistry.Register{T}"/>, normally during the registering mod's BepInEx
+/// <c>Awake</c> phase. It is the phase for early setup such as keybind registration via CommonAPI's
 /// <c>CustomKeyBindSystem</c>, whose registered bindings are copied by the game's
-/// <c>UIOptionWindow._OnCreate</c> only after all plugins finish loading) can safely run. Implementations
-/// must not depend on the game being loaded here.</item>
-/// <item><see cref="Start"/> runs <strong>once</strong> during the host mod's (UXAssist) <c>Start</c>,
-/// which is guaranteed to occur after <em>every</em> mod's <c>Awake</c> has finished (BepInEx runs all
-/// plugins' <c>Awake</c> synchronously during load, before Unity dispatches any <c>Start</c>). This is
-/// the phase for activating behavior that requires the game/runtime to be ready. It is driven solely by
-/// UXAssist; dependent mods must not start features themselves.</item>
+/// <c>UIOptionWindow._OnCreate</c> only after all plugins finish loading. A late-discovered feature may
+/// initialize after the host lifecycle has begun, so implementations must not depend on either the game
+/// being loaded or unloaded here.</item>
+/// <item><see cref="Start"/> runs <strong>once</strong> when UXAssist starts the deferred lifecycle.
+/// This is normally during the host mod's <c>Start</c>; if a feature is registered afterwards, the registry
+/// starts that feature immediately after <see cref="Init"/>. This is the phase for activating behavior that
+/// requires the game/runtime to be ready. It is driven solely by UXAssist; dependent mods must not start
+/// features themselves.</item>
 /// <item><see cref="Uninit"/> runs during the host's teardown (<c>OnDestroy</c>) and resets the feature
 /// so it could be started again.</item>
 /// <item><see cref="OnInputUpdate"/> and <see cref="OnUpdate"/> are called every frame by UXAssist; the
@@ -36,18 +35,18 @@ namespace UXAssist.Common.ModFeatures;
 public interface IModFeature
 {
     /// <summary>
-    /// Called eagerly at registration time, during the registering mod's <c>Awake</c> phase, before the
-    /// game scene loads and before any plugin's <see cref="Start"/>. Use this for early setup that must
-    /// precede game initialization (e.g. keybind registration). Do not depend on the game being loaded
-    /// here. Runs at most once per registration.
+    /// Called eagerly at registration time, normally during the registering mod's <c>Awake</c> phase.
+    /// Use this for early setup such as keybind registration. A late-discovered feature may initialize
+    /// after the host lifecycle has begun, so do not depend on the game being loaded or unloaded here.
+    /// Runs at most once per registration.
     /// </summary>
     void Init();
 
     /// <summary>
-    /// Called once during the host mod's (UXAssist) <c>Start</c>, after all mods have finished
-    /// <c>Awake</c> (and thus after every feature's <see cref="Init"/>). Use this to activate behavior
-    /// that requires the game/runtime to be ready. Driven solely by UXAssist; runs at most once
-    /// (a repeated driver call is a no-op for an already-started feature).
+    /// Called once when UXAssist starts the deferred lifecycle. If this feature is registered after the
+    /// lifecycle has already started, the registry invokes this immediately after <see cref="Init"/>. Use
+    /// this to activate behavior that requires the game/runtime to be ready. Driven solely by UXAssist;
+    /// runs at most once (a repeated driver call is a no-op for an already-started feature).
     /// </summary>
     void Start();
 

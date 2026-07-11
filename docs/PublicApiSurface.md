@@ -250,8 +250,8 @@ public interface IModFeature
 public static class ModFeatureRegistry
 ```
 
-- `public static void Discover(Assembly assembly)` — register + eagerly `Init` features; called by every mod (host + dependents) in `Awake`
-- `public static void Register<T>() where T : class, IModFeature, new()` — register + eagerly `Init` an instance feature
+- `public static void Discover(Assembly assembly)` — register + eagerly `Init` features; starts a feature immediately if the host lifecycle has already begun
+- `public static void Register<T>() where T : class, IModFeature, new()` — register + eagerly `Init` an instance feature; starts it immediately if the host lifecycle has already begun
 - `internal static void StartAll()` — host-only deferred lifecycle driver (UXAssist), idempotent per feature
 - `internal static void UninitAll()` — host-only lifecycle driver (UXAssist)
 - `internal static void OnInputUpdateAll()` — host-only per-frame driver (UXAssist), guarded per-frame
@@ -260,11 +260,11 @@ public static class ModFeatureRegistry
 > `Init` runs eagerly when a feature is registered (via `Discover`/`Register`), preserving the original
 > `Awake`-phase timing that keybind registration and other early setup rely on (the game's
 > `UIOptionWindow._OnCreate` copies registered keybinds only after all plugins have loaded). `Start` is
-> the only deferred phase: UXAssist calls `StartAll` in its own `Start` so all dependents have registered
-> first (BepInEx runs every plugin's `Awake` before any plugin's `Start`). The deferred dispatchers are
-> `internal` so only UXAssist (the host, same assembly) can drive them; no `InternalsVisibleTo` is
-> declared, so cross-assembly calls are rejected at compile time. Runtime idempotency (per-feature
-> start-once) and per-frame re-entrancy guards (`Time.frameCount`) act as defense-in-depth.
+> driven solely by UXAssist: it calls `StartAll` in its own `Start`, and the registry immediately starts
+> any feature registered after that transition. The deferred dispatchers are `internal` so only UXAssist
+> (the host, same assembly) can drive them; no `InternalsVisibleTo` is declared, so cross-assembly calls
+> are rejected at compile time. Runtime idempotency (per-feature start-once) and per-frame re-entrancy
+> guards (`Time.frameCount`) act as defense-in-depth.
 
 ### `UXAssist.Common.Config`
 

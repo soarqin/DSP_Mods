@@ -102,7 +102,8 @@ public class CheatEnabler : BaseUnityPlugin
             "Buildings invincible");
         Localization.Register();
         UIConfigWindow.Init();
-        // Register features (Init runs eagerly here); UXAssist drives the deferred lifecycle (Start/Uninit/Update).
+        // Register features (Init runs eagerly here); UXAssist drives the deferred lifecycle and starts
+        // this feature set immediately if its lifecycle has already begun.
         ModFeatureRegistry.Discover(Assembly.GetExecutingAssembly());
 
         I18N.Apply();

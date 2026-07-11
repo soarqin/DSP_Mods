@@ -19,7 +19,9 @@ namespace UXAssist.Common.ModFeatures;
 /// <see cref="OnUpdateAll"/>). <see cref="Init"/> runs eagerly when a feature is registered via
 /// <see cref="Discover"/>/<see cref="Register{T}"/>, preserving the original BepInEx <c>Awake</c> timing
 /// that keybind registration and other early setup depend on (the game's <c>UIOptionWindow._OnCreate</c>
-/// copies registered keybinds, which happens only after all plugins have finished loading).
+/// copies registered keybinds, which happens only after all plugins have finished loading). If a
+/// dependent feature is discovered after the host has started the deferred lifecycle, the registry starts
+/// that feature immediately after its eager initialization so it cannot miss the lifecycle.
 /// </para>
 /// <para>
 /// The deferred dispatchers are <c>internal</c> to enforce host-only driving at compile time (no
@@ -73,6 +75,7 @@ public static class ModFeatureRegistry
     private static readonly HashSet<Type> _registeredInstanceTypes = [];
     private static readonly HashSet<Assembly> _discoveredAssemblies = [];
 
+    private static bool _deferredLifecycleStarted;
     private static int _lastInputUpdateFrame = -1;
     private static int _lastUpdateFrame = -1;
 
@@ -80,7 +83,8 @@ public static class ModFeatureRegistry
     /// Discovers mod feature classes marked with <see cref="ModFeatureAttribute"/> in the given assembly,
     /// and initializes each one immediately (calling its static <c>Init</c> method if present). Each
     /// assembly is only discovered once. Dependent mods call this in their <c>Awake</c>; the host
-    /// (UXAssist) drives the deferred lifecycle phases (<see cref="StartAll"/> etc.).
+    /// (UXAssist) drives the deferred lifecycle phases (<see cref="StartAll"/> etc.). If discovery
+    /// occurs after the host has started the deferred lifecycle, the new feature also starts immediately.
     /// </summary>
     /// <param name="assembly">The assembly to scan.</param>
     public static void Discover(Assembly assembly)
@@ -101,6 +105,7 @@ public static class ModFeatureRegistry
                 // Init eagerly at registration time, preserving the original Awake-phase timing that
                 // keybind registration and other early setup rely on.
                 InitStatic(type);
+                StartIfDeferredLifecycleStarted(feature);
             }
         }
     }
@@ -108,7 +113,8 @@ public static class ModFeatureRegistry
     /// <summary>
     /// Registers a new instance mod feature, initializing it immediately. If an instance of the same
     /// type is already registered, this is a no-op. Dependent mods call this in their <c>Awake</c>; the
-    /// host (UXAssist) drives the deferred lifecycle phases.
+    /// host (UXAssist) drives the deferred lifecycle phases. A feature registered after that lifecycle
+    /// has started is also started immediately.
     /// </summary>
     /// <typeparam name="T">The mod feature type to register.</typeparam>
     public static void Register<T>() where T : class, IModFeature, new()
@@ -117,30 +123,24 @@ public static class ModFeatureRegistry
         if (!_registeredInstanceTypes.Add(type)) return;
 
         var instance = new T();
-        _instanceFeatures.Add(new InstanceFeature(instance));
+        var feature = new InstanceFeature(instance);
+        _instanceFeatures.Add(feature);
         // Init eagerly at registration time, preserving the original Awake-phase timing.
         instance.Init();
+        StartIfDeferredLifecycleStarted(feature);
     }
 
     /// <summary>
     /// Calls <see cref="IModFeature.Start"/> on all registered instance features
     /// and invokes the cached static <c>Start</c> methods on all discovered mod feature classes.
     /// Each feature is started at most once; subsequent calls are no-ops for already-started features.
+    /// Features registered after this lifecycle has started are started immediately by the registry.
     /// </summary>
     internal static void StartAll()
     {
-        foreach (var f in _staticFeatures)
-        {
-            if (f.Started) continue;
-            f.Start?.Invoke();
-            f.Started = true;
-        }
-        foreach (var f in _instanceFeatures)
-        {
-            if (f.Started) continue;
-            f.Feature.Start();
-            f.Started = true;
-        }
+        _deferredLifecycleStarted = true;
+        foreach (var f in _staticFeatures) Start(f);
+        foreach (var f in _instanceFeatures) Start(f);
     }
 
     /// <summary>
@@ -150,6 +150,7 @@ public static class ModFeatureRegistry
     /// </summary>
     internal static void UninitAll()
     {
+        _deferredLifecycleStarted = false;
         foreach (var f in _staticFeatures)
         {
             f.Uninit?.Invoke();
@@ -190,6 +191,30 @@ public static class ModFeatureRegistry
         _lastUpdateFrame = frame;
         foreach (var f in _staticFeatures) f.OnUpdate?.Invoke();
         foreach (var f in _instanceFeatures) f.Feature.OnUpdate();
+    }
+
+    private static void StartIfDeferredLifecycleStarted(StaticFeature feature)
+    {
+        if (_deferredLifecycleStarted) Start(feature);
+    }
+
+    private static void StartIfDeferredLifecycleStarted(InstanceFeature feature)
+    {
+        if (_deferredLifecycleStarted) Start(feature);
+    }
+
+    private static void Start(StaticFeature feature)
+    {
+        if (feature.Started) return;
+        feature.Start?.Invoke();
+        feature.Started = true;
+    }
+
+    private static void Start(InstanceFeature feature)
+    {
+        if (feature.Started) return;
+        feature.Feature.Start();
+        feature.Started = true;
     }
 
     private static void InitStatic(Type type)
