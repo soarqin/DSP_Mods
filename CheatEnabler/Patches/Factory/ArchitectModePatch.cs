@@ -12,7 +12,7 @@ internal class ArchitectMode : PatchImpl<ArchitectMode>
         var factory = GameMain.mainPlayer?.factory;
         if (factory?.planet?.data != null)
         {
-            FactoryPatch.ArrivePlanet(factory);
+            global::CheatEnabler.Patches.FactoryPatch.ArrivePlanet(factory);
         }
     }
 

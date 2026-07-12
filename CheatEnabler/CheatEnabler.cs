@@ -3,6 +3,7 @@ using BepInEx;
 using BepInEx.Configuration;
 using CheatEnabler.Patches;
 using CheatEnabler.Patches.Factory;
+using FactoryPatch = CheatEnabler.Patches.Factory.FactoryPatch;
 using UXAssist.Common;
 using UXAssist.Common.ModFeatures;
 

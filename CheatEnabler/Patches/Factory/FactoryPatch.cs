@@ -188,7 +188,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         var main = GameMain.instance;
         if (main != null && main._running && __instance.factory?.planet?.data != null)
         {
-            ArrivePlanet(__instance.factory);
+            global::CheatEnabler.Patches.FactoryPatch.ArrivePlanet(__instance.factory);
         }
     }
 
@@ -198,7 +198,7 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         var factory = GameMain.mainPlayer?.factory;
         if (factory?.planet?.data != null)
         {
-            ArrivePlanet(factory);
+            global::CheatEnabler.Patches.FactoryPatch.ArrivePlanet(factory);
         }
         GameMain.data?.warningSystem?.UpdateCriticalWarningText();
     }

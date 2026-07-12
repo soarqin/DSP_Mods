@@ -121,7 +121,7 @@ internal class ImmediateBuild : PatchImpl<ImmediateBuild>
         var factory = GameMain.mainPlayer?.factory;
         if (factory?.planet?.data != null)
         {
-            FactoryPatch.ArrivePlanet(factory);
+            global::CheatEnabler.Patches.FactoryPatch.ArrivePlanet(factory);
         }
     }
     // Harmony transpiler: Transpiler
@@ -157,7 +157,7 @@ internal class ImmediateBuild : PatchImpl<ImmediateBuild>
         matcher.Insert(
             new CodeInstruction(OpCodes.Ldarg_0).WithLabels(labels),
             new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(BuildTool), nameof(BuildTool.factory))),
-            new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(FactoryPatch), nameof(FactoryPatch.ArrivePlanet)))
+            new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(global::CheatEnabler.Patches.FactoryPatch), nameof(global::CheatEnabler.Patches.FactoryPatch.ArrivePlanet)))
         );
         return matcher.InstructionEnumeration();
     }
@@ -255,7 +255,7 @@ internal class ImmediateBuild : PatchImpl<ImmediateBuild>
         var factory = GameMain.mainPlayer?.factory;
         if (factory?.planet?.data != null)
         {
-            FactoryPatch.ArrivePlanet(factory);
+            global::CheatEnabler.Patches.FactoryPatch.ArrivePlanet(factory);
         }
     }
 }
