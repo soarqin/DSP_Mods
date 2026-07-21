@@ -362,6 +362,7 @@ public static class IllegalShellFunctions
         {
             var sshell = supposedShells[j];
             var vertCount = GeometryHelpers.CalculateTriangleVertCount([sshell.posA, sshell.posB, sshell.posC]);
+            sshell.vertCount = vertCount <= barrier ? vertCount : -1;
             if (vertCount <= barrier)
             {
                 lock (mutex)
@@ -385,16 +386,32 @@ public static class IllegalShellFunctions
         if (maxJ >= 0)
         {
             ResetLayerPools(layer);
-            var sshell = supposedShells[maxJ];
-            DysonNode[] newNodes = [layer.QuickAddDysonNode(0, sshell.posA), layer.QuickAddDysonNode(0, sshell.posB), layer.QuickAddDysonNode(0, sshell.posC)];
-            DysonFrame[] newFrames = [layer.QuickAddDysonFrame(0, newNodes[0], newNodes[1], false), layer.QuickAddDysonFrame(0, newNodes[1], newNodes[2], false), layer.QuickAddDysonFrame(0, newNodes[2], newNodes[0], false)];
-            layer.QuickAddDysonShell(0, newNodes, newFrames, false);
-            foreach (var node in newNodes)
+            foreach (var sshell in supposedShells.OrderByDescending(shell => shell.vertCount))
             {
-                node.RecalcSpReq();
-                node.RecalcCpReq();
+                if (sshell.vertCount <= 0) break;
+
+                DysonNode[] newNodes = [layer.QuickAddDysonNode(0, sshell.posA), layer.QuickAddDysonNode(0, sshell.posB), layer.QuickAddDysonNode(0, sshell.posC)];
+                DysonFrame[] newFrames = [layer.QuickAddDysonFrame(0, newNodes[0], newNodes[1], false), layer.QuickAddDysonFrame(0, newNodes[1], newNodes[2], false), layer.QuickAddDysonFrame(0, newNodes[2], newNodes[0], false)];
+                if (layer.QuickAddDysonShell(0, newNodes, newFrames, false) == 0)
+                {
+                    foreach (var frame in newFrames)
+                    {
+                        layer.QuickRemoveDysonFrame(frame.id);
+                    }
+                    foreach (var node in newNodes)
+                    {
+                        layer.QuickRemoveDysonNode(node.id);
+                    }
+                    continue;
+                }
+                foreach (var node in newNodes)
+                {
+                    node.RecalcSpReq();
+                    node.RecalcCpReq();
+                }
+                shellsChanged = true;
+                break;
             }
-            shellsChanged = true;
         }
         return shellsChanged;
     }

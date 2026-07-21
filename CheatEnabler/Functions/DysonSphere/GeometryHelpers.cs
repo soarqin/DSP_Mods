@@ -162,17 +162,18 @@ public static class GeometryHelpers
         double num = 0.0;
         for (int i = 0; i < 3; i++)
         {
-            double num2 = Vector3.Distance(pos[i], pos[(i + 1) % 3]);
+            float num2 = Vector3.Distance(pos[i], pos[(i + 1) % 3]);
             VectorLF3 vectorLF2 = ((VectorLF3)pos[i] + (VectorLF3)pos[(i + 1) % 3]) * 0.5;
             sum += vectorLF2 * num2;
-            num += num2;
+            num += (double)num2;
         }
         var radius = Math.Round(polygon[0].magnitude * 10.0) / 10.0;
         for (int j = 0; j < polygon.Length; j++)
         {
             polygon[j] = polygon[j].normalized * radius;
         }
-        var center = (sum / num).normalized * radius;
+        var normalized = (sum / num).normalized;
+        var center = normalized * radius;
         float num3 = 0f;
         for (int k = 0; k < 3; k++)
         {
@@ -189,12 +190,12 @@ public static class GeometryHelpers
         var cpPerVertex = gridScale * gridScale * DysonSphereConstants.CpPerVertexFactor;
 
         var num5 = (int)((double)num3 / factor3 / gridSizeDouble + 2.5);
-        var xaxis = VectorLF3.Cross(center, Vector3.up).normalized;
+        var xaxis = VectorLF3.Cross(normalized, Vector3.up).normalized;
         if (xaxis.magnitude < 0.1)
         {
             xaxis = new VectorLF3(0f, 0f, 1f);
         }
-        var yaxis = VectorLF3.Cross(xaxis, center).normalized;
+        var yaxis = VectorLF3.Cross(xaxis, normalized).normalized;
         var raydir = xaxis * factor0 + yaxis * factor1;
         var w1axis = xaxis * (0.5 * gridSizeDouble) - yaxis * (factor3 * gridSizeDouble);
         var w2axis = xaxis * (0.5 * gridSizeDouble) + yaxis * (factor3 * gridSizeDouble);
@@ -206,7 +207,9 @@ public static class GeometryHelpers
         var polynu = new double[3];
         for (int l = 0; l < 3; l++)
         {
-            polyn[l] = VectorLF3.Cross(polygon[l], polygon[(l + 1) % 3]).normalized;
+            Vector3 vector = polygon[l];
+            Vector3 vector2 = polygon[(l + 1) % 3];
+            polyn[l] = VectorLF3.Cross(vector, vector2).normalized;
             polynu[l] = polyn[l].x * raydir.x + polyn[l].y * raydir.y + polyn[l].z * raydir.z;
         }
         var vmap = _vmap.Value;
