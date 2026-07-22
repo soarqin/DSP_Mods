@@ -142,6 +142,7 @@ public static class I18NKeys
     public const string RealTimeLogisticStationsInfoPanel = "Real-time logistic stations info panel";
     public const string ShowStatusBarsForStorageItems = "Show status bars for storage items";
     public const string TweakBuildingBuffers = "Tweak building buffers";
+    public const string TweakBuildingBuffersTips = "Tweak building buffers tips";
     public const string AssemblerBufferTimeMultiplierInSeconds = "Assembler buffer time multiplier(in seconds)";
     public const string AssemblerBufferMinimumMultiplier = "Assembler buffer minimum multiplier";
     public const string BufferCountForAssemblingInLabs = "Buffer count for assembling in labs";
@@ -380,6 +381,27 @@ Quick-set item filter while right-clicking item icons in storage list on the pan
         I18N.Add(RealTimeLogisticStationsInfoPanel, "Real-time logistic stations info panel", "物流运输站实时信息面板");
         I18N.Add(ShowStatusBarsForStorageItems, "Show status bars for storage items", "显示存储物品状态条");
         I18N.Add(TweakBuildingBuffers, "Tweak building buffers", "调整建筑输入缓冲");
+        I18N.Add(TweakBuildingBuffersTips, """
+Original in-game values:
+Assembler buffer time multiplier (in seconds): 4
+Assembler buffer minimum multiplier: 2
+Buffer count for assembling in labs: 6
+Extra buffer count for Self-evolution Labs: 3
+Buffer count for researching in labs: 10
+Ray Receiver Graviton Lens buffer count: 20
+Ejector Solar Sails buffer count: 20
+Silo Rockets buffer count: 20
+""", """
+游戏内原始值：
+工厂配方缓冲时间倍率（秒）：4
+工厂配方缓冲最小倍率：2
+研究站矩阵合成模式缓存数量：6
+自演化研究站矩阵额外缓冲数量：3
+研究站科研模式缓存数量：10
+射线接收器透镜缓冲数量：20
+弹射器太阳能帆缓冲数量：20
+发射井火箭缓冲数量：20
+""");
         I18N.Add(AssemblerBufferTimeMultiplierInSeconds, "Assembler buffer time multiplier(in seconds)", "工厂配方缓冲时间倍率(秒)");
         I18N.Add(AssemblerBufferMinimumMultiplier, "Assembler buffer minimum multiplier", "工厂配方缓冲最小倍率");
         I18N.Add(BufferCountForAssemblingInLabs, "Buffer count for assembling in labs", "研究站矩阵合成模式缓存数量");

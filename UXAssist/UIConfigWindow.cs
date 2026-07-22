@@ -375,7 +375,9 @@ public static class UIConfigWindow
 
         {
             y += 36f;
-            wnd.AddCheckBox(x, y, tab2, FactoryConfigProvider.TweakBuildingBufferEnabled, I18NKeys.TweakBuildingBuffers);
+            checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab2, FactoryConfigProvider.TweakBuildingBufferEnabled, I18NKeys.TweakBuildingBuffers);
+            wnd.AddTipsButton2(x + checkBoxForMeasureTextWidth.Width + 5f, y + 6f, tab2, I18NKeys.TweakBuildingBuffers,
+                I18NKeys.TweakBuildingBuffersTips, "tweak-building-buffers-tips");
             y += 27f;
             txt = wnd.AddText2(x + 20f, y, tab2, I18NKeys.AssemblerBufferTimeMultiplierInSeconds, 13);
             var nx1 = txt.preferredWidth + 5f;
