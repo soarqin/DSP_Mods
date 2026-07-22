@@ -235,6 +235,7 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
         DysonSpherePatch.AutoConstructMultiplier = Config.Bind("DysonSphere", "AutoConstructMultiplier", 1, "Dyson Sphere auto-construct speed multiplier");
         UIPatch.PlanetVeinUtilizationEnabled = Config.Bind("UI", "PlanetVeinUtilization", false,
             "Planet vein utilization");
+		PlayerPatch.AutoNavigationG.Awake(Config);
 
         I18N.Init();
         I18NKeys.Register();
