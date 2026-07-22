@@ -42,6 +42,7 @@ public static class LogisticsPatch
     // Vein collector config
     public static ConfigEntry<int> AutoConfigVeinCollectorHarvestSpeed; // 0-20, 100% + 10% * value
     public static ConfigEntry<int> AutoConfigVeinCollectorMinPilerValue; // 0~4; 0 = Maximum in tech, 1~4 = piler stacking count
+    public static ConfigEntry<int> OrbitalCollectorProductLimit;
 
     public static ConfigEntry<bool> LogisticsCapacityTweaksEnabled;
     public static ConfigEntry<bool> AllowOverflowInLogisticsEnabled;
@@ -337,6 +338,29 @@ public static class LogisticsPatch
     public static void ApplyVeinCollectorHarvestSpeed() => ForEachStation(StationKind.VeinCollector, (f, s) => VeinCollectorSetHarvestSpeed(f, s));
     public static void ApplyVeinCollectorMinPilerValue() => ForEachStation(StationKind.VeinCollector, VeinCollectorSetPilerCount);
     public static void ApplyAllVeinCollector() => ForEachStation(StationKind.VeinCollector, DoConfigStation);
+
+    public static void ApplyOrbitalCollectorProductLimitToUniverse()
+    {
+        var data = GameMain.data;
+        var factories = data?.factories;
+        if (factories == null) return;
+        var limit = OrbitalCollectorProductLimit.Value;
+        for (var factoryIndex = data.factoryCount - 1; factoryIndex >= 0; factoryIndex--)
+        {
+            var transport = factories[factoryIndex]?.transport;
+            var stationPool = transport?.stationPool;
+            if (stationPool == null) continue;
+            for (var stationIndex = transport.stationCursor - 1; stationIndex > 0; stationIndex--)
+            {
+                var station = stationPool[stationIndex];
+                if (station == null || station.id != stationIndex || !station.isCollector) continue;
+                var productCount = Math.Min(station.storage.Length, station.collectionIds?.Length ?? 0);
+                for (var productIndex = 0; productIndex < productCount; productIndex++)
+                    station.storage[productIndex].max = limit;
+            }
+        }
+        RefreshOpenLogisticsWindows();
+    }
 
     #endregion
 }

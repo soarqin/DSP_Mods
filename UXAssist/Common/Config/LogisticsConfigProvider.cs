@@ -29,6 +29,7 @@ public static class LogisticsConfigProvider
     public static ConfigEntry<int> AutoConfigILSShipCount => LogisticsPatch.AutoConfigILSShipCount;
     public static ConfigEntry<int> AutoConfigVeinCollectorHarvestSpeed => LogisticsPatch.AutoConfigVeinCollectorHarvestSpeed;
     public static ConfigEntry<int> AutoConfigVeinCollectorMinPilerValue => LogisticsPatch.AutoConfigVeinCollectorMinPilerValue;
+    public static ConfigEntry<int> OrbitalCollectorProductLimit => LogisticsPatch.OrbitalCollectorProductLimit;
     public static ConfigEntry<bool> LogisticsCapacityTweaksEnabled => LogisticsPatch.LogisticsCapacityTweaksEnabled;
     public static ConfigEntry<bool> AllowOverflowInLogisticsEnabled => LogisticsPatch.AllowOverflowInLogisticsEnabled;
     public static ConfigEntry<bool> GreaterPowerUsageInLogisticsEnabled => LogisticsPatch.GreaterPowerUsageInLogisticsEnabled;

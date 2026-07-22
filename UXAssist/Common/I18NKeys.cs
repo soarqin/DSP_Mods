@@ -109,6 +109,8 @@ public static class I18NKeys
     public const string PLS = "PLS";
     public const string ILS = "ILS";
     public const string AdvancedMiningMachine = "Advanced Mining Machine";
+    public const string OrbitalCollectorProductLimit = "Orbital Collector product limit";
+    public const string ApplyToUniverse = "Apply to universe";
     public const string SetDefaultRemoteLogicToStorage = "Set default remote logic to storage";
     public const string MaxChargingPower = "Max. Charging Power";
     public const string CountOfBotsFilled = "Count of Bots filled";
@@ -331,6 +333,8 @@ Close this function to resume mining and pumping, usually when you have enough l
         I18N.Add(PLS, "PLS", "行星物流站");
         I18N.Add(ILS, "ILS", "星际物流站");
         I18N.Add(AdvancedMiningMachine, "Advanced Mining Machine", "大型采矿机");
+        I18N.Add(OrbitalCollectorProductLimit, "Orbital Collector product limit", "轨道采集器产物上限");
+        I18N.Add(ApplyToUniverse, "Apply to universe", "应用到全宇宙");
         I18N.Add(SetDefaultRemoteLogicToStorage, "Set default remote logic to storage", "设置默认远程逻辑为仓储");
         I18N.Add(MaxChargingPower, "Max. Charging Power", "最大充能功率");
         I18N.Add(CountOfBotsFilled, "Count of Bots filled", "填充的配送机数量");

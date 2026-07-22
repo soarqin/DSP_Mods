@@ -196,6 +196,7 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
         LogisticsPatch.AutoConfigILSShipCount = Config.Bind("Factory", "AutoConfigILSShipCount", 10, new ConfigDescription("ILS: Count of Vessels filled", new AcceptableValueRange<int>(0, 10)));
         LogisticsPatch.AutoConfigVeinCollectorHarvestSpeed = Config.Bind("Factory", "AutoConfigVeinCollectorHarvestSpeed", 20, new ConfigDescription("AMM: Collecting Speed", new AcceptableValueRange<int>(0, 20)));
         LogisticsPatch.AutoConfigVeinCollectorMinPilerValue = Config.Bind("Factory", "AutoConfigVeinCollectorMinPilerValue", 0, new ConfigDescription("AMM: Outgoing integration count", new AcceptableValueRange<int>(0, 4)));
+        LogisticsPatch.OrbitalCollectorProductLimit = Config.Bind("Factory", "OrbitalCollectorProductLimit", 20000, new ConfigDescription("Orbital Collector product limit", new AcceptableValueRange<int>(1, 999999)));
         LogisticsPatch.LogisticsCapacityTweaksEnabled = Config.Bind("Factory", "LogisticsCapacityTweaks", true,
             "Logistics capacity related tweaks");
         LogisticsPatch.AllowOverflowInLogisticsEnabled = Config.Bind("Factory", "AllowOverflowInLogistics", false,

@@ -479,6 +479,33 @@ public static class UIConfigWindow
             }
         }
         y += 36f;
+        {
+            txt = wnd.AddText2(x, y + 4f, tab3, I18NKeys.OrbitalCollectorProductLimit, 15, "text-orbital-collector-product-limit");
+            var productLimitConfig = LogisticsConfigProvider.OrbitalCollectorProductLimit;
+            var productLimitInput = wnd.AddInputField(x + txt.preferredWidth + 10f, y, tab3, productLimitConfig.Value.ToString(), 15,
+                "input-orbital-collector-product-limit");
+            productLimitInput.onEndEdit.AddListener(SetProductLimit);
+            productLimitInput.contentType = UnityEngine.UI.InputField.ContentType.IntegerNumber;
+            productLimitInput.characterValidation = UnityEngine.UI.InputField.CharacterValidation.Integer;
+            (productLimitInput.transform as RectTransform).sizeDelta = new Vector2(100f, (productLimitInput.transform as RectTransform).sizeDelta.y);
+            wnd.AddButton(x + txt.preferredWidth + 120f, y, 130f, tab3, I18NKeys.ApplyToUniverse, 14,
+                "button-apply-orbital-collector-product-limit", () =>
+                {
+                    SetProductLimit(productLimitInput.text);
+                    LogisticsPatch.ApplyOrbitalCollectorProductLimitToUniverse();
+                });
+            productLimitConfig.SettingChanged += ProductLimitChanged;
+            wnd.OnFree += () => productLimitConfig.SettingChanged -= ProductLimitChanged;
+
+            void SetProductLimit(string value)
+            {
+                if (int.TryParse(value, out var parsed)) productLimitConfig.Value = Mathf.Clamp(parsed, 1, 999999);
+                productLimitInput.text = productLimitConfig.Value.ToString();
+            }
+
+            void ProductLimitChanged(object sender, EventArgs args) => productLimitInput.text = productLimitConfig.Value.ToString();
+        }
+        y += 36f;
         wnd.AddCheckBox(x, y, tab3, LogisticsConfigProvider.AutoConfigLogisticsEnabled, I18NKeys.AutoConfigLogisticStations);
         y += 26f;
         wnd.AddCheckBox(x + 10f, y, tab3, LogisticsConfigProvider.AutoConfigLimitAutoReplenishCount, I18NKeys.LimitAutoReplenishCountToValuesBelow, 13).WithSmallerBox();
