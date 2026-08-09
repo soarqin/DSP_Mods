@@ -3,7 +3,7 @@
   <PropertyGroup>
     <BepInExPluginGuid>org.soardev.dustbin</BepInExPluginGuid>
     <Description>DSP MOD - Dustbin</Description>
-    <Version>1.4.0</Version>
+    <Version>1.4.1</Version>
     <PackageId>Dustbin</PackageId>
     <RootNamespace>Dustbin</RootNamespace>
     <PackHasChangelog>true</PackHasChangelog>
