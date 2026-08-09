@@ -197,39 +197,35 @@ public static class BeltSignal
         }
     }
 
-    [HarmonyTranspiler]
-    [HarmonyPatch(typeof(GameData), nameof(GameData.GameTick))]
-    public static IEnumerable<CodeInstruction> GameData_GameTick_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+    // Game 0.10.34 removed GameData.GameTick (the main loop was split into granular
+    // GameLogic methods), which broke the old transpiler that injected the belt-signal
+    // processing there. GameLogic.TrashSystemGameTick is invoked synchronously from
+    // GameLogic.OnGameLogicFrame once per logic frame, after belt/cargo updates, so a
+    // postfix on it is an equivalent (and simpler) once-per-tick main-logic-thread hook.
+    [HarmonyPostfix]
+    [HarmonyPatch(typeof(GameLogic), nameof(GameLogic.TrashSystemGameTick))]
+    public static void GameLogic_TrashSystemGameTick_Postfix()
     {
-        var matcher = new CodeMatcher(instructions, generator);
-        matcher.MatchForward(false,
-            new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(PerformanceMonitor), nameof(PerformanceMonitor.EndSample)))
-        ).Advance(1).Insert(
-            Transpilers.EmitDelegate(() =>
+        var factories = GameMain.data?.factories;
+        if (factories == null) return;
+        foreach (var factory in factories)
+        {
+            if (factory == null) continue;
+            var index = factory.index;
+            var belts = GetSignalBelts(index);
+            if (belts == null || belts.Count == 0) continue;
+            var consumeRegister = GameMain.statistics.production.factoryStatPool[index].consumeRegister;
+            var cargoTraffic = factory.cargoTraffic;
+            foreach (var beltId in belts)
             {
-                var factories = GameMain.data?.factories;
-                if (factories == null) return;
-                foreach (var factory in factories)
-                {
-                    if (factory == null) continue;
-                    var index = factory.index;
-                    var belts = GetSignalBelts(index);
-                    if (belts == null || belts.Count == 0) continue;
-                    var consumeRegister = GameMain.statistics.production.factoryStatPool[index].consumeRegister;
-                    var cargoTraffic = factory.cargoTraffic;
-                    foreach (var beltId in belts)
-                    {
-                        ref var belt = ref cargoTraffic.beltPool[beltId];
-                        var cargoPath = cargoTraffic.GetCargoPath(belt.segPathId);
-                        if (cargoPath == null) continue;
-                        int itemId;
-                        if ((itemId = cargoPath.TryPickItem(belt.segIndex + belt.segPivotOffset - 5, 12, out var stack, out _)) <= 0) continue;
-                        consumeRegister[itemId] += stack;
-                        Dustbin.CalcGetSands(itemId, stack, 0);
-                    }
-                }
-            })
-        );
-        return matcher.InstructionEnumeration();
+                ref var belt = ref cargoTraffic.beltPool[beltId];
+                var cargoPath = cargoTraffic.GetCargoPath(belt.segPathId);
+                if (cargoPath == null) continue;
+                int itemId;
+                if ((itemId = cargoPath.TryPickItem(belt.segIndex + belt.segPivotOffset - 5, 12, out var stack, out _)) <= 0) continue;
+                consumeRegister[itemId] += stack;
+                Dustbin.CalcGetSands(itemId, stack, 0);
+            }
+        }
     }
 }

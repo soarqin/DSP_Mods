@@ -142,7 +142,7 @@ The sync is implemented as an inline PowerShell `Exec` step inside the `ZipMod` 
 ## Key Architectural Patterns
 
 - **Shared library:** `UXAssist` acts as a common library. `CheatEnabler` and `UniverseGenTweaks` reference `UXAssist.csproj` directly to reuse `Common/`, `UI/`, and config panel infrastructure.
-- **Preloader pattern:** `DustbinPreloader` and `LabOptPreloader` use Mono.Cecil to inject new fields into game assemblies at BepInEx preload time, enabling their corresponding main mods to read/write those fields via normal C# without reflection.
+- **Preloader pattern:** `DustbinPreloader` and `LabOptPreloader` use Mono.Cecil to inject new fields into game assemblies at BepInEx preload time, enabling their corresponding main mods to read/write those fields via normal C# without reflection. The main mods compile against a pre-injected reference copy of the game assembly kept in the mod's `GameAssembly/` directory (e.g. `Dustbin/GameAssembly/Assembly-CSharp.dll` = `AssemblyFromGame/Assembly-CSharp.dll` plus the injected fields); regenerate that copy with Mono.Cecil whenever `AssemblyFromGame/` is updated, or the mod silently builds against stale game APIs.
 - **Internationalization:** `UXAssist/Common/I18N.cs` provides bilingual (EN + ZH) string lookup used across UXAssist and CheatEnabler.
 - **Transpiler patches:** Performance-critical mods (LabOpt, MechaDronesTweaks) use `[HarmonyTranspiler]` to rewrite IL instructions directly for maximum efficiency.
 - **Save persistence:** Mods that need to persist data use the `IModCanSave` interface from DSPModSave.

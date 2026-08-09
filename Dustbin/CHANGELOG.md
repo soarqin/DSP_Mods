@@ -3,6 +3,10 @@
 
 ## Changelog
 
+* 1.4.1
+  * Fix belt signal processing broken by game version 0.10.34: `GameData.GameTick` was removed when the main loop was split into granular `GameLogic` methods, so the old transpiler could not find its target. Belt-signal processing is now a postfix on `GameLogic.TrashSystemGameTick` (invoked synchronously once per logic frame from `GameLogic.OnGameLogicFrame`).
+  * Regenerate `GameAssembly/Assembly-CSharp.dll` from the current game version (previous copy predated 0.10.34 and masked the compile break).
+
 * 1.4.0
   * Refactorying Tank input logic codes, for better performance, and resolve a bug [#53](https://github.com/soarqin/DSP_Mods/issues/53)
   * Remove use of AssetBundle, move the belt signal icon into `Assembly Resources`, for better flexibility.
