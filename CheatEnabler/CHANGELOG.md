@@ -6,6 +6,7 @@
 * 2.4.5
   * New button `Generate illegal dyson shells for all layers without nodes and shells`, which is used to extend dyson layers.
     * You must enable `IllegalDysonShellFunctionsEnabled` of `DysonSphere` section in config to see it.
+  * `Finish build immediately`: Fix a crash when pasting a blueprint containing the first Planetary Shield Generator on a planet.
 * 2.4.4
   * `Finish build immediately`: Fix a possible crash.
 * 2.4.3
@@ -193,6 +194,7 @@
 * 2.4.5
   * 新按钮 `为所有没有节点和壳的层级生成仙术戴森壳`，用于扩展新戴森壳层面的时候。
     * 你必须在设置文件里开启`DysonSphere`分类的`IllegalDysonShellFunctionsEnabled`才能看到它。
+  * `立即完成建造`：修复在行星上粘贴包含首座行星护盾发生器的蓝图时可能崩溃的问题。
 * 2.4.4
   * `立即完成建造`: 修复一个可能的崩溃问题。
 * 2.4.3

@@ -59,6 +59,14 @@ internal class CargoTrafficPatch : PatchImpl<CargoTrafficPatch>
         _anyBelt = false;
         factory.planet.physics?.raycastLogic?.NotifyBatchObjectRemove();
         factory.planet.audio?.SetPlanetAudioDirty();
+
+        var atField = factory.planetATField;
+        var defenseSystem = factory.defenseSystem;
+        if (atField != null && defenseSystem != null &&
+            defenseSystem.fieldGenerators.count > 0 && atField.physicsArgs == null)
+        {
+            atField.UpdatePhysicsShape(updateGeneratorMatrix: true);
+        }
     }
 
     public static void TryEndBatchBuilding(PlanetFactory factory)
