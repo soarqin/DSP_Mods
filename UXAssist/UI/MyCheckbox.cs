@@ -28,11 +28,30 @@ public class MyCheckBox : MonoBehaviour
         var go = Instantiate(UIRoot.instance.uiGame.buildMenu.uxFacilityCheck.gameObject);
         go.name = "my-checkbox";
         go.SetActive(false);
+        Util.ResetButton(go.GetComponent<UIButton>());
+        var boxImage = go.GetComponent<Image>();
+        if (boxImage)
+        {
+            boxImage.color = BoxColor;
+            boxImage.enabled = true;
+        }
+        var checkImage = go.transform.Find("checked")?.GetComponent<Image>();
+        if (checkImage)
+        {
+            checkImage.color = CheckColor;
+            checkImage.enabled = false;
+        }
         var comp = go.transform.Find("text");
         if (comp)
         {
             var txt = comp.GetComponent<Text>();
-            if (txt) txt.text = "";
+            if (txt)
+            {
+                txt.text = "";
+                txt.color = TextColor;
+                txt.alignment = TextAnchor.MiddleLeft;
+                txt.fontStyle = FontStyle.Normal;
+            }
             var localizer = comp.GetComponent<Localizer>();
             if (localizer) DestroyImmediate(localizer);
         }
@@ -66,6 +85,11 @@ public class MyCheckBox : MonoBehaviour
         cb.uiButton = go.GetComponent<UIButton>();
         cb.boxImage = go.transform.GetComponent<Image>();
         cb.checkImage = go.transform.Find("checked")?.GetComponent<Image>();
+        Util.ResetButton(cb.uiButton);
+        cb.boxImage.color = BoxColor;
+        cb.boxImage.enabled = true;
+        cb.checkImage.color = CheckColor;
+        cb.checkImage.enabled = false;
         Util.NormalizeRectWithTopLeft(cb.checkImage, 0f, 0f);
 
         var child = go.transform.Find("text");
@@ -76,17 +100,21 @@ public class MyCheckBox : MonoBehaviour
             {
                 cb.labelText.text = "";
                 cb.labelText.fontSize = fontSize;
+                cb.labelText.color = TextColor;
+                cb.labelText.alignment = TextAnchor.MiddleLeft;
+                cb.labelText.fontStyle = FontStyle.Normal;
                 cb.UpdateLabelTextWidth();
             }
         }
 
+        cb.SetEnable(true);
         cb.uiButton.onClick += cb.OnClick;
         return cb;
     }
 
     private void UpdateLabelTextWidth()
     {
-        if (labelText) labelText.rectTransform.sizeDelta = new Vector2(labelText.preferredWidth, labelText.rectTransform.sizeDelta.y);
+        if (labelText) labelText.rectTransform.sizeDelta = new Vector2(Util.GetPreferredWidth(labelText), labelText.rectTransform.sizeDelta.y);
     }
 
     public bool Checked

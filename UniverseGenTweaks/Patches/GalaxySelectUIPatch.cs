@@ -67,9 +67,13 @@ public static class GalaxySelectUIPatch
             CreateSliderWithText(__instance.starCountSlider, out _maxStepTitle, out _maxStepSlider, out _maxStepText, out var maxStepLocalizer);
             CreateSliderWithText(__instance.starCountSlider, out _flattenTitle, out _flattenSlider, out _flattenText, out var flattenLocalizer);
             minDistLocalizer.stringKey = Localization.StarDistanceMin;
+            _minDistTitle.text = Localization.StarDistanceMin.Translate();
             minStepLocalizer.stringKey = Localization.StepDistanceMin;
+            _minStepTitle.text = Localization.StepDistanceMin.Translate();
             maxStepLocalizer.stringKey = Localization.StepDistanceMax;
+            _maxStepTitle.text = Localization.StepDistanceMax.Translate();
             flattenLocalizer.stringKey = Localization.Flatness;
+            _flattenTitle.text = Localization.Flatness.Translate();
 
             _minDistTitle.name = "min-dist";
             _minStepTitle.name = "min-step";
@@ -120,8 +124,31 @@ public static class GalaxySelectUIPatch
     {
         var origText = orig.transform.parent.GetComponent<Text>();
         title = Object.Instantiate(origText, origText.transform.parent);
+        title.text = "";
+        title.color = Color.white;
+        title.fontStyle = FontStyle.Normal;
+        title.horizontalOverflow = HorizontalWrapMode.Overflow;
+        title.verticalOverflow = VerticalWrapMode.Overflow;
+        title.enabled = true;
+        foreach (var button in title.GetComponentsInChildren<UIButton>(true))
+        {
+            UXAssist.UI.Util.ResetButton(button);
+        }
+        foreach (var image in title.GetComponentsInChildren<Image>(true))
+        {
+            image.enabled = true;
+        }
         slider = title.transform.FindChildRecur("Slider").GetComponent<Slider>();
+        slider.enabled = true;
+        slider.interactable = true;
+        slider.onValueChanged.RemoveAllListeners();
         text = slider.transform.FindChildRecur("Text").GetComponent<Text>();
+        text.text = "";
+        text.color = Color.white;
+        text.fontStyle = FontStyle.Normal;
+        text.horizontalOverflow = HorizontalWrapMode.Overflow;
+        text.verticalOverflow = VerticalWrapMode.Overflow;
+        text.enabled = true;
         loc = title.GetComponent<Localizer>();
     }
 

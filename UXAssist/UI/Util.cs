@@ -1,9 +1,33 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 
 namespace UXAssist.UI;
 
 public static class Util
 {
+
+    public static float GetPreferredWidth(Text text)
+    {
+        // DSP caches preferred sizes in its custom text generator, separately from Unity's layout queue.
+        text.SetLayoutDirty();
+        return text.preferredWidth;
+    }
+
+    public static void ResetButton(UIButton button)
+    {
+        if (!button) return;
+        button.enabled = true;
+        button.highlighted = false;
+        button.updating = true;
+        button.data = 0;
+        button.tips = default;
+        if (button.button)
+        {
+            button.button.enabled = true;
+            button.button.interactable = true;
+        }
+        button.MReset();
+    }
 
     public static RectTransform NormalizeRectWithTopLeft(Component cmp, float left, float top, Transform parent = null)
     {

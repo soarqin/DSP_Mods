@@ -25,7 +25,10 @@ public static class LayoutHelper
         txt.color = new Color(1f, 1f, 1f, 0.4f);
         txt.alignment = TextAnchor.MiddleLeft;
         txt.fontSize = fontSize;
-        txt.rectTransform.sizeDelta = new Vector2(txt.preferredWidth + 8f, txt.preferredHeight + 8f);
+        txt.fontStyle = FontStyle.Normal;
+        txt.horizontalOverflow = HorizontalWrapMode.Overflow;
+        txt.verticalOverflow = VerticalWrapMode.Overflow;
+        txt.rectTransform.sizeDelta = new Vector2(Util.GetPreferredWidth(txt) + 8f, txt.preferredHeight + 8f);
         AddElement(x, y, txt.rectTransform, parent);
         return txt;
     }
@@ -36,6 +39,7 @@ public static class LayoutHelper
         var dst = UnityEngine.Object.Instantiate(src);
         dst.gameObject.name = objName;
         var btn = dst.GetComponent<UIButton>();
+        Util.ResetButton(btn);
         Util.NormalizeRectWithTopLeft(btn, x, y, parent);
         btn.tips.topLevel = true;
         btn.tips.tipTitle = label;
@@ -54,6 +58,7 @@ public static class LayoutHelper
         var panel = UIRoot.instance.uiGame.statWindow.performancePanelUI;
         var btn = UnityEngine.Object.Instantiate(panel.cpuActiveButton);
         btn.gameObject.name = objName;
+        Util.ResetButton(btn);
         var rect = Util.NormalizeRectWithTopLeft(btn, x, y, parent);
         rect.sizeDelta = new Vector2(width, rect.sizeDelta.y);
         var l = btn.gameObject.transform.Find("button-text").GetComponent<Localizer>();
@@ -67,6 +72,10 @@ public static class LayoutHelper
         if (t != null)
         {
             t.text = text.Translate();
+            t.color = Color.white;
+            t.fontStyle = FontStyle.Normal;
+            t.horizontalOverflow = HorizontalWrapMode.Overflow;
+            t.verticalOverflow = VerticalWrapMode.Overflow;
         }
 
         t.fontSize = fontSize;

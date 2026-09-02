@@ -48,6 +48,7 @@ public class MyWindow : ManualBehaviour
         var go = Instantiate(_baseObject, UIRoot.instance.uiGame.transform.parent);
         go.name = name;
         go.SetActive(false);
+        Util.ResetButton(go.transform.Find("panel-bg")?.GetComponentInChildren<UIButton>());
         MyWindow win = go.AddComponent<T>();
         if (!win) return null;
 
@@ -385,9 +386,13 @@ public class MyWindow : ManualBehaviour
         inputField.gameObject.name = objName;
         Destroy(inputField.GetComponent<UIButton>());
         inputField.GetComponent<Image>().color = new Color(1f, 1f, 1f, 0.05f);
+        inputField.GetComponent<Image>().enabled = true;
+        inputField.interactable = true;
         var rect = Util.NormalizeRectWithTopLeft(inputField, x, y, parent);
         rect.sizeDelta = new Vector2(210, rect.sizeDelta.y);
         inputField.text = text;
+        inputField.textComponent.color = Color.white;
+        inputField.textComponent.fontStyle = FontStyle.Normal;
         inputField.textComponent.fontSize = fontSize;
 
         inputField.onValueChanged.RemoveAllListeners();
@@ -408,9 +413,13 @@ public class MyWindow : ManualBehaviour
         inputField.gameObject.name = objName;
         Destroy(inputField.GetComponent<UIButton>());
         inputField.GetComponent<Image>().color = new Color(1f, 1f, 1f, 0.05f);
+        inputField.GetComponent<Image>().enabled = true;
+        inputField.interactable = true;
         var rect = Util.NormalizeRectWithTopLeft(inputField, x, y, parent);
         rect.sizeDelta = new Vector2(width, rect.sizeDelta.y);
         inputField.text = config.Value;
+        inputField.textComponent.color = Color.white;
+        inputField.textComponent.fontStyle = FontStyle.Normal;
         inputField.textComponent.fontSize = fontSize;
 
         inputField.onValueChanged.RemoveAllListeners();
@@ -447,7 +456,10 @@ public class MyWindowWithTabs : MyWindow
         var swarmPanel = UIRoot.instance.uiGame.dysonEditor.controlPanel.hierarchy.swarmPanel;
         var src = swarmPanel.orbitButtons[0];
         var btn = Instantiate(src);
+        Util.ResetButton(btn);
         btn.gameObject.GetComponent<Image>().sprite = swarmPanel.buttonDefaultSprite;
+        btn.gameObject.GetComponent<Image>().color = Color.white;
+        btn.gameObject.GetComponent<Image>().enabled = true;
         btn.name = "tab-btn-" + index;
         btn.highlighted = false;
 
@@ -468,7 +480,9 @@ public class MyWindowWithTabs : MyWindow
         shadow.effectColor = new Color(0f, 0f, 0f, 0.4f);
         shadow.effectDistance = new Vector2(1f, -1f);
         btnText.text = label.Translate();
+        btnText.color = Color.white;
         btnText.fontSize = 16;
+        btnText.fontStyle = FontStyle.Normal;
         btn.data = index;
 
         _tabGroup.AddTab(tabRect, btn);
@@ -488,6 +502,12 @@ public class MyWindowWithTabs : MyWindow
     public void AddSplitter(RectTransform parent, float spacing)
     {
         var img = Instantiate(UIRoot.instance.optionWindow.transform.Find("tab-line").Find("bar"));
+        var image = img.GetComponent<Image>();
+        if (image)
+        {
+            image.color = Color.white;
+            image.enabled = true;
+        }
         Destroy(img.Find("tri").gameObject);
         _tabY += spacing;
         var rect = Util.NormalizeRectWithTopLeft(img, 28, _tabY, parent);

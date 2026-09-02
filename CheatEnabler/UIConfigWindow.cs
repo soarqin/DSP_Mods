@@ -278,7 +278,7 @@ public static class UIConfigWindow
             });
             y += 30f;
             var txt2 = wnd.AddText2(x, y, tab4, "Shells count", 15, "text-shells-count");
-            var input2 = AddShellsCountInput(wnd, x + txt2.preferredWidth + 5f, y, tab4, "input-shells-count-quick");
+            var input2 = AddShellsCountInput(wnd, x + UXAssist.UI.Util.GetPreferredWidth(txt2) + 5f, y, tab4, "input-shells-count-quick");
 
             Functions.DysonSphereFunctions.IllegalDysonShellFunctionsEnabled.SettingChanged += onIllegalDysonShellFunctionsChanged;
             wnd.OnFree += () => { Functions.DysonSphereFunctions.IllegalDysonShellFunctionsEnabled.SettingChanged -= onIllegalDysonShellFunctionsChanged; };

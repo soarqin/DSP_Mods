@@ -20,18 +20,30 @@ public class MyFlatButton : MonoBehaviour
         var btn = go.GetComponent<UIButton>();
         go.GetComponent<Image>().sprite = panel.buttonDefaultSprite;
         btn.gameObject.name = "my-flatbutton";
+        go.SetActive(false);
+        Util.ResetButton(btn);
         btn.highlighted = false;
         var img = btn.GetComponent<Image>();
         if (img != null)
         {
             img.sprite = panel.buttonDefaultSprite;
-            img.color = new Color(img.color.r, img.color.g, img.color.b, 13f / 255f);
+            img.color = new Color(1f, 1f, 1f, 13f / 255f);
+            img.enabled = true;
         }
 
         img = btn.gameObject.transform.Find("frame")?.GetComponent<Image>();
         if (img != null)
         {
-            img.color = new Color(img.color.r, img.color.g, img.color.b, 0f);
+            img.color = new Color(1f, 1f, 1f, 0f);
+            img.enabled = true;
+        }
+
+        var text = btn.gameObject.transform.Find("Text")?.GetComponent<Text>();
+        if (text)
+        {
+            text.text = "";
+            text.color = Color.white;
+            text.fontStyle = FontStyle.Normal;
         }
 
         btn.button.onClick.RemoveAllListeners();
@@ -53,6 +65,7 @@ public class MyFlatButton : MonoBehaviour
 
         cb.rectTrans = rect;
         cb.uiButton = go.GetComponent<UIButton>();
+        Util.ResetButton(cb.uiButton);
 
         cb.labelText = go.transform.Find("Text")?.GetComponent<Text>();
         cb.uiButton.onClick += onClick;

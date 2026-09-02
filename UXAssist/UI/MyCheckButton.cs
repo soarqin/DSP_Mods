@@ -38,6 +38,7 @@ public class MyCheckButton : MonoBehaviour
         var go = Instantiate(UIRoot.instance.uiGame.beltWindow.reverseButton.gameObject);
         go.name = "my-checkbutton";
         go.SetActive(false);
+        Util.ResetButton(go.GetComponent<UIButton>());
         var comp = go.transform.Find("text");
         if (comp)
         {
@@ -46,6 +47,8 @@ public class MyCheckButton : MonoBehaviour
             {
                 txt.text = "";
                 txt.alignment = TextAnchor.MiddleCenter;
+                txt.color = Color.white;
+                txt.fontStyle = FontStyle.Normal;
                 txt.rectTransform.anchorMax = new Vector2(0f, 1f);
                 txt.rectTransform.anchorMin = new Vector2(0f, 1f);
                 txt.rectTransform.pivot = new Vector2(0f, 1f);
@@ -82,6 +85,7 @@ public class MyCheckButton : MonoBehaviour
 
         cb.rectTrans = rect;
         cb.uiButton = go.GetComponent<UIButton>();
+        Util.ResetButton(cb.uiButton);
 
         var child = go.transform.Find("text");
         if (child != null)
@@ -91,6 +95,8 @@ public class MyCheckButton : MonoBehaviour
             {
                 cb.labelText.text = "";
                 cb.labelText.fontSize = fontSize;
+                cb.labelText.color = Color.white;
+                cb.labelText.fontStyle = FontStyle.Normal;
             }
         }
 

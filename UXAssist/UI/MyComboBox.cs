@@ -21,6 +21,10 @@ public class MyComboBox : MonoBehaviour
         var go = Instantiate(UIRoot.instance.optionWindow.resolutionComp.gameObject);
         go.name = "my-combobox";
         go.SetActive(false);
+        foreach (var button in go.GetComponentsInChildren<UIButton>(true))
+        {
+            Util.ResetButton(button);
+        }
 
         var rect = (RectTransform)go.transform;
         var cbctrl = rect.GetComponent<UIComboBox>();
@@ -38,6 +42,7 @@ public class MyComboBox : MonoBehaviour
                 txtComp.font = fontSource.font;
                 txtComp.fontSize = fontSource.fontSize;
                 txtComp.fontStyle = fontSource.fontStyle;
+                txtComp.color = Color.white;
             }
             txtComp = rect.Find("Main Button/Text")?.GetComponent<Text>();
             if (txtComp)
@@ -45,10 +50,22 @@ public class MyComboBox : MonoBehaviour
                 txtComp.font = fontSource.font;
                 txtComp.fontSize = fontSource.fontSize;
                 txtComp.fontStyle = fontSource.fontStyle;
+                txtComp.color = Color.white;
             }
         }
         cbctrl.onSubmit.RemoveAllListeners();
         cbctrl.onItemIndexChange.RemoveAllListeners();
+        cbctrl.itemIndex = -1;
+        cbctrl.isDroppedDown = false;
+        cbctrl.m_Input.text = "";
+        cbctrl.m_Text.text = "";
+        cbctrl.m_Input.textComponent.color = Color.white;
+        cbctrl.m_Text.color = Color.white;
+        cbctrl.m_DropDownContent.anchoredPosition = Vector2.zero;
+        cbctrl.m_DropDownList.gameObject.SetActive(false);
+        cbctrl.m_EmptyItemRes.gameObject.SetActive(false);
+        cbctrl.m_SelectionBG.gameObject.SetActive(false);
+        cbctrl.m_Scrollbar.gameObject.SetActive(false);
         _baseObject = go;
     }
 
@@ -58,6 +75,10 @@ public class MyComboBox : MonoBehaviour
         gameObject.name = "my-combobox";
         gameObject.SetActive(true);
         var cb = gameObject.AddComponent<MyComboBox>();
+        foreach (var button in gameObject.GetComponentsInChildren<UIButton>(true))
+        {
+            Util.ResetButton(button);
+        }
         var rtrans = Util.NormalizeRectWithTopLeft(cb, x, y, parent);
         cb._rectTrans = rtrans;
         var box = rtrans.GetComponent<UIComboBox>();

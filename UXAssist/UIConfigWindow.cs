@@ -232,7 +232,7 @@ public static class UIConfigWindow
         {
             y += 36f;
             txt = wnd.AddText2(x + 2f, y, tab1, I18NKeys.LogicalFrameRate, 15, "game-frame-rate");
-            x += txt.preferredWidth + 7f;
+            x += UI.Util.GetPreferredWidth(txt) + 7f;
             wnd.AddSlider(x, y + 6f, tab1, GamePatch.GameUpsFactor, new UpsMapper(), "0.0x", 100f).WithSmallerHandle();
             var btn = wnd.AddFlatButton(x + 104f, y + 6f, tab1, I18NKeys.Reset, 13, "reset-game-frame-rate", () => GamePatch.GameUpsFactor.Value = 1.0f);
             ((RectTransform)btn.transform).sizeDelta = new Vector2(40f, 20f);
@@ -240,7 +240,7 @@ public static class UIConfigWindow
         }
         y += 36f;
         txt = wnd.AddText2(x + 2f, y, tab1, I18NKeys.ProcessPriority, 15, "process-priority");
-        wnd.AddComboBox(x + 7f + txt.preferredWidth, y, tab1).WithItems(I18NKeys.High, I18NKeys.AboveNormal, I18NKeys.Normal, I18NKeys.BelowNormal, I18NKeys.Idle).WithSize(100f, 0f).WithConfigEntry(WindowFunctions.ProcessPriority);
+        wnd.AddComboBox(x + 7f + UI.Util.GetPreferredWidth(txt), y, tab1).WithItems(I18NKeys.High, I18NKeys.AboveNormal, I18NKeys.Normal, I18NKeys.BelowNormal, I18NKeys.Idle).WithSize(100f, 0f).WithConfigEntry(WindowFunctions.ProcessPriority);
 
         var tab2 = wnd.AddTab(trans, I18NKeys.Factory);
         x = 0f;
@@ -252,11 +252,11 @@ public static class UIConfigWindow
         checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab2, FactoryConfigProvider.NightLightEnabled, I18NKeys.NightLight);
         x += checkBoxForMeasureTextWidth.Width + 5f + 10f;
         txt = wnd.AddText2(x, y + 2f, tab2, I18NKeys.AngleX, 13, "text-nightlight-angle-x");
-        x += txt.preferredWidth + 5f;
+        x += UI.Util.GetPreferredWidth(txt) + 5f;
         wnd.AddSlider(x, y + 7f, tab2, FactoryConfigProvider.NightLightAngleX, new AngleMapper(), "0", 60f).WithSmallerHandle();
         x += 70f;
         txt = wnd.AddText2(x, y + 2f, tab2, "Y:", 13, "text-nightlight-angle-y");
-        wnd.AddSlider(x + txt.preferredWidth + 5f, y + 7f, tab2, FactoryConfigProvider.NightLightAngleY, new AngleMapper(), "0", 60f).WithSmallerHandle();
+        wnd.AddSlider(x + UI.Util.GetPreferredWidth(txt) + 5f, y + 7f, tab2, FactoryConfigProvider.NightLightAngleY, new AngleMapper(), "0", 60f).WithSmallerHandle();
         x = 0;
         y += 36f;
         wnd.AddCheckBox(x, y, tab2, FactoryConfigProvider.LargerAreaForUpgradeAndDismantleEnabled, I18NKeys.LargerAreaForUpgradeAndDismantle);
@@ -276,7 +276,7 @@ public static class UIConfigWindow
             var cb = wnd.AddCheckBox(x, y, tab2, FactoryConfigProvider.TankFastFillInAndTakeOutEnabled, I18NKeys.FastFillInToAndTakeOutFromTanks);
             x += cb.Width + 5f;
             txt = wnd.AddText2(x, y + 2f, tab2, I18NKeys.SpeedRatio, 13, "text-tank-fast-fill-speed-ratio");
-            var tankSlider = wnd.AddSlider(x + txt.preferredWidth + 5f, y + 7f, tab2, FactoryConfigProvider.TankFastFillInAndTakeOutMultiplier, [2, 5, 10, 20, 50, 100, 500, 1000], "G", 100f).WithSmallerHandle();
+            var tankSlider = wnd.AddSlider(x + UI.Util.GetPreferredWidth(txt) + 5f, y + 7f, tab2, FactoryConfigProvider.TankFastFillInAndTakeOutMultiplier, [2, 5, 10, 20, 50, 100, 500, 1000], "G", 100f).WithSmallerHandle();
             FactoryConfigProvider.TankFastFillInAndTakeOutEnabled.SettingChanged += TankSettingChanged;
             wnd.OnFree += () => { FactoryConfigProvider.TankFastFillInAndTakeOutEnabled.SettingChanged -= TankSettingChanged; };
             TankSettingChanged(null, null);
@@ -369,7 +369,7 @@ public static class UIConfigWindow
         wnd.AddButton(x, y, 200, tab2, I18NKeys.QuickBuildOrbitalCollectors, 16, "button-init-planet", PlanetFunctions.BuildOrbitalCollectors);
         y += 30f;
         txt = wnd.AddText2(x + 10f, y, tab2, I18NKeys.MaximumCountToBuild, 15, "text-oc-build-count");
-        wnd.AddSlider(x + 10f + txt.preferredWidth + 5f, y + 6f, tab2, PlanetFunctions.OrbitalCollectorMaxBuildCount, new OcMapper(), "G", 160f);
+        wnd.AddSlider(x + 10f + UI.Util.GetPreferredWidth(txt) + 5f, y + 6f, tab2, PlanetFunctions.OrbitalCollectorMaxBuildCount, new OcMapper(), "G", 160f);
 
         y += 18f;
 
@@ -380,28 +380,28 @@ public static class UIConfigWindow
                 I18NKeys.TweakBuildingBuffersTips, "tweak-building-buffers-tips");
             y += 27f;
             txt = wnd.AddText2(x + 20f, y, tab2, I18NKeys.AssemblerBufferTimeMultiplierInSeconds, 13);
-            var nx1 = txt.preferredWidth + 5f;
+            var nx1 = UI.Util.GetPreferredWidth(txt) + 5f;
             y += 27f;
             txt = wnd.AddText2(x + 20f, y, tab2, I18NKeys.AssemblerBufferMinimumMultiplier, 13);
-            var nx2 = txt.preferredWidth + 5f;
+            var nx2 = UI.Util.GetPreferredWidth(txt) + 5f;
             y += 27f;
             txt = wnd.AddText2(x + 20f, y, tab2, I18NKeys.BufferCountForAssemblingInLabs, 13);
-            var nx3 = txt.preferredWidth + 5f;
+            var nx3 = UI.Util.GetPreferredWidth(txt) + 5f;
             y += 27f;
             txt = wnd.AddText2(x + 20f, y, tab2, I18NKeys.ExtraBufferCountForSelfEvolutionLabs, 13);
-            var nx4 = txt.preferredWidth + 5f;
+            var nx4 = UI.Util.GetPreferredWidth(txt) + 5f;
             y += 27f;
             txt = wnd.AddText2(x + 20f, y, tab2, I18NKeys.BufferCountForResearchingInLabs, 13);
-            var nx5 = txt.preferredWidth + 5f;
+            var nx5 = UI.Util.GetPreferredWidth(txt) + 5f;
             y += 27f;
             txt = wnd.AddText2(x + 20f, y, tab2, I18NKeys.RayReceiverGravitonLensBufferCount, 13);
-            var nx6 = txt.preferredWidth + 5f;
+            var nx6 = UI.Util.GetPreferredWidth(txt) + 5f;
             y += 27f;
             txt = wnd.AddText2(x + 20f, y, tab2, I18NKeys.EjectorSolarSailsBufferCount, 13);
-            var nx7 = txt.preferredWidth + 5f;
+            var nx7 = UI.Util.GetPreferredWidth(txt) + 5f;
             y += 27f;
             txt = wnd.AddText2(x + 20f, y, tab2, I18NKeys.SiloRocketsBufferCount, 13);
-            var nx8 = txt.preferredWidth + 5f;
+            var nx8 = UI.Util.GetPreferredWidth(txt) + 5f;
             y -= 189f;
             var mx = Mathf.Max(nx1, nx2, nx3, nx4, nx5, nx6, nx7, nx8) + 20f;
             var assemblerBufferTimeMultiplierSlider = wnd.AddSlider(x + mx, y + 5f, tab2, FactoryConfigProvider.AssemblerBufferTimeMultiplier, new MyWindow.RangeValueMapper<int>(2, 10), "0", 120f).WithSmallerHandle();
@@ -484,13 +484,14 @@ public static class UIConfigWindow
         {
             txt = wnd.AddText2(x, y + 4f, tab3, I18NKeys.OrbitalCollectorProductLimit, 15, "text-orbital-collector-product-limit");
             var productLimitConfig = LogisticsConfigProvider.OrbitalCollectorProductLimit;
-            var productLimitInput = wnd.AddInputField(x + txt.preferredWidth + 10f, y, tab3, productLimitConfig.Value.ToString(), 15,
+            var productLimitLabelWidth = UI.Util.GetPreferredWidth(txt);
+            var productLimitInput = wnd.AddInputField(x + productLimitLabelWidth + 10f, y, tab3, productLimitConfig.Value.ToString(), 15,
                 "input-orbital-collector-product-limit");
             productLimitInput.onEndEdit.AddListener(SetProductLimit);
             productLimitInput.contentType = UnityEngine.UI.InputField.ContentType.IntegerNumber;
             productLimitInput.characterValidation = UnityEngine.UI.InputField.CharacterValidation.Integer;
             (productLimitInput.transform as RectTransform).sizeDelta = new Vector2(100f, (productLimitInput.transform as RectTransform).sizeDelta.y);
-            wnd.AddButton(x + txt.preferredWidth + 120f, y, 130f, tab3, I18NKeys.ApplyToUniverse, 14,
+            wnd.AddButton(x + productLimitLabelWidth + 120f, y, 130f, tab3, I18NKeys.ApplyToUniverse, 14,
                 "button-apply-orbital-collector-product-limit", () =>
                 {
                     SetProductLimit(productLimitInput.text);
@@ -521,73 +522,73 @@ public static class UIConfigWindow
         var oy = y;
         x = 20f;
         var textForMeasureTextWidth = wnd.AddText2(x, y, tab3, I18NKeys.MaxChargingPower, 13, "text-dispenser-max-charging-power");
-        maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
+        maxWidth = Mathf.Max(maxWidth, UI.Util.GetPreferredWidth(textForMeasureTextWidth));
         y += 18f;
         textForMeasureTextWidth = wnd.AddText2(x, y, tab3, I18NKeys.CountOfBotsFilled, 13, "text-dispenser-count-of-bots-filled");
-        maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
+        maxWidth = Mathf.Max(maxWidth, UI.Util.GetPreferredWidth(textForMeasureTextWidth));
         y += 18f;
         wnd.AddText2(10f, y, tab3, I18NKeys.BattlefieldAnalysisBase, 14, "text-battlefield-analysis-base");
         var battleBaseCatY = y;
         y += 18f;
         textForMeasureTextWidth = wnd.AddText2(x, y, tab3, I18NKeys.MaxChargingPower, 13, "text-battlefield-analysis-base-max-charging-power");
-        maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
+        maxWidth = Mathf.Max(maxWidth, UI.Util.GetPreferredWidth(textForMeasureTextWidth));
         y += 18f;
         wnd.AddText2(10f, y, tab3, I18NKeys.PLS, 14, "text-pls");
         var plsCatY = y;
         y += 18f;
         textForMeasureTextWidth = wnd.AddText2(x, y, tab3, I18NKeys.MaxChargingPower, 13, "text-pls-max-charging-power");
-        maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
+        maxWidth = Mathf.Max(maxWidth, UI.Util.GetPreferredWidth(textForMeasureTextWidth));
         y += 18f;
         textForMeasureTextWidth = wnd.AddText2(x, y, tab3, I18NKeys.DroneTransportRange, 13, "text-pls-drone-transport-range");
-        maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
+        maxWidth = Mathf.Max(maxWidth, UI.Util.GetPreferredWidth(textForMeasureTextWidth));
         y += 18f;
         textForMeasureTextWidth = wnd.AddText2(x, y, tab3, I18NKeys.MinLoadOfDrones, 13, "text-pls-min-load-of-drones");
-        maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
+        maxWidth = Mathf.Max(maxWidth, UI.Util.GetPreferredWidth(textForMeasureTextWidth));
         y += 18f;
         textForMeasureTextWidth = wnd.AddText2(x, y, tab3, I18NKeys.OutgoingIntegrationCount, 13, "text-pls-outgoing-integration-count");
-        maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
+        maxWidth = Mathf.Max(maxWidth, UI.Util.GetPreferredWidth(textForMeasureTextWidth));
         y += 18f;
         textForMeasureTextWidth = wnd.AddText2(x, y, tab3, I18NKeys.CountOfDronesFilled, 13, "text-pls-count-of-drones-filled");
-        maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
+        maxWidth = Mathf.Max(maxWidth, UI.Util.GetPreferredWidth(textForMeasureTextWidth));
         y += 18f;
         wnd.AddText2(10f, y, tab3, I18NKeys.ILS, 14, "text-ils");
         var ilsCatY = y;
         y += 18f;
         textForMeasureTextWidth = wnd.AddText2(x, y, tab3, I18NKeys.MaxChargingPower, 13, "text-ils-max-charging-power");
-        maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
+        maxWidth = Mathf.Max(maxWidth, UI.Util.GetPreferredWidth(textForMeasureTextWidth));
         y += 18f;
         textForMeasureTextWidth = wnd.AddText2(x, y, tab3, I18NKeys.DroneTransportRange, 13, "text-ils-drone-transport-range");
-        maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
+        maxWidth = Mathf.Max(maxWidth, UI.Util.GetPreferredWidth(textForMeasureTextWidth));
         y += 18f;
         textForMeasureTextWidth = wnd.AddText2(x, y, tab3, I18NKeys.VesselTransportRange, 13, "text-ils-vessel-transport-range");
-        maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
+        maxWidth = Mathf.Max(maxWidth, UI.Util.GetPreferredWidth(textForMeasureTextWidth));
         y += 18f;
         textForMeasureTextWidth = wnd.AddText2(x, y, tab3, I18NKeys.WarpDistance, 13, "text-ils-warp-distance");
-        maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
+        maxWidth = Mathf.Max(maxWidth, UI.Util.GetPreferredWidth(textForMeasureTextWidth));
         y += 18f;
         textForMeasureTextWidth = wnd.AddText2(x, y, tab3, I18NKeys.MinLoadOfDrones, 13, "text-ils-min-load-of-drones");
-        maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
+        maxWidth = Mathf.Max(maxWidth, UI.Util.GetPreferredWidth(textForMeasureTextWidth));
         y += 18f;
         textForMeasureTextWidth = wnd.AddText2(x, y, tab3, I18NKeys.MinLoadOfVessels, 13, "text-ils-min-load-of-vessels");
-        maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
+        maxWidth = Mathf.Max(maxWidth, UI.Util.GetPreferredWidth(textForMeasureTextWidth));
         y += 18f;
         textForMeasureTextWidth = wnd.AddText2(x, y, tab3, I18NKeys.OutgoingIntegrationCount, 13, "text-ils-outgoing-integration-count");
-        maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
+        maxWidth = Mathf.Max(maxWidth, UI.Util.GetPreferredWidth(textForMeasureTextWidth));
         y += 18f;
         textForMeasureTextWidth = wnd.AddText2(x, y, tab3, I18NKeys.CountOfDronesFilled, 13, "text-ils-count-of-drones-filled");
-        maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
+        maxWidth = Mathf.Max(maxWidth, UI.Util.GetPreferredWidth(textForMeasureTextWidth));
         y += 18f;
         textForMeasureTextWidth = wnd.AddText2(x, y, tab3, I18NKeys.CountOfVesselsFilled, 13, "text-ils-count-of-vessels-filled");
-        maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
+        maxWidth = Mathf.Max(maxWidth, UI.Util.GetPreferredWidth(textForMeasureTextWidth));
         y += 18f;
         wnd.AddText2(10f, y, tab3, I18NKeys.AdvancedMiningMachine, 14, "text-amm");
         var ammCatY = y;
         y += 18f;
         textForMeasureTextWidth = wnd.AddText2(x, y, tab3, I18NKeys.CollectingSpeed, 13, "text-amm-collecting-speed");
-        maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
+        maxWidth = Mathf.Max(maxWidth, UI.Util.GetPreferredWidth(textForMeasureTextWidth));
         y += 18f;
         textForMeasureTextWidth = wnd.AddText2(x, y, tab3, I18NKeys.MinPilerValue, 13, "text-amm-min-piler-value");
-        maxWidth = Mathf.Max(maxWidth, textForMeasureTextWidth.preferredWidth);
+        maxWidth = Mathf.Max(maxWidth, UI.Util.GetPreferredWidth(textForMeasureTextWidth));
         y = oy + 1;
         var nx = x + maxWidth + 5f + 10f;
         const float applyBtnWidth = 44f;
@@ -704,7 +705,7 @@ public static class UIConfigWindow
             var autoBoostCheckBox = wnd.AddCheckBox(x + 20f, y, tab4, PlayerPatch.AutoBoostEnabled, I18NKeys.AutoBoost, 13);
             y += 27f;
             txt = wnd.AddText2(x + 20f, y, tab4, I18NKeys.DistanceToUseWarp, 15, "text-distance-to-warp");
-            var navDistanceSlider = wnd.AddSlider(x + 20f + txt.preferredWidth + 5f, y + 6f, tab4, PlayerPatch.DistanceToWarp, new DistanceMapper(), "0.0", 100f);
+            var navDistanceSlider = wnd.AddSlider(x + 20f + UI.Util.GetPreferredWidth(txt) + 5f, y + 6f, tab4, PlayerPatch.DistanceToWarp, new DistanceMapper(), "0.0", 100f);
 
 			y += 36f;
 			MyCheckBox newAlgorithmCheckBox = wnd.AddCheckBox(
@@ -725,7 +726,7 @@ public static class UIConfigWindow
 			y   += 27f;
 			txt =  wnd.AddText2(x + 20f, y, tab4, I18NKeys.UseWarpMinimalEnergy, 15, "use-warp-minimal-energy");
 			var warpEnergySlider = wnd.AddSideSlider(
-				x + 20f + txt.preferredWidth + 5f,
+				x + 20f + UI.Util.GetPreferredWidth(txt) + 5f,
 				y + 6f,
 				tab4,
 				PlayerPatch.UseWarperMinimalEnergy,
@@ -736,7 +737,7 @@ public static class UIConfigWindow
 			y   += 27f;
 			txt =  wnd.AddText2(x + 20f, y, tab4, I18NKeys.DistanceToUseWarp, 15, "text-new-navigation-distance-to-warp");
 			var newNavDistanceSlider = wnd.AddSlider(
-				x + 20f + txt.preferredWidth + 5f,
+				x + 20f + UI.Util.GetPreferredWidth(txt) + 5f,
 				y + 6f,
 				tab4,
 				PlayerPatch.UseWarperDistance,
@@ -748,7 +749,7 @@ public static class UIConfigWindow
 			y   += 27f;
 			txt =  wnd.AddText2(x + 20f, y, tab4, I18NKeys.AutoBoostMinimalEnergy, 15, "auto-boost-minimal-energy");
 			var speedUpEnergySlider = wnd.AddSideSlider(
-				x + 20f + txt.preferredWidth + 5f,
+				x + 20f + UI.Util.GetPreferredWidth(txt) + 5f,
 				y + 6f,
 				tab4,
 				PlayerPatch.UseSpeedUpMinimalEnergy,
@@ -759,7 +760,7 @@ public static class UIConfigWindow
 			y   += 27f;
 			txt =  wnd.AddText2(x, y, tab4, I18NKeys.DarkFogHiveFollowDistance, 15, "dark-fog-hive-follow-distance");
 			var dfHiveSlider = wnd.AddSideSlider(
-				x + txt.preferredWidth + 5f,
+				x + UI.Util.GetPreferredWidth(txt) + 5f,
 				y + 6f,
 				tab4,
 				PlayerPatch.DFHiveFollowDistance,
@@ -770,7 +771,7 @@ public static class UIConfigWindow
 			y   += 27f;
 			txt =  wnd.AddText2(x, y, tab4, I18NKeys.DarkFogCarrierFollowDistance, 15, "dark-fog-carrier-follow-distance");
 			var dfCarrierSlider = wnd.AddSideSlider(
-				x + txt.preferredWidth + 5f,
+				x + UI.Util.GetPreferredWidth(txt) + 5f,
 				y + 6f,
 				tab4,
 				PlayerPatch.DFCarrierFollowDistance,
@@ -848,7 +849,7 @@ public static class UIConfigWindow
         x = 400f;
         y += 36f;
         txt = wnd.AddText2(x, y, tab5, I18NKeys.AutoFastBuildSpeedMultiplier, 15, "text-auto-fast-build-multiplier");
-        wnd.AddSlider(x + txt.preferredWidth + 5f, y + 6f, tab5, DysonSpherePatch.AutoConstructMultiplier, [1, 2, 5, 10, 20, 50, 100], "0", 100f);
+        wnd.AddSlider(x + UI.Util.GetPreferredWidth(txt) + 5f, y + 6f, tab5, DysonSpherePatch.AutoConstructMultiplier, [1, 2, 5, 10, 20, 50, 100], "0", 100f);
         _dysonTab = tab5;
 
         var tab6 = wnd.AddTab(trans, I18NKeys.TechCombatUI);

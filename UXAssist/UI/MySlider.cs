@@ -29,6 +29,10 @@ public class MySlider : MonoBehaviour
         //sizeDelta = 240, 20
         go.name = "my-slider";
         go.SetActive(true);
+        foreach (var button in go.GetComponentsInChildren<UIButton>(true))
+        {
+            Util.ResetButton(button);
+        }
         var sl = go.AddComponent<MySlider>();
         var rect = Util.NormalizeRectWithTopLeft(sl, x, y, parent);
         sl.rectTrans = rect;
@@ -40,12 +44,17 @@ public class MySlider : MonoBehaviour
         sl.slider = go.GetComponent<Slider>();
         sl.slider.minValue = 0f;
         sl.slider.maxValue = 100f;
+        sl.slider.interactable = true;
         sl.slider.onValueChanged.RemoveAllListeners();
         sl.slider.onValueChanged.AddListener(sl.SliderChanged);
         sl.Value = 0f;
         sl.labelText = sl.slider.handleRect.Find("Text")?.GetComponent<Text>();
         if (sl.labelText)
         {
+            sl.labelText.text = "";
+            sl.labelText.color = Color.white;
+            sl.labelText.alignment = TextAnchor.MiddleCenter;
+            sl.labelText.fontStyle = FontStyle.Normal;
             sl.labelText.fontSize = 14;
             if (sl.labelText.transform is RectTransform rectTrans)
             {
@@ -60,11 +69,13 @@ public class MySlider : MonoBehaviour
         if (bg != null)
         {
             bg.color = new Color(0.5f, 0.5f, 0.5f, 0.5f);
+            bg.enabled = true;
         }
         var fill = sl.slider.fillRect.GetComponent<Image>();
         if (fill != null)
         {
             fill.color = new Color(1f, 1f, 1f, 0.28f);
+            fill.enabled = true;
         }
         sl.UpdateLabel();
 

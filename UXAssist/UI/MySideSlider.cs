@@ -24,6 +24,10 @@ public class MySideSlider : MonoBehaviour
         var go = Instantiate(UIRoot.instance.uiGame.stationWindow.maxMiningSpeedGroup.gameObject);
         //sizeDelta = 240, 20
         go.name = "my-side-slider";
+        foreach (var button in go.GetComponentsInChildren<UIButton>(true))
+        {
+            Util.ResetButton(button);
+        }
         Destroy(go.transform.Find("label").gameObject);
         Destroy(go.GetComponent<UIButton>());
         go.SetActive(true);
@@ -34,6 +38,7 @@ public class MySideSlider : MonoBehaviour
         sl.slider = go.transform.Find("slider").GetComponent<Slider>();
         sl.slider.minValue = 0f;
         sl.slider.maxValue = 100f;
+        sl.slider.interactable = true;
         sl.slider.onValueChanged.RemoveAllListeners();
         sl.slider.onValueChanged.AddListener(sl.SliderChanged);
         if (width == 0) width = 160f;
@@ -45,6 +50,9 @@ public class MySideSlider : MonoBehaviour
         sl.Value = 0f;
 
         sl.labelText = go.transform.Find("value").GetComponent<Text>();
+        sl.labelText.text = "";
+        sl.labelText.color = Color.white;
+        sl.labelText.fontStyle = FontStyle.Normal;
         sl.labelText.alignment = textWidth <= 0f ? TextAnchor.MiddleLeft : TextAnchor.MiddleRight;
         if (sl.labelText.transform is RectTransform rectTrans2)
         {

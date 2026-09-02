@@ -21,16 +21,32 @@ public class MyCornerComboBox : MonoBehaviour
         var go = Instantiate(UIRoot.instance.uiGame.starDetail.displayCombo.gameObject);
         go.name = "my-small-combobox";
         go.SetActive(false);
+        foreach (var button in go.GetComponentsInChildren<UIButton>(true))
+        {
+            Util.ResetButton(button);
+        }
 
         var cbctrl = go.transform.GetComponent<UIComboBox>();
         cbctrl.onSubmit.RemoveAllListeners();
         cbctrl.onItemIndexChange.RemoveAllListeners();
+        cbctrl.itemIndex = -1;
+        cbctrl.isDroppedDown = false;
+        cbctrl.m_Input.text = "";
+        cbctrl.m_Text.text = "";
+        cbctrl.m_Input.textComponent.color = Color.white;
+        cbctrl.m_Text.color = Color.white;
+        cbctrl.m_DropDownContent.anchoredPosition = Vector2.zero;
+        cbctrl.m_DropDownList.gameObject.SetActive(false);
+        cbctrl.m_EmptyItemRes.gameObject.SetActive(false);
+        cbctrl.m_SelectionBG.gameObject.SetActive(false);
+        cbctrl.m_Scrollbar.gameObject.SetActive(false);
         foreach (var button in cbctrl.ItemButtons)
         {
             Destroy(button.gameObject);
         }
         cbctrl.Items.Clear();
         cbctrl.ItemButtons.Clear();
+        cbctrl.m_ListItemRes.GetComponentInChildren<Text>().color = Color.white;
         _baseObject = go;
     }
 
@@ -40,6 +56,10 @@ public class MyCornerComboBox : MonoBehaviour
         gameObject.name = "my-combobox";
         gameObject.SetActive(true);
         var cb = gameObject.AddComponent<MyCornerComboBox>();
+        foreach (var button in gameObject.GetComponentsInChildren<UIButton>(true))
+        {
+            Util.ResetButton(button);
+        }
         RectTransform rtrans;
         if (topRight)
         {

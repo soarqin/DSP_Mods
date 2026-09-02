@@ -60,6 +60,21 @@ public class MyKeyBinder : MonoBehaviour
         kb.setDefaultUIButton = uikeyEntry.setDefaultUIButton;
         kb.setNoneKeyUIButton = uikeyEntry.setNoneKeyUIButton;
 
+        Util.ResetButton(kb.inputUIButton);
+        Util.ResetButton(kb.setDefaultUIButton);
+        Util.ResetButton(kb.setNoneKeyUIButton);
+        kb.functionText.text = "";
+        kb.functionText.color = Color.white;
+        kb.functionText.fontStyle = FontStyle.Normal;
+        kb.keyText.text = "";
+        kb.keyText.color = uikeyEntry.builtinColor;
+        kb.keyText.fontStyle = FontStyle.Normal;
+        kb.conflictText.text = "";
+        kb.waitingText.text = "";
+        kb.conflictText.gameObject.SetActive(false);
+        kb.waitingText.gameObject.SetActive(false);
+        kb.setTheKeyToggle.isOn = false;
+        kb.setTheKeyInput.text = "";
 
         kb.functionText.text = label.Translate();
         kb.functionText.fontSize = 17;

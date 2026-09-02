@@ -160,6 +160,12 @@ public class UIPatch : PatchImpl<UIPatch>
                 var parent = uiresAmountEntry.labelText.transform.parent;
                 vt.textCtrl = Object.Instantiate(uiresAmountEntry.valueText, parent);
                 vt.textCtrl.font = uiresAmountEntry.labelText.font;
+                vt.textCtrl.text = "";
+                vt.textCtrl.color = uiresAmountEntry.normalColor;
+                vt.textCtrl.alignment = TextAnchor.MiddleRight;
+                vt.textCtrl.fontStyle = FontStyle.Normal;
+                vt.textCtrl.horizontalOverflow = HorizontalWrapMode.Overflow;
+                vt.textCtrl.verticalOverflow = VerticalWrapMode.Overflow;
                 RectTransform trans = vt.textCtrl.rectTransform;
                 var pos = uiresAmountEntry.rectTrans.localPosition;
                 pos.x = pos.x + uiresAmountEntry.iconImage.rectTransform.localPosition.x - 25f;

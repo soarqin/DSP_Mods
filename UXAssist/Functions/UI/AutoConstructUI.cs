@@ -78,6 +78,9 @@ internal static class AutoConstructUI
         ConstructCountText.color = new Color(1f, 1f, 1f, 0.4f);
         ConstructCountText.alignment = TextAnchor.MiddleLeft;
         ConstructCountText.fontSize = 16;
+        ConstructCountText.fontStyle = FontStyle.Normal;
+        ConstructCountText.horizontalOverflow = HorizontalWrapMode.Overflow;
+        ConstructCountText.verticalOverflow = VerticalWrapMode.Overflow;
         rectTrans = ConstructCountText.rectTransform;
         rectTrans.SetParent(ConstructCountPanel.transform);
         rectTrans.sizeDelta = new Vector2(150f, 20f);

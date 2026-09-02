@@ -187,6 +187,9 @@ internal static class MilkyWayUI
             txt.color = new Color(1f, 1f, 1f, 0.4f);
             txt.alignment = TextAnchor.MiddleLeft;
             txt.fontSize = 15;
+            txt.fontStyle = FontStyle.Normal;
+            txt.horizontalOverflow = HorizontalWrapMode.Overflow;
+            txt.verticalOverflow = VerticalWrapMode.Overflow;
             txt.rectTransform.sizeDelta = new Vector2(0, 18);
             return txt;
         }
@@ -266,10 +269,10 @@ internal static class MilkyWayUI
                 textFields[i * 4 + 1].text = _topTenPlayerData[i].name;
                 textFields[i * 4 + 2].text = SeedToString(_topTenPlayerData[i].seedKey);
                 textFields[i * 4 + 3].text = String.Format("{0}W", ToKMG(_topTenPlayerData[i].genCap * 60L));
-                maxWidth0 = Math.Max(maxWidth0, textFields[i * 4].preferredWidth);
-                maxWidth1 = Math.Max(maxWidth1, textFields[i * 4 + 1].preferredWidth);
-                maxWidth2 = Math.Max(maxWidth2, textFields[i * 4 + 2].preferredWidth);
-                maxWidth3 = Math.Max(maxWidth3, textFields[i * 4 + 3].preferredWidth);
+                maxWidth0 = Math.Max(maxWidth0, global::UXAssist.UI.Util.GetPreferredWidth(textFields[i * 4]));
+                maxWidth1 = Math.Max(maxWidth1, global::UXAssist.UI.Util.GetPreferredWidth(textFields[i * 4 + 1]));
+                maxWidth2 = Math.Max(maxWidth2, global::UXAssist.UI.Util.GetPreferredWidth(textFields[i * 4 + 2]));
+                maxWidth3 = Math.Max(maxWidth3, global::UXAssist.UI.Util.GetPreferredWidth(textFields[i * 4 + 3]));
                 button.gameObject.SetActive(true);
                 textFields[i * 4].gameObject.SetActive(true);
                 textFields[i * 4 + 1].gameObject.SetActive(true);
