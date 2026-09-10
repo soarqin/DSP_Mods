@@ -27,14 +27,12 @@ public class MyFlatButton : MonoBehaviour
         if (img != null)
         {
             img.sprite = panel.buttonDefaultSprite;
-            img.color = new Color(1f, 1f, 1f, 13f / 255f);
             img.enabled = true;
         }
 
         img = btn.gameObject.transform.Find("frame")?.GetComponent<Image>();
         if (img != null)
         {
-            img.color = new Color(1f, 1f, 1f, 0f);
             img.enabled = true;
         }
 
@@ -42,7 +40,6 @@ public class MyFlatButton : MonoBehaviour
         if (text)
         {
             text.text = "";
-            text.color = Color.white;
             text.fontStyle = FontStyle.Normal;
         }
 

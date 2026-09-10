@@ -51,7 +51,6 @@ public class MySideSlider : MonoBehaviour
 
         sl.labelText = go.transform.Find("value").GetComponent<Text>();
         sl.labelText.text = "";
-        sl.labelText.color = Color.white;
         sl.labelText.fontStyle = FontStyle.Normal;
         sl.labelText.alignment = textWidth <= 0f ? TextAnchor.MiddleLeft : TextAnchor.MiddleRight;
         if (sl.labelText.transform is RectTransform rectTrans2)

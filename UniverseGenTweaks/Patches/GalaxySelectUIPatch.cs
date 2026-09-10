@@ -125,7 +125,6 @@ public static class GalaxySelectUIPatch
         var origText = orig.transform.parent.GetComponent<Text>();
         title = Object.Instantiate(origText, origText.transform.parent);
         title.text = "";
-        title.color = Color.white;
         title.fontStyle = FontStyle.Normal;
         title.horizontalOverflow = HorizontalWrapMode.Overflow;
         title.verticalOverflow = VerticalWrapMode.Overflow;
@@ -144,7 +143,6 @@ public static class GalaxySelectUIPatch
         slider.onValueChanged.RemoveAllListeners();
         text = slider.transform.FindChildRecur("Text").GetComponent<Text>();
         text.text = "";
-        text.color = Color.white;
         text.fontStyle = FontStyle.Normal;
         text.horizontalOverflow = HorizontalWrapMode.Overflow;
         text.verticalOverflow = VerticalWrapMode.Overflow;

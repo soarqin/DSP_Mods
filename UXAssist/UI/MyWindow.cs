@@ -391,7 +391,6 @@ public class MyWindow : ManualBehaviour
         var rect = Util.NormalizeRectWithTopLeft(inputField, x, y, parent);
         rect.sizeDelta = new Vector2(210, rect.sizeDelta.y);
         inputField.text = text;
-        inputField.textComponent.color = Color.white;
         inputField.textComponent.fontStyle = FontStyle.Normal;
         inputField.textComponent.fontSize = fontSize;
 
@@ -458,7 +457,6 @@ public class MyWindowWithTabs : MyWindow
         var btn = Instantiate(src);
         Util.ResetButton(btn);
         btn.gameObject.GetComponent<Image>().sprite = swarmPanel.buttonDefaultSprite;
-        btn.gameObject.GetComponent<Image>().color = Color.white;
         btn.gameObject.GetComponent<Image>().enabled = true;
         btn.name = "tab-btn-" + index;
         btn.highlighted = false;
@@ -480,7 +478,6 @@ public class MyWindowWithTabs : MyWindow
         shadow.effectColor = new Color(0f, 0f, 0f, 0.4f);
         shadow.effectDistance = new Vector2(1f, -1f);
         btnText.text = label.Translate();
-        btnText.color = Color.white;
         btnText.fontSize = 16;
         btnText.fontStyle = FontStyle.Normal;
         btn.data = index;
@@ -505,7 +502,6 @@ public class MyWindowWithTabs : MyWindow
         var image = img.GetComponent<Image>();
         if (image)
         {
-            image.color = Color.white;
             image.enabled = true;
         }
         Destroy(img.Find("tri").gameObject);

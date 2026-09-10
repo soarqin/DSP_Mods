@@ -33,8 +33,6 @@ public class MyCornerComboBox : MonoBehaviour
         cbctrl.isDroppedDown = false;
         cbctrl.m_Input.text = "";
         cbctrl.m_Text.text = "";
-        cbctrl.m_Input.textComponent.color = Color.white;
-        cbctrl.m_Text.color = Color.white;
         cbctrl.m_DropDownContent.anchoredPosition = Vector2.zero;
         cbctrl.m_DropDownList.gameObject.SetActive(false);
         cbctrl.m_EmptyItemRes.gameObject.SetActive(false);
@@ -46,7 +44,6 @@ public class MyCornerComboBox : MonoBehaviour
         }
         cbctrl.Items.Clear();
         cbctrl.ItemButtons.Clear();
-        cbctrl.m_ListItemRes.GetComponentInChildren<Text>().color = Color.white;
         _baseObject = go;
     }
 

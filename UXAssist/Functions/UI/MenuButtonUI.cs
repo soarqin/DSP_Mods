@@ -79,10 +79,7 @@ internal static class MenuButtonUI
             btn.name = "button-uxassist-config";
             btn.button.enabled = true;
             btn.button.interactable = true;
-            btn.text.color = Color.white;
             btn.text.fontStyle = FontStyle.Normal;
-            btn.selectBg.color = new Color(1f, 1f, 1f, 0f);
-            btn.selectBar.color = new Color(1f, 1f, 1f, 0f);
             var l = btn.text.GetComponent<Localizer>();
             if (l != null)
             {
@@ -114,7 +111,6 @@ internal static class MenuButtonUI
             if (img != null)
             {
                 img.sprite = icon;
-                img.color = Color.white;
                 img.enabled = icon != null;
             }
 

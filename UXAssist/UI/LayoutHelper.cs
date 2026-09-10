@@ -72,7 +72,6 @@ public static class LayoutHelper
         if (t != null)
         {
             t.text = text.Translate();
-            t.color = Color.white;
             t.fontStyle = FontStyle.Normal;
             t.horizontalOverflow = HorizontalWrapMode.Overflow;
             t.verticalOverflow = VerticalWrapMode.Overflow;

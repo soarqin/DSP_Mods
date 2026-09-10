@@ -47,7 +47,6 @@ public class MyCheckButton : MonoBehaviour
             {
                 txt.text = "";
                 txt.alignment = TextAnchor.MiddleCenter;
-                txt.color = Color.white;
                 txt.fontStyle = FontStyle.Normal;
                 txt.rectTransform.anchorMax = new Vector2(0f, 1f);
                 txt.rectTransform.anchorMin = new Vector2(0f, 1f);
@@ -95,7 +94,6 @@ public class MyCheckButton : MonoBehaviour
             {
                 cb.labelText.text = "";
                 cb.labelText.fontSize = fontSize;
-                cb.labelText.color = Color.white;
                 cb.labelText.fontStyle = FontStyle.Normal;
             }
         }

@@ -64,7 +64,6 @@ public class MyKeyBinder : MonoBehaviour
         Util.ResetButton(kb.setDefaultUIButton);
         Util.ResetButton(kb.setNoneKeyUIButton);
         kb.functionText.text = "";
-        kb.functionText.color = Color.white;
         kb.functionText.fontStyle = FontStyle.Normal;
         kb.keyText.text = "";
         kb.keyText.color = uikeyEntry.builtinColor;

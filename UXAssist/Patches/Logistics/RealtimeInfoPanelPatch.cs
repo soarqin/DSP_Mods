@@ -354,7 +354,6 @@ internal static class RealtimeLogisticsInfoPanel
             var itemIcon = Object.Instantiate(tipIconPrefab.gameObject, new Vector3(0, 0, 0), Quaternion.identity, _tipPrefab.transform);
             itemIcon.name = "icon" + index;
             var itemIconImage = itemIcon.GetComponent<Image>();
-            itemIconImage.color = Color.white;
             itemIconImage.enabled = true;
             rectTrans = (RectTransform)itemIcon.transform;
             rectTrans.sizeDelta = new Vector2(30f, 30f);
@@ -402,7 +401,6 @@ internal static class RealtimeLogisticsInfoPanel
             var text = countText.GetComponent<Text>();
             text.fontSize = 18;
             text.text = "";
-            text.color = Color.white;
             text.alignment = TextAnchor.UpperRight;
             text.fontStyle = FontStyle.Normal;
             text.horizontalOverflow = HorizontalWrapMode.Overflow;
@@ -419,7 +417,6 @@ internal static class RealtimeLogisticsInfoPanel
             stateLocal.name = "iconLocal" + index;
             var stateLocalImage = stateLocal.GetComponent<Image>();
             stateLocalImage.material = null;
-            stateLocalImage.color = Color.white;
             stateLocalImage.enabled = true;
             rectTrans = (RectTransform)stateLocal.transform;
             rectTrans.sizeDelta = new Vector2(16f, 16f);
@@ -431,7 +428,6 @@ internal static class RealtimeLogisticsInfoPanel
             stateRemote.name = "iconRemote" + index;
             var stateRemoteImage = stateRemote.GetComponent<Image>();
             stateRemoteImage.material = null;
-            stateRemoteImage.color = Color.white;
             stateRemoteImage.enabled = true;
             rectTrans = (RectTransform)stateRemote.transform;
             rectTrans.sizeDelta = new Vector2(20f, 20f);
@@ -443,7 +439,6 @@ internal static class RealtimeLogisticsInfoPanel
 
         var iconPrefab = Object.Instantiate(GameObject.Find("UI Root/Overlay Canvas/In Game/Top Tips/Entity Briefs/brief-info-top/brief-info/content/icons/icon"), _tipPrefab.transform);
         var iconPrefabImage = iconPrefab.GetComponent<Image>();
-        iconPrefabImage.color = Color.white;
         iconPrefabImage.enabled = true;
         Object.Destroy(iconPrefab.transform.Find("count-text").gameObject);
         Object.Destroy(iconPrefab.transform.Find("bg").gameObject);

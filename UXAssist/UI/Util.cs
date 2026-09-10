@@ -16,6 +16,7 @@ public static class Util
     public static void ResetButton(UIButton button)
     {
         if (!button) return;
+        button.Init();
         button.enabled = true;
         button.highlighted = false;
         button.updating = true;

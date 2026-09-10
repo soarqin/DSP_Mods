@@ -17,10 +17,9 @@ public class MyCheckBox : MonoBehaviour
     private bool _checked;
 
     private static GameObject _baseObject;
-
-    private static readonly Color BoxColor = new(1f, 1f, 1f, 100f / 255f);
-    private static readonly Color CheckColor = new(1f, 1f, 1f, 1f);
-    private static readonly Color TextColor = new(178f / 255f, 178f / 255f, 178f / 255f, 168f / 255f);
+    private static Color _boxColor;
+    private static Color _checkColor;
+    private static Color _textColor;
 
     public static void InitBaseObject()
     {
@@ -32,13 +31,12 @@ public class MyCheckBox : MonoBehaviour
         var boxImage = go.GetComponent<Image>();
         if (boxImage)
         {
-            boxImage.color = BoxColor;
             boxImage.enabled = true;
         }
         var checkImage = go.transform.Find("checked")?.GetComponent<Image>();
         if (checkImage)
         {
-            checkImage.color = CheckColor;
+            _checkColor = checkImage.color;
             checkImage.enabled = false;
         }
         var comp = go.transform.Find("text");
@@ -48,13 +46,14 @@ public class MyCheckBox : MonoBehaviour
             if (txt)
             {
                 txt.text = "";
-                txt.color = TextColor;
+                _textColor = txt.color;
                 txt.alignment = TextAnchor.MiddleLeft;
                 txt.fontStyle = FontStyle.Normal;
             }
             var localizer = comp.GetComponent<Localizer>();
             if (localizer) DestroyImmediate(localizer);
         }
+        if (boxImage) _boxColor = boxImage.color;
         _baseObject = go;
     }
 
@@ -86,9 +85,7 @@ public class MyCheckBox : MonoBehaviour
         cb.boxImage = go.transform.GetComponent<Image>();
         cb.checkImage = go.transform.Find("checked")?.GetComponent<Image>();
         Util.ResetButton(cb.uiButton);
-        cb.boxImage.color = BoxColor;
         cb.boxImage.enabled = true;
-        cb.checkImage.color = CheckColor;
         cb.checkImage.enabled = false;
         Util.NormalizeRectWithTopLeft(cb.checkImage, 0f, 0f);
 
@@ -100,7 +97,6 @@ public class MyCheckBox : MonoBehaviour
             {
                 cb.labelText.text = "";
                 cb.labelText.fontSize = fontSize;
-                cb.labelText.color = TextColor;
                 cb.labelText.alignment = TextAnchor.MiddleLeft;
                 cb.labelText.fontStyle = FontStyle.Normal;
                 cb.UpdateLabelTextWidth();
@@ -141,15 +137,15 @@ public class MyCheckBox : MonoBehaviour
         if (uiButton) uiButton.enabled = on;
         if (on)
         {
-            if (boxImage) boxImage.color = BoxColor;
-            if (checkImage) checkImage.color = CheckColor;
-            if (labelText) labelText.color = TextColor;
+            if (boxImage) boxImage.color = _boxColor;
+            if (checkImage) checkImage.color = _checkColor;
+            if (labelText) labelText.color = _textColor;
         }
         else
         {
-            if (boxImage) boxImage.color = BoxColor.RGBMultiplied(0.5f);
-            if (checkImage) checkImage.color = CheckColor.RGBMultiplied(0.5f);
-            if (labelText) labelText.color = TextColor.RGBMultiplied(0.5f);
+            if (boxImage) boxImage.color = _boxColor.RGBMultiplied(0.5f);
+            if (checkImage) checkImage.color = _checkColor.RGBMultiplied(0.5f);
+            if (labelText) labelText.color = _textColor.RGBMultiplied(0.5f);
         }
     }
 

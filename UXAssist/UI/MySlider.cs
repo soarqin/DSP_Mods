@@ -52,7 +52,6 @@ public class MySlider : MonoBehaviour
         if (sl.labelText)
         {
             sl.labelText.text = "";
-            sl.labelText.color = Color.white;
             sl.labelText.alignment = TextAnchor.MiddleCenter;
             sl.labelText.fontStyle = FontStyle.Normal;
             sl.labelText.fontSize = 14;

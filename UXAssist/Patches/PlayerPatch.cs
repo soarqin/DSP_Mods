@@ -730,7 +730,6 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 			UiTipText = Object.Instantiate(originText, originText.transform.parent);
 			UiTipText.gameObject.SetActive(false);
 			UiTipText.rectTransform.anchoredPosition = new Vector2(0f, 160f);
-			UiTipText.color = Color.white;
 			UiTipText.fontStyle = FontStyle.Normal;
 			UiTipText.text                           = I18NKeys.AutoNavigationActive.Translate();
 		}
