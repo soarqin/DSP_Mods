@@ -234,10 +234,11 @@ public class LuaState : IDisposable
         var getFactoryStat = (int itemId) =>
         {
             var gameData = GameMain.data;
-            if (gameData == null) return (0, 0);
+            if (gameData == null) return (0, 0, 0f);
             var statPool = GameMain.statistics?.production.factoryStatPool;
-            if (statPool == null) return (0, 0);
+            if (statPool == null) return (0, 0, 0f);
             long productTotal = 0L, consumeTotal = 0L;
+            float refTotal = 0f;
             for (var i = gameData.factoryCount - 1; i >= 0; i--)
             {
                 var stat = statPool[i];
@@ -255,14 +256,15 @@ public class LuaState : IDisposable
                 {
                     consumeTotal += ppool.count[cursor - 1];
                 }
+                refTotal += ppool.refProductSpeed;
             }
-            return (productTotal, consumeTotal);
+            return (productTotal, consumeTotal, refTotal);
         };
         state["get_factory_stat"] = getFactoryStat;
         state["get_factory_stat_str"] = string (string format, int itemId) =>
         {
-            var (productTotal, consumeTotal) = getFactoryStat(itemId);
-            return string.Format(format, JournalUtility.TranslateKMGValue(productTotal), JournalUtility.TranslateKMGValue(consumeTotal));
+            var (productTotal, consumeTotal, refTotal) = getFactoryStat(itemId);
+            return string.Format(format, JournalUtility.TranslateKMGValue(productTotal), JournalUtility.TranslateKMGValue(consumeTotal), JournalUtility.TranslateKMGValue((long)refTotal));
         };
 
         var getDysonSphereTotalGen = () =>
