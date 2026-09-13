@@ -29,6 +29,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LuaScriptEngine", "LuaScrip
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UpdateGameDlls", "UpdateGameDlls\UpdateGameDlls.csproj", "{6E73B301-7C7A-4EF4-B0FA-4C6B40F96653}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LiveStreamAssist", "LiveStreamAssist\LiveStreamAssist.csproj", "{0E6D6C44-00CF-4FE9-A475-1D898B4D1DAC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -195,6 +197,18 @@ Global
 		{6E73B301-7C7A-4EF4-B0FA-4C6B40F96653}.Release|x64.Build.0 = Release|Any CPU
 		{6E73B301-7C7A-4EF4-B0FA-4C6B40F96653}.Release|x86.ActiveCfg = Release|Any CPU
 		{6E73B301-7C7A-4EF4-B0FA-4C6B40F96653}.Release|x86.Build.0 = Release|Any CPU
+		{0E6D6C44-00CF-4FE9-A475-1D898B4D1DAC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0E6D6C44-00CF-4FE9-A475-1D898B4D1DAC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0E6D6C44-00CF-4FE9-A475-1D898B4D1DAC}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{0E6D6C44-00CF-4FE9-A475-1D898B4D1DAC}.Debug|x64.Build.0 = Debug|Any CPU
+		{0E6D6C44-00CF-4FE9-A475-1D898B4D1DAC}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{0E6D6C44-00CF-4FE9-A475-1D898B4D1DAC}.Debug|x86.Build.0 = Debug|Any CPU
+		{0E6D6C44-00CF-4FE9-A475-1D898B4D1DAC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0E6D6C44-00CF-4FE9-A475-1D898B4D1DAC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0E6D6C44-00CF-4FE9-A475-1D898B4D1DAC}.Release|x64.ActiveCfg = Release|Any CPU
+		{0E6D6C44-00CF-4FE9-A475-1D898B4D1DAC}.Release|x64.Build.0 = Release|Any CPU
+		{0E6D6C44-00CF-4FE9-A475-1D898B4D1DAC}.Release|x86.ActiveCfg = Release|Any CPU
+		{0E6D6C44-00CF-4FE9-A475-1D898B4D1DAC}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

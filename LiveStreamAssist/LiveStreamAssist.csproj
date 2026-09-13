@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <BepInExPluginGuid>org.soardev.livestreamassist</BepInExPluginGuid>
+    <Description>DSP MOD - LiveStreamAssist</Description>
+    <Version>1.0.0</Version>
+    <PackageId>LiveStreamAssist</PackageId>
+    <RootNamespace>LiveStreamAssist</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\UXAssist\UXAssist.csproj" />
+  </ItemGroup>
+</Project>

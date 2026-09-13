@@ -1,0 +1,10 @@
+﻿{
+  "name": "LiveStreamAssist",
+  "version_number": "1.0.0",
+  "website_url": "https://github.com/soarqin/DSP_Mods/tree/master/LiveStreamAssist",
+  "description": "Keep the statistics window active for live streams",
+  "dependencies": [
+    "xiaoye97-BepInEx-5.4.17",
+    "soarqin-UXAssist-1.5.9"
+  ]
+}

@@ -64,3 +64,7 @@ Cloak(Fake) user account info
 
 Some functions and patches for better user experience
 一些提升用户体验的功能和补丁
+
+## [LiveStreamAssist](LiveStreamAssist)
+
+Keeps the statistics window active for live streams by switching between the Production Statistics and Dyson Sphere tabs every 15 to 30 seconds.
