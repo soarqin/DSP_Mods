@@ -26,6 +26,8 @@ internal static class AutoCruiseUI
 
     public static void OnUpdate()
     {
+        if (Time.frameCount % 30 == 0)
+            Patches.PlayerPatch.AutoNavigationG.UpdateUiTip();
     }
 
     public static void InitToggleAutoCruiseCheckButton()

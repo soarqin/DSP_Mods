@@ -165,6 +165,7 @@ public static class I18NKeys
     public const string DarkFogHiveFollowDistance = "Dark Fog Hive follow distance";
     public const string DarkFogCarrierFollowDistance = "Dark Fog Carrier follow distance";
     public const string AutoNavigationActive = "Auto-navigation active";
+    public const string AutoNavigationEnableHint = "Press {0} to enable auto-navigation";
     public const string AutoNavigationStarted = "Auto-navigation started";
     public const string AutoNavigationStopped = "Auto-navigation stopped";
     public const string TreatStackItemsAsSingleInMonitorComponents = "Treat stack items as single in monitor components";
@@ -432,6 +433,7 @@ You can set 2 shortcut keys in Settings panel:
         I18N.Add(DarkFogHiveFollowDistance, "Dark Fog Hive follow distance (AU)", "黑雾巢穴跟踪距离(AU)");
         I18N.Add(DarkFogCarrierFollowDistance, "Dark Fog Carrier follow distance (m)", "黑雾火种跟踪距离(m)");
         I18N.Add(AutoNavigationActive, "Auto-navigation active", "自动导航中");
+        I18N.Add(AutoNavigationEnableHint, "Press {0} to enable auto-navigation", "按 {0} 启用自动导航");
         I18N.Add(AutoNavigationStarted, "Auto-navigation started", "自动导航启动");
         I18N.Add(AutoNavigationStopped, "Auto-navigation stopped", "自动导航关闭");
         I18N.Add(TreatStackItemsAsSingleInMonitorComponents, "Treat stack items as single in monitor components", "在流速计中将堆叠物品视为单个物品");

@@ -724,14 +724,19 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 
 		public static void StartG( )
 		{
-			if (UiTipText != null || UIRoot.instance?.uiGame?.generalTips?.modeText == null)
+			if (UiTipText != null)
+			{
+				UpdateUiTip();
+				return;
+			}
+			if (UIRoot.instance?.uiGame?.generalTips?.modeText == null)
 				return;
 			Text originText = UIRoot.instance.uiGame.generalTips.modeText;
 			UiTipText = Object.Instantiate(originText, originText.transform.parent);
 			UiTipText.gameObject.SetActive(false);
 			UiTipText.rectTransform.anchoredPosition = new Vector2(0f, 160f);
 			UiTipText.fontStyle = FontStyle.Normal;
-			UiTipText.text                           = I18NKeys.AutoNavigationActive.Translate();
+			UpdateUiTip();
 		}
 
 		public static void Toggle()
@@ -740,6 +745,7 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 				StopAutoNavigation();
 			else
 				StartAutoNavigation( );
+			UpdateUiTip();
 		}
 
 		private static void StartAutoNavigation( )
@@ -750,7 +756,7 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 			EnableTag = true;
 			Reset( );
 			UIRealtimeTip.Popup(I18NKeys.AutoNavigationStarted.Translate(), sound: false);
-			UiTipText?.gameObject.SetActive(true);
+			UpdateUiTip();
 		}
 
 		private static void StopAutoNavigation(bool showTip = true)
@@ -760,7 +766,7 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 			PauseTag = false;
 			if (wasEnabled && showTip && !DSPGame.IsMenuDemo && GameMain.isRunning)
 				UIRealtimeTip.Popup(I18NKeys.AutoNavigationStopped.Translate(), sound: false);
-			UiTipText?.gameObject.SetActive(false);
+			UpdateUiTip();
 		}
 
 		private static void Reset( )
@@ -785,7 +791,26 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 			Reset();
 		}
 
-		private static void NavigationModeChanged(object sender, EventArgs args) => NormalizeNavigationMode();
+		private static void NavigationModeChanged(object sender, EventArgs args)
+		{
+			NormalizeNavigationMode();
+			UpdateUiTip();
+		}
+
+		public static void UpdateUiTip()
+		{
+			if (UiTipText == null)
+				return;
+
+			bool showTip = GameMain.isRunning && !DSPGame.IsMenuDemo && UseNewNavigationAlgorithm.Value && !AutoNavigationEnabled.Value;
+			UiTipText.gameObject.SetActive(showTip);
+			if (!showTip)
+				return;
+
+			UiTipText.text = EnableTag
+				? I18NKeys.AutoNavigationActive.Translate()
+				: string.Format(I18NKeys.AutoNavigationEnableHint.Translate(), KeyBindings.GetKeyBindingText(_autoDriveKey));
+		}
 
 		private static void NormalizeNavigationMode()
 		{

@@ -30,6 +30,19 @@ public static class KeyBindings
         return new CombineKey((int)shortcut.MainKey, mod, ECombineKeyAction.OnceClick, false);
     }
 
+    public static string GetKeyBindingText(PressKeyBind keyBind)
+    {
+        var defaultBind = keyBind.defaultBind;
+        var key = defaultBind.key;
+        if (VFInput.override_keys != null && (uint)defaultBind.id < (uint)VFInput.override_keys.Length)
+        {
+            var overrideKey = VFInput.override_keys[defaultBind.id];
+            if (!overrideKey.IsNull()) key = overrideKey;
+        }
+
+        return key.ToString();
+    }
+
     public static bool IsKeyPressing(this PressKeyBind keyBind)
     {
         var defBind = keyBind.defaultBind;
