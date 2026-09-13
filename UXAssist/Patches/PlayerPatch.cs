@@ -802,7 +802,7 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 			if (UiTipText == null)
 				return;
 
-			bool showTip = GameMain.isRunning && !DSPGame.IsMenuDemo && UseNewNavigationAlgorithm.Value && !AutoNavigationEnabled.Value;
+			bool showTip = GameMain.isRunning && !DSPGame.IsMenuDemo && UseNewNavigationAlgorithm.Value && !AutoNavigationEnabled.Value && (EnableTag || HasNavigationTarget());
 			UiTipText.gameObject.SetActive(showTip);
 			if (!showTip)
 				return;
@@ -810,6 +810,20 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 			UiTipText.text = EnableTag
 				? I18NKeys.AutoNavigationActive.Translate()
 				: string.Format(I18NKeys.AutoNavigationEnableHint.Translate(), KeyBindings.GetKeyBindingText(_autoDriveKey));
+		}
+
+		private static bool HasNavigationTarget()
+		{
+			Player player = GameMain.mainPlayer;
+			if (player == null)
+				return false;
+
+			PlayerNavigation navigation = player.navigation;
+			int indicatorAstroId = navigation.indicatorAstroId;
+			if (indicatorAstroId == 0)
+				return navigation.indicatorEnemyId != 0;
+
+			return GameMain.localPlanet == null || indicatorAstroId != GameMain.localPlanet.astroId;
 		}
 
 		private static void NormalizeNavigationMode()
