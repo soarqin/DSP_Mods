@@ -287,13 +287,19 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
         GameLogicProc.Enable(false);
     }
 
-    private void Update()
+    internal static void OnInputUpdate()
     {
         if (VFInput.inputing) return;
         ModFeatureRegistry.OnInputUpdateAll();
         if (DSPGame.IsMenuDemo) return;
         GamePatch.OnInputUpdate();
         PlayerPatch.OnInputUpdate();
+    }
+
+    private void Update()
+    {
+        if (VFInput.inputing) return;
+        if (DSPGame.IsMenuDemo) return;
         ModFeatureRegistry.OnUpdateAll();
     }
 }

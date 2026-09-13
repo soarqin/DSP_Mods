@@ -35,6 +35,17 @@ public class GameLogic : PatchImpl<GameLogic>
     }
 
     /// <summary>
+    /// Harmony postfix for <see cref="VFInput.OnUpdate"/>.
+    /// Dispatches mod updates after the game has refreshed its input state.
+    /// </summary>
+    [HarmonyPostfix, HarmonyPriority(Priority.Last)]
+    [HarmonyPatch(typeof(VFInput), nameof(VFInput.OnUpdate))]
+    public static void VFInput_OnUpdate_Postfix()
+    {
+        UXAssist.OnInputUpdate();
+    }
+
+    /// <summary>
     /// Harmony postfix for <see cref="GameMain.Begin"/>.
     /// Raises <see cref="OnGameBegin"/>.
     /// </summary>
