@@ -438,8 +438,8 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
                             if (!AutoCruiseEnabled.Value) return;
                             if (GameMain.localStar?.astroId == _indicatorAstroId) return;
                             UpdateMovementState(controller);
-                            /* Keep pressing jump and pullup key to sail */
-                            controller.input0.y = -1f;
+                            /* Keep moving forward and pulling up to sail */
+                            controller.input0.y = 1f;
                             controller.input1.y = 1f;
                             break;
                         case EMovementState.Sail:
