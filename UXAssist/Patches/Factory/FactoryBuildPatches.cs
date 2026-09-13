@@ -12,13 +12,24 @@ internal static class FactoryBuildPatches
     internal class AutoConstructPatch : PatchImpl<AutoConstructPatch>
     {
         private const long AutoConstructTickInterval = 15L;
-        private const float ConstructionStopMargin = 1.5f;
+        private const long PlannerTickInterval = 120L;
+        private const int MaxPlannerCandidates = 32;
+        private const int MaxImmediateBuildTargets = 120;
+        private const int MaxOverflowBuildTargets = 600;
+        private const int MaxPlannerEntriesPerCandidate = 4096;
+        private const int ItemAvailabilityCacheSize = 64;
+        private const float PlanArrivalDistance = 5f;
+        private const float CandidateMergeDistance = 6f;
+        private const float CoverageValuePerTarget = 100f;
+        private const float OverflowValuePerTarget = 12f;
+        private const float DroneDistanceCost = 0.3f;
+        private const float PlayerTravelCost = 1f;
         private const float AvoidanceAltitude = 35f;
         private const float AvoidanceClearance = 1.5f;
         private const float StuckDistance = 1.5f;
         private const int StuckTickThreshold = 45;
+        private static readonly float[] DetourSideOffsets = { 1f, -1f, 1f, -1f, 1f, -1f };
 
-        private static int _targetPrebuildId;
         private static OrderNode _autoOrder;
         private static Vector3 _lastPosition;
         private static int _stuckTicks;
@@ -26,6 +37,21 @@ internal static class FactoryBuildPatches
         private static bool _isAvoidingObstacle;
         private static Vector3 _pendingWaypoint;
         private static bool _hasPendingWaypoint;
+        private static Vector3 _constructionDestination;
+        private static bool _hasConstructionPlan;
+        private static bool _atConstructionDestination;
+        private static int _planAstroId;
+        private static long _lastPlanAttemptTick;
+        private static bool _hasPlanAttempted;
+        private static readonly Vector3[] PlannerCandidates = new Vector3[MaxPlannerCandidates];
+        private static readonly float[] PlannerCandidateDistanceSquared = new float[MaxPlannerCandidates];
+        private static int _plannerCandidateCount;
+        private static int _plannerNearestCandidateCount;
+        private static int _plannerSampleCount;
+        private static readonly int[] ItemAvailabilityProtoIds = new int[ItemAvailabilityCacheSize];
+        private static readonly int[] ItemAvailabilityCounts = new int[ItemAvailabilityCacheSize];
+        private static int _itemAvailabilityCount;
+        private static uint _plannerRandomState = 0x6D2B79F5u;
 
         protected override void OnEnable()
         {
@@ -61,8 +87,6 @@ internal static class FactoryBuildPatches
             var planet = GameMain.localPlanet;
             if (planet == null || !planet.factoryLoaded) return;
             var factory = planet.factory;
-            var prebuildCount = factory.prebuildCount;
-            if (prebuildCount <= 0) return;
             var player = __instance.player;
             if (player.planetData != planet)
             {
@@ -70,55 +94,43 @@ internal static class FactoryBuildPatches
                 return;
             }
 
-            if (_targetPrebuildId != 0)
+            var currentOrder = player.orders.currentOrder;
+            if (HasManualInput(player) ||
+                currentOrder != null && currentOrder != _autoOrder ||
+                currentOrder == null && player.orders.orderCount > 0)
             {
-                if (!TryGetPrebuild(factory, _targetPrebuildId, out var target) ||
-                    target.itemRequired > 0 && player.package.GetItemCount(target.protoId) < target.itemRequired)
-                {
-                    ResetNavigation();
-                }
-                else if (player.orders.orderCount > 0 ||
-                         player.orders.currentOrder != null && player.orders.currentOrder != _autoOrder)
-                {
-                    ResetNavigation();
-                }
-            }
-
-            if (_targetPrebuildId == 0)
-            {
-                if (prebuildCount <= player.mecha.constructionModule.buildTargetTotalCount ||
-                    player.orders.orderCount > 0 || player.orders.currentOrder != null ||
-                    player.controller.horzVelocity.sqrMagnitude > 0.01f)
-                {
-                    return;
-                }
-
-                if (!TryFindTarget(factory, player, out _targetPrebuildId)) return;
-                _lastPosition = player.position;
-                _stuckTicks = 0;
-                _detourCount = 0;
-                _isAvoidingObstacle = false;
-            }
-
-            if (!TryGetPrebuild(factory, _targetPrebuildId, out var prebuild))
-            {
+                ClearAutoRoute(player);
                 ResetNavigation();
                 return;
             }
 
-            var targetPosition = prebuild.pos;
-            var constructionStopDistance = Mathf.Max(2f, player.mecha.buildArea - ConstructionStopMargin);
-            if ((targetPosition - player.position).sqrMagnitude <= constructionStopDistance * constructionStopDistance)
+            var prebuildCount = factory.prebuildCount;
+            if (prebuildCount <= 0)
             {
-                player.ClearOrders();
+                ClearAutoRoute(player);
                 ResetNavigation();
                 return;
             }
 
-            if (player.movementState == EMovementState.Walk && player.mecha.thrusterLevel >= 1)
+            if (_hasConstructionPlan && _planAstroId != planet.astroId)
             {
-                player.controller.actionWalk.SwitchToFly();
+                ClearAutoRoute(player);
+                ResetNavigation();
             }
+
+            if (!_hasConstructionPlan)
+            {
+                if (!IsPlannerDue(timei) || !TryCreatePlan(factory, player, timei)) return;
+            }
+            else if (_atConstructionDestination && IsPlannerDue(timei))
+            {
+                if (HasLocalConstructionWork(factory, player)) return;
+                ClearAutoRoute(player);
+                ResetNavigation();
+                if (!TryCreatePlan(factory, player, timei)) return;
+            }
+
+            if (!_hasConstructionPlan) return;
 
             if (_autoOrder != null && player.orders.currentOrder == null)
             {
@@ -135,9 +147,24 @@ internal static class FactoryBuildPatches
                 }
             }
 
+            if (!_hasPendingWaypoint &&
+                (player.position - _constructionDestination).sqrMagnitude <= PlanArrivalDistance * PlanArrivalDistance)
+            {
+                ClearAutoRoute(player);
+                _atConstructionDestination = true;
+                _stuckTicks = 0;
+                return;
+            }
+
+            _atConstructionDestination = false;
+            if (player.movementState == EMovementState.Walk && player.mecha.thrusterLevel >= 1)
+            {
+                player.controller.actionWalk.SwitchToFly();
+            }
+
             if (_autoOrder == null)
             {
-                IssueRoute(player, targetPosition, false);
+                IssueRoute(player, _constructionDestination, false);
                 return;
             }
 
@@ -171,7 +198,7 @@ internal static class FactoryBuildPatches
                     _pendingWaypoint = Vector3.zero;
                     _hasPendingWaypoint = false;
                     player.controller.actionFly.targetAltitude = AvoidanceAltitude;
-                    IssueRoute(player, targetPosition, true);
+                    IssueRoute(player, _constructionDestination, true);
                 }
 
                 _stuckTicks = 0;
@@ -179,38 +206,286 @@ internal static class FactoryBuildPatches
             }
         }
 
-        private static bool TryFindTarget(PlanetFactory factory, Player player, out int targetId)
+        private static bool IsPlannerDue(long timei)
         {
-            var prebuilds = factory.prebuildPool;
-            var minDistance = float.MaxValue;
-            targetId = 0;
-            for (var i = factory.prebuildCursor - 1; i > 0; i--)
-            {
-                ref var prebuild = ref prebuilds[i];
-                if (prebuild.id != i || prebuild.isDestroyed) continue;
-                if (prebuild.itemRequired > 0 && player.package.GetItemCount(prebuild.protoId) < prebuild.itemRequired) continue;
+            return !_hasPlanAttempted || timei < _lastPlanAttemptTick || timei - _lastPlanAttemptTick >= PlannerTickInterval;
+        }
 
-                var distance = (prebuild.pos - player.position).sqrMagnitude;
-                if (distance < minDistance)
+        private static bool TryCreatePlan(PlanetFactory factory, Player player, long timei)
+        {
+            _lastPlanAttemptTick = timei;
+            _hasPlanAttempted = true;
+            _hasConstructionPlan = false;
+            _atConstructionDestination = false;
+            _plannerCandidateCount = 0;
+            _plannerNearestCandidateCount = 0;
+            _plannerSampleCount = 0;
+            _itemAvailabilityCount = 0;
+
+            var buildArea = Mathf.Max(0f, player.mecha.buildArea);
+            if (buildArea < PlanArrivalDistance) return false;
+
+            CollectPlannerCandidates(factory, player, buildArea * buildArea);
+            if (_plannerCandidateCount == 0) return false;
+
+            var bestScore = float.MinValue;
+            var bestCoverageCount = 0;
+            var bestCandidate = Vector3.zero;
+            var buildAreaSquared = buildArea * buildArea;
+            for (var i = 0; i < _plannerCandidateCount; i++)
+            {
+                var score = EvaluatePlannerCandidate(factory, player, PlannerCandidates[i], buildAreaSquared, out var coverageCount);
+                if (coverageCount > 0 && score > bestScore)
                 {
-                    minDistance = distance;
-                    targetId = i;
+                    bestScore = score;
+                    bestCoverageCount = coverageCount;
+                    bestCandidate = PlannerCandidates[i];
                 }
             }
 
-            return targetId != 0;
+            if (bestCoverageCount == 0) return false;
+
+            _constructionDestination = bestCandidate;
+            _hasConstructionPlan = true;
+            _planAstroId = factory.planet.astroId;
+            _autoOrder = null;
+            _atConstructionDestination = false;
+            _stuckTicks = 0;
+            _detourCount = 0;
+            _isAvoidingObstacle = false;
+            _pendingWaypoint = Vector3.zero;
+            _hasPendingWaypoint = false;
+            _lastPosition = player.position;
+            return true;
         }
 
-        private static bool TryGetPrebuild(PlanetFactory factory, int id, out PrebuildData prebuild)
+        private static void CollectPlannerCandidates(PlanetFactory factory, Player player, float buildAreaSquared)
         {
-            if (id > 0 && id < factory.prebuildPool.Length)
+            var prebuilds = factory.prebuildPool;
+            for (var i = 1; i < factory.prebuildCursor; i++)
             {
-                prebuild = factory.prebuildPool[id];
-                return prebuild.id == id && !prebuild.isDestroyed;
+                ref var prebuild = ref prebuilds[i];
+                if (prebuild.id != i || prebuild.isDestroyed || prebuild.builderLaunched) continue;
+                if (!HasRequiredItems(player, prebuild.protoId, prebuild.itemRequired)) continue;
+
+                var distanceSquared = (prebuild.pos - player.position).sqrMagnitude;
+                if (distanceSquared <= buildAreaSquared) continue;
+                AddPlannerCandidate(prebuild.pos, distanceSquared);
+            }
+        }
+
+        private static void AddPlannerCandidate(Vector3 position, float distanceSquared)
+        {
+            var mergeDistanceSquared = CandidateMergeDistance * CandidateMergeDistance;
+            for (var i = 0; i < _plannerCandidateCount; i++)
+            {
+                if ((PlannerCandidates[i] - position).sqrMagnitude <= mergeDistanceSquared) return;
             }
 
-            prebuild = default;
-            return false;
+            if (_plannerNearestCandidateCount < MaxPlannerCandidates / 2)
+            {
+                var index = _plannerNearestCandidateCount++;
+                PlannerCandidates[index] = position;
+                PlannerCandidateDistanceSquared[index] = distanceSquared;
+                _plannerCandidateCount = Mathf.Max(_plannerCandidateCount, _plannerNearestCandidateCount);
+                return;
+            }
+
+            var farthestIndex = 0;
+            var farthestDistanceSquared = PlannerCandidateDistanceSquared[0];
+            for (var i = 1; i < _plannerNearestCandidateCount; i++)
+            {
+                if (PlannerCandidateDistanceSquared[i] > farthestDistanceSquared)
+                {
+                    farthestIndex = i;
+                    farthestDistanceSquared = PlannerCandidateDistanceSquared[i];
+                }
+            }
+
+            if (distanceSquared < farthestDistanceSquared)
+            {
+                PlannerCandidates[farthestIndex] = position;
+                PlannerCandidateDistanceSquared[farthestIndex] = distanceSquared;
+                return;
+            }
+
+            _plannerSampleCount++;
+            if (_plannerCandidateCount < MaxPlannerCandidates)
+            {
+                var index = _plannerCandidateCount++;
+                PlannerCandidates[index] = position;
+                PlannerCandidateDistanceSquared[index] = distanceSquared;
+                return;
+            }
+
+            var replacement = (int)(NextPlannerRandom() % (uint)_plannerSampleCount);
+            if (replacement < MaxPlannerCandidates / 2)
+            {
+                var index = MaxPlannerCandidates / 2 + replacement;
+                PlannerCandidates[index] = position;
+                PlannerCandidateDistanceSquared[index] = distanceSquared;
+            }
+        }
+
+        private static float EvaluatePlannerCandidate(PlanetFactory factory, Player player, Vector3 candidate, float buildAreaSquared, out int coverageCount)
+        {
+            coverageCount = 0;
+            var distanceSquaredSum = 0f;
+            var inspectedCount = 0;
+            var reachedScanLimit = false;
+            var prebuilds = factory.prebuildPool;
+            var hashSystem = factory.hashSystemStatic;
+            var hashPool = hashSystem.hashPool;
+            var bucketOffsets = hashSystem.bucketOffsets;
+            hashSystem.GetBucketIdxesInArea(candidate, Mathf.Sqrt(buildAreaSquared));
+            var activeBucketsCount = hashSystem.activeBucketsCount;
+            for (var bucketIndex = 0; bucketIndex < activeBucketsCount && !reachedScanLimit; bucketIndex++)
+            {
+                var bucket = hashSystem.activeBuckets[bucketIndex];
+                var bucketOffset = bucketOffsets[bucket];
+                var bucketCursor = hashSystem.bucketCursors[bucket];
+                for (var entryIndex = 0; entryIndex < bucketCursor; entryIndex++)
+                {
+                    if (++inspectedCount > MaxPlannerEntriesPerCandidate)
+                    {
+                        reachedScanLimit = true;
+                        break;
+                    }
+
+                    var hashEntry = hashPool[bucketOffset + entryIndex];
+                    if (hashEntry == 0 || hashEntry >> 28 != 3) continue;
+                    var prebuildId = hashEntry & 0xFFFFFFF;
+                    if (prebuildId <= 0 || prebuildId >= prebuilds.Length) continue;
+
+                    ref var prebuild = ref prebuilds[prebuildId];
+                    if (prebuild.id != prebuildId || prebuild.isDestroyed || prebuild.builderLaunched) continue;
+                    if (!HasRequiredItems(player, prebuild.protoId, prebuild.itemRequired)) continue;
+
+                    var distanceSquared = (prebuild.pos - candidate).sqrMagnitude;
+                    if (distanceSquared > buildAreaSquared) continue;
+
+                    coverageCount++;
+                    if (coverageCount <= MaxImmediateBuildTargets)
+                    {
+                        distanceSquaredSum += distanceSquared;
+                    }
+
+                    if (coverageCount >= MaxOverflowBuildTargets) break;
+                }
+
+                if (coverageCount >= MaxOverflowBuildTargets) break;
+            }
+
+            hashSystem.ClearActiveBuckets();
+            if (coverageCount == 0) return float.MinValue;
+
+            var immediateCount = Mathf.Min(coverageCount, MaxImmediateBuildTargets);
+            var overflowCount = Mathf.Min(Mathf.Max(0, coverageCount - MaxImmediateBuildTargets),
+                MaxOverflowBuildTargets - MaxImmediateBuildTargets);
+            var averageDistanceSquared = distanceSquaredSum / immediateCount;
+            var travelDistance = (candidate - player.position).magnitude;
+            return immediateCount * CoverageValuePerTarget +
+                   overflowCount * OverflowValuePerTarget -
+                   averageDistanceSquared * DroneDistanceCost -
+                   travelDistance * PlayerTravelCost;
+        }
+
+        private static bool HasRequiredItems(Player player, int protoId, int itemRequired)
+        {
+            if (itemRequired <= 0) return true;
+
+            for (var i = 0; i < _itemAvailabilityCount; i++)
+            {
+                if (ItemAvailabilityProtoIds[i] == protoId)
+                {
+                    return ItemAvailabilityCounts[i] >= itemRequired;
+                }
+            }
+
+            var itemCount = player.package.GetItemCount(protoId);
+            if (_itemAvailabilityCount < ItemAvailabilityCacheSize)
+            {
+                ItemAvailabilityProtoIds[_itemAvailabilityCount] = protoId;
+                ItemAvailabilityCounts[_itemAvailabilityCount] = itemCount;
+                _itemAvailabilityCount++;
+            }
+
+            return itemCount >= itemRequired;
+        }
+
+        private static uint NextPlannerRandom()
+        {
+            _plannerRandomState ^= _plannerRandomState << 13;
+            _plannerRandomState ^= _plannerRandomState >> 17;
+            _plannerRandomState ^= _plannerRandomState << 5;
+            return _plannerRandomState;
+        }
+
+        private static bool HasLocalConstructionWork(Player player)
+        {
+            var constructionModule = player.mecha.constructionModule;
+            return constructionModule.buildTargetTotalCount > 0 ||
+                   constructionModule.droneIdleCount < constructionModule.droneCount;
+        }
+
+        private static bool HasLocalConstructionWork(PlanetFactory factory, Player player)
+        {
+            if (HasLocalConstructionWork(player)) return true;
+
+            var buildArea = Mathf.Max(0f, player.mecha.buildArea);
+            if (buildArea <= 0f) return false;
+
+            _itemAvailabilityCount = 0;
+            var prebuilds = factory.prebuildPool;
+            var hashSystem = factory.hashSystemStatic;
+            var hashPool = hashSystem.hashPool;
+            var bucketOffsets = hashSystem.bucketOffsets;
+            hashSystem.GetBucketIdxesInArea(player.position, buildArea);
+            var hasLocalTarget = false;
+            for (var bucketIndex = 0; bucketIndex < hashSystem.activeBucketsCount && !hasLocalTarget; bucketIndex++)
+            {
+                var bucket = hashSystem.activeBuckets[bucketIndex];
+                var bucketOffset = bucketOffsets[bucket];
+                var bucketCursor = hashSystem.bucketCursors[bucket];
+                for (var entryIndex = 0; entryIndex < bucketCursor; entryIndex++)
+                {
+                    var hashEntry = hashPool[bucketOffset + entryIndex];
+                    if (hashEntry == 0 || hashEntry >> 28 != 3) continue;
+                    var prebuildId = hashEntry & 0xFFFFFFF;
+                    if (prebuildId <= 0 || prebuildId >= prebuilds.Length) continue;
+
+                    ref var prebuild = ref prebuilds[prebuildId];
+                    if (prebuild.id != prebuildId || prebuild.isDestroyed || prebuild.builderLaunched) continue;
+                    if (HasRequiredItems(player, prebuild.protoId, prebuild.itemRequired))
+                    {
+                        hasLocalTarget = true;
+                        break;
+                    }
+                }
+            }
+
+            hashSystem.ClearActiveBuckets();
+            return hasLocalTarget;
+        }
+
+        private static bool HasManualInput(Player player)
+        {
+            var input0 = player.controller.input0;
+            var input1 = player.controller.input1;
+            return Mathf.Abs(input0.x) > 0.01f || Mathf.Abs(input0.y) > 0.01f || input0.z > 0f ||
+                   Mathf.Abs(input1.y) > 0.01f;
+        }
+
+        private static void ClearAutoRoute(Player player)
+        {
+            if (_autoOrder != null && player.orders.currentOrder == _autoOrder)
+            {
+                player.ClearOrders();
+            }
+
+            _autoOrder = null;
+            _pendingWaypoint = Vector3.zero;
+            _hasPendingWaypoint = false;
         }
 
         private static void IssueRoute(Player player, Vector3 targetPosition, bool keepAltitude)
@@ -218,8 +493,7 @@ internal static class FactoryBuildPatches
             var direction = targetPosition - player.position;
             if (direction.sqrMagnitude < 0.01f) return;
 
-            var target = targetPosition + direction.normalized * 6f;
-            _autoOrder = OrderNode.MoveTo(target);
+            _autoOrder = OrderNode.MoveTo(targetPosition);
             player.Order(_autoOrder, false);
             if (keepAltitude && player.movementState == EMovementState.Fly)
             {
@@ -259,9 +533,13 @@ internal static class FactoryBuildPatches
             var forwardExtent = Mathf.Min(GetProjectedExtent(obstacleBounds.extents, forward), 48f);
             var sideOffset = Mathf.Max(6f, sideExtent + AvoidanceClearance + 2f);
             var forwardOffset = Mathf.Max(5f, forwardExtent + AvoidanceClearance + 2f);
-            var sideOffsets = new[] { sideOffset, -sideOffset, sideOffset + 8f, -sideOffset - 8f, sideOffset + 16f, -sideOffset - 16f };
-            foreach (var lateralOffset in sideOffsets)
+            for (var offsetIndex = 0; offsetIndex < DetourSideOffsets.Length; offsetIndex++)
             {
+                var lateralOffset = sideOffset * DetourSideOffsets[offsetIndex];
+                if (offsetIndex >= 2)
+                {
+                    lateralOffset += 8f * (offsetIndex / 2) * DetourSideOffsets[offsetIndex];
+                }
                 var entry = SurfaceOffset(anchor, side * lateralOffset - forward * forwardOffset, planet.realRadius);
                 var exit = SurfaceOffset(anchor, side * lateralOffset + forward * forwardOffset, planet.realRadius);
                 if (IsPathClear(player, entry, altitude) &&
@@ -328,7 +606,6 @@ internal static class FactoryBuildPatches
 
         private static void ResetNavigation()
         {
-            _targetPrebuildId = 0;
             _autoOrder = null;
             _lastPosition = Vector3.zero;
             _stuckTicks = 0;
@@ -336,6 +613,16 @@ internal static class FactoryBuildPatches
             _isAvoidingObstacle = false;
             _pendingWaypoint = Vector3.zero;
             _hasPendingWaypoint = false;
+            _constructionDestination = Vector3.zero;
+            _hasConstructionPlan = false;
+            _atConstructionDestination = false;
+            _planAstroId = 0;
+            _lastPlanAttemptTick = 0;
+            _hasPlanAttempted = false;
+            _plannerCandidateCount = 0;
+            _plannerNearestCandidateCount = 0;
+            _plannerSampleCount = 0;
+            _itemAvailabilityCount = 0;
         }
     }
 
