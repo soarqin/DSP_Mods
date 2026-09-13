@@ -662,6 +662,8 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 
 		private static bool _normalizingNavigationMode;
 
+		public static bool IsActive => IsEnable;
+
 		protected override void OnEnable( )
 		{
 			StartG(  );
