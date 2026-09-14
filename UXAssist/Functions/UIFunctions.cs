@@ -10,8 +10,6 @@ public static class UIFunctions
     public static void Init()
     {
         MenuButtonUI.Init();
-        AutoCruiseUI.Init();
-        AutoConstructUI.Init();
         StarmapFilterUI.Init();
         MilkyWayUI.Init();
 
@@ -22,8 +20,6 @@ public static class UIFunctions
     public static void Start()
     {
         MenuButtonUI.Start();
-        AutoCruiseUI.Start();
-        AutoConstructUI.Start();
         StarmapFilterUI.Start();
         MilkyWayUI.Start();
     }
@@ -31,8 +27,6 @@ public static class UIFunctions
     public static void Uninit()
     {
         MenuButtonUI.Uninit();
-        AutoCruiseUI.Uninit();
-        AutoConstructUI.Uninit();
         StarmapFilterUI.Uninit();
         MilkyWayUI.Uninit();
     }
@@ -40,8 +34,6 @@ public static class UIFunctions
     public static void OnInputUpdate()
     {
         MenuButtonUI.OnInputUpdate();
-        AutoCruiseUI.OnInputUpdate();
-        AutoConstructUI.OnInputUpdate();
         StarmapFilterUI.OnInputUpdate();
         MilkyWayUI.OnInputUpdate();
     }

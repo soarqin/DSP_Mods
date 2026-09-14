@@ -360,25 +360,24 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 		private const double ResidualCompensationMaxDistance = GalaxyData.AU * 0.5;
 		private const double ResidualCompensationSpeedRatio  = 0.5;
 		private const double ResidualCompensationMinSpeed    = 100;
+		private const double ObstacleLookAheadDistance       = GalaxyData.AU;
+		private const double ObstacleEscapeAltitude          = 200;
 
-		private static bool EnableTag { get; set; }
-		private static bool PauseTag  { get; set; }
-		private static Text UiTipText { get; set; }
+		private static bool _enabled;
+		private static Text _uiTipText;
 
-		private static int             TargetId                    { get; set; }
-		private static VectorLF3       TargetUniversePosition      { get; set; }
-		private static VectorLF3       TargetUniverseVelocity      { get; set; }
-		private static ESpaceGuideType TargetType                  { get; set; }
-		private static double          TargetArriveThresholdRadius { get; set; }
+		private static int             _targetId;
+		private static VectorLF3       _targetUniversePosition;
+		private static VectorLF3       _targetUniverseVelocity;
+		private static ESpaceGuideType _targetType;
+		private static double          _targetArriveThresholdRadius;
 
-		private static List<SpaceObject> SpaceObjects      { get; set; } = new(64);
-		private static EMovementState    LastMovementState { get; set; }
-		private static bool              EscapeMode        { get; set; }
-		private static int               EscapeAstroId     { get; set; }
-		private static bool              FollowModeLock    { get; set; }
+		private static readonly List<Obstacle> Obstacles = new(64);
+		private static bool _wasSailing;
+		private static bool _followModeLock;
 
 
-		public static bool IsActive => IsEnable;
+		public static bool IsActive => _enabled;
 
 		protected override void OnEnable( )
 		{
@@ -392,10 +391,10 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 			global::UXAssist.Common.GameLogic.OnGameBegin -= StartG;
 			global::UXAssist.Common.GameLogic.OnGameEnd -= ResetState;
 			ResetState();
-			if (UiTipText != null)
+			if (_uiTipText != null)
 			{
-				Object.Destroy(UiTipText.gameObject);
-				UiTipText = null;
+				Object.Destroy(_uiTipText.gameObject);
+				_uiTipText = null;
 			}
 		}
 
@@ -440,7 +439,7 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 
 		public static void StartG( )
 		{
-			if (UiTipText != null)
+			if (_uiTipText != null)
 			{
 				UpdateUiTip();
 				return;
@@ -448,10 +447,10 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 			if (UIRoot.instance?.uiGame?.generalTips?.modeText == null)
 				return;
 			Text originText = UIRoot.instance.uiGame.generalTips.modeText;
-			UiTipText = Object.Instantiate(originText, originText.transform.parent);
-			UiTipText.gameObject.SetActive(false);
-			UiTipText.rectTransform.anchoredPosition = new Vector2(0f, 160f);
-			UiTipText.fontStyle = FontStyle.Normal;
+			_uiTipText = Object.Instantiate(originText, originText.transform.parent);
+			_uiTipText.gameObject.SetActive(false);
+			_uiTipText.rectTransform.anchoredPosition = new Vector2(0f, 160f);
+			_uiTipText.fontStyle = FontStyle.Normal;
 			UpdateUiTip();
 		}
 
@@ -459,11 +458,10 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 		{
 			if (!AutoCruiseEnabled.Value)
 				return;
-			if (EnableTag)
+			if (_enabled)
 				StopAutoNavigation();
 			else
 				StartAutoNavigation( );
-			UpdateUiTip();
 		}
 
 		private static void StartAutoNavigation( )
@@ -471,63 +469,59 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 			if (DSPGame.IsMenuDemo || ! GameMain.isRunning)
 				return;
 
-			EnableTag = true;
-			Reset( );
+			_enabled = true;
+			ResetTargetState();
 			UIRealtimeTip.Popup(I18NKeys.AutoNavigationStarted.Translate(), sound: false);
 			UpdateUiTip();
 		}
 
 		private static void StopAutoNavigation(bool showTip = true)
 		{
-			bool wasEnabled = EnableTag;
-			EnableTag = false;
-			PauseTag = false;
+			bool wasEnabled = _enabled;
+			_enabled = false;
+			ResetTargetState();
 			if (wasEnabled && showTip && !DSPGame.IsMenuDemo && GameMain.isRunning)
 				UIRealtimeTip.Popup(I18NKeys.AutoNavigationStopped.Translate(), sound: false);
 			UpdateUiTip();
 		}
 
-		private static void Reset( )
+		private static void ResetTargetState( )
 		{
-			PauseTag          = false;
-			TargetId          = 0;
-			LastMovementState = EMovementState.Walk;
-			EscapeMode        = false;
-			FollowModeLock    = false;
-
-			EscapeAstroId = 0;
-			TargetUniversePosition = default;
-			TargetUniverseVelocity = default;
-			TargetType = default;
-			TargetArriveThresholdRadius = 0;
-			SpaceObjects.Clear();
+			_targetId                    = 0;
+			_wasSailing                  = false;
+			_followModeLock              = false;
+			_targetUniversePosition      = default;
+			_targetUniverseVelocity      = default;
+			_targetType                  = default;
+			_targetArriveThresholdRadius = 0;
+			Obstacles.Clear();
 		}
 
 		private static void ResetState()
 		{
 			StopAutoNavigation(false);
-			Reset();
 		}
 
 		private static void NavigationModeChanged(object sender, EventArgs args)
 		{
 			if (!AutoCruiseEnabled.Value)
 				StopAutoNavigation(false);
-			UpdateUiTip();
+			else
+				UpdateUiTip();
 			global::UXAssist.Functions.UIFunctions.UpdateToggleAutoCruiseCheckButtonVisiblility();
 		}
 
 		public static void UpdateUiTip()
 		{
-			if (UiTipText == null)
+			if (_uiTipText == null)
 				return;
 
-			bool showTip = GameMain.isRunning && !DSPGame.IsMenuDemo && AutoCruiseEnabled.Value && (EnableTag || HasNavigationTarget());
-			UiTipText.gameObject.SetActive(showTip);
+			bool showTip = GameMain.isRunning && !DSPGame.IsMenuDemo && AutoCruiseEnabled.Value && (_enabled || HasNavigationTarget());
+			_uiTipText.gameObject.SetActive(showTip);
 			if (!showTip)
 				return;
 
-			UiTipText.text = EnableTag
+			_uiTipText.text = _enabled
 				? I18NKeys.AutoNavigationActive.Translate()
 				: string.Format(I18NKeys.AutoNavigationEnableHint.Translate(), KeyBindings.GetKeyBindingText(_autoDriveKey));
 		}
@@ -535,36 +529,23 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 		public static bool HasNavigationTarget()
 		{
 			Player player = GameMain.mainPlayer;
-			if (player == null)
+			if (player == null || !TryResolveNavigationTarget(player, out NavigationTarget target))
 				return false;
 
-			PlayerNavigation navigation = player.navigation;
-			int indicatorAstroId = navigation.indicatorAstroId;
-			if (indicatorAstroId == 0)
-				return navigation.indicatorEnemyId != 0;
-
-			return GameMain.localPlanet == null || indicatorAstroId != GameMain.localPlanet.astroId;
+			return target.Type != ESpaceGuideType.Planet || GameMain.localPlanet == null || target.Id != GameMain.localPlanet.astroId;
 		}
-
-		private static void Pause( ) => PauseTag = true;
-
-		private static void Resume( ) => PauseTag = false;
-
-		private static bool IsEnable => EnableTag && ! PauseTag;
 
 		/// <summary>
 		/// Performs precondition checks and refreshes the current navigation target.
 		/// </summary>
 		private static bool PreCheckAndRefreshTarget(Player player)
 		{
-			int previousTargetId = TargetId;
-			ESpaceGuideType previousTargetType = TargetType;
-			if (! AutoCruiseEnabled.Value)
+			if (!AutoCruiseEnabled.Value)
 			{
 				StopAutoNavigation( );
 				return true;
 			}
-			if (IsEnable is not true)
+			if (!_enabled)
 				return true;
 			if (player.mecha.thrusterLevel < 2)
 			{
@@ -583,83 +564,95 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 				return true;
 			}
 
-			PlayerNavigation navigation       = player.navigation;
-			int              indicatorAstroId = navigation.indicatorAstroId;
-			if (indicatorAstroId != 0)
+			if (!TryResolveNavigationTarget(player, out NavigationTarget target))
 			{
-				TargetId = indicatorAstroId;
-				if (indicatorAstroId > DarkFogAstroIdStart)
-				{
-					TargetType = ESpaceGuideType.DFHive;
-					int astroIndex = indicatorAstroId - DarkFogAstroIdStart;
-					if (astroIndex < 0 || astroIndex >= GameMain.spaceSector.astros.Length)
-					{
-						StopAutoNavigation();
-						return true;
-					}
-					AstroData astro = GameMain.spaceSector.astros[astroIndex];
-					VectorLF3 lPos  = default;
-					astro.VelocityU(ref lPos, out Vector3 velocity);
-					TargetUniverseVelocity      = velocity;
-					TargetUniversePosition      = astro.uPos;
-					TargetArriveThresholdRadius = DFHiveFollowDistance.Value * GalaxyData.AU;
-				} else
-				{
-					bool isStar = indicatorAstroId % 100 == 0;
-					TargetType = isStar ? ESpaceGuideType.Star : ESpaceGuideType.Planet;
-					if (isStar)
-					{
-						StarData star = GameMain.galaxy.StarById(indicatorAstroId / 100);
-						if (star == null)
-						{
-							StopAutoNavigation();
-							return true;
-						}
-						TargetUniversePosition      = star.uPosition;
-						TargetArriveThresholdRadius = GameMain.galaxy.astrosData[indicatorAstroId].uRadius + StarArriveThresholdRadius;
-					} else
-					{
-						PlanetData planet = GameMain.galaxy.PlanetById(indicatorAstroId);
-						if (planet == null)
-						{
-							StopAutoNavigation();
-							return true;
-						}
-						TargetUniversePosition      = planet.uPosition;
-						TargetArriveThresholdRadius = planet.realRadius + PlanetArriveThresholdRadius;
-					}
-				}
-			} else if (navigation.indicatorEnemyId != 0)
-			{
-				TargetId   = navigation.indicatorEnemyId;
-				TargetType = ESpaceGuideType.DFCarrier;
-				if (navigation.indicatorEnemyId < 0 || navigation.indicatorEnemyId >= GameMain.data.spaceSector.enemyPool.Length)
-				{
-					StopAutoNavigation();
-					return true;
-				}
-				EnemyData ptr = GameMain.data.spaceSector.enemyPool[navigation.indicatorEnemyId];
-				if (ptr.id != navigation.indicatorEnemyId)
-				{
-					StopAutoNavigation();
-					return true;
-				}
-				GameMain.data.spaceSector.TransformFromAstro_ref(ptr.astroId, out VectorLF3 uPosition, ref ptr.pos);
-				TargetUniversePosition      = uPosition;
-				TargetUniverseVelocity      = ptr.vel;
-				TargetArriveThresholdRadius = DFCarrierFollowDistance.Value;
-			} else
-			{
-				StopAutoNavigation( );
+				StopAutoNavigation();
 				return true;
 			}
-			if (TargetId != previousTargetId || TargetType != previousTargetType)
+
+			bool targetChanged = _targetId != target.Id || _targetType != target.Type;
+			_targetId                    = target.Id;
+			_targetType                  = target.Type;
+			_targetUniversePosition      = target.Position;
+			_targetUniverseVelocity      = target.Velocity;
+			_targetArriveThresholdRadius = target.ArrivalRadius;
+			if (targetChanged)
 			{
-				EscapeMode = false;
-				EscapeAstroId = 0;
-				FollowModeLock = false;
+				_followModeLock = false;
 			}
 			return false;
+		}
+
+		private static bool TryResolveNavigationTarget(Player player, out NavigationTarget target)
+		{
+			target = default;
+			PlayerNavigation navigation = player.navigation;
+			int indicatorAstroId = navigation.indicatorAstroId;
+			if (indicatorAstroId > DarkFogAstroIdStart)
+			{
+				int astroIndex = indicatorAstroId - DarkFogAstroIdStart;
+				if (astroIndex < 0 || astroIndex >= GameMain.spaceSector.astros.Length)
+					return false;
+
+				AstroData astro = GameMain.spaceSector.astros[astroIndex];
+				VectorLF3 localPosition = default;
+				astro.VelocityU(ref localPosition, out Vector3 velocity);
+				target = new NavigationTarget(
+					indicatorAstroId,
+					ESpaceGuideType.DFHive,
+					astro.uPos,
+					velocity,
+					DFHiveFollowDistance.Value * GalaxyData.AU);
+				return true;
+			}
+
+			if (indicatorAstroId != 0)
+			{
+				if (indicatorAstroId < 0 || indicatorAstroId >= GameMain.galaxy.astrosData.Length)
+					return false;
+				if (indicatorAstroId % 100 == 0)
+				{
+					StarData star = GameMain.galaxy.StarById(indicatorAstroId / 100);
+					if (star == null)
+						return false;
+					target = new NavigationTarget(
+						indicatorAstroId,
+						ESpaceGuideType.Star,
+						star.uPosition,
+						default,
+						GameMain.galaxy.astrosData[indicatorAstroId].uRadius + StarArriveThresholdRadius);
+				} else
+				{
+					PlanetData planet = GameMain.galaxy.PlanetById(indicatorAstroId);
+					if (planet == null)
+						return false;
+					target = new NavigationTarget(
+						indicatorAstroId,
+						ESpaceGuideType.Planet,
+						planet.uPosition,
+						default,
+						planet.realRadius + PlanetArriveThresholdRadius);
+				}
+				return true;
+			}
+
+			int enemyId = navigation.indicatorEnemyId;
+			if (enemyId <= 0 || enemyId >= GameMain.data.spaceSector.enemyPool.Length)
+				return false;
+			EnemyData enemy = GameMain.data.spaceSector.enemyPool[enemyId];
+			if (enemy.id != enemyId)
+				return false;
+
+			VectorLF3 localPositionForVelocity = enemy.pos;
+			Vector3 localVelocity = enemy.vel;
+			GameMain.data.spaceSector.TransformVelocityFromAstro_ref(
+				enemy.astroId,
+				out Vector3 enemyVelocity,
+				ref localPositionForVelocity,
+				ref localVelocity);
+			GameMain.data.spaceSector.TransformFromAstro_ref(enemy.astroId, out VectorLF3 position, ref enemy.pos);
+			target = new NavigationTarget(enemyId, ESpaceGuideType.DFCarrier, position, enemyVelocity, DFCarrierFollowDistance.Value);
+			return true;
 		}
 
 		/// <summary>
@@ -667,56 +660,11 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 		/// </summary>
 		private static void SailToTarget(PlayerController controller, double distance)
 		{
-			if (controller.movementStateInFrame != EMovementState.Sail)
-				return;
-
-			StarData localStar = GameMain.localStar;
-			SpaceObjects.Clear( );
-			if (localStar != null)
-			{
-				if (localStar.astroId != TargetId)
-				{
-					SpaceObjects.Add(
-						new SpaceObject(
-							astroId: localStar.astroId,
-							position: localStar.uPosition,
-							radius: GameMain.galaxy.astrosData[localStar.astroId].uRadius,
-							radiusOffset: StarSafeRedis));
-				}
-				foreach (PlanetData planet in localStar.planets)
-				{
-					if (planet.astroId == TargetId)
-						continue;
-					SpaceObjects.Add(
-						new SpaceObject(
-							astroId: planet.astroId,
-							position: planet.uPosition,
-							radius: planet.realRadius,
-							radiusOffset: PlanetSafeRedis));
-				}
-				if (TargetType is not ESpaceGuideType.DFHive)
-				{
-					EnemyDFHiveSystem hiveSys = GameMain.spaceSector.dfHives[localStar.index];
-					while (hiveSys != null)
-					{
-						if (hiveSys is { realized: true, hiveAstroId: > DarkFogAstroIdStart }
-							&& hiveSys.hiveAstroId != TargetId)
-						{
-							SpaceObjects.Add(
-								new SpaceObject(
-									astroId: hiveSys.hiveAstroId,
-									position: GameMain.spaceSector.astros[hiveSys.hiveAstroId - DarkFogAstroIdStart].uPos,
-									radius: 0,
-									radiusOffset: HiveSafeRedis));
-						}
-						hiveSys = hiveSys.nextSibling;
-					}
-				}
-			}
+			CollectObstacles();
 
 			Player    player       = controller.player;
 			double    currentSpeed = player.uVelocity.magnitude;
-			VectorLF3 targetDir    = ComputeDirection(player.uPosition, SpaceObjects);
+			VectorLF3 targetDir    = ComputeDirection(player.uPosition, Obstacles);
 			VectorLF3 currentDir   = SafeNorm(player.uVelocity, targetDir);
 			if (player.warping)
 				UpdateSailVelocityAndRotation(controller, currentDir, currentSpeed, targetDir, currentSpeed);
@@ -740,79 +688,90 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 			}
 		}
 
+		private static void CollectObstacles()
+		{
+			Obstacles.Clear();
+			StarData localStar = GameMain.localStar;
+			if (localStar == null)
+				return;
+
+			if (localStar.astroId != _targetId)
+				Obstacles.Add(new Obstacle(
+					localStar.uPosition,
+					GameMain.galaxy.astrosData[localStar.astroId].uRadius,
+					StarSafeRedis));
+
+			foreach (PlanetData planet in localStar.planets)
+			{
+				if (planet.astroId != _targetId)
+					Obstacles.Add(new Obstacle(planet.uPosition, planet.realRadius, PlanetSafeRedis));
+			}
+
+			if (_targetType == ESpaceGuideType.DFHive)
+				return;
+
+			EnemyDFHiveSystem hiveSys = GameMain.spaceSector.dfHives[localStar.index];
+			while (hiveSys != null)
+			{
+				if (hiveSys is { realized: true, hiveAstroId: > DarkFogAstroIdStart }
+					&& hiveSys.hiveAstroId != _targetId)
+				{
+					Obstacles.Add(new Obstacle(
+						GameMain.spaceSector.astros[hiveSys.hiveAstroId - DarkFogAstroIdStart].uPos,
+						0,
+						HiveSafeRedis));
+				}
+				hiveSys = hiveSys.nextSibling;
+			}
+		}
+
 		/// <summary>
 		/// Computes a target direction with obstacle avoidance.
 		/// </summary>
 		/// <param name="playerPos">Player position.</param>
-		/// <param name="spaceObjects">Nearby obstacles.</param>
+		/// <param name="obstacles">Nearby obstacles.</param>
 		/// <returns></returns>
-		private static VectorLF3 ComputeDirection(VectorLF3 playerPos, List<SpaceObject> spaceObjects)
+		private static VectorLF3 ComputeDirection(VectorLF3 playerPos, List<Obstacle> obstacles)
 		{
-			const double lookForward = GalaxyData.AU * 1;
-
-			VectorLF3 toTarget    = TargetUniversePosition - playerPos;
+			VectorLF3 toTarget    = _targetUniversePosition - playerPos;
 			double    toTargetSqr = toTarget.sqrMagnitude;
 			if (toTargetSqr < Epsilon)
 				return default;
 			VectorLF3 baseDir = toTarget.normalized;
-			if (spaceObjects.Count == 0)
+			if (obstacles.Count == 0)
 				return baseDir;
 
-			var       upRef   = VectorLF3.unit_y;
-			VectorLF3 avoid   = default;
-			VectorLF3 liftRaw = default;
-			double    sumW    = 0;
-			foreach (SpaceObject spaceObject in spaceObjects)
+			VectorLF3 avoid  = default;
+			double    sumWeight = 0;
+			foreach (Obstacle obstacle in obstacles)
 			{
-				const double enterEscapeAltitude = 200;
-				double       quitEscapeAltitude  = Math.Max(600, spaceObject.Radius * 1.5);
-
-				double safeR = spaceObject.Radius + spaceObject.RadiusOffset;
+				double safeR = obstacle.SafeRadius;
 				if (safeR <= 0.0)
 					continue;
-				VectorLF3 toObject    = spaceObject.Position - playerPos;
+				VectorLF3 toObject    = obstacle.Position - playerPos;
 				double    toObjectSqr = toObject.sqrMagnitude;
 				if (toObjectSqr > toTargetSqr)
 					continue;
 
 				double toObjectMagnitude = Math.Sqrt(toObjectSqr);
-				if (toObjectMagnitude > lookForward)
+				if (toObjectMagnitude > ObstacleLookAheadDistance)
 					continue;
 
-				double    toObjectAltitude = toObjectMagnitude - spaceObject.Radius;
+				double    toObjectAltitude = toObjectMagnitude - obstacle.Radius;
 				double    forward          = VectorLF3.Dot(toObject, baseDir);
 				VectorLF3 pushVector       = baseDir * forward - toObject;
 
-				// Escape from an obstacle before resuming normal avoidance.
-				if (EscapeMode is not true && toObjectAltitude < enterEscapeAltitude)
+				double escapeExitAltitude = Math.Max(ObstacleEscapeAltitude * 3, obstacle.Radius * 1.5);
+				if (toObjectAltitude < escapeExitAltitude && (forward > 0 || toObjectAltitude < 0))
 				{
-					EscapeMode    = true;
-					EscapeAstroId = spaceObject.AstroId;
-				}
-				if (EscapeMode)
-				{
-					if (spaceObject.AstroId != EscapeAstroId)
-						continue;
-					if (toObjectAltitude > quitEscapeAltitude)
-					{
-						EscapeMode    = false;
-						EscapeAstroId = 0;
-					} else
-					{
-						VectorLF3 escapeDirection = - toObject / toObjectMagnitude;
-						VectorLF3 cDirection = VectorLF3.Dot(escapeDirection, baseDir) < - 0.5 ?
-							pushVector.sqrMagnitude < Epsilon ? default : pushVector.normalized
-							: baseDir;
-						double bias = (quitEscapeAltitude - toObjectAltitude) / (quitEscapeAltitude - enterEscapeAltitude);
-						bias = bias switch
-						{
-							< 0.0 => 0.0,
-							> 1.0 => 1.0,
-							_     => bias
-						};
-						VectorLF3 direction = escapeDirection * bias + cDirection * (1 - bias);
-						return direction.sqrMagnitude < Epsilon ? escapeDirection : direction.normalized;
-					}
+					VectorLF3 outward = SafeNorm(-toObject, -baseDir);
+					VectorLF3 tangent = baseDir - outward * VectorLF3.Dot(baseDir, outward);
+					tangent = SafeNorm(tangent, GetPerpendicularDirection(baseDir, VectorLF3.unit_y));
+					double escapeWeight = Clamp(
+						(escapeExitAltitude - toObjectAltitude) / (escapeExitAltitude - ObstacleEscapeAltitude),
+						0,
+						1);
+					return SafeNorm(outward * escapeWeight + tangent * (1 - escapeWeight), outward);
 				}
 
 				// Only consider obstacles in front of the player.
@@ -828,46 +787,27 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 				// Weight and combine avoidance forces by distance.
 				double pushW = (safeR - pushMagnitude) / safeR;
 				pushW = Clamp(pushW, 0, 1);
-				double forwardW = 1 - (forward - safeR) / (lookForward - safeR);
+				double forwardRange = Math.Max(ObstacleLookAheadDistance - safeR, Epsilon);
+				double forwardW = 1 - (forward - safeR) / forwardRange;
 				forwardW = Clamp(forwardW, 0, 1);
 				double    weight  = pushW      * pushW * (3.0 - 2.0 * pushW) * forwardW * forwardW;
 				VectorLF3 pushDir = pushVector / pushMagnitude;
 				avoid += pushDir * weight;
-				sumW  += weight;
-
-				// Add lift to avoid cancellation from symmetric obstacles.
-				VectorLF3 n = VectorLF3.Cross(baseDir, pushDir);
-				if (VectorLF3.Dot(n, upRef) < 0)
-					n = - n;
-				liftRaw += n * weight;
+				sumWeight += weight;
 			}
 
 			double avoidSqr = avoid.sqrMagnitude;
-			if (avoidSqr < Epsilon)
+			if (sumWeight < Epsilon)
 				return baseDir;
 
-			// Apply lift when the combined lateral avoidance is insufficient.
-			double needLift = 0;
-			if (sumW > Epsilon)
+			VectorLF3 mixed = baseDir + avoid;
+			double avoidStrength = Math.Sqrt(avoidSqr);
+			if (avoidStrength < sumWeight * 0.6)
 			{
-				double avoidMagnitude = Math.Sqrt(avoidSqr);
-				double ratio          = avoidMagnitude / sumW;
-				needLift = 1 - Clamp(ratio, 0, 1);
-			}
-			const double needLiftMin = 0.4;
-			needLift = (needLift - needLiftMin) / (1 - needLiftMin);
-			needLift = Clamp(needLift, 0, 1);
-			VectorLF3 lift = default;
-			if (needLift > 0)
-			{
-				const double liftScale = 0.25;
-				const double liftMax   = 0.6;
-				lift = liftRaw * needLift * liftScale;
-				if (lift.sqrMagnitude > liftMax * liftMax)
-					lift = lift.normalized * liftMax;
+				VectorLF3 lift = GetPerpendicularDirection(baseDir, VectorLF3.unit_y);
+				mixed += lift.normalized * (Clamp(1 - avoidStrength / sumWeight, 0, 1) * 0.25);
 			}
 
-			VectorLF3 mixed    = baseDir + avoid + lift;
 			double    mixedSqr = mixed.sqrMagnitude;
 			return mixedSqr < Epsilon ? baseDir : mixed.normalized;
 		}
@@ -878,7 +818,7 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 		/// </summary>
 		private static void FollowMovingTarget(PlayerController controller, double distance)
 		{
-			double arriveRadius            = TargetArriveThresholdRadius;
+			double arriveRadius            = _targetArriveThresholdRadius;
 			double exitLockRadius          = arriveRadius * 1.05;
 			double axialTolerance          = arriveRadius * 0.8;
 			double lateralTolerance        = arriveRadius * 0.8;
@@ -890,8 +830,8 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 			VectorLF3 playerPos         = player.uPosition;
 			VectorLF3 playerVelocity    = player.uVelocity;
 			double    playerSpeed       = playerVelocity.magnitude;
-			VectorLF3 targetPos         = TargetUniversePosition;
-			VectorLF3 targetVelocity    = TargetUniverseVelocity;
+			VectorLF3 targetPos         = _targetUniversePosition;
+			VectorLF3 targetVelocity    = _targetUniverseVelocity;
 			VectorLF3 toTarget          = targetPos - playerPos;
 			if (distance < Epsilon)
 				return;
@@ -904,33 +844,24 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 				return;
 			}
 			if (player.warping)
-				player.warpCommand = false;
-
-			switch (distance)
 			{
-				case >= FollowModeUseWarpDistance:
-					SailToTarget(controller, distance);
-					return;
-				case < FollowModeUseWarpDistance when player.warping:
-					player.warpCommand = false;
-					return;
-				case < FollowModeUseWarpDistance when distance > exitLockRadius:
-					FollowModeLock = false;
-					break;
-				case < FollowModeUseWarpDistance when distance <= arriveRadius:
-					FollowModeLock = true;
-					break;
+				player.warpCommand = false;
+				return;
 			}
+			if (distance > exitLockRadius)
+				_followModeLock = false;
+			else if (distance <= arriveRadius)
+				_followModeLock = true;
+
 			// Match the target velocity after entering the follow sphere.
-			if (FollowModeLock)
+			if (_followModeLock)
 			{
 				UpdateSailVelocityAndRotation(
 					controller: controller,
 					currentDir: SafeNorm(playerVelocity, targetVelocityDir),
 					currentSpeed: playerSpeed,
 					targetDir: targetVelocityDir,
-					targetSpeed: targetVelocity.magnitude,
-					forceSpeedUp: false);
+					targetSpeed: targetVelocity.magnitude);
 				return;
 			}
 
@@ -975,14 +906,20 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 				currentDir: playerDir,
 				currentSpeed: playerSpeed,
 				targetDir: desiredDirection,
-				targetSpeed: desiredSpeed,
-				forceSpeedUp: false);
+				targetSpeed: desiredSpeed);
 		}
 
-		private static VectorLF3 SafeNorm(VectorLF3 vector, VectorLF3 fallback, double sqr = double.NaN)
+		private static VectorLF3 SafeNorm(VectorLF3 vector, VectorLF3 fallback) =>
+			vector.sqrMagnitude < Epsilon ? fallback : vector.normalized;
+
+		private static VectorLF3 GetPerpendicularDirection(VectorLF3 direction, VectorLF3 reference)
 		{
-			sqr = double.IsNaN(sqr) ? vector.sqrMagnitude : sqr;
-			return sqr < Epsilon ? fallback : vector.normalized;
+			VectorLF3 perpendicular = reference - direction * VectorLF3.Dot(reference, direction);
+			if (perpendicular.sqrMagnitude < Epsilon)
+				perpendicular = VectorLF3.Cross(direction, VectorLF3.unit_x);
+			if (perpendicular.sqrMagnitude < Epsilon)
+				perpendicular = VectorLF3.Cross(direction, VectorLF3.unit_z);
+			return perpendicular.sqrMagnitude < Epsilon ? VectorLF3.unit_y : perpendicular.normalized;
 		}
 
 		/// <summary>
@@ -993,8 +930,7 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 			VectorLF3        currentDir,
 			double           currentSpeed,
 			VectorLF3        targetDir,
-			double           targetSpeed,
-			bool             forceSpeedUp = false)
+			double           targetSpeed)
 		{
 			PlayerMove_Sail sail         = controller.actionSail;
 			Player          player       = controller.player;
@@ -1004,7 +940,7 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 			double          stepSpeed    = currentSpeed;
 
 			// Acceleration and braking.
-			bool speedUp = forceSpeedUp || (UseSpeedUp.Value && mecha.coreEnergy > UseSpeedUpMinimalEnergy.Value * 1000 * 1000);
+			bool speedUp = UseSpeedUp.Value && mecha.coreEnergy > UseSpeedUpMinimalEnergy.Value * 1000 * 1000;
 			if (speedUp && desiredSpeed > currentSpeed)
 			{
 				double dSpeed = Clamp(currentSpeed * 0.02, 7.0, sail.max_acc);
@@ -1120,21 +1056,7 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 				sail.visual_uvel = newVelocity;
 		}
 
-		private static bool UpdateMovementState(EMovementState state)
-		{
-			if (LastMovementState == state)
-				return false;
-			LastMovementState = state;
-			return true;
-		}
-
 		private static double Clamp(double value, double min, double max) => value < min ? min : value > max ? max : value;
-
-		[HarmonyPatch(typeof(GameMain), nameof(GameMain.Pause)), HarmonyPrefix]
-		private static void PausePrefix( ) => Pause( );
-
-		[HarmonyPatch(typeof(GameMain), nameof(GameMain.Resume)), HarmonyPrefix]
-		private static void ResumePrefix( ) => Resume( );
 
 		// Harmony transpiler: PlayerController_GameTick_Transpiler
 		// Target: PlayerController.GameTick
@@ -1156,21 +1078,18 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 				new CodeInstruction(OpCodes.Ldarg_0),
 				Transpilers.EmitDelegate((PlayerController controller) =>
 				{
-					switch (controller.movementStateInFrame)
+					EMovementState movementState = controller.movementStateInFrame;
+					if (movementState is not (EMovementState.Walk or EMovementState.Drift or EMovementState.Fly))
+						return;
+					if (PreCheckAndRefreshTarget(controller.player) || DetermineTargetLocal( ))
+						return;
+					if (movementState == EMovementState.Fly)
 					{
-						case EMovementState.Walk:
-						case EMovementState.Drift:
-							if (PreCheckAndRefreshTarget(controller.player) || DetermineTargetLocal( ))
-								return;
-							controller.input0.z = 1f;
-							break;
-						case EMovementState.Fly:
-							if (PreCheckAndRefreshTarget(controller.player) || DetermineTargetLocal( ))
-								return;
-							controller.input1.y = 1f;
-							controller.input0.y = 1f;
-							break;
+						controller.input1.y = 1f;
+						controller.input0.y = 1f;
 					}
+					else
+						controller.input0.z = 1f;
 				})
 			);
 			return matcher.Finish(original, UXAssist.Logger, nameof(PlayerController_GameTick_Transpiler));
@@ -1178,7 +1097,7 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 			// Detect arrival while walking or flying.
 			static bool DetermineTargetLocal( )
 			{
-				if (TargetId != 0 && (TargetType != ESpaceGuideType.Planet || GameMain.localPlanet?.astroId != TargetId))
+				if (_targetId != 0 && (_targetType != ESpaceGuideType.Planet || GameMain.localPlanet?.astroId != _targetId))
 					return false;
 				StopAutoNavigation( );
 				return true;
@@ -1193,20 +1112,24 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 			Player           player     = __instance.player;
 			if (PreCheckAndRefreshTarget(player))
 				return;
-			bool      isStateChanged = UpdateMovementState(controller.movementStateInFrame);
+			bool isSailing = controller.movementStateInFrame == EMovementState.Sail;
+			bool enteredSailing = isSailing && !_wasSailing;
+			_wasSailing = isSailing;
+			if (!isSailing)
+				return;
 			VectorLF3 playerPos      = player.uPosition;
-			VectorLF3 targetVector   = TargetUniversePosition - playerPos;
+			VectorLF3 targetVector   = _targetUniversePosition - playerPos;
 			double    distance       = targetVector.magnitude;
-			if (isStateChanged && targetVector.sqrMagnitude >= Epsilon)
+			if (enteredSailing && targetVector.sqrMagnitude >= Epsilon)
 				__instance.sailPoser.targetURotWanted = Quaternion.LookRotation(targetVector);
 
 			// ReSharper disable once SwitchStatementMissingSomeEnumCasesNoDefault
-			switch (TargetType)
+			switch (_targetType)
 			{
 				case ESpaceGuideType.Star:
 				case ESpaceGuideType.Planet:
 					// Stop after reaching a fixed target.
-					if (distance < TargetArriveThresholdRadius)
+					if (distance < _targetArriveThresholdRadius)
 					{
 						if (player.warping)
 							player.warpCommand = false;
@@ -1223,12 +1146,25 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 		}
 	}
 
-	public readonly struct SpaceObject(int astroId, VectorLF3 position, double radius, double radiusOffset)
+	private readonly struct NavigationTarget(
+		int id,
+		ESpaceGuideType type,
+		VectorLF3 position,
+		VectorLF3 velocity,
+		double arrivalRadius)
 	{
-		public int       AstroId      { get; } = astroId;
-		public VectorLF3 Position     { get; } = position;
-		public double    Radius       { get; } = radius;
-		public double    RadiusOffset { get; } = radiusOffset;
+		public int             Id            { get; } = id;
+		public ESpaceGuideType Type          { get; } = type;
+		public VectorLF3       Position      { get; } = position;
+		public VectorLF3       Velocity      { get; } = velocity;
+		public double          ArrivalRadius { get; } = arrivalRadius;
+	}
+
+	private readonly struct Obstacle(VectorLF3 position, double radius, double safetyMargin)
+	{
+		public VectorLF3 Position   { get; } = position;
+		public double    Radius     { get; } = radius;
+		public double    SafeRadius { get; } = radius + safetyMargin;
 	}
 
 	#endregion

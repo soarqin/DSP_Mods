@@ -11,23 +11,6 @@ internal static class AutoConstructUI
     public static MyCheckButton ToggleAutoConstruct;
     public static GameObject ConstructCountPanel;
     public static Text ConstructCountText;
-    private static int _lastPrebuildCount = -1;
-
-    public static void Init()
-    {
-                            }
-
-    public static void Start()
-    {
-    }
-
-    public static void Uninit()
-    {
-    }
-
-    public static void OnInputUpdate()
-    {
-    }
 
     public static void OnUpdate()
     {
@@ -43,8 +26,6 @@ internal static class AutoConstructUI
         var localPlanet = GameMain.localPlanet;
         if (localPlanet == null || !localPlanet.factoryLoaded) return;
         var prebuildCount = localPlanet.factory.prebuildCount;
-        if (prebuildCount == _lastPrebuildCount) return;
-        _lastPrebuildCount = prebuildCount;
         UpdateConstructCountText(prebuildCount);
     }
 

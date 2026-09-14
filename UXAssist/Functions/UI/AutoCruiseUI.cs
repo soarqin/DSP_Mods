@@ -8,22 +8,6 @@ internal static class AutoCruiseUI
 {
     public static MyCheckButton ToggleAutoCruise;
 
-    public static void Init()
-    {
-                    }
-
-    public static void Start()
-    {
-    }
-
-    public static void Uninit()
-    {
-    }
-
-    public static void OnInputUpdate()
-    {
-    }
-
     public static void OnUpdate()
     {
         if (Time.frameCount % 30 == 0)

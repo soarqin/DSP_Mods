@@ -219,21 +219,14 @@ internal static class FactoryBuildPatches
                     return;
                 }
 
-                _atConstructionDestination = true;
-                _constructionArrivalTick = timei;
-                _hasConstructionArrival = true;
-                BeginFlightSettling();
+                MarkConstructionArrival(timei);
                 return;
             }
 
             if (!_hasPendingWaypoint && IsAtConstructionDestination(player))
             {
                 ClearAutoRoute(player);
-                _atConstructionDestination = true;
-                _constructionArrivalTick = timei;
-                _hasConstructionArrival = true;
-                BeginFlightSettling();
-                _stuckTicks = 0;
+                MarkConstructionArrival(timei);
                 return;
             }
 
@@ -283,15 +276,7 @@ internal static class FactoryBuildPatches
                     _isAvoidingObstacle = true;
                     _pendingWaypoint = pendingWaypoint;
                     _hasPendingWaypoint = pendingWaypoint.sqrMagnitude > 0.01f;
-                    player.controller.actionFly.targetAltitude = AvoidanceAltitude;
-                    if (orbitDetected)
-                    {
-                        QueueRouteAfterFlightSettle(detour, true);
-                    }
-                    else
-                    {
-                        IssueRoute(player, detour, true);
-                    }
+                    IssueRecoveryRoute(player, detour, orbitDetected);
                 }
                 else
                 {
@@ -299,15 +284,7 @@ internal static class FactoryBuildPatches
                     _isAvoidingObstacle = true;
                     _pendingWaypoint = Vector3.zero;
                     _hasPendingWaypoint = false;
-                    player.controller.actionFly.targetAltitude = AvoidanceAltitude;
-                    if (orbitDetected)
-                    {
-                        QueueRouteAfterFlightSettle(_constructionDestination, true);
-                    }
-                    else
-                    {
-                        IssueRoute(player, _constructionDestination, true);
-                    }
+                    IssueRecoveryRoute(player, _constructionDestination, orbitDetected);
                 }
 
                 _stuckTicks = 0;
@@ -318,6 +295,28 @@ internal static class FactoryBuildPatches
         private static bool IsPlannerDue(long timei)
         {
             return !_hasPlanAttempted || timei < _lastPlanAttemptTick || timei - _lastPlanAttemptTick >= PlannerTickInterval;
+        }
+
+        private static void ResetPlannerScan()
+        {
+            _plannerCandidateCount = 0;
+            _plannerRefinementCount = 0;
+            _plannerTargetCount = 0;
+            _plannerEligibleTargetCount = 0;
+            _nearestPlannerTarget = Vector3.zero;
+            _nearestPlannerTargetDistanceSquared = float.MaxValue;
+            _plannerTargetDistanceSum = 0f;
+            _plannerTargetDirectionSum = Vector3.zero;
+            _plannerNearbyTargetCount = 0;
+            _currentSiteTargetCount = 0;
+            _currentSiteNearbyTargetCount = 0;
+            _currentSiteScore = 0f;
+            _nextSiteScore = 0f;
+            _itemAvailabilityCount = 0;
+            for (var i = 0; i < MaxPlannerCandidates; i++)
+            {
+                PlannerCandidateDistanceSquared[i] = -1f;
+            }
         }
 
         private static bool TryCreatePlan(PlanetFactory factory, Player player, long timei)
@@ -335,25 +334,21 @@ internal static class FactoryBuildPatches
             return true;
         }
 
+        private static void MarkConstructionArrival(long timei)
+        {
+            _atConstructionDestination = true;
+            _constructionArrivalTick = timei;
+            _hasConstructionArrival = true;
+            _stuckTicks = 0;
+            BeginFlightSettling();
+        }
+
         private static bool TryFindBestDestination(PlanetFactory factory, Player player, long timei, out Vector3 destination)
         {
             destination = default;
             _lastPlanAttemptTick = timei;
             _hasPlanAttempted = true;
-            _plannerCandidateCount = 0;
-            _plannerRefinementCount = 0;
-            _itemAvailabilityCount = 0;
-            _plannerEligibleTargetCount = 0;
-            _nearestPlannerTarget = Vector3.zero;
-            _nearestPlannerTargetDistanceSquared = float.MaxValue;
-            _currentSiteTargetCount = 0;
-            _currentSiteNearbyTargetCount = 0;
-            _currentSiteScore = 0f;
-            _nextSiteScore = 0f;
-            for (var i = 0; i < MaxPlannerCandidates; i++)
-            {
-                PlannerCandidateDistanceSquared[i] = -1f;
-            }
+            ResetPlannerScan();
             InitializePlannerFan(player);
 
             var buildArea = Mathf.Max(0f, player.mecha.buildArea);
@@ -364,12 +359,15 @@ internal static class FactoryBuildPatches
                 factory, player, player.position, buildAreaSquared, out _currentSiteTargetCount, out _, true);
             _currentSiteNearbyTargetCount = _plannerNearbyTargetCount;
             CollectPlannerCandidates(factory, player);
-            if (_plannerCandidateCount == 0)
+            if (IsFinalConstructionRun())
             {
-                if (!IsFinalConstructionRun()) return false;
-
                 destination = _nearestPlannerTarget;
                 return destination.sqrMagnitude >= 0.01f;
+            }
+
+            if (_plannerCandidateCount == 0)
+            {
+                return false;
             }
 
             var bestScore = float.MinValue;
@@ -404,7 +402,7 @@ internal static class FactoryBuildPatches
             if (bestCoverageCount == 0) return false;
 
             _nextSiteScore = bestScore;
-            destination = IsFinalConstructionRun() ? _nearestPlannerTarget : bestCandidate;
+            destination = bestCandidate;
             return true;
         }
 
@@ -895,6 +893,19 @@ internal static class FactoryBuildPatches
             _hasDeferredRoute = true;
         }
 
+        private static void IssueRecoveryRoute(Player player, Vector3 target, bool waitForFlightSettle)
+        {
+            player.controller.actionFly.targetAltitude = AvoidanceAltitude;
+            if (waitForFlightSettle)
+            {
+                QueueRouteAfterFlightSettle(target, true);
+            }
+            else
+            {
+                IssueRoute(player, target, true);
+            }
+        }
+
         private static bool ShouldBrakeBeforeRoute(Player player, Vector3 targetPosition)
         {
             if (player.movementState != EMovementState.Fly || player.planetData == null) return false;
@@ -1084,11 +1095,7 @@ internal static class FactoryBuildPatches
             _planAstroId = 0;
             _lastPlanAttemptTick = 0;
             _hasPlanAttempted = false;
-            _plannerCandidateCount = 0;
-            _plannerEligibleTargetCount = 0;
-            _nearestPlannerTarget = Vector3.zero;
-            _nearestPlannerTargetDistanceSquared = float.MaxValue;
-            _itemAvailabilityCount = 0;
+            ResetPlannerScan();
         }
     }
 
