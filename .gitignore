@@ -24,3 +24,5 @@ build/
 # Agent files
 /.omo/
 /.worktrees/
+/.pi*/
+/.opencode/
