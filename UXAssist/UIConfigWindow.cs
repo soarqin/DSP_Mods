@@ -698,117 +698,89 @@ public static class UIConfigWindow
 
         {
             y += 36f;
-            var autoNavCheckBox = wnd.AddCheckBox(x, y, tab4, PlayerPatch.AutoNavigationEnabled, I18NKeys.AutoNavigationOnSailings);
+            var autoCruiseCheckBox = wnd.AddCheckBox(x, y, tab4, PlayerPatch.AutoCruiseEnabled, I18NKeys.EnableAutoCruise);
             y += 27f;
-            var autoCruiseCheckBox = wnd.AddCheckBox(x + 20f, y, tab4, PlayerPatch.AutoCruiseEnabled, I18NKeys.EnableAutoCruise, 13);
+            var autoStopCheckBox = wnd.AddCheckBox(x + 20f, y, tab4, PlayerPatch.StopOnArrivalAndInput, I18NKeys.StopAutoNavigationOnManualInput, 13);
             y += 27f;
-            var autoBoostCheckBox = wnd.AddCheckBox(x + 20f, y, tab4, PlayerPatch.AutoBoostEnabled, I18NKeys.AutoBoost, 13);
+            var useWarpCheckBox = wnd.AddCheckBox(x + 20f, y, tab4, PlayerPatch.UseWarper, I18NKeys.UseWarp, 13);
             y += 27f;
-            txt = wnd.AddText2(x + 20f, y, tab4, I18NKeys.DistanceToUseWarp, 15, "text-distance-to-warp");
-            var navDistanceSlider = wnd.AddSlider(x + 20f + UI.Util.GetPreferredWidth(txt) + 5f, y + 6f, tab4, PlayerPatch.DistanceToWarp, new DistanceMapper(), "0.0", 100f);
+            txt = wnd.AddText2(x + 20f, y, tab4, I18NKeys.UseWarpMinimalEnergy, 13, "use-warp-minimal-energy");
+            var warpEnergySlider = wnd.AddSideSlider(
+                x + 20f + UI.Util.GetPreferredWidth(txt) + 5f,
+                y + 6f,
+                tab4,
+                PlayerPatch.UseWarperMinimalEnergy,
+                new EnergyMapper( ),
+                "0",
+                200f,
+                - 100f).WithFontSize(13);
+            y += 27f;
+            txt = wnd.AddText2(x + 20f, y, tab4, I18NKeys.DistanceToUseWarp, 13, "text-new-navigation-distance-to-warp");
+            var newNavDistanceSlider = wnd.AddSlider(
+                x + 20f + UI.Util.GetPreferredWidth(txt) + 5f,
+                y + 6f,
+                tab4,
+                PlayerPatch.UseWarperDistance,
+                new DistanceMapper( ),
+                "0.0",
+                200f);
+            y += 27f;
+            var speedUpCheckBox = wnd.AddCheckBox(x + 20f, y, tab4, PlayerPatch.UseSpeedUp, I18NKeys.AutoBoost, 13);
+            y += 27f;
+            txt = wnd.AddText2(x + 20f, y, tab4, I18NKeys.AutoBoostMinimalEnergy, 13, "auto-boost-minimal-energy");
+            var speedUpEnergySlider = wnd.AddSideSlider(
+                x + 20f + UI.Util.GetPreferredWidth(txt) + 5f,
+                y + 6f,
+                tab4,
+                PlayerPatch.UseSpeedUpMinimalEnergy,
+                new EnergyMapper( ),
+                "0",
+                200f,
+                - 100f).WithFontSize(13);
+            y += 27f;
+            txt = wnd.AddText2(x + 20f, y, tab4, I18NKeys.DarkFogHiveFollowDistance, 13, "dark-fog-hive-follow-distance");
+            var dfHiveSlider = wnd.AddSideSlider(
+                x + 20f + UI.Util.GetPreferredWidth(txt) + 5f,
+                y + 6f,
+                tab4,
+                PlayerPatch.DFHiveFollowDistance,
+                new DistanceMapperHive( ),
+                "0.0",
+                200f,
+                - 100f).WithFontSize(13);
+            y += 27f;
+            txt = wnd.AddText2(x + 20f, y, tab4, I18NKeys.DarkFogCarrierFollowDistance, 13, "dark-fog-carrier-follow-distance");
+            var dfCarrierSlider = wnd.AddSideSlider(
+                x + 20f + UI.Util.GetPreferredWidth(txt) + 5f,
+                y + 6f,
+                tab4,
+                PlayerPatch.DFCarrierFollowDistance,
+                new DistanceMapperCarrier( ),
+                "0.0",
+                200f,
+                - 100f).WithFontSize(13);
 
-			y += 36f;
-			MyCheckBox newAlgorithmCheckBox = wnd.AddCheckBox(
-				x,
-				y,
-				tab4,
-				PlayerPatch.UseNewNavigationAlgorithm,
-				I18NKeys.NewNavigationAlgorithm);
-			y += 27f;
-			MyCheckBox autoStopCheckBox = wnd.AddCheckBox(
-				x,
-				y,
-				tab4,
-				PlayerPatch.StopOnArrivalAndInput,
-				I18NKeys.StopAutoNavigationOnManualInput);
-			y += 27f;
-			MyCheckBox useWarpCheckBox = wnd.AddCheckBox(x, y, tab4, PlayerPatch.UseWarper, I18NKeys.UseWarp);
-			y   += 27f;
-			txt =  wnd.AddText2(x + 20f, y, tab4, I18NKeys.UseWarpMinimalEnergy, 15, "use-warp-minimal-energy");
-			var warpEnergySlider = wnd.AddSideSlider(
-				x + 20f + UI.Util.GetPreferredWidth(txt) + 5f,
-				y + 6f,
-				tab4,
-				PlayerPatch.UseWarperMinimalEnergy,
-				new EnergyMapper( ),
-				"0",
-				200f,
-				- 100f).WithFontSize(13);
-			y   += 27f;
-			txt =  wnd.AddText2(x + 20f, y, tab4, I18NKeys.DistanceToUseWarp, 15, "text-new-navigation-distance-to-warp");
-			var newNavDistanceSlider = wnd.AddSlider(
-				x + 20f + UI.Util.GetPreferredWidth(txt) + 5f,
-				y + 6f,
-				tab4,
-				PlayerPatch.UseWarperDistance,
-				new DistanceMapper( ),
-				"0.0",
-				200f);
-			y += 27f;
-			MyCheckBox speedUpCheckBox = wnd.AddCheckBox(x, y, tab4, PlayerPatch.UseSpeedUp, I18NKeys.AutoBoost);
-			y   += 27f;
-			txt =  wnd.AddText2(x + 20f, y, tab4, I18NKeys.AutoBoostMinimalEnergy, 15, "auto-boost-minimal-energy");
-			var speedUpEnergySlider = wnd.AddSideSlider(
-				x + 20f + UI.Util.GetPreferredWidth(txt) + 5f,
-				y + 6f,
-				tab4,
-				PlayerPatch.UseSpeedUpMinimalEnergy,
-				new EnergyMapper( ),
-				"0",
-				200f,
-				- 100f).WithFontSize(13);
-			y   += 27f;
-			txt =  wnd.AddText2(x, y, tab4, I18NKeys.DarkFogHiveFollowDistance, 15, "dark-fog-hive-follow-distance");
-			var dfHiveSlider = wnd.AddSideSlider(
-				x + UI.Util.GetPreferredWidth(txt) + 5f,
-				y + 6f,
-				tab4,
-				PlayerPatch.DFHiveFollowDistance,
-				new DistanceMapperHive( ),
-				"0.0",
-				200f,
-				- 100f).WithFontSize(13);
-			y   += 27f;
-			txt =  wnd.AddText2(x, y, tab4, I18NKeys.DarkFogCarrierFollowDistance, 15, "dark-fog-carrier-follow-distance");
-			var dfCarrierSlider = wnd.AddSideSlider(
-				x + UI.Util.GetPreferredWidth(txt) + 5f,
-				y + 6f,
-				tab4,
-				PlayerPatch.DFCarrierFollowDistance,
-				new DistanceMapperCarrier( ),
-				"0.0",
-				200f,
-				- 100f).WithFontSize(13);
+            PlayerPatch.AutoCruiseEnabled.SettingChanged += NavSettingChanged;
+            PlayerPatch.UseWarper.SettingChanged += NavSettingChanged;
+            PlayerPatch.UseSpeedUp.SettingChanged += NavSettingChanged;
+            wnd.OnFree += ( ) => { PlayerPatch.AutoCruiseEnabled.SettingChanged -= NavSettingChanged; };
+            wnd.OnFree += ( ) => { PlayerPatch.UseWarper.SettingChanged -= NavSettingChanged; };
+            wnd.OnFree += ( ) => { PlayerPatch.UseSpeedUp.SettingChanged -= NavSettingChanged; };
+            NavSettingChanged(null, null);
 
-			PlayerPatch.AutoNavigationEnabled.SettingChanged += NavSettingChanged;
-			PlayerPatch.UseNewNavigationAlgorithm.SettingChanged += NavSettingChanged;
-			PlayerPatch.UseWarper.SettingChanged += NavSettingChanged;
-			PlayerPatch.UseSpeedUp.SettingChanged += NavSettingChanged;
-			wnd.OnFree += ( ) => { PlayerPatch.AutoNavigationEnabled.SettingChanged -= NavSettingChanged; };
-			wnd.OnFree += ( ) => { PlayerPatch.UseNewNavigationAlgorithm.SettingChanged -= NavSettingChanged; };
-			wnd.OnFree += ( ) => { PlayerPatch.UseWarper.SettingChanged -= NavSettingChanged; };
-			wnd.OnFree += ( ) => { PlayerPatch.UseSpeedUp.SettingChanged -= NavSettingChanged; };
-			NavSettingChanged(null, null);
-
-			void NavSettingChanged(object o, EventArgs e)
-			{
-				autoNavCheckBox.SetEnable(! PlayerPatch.UseNewNavigationAlgorithm.Value);
-				autoCruiseCheckBox.SetEnable(PlayerPatch.AutoNavigationEnabled.Value);
-				autoBoostCheckBox.SetEnable(PlayerPatch.AutoNavigationEnabled.Value);
-				navDistanceSlider.SetEnable(PlayerPatch.AutoNavigationEnabled.Value);
-
-				newAlgorithmCheckBox.SetEnable(! PlayerPatch.AutoNavigationEnabled.Value);
-				autoStopCheckBox.SetEnable(PlayerPatch.UseNewNavigationAlgorithm.Value);
-				useWarpCheckBox.SetEnable(PlayerPatch.UseNewNavigationAlgorithm.Value);
-				warpEnergySlider.SetEnable(PlayerPatch.UseNewNavigationAlgorithm.Value && PlayerPatch.UseWarper.Value);
-				newNavDistanceSlider.SetEnable(PlayerPatch.UseNewNavigationAlgorithm.Value && PlayerPatch.UseWarper.Value);
-				speedUpCheckBox.SetEnable(PlayerPatch.UseNewNavigationAlgorithm.Value);
-				speedUpEnergySlider.SetEnable(PlayerPatch.UseNewNavigationAlgorithm.Value && PlayerPatch.UseSpeedUp.Value);
-				dfHiveSlider.SetEnable(PlayerPatch.UseNewNavigationAlgorithm.Value);
-				dfCarrierSlider.SetEnable(PlayerPatch.UseNewNavigationAlgorithm.Value);
-			}
+            void NavSettingChanged(object o, EventArgs e)
+            {
+                autoCruiseCheckBox.SetEnable(true);
+                autoStopCheckBox.SetEnable(PlayerPatch.AutoCruiseEnabled.Value);
+                useWarpCheckBox.SetEnable(PlayerPatch.AutoCruiseEnabled.Value);
+                warpEnergySlider.SetEnable(PlayerPatch.AutoCruiseEnabled.Value && PlayerPatch.UseWarper.Value);
+                newNavDistanceSlider.SetEnable(PlayerPatch.AutoCruiseEnabled.Value && PlayerPatch.UseWarper.Value);
+                speedUpCheckBox.SetEnable(PlayerPatch.AutoCruiseEnabled.Value);
+                speedUpEnergySlider.SetEnable(PlayerPatch.AutoCruiseEnabled.Value && PlayerPatch.UseSpeedUp.Value);
+                dfHiveSlider.SetEnable(PlayerPatch.AutoCruiseEnabled.Value);
+                dfCarrierSlider.SetEnable(PlayerPatch.AutoCruiseEnabled.Value);
+            }
         }
-
         var tab5 = wnd.AddTab(trans, I18NKeys.DysonSphere);
         x = 0f;
         y = 10f;

@@ -40,8 +40,6 @@ public static class I18NKeys
     public const string KEYShowAllStarsName = "KEYShowAllStarsName";
     public const string KEYToggleAllStarsName = "KEYToggleAllStarsName";
     public const string KEYToggleAutoCruise = "KEYToggleAutoCruise";
-    public const string AutoCruiseOn = "AutoCruiseOn";
-    public const string AutoCruiseOff = "AutoCruiseOff";
     public const string SorterCargoStackingPrefix = "Sorter cargo stacking prefix";
     public const string UXAssist = "UXAssist";
     public const string General = "General";
@@ -154,10 +152,8 @@ public static class I18NKeys
     public const string ShortcutKeysForBlueprintCopyMode = "Shortcut keys for Blueprint Copy mode";
     public const string ShortcutKeysForBlueprintCopyModeTips = "Shortcut keys for Blueprint Copy mode tips";
     public const string ShortcutKeysForShowingStarsName = "Shortcut keys for showing stars' name";
-    public const string AutoNavigationOnSailings = "Auto navigation on sailings";
     public const string AutoBoost = "Auto boost";
     public const string DistanceToUseWarp = "Distance to use warp";
-    public const string NewNavigationAlgorithm = "New navigation algorithm";
     public const string StopAutoNavigationOnManualInput = "Stop auto-navigation on manual input";
     public const string UseWarp = "Use warp";
     public const string UseWarpMinimalEnergy = "Use warp minimal energy";
@@ -239,8 +235,6 @@ public static class I18NKeys
         I18N.Add(KEYShowAllStarsName, "[UXA] Keep pressing to show all Stars' name", "[UXA] 按住显示所有星系名称");
         I18N.Add(KEYToggleAllStarsName, "[UXA] Toggle display of all Stars' name", "[UXA] 切换所有星系名称显示状态");
         I18N.Add(KEYToggleAutoCruise, "[UXA] Toggle auto-cruise", "[UXA] 切换自动巡航");
-        I18N.Add(AutoCruiseOn, "Auto-cruise enabled", "已启用自动巡航");
-        I18N.Add(AutoCruiseOff, "Auto-cruise disabled", "已禁用自动巡航");
         I18N.Add(SorterCargoStackingPrefix, "Sorter Mk.III cargo stacking : ", "极速分拣器每次可运送 ");
         I18N.Add(UXAssist, "UXAssist", "UX助手");
         I18N.Add(General, "General", "常规");
@@ -422,10 +416,8 @@ You can set 2 shortcut keys in Settings panel:
   2. 拆除选中的建筑
 """);
         I18N.Add(ShortcutKeysForShowingStarsName, "Shortcut keys for showing stars' name", "启用显示所有星系名称的快捷键");
-        I18N.Add(AutoNavigationOnSailings, "Auto navigation on sailings", "宇宙航行时自动导航");
         I18N.Add(AutoBoost, "Auto boost", "自动加速");
         I18N.Add(DistanceToUseWarp, "Distance to use warp (AU)", "使用曲速的距离(AU)");
-        I18N.Add(NewNavigationAlgorithm, "New navigation algorithm", "新导航算法");
         I18N.Add(StopAutoNavigationOnManualInput, "Stop auto-navigation on manual input", "手动输入时停止自动导航");
         I18N.Add(UseWarp, "Use warp", "启用曲速");
         I18N.Add(UseWarpMinimalEnergy, "Minimum energy to use warp (MJ)", "使用曲速最低能量(MJ)");

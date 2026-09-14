@@ -27,13 +27,16 @@ internal static class AutoCruiseUI
     public static void OnUpdate()
     {
         if (Time.frameCount % 30 == 0)
-            Patches.PlayerPatch.AutoNavigationG.UpdateUiTip();
+        {
+            Patches.PlayerPatch.AutoNavigation.UpdateUiTip();
+            UpdateToggleAutoCruiseCheckButtonVisiblility();
+        }
     }
 
     public static void InitToggleAutoCruiseCheckButton()
     {
         var lowGroup = GameObject.Find("UI Root/Overlay Canvas/In Game/Low Group");
-        ToggleAutoCruise = MyCheckButton.CreateCheckButton(0, 0, lowGroup.GetComponent<RectTransform>(), Patches.PlayerPatch.AutoCruiseEnabled).WithSize(160f, 40f);
+        ToggleAutoCruise = MyCheckButton.CreateCheckButton(0, 0, lowGroup.GetComponent<RectTransform>(), Patches.PlayerPatch.AutoNavigation.IsActive).WithSize(160f, 40f);
         var rectTrans = ToggleAutoCruise.rectTrans;
         rectTrans.anchorMax = new Vector2(0.5f, 0f);
         rectTrans.anchorMin = new Vector2(0.5f, 0f);
@@ -48,19 +51,22 @@ internal static class AutoCruiseUI
         {
             if (ToggleAutoCruise.Checked)
             {
-                ToggleAutoCruise.SetLabelText("Disable auto-cruise");
+                ToggleAutoCruise.SetLabelText(I18NKeys.DisableAutoCruise);
             }
             else
             {
-                ToggleAutoCruise.SetLabelText("Enable auto-cruise");
+                ToggleAutoCruise.SetLabelText(I18NKeys.EnableAutoCruise);
             }
         }
+        ToggleAutoCruise.OnChecked += Patches.PlayerPatch.AutoNavigation.Toggle;
     }
 
     public static void UpdateToggleAutoCruiseCheckButtonVisiblility()
     {
         if (ToggleAutoCruise == null) return;
-        var active = Patches.PlayerPatch.AutoNavigationEnabled.Value && Patches.PlayerPatch.AutoNavigation.IndicatorAstroId > 0;
+        var active = Patches.PlayerPatch.AutoCruiseEnabled.Value
+                     && Patches.PlayerPatch.AutoNavigation.HasNavigationTarget();
+        ToggleAutoCruise.Checked = Patches.PlayerPatch.AutoNavigation.IsActive;
         ToggleAutoCruise.gameObject.SetActive(active);
     }
 }

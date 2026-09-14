@@ -129,7 +129,7 @@ internal static class FactoryBuildPatches
                 return;
             }
 
-            if (player.navigation.navigating || global::UXAssist.Patches.PlayerPatch.AutoNavigationG.IsActive)
+            if (player.navigation.navigating || global::UXAssist.Patches.PlayerPatch.AutoNavigation.IsActive)
             {
                 ClearAutoRoute(player);
                 ResetNavigation();

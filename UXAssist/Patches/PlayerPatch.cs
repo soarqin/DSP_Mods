@@ -17,15 +17,11 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
     public static ConfigEntry<bool> EnhancedMechaForgeCountControlEnabled;
     public static ConfigEntry<bool> HideTipsForSandsChangesEnabled;
     public static ConfigEntry<bool> ShortcutKeysForStarsNameEnabled;
-    public static ConfigEntry<bool> AutoNavigationEnabled;
-    public static ConfigEntry<bool> AutoCruiseEnabled;
-    public static ConfigEntry<bool> AutoBoostEnabled;
-    public static ConfigEntry<double> DistanceToWarp;
     private static PressKeyBind _showAllStarsNameKey;
     private static PressKeyBind _toggleAllStarsNameKey;
     private static PressKeyBind _autoDriveKey;
 
-	public static ConfigEntry<bool>   UseNewNavigationAlgorithm { get; set; } = null!;
+	public static ConfigEntry<bool>   AutoCruiseEnabled { get; set; } = null!;
 	public static ConfigEntry<bool>   StopOnArrivalAndInput     { get; set; } = null!;
 	public static ConfigEntry<bool>   UseWarper                 { get; set; } = null!;
 	public static ConfigEntry<double> UseWarperMinimalEnergy    { get; set; } = null!;
@@ -63,10 +59,7 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
                                 EnhancedMechaForgeCountControlEnabled.SettingChanged += (_, _) => EnhancedMechaForgeCountControl.Enable(EnhancedMechaForgeCountControlEnabled.Value);
         HideTipsForSandsChangesEnabled.SettingChanged += (_, _) => HideTipsForSandsChanges.Enable(HideTipsForSandsChangesEnabled.Value);
         ShortcutKeysForStarsNameEnabled.SettingChanged += (_, _) => ShortcutKeysForStarsName.Enable(ShortcutKeysForStarsNameEnabled.Value);
-        AutoNavigationEnabled.SettingChanged += (_, _) => AutoNavigation.Enable(AutoNavigationEnabled.Value);
-        AutoNavigationEnabled.SettingChanged += (_, _) => Functions.UIFunctions.UpdateToggleAutoCruiseCheckButtonVisiblility();
-        AutoCruiseEnabled.SettingChanged += (_, _) => Functions.UIFunctions.UpdateToggleAutoCruiseCheckButtonVisiblility();
-        AutoNavigationG.Init();
+        AutoNavigation.Init();
     }
 
     public static void Start()
@@ -74,8 +67,7 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
         EnhancedMechaForgeCountControl.Enable(EnhancedMechaForgeCountControlEnabled.Value);
         HideTipsForSandsChanges.Enable(HideTipsForSandsChangesEnabled.Value);
         ShortcutKeysForStarsName.Enable(ShortcutKeysForStarsNameEnabled.Value);
-        AutoNavigation.Enable(AutoNavigationEnabled.Value);
-		AutoNavigationG.Enable(true);
+        AutoNavigation.Enable(true);
         Enable(true);
     }
 
@@ -83,12 +75,7 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
     {
         ShortcutKeysForStarsName.OnInputUpdate();
         if (_autoDriveKey.keyValue)
-        {
-            if (UseNewNavigationAlgorithm.Value)
-                AutoNavigationG.Toggle();
-            else
-                AutoNavigation.ToggleAutoCruise();
-        }
+            AutoNavigation.Toggle();
     }
 
     public static void Uninit()
@@ -98,7 +85,6 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
         HideTipsForSandsChanges.Enable(false);
         ShortcutKeysForStarsName.Enable(false);
         AutoNavigation.Enable(false);
-		AutoNavigationG.Enable(false);
     }
     // Harmony transpiler: UIStarmapStar__OnLateUpdate_Transpiler
     // Target: UIStarmapStar._OnLateUpdate
@@ -357,279 +343,10 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
         */
     }
 
-    public class AutoNavigation : PatchImpl<AutoNavigation>
-    {
-        private static bool _canUseWarper;
-        private static int _indicatorAstroId;
-        private static bool _speedUp;
-        private static Vector3 _direction;
-        private static EMovementState _movementState = EMovementState.Walk;
-
-        public static int IndicatorAstroId => _indicatorAstroId;
-
-        protected override void OnEnable()
-        {
-            _canUseWarper = false;
-            _indicatorAstroId = 0;
-            _speedUp = false;
-            _direction = Vector3.zero;
-            _movementState = EMovementState.Walk;
-        }
-
-        public static void ToggleAutoCruise()
-        {
-			if(UseNewNavigationAlgorithm.Value)
-				return;
-            AutoCruiseEnabled.Value = !AutoCruiseEnabled.Value;
-            if (!DSPGame.IsMenuDemo && GameMain.isRunning)
-            {
-                UIRoot.instance.uiGame.generalTips.InvokeRealtimeTipAhead((AutoCruiseEnabled.Value ? I18NKeys.AutoCruiseOn : I18NKeys.AutoCruiseOff).Translate());
-            }
-        }
-
-        private static bool UpdateMovementState(PlayerController controller)
-        {
-            var movementStateChanged = controller.movementStateInFrame != _movementState;
-            if (movementStateChanged)
-            {
-                _movementState = controller.movementStateInFrame;
-            }
-            return movementStateChanged;
-        }
-        // Harmony transpiler: PlayerController_GameTick_Transpiler
-        // Target: PlayerController.GameTick
-        // Fallback: None — patch will fail loudly if the target method body changes.
-        [HarmonyTranspiler]
-        [HarmonyPatch(typeof(PlayerController), nameof(PlayerController.GameTick))]
-        private static IEnumerable<CodeInstruction> PlayerController_GameTick_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
-        {
-            var matcher = new CodeMatcher(instructions, generator);
-            matcher.MatchForward(false,
-                new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(BuildModel), nameof(BuildModel.EarlyGameTickIgnoreActive)))
-            ).Advance(1).InsertAndAdvance(
-                new CodeInstruction(OpCodes.Ldarg_0),
-                Transpilers.EmitDelegate((PlayerController controller) =>
-                {
-					if (UseNewNavigationAlgorithm.Value)
-						return;
-                    /* Update target astro if changed */
-                    _speedUp = false;
-                    var player = controller.player;
-                    if (player.mecha.thrusterLevel < 2) return;
-                    var navi = player.navigation;
-                    var astroChanged = navi.indicatorAstroId != _indicatorAstroId;
-                    if (astroChanged)
-                    {
-                        _indicatorAstroId = navi.indicatorAstroId;
-                        Functions.UIFunctions.UpdateToggleAutoCruiseCheckButtonVisiblility();
-                    }
-                    if (_indicatorAstroId == 0) return;
-                    switch (controller.movementStateInFrame)
-                    {
-                        case EMovementState.Walk:
-                        case EMovementState.Drift:
-                            if (!AutoCruiseEnabled.Value) return;
-                            if (GameMain.localStar?.astroId == _indicatorAstroId) return;
-                            UpdateMovementState(controller);
-                            /* Press jump key to fly */
-                            controller.input0.z = 1f;
-                            break;
-                        case EMovementState.Fly:
-                            if (!AutoCruiseEnabled.Value) return;
-                            if (GameMain.localStar?.astroId == _indicatorAstroId) return;
-                            UpdateMovementState(controller);
-                            /* Keep moving forward and pulling up to sail */
-                            controller.input0.y = 1f;
-                            controller.input1.y = 1f;
-                            break;
-                        case EMovementState.Sail:
-                            if (VFInput._pullUp.pressing || VFInput._pushDown.pressing || VFInput._moveLeft.pressing || VFInput._moveRight.pressing ||
-                                (!player.warping && UIRoot.instance.uiGame.disableLockCursor && (VFInput._moveForward.pressing || VFInput._moveBackward.pressing)))
-                                return;
-                            var movementStateChanged = UpdateMovementState(controller);
-                            var playerPos = player.uPosition;
-                            var isHive = _indicatorAstroId > 1000000;
-                            ref var astro = ref isHive ? ref GameMain.spaceSector.astros[_indicatorAstroId - 1000000] : ref GameMain.galaxy.astrosData[_indicatorAstroId];
-                            var astroVec = astro.uPos - playerPos;
-                            var distance = astroVec.magnitude;
-                            astroVec = astroVec.normalized;
-                            if (astroChanged || movementStateChanged)
-                            {
-                                controller.actionSail.sailPoser.targetURotWanted = Quaternion.LookRotation(astroVec);
-                            }
-                            if (distance < astro.type switch
-                            {
-                                EAstroType.Planet => 800.0 + astro.uRadius,
-                                EAstroType.Star => 4000.0 + astro.uRadius,
-                                EAstroType.EnemyHive => 800.0,
-                                _ => 2000.0 + astro.uRadius
-                            })
-                            {
-                                if (isHive)
-                                {
-                                    player.uVelocity = Vector3.zero;
-                                }
-                                return;
-                            }
-                            var autoCruise = AutoCruiseEnabled.Value;
-                            if (GameMain.instance.timei % 6 == 0 || _direction == Vector3.zero)
-                            {
-                                _direction = astroVec;
-
-                                /* Check nearest astroes, try to bypass them */
-                                var localStar = GameMain.localStar;
-                                _canUseWarper = autoCruise && player.mecha.thrusterLevel >= 3 && !player.warping && player.mecha.HasWarper();
-                                if (localStar != null)
-                                {
-                                    var nearestRange = (playerPos - localStar.uPosition).sqrMagnitude;
-                                    var nearestPos = localStar.uPosition;
-                                    var nearestAstroId = localStar.astroId;
-                                    foreach (var p in localStar.planets)
-                                    {
-                                        var range = (playerPos - p.uPosition).sqrMagnitude;
-                                        if (range >= nearestRange) continue;
-                                        nearestRange = range;
-                                        nearestPos = p.uPosition;
-                                        nearestAstroId = p.astroId;
-                                    }
-
-                                    /* If targeting hives, do not bypass them */
-                                    if (!isHive)
-                                    {
-                                        var hiveSys = GameMain.spaceSector.dfHives[localStar.index];
-                                        while (hiveSys != null)
-                                        {
-                                            if (hiveSys.realized && hiveSys.hiveAstroId > 1000000)
-                                            {
-                                                ref var hiveAstro = ref GameMain.spaceSector.astros[hiveSys.hiveAstroId - 1000000];
-                                                /* Divide by 36, so that the real range is 6 times of the calculated range,
-                                                   which means the minimal range allowed is 12000 */
-                                                var range = (playerPos - hiveAstro.uPos).sqrMagnitude / 36.0;
-                                                if (range < nearestRange)
-                                                {
-                                                    nearestRange = range;
-                                                    nearestPos = hiveAstro.uPos;
-                                                    nearestAstroId = hiveSys.hiveAstroId;
-                                                }
-                                            }
-
-                                            hiveSys = hiveSys.nextSibling;
-                                        }
-                                    }
-
-                                    if (nearestAstroId != _indicatorAstroId && nearestRange < 2000.0 * 2000.0)
-                                    {
-                                        Vector3 leavingDirection = (playerPos - nearestPos).normalized;
-                                        var dot = Vector3.Dot(leavingDirection, _direction);
-                                        if (dot < 0)
-                                        {
-                                            var cross = Vector3.Cross(_direction, leavingDirection);
-                                            _direction = Vector3.Cross(leavingDirection, cross).normalized;
-                                        }
-                                        else
-                                        {
-                                            _direction = leavingDirection;
-                                        }
-                                    }
-                                }
-                            }
-
-                            Vector3 uVel = player.uVelocity;
-                            var speed = uVel.magnitude;
-                            if (player.warping)
-                            {
-                                if (autoCruise)
-                                {
-                                    var actionSail = controller.actionSail;
-                                    _speedUp = actionSail.currentWarpSpeed < actionSail.maxWarpSpeed;
-                                    /* Speed down if too close */
-                                    if (distance < GalaxyData.LY * 1.5)
-                                    {
-                                        if (distance < actionSail.currentWarpSpeed * distance switch
-                                        {
-                                            > GalaxyData.LY * 0.6 => 0.33,
-                                            > GalaxyData.LY * 0.3 => 0.5,
-                                            > GalaxyData.LY * 0.1 => 0.66,
-                                            _ => 1.0
-                                        })
-                                        {
-                                            controller.input0.y = -1f;
-                                            _speedUp = false;
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    _speedUp = false;
-                                }
-                            }
-                            else
-                            {
-                                var mecha = player.mecha;
-                                var energyRatio = mecha.coreEnergy / mecha.coreEnergyCap;
-                                if (_canUseWarper && GameMain.localPlanet == null && distance > GalaxyData.AU * DistanceToWarp.Value && energyRatio >= 0.8 && player.mecha.UseWarper())
-                                {
-                                    player.warpCommand = true;
-                                    VFAudio.Create("warp-begin", player.transform, Vector3.zero, true);
-                                    controller.actionSail.sailPoser.targetURotWanted = Quaternion.LookRotation(astroVec);
-                                }
-                                else
-                                {
-                                    /* Speed up if needed */
-                                    _speedUp = autoCruise && AutoBoostEnabled.Value && speed + 0.2f < player.mecha.maxSailSpeed && energyRatio >= 0.1;
-                                }
-                            }
-
-                            /* Update direction, gracefully rotate for 2 degrees for each frame */
-                            var angle = Vector3.Angle(uVel, _direction);
-                            if (angle < 2f)
-                            {
-                                player.uVelocity = _direction * speed;
-                            }
-                            else
-                            {
-                                player.uVelocity = Vector3.Slerp(uVel, _direction * speed, 2f / angle);
-                            }
-                            break;
-                        default:
-                            _speedUp = false;
-                            break;
-                    }
-                })
-            );
-            return matcher.InstructionEnumeration();
-        }
-        // Harmony transpiler: VFInput_sailSpeedUp_Transpiler
-        // Target: VFInput._sailSpeedUp (getter)
-        // Fallback: None — patch will fail loudly if the target method body changes.
-        [HarmonyTranspiler]
-        [HarmonyPatch(typeof(VFInput), nameof(VFInput._sailSpeedUp), MethodType.Getter)]
-        private static IEnumerable<CodeInstruction> VFInput_sailSpeedUp_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
-        {
-            var matcher = new CodeMatcher(instructions, generator);
-            matcher.MatchForward(false,
-                new CodeMatch(OpCodes.Ret)
-            );
-            matcher.Repeat(m => m.InsertAndAdvance(
-                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(AutoNavigation), nameof(_speedUp))),
-                new CodeInstruction(OpCodes.Or)
-            ).Advance(1));
-            return matcher.InstructionEnumeration();
-        }
-
-        /* Disable Lock Cursor Mode on entering sail panel
-        [HarmonyPrefix]
-        [HarmonyPatch(typeof(UISailPanel), nameof(UISailPanel._OnOpen))]
-        public static void OnOpen_Prefix()
-        {
-            UIRoot.instance.uiGame.disableLockCursor = true;
-        }
-        */
-    }
 
 	#region New navigation algorithm
 
-	public class AutoNavigationG : PatchImpl<AutoNavigationG>
+	public class AutoNavigation : PatchImpl<AutoNavigation>
 	{
 		private const double Epsilon                     = 1e-18;
 		private const int    DarkFogAstroIdStart         = 1000000;
@@ -660,7 +377,6 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 		private static int               EscapeAstroId     { get; set; }
 		private static bool              FollowModeLock    { get; set; }
 
-		private static bool _normalizingNavigationMode;
 
 		public static bool IsActive => IsEnable;
 
@@ -685,11 +401,11 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 
 		public static void Awake(ConfigFile config)
 		{
-			UseNewNavigationAlgorithm = config.Bind(
+			AutoCruiseEnabled = config.Bind(
 				"Player",
-				nameof(UseNewNavigationAlgorithm),
+			"AutoCruise",
 				true,
-				"Use the new navigation algorithm");
+			"Enable auto-cruise");
 			StopOnArrivalAndInput = config.Bind("Player", nameof(StopOnArrivalAndInput), true, "Stop auto-navigation on arrival or manual input");
 			UseWarper             = config.Bind("Player", nameof(UseWarper),             true, "Use warp during auto-navigation");
 			UseWarperMinimalEnergy = config.Bind<double>(
@@ -719,9 +435,7 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 
 		public static void Init()
 		{
-			AutoNavigationEnabled.SettingChanged += NavigationModeChanged;
-			UseNewNavigationAlgorithm.SettingChanged += NavigationModeChanged;
-			NormalizeNavigationMode();
+			AutoCruiseEnabled.SettingChanged += NavigationModeChanged;
 		}
 
 		public static void StartG( )
@@ -743,6 +457,8 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 
 		public static void Toggle()
 		{
+			if (!AutoCruiseEnabled.Value)
+				return;
 			if (EnableTag)
 				StopAutoNavigation();
 			else
@@ -795,8 +511,10 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 
 		private static void NavigationModeChanged(object sender, EventArgs args)
 		{
-			NormalizeNavigationMode();
+			if (!AutoCruiseEnabled.Value)
+				StopAutoNavigation(false);
 			UpdateUiTip();
+			global::UXAssist.Functions.UIFunctions.UpdateToggleAutoCruiseCheckButtonVisiblility();
 		}
 
 		public static void UpdateUiTip()
@@ -804,7 +522,7 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 			if (UiTipText == null)
 				return;
 
-			bool showTip = GameMain.isRunning && !DSPGame.IsMenuDemo && UseNewNavigationAlgorithm.Value && !AutoNavigationEnabled.Value && (EnableTag || HasNavigationTarget());
+			bool showTip = GameMain.isRunning && !DSPGame.IsMenuDemo && AutoCruiseEnabled.Value && (EnableTag || HasNavigationTarget());
 			UiTipText.gameObject.SetActive(showTip);
 			if (!showTip)
 				return;
@@ -814,7 +532,7 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 				: string.Format(I18NKeys.AutoNavigationEnableHint.Translate(), KeyBindings.GetKeyBindingText(_autoDriveKey));
 		}
 
-		private static bool HasNavigationTarget()
+		public static bool HasNavigationTarget()
 		{
 			Player player = GameMain.mainPlayer;
 			if (player == null)
@@ -826,16 +544,6 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 				return navigation.indicatorEnemyId != 0;
 
 			return GameMain.localPlanet == null || indicatorAstroId != GameMain.localPlanet.astroId;
-		}
-
-		private static void NormalizeNavigationMode()
-		{
-			if (_normalizingNavigationMode || !AutoNavigationEnabled.Value || !UseNewNavigationAlgorithm.Value)
-				return;
-			_normalizingNavigationMode = true;
-			UseNewNavigationAlgorithm.Value = false;
-			_normalizingNavigationMode = false;
-			StopAutoNavigation(false);
 		}
 
 		private static void Pause( ) => PauseTag = true;
@@ -851,12 +559,7 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 		{
 			int previousTargetId = TargetId;
 			ESpaceGuideType previousTargetType = TargetType;
-			if (! UseNewNavigationAlgorithm.Value)
-			{
-				StopAutoNavigation( );
-				return true;
-			}
-			if (AutoNavigationEnabled.Value)
+			if (! AutoCruiseEnabled.Value)
 			{
 				StopAutoNavigation( );
 				return true;
@@ -1318,15 +1021,61 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 
 			// Smooth velocity changes.
 			VectorLF3 targetVelocity = targetDir * stepSpeed;
-			float     angle          = Vector3.Angle(targetVelocity, currentVel);
-			var       t              = (float)(1.6 / Mathf.Max(10, angle));
-			VectorLF3 dVelocity      = (VectorLF3)Vector3.Slerp(currentVel, targetVelocity, t) - currentVel;
+			float           angle           = Vector3.Angle(targetVelocity, currentVel);
+			var             t               = 1.6f / Mathf.Max(10f, angle);
+			VectorLF3       smoothedVelocity = SmoothVelocity(currentVel, targetVelocity, t, sail.sailPoser.targetURot * Vector3.up);
+			VectorLF3       dVelocity       = smoothedVelocity - currentVel;
 			sail.UseSailEnergy(ref dVelocity, 0.36);
 			VectorLF3 newVelocity = currentVel + dVelocity;
 
 			sail.input_aff_1 = 1.0;
 			player.uVelocity = newVelocity;
 			UpdateRotation(controller: controller);
+		}
+
+		private static VectorLF3 SmoothVelocity(
+			VectorLF3 currentVelocity,
+			VectorLF3 targetVelocity,
+			float     interpolation,
+			VectorLF3 turnReference)
+		{
+			double currentMagnitude = currentVelocity.magnitude;
+			double targetMagnitude  = targetVelocity.magnitude;
+			if (currentMagnitude < Epsilon && targetMagnitude < Epsilon)
+				return VectorLF3.zero;
+
+			Vector3 currentDirection = currentMagnitude >= Epsilon
+				? (Vector3)(currentVelocity / currentMagnitude)
+				: (targetMagnitude >= Epsilon ? (Vector3)(targetVelocity / targetMagnitude) : Vector3.forward);
+			Vector3 targetDirection = targetMagnitude >= Epsilon
+				? (Vector3)(targetVelocity / targetMagnitude)
+				: currentDirection;
+			Vector3 direction;
+			if (Vector3.Dot(currentDirection, targetDirection) < -0.9999f)
+			{
+				float angle = Vector3.Angle(currentDirection, targetDirection);
+				Vector3 axis = GetStableTurnAxis(currentDirection, (Vector3)turnReference);
+				direction = Quaternion.AngleAxis(angle * interpolation, axis) * currentDirection;
+			}
+			else
+			{
+				direction = Vector3.Slerp(currentDirection, targetDirection, interpolation);
+			}
+
+			double magnitude = currentMagnitude + (targetMagnitude - currentMagnitude) * interpolation;
+			return (VectorLF3)(direction.normalized * (float)magnitude);
+		}
+
+		private static Vector3 GetStableTurnAxis(Vector3 direction, Vector3 reference)
+		{
+			Vector3 projectedReference = reference - direction * Vector3.Dot(reference, direction);
+			if (projectedReference.sqrMagnitude < 1e-10f)
+			{
+				projectedReference = Vector3.Cross(direction, Vector3.right);
+				if (projectedReference.sqrMagnitude < 1e-10f)
+					projectedReference = Vector3.Cross(direction, Vector3.up);
+			}
+			return Vector3.Cross(direction, projectedReference).normalized;
 		}
 
 		/// <summary>

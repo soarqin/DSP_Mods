@@ -409,21 +409,12 @@ Total classified fields: **298**
 | `UXAssist/Patches/PlayerPatch.cs` | 13 | `public static ConfigEntry<bool> EnhancedMechaForgeCountControlEnabled;` | LifecycleSafe |
 | `UXAssist/Patches/PlayerPatch.cs` | 14 | `public static ConfigEntry<bool> HideTipsForSandsChangesEnabled;` | LifecycleSafe |
 | `UXAssist/Patches/PlayerPatch.cs` | 15 | `public static ConfigEntry<bool> ShortcutKeysForStarsNameEnabled;` | LifecycleSafe |
-| `UXAssist/Patches/PlayerPatch.cs` | 16 | `public static ConfigEntry<bool> AutoNavigationEnabled;` | LifecycleSafe |
-| `UXAssist/Patches/PlayerPatch.cs` | 17 | `public static ConfigEntry<bool> AutoCruiseEnabled;` | LifecycleSafe |
-| `UXAssist/Patches/PlayerPatch.cs` | 18 | `public static ConfigEntry<bool> AutoBoostEnabled;` | LifecycleSafe |
-| `UXAssist/Patches/PlayerPatch.cs` | 19 | `public static ConfigEntry<double> DistanceToWarp;` | LifecycleSafe |
 | `UXAssist/Patches/PlayerPatch.cs` | 20 | `private static PressKeyBind _showAllStarsNameKey;` | LifecycleSafe |
 | `UXAssist/Patches/PlayerPatch.cs` | 21 | `private static PressKeyBind _toggleAllStarsNameKey;` | LifecycleSafe |
 | `UXAssist/Patches/PlayerPatch.cs` | 22 | `private static PressKeyBind _autoDriveKey;` | LifecycleSafe |
 | `UXAssist/Patches/PlayerPatch.cs` | 194 | `public static int ShowAllStarsNameStatus;` | NeedsReset |
 | `UXAssist/Patches/PlayerPatch.cs` | 195 | `public static bool ForceShowAllStarsName;` | NeedsReset |
 | `UXAssist/Patches/PlayerPatch.cs` | 196 | `public static bool ForceShowAllStarsNameExternal;` | NeedsReset |
-| `UXAssist/Patches/PlayerPatch.cs` | 328 | `private static bool _canUseWarper;` | NeedsReset |
-| `UXAssist/Patches/PlayerPatch.cs` | 329 | `private static int _indicatorAstroId;` | NeedsReset |
-| `UXAssist/Patches/PlayerPatch.cs` | 330 | `private static bool _speedUp;` | NeedsReset |
-| `UXAssist/Patches/PlayerPatch.cs` | 331 | `private static Vector3 _direction;` | NeedsReset |
-| `UXAssist/Patches/PlayerPatch.cs` | 332 | `private static EMovementState _movementState = EMovementState.Walk;` | NeedsReset |
 
 ### Patches/TechPatch.cs
 
@@ -745,11 +736,6 @@ UXAssist/Patches/PlayerPatch.cs:182:        private static IEnumerable<CodeInstr
 UXAssist/Patches/PlayerPatch.cs:221:        private static void UIStarmap__OnOpen_Prefix()
 UXAssist/Patches/PlayerPatch.cs:228:                private static IEnumerable<CodeInstruction> UIStarmapPlanet__OnLateUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
 UXAssist/Patches/PlayerPatch.cs:276:                private static IEnumerable<CodeInstruction> UIStarmapDFHive__OnLateUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
-UXAssist/Patches/PlayerPatch.cs:328:        private static bool _canUseWarper;
-UXAssist/Patches/PlayerPatch.cs:329:        private static int _indicatorAstroId;
-UXAssist/Patches/PlayerPatch.cs:330:        private static bool _speedUp;
-UXAssist/Patches/PlayerPatch.cs:331:        private static Vector3 _direction;
-UXAssist/Patches/PlayerPatch.cs:332:        private static EMovementState _movementState = EMovementState.Walk;
 UXAssist/Patches/PlayerPatch.cs:354:        private static bool UpdateMovementState(PlayerController controller)
 UXAssist/Patches/PlayerPatch.cs:366:        private static IEnumerable<CodeInstruction> PlayerController_GameTick_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
 UXAssist/Patches/PlayerPatch.cs:565:        private static IEnumerable<CodeInstruction> VFInput_sailSpeedUp_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -1142,10 +1128,6 @@ UXAssist/Patches/PlanetPatch.cs:23:    public static void Uninit()
 UXAssist/Patches/PlayerPatch.cs:13:    public static ConfigEntry<bool> EnhancedMechaForgeCountControlEnabled;
 UXAssist/Patches/PlayerPatch.cs:14:    public static ConfigEntry<bool> HideTipsForSandsChangesEnabled;
 UXAssist/Patches/PlayerPatch.cs:15:    public static ConfigEntry<bool> ShortcutKeysForStarsNameEnabled;
-UXAssist/Patches/PlayerPatch.cs:16:    public static ConfigEntry<bool> AutoNavigationEnabled;
-UXAssist/Patches/PlayerPatch.cs:17:    public static ConfigEntry<bool> AutoCruiseEnabled;
-UXAssist/Patches/PlayerPatch.cs:18:    public static ConfigEntry<bool> AutoBoostEnabled;
-UXAssist/Patches/PlayerPatch.cs:19:    public static ConfigEntry<double> DistanceToWarp;
 UXAssist/Patches/PlayerPatch.cs:24:    public static void Init()
 UXAssist/Patches/PlayerPatch.cs:57:    public static void Start()
 UXAssist/Patches/PlayerPatch.cs:66:    public static void OnInputUpdate()
@@ -1155,8 +1137,6 @@ UXAssist/Patches/PlayerPatch.cs:195:        public static bool ForceShowAllStars
 UXAssist/Patches/PlayerPatch.cs:196:        public static bool ForceShowAllStarsNameExternal;
 UXAssist/Patches/PlayerPatch.cs:198:        public static void ToggleAllStarsName()
 UXAssist/Patches/PlayerPatch.cs:203:        public static void OnInputUpdate()
-UXAssist/Patches/PlayerPatch.cs:334:        public static int IndicatorAstroId => _indicatorAstroId;
-UXAssist/Patches/PlayerPatch.cs:345:        public static void ToggleAutoCruise()
 UXAssist/Patches/PlayerPatch.cs:581:        public static void OnOpen_Prefix()
 UXAssist/Patches/TechPatch.cs:14:public static class TechPatch
 UXAssist/Patches/TechPatch.cs:16:    public static ConfigEntry<bool> SorterCargoStackingEnabled;

@@ -216,13 +216,6 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
             "Hide tips for getting soil piles");
         PlayerPatch.ShortcutKeysForStarsNameEnabled = Config.Bind("Player", "ShortcutKeysForStarsName", false,
             "Shortcut keys for showing stars' name");
-        PlayerPatch.AutoNavigationEnabled = Config.Bind("Player", "AutoNavigation", false,
-            "Auto navigation");
-        PlayerPatch.AutoCruiseEnabled = Config.Bind("Player", "AutoCruise", false,
-            "Auto-cruise enabled");
-        PlayerPatch.AutoBoostEnabled = Config.Bind("Player", "AutoBoost", false,
-            "Auto boost speed with auto-cruise enabled");
-        PlayerPatch.DistanceToWarp = Config.Bind("Player", "DistanceToWarp", 5.0, "Distance to warp (in AU)");
         TechPatch.SorterCargoStackingEnabled = Config.Bind("Tech", "SorterCargoStacking", false,
             "Restore upgrades of `Sorter Cargo Stacking` on panel");
         TechPatch.DisableBattleRelatedTechsInPeaceModeEnabled = Config.Bind("Tech", "DisableBattleRelatedTechsInPeaceMode", false,
@@ -236,7 +229,7 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
         DysonSpherePatch.AutoConstructMultiplier = Config.Bind("DysonSphere", "AutoConstructMultiplier", 1, "Dyson Sphere auto-construct speed multiplier");
         UIPatch.PlanetVeinUtilizationEnabled = Config.Bind("UI", "PlanetVeinUtilization", false,
             "Planet vein utilization");
-		PlayerPatch.AutoNavigationG.Awake(Config);
+		PlayerPatch.AutoNavigation.Awake(Config);
 
         I18N.Init();
         I18NKeys.Register();
