@@ -55,6 +55,10 @@ internal static class AutoConstructUI
 
         ConstructCountText = GameObject.Instantiate(UIRoot.instance.uiGame.assemblerWindow.stateText);
         ConstructCountText.gameObject.name = "construct-count-text";
+        // The runtime object is only a style source. A Localizer copied along with it would
+        // overwrite the formatted count on the next localization refresh.
+        var localizer = ConstructCountText.GetComponent<Localizer>();
+        if (localizer != null) GameObject.DestroyImmediate(localizer);
         ConstructCountText.text = String.Format(I18NKeys.BuildingsToConstruct0.Translate(), 0);
         ConstructCountText.color = new Color(1f, 1f, 1f, 0.4f);
         ConstructCountText.alignment = TextAnchor.MiddleLeft;
@@ -72,19 +76,7 @@ internal static class AutoConstructUI
         rectTrans.localScale = new Vector3(1f, 1f, 1f);
 
         UpdateToggleAutoConstructCheckButtonVisiblility();
-        ToggleAutoConstructChecked();
-        ToggleAutoConstruct.OnChecked += ToggleAutoConstructChecked;
-        static void ToggleAutoConstructChecked()
-        {
-            if (ToggleAutoConstruct.Checked)
-            {
-                ToggleAutoConstruct.SetLabelText(I18NKeys.DisableAutoConstruct);
-            }
-            else
-            {
-                ToggleAutoConstruct.SetLabelText(I18NKeys.EnableAutoConstruct);
-            }
-        }
+        ToggleAutoConstruct.OnChecked += UpdateToggleAutoConstructLabel;
     }
 
     public static void UpdateToggleAutoConstructCheckButtonVisiblility()
@@ -92,8 +84,19 @@ internal static class AutoConstructUI
         if (ToggleAutoConstruct == null) return;
         var localPlanet = GameMain.localPlanet;
         var active = localPlanet != null && localPlanet.factoryLoaded && localPlanet.factory.prebuildCount > 0 && Patches.Factory.FactoryPatch.AutoConstructButtonEnabled.Value;
+        // The config can also change from outside the button (config file, BepInEx config manager),
+        // which only refreshes the colours, so reconcile the label here too.
+        UpdateToggleAutoConstructLabel();
         ToggleAutoConstruct.gameObject.SetActive(active);
-        ConstructCountPanel.gameObject.SetActive(active);
+        ConstructCountPanel.SetActive(active);
+    }
+
+    private static void UpdateToggleAutoConstructLabel()
+    {
+        if (ToggleAutoConstruct == null) return;
+        ToggleAutoConstruct.SetLabelText(ToggleAutoConstruct.Checked
+            ? I18NKeys.DisableAutoConstruct
+            : I18NKeys.EnableAutoConstruct);
     }
 
     public static void UpdateConstructCountText(int count)

@@ -116,8 +116,14 @@ public static class FactoryPatch
         DoNotRenderEntitiesHideSortersEnabled.SettingChanged += (_, _) => RenderingPatch.DoNotRenderEntities.HideSorters = DoNotRenderEntitiesHideSortersEnabled.Value;
         DragBuildPowerPolesEnabled.SettingChanged += (_, _) => BuildToolPatch.DragBuildPowerPoles.Enable(DragBuildPowerPolesEnabled.Value);
         DragBuildPowerPolesAlternatelyEnabled.SettingChanged += (_, _) => BuildToolPatch.DragBuildPowerPoles.AlternatelyChanged();
-        AutoConstructButtonEnabled.SettingChanged += (_, _) => FactoryBuildPatches.AutoConstructPatch.Enable(AutoConstructButtonEnabled.Value);
-        AutoConstructEnabled.SettingChanged += (_, _) => Functions.UIFunctions.UpdateToggleAutoConstructCheckButtonVisiblility();
+        // The button config only controls UI visibility; the behaviour itself follows
+        // AutoConstructEnabled, so hiding the button cannot silently disable auto-construct.
+        AutoConstructButtonEnabled.SettingChanged += (_, _) => Functions.UIFunctions.UpdateToggleAutoConstructCheckButtonVisiblility();
+        AutoConstructEnabled.SettingChanged += (_, _) =>
+        {
+            FactoryBuildPatches.AutoConstructPatch.Enable(AutoConstructEnabled.Value);
+            Functions.UIFunctions.UpdateToggleAutoConstructCheckButtonVisiblility();
+        };
         BeltSignalsForBuyOutEnabled.SettingChanged += (_, _) => BeltSignalPatch.BeltSignalsForBuyOut.Enable(BeltSignalsForBuyOutEnabled.Value);
         TankFastFillInAndTakeOutEnabled.SettingChanged += (_, _) => BuildToolPatch.TankFastFillInAndTakeOut.Enable(TankFastFillInAndTakeOutEnabled.Value);
         TankFastFillInAndTakeOutMultiplier.SettingChanged += (_, _) => UpdateTankFastFillInAndTakeOutMultiplierRealValue();
@@ -151,7 +157,7 @@ public static class FactoryPatch
         RenderingPatch.DoNotRenderEntities.Enable(DoNotRenderEntitiesEnabled.Value);
         RenderingPatch.DoNotRenderEntities.HideSorters = DoNotRenderEntitiesHideSortersEnabled.Value;
         BuildToolPatch.DragBuildPowerPoles.Enable(DragBuildPowerPolesEnabled.Value);
-        FactoryBuildPatches.AutoConstructPatch.Enable(AutoConstructButtonEnabled.Value);
+        FactoryBuildPatches.AutoConstructPatch.Enable(AutoConstructEnabled.Value);
         BeltSignalPatch.BeltSignalsForBuyOut.Enable(BeltSignalsForBuyOutEnabled.Value);
         BuildToolPatch.TankFastFillInAndTakeOut.Enable(TankFastFillInAndTakeOutEnabled.Value);
         BuildingBufferPatch.TweakBuildingBuffer.Enable(TweakBuildingBufferEnabled.Value);
