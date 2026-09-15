@@ -29,19 +29,7 @@ internal static class AutoCruiseUI
         rectTrans.localScale = new Vector3(1f, 1f, 1f);
 
         UpdateToggleAutoCruiseCheckButtonVisiblility();
-        ToggleAutoCruiseChecked();
-        ToggleAutoCruise.OnChecked += ToggleAutoCruiseChecked;
-        static void ToggleAutoCruiseChecked()
-        {
-            if (ToggleAutoCruise.Checked)
-            {
-                ToggleAutoCruise.SetLabelText(I18NKeys.DisableAutoCruise);
-            }
-            else
-            {
-                ToggleAutoCruise.SetLabelText(I18NKeys.EnableAutoCruise);
-            }
-        }
+        ToggleAutoCruise.OnChecked += UpdateToggleAutoCruiseLabel;
         ToggleAutoCruise.OnChecked += Patches.PlayerPatch.AutoNavigation.Toggle;
     }
 
@@ -50,7 +38,19 @@ internal static class AutoCruiseUI
         if (ToggleAutoCruise == null) return;
         var active = Patches.PlayerPatch.AutoCruiseEnabled.Value
                      && Patches.PlayerPatch.AutoNavigation.HasNavigationTarget();
+        // MyCheckButton.Checked only refreshes the colours; the label lives on the OnChecked
+        // handlers. Auto-cruise can also be toggled by its shortcut or stopped automatically on
+        // arrival, so the label has to be refreshed here as well or it goes stale.
         ToggleAutoCruise.Checked = Patches.PlayerPatch.AutoNavigation.IsActive;
+        UpdateToggleAutoCruiseLabel();
         ToggleAutoCruise.gameObject.SetActive(active);
+    }
+
+    private static void UpdateToggleAutoCruiseLabel()
+    {
+        if (ToggleAutoCruise == null) return;
+        ToggleAutoCruise.SetLabelText(ToggleAutoCruise.Checked
+            ? I18NKeys.DisableAutoCruise
+            : I18NKeys.EnableAutoCruise);
     }
 }

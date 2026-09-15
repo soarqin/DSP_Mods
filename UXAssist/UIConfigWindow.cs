@@ -700,7 +700,7 @@ public static class UIConfigWindow
             y += 36f;
             var autoCruiseCheckBox = wnd.AddCheckBox(x, y, tab4, PlayerPatch.AutoCruiseEnabled, I18NKeys.EnableAutoCruise);
             y += 27f;
-            var autoStopCheckBox = wnd.AddCheckBox(x + 20f, y, tab4, PlayerPatch.StopOnArrivalAndInput, I18NKeys.StopAutoNavigationOnManualInput, 13);
+            var autoStopCheckBox = wnd.AddCheckBox(x + 20f, y, tab4, PlayerPatch.StopOnArrivalAndInput, I18NKeys.StopAutoCruiseOnManualInput, 13);
             y += 27f;
             var useWarpCheckBox = wnd.AddCheckBox(x + 20f, y, tab4, PlayerPatch.UseWarper, I18NKeys.UseWarp, 13);
             y += 27f;
