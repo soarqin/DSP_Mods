@@ -359,6 +359,7 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 		private const double ResidualCompensationMaxDistance = GalaxyData.AU * 0.5;
 		private const double ResidualCompensationSpeedRatio  = 0.5;
 		private const double ResidualCompensationMinSpeed    = 100;
+		private const float  WarpTurnDegreesPerTick          = 1.6f;
 
 		private static bool _enabled;
 		private static Text _uiTipText;
@@ -372,6 +373,9 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 		private static readonly List<Obstacle> Obstacles = new(64);
 		private static bool _wasSailing;
 		private static bool _followModeLock;
+		private static bool _warpSteeringPending;
+		private static Quaternion _warpHeadingBeforeRotation;
+		private static VectorLF3 _warpTargetDirection;
 
 
 		public static bool IsActive => _enabled;
@@ -487,6 +491,9 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 			_targetId                    = 0;
 			_wasSailing                  = false;
 			_followModeLock              = false;
+			_warpSteeringPending         = false;
+			_warpHeadingBeforeRotation   = Quaternion.identity;
+			_warpTargetDirection         = default;
 			_targetUniversePosition      = default;
 			_targetUniverseVelocity      = default;
 			_targetType                  = default;
@@ -956,6 +963,12 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 				stepSpeed = Math.Max(0, (currentVel - dVelocityBrake).magnitude);
 			}
 
+			_warpSteeringPending = player.warping && targetDir.sqrMagnitude > Epsilon;
+			_warpHeadingBeforeRotation = player.uRotation;
+			_warpTargetDirection = _warpSteeringPending ? targetDir : default;
+
+			AdaptWarpSpeedControl(controller, targetDir);
+
 			// Smooth velocity changes.
 			VectorLF3 targetVelocity = targetDir * stepSpeed;
 			float           angle           = Vector3.Angle(targetVelocity, currentVel);
@@ -968,6 +981,51 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 			sail.input_aff_1 = 1.0;
 			player.uVelocity = newVelocity;
 			UpdateRotation(controller: controller);
+		}
+
+		[HarmonyPatch(typeof(PlayerController), "UpdateRotation")]
+		[HarmonyPostfix]
+		private static void PlayerController_UpdateRotation_Postfix(PlayerController __instance)
+		{
+			if (!_enabled || !_warpSteeringPending)
+				return;
+
+			_warpSteeringPending = false;
+			Player player = __instance.player;
+			if (player == null || __instance.movementStateInFrame != EMovementState.Sail || !player.warping)
+				return;
+
+			Vector3 previousDirection = _warpHeadingBeforeRotation * Vector3.forward;
+			Vector3 currentDirection = player.uRotation * Vector3.forward;
+			Vector3 targetDirection = (Vector3)_warpTargetDirection;
+			float appliedAngle = Vector3.Angle(previousDirection, currentDirection);
+			float targetAngle = Vector3.Angle(currentDirection, targetDirection);
+			float remainingAngle = Mathf.Min(targetAngle, Mathf.Max(0f, WarpTurnDegreesPerTick - appliedAngle));
+			if (remainingAngle < 0.01f)
+				return;
+
+			Vector3 turnAxis = GetStableTurnAxis(currentDirection, targetDirection);
+			player.uRotation = Quaternion.AngleAxis(remainingAngle, turnAxis) * player.uRotation;
+		}
+
+		private static void AdaptWarpSpeedControl(PlayerController controller, VectorLF3 targetDir)
+		{
+			Player player = controller.player;
+			if (!player.warping || VFInput._sailSpeedUp || controller.input0.y < 0f)
+				return;
+
+			Vector3 warpDirection = player.uRotation * Vector3.forward;
+			float turnAngle = Vector3.Angle(warpDirection, targetDir);
+			double turnSeverity = Clamp((turnAngle - 15.0) / 45.0, 0.0, 1.0);
+			double targetControl = 1.0 - turnSeverity * turnSeverity * (3.0 - 2.0 * turnSeverity) * 0.8;
+			double controlDelta = Clamp(
+				targetControl - controller.actionSail.warpSpeedControl,
+				-0.02,
+				0.02);
+			controller.actionSail.warpSpeedControl = Clamp(
+				controller.actionSail.warpSpeedControl + controlDelta,
+				0.2,
+				1.0);
 		}
 
 		private static VectorLF3 SmoothVelocity(
