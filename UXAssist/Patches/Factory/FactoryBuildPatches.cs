@@ -24,7 +24,6 @@ internal static class FactoryBuildPatches
         private const float PlanArrivalDistance = 5f;
         private const float MinimumSiteMoveDistance = 8f;
         private const float ConstructionFlightAltitude = 15f;
-        private const float SiteSwitchGain = 1.1f;
         private const float DroneBuildSecondsPerTarget = 2f;
         private const int MinimumConstructionSiteHoldTicks = 45;
         private const int FlightSettleDurationTicks = 45;
@@ -32,13 +31,17 @@ internal static class FactoryBuildPatches
         private const float FlightSettleTangentialSpeed = 6f;
         private const float CandidateMergeDistance = 6f;
         private const float AvoidanceAltitude = 35f;
-        private const float AvoidanceClearance = 1.5f;
+        private const float AvoidanceClearance = 2.5f;
         private const float StuckDistance = 1.5f;
         private const int StuckTickThreshold = 45;
         private const float OrbitRadialMovementThreshold = 0.75f;
         private const float OrbitAngleProgressThreshold = 0.5f;
         private const int OrbitTickThreshold = 45;
-        private static readonly float[] DetourSideOffsets = { 1f, -1f, 1f, -1f, 1f, -1f };
+        private const int MaxDetourAttempts = 8;
+        private const float LocalRouteRadiusMultiplier = 3f;
+        private static readonly float[] DetourRadiusScales = { 1f, 1.5f, 2f, 3f };
+        private static readonly int[] DetourSideSigns = { -1, 1 };
+        private static readonly Collider[] ObstacleOverlapColliders = new Collider[8];
 
         private static OrderNode _autoOrder;
         private static Vector3 _lastPosition;
@@ -73,15 +76,13 @@ internal static class FactoryBuildPatches
         private static int _plannerRefinementCount;
         private static int _plannerTargetCount;
         private static int _plannerEligibleTargetCount;
+        private static int _plannerLaunchedTargetCount;
         private static Vector3 _nearestPlannerTarget;
         private static float _nearestPlannerTargetDistanceSquared;
         private static float _plannerTargetDistanceSum;
         private static Vector3 _plannerTargetDirectionSum;
-        private static int _plannerNearbyTargetCount;
         private static int _currentSiteTargetCount;
-        private static int _currentSiteNearbyTargetCount;
-        private static float _currentSiteScore;
-        private static float _nextSiteScore;
+        private static int _currentSiteLaunchedTargetCount;
         private static readonly int[] ItemAvailabilityProtoIds = new int[ItemAvailabilityCacheSize];
         private static readonly int[] ItemAvailabilityCounts = new int[ItemAvailabilityCacheSize];
         private static Vector3 _plannerFanForward;
@@ -164,6 +165,8 @@ internal static class FactoryBuildPatches
                 if (!IsPlannerDue(timei) || !TryCreatePlan(factory, player, timei)) return;
             }
 
+            MaintainAvoidanceAltitude(player);
+
             if (_flightSettleTicks > 0 && !UpdateFlightSettling(player)) return;
 
             if (_hasDeferredRoute)
@@ -201,7 +204,7 @@ internal static class FactoryBuildPatches
                     var pendingWaypoint = _pendingWaypoint;
                     _pendingWaypoint = Vector3.zero;
                     _hasPendingWaypoint = false;
-                    IssueRoute(player, pendingWaypoint, true);
+                    IssueRoute(player, pendingWaypoint, true, true);
                     return;
                 }
 
@@ -211,7 +214,7 @@ internal static class FactoryBuildPatches
                     {
                         _isAvoidingObstacle = false;
                         _detourCount = 0;
-                        IssueRoute(player, _constructionDestination, false);
+                        IssueRoute(player, _constructionDestination, false, true);
                         return;
                     }
 
@@ -270,13 +273,13 @@ internal static class FactoryBuildPatches
                 }
 
                 var altitude = _isAvoidingObstacle ? AvoidanceAltitude : GetCurrentAltitude(player);
-                if (_detourCount < 4 && TryFindDetour(player, routeTarget, altitude, out var detour, out var pendingWaypoint))
+                if (_detourCount < MaxDetourAttempts && TryFindDetour(player, routeTarget, altitude, out var detour, out var pendingWaypoint))
                 {
                     _detourCount++;
                     _isAvoidingObstacle = true;
                     _pendingWaypoint = pendingWaypoint;
                     _hasPendingWaypoint = pendingWaypoint.sqrMagnitude > 0.01f;
-                    IssueRecoveryRoute(player, detour, orbitDetected);
+                    IssueRecoveryRoute(player, detour);
                 }
                 else
                 {
@@ -284,7 +287,7 @@ internal static class FactoryBuildPatches
                     _isAvoidingObstacle = true;
                     _pendingWaypoint = Vector3.zero;
                     _hasPendingWaypoint = false;
-                    IssueRecoveryRoute(player, _constructionDestination, orbitDetected);
+                    IssueRecoveryRoute(player, _constructionDestination);
                 }
 
                 _stuckTicks = 0;
@@ -303,15 +306,13 @@ internal static class FactoryBuildPatches
             _plannerRefinementCount = 0;
             _plannerTargetCount = 0;
             _plannerEligibleTargetCount = 0;
+            _plannerLaunchedTargetCount = 0;
             _nearestPlannerTarget = Vector3.zero;
             _nearestPlannerTargetDistanceSquared = float.MaxValue;
             _plannerTargetDistanceSum = 0f;
             _plannerTargetDirectionSum = Vector3.zero;
-            _plannerNearbyTargetCount = 0;
             _currentSiteTargetCount = 0;
-            _currentSiteNearbyTargetCount = 0;
-            _currentSiteScore = 0f;
-            _nextSiteScore = 0f;
+            _currentSiteLaunchedTargetCount = 0;
             _itemAvailabilityCount = 0;
             for (var i = 0; i < MaxPlannerCandidates; i++)
             {
@@ -355,9 +356,9 @@ internal static class FactoryBuildPatches
             if (buildArea < PlanArrivalDistance) return false;
 
             var buildAreaSquared = buildArea * buildArea;
-            _currentSiteScore = EvaluatePlannerCandidate(
+            EvaluatePlannerCandidate(
                 factory, player, player.position, buildAreaSquared, out _currentSiteTargetCount, out _, true);
-            _currentSiteNearbyTargetCount = _plannerNearbyTargetCount;
+            _currentSiteLaunchedTargetCount = _plannerLaunchedTargetCount;
             CollectPlannerCandidates(factory, player);
             if (IsFinalConstructionRun())
             {
@@ -370,17 +371,29 @@ internal static class FactoryBuildPatches
                 return false;
             }
 
-            var bestScore = float.MinValue;
-            var bestCoverageCount = 0;
-            var bestCandidate = Vector3.zero;
+            var localRouteDistance = Mathf.Max(
+                MinimumSiteMoveDistance, buildArea * LocalRouteRadiusMultiplier);
+            var localRouteDistanceSquared = localRouteDistance * localRouteDistance;
+            var localBestScore = float.MinValue;
+            var localBestCoverageCount = 0;
+            var localBestCandidate = Vector3.zero;
+            var nearestCandidate = Vector3.zero;
+            var nearestCandidateDistanceSquared = float.MaxValue;
             for (var i = 0; i < MaxPlannerCandidates; i++)
             {
                 if (PlannerCandidateDistanceSquared[i] < 0f) continue;
                 var candidate = PlannerCandidates[i];
                 var score = EvaluatePlannerCandidate(
                     factory, player, candidate, buildAreaSquared, out var coverageCount, out var refinedCandidate);
-                ConsiderPlannerDestination(
-                    candidate, score, coverageCount, ref bestScore, ref bestCoverageCount, ref bestCandidate);
+                if (PlannerCandidateDistanceSquared[i] <= localRouteDistanceSquared)
+                {
+                    ConsiderPlannerDestination(
+                        candidate, score, coverageCount,
+                        ref localBestScore, ref localBestCoverageCount, ref localBestCandidate);
+                }
+                ConsiderNearestDestination(
+                    candidate, coverageCount, PlannerCandidateDistanceSquared[i],
+                    ref nearestCandidateDistanceSquared, ref nearestCandidate);
                 AddPlannerRefinementCandidate(candidate, refinedCandidate, score, coverageCount);
             }
 
@@ -395,15 +408,41 @@ internal static class FactoryBuildPatches
 
                 var score = EvaluatePlannerCandidate(
                     factory, player, refinedCandidate, buildAreaSquared, out var coverageCount, out _);
-                ConsiderPlannerDestination(
-                    refinedCandidate, score, coverageCount, ref bestScore, ref bestCoverageCount, ref bestCandidate);
+                var refinementDistanceSquared = GetSurfaceDistanceSquared(factory, refinedCandidate, player.position);
+                if (refinementDistanceSquared <= localRouteDistanceSquared)
+                {
+                    ConsiderPlannerDestination(
+                        refinedCandidate, score, coverageCount,
+                        ref localBestScore, ref localBestCoverageCount, ref localBestCandidate);
+                }
+                ConsiderNearestDestination(
+                    refinedCandidate, coverageCount, refinementDistanceSquared,
+                    ref nearestCandidateDistanceSquared, ref nearestCandidate);
             }
 
-            if (bestCoverageCount == 0) return false;
+            if (localBestCoverageCount > 0)
+            {
+                destination = localBestCandidate;
+                return true;
+            }
 
-            _nextSiteScore = bestScore;
-            destination = bestCandidate;
+            if (nearestCandidateDistanceSquared >= float.MaxValue) return false;
+
+            destination = nearestCandidate;
             return true;
+        }
+
+        private static void ConsiderNearestDestination(
+            Vector3 candidate,
+            int coverageCount,
+            float distanceSquared,
+            ref float nearestDistanceSquared,
+            ref Vector3 nearestCandidate)
+        {
+            if (coverageCount <= 0 || distanceSquared >= nearestDistanceSquared) return;
+
+            nearestDistanceSquared = distanceSquared;
+            nearestCandidate = candidate;
         }
 
         private static void ConsiderPlannerDestination(
@@ -595,9 +634,9 @@ internal static class FactoryBuildPatches
         {
             coverageCount = 0;
             refinedCandidate = candidate;
+            _plannerLaunchedTargetCount = 0;
             _plannerTargetCount = 0;
             _plannerTargetDistanceSum = 0f;
-            _plannerNearbyTargetCount = 0;
             _plannerTargetDirectionSum = Vector3.zero;
             var inspectedCount = 0;
             var reachedScanLimit = false;
@@ -607,12 +646,9 @@ internal static class FactoryBuildPatches
             var bucketOffsets = hashSystem.bucketOffsets;
             var realRadius = factory.planet.realRadius;
             var planningCenter = candidate.normalized * (realRadius + ConstructionFlightAltitude);
-            var productiveSurfaceRadius = Mathf.Min(
-                Mathf.Sqrt(buildAreaSquared),
-                Mathf.Clamp(Mathf.Sqrt(buildAreaSquared) * 0.45f, 10f, 24f));
             if (currentSite)
             {
-                planningCenter = player.position.normalized * (realRadius + ConstructionFlightAltitude);
+                planningCenter = player.position;
             }
             hashSystem.GetBucketIdxesInArea(planningCenter, Mathf.Sqrt(buildAreaSquared));
             var activeBucketsCount = hashSystem.activeBucketsCount;
@@ -635,23 +671,21 @@ internal static class FactoryBuildPatches
                     if (prebuildId <= 0 || prebuildId >= prebuilds.Length) continue;
 
                     ref var prebuild = ref prebuilds[prebuildId];
-                    if (prebuild.id != prebuildId || prebuild.isDestroyed || prebuild.builderLaunched) continue;
-                    if (!HasRequiredItems(player, prebuild.protoId, prebuild.itemRequired)) continue;
-
+                    if (prebuild.id != prebuildId || prebuild.isDestroyed) continue;
                     var distanceSquared = (prebuild.pos - planningCenter).sqrMagnitude;
                     if (distanceSquared > buildAreaSquared) continue;
+                    if (prebuild.builderLaunched)
+                    {
+                        _plannerLaunchedTargetCount++;
+                        continue;
+                    }
+                    if (!HasRequiredItems(player, prebuild.protoId, prebuild.itemRequired)) continue;
 
                     if (coverageCount < MaxOverflowBuildTargets)
                     {
                         coverageCount++;
                     }
 
-                    var surfaceDistanceSquared = GetSurfaceDistanceSquared(factory, prebuild.pos, planningCenter);
-                    if (surfaceDistanceSquared <= productiveSurfaceRadius * productiveSurfaceRadius &&
-                        _plannerNearbyTargetCount < MaxImmediateBuildTargets)
-                    {
-                        _plannerNearbyTargetCount++;
-                    }
                     AddPlannerTarget(prebuild.pos, distanceSquared);
                 }
             }
@@ -663,14 +697,7 @@ internal static class FactoryBuildPatches
             var droneSpeed = Mathf.Max(1f, factory.gameData.history.constructionDroneSpeed);
             var targetsPerDrone = Mathf.Clamp(factory.gameData.history.constructionDroneMovement, 1, 4);
             var waveSize = Mathf.Max(1, droneCount * targetsPerDrone);
-            var productiveTargetCount = Mathf.Max(
-                1f,
-                _plannerNearbyTargetCount + Mathf.Min(
-                    Mathf.Max(0, coverageCount - _plannerNearbyTargetCount), waveSize) * 0.15f);
-            if (currentSite)
-            {
-                productiveTargetCount = Mathf.Max(1, _plannerNearbyTargetCount);
-            }
+            var productiveTargetCount = Mathf.Max(1f, coverageCount);
 
             var waveCount = Mathf.Ceil(productiveTargetCount / waveSize);
             var averageDroneDistance = _plannerTargetDistanceSum / _plannerTargetCount;
@@ -830,8 +857,18 @@ internal static class FactoryBuildPatches
                 return _currentSiteTargetCount > 0 || activeDroneCount > 0;
             }
 
-            if (_currentSiteNearbyTargetCount <= 0 || _currentSiteScore <= 0f) return false;
-            return _nextSiteScore < _currentSiteScore * SiteSwitchGain;
+            if (_currentSiteTargetCount <= 0) return false;
+
+            return _currentSiteLaunchedTargetCount < GetConstructionWaveCapacity(player);
+        }
+
+        private static int GetConstructionWaveCapacity(Player player)
+        {
+            var constructionModule = player.mecha.constructionModule;
+            var targetsPerDrone = Mathf.Clamp(
+                player.factory.gameData.history.constructionDroneMovement, 1, 4);
+            return Mathf.Clamp(
+                constructionModule.droneCount * targetsPerDrone, 1, MaxImmediateBuildTargets);
         }
 
         private static bool HasManualInput()
@@ -893,17 +930,21 @@ internal static class FactoryBuildPatches
             _hasDeferredRoute = true;
         }
 
-        private static void IssueRecoveryRoute(Player player, Vector3 target, bool waitForFlightSettle)
+        private static void IssueRecoveryRoute(Player player, Vector3 target)
         {
             player.controller.actionFly.targetAltitude = AvoidanceAltitude;
-            if (waitForFlightSettle)
-            {
-                QueueRouteAfterFlightSettle(target, true);
-            }
-            else
-            {
-                IssueRoute(player, target, true);
-            }
+            _flightSettleTicks = 0;
+            _deferredRoute = Vector3.zero;
+            _hasDeferredRoute = false;
+            _deferredRouteKeepAltitude = false;
+            IssueRoute(player, target, true, true);
+        }
+
+        private static void MaintainAvoidanceAltitude(Player player)
+        {
+            if (!_isAvoidingObstacle || player.movementState != EMovementState.Fly) return;
+
+            player.controller.actionFly.targetAltitude = AvoidanceAltitude;
         }
 
         private static bool ShouldBrakeBeforeRoute(Player player, Vector3 targetPosition)
@@ -946,12 +987,16 @@ internal static class FactoryBuildPatches
             _hasPendingWaypoint = false;
         }
 
-        private static void IssueRoute(Player player, Vector3 targetPosition, bool keepAltitude)
+        private static void IssueRoute(
+            Player player,
+            Vector3 targetPosition,
+            bool keepAltitude,
+            bool bypassBrake = false)
         {
             var direction = targetPosition - player.position;
             if (direction.sqrMagnitude < 0.01f) return;
 
-            if (!_hasDeferredRoute && ShouldBrakeBeforeRoute(player, targetPosition))
+            if (!bypassBrake && !_hasDeferredRoute && ShouldBrakeBeforeRoute(player, targetPosition))
             {
                 CancelAutoMotion(player);
                 QueueRouteAfterFlightSettle(targetPosition, keepAltitude);
@@ -979,13 +1024,30 @@ internal static class FactoryBuildPatches
             var finalDirection = routeTarget.normalized;
             var path = GetFlightPoint(finalDirection, altitude, planet.realRadius) - origin;
             if (path.sqrMagnitude < 0.01f) return false;
-            if (!Physics.SphereCast(origin, AvoidanceClearance, path.normalized, out var hit, path.magnitude, 8704, QueryTriggerInteraction.Collide) ||
-                hit.distance + 4f >= path.magnitude)
+            var obstacleBounds = new Bounds();
+            var hasObstacle = false;
+            var overlapCount = Physics.OverlapSphereNonAlloc(
+                origin, AvoidanceClearance + 0.5f, ObstacleOverlapColliders, 8704, QueryTriggerInteraction.Collide);
+            for (var i = 0; i < overlapCount; i++)
             {
-                return false;
+                var overlapCollider = ObstacleOverlapColliders[i];
+                if (overlapCollider == null) continue;
+
+                obstacleBounds = overlapCollider.bounds;
+                hasObstacle = true;
+                break;
             }
 
-            var obstacleBounds = hit.collider != null ? hit.collider.bounds : new Bounds(hit.point, Vector3.one * 2f);
+            if (!hasObstacle &&
+                Physics.SphereCast(origin, AvoidanceClearance, path.normalized, out var hit, path.magnitude, 8704, QueryTriggerInteraction.Collide) &&
+                hit.distance + 4f < path.magnitude)
+            {
+                obstacleBounds = hit.collider != null ? hit.collider.bounds : new Bounds(hit.point, Vector3.one * 2f);
+                hasObstacle = true;
+            }
+
+            if (!hasObstacle) return false;
+
             var anchor = obstacleBounds.center.normalized;
             var forward = Vector3.ProjectOnPlane(finalDirection, anchor).normalized;
             if (forward.sqrMagnitude < 0.01f)
@@ -996,42 +1058,78 @@ internal static class FactoryBuildPatches
             var side = Vector3.Cross(anchor, forward).normalized;
             if (side.sqrMagnitude < 0.01f) return false;
 
-            var sideExtent = Mathf.Min(GetProjectedExtent(obstacleBounds.extents, side), 48f);
-            var forwardExtent = Mathf.Min(GetProjectedExtent(obstacleBounds.extents, forward), 48f);
-            var sideOffset = Mathf.Max(6f, sideExtent + AvoidanceClearance + 2f);
-            var forwardOffset = Mathf.Max(5f, forwardExtent + AvoidanceClearance + 2f);
-            for (var offsetIndex = 0; offsetIndex < DetourSideOffsets.Length; offsetIndex++)
+            var footprintRadius = GetObstacleFootprintRadius(obstacleBounds, anchor);
+            var fallbackDetour = default(Vector3);
+            var fallbackWaypoint = default(Vector3);
+            var fallbackClearCount = -1;
+            var optionCount = DetourRadiusScales.Length * DetourSideSigns.Length;
+            for (var optionIndex = 0; optionIndex < optionCount; optionIndex++)
             {
-                var lateralOffset = sideOffset * DetourSideOffsets[offsetIndex];
-                if (offsetIndex >= 2)
-                {
-                    lateralOffset += 8f * (offsetIndex / 2) * DetourSideOffsets[offsetIndex];
-                }
+                var scaleIndex = optionIndex / DetourSideSigns.Length;
+                var sideIndex = optionIndex % DetourSideSigns.Length;
+                var routeOffset = footprintRadius * DetourRadiusScales[scaleIndex];
+                var lateralOffset = routeOffset * DetourSideSigns[sideIndex];
+                var forwardOffset = routeOffset;
                 var entry = SurfaceOffset(anchor, side * lateralOffset - forward * forwardOffset, planet.realRadius);
                 var exit = SurfaceOffset(anchor, side * lateralOffset + forward * forwardOffset, planet.realRadius);
-                if (IsPathClear(player, entry, altitude) &&
-                    IsPathClear(entry, exit, altitude, planet.realRadius) &&
-                    IsPathClear(exit, finalDirection, altitude, planet.realRadius))
+                var entryClear = IsPathClear(player, entry, altitude);
+                var exitClear = IsPathClear(entry, exit, altitude, planet.realRadius);
+                var finalClear = IsPathClear(exit, finalDirection, altitude, planet.realRadius);
+                if (entryClear && exitClear && finalClear)
                 {
                     detour = entry * planet.realRadius;
                     pendingWaypoint = exit * planet.realRadius;
                     return true;
                 }
 
-                var candidate = SurfaceOffset(anchor, side * lateralOffset, planet.realRadius);
-                if (!IsPathClear(player, candidate, altitude) ||
-                    !IsPathClear(candidate, finalDirection, altitude, planet.realRadius)) continue;
+                var clearCount = (entryClear ? 1 : 0) + (exitClear ? 1 : 0) + (finalClear ? 1 : 0);
+                if (clearCount > fallbackClearCount)
+                {
+                    fallbackClearCount = clearCount;
+                    fallbackDetour = entry * planet.realRadius;
+                    fallbackWaypoint = exit * planet.realRadius;
+                }
 
-                detour = candidate * planet.realRadius;
-                return true;
+                var candidate = SurfaceOffset(anchor, side * lateralOffset, planet.realRadius);
+                var candidateEntryClear = IsPathClear(player, candidate, altitude);
+                var candidateFinalClear = IsPathClear(candidate, finalDirection, altitude, planet.realRadius);
+                if (candidateEntryClear && candidateFinalClear)
+                {
+                    detour = candidate * planet.realRadius;
+                    pendingWaypoint = default;
+                    return true;
+                }
+
+                var candidateClearCount = (candidateEntryClear ? 1 : 0) + (candidateFinalClear ? 1 : 0);
+                if (candidateClearCount > fallbackClearCount)
+                {
+                    fallbackClearCount = candidateClearCount;
+                    fallbackDetour = candidate * planet.realRadius;
+                    fallbackWaypoint = default;
+                }
             }
 
-            return false;
+            if (fallbackClearCount < 0) return false;
+
+            detour = fallbackDetour;
+            pendingWaypoint = fallbackWaypoint;
+            return true;
         }
 
-        private static float GetProjectedExtent(Vector3 extents, Vector3 axis)
+        private static float GetObstacleFootprintRadius(Bounds bounds, Vector3 anchor)
         {
-            return Mathf.Abs(axis.x) * extents.x + Mathf.Abs(axis.y) * extents.y + Mathf.Abs(axis.z) * extents.z;
+            var maximumRadius = 0f;
+            for (var cornerIndex = 0; cornerIndex < 8; cornerIndex++)
+            {
+                var corner = new Vector3(
+                    (cornerIndex & 1) == 0 ? bounds.min.x : bounds.max.x,
+                    (cornerIndex & 2) == 0 ? bounds.min.y : bounds.max.y,
+                    (cornerIndex & 4) == 0 ? bounds.min.z : bounds.max.z);
+                var cornerOffset = Vector3.ProjectOnPlane(corner - bounds.center, anchor);
+                maximumRadius = Mathf.Max(maximumRadius, cornerOffset.magnitude);
+            }
+
+            return Mathf.Clamp(maximumRadius + AvoidanceClearance + 2f, 5f, 64f);
         }
 
         private static bool IsPathClear(Player player, Vector3 targetDirection, float altitude)
