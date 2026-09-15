@@ -24,6 +24,7 @@ internal static class FactoryBuildPatches
         private const float PlanArrivalDistance = 5f;
         private const float MinimumSiteMoveDistance = 8f;
         private const float ConstructionFlightAltitude = 15f;
+        private const float SiteSwitchGain = 1.15f;
         private const float DroneBuildSecondsPerTarget = 2f;
         private const int MinimumConstructionSiteHoldTicks = 45;
         private const int FlightSettleDurationTicks = 45;
@@ -39,6 +40,7 @@ internal static class FactoryBuildPatches
         private const int OrbitTickThreshold = 45;
         private const int MaxDetourAttempts = 8;
         private const float LocalRouteRadiusMultiplier = 3f;
+        private const float RouteCorridorWidthFactor = 0.8f;
         private static readonly float[] DetourRadiusScales = { 1f, 1.5f, 2f, 3f };
         private static readonly int[] DetourSideSigns = { -1, 1 };
         private static readonly Collider[] ObstacleOverlapColliders = new Collider[8];
@@ -83,6 +85,8 @@ internal static class FactoryBuildPatches
         private static Vector3 _plannerTargetDirectionSum;
         private static int _currentSiteTargetCount;
         private static int _currentSiteLaunchedTargetCount;
+        private static float _currentSiteScore;
+        private static float _nextSiteScore;
         private static readonly int[] ItemAvailabilityProtoIds = new int[ItemAvailabilityCacheSize];
         private static readonly int[] ItemAvailabilityCounts = new int[ItemAvailabilityCacheSize];
         private static Vector3 _plannerFanForward;
@@ -313,6 +317,8 @@ internal static class FactoryBuildPatches
             _plannerTargetDirectionSum = Vector3.zero;
             _currentSiteTargetCount = 0;
             _currentSiteLaunchedTargetCount = 0;
+            _currentSiteScore = 0f;
+            _nextSiteScore = 0f;
             _itemAvailabilityCount = 0;
             for (var i = 0; i < MaxPlannerCandidates; i++)
             {
@@ -356,7 +362,7 @@ internal static class FactoryBuildPatches
             if (buildArea < PlanArrivalDistance) return false;
 
             var buildAreaSquared = buildArea * buildArea;
-            EvaluatePlannerCandidate(
+            _currentSiteScore = EvaluatePlannerCandidate(
                 factory, player, player.position, buildAreaSquared, out _currentSiteTargetCount, out _, true);
             _currentSiteLaunchedTargetCount = _plannerLaunchedTargetCount;
             CollectPlannerCandidates(factory, player);
@@ -379,6 +385,9 @@ internal static class FactoryBuildPatches
             var localBestCandidate = Vector3.zero;
             var nearestCandidate = Vector3.zero;
             var nearestCandidateDistanceSquared = float.MaxValue;
+            var nearestCandidateScore = float.MinValue;
+            Vector3 prefixDestination;
+            float prefixScore;
             for (var i = 0; i < MaxPlannerCandidates; i++)
             {
                 if (PlannerCandidateDistanceSquared[i] < 0f) continue;
@@ -392,8 +401,8 @@ internal static class FactoryBuildPatches
                         ref localBestScore, ref localBestCoverageCount, ref localBestCandidate);
                 }
                 ConsiderNearestDestination(
-                    candidate, coverageCount, PlannerCandidateDistanceSquared[i],
-                    ref nearestCandidateDistanceSquared, ref nearestCandidate);
+                    candidate, coverageCount, PlannerCandidateDistanceSquared[i], score,
+                    ref nearestCandidateDistanceSquared, ref nearestCandidate, ref nearestCandidateScore);
                 AddPlannerRefinementCandidate(candidate, refinedCandidate, score, coverageCount);
             }
 
@@ -416,33 +425,109 @@ internal static class FactoryBuildPatches
                         ref localBestScore, ref localBestCoverageCount, ref localBestCandidate);
                 }
                 ConsiderNearestDestination(
-                    refinedCandidate, coverageCount, refinementDistanceSquared,
-                    ref nearestCandidateDistanceSquared, ref nearestCandidate);
+                    refinedCandidate, coverageCount, refinementDistanceSquared, score,
+                    ref nearestCandidateDistanceSquared, ref nearestCandidate, ref nearestCandidateScore);
             }
 
             if (localBestCoverageCount > 0)
             {
                 destination = localBestCandidate;
+                _nextSiteScore = localBestScore;
+                if (TryFindRoutePrefixDestination(
+                        factory, player, destination, buildArea, out prefixDestination, out prefixScore))
+                {
+                    destination = prefixDestination;
+                    _nextSiteScore = prefixScore;
+                }
+
                 return true;
             }
 
-            if (nearestCandidateDistanceSquared >= float.MaxValue) return false;
+            if (nearestCandidateDistanceSquared >= float.MaxValue || nearestCandidateScore <= float.MinValue) return false;
 
             destination = nearestCandidate;
+            _nextSiteScore = nearestCandidateScore;
+            if (TryFindRoutePrefixDestination(
+                    factory, player, destination, buildArea, out prefixDestination, out prefixScore))
+            {
+                destination = prefixDestination;
+                _nextSiteScore = prefixScore;
+            }
+
             return true;
+        }
+
+        private static bool TryFindRoutePrefixDestination(
+            PlanetFactory factory,
+            Player player,
+            Vector3 destination,
+            float buildArea,
+            out Vector3 prefixDestination,
+            out float prefixScore)
+        {
+            prefixDestination = default;
+            prefixScore = float.MinValue;
+            var realRadius = factory.planet.realRadius;
+            var originDirection = player.position.normalized;
+            var targetDirection = destination.normalized;
+            var routeNormal = Vector3.Cross(originDirection, targetDirection);
+            if (routeNormal.sqrMagnitude < 0.000001f) return false;
+
+            routeNormal.Normalize();
+            var routeCos = Vector3.Dot(originDirection, targetDirection);
+            var routeAngle = Mathf.Acos(Mathf.Clamp(routeCos, -1f, 1f));
+            var routeDistance = routeAngle * realRadius;
+            if (routeDistance <= MinimumSiteMoveDistance) return false;
+            var minimumDistanceCos = Mathf.Cos(Mathf.Min(Mathf.PI, MinimumSiteMoveDistance / realRadius));
+
+            var corridorWidth = Mathf.Max(16f, buildArea * RouteCorridorWidthFactor);
+            var maximumCrossTrackNormal = Mathf.Sin(
+                Mathf.Min(Mathf.PI, corridorWidth / realRadius));
+            var prebuilds = factory.prebuildPool;
+            var bestCandidateCos = -2f;
+            var found = false;
+            for (var i = 1; i < factory.prebuildCursor; i++)
+            {
+                ref var prebuild = ref prebuilds[i];
+                if (prebuild.id != i || prebuild.isDestroyed || prebuild.builderLaunched) continue;
+                if (!HasRequiredItems(player, prebuild.protoId, prebuild.itemRequired)) continue;
+
+                var candidateDirection = prebuild.pos.normalized;
+                var candidateCos = Vector3.Dot(originDirection, candidateDirection);
+                if (candidateCos >= minimumDistanceCos || candidateCos <= routeCos) continue;
+                if (Vector3.Dot(candidateDirection, targetDirection) <= routeCos) continue;
+
+                var crossTrackAngle = Mathf.Asin(
+                    Mathf.Clamp(Vector3.Dot(routeNormal, candidateDirection), -1f, 1f));
+                if (Mathf.Abs(crossTrackAngle) > maximumCrossTrackNormal) continue;
+                if (candidateCos <= bestCandidateCos) continue;
+
+                bestCandidateCos = candidateCos;
+                prefixDestination = prebuild.pos;
+                found = true;
+            }
+
+            if (!found) return false;
+
+            prefixScore = EvaluatePlannerCandidate(
+                factory, player, prefixDestination, buildArea * buildArea, out _, out _);
+            return prefixScore > float.MinValue;
         }
 
         private static void ConsiderNearestDestination(
             Vector3 candidate,
             int coverageCount,
             float distanceSquared,
+            float score,
             ref float nearestDistanceSquared,
-            ref Vector3 nearestCandidate)
+            ref Vector3 nearestCandidate,
+            ref float nearestScore)
         {
             if (coverageCount <= 0 || distanceSquared >= nearestDistanceSquared) return;
 
             nearestDistanceSquared = distanceSquared;
             nearestCandidate = candidate;
+            nearestScore = score;
         }
 
         private static void ConsiderPlannerDestination(
@@ -859,7 +944,9 @@ internal static class FactoryBuildPatches
 
             if (_currentSiteTargetCount <= 0) return false;
 
-            return _currentSiteLaunchedTargetCount < GetConstructionWaveCapacity(player);
+            if (_currentSiteLaunchedTargetCount >= GetConstructionWaveCapacity(player)) return false;
+
+            return _nextSiteScore < _currentSiteScore * SiteSwitchGain;
         }
 
         private static int GetConstructionWaveCapacity(Player player)
