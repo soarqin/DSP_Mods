@@ -355,13 +355,10 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 		private const double StarSafeRedis               = 2000;
 		private const double PlanetSafeRedis             = 2000;
 		private const double HiveSafeRedis               = GalaxyData.AU * 0.5;
-
 		private const double FollowModeUseWarpDistance       = GalaxyData.AU * 1.5;
 		private const double ResidualCompensationMaxDistance = GalaxyData.AU * 0.5;
 		private const double ResidualCompensationSpeedRatio  = 0.5;
 		private const double ResidualCompensationMinSpeed    = 100;
-		private const double ObstacleLookAheadDistance       = GalaxyData.AU;
-		private const double ObstacleEscapeAltitude          = 200;
 
 		private static bool _enabled;
 		private static Text _uiTipText;
@@ -664,8 +661,9 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 
 			Player    player       = controller.player;
 			double    currentSpeed = player.uVelocity.magnitude;
-			VectorLF3 targetDir    = ComputeDirection(player.uPosition, Obstacles);
-			VectorLF3 currentDir   = SafeNorm(player.uVelocity, targetDir);
+			VectorLF3 preliminaryDir = SafeNorm(_targetUniversePosition - player.uPosition, default);
+			VectorLF3 currentDir     = SafeNorm(player.uVelocity, preliminaryDir);
+			VectorLF3 targetDir    = ComputeDirection(player.uPosition, currentDir, Obstacles);
 			if (player.warping)
 				UpdateSailVelocityAndRotation(controller, currentDir, currentSpeed, targetDir, currentSpeed);
 			else
@@ -731,85 +729,88 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 		/// <param name="playerPos">Player position.</param>
 		/// <param name="obstacles">Nearby obstacles.</param>
 		/// <returns></returns>
-		private static VectorLF3 ComputeDirection(VectorLF3 playerPos, List<Obstacle> obstacles)
+		private static VectorLF3 ComputeDirection(VectorLF3 playerPos, VectorLF3 currentDirection, List<Obstacle> obstacles)
 		{
-			VectorLF3 toTarget    = _targetUniversePosition - playerPos;
+			VectorLF3 toTarget = _targetUniversePosition - playerPos;
 			double    toTargetSqr = toTarget.sqrMagnitude;
 			if (toTargetSqr < Epsilon)
 				return default;
-			VectorLF3 baseDir = toTarget.normalized;
-			if (obstacles.Count == 0)
-				return baseDir;
 
-			VectorLF3 avoid  = default;
-			double    sumWeight = 0;
+			VectorLF3 baseDir = toTarget.normalized;
 			foreach (Obstacle obstacle in obstacles)
 			{
-				double safeR = obstacle.SafeRadius;
-				if (safeR <= 0.0)
-					continue;
-				VectorLF3 toObject    = obstacle.Position - playerPos;
-				double    toObjectSqr = toObject.sqrMagnitude;
-				if (toObjectSqr > toTargetSqr)
+				double pathRadius = GetReachablePathRadius(obstacle);
+				if (pathRadius <= 0.0)
 					continue;
 
-				double toObjectMagnitude = Math.Sqrt(toObjectSqr);
-				if (toObjectMagnitude > ObstacleLookAheadDistance)
-					continue;
-
-				double    toObjectAltitude = toObjectMagnitude - obstacle.Radius;
-				double    forward          = VectorLF3.Dot(toObject, baseDir);
-				VectorLF3 pushVector       = baseDir * forward - toObject;
-
-				double escapeExitAltitude = Math.Max(ObstacleEscapeAltitude * 3, obstacle.Radius * 1.5);
-				if (toObjectAltitude < escapeExitAltitude && (forward > 0 || toObjectAltitude < 0))
-				{
-					VectorLF3 outward = SafeNorm(-toObject, -baseDir);
-					VectorLF3 tangent = baseDir - outward * VectorLF3.Dot(baseDir, outward);
-					tangent = SafeNorm(tangent, GetPerpendicularDirection(baseDir, VectorLF3.unit_y));
-					double escapeWeight = Clamp(
-						(escapeExitAltitude - toObjectAltitude) / (escapeExitAltitude - ObstacleEscapeAltitude),
-						0,
-						1);
-					return SafeNorm(outward * escapeWeight + tangent * (1 - escapeWeight), outward);
-				}
-
-				// Only consider obstacles in front of the player.
-				if (forward <= 0.0)
-					continue;
-				double pushSqr       = pushVector.sqrMagnitude;
-				double pushMagnitude = Math.Sqrt(pushSqr);
-				if (pushSqr < Epsilon)
-					continue;
-				if (pushMagnitude >= safeR)
-					continue;
-
-				// Weight and combine avoidance forces by distance.
-				double pushW = (safeR - pushMagnitude) / safeR;
-				pushW = Clamp(pushW, 0, 1);
-				double forwardRange = Math.Max(ObstacleLookAheadDistance - safeR, Epsilon);
-				double forwardW = 1 - (forward - safeR) / forwardRange;
-				forwardW = Clamp(forwardW, 0, 1);
-				double    weight  = pushW      * pushW * (3.0 - 2.0 * pushW) * forwardW * forwardW;
-				VectorLF3 pushDir = pushVector / pushMagnitude;
-				avoid += pushDir * weight;
-				sumWeight += weight;
+				VectorLF3 toObstacle = obstacle.Position - playerPos;
+				double obstacleDistance = toObstacle.magnitude;
+				if (obstacleDistance < pathRadius)
+					return ComputeEscapeDirection(currentDirection, toObstacle, baseDir);
+				if (IsSegmentBlocked(playerPos, _targetUniversePosition, obstacle.Position, pathRadius))
+					return ComputeTangentDirection(currentDirection, toObstacle, pathRadius, baseDir);
 			}
 
-			double avoidSqr = avoid.sqrMagnitude;
-			if (sumWeight < Epsilon)
-				return baseDir;
+			return baseDir;
+		}
 
-			VectorLF3 mixed = baseDir + avoid;
-			double avoidStrength = Math.Sqrt(avoidSqr);
-			if (avoidStrength < sumWeight * 0.6)
-			{
-				VectorLF3 lift = GetPerpendicularDirection(baseDir, VectorLF3.unit_y);
-				mixed += lift.normalized * (Clamp(1 - avoidStrength / sumWeight, 0, 1) * 0.25);
-			}
+		private static double GetReachablePathRadius(Obstacle obstacle)
+		{
+			double targetClearance = (obstacle.Position - _targetUniversePosition).magnitude - _targetArriveThresholdRadius;
+			return Math.Min(obstacle.PathRadius, targetClearance);
+		}
 
-			double    mixedSqr = mixed.sqrMagnitude;
-			return mixedSqr < Epsilon ? baseDir : mixed.normalized;
+		private static bool IsSegmentBlocked(
+			VectorLF3 start,
+			VectorLF3 end,
+			VectorLF3 center,
+			double    pathRadius)
+		{
+			VectorLF3 segment = end - start;
+			double    segmentLength = segment.magnitude;
+			if (segmentLength < Epsilon)
+				return false;
+
+			VectorLF3 toCenter = center - start;
+			double    projection = VectorLF3.Dot(toCenter, segment) / segmentLength;
+			double    closestDistance = projection <= 0.0
+				? toCenter.magnitude
+				: projection >= segmentLength
+					? (center - end).magnitude
+					: Math.Sqrt(Math.Max(0.0, toCenter.sqrMagnitude - projection * projection));
+			return closestDistance < pathRadius;
+		}
+
+		private static VectorLF3 ComputeEscapeDirection(VectorLF3 currentDirection, VectorLF3 toObstacle, VectorLF3 fallback)
+		{
+			VectorLF3 outward = SafeNorm(-toObstacle, -fallback);
+			VectorLF3 tangent = currentDirection - outward * VectorLF3.Dot(currentDirection, outward);
+			tangent = SafeNorm(tangent, GetPerpendicularDirection(outward, VectorLF3.unit_y));
+			return SafeNorm(outward + tangent * 0.5, outward);
+		}
+
+		private static VectorLF3 ComputeTangentDirection(
+			VectorLF3 currentDirection,
+			VectorLF3 toObstacle,
+			double    pathRadius,
+			VectorLF3 fallback)
+		{
+			double obstacleDistance = toObstacle.magnitude;
+			if (obstacleDistance < Epsilon)
+				return ComputeEscapeDirection(currentDirection, toObstacle, fallback);
+
+			VectorLF3 radial = toObstacle / obstacleDistance;
+			double    cosAngle = Clamp(pathRadius / obstacleDistance, 0.0, 1.0);
+			double    sinAngle = Math.Sqrt(Math.Max(0.0, 1.0 - cosAngle * cosAngle));
+			VectorLF3 side = currentDirection - radial * VectorLF3.Dot(currentDirection, radial);
+			if (side.sqrMagnitude < Epsilon)
+				side = _targetUniverseVelocity - radial * VectorLF3.Dot(_targetUniverseVelocity, radial);
+			if (side.sqrMagnitude < Epsilon)
+				side = fallback - radial * VectorLF3.Dot(fallback, radial);
+			if (side.sqrMagnitude < Epsilon)
+				side = GetPerpendicularDirection(radial, VectorLF3.unit_y);
+
+			return SafeNorm(radial * cosAngle + side.normalized * sinAngle, fallback);
 		}
 
 		/// <summary>
@@ -1164,7 +1165,7 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 	{
 		public VectorLF3 Position   { get; } = position;
 		public double    Radius     { get; } = radius;
-		public double    SafeRadius { get; } = radius + safetyMargin;
+		public double    PathRadius { get; } = radius + safetyMargin;
 	}
 
 	#endregion
