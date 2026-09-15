@@ -484,6 +484,11 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
         {
             if (DSPGame.IsMenuDemo || !GameMain.isRunning)
                 return;
+
+            var player = GameMain.mainPlayer;
+            if (player == null || player.navigation.navigating)
+                return;
+
             // Without this check the next tick would immediately fail to resolve a target and stop
             // again, producing a "started" and a "stopped" popup back to back.
             if (!HasNavigationTarget())

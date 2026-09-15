@@ -117,6 +117,7 @@ internal static class FactoryBuildPatches
         {
             GameLogicProc.OnGameEnd -= ResetNavigation;
             GameLogicProc.OnGameEnd -= ResetEnableDiagnostics;
+            ClearAutoRoute(GameMain.mainPlayer);
             ResetNavigation();
             Functions.UIFunctions.UpdateToggleAutoConstructCheckButtonVisiblility();
         }
@@ -160,6 +161,7 @@ internal static class FactoryBuildPatches
             var player = __instance.player;
             if (player.planetData != planet)
             {
+                ClearAutoRoute(player);
                 ResetNavigation();
                 return;
             }
@@ -1192,7 +1194,7 @@ internal static class FactoryBuildPatches
 
         private static void ClearAutoRoute(Player player)
         {
-            if (_autoOrder != null && player.orders.currentOrder == _autoOrder)
+            if (player != null && _autoOrder != null && player.orders.currentOrder == _autoOrder)
             {
                 player.ClearOrders();
             }

@@ -2,173 +2,69 @@
 
 ## Rules
 
-- Update `AGENTS.md` after completing every task.
-- Do not record a changelog in `AGENTS.md`; modify the document content directly instead.
-- All documentation and code comments must be written in English.
-- When you need to inspect game method implementations, decompile the **original** game DLL rather than the publicized copy in `AssemblyFromGame/` (which was built with `--strip` and has all method bodies removed). Locate the original DLL using the same logic as `UpdateGameDlls.ps1`: read the Steam installation path from the Windows registry (`HKCU\Software\Valve\Steam`), parse `steamapps/libraryfolders.vdf` to find the library containing DSP (AppID `1366540`), then decompile `<game_root>/DSPGAME_Data/Managed/Assembly-CSharp.dll` directly.
-- When looking up in-game terminology, use the localization files under `<game_root>/Locale/` (located via the same Steam registry + `libraryfolders.vdf` method). The `Names` directory contains the dictionary keys; `1033` is the English translation directory; `2052` is the Simplified Chinese translation directory.
+- Update `AGENTS.md` after completing every task; edit its current guidance directly rather than keeping a changelog.
+- Write all documentation and code comments in English.
+- Inspect the original DSP game DLL, never the stripped publicized copy in `AssemblyFromGame/`, when method bodies are required. Locate DSP using the Steam registry and `steamapps/libraryfolders.vdf` as `UpdateGameDlls.ps1` does, then decompile `<game_root>/DSPGAME_Data/Managed/Assembly-CSharp.dll`.
+- Resolve in-game terminology from `<game_root>/Locale/`: `Names` contains keys, `1033` is English, and `2052` is Simplified Chinese.
 
-## Project Overview
+## Project
 
-This repository is a collection of **BepInEx mods** for the game **Dyson Sphere Program (DSP)**, a factory/automation game on Steam. Each subdirectory is an independent mod plugin loaded by the BepInEx framework at game startup. Mods use **HarmonyLib** to patch the game's compiled C# methods at runtime (prefix, postfix, and transpiler patches).
+- This repository contains independent BepInEx 5.x C# mods for Dyson Sphere Program. HarmonyLib patches game methods at runtime; `UXAssist` is the shared library used directly by `CheatEnabler` and `UniverseGenTweaks`.
+- Projects target `net472` or `netstandard2.1` with SDK-style `.csproj` files. Compile-time game references live in `AssemblyFromGame/`.
+- `DustbinPreloader` and `LabOptPreloader` are Mono.Cecil preloaders; their main mods consume the injected fields without reflection.
 
-## Tech Stack
+## Build
 
-- **Language:** C# (`net472` / `netstandard2.1`, latest LangVersion)
-- **Modding Framework:** BepInEx 5.x
-- **Patching Library:** HarmonyLib (runtime IL patching via `[HarmonyPatch]` attributes)
-- **Build System:** Visual Studio solution (`DSP_Mods.sln`), SDK-style `.csproj` per mod
-- **Package Manager:** NuGet (standard feed + BepInEx dev feed)
-- **Packaging:** `ZipMod` MSBuild target (explicit, not post-build) produces Thunderstore-ready `.zip` files via `powershell.exe Compress-Archive`
-- **Game DLL references:** `AssemblyFromGame/Assembly-CSharp.dll` and `UnityEngine.UI.dll`
-- **Notable dependencies:** DSPModSave, NebulaMultiplayer API, CommonAPI, NLua, obs-websocket-dotnet, Mono.Cecil
+- `Directory.Build.props` supplies common frameworks, BepInEx packages, game references, warning policy, and the `UpdateGameDlls` dependency. `Directory.Build.targets` defines `ZipMod` and `CopyToParentPackage`.
+- Normal validation: `dotnet build <project>/<project>.csproj -c Release --no-restore`.
+- Refresh game references explicitly with `dotnet build UpdateGameDlls/UpdateGameDlls.csproj`; the script compares timestamps and uses `assembly-publicizer --strip --overwrite`. Missing DSP or the publicizer is a warning, not a build failure.
+- Package main mods with `dotnet build -t:ZipMod -c Release`; package preloaders with `dotnet build -t:CopyToParentPackage -c Release`. The mod `.csproj` `<Version>` is the single version source and packaging synchronizes `package/manifest.json`.
+- Treat warnings as errors except the intentional obsolete API warning `0618`; do not weaken this policy to hide new warnings.
 
-## Repository Structure
+## Architecture
 
-```
-DSP_Mods/
-├── DSP_Mods.sln              # Visual Studio solution
-├── AssemblyFromGame/         # Game DLLs used as compile-time references
-├── UXAssist/                 # Core UX mod + shared library (largest mod)
-├── CheatEnabler/             # Cheat functions mod (depends on UXAssist)
-├── Dustbin/                  # Storage/tank dustbin mod
-├── DustbinPreloader/         # BepInEx preloader for Dustbin
-├── HideTips/                 # Hides tutorial/tip popups
-├── LabOpt/                   # Lab performance optimizations
-├── LabOptPreloader/          # BepInEx preloader for LabOpt
-├── LogisticMiner/            # Logistic stations auto-mine ores
-├── LuaScriptEngine/          # Lua scripting support for the game
-├── MechaDronesTweaks/        # Mecha drone speed/energy tweaks
-├── OverclockEverything/      # Speed/power multipliers for all buildings
-├── PoolOpt/                  # Memory pool optimization on save loading
-├── UniverseGenTweaks/        # Universe generator parameter tweaks
-├── UserCloak/                # Hides/fakes Steam account info
-├── UpdateGameDlls/           # MSBuild helper project; runs UpdateGameDlls.ps1 before any mod compiles
-└── CompressSave/             # Stub only (moved to external repo)
-```
+- `ModFeatureRegistry` discovers dependent-mod features during `Awake`; feature initialization is eager, while UXAssist alone drives the deferred start, input, update, and uninitialization lifecycle. Keep dispatchers internal and idempotent.
+- Register localization keys through each project registration class and use `.Translate()` with keys. Do not add Chinese literals at call sites.
+- Prefer `UXAssist/Common/GameConstants` for item, tech, logistics, and Dyson sphere constants instead of inline literals.
+- Persist mod data through `IModCanSave` from DSPModSave.
+- Use `ModCompatHelper` for external plugin/type/member resolution and preserve legacy public type identities when refactoring reflection targets. Use `DysonSphereReflection` for DSPOptimizations-compatible Dyson sphere fields.
+- Performance-sensitive Harmony transpilers must include the standard target/fallback header and use `TranspilerGuard` when a matcher can fail; returning original instructions is the fallback.
+- `PatchImpl<T>.Enable(true)` must remain fail-soft: log, unpatch, and leave the patch unset if Harmony application fails so config delegate chains remain consistent.
+- Overlay UI state must converge from actual game state on periodic updates, not depend only on one-shot event or patch callbacks. Cloned controls must reset runtime state while retaining source styles; use `UXAssist.UI.Util.GetPreferredWidth` for dynamic text and `ResetButton` for cloned buttons.
 
-## Mods Summary
+## Verified Game Facts
 
-| Mod | GUID | Description |
-|-----|------|-------------|
-| **LiveStreamAssist** | `org.soardev.livestreamassist` | UXAssist-based live-stream statistics display. The rebindable Ctrl+F8 shortcut starts or stops the feature; starting opens Production Statistics, then alternates with Dyson Sphere at random 15-30-second unscaled-time intervals. Closing the statistics window or ending the game session stops the feature without reopening the window. |
-| **UXAssist** | `org.soardev.uxassist` | Core QoL mod and shared library. Window resize, profile-based saves, FPS control, factory/logistics/navigation/Dyson Sphere tweaks, UI improvements, config panel UI, and `Common/` + `UI/` widget library shared by other mods. The Factory tab's building-buffer controls include a comparison tip with the original game values. The Logistics tab can push auto-config values to all existing facilities of a type on the current planet (per-setting `Apply` and per-category `Apply All` buttons), and can set both product limits of every Orbital Collector across all loaded factories; logic is in `LogisticsPatch.Apply*`/`ForEach*` and wired in `UIConfigWindow`. Auto-construct uses a bounded construction-site planner, forward sphere-cast probing, horizontal footprint-based detours, adaptive flight altitude, and stuck recovery while flying to construction ghosts. |
-| **CheatEnabler** | `org.soardev.cheatenabler` | Cheat pack (depends on UXAssist). Instant build, architect mode, infinite resources, power boosts, Dyson Sphere cheats with a bounded shell-count input (1–99,999), mecha invincibility, and more. |
-| **LogisticMiner** | — | Makes logistic stations automatically mine ores and water from the current planet. |
-| **HideTips** | — | Suppresses all tutorial popups, random tips, achievement/milestone cards, and skips the prologue cutscene. |
-| **MechaDronesTweaks** | — | Configurable drone speed multiplier, skip stage-1 animation, reduce energy consumption. Successor to FastDrones. |
-| **OverclockEverything** | — | Multiplies speed and power consumption of belts, sorters, assemblers, labs, miners, generators, ejectors, and silos. |
-| **PoolOpt** | — | Shrinks all object pool arrays to actual used size on save load, then forces GC to reduce memory footprint. |
-| **UniverseGenTweaks** | — | Adds Epic difficulty, expands max star count to 1024, allows rare veins and flat terrain on birth planet. |
-| **UserCloak** | — | Prevents Steam leaderboard/achievement uploads; can fake or block Steam user identity. |
-| **Dustbin** | — | Turns storage boxes and tanks into item-destroying dustbins. Supports Nebula multiplayer and DSPModSave. Requires DustbinPreloader. |
-| **DustbinPreloader** | — | Mono.Cecil preloader that injects `bool IsDustbin` into `StorageComponent` and `TankComponent` before game load. |
-| **LabOpt** | — | Optimizes stacked Matrix Lab updates via a `rootLabId` concept. Temporarily marked obsolete. Requires LabOptPreloader. |
-| **LabOptPreloader** | — | Mono.Cecil preloader that injects `int rootLabId` into `LabComponent` before game load. |
-| **LuaScriptEngine** | `org.soardev.luascriptengine` | Embeds NLua runtime; loads `.lua` files from `scripts/`; exposes game lifecycle hooks and OBS WebSocket integration. |
-| **CompressSave** | — | Stub only; functionality moved to external repository `soarqin/DSP_Mods_TO`. |
+- In the original `Assembly-CSharp.dll`, `PlanetFactory.prebuildCount` is `prebuildCursor - prebuildRecycleCursor - 1`; investigate planet, factory, preview state, and UI refreshes before replacing it with a pool scan.
+- `ProductStat.cursor` has 12 rings: indices `0..5` are production and `6..11` are consumption. Production-panel reference rate comes from `refProductSpeed`, which the extra-info calculator may leave stale or zero until it runs.
+- `PlanetATField.physicsArgs` is null until the first physics-shape recalculation. Immediate completion of the first Planetary Shield Generator must restore that invariant before shield UI reads it; Signal Towers do not share this race.
+- Estimated Dyson shell geometry can differ at numerical boundaries from the final rasterized polygon. If `QuickAddDysonShell` rejects a candidate, try the next candidate rather than trusting the estimate.
 
-## Build System
+## Automation Invariants
 
-### Shared MSBuild Configuration
+### Auto-construct
 
-Common properties and references are factored into two root-level files that MSBuild automatically imports for every project:
+- `AutoConstructEnabled` controls patch activation; `AutoConstructButtonEnabled` controls only button visibility. Never couple them.
+- Keep planning bounded and allocation-free: use the native 120-target construction capacity, fixed candidate limits, actual construction hash entries, and the same material-delivery and enemy-proximity eligibility rules as `ConstructionModuleComponent.GameTick`.
+- Prebuild and player positions are planet-local. Derive angular fan axes in the planet-local frame, use great-circle surface distances, and preserve the game's surface-direction arrival semantics.
+- Select a nearest local cluster before falling back to the nearest candidate; refine destinations from scanned ghosts. In the approach corridor, retain the closest route-prefix ghost so nearer work cannot be bypassed. When at most eight eligible ghosts remain, route directly to the nearest one; the existing scan caps the final-pass count at nine.
+- A site is held only while its initial drone wave is below capacity and its throughput is competitive. Replan before the site empties when the remaining workload no longer covers the next flight.
+- Normal route changes settle residual flight speed before issuing the new route. Recovery detours and their continuation/final routes bypass settling so they can take over while the mecha is stuck. Detours use collider footprint bounds and resume the construction route after completion.
+- Clear the active auto `MoveTo` order before resetting planner state during disable and planet changes, but clear it only when it is still the auto order so user orders are preserved.
 
-- **`Directory.Build.props`** — shared `PropertyGroup` defaults (`TargetFramework`, `AllowUnsafeBlocks`, `LangVersion`, `RestoreAdditionalProjectSources`) and shared `ItemGroup`s (BepInEx packages, game DLL references, `Microsoft.NETFramework.ReferenceAssemblies`), and a global `ProjectReference` to the `UpdateGameDlls` helper project (ensuring game DLLs are refreshed before any mod project resolves assembly references).
-- **`Directory.Build.targets`** — defines the `ZipMod` and `CopyToParentPackage` targets (see below).
-- **`UpdateGameDlls.ps1`** — PowerShell script invoked by the `UpdateGameDlls` helper project; locates the DSP installation via Steam registry and `libraryfolders.vdf`, compares DLL timestamps, and re-publicizes stale DLLs using `assembly-publicizer`.
+### Auto-cruise
 
-Individual `.csproj` files only declare what is unique to that project (GUID, version, extra packages, embedded resources).
+- `PlayerPatch.AutoNavigation` is the only auto-cruise implementation. Its Harmony patches follow `AutoCruiseEnabled`; all user-facing terminology is auto-cruise / `自动巡航`, not the game's `自动导航` autopilot terminology.
+- Yield to `player.navigation.navigating`. Starting requires a resolvable target and must reject an already-running native autopilot before showing a started notification. Reset target state and reusable obstacle data through one navigation lifecycle path.
+- Sail velocity uses the game's planet-frame blend `Clamp01((600 - altitude) / 450)`. Apply the same blend to `visual_uvel`; do not write `uRotation` from the sail postfix because the game recomputes it afterward.
+- Apply braking directly using the game's decay behavior. Fixed targets need an approach speed cap below the 75 m/s fly handoff threshold, and warp must release early enough for braking; manual warp speed input takes precedence.
+- Preserve native flight input signs: `input0.y = 1` is forward thrust, `input1.y = 1` is upward thrust, and `input0.z` is the walk jump/takeoff axis.
+- Satellite routing uses a parent-body corridor and current-heading tangent selection. Null-check `SpaceSector.dfHives`, which is absent in saves without hive data.
 
-### Automatic Game DLL Update
+## Input Timing
 
-`AssemblyFromGame/` holds publicized copies of two game DLLs used as compile-time references. They are refreshed automatically before any mod project compiles by the `UpdateGameDlls` helper project.
+- Dispatch UXAssist shortcuts from the postfix of `VFInput.OnUpdate`, after DSP refreshes modifier and UI state. Keep typing/menu guards and per-frame registry guards; do not poll from an independent `Update()` or logic-tick callback.
 
-The helper project (`UpdateGameDlls/UpdateGameDlls.csproj`) uses the `Microsoft.Build.NoTargets` SDK and is declared as a global `ProjectReference` in `Directory.Build.props` with `ReferenceOutputAssembly=false`, `SkipGetTargetFrameworkProperties=true`, and `Private=false`. This ensures that MSBuild's dependency graph guarantees the helper project completes before any mod project resolves assembly references, with no need for file locks or conditional triggers.
+## Review Standard
 
-The `UpdateGameDlls.ps1` script:
-1. Reads the Steam installation path from the Windows registry (`HKCU\Software\Valve\Steam`).
-2. Parses `steamapps/libraryfolders.vdf` to find the library that contains DSP (AppID `1366540`).
-3. Locates `<game_root>/DSPGAME_Data/Managed/`.
-4. For each DLL (`Assembly-CSharp.dll`, `UnityEngine.UI.dll`): if the game copy is newer than the local copy, runs `assembly-publicizer … --strip --overwrite` to regenerate the local file and stamps it with the source timestamp.
-
-To explicitly update game DLLs:
-```
-dotnet build UpdateGameDlls\UpdateGameDlls.csproj
-```
-
-**Prerequisite:** `assembly-publicizer` must be installed as a .NET global tool:
-```
-dotnet tool install -g BepInEx.AssemblyPublicizer.Cli
-```
-If the tool is missing or DSP is not found, the script prints a warning and continues without failing the build.
-
-### Packaging
-
-Packaging is a **separate, explicit build target** — it does not run on every normal build.
-
-To produce a Thunderstore-ready zip:
-```
-dotnet build -t:ZipMod -c Release
-```
-
-The `ZipMod` target (defined in `Directory.Build.targets`) uses pure MSBuild tasks (`MakeDir`, `Copy`, `Delete`) plus `powershell.exe -NoProfile -Command` for `Compress-Archive`. Calling `powershell.exe` as an explicit executable path works correctly from any shell environment (cmd, PowerShell, bash/WSL).
-
-> Note: the target is named `ZipMod` rather than `Pack` because `Pack` is a reserved target name in the .NET SDK (used for NuGet packaging) and would be silently intercepted.
-
-**Per-project packaging properties** (set in the project's `PropertyGroup`):
-
-| Property | Default | Description |
-|----------|---------|-------------|
-| `PackHasChangelog` | `false` | Include `CHANGELOG.md` in the zip |
-| `PackUsePluginsLayout` | `false` | Use `plugins/` + `patchers/` folder layout (Dustbin, LabOpt) |
-| `PackPreloaderTargetDir` | *(empty)* | Preloader projects: destination folder for `CopyToParentPackage` |
-
-**Preloader projects** (DustbinPreloader, LabOptPreloader) use `CopyToParentPackage` instead of `ZipMod`:
-```
-dotnet build -t:CopyToParentPackage -c Release
-```
-This copies the preloader DLL into the sibling main mod's `package/patchers/` directory, ready to be zipped by the main mod's `ZipMod` target.
-
-### Version Management
-
-Each mod's `<Version>` property in its `.csproj` file is the **single source of truth** for the version number. The `version_number` field in `package/manifest.json` is automatically synchronized from `<Version>` during the `ZipMod` target — no manual update of `manifest.json` is needed.
-
-**Release workflow:**
-1. Update `<Version>` in the mod's `.csproj` file (e.g., `<Version>1.2.3</Version>`)
-2. Run `dotnet build -t:ZipMod -c Release` — `manifest.json` is updated automatically before packaging
-
-The sync is implemented as an inline PowerShell `Exec` step inside the `ZipMod` target in `Directory.Build.targets`. It uses a regex replace that preserves the original UTF-8 BOM encoding and CRLF line endings of `manifest.json`. Preloader projects (which have no `manifest.json`) are safely skipped via a `Condition="Exists(...)"` guard.
-
-## Key Architectural Patterns
-
- - Auto-construct motion recovery treats only actual movement keys as manual override (through the shared `PlayerInputUtil.HasManualMovementInput`), yields to active auto-navigation, clears stale move orders before flight ascent, returns before issuing a same-frame route after switching from walking to flying, and performs one stop-equivalent recovery when a route circles without radial progress. Planner candidates use fixed angular fan sectors with near and far representatives instead of retaining only globally nearest ghosts; a sector's near/far separation is measured as a real distance between the two representatives, and a displaced near representative is demoted to the far slot so the pair does not depend on prebuild iteration order. Arrival follows the game's surface-direction order semantics. Site selection follows a nearest-cluster route: it prefers the best local candidate within a build-area-scaled horizon and falls back to the nearest candidate, rather than selecting a distant high-density cluster and forcing return flights. A site is held only while its first construction-drone wave remains below capacity and its current throughput is not meaningfully beaten by a nearby candidate; it must not wait merely to exhaust every ghost in range, because waiting extends drone round trips and mecha power use. Normal route changes still brake and wait for tangential flight speed to settle, but recovery detours, their continuation points, and the resumed final route bypass flight settling so they can take over before the mecha stops. Refinement destinations are selected from the scanned ghost positions. After a destination is chosen, eligible ghosts in its approach corridor are reduced to the closest route-prefix ghost so travel cannot bypass nearer construction work; the corridor half-width is compared as a sine against the candidate's out-of-plane component, never as an angle against a sine. Obstacle probing is only allowed to initiate a detour after stuck or orbit evidence; it detects overlapping colliders, derives a horizontal footprint radius from the collider bounds, tests tangent candidates at several radii and sides, chooses the least-blocked horizontal fallback when no fully clear tangent exists, and a completed detour resumes the final construction route instead of resetting the plan. Distances between surface positions are great-circle distances, not chord lengths.
-
-- **Shared library:** `UXAssist` acts as a common library. `CheatEnabler` and `UniverseGenTweaks` reference `UXAssist.csproj` directly to reuse `Common/`, `UI/`, and config panel infrastructure.
-- **Centralized mod-feature lifecycle:** `UXAssist.Common.ModFeatures.ModFeatureRegistry` holds shared static lists of mod features discovered across all mods. **Only UXAssist drives the shared deferred lifecycle** (`StartAll`/`UninitAll`/`OnInputUpdateAll`/`OnUpdateAll`); these dispatchers are `internal` so dependent mods (separate assemblies, no `InternalsVisibleTo`) cannot call them and re-trigger other mods' features. A feature's `Init` runs **eagerly** when it is registered (via `Discover`/`Register`), preserving the original `Awake`-phase timing that keybind registration and other early setup rely on — the game's `UIOptionWindow._OnCreate` copies registered keybinds only after all plugins have finished loading. Dependent mods only call `ModFeatureRegistry.Discover(Assembly.GetExecutingAssembly())` (and optionally `Register<T>()`) in their `Awake`. UXAssist begins the deferred lifecycle from its own `Start`; if a dependent feature is discovered after that transition, the registry starts it immediately after initialization so it cannot miss `Start`. The registry also guards start idempotency per feature (start at most once; uninit resets) and per-frame re-entrancy (`Time.frameCount`) for the update dispatchers, as defense-in-depth.
-- **Preloader pattern:** `DustbinPreloader` and `LabOptPreloader` use Mono.Cecil to inject new fields into game assemblies at BepInEx preload time, enabling their corresponding main mods to read/write those fields via normal C# without reflection.
-- **Internationalization:** `UXAssist/Common/I18N.cs` provides bilingual (EN + ZH) string lookup used across UXAssist and CheatEnabler. Localization keys are declared as `public const string` in per-project registration classes (`UXAssist/Common/I18NKeys.cs`, `CheatEnabler/Localization.cs`, `UniverseGenTweaks/Localization.cs`) and registered through a single `Register()` call from each mod's `Awake()`. Do not pass Chinese string literals to `.Translate()` at call sites.
-- **Centralized game constants:** Hard-coded item IDs, tech IDs, logistics capacities, and Dyson sphere geometry defaults live in `UXAssist/Common/GameConstants` (`ItemIds`, `TechIds`, `LogisticsConstants`, `DysonSphereConstants`). Prefer these constants over inline literals in UXAssist patches.
-- **Game source facts:** In the original DSP `Assembly-CSharp.dll`, `PlanetFactory.prebuildCount` is computed as `prebuildCursor - prebuildRecycleCursor - 1`, and normal prebuild add/remove paths maintain those cursors. If Auto Construct UI reports zero while visible construction ghosts exist, first suspect the wrong planet/factory, non-prebuild preview state, or a missed UI refresh path before replacing this property with a pool scan.
-- **Production statistics cursor layout:** In the original DSP `Assembly-CSharp.dll`, each `ProductStat.cursor` has 12 ring-buffer write pointers over `count[7200]`. Fresh initialization sets `cursor[i] = i * 600`; indices `0..5` are production levels and `6..11` are consumption levels. The level tick intervals are `1, 6, 60, 360, 3600, 36000`, corresponding to `1/60` second, `0.1` second, `1` second, `6` seconds, `1` minute, and `10` minutes per ring sample at 60 game ticks per second. Because each ring has 600 samples, the UI exposes levels 1-5 as 1-minute, 10-minute, 1-hour, 10-hour, and 100-hour history windows, plus the total view through `total[1..6]` for production and `total[8..13]` for consumption.
-- **Production statistics reference rate:** In the original DSP `Assembly-CSharp.dll`, the production panel's `参考速率`/`Reference Rate` is read from `ProductStat.refProductSpeed`, not from `cursor`, `count`, or `total`. `ProductionExtraInfoCalculator.CalculateFactory` recomputes it from powered facilities, recipe speed, recipe item counts, proliferator mode, mining speed, and other facility-specific rates; `UIProductEntry.UpdateExtraProductTexts` sums the field across the factories selected by the current planet/star/cluster filter and formats it with `ProductionExtraInfoCalculator.RefSpeedToString`. The value is an ideal rate in items per minute and may be stale or zero until the extra-info calculator runs.
-- **Immediate-build shield initialization:** `PlanetATField.physicsArgs` starts as `null` and is allocated by the first physics-shape recalculation. If CheatEnabler completes the first Planetary Shield Generator synchronously from a build-tool callback, `UIPlanetShieldDetail` can observe `fieldGenerators.count > 0` before that recalculation and dereference the null array. `CargoTrafficPatch.EndBatchBuilding` restores the invariant once per batch by calling `planetATField.UpdatePhysicsShape(true)` when field generators exist but `physicsArgs` is still null.
-- **Immediate-build beacon timing:** Signal Towers do not share the Planetary Shield initialization race. `DataPool<BeaconComponent>.Add()` resets the value-type component, `NewBeaconComponent` synchronously assigns its entity and already-created power-node IDs, and no UI opens from `beacons.count` or reads tick-created resources. Holo Beacons use `MarkerComponent`; `NewMarkerComponent` also initializes and registers their UI-visible state synchronously.
-- **Illegal Dyson shell generation:** Estimated triangle vertex counts mirror the original `DysonShell.GenerateGeometry` rasterization as closely as possible, but can still differ from the final frame-generated shell polygon at numerical boundaries. Max-output generation must treat `QuickAddDysonShell` failure as a candidate rejection and try the next candidate rather than assuming the estimate is exact.
-- **Fail-soft patch application:** `PatchImpl<T>.Enable(true)` applies Harmony patches inside a try/catch. Runtime patching can fail through no fault of ours (Harmony re-runs other mods' transpilers on shared target methods), and an escaping exception would abort the calling `ConfigEntry.SettingChanged` delegate chain, desyncing config UI from config values. On failure it logs a `LogError` with the feature type name, rolls back via `UnpatchSelf()`, and leaves `_patch` null so a later `Enable(true)` can retry.
-- **Convergent in-game UI state:** In-game overlay widgets whose visibility depends on game state (e.g. `AutoConstructUI`) must not rely solely on one-shot event-driven refreshes (`SettingChanged` handlers, patch `OnEnable`/`OnDisable`), because a thrown exception earlier in a delegate chain or a failed patch application silently drops the refresh. `AutoConstructUI.OnUpdate()` reconciles button visibility and the pending-construction count with actual game state every 30 frames (also effective while paused); the `AutoConstructPatch` postfix on `PlayerAction_Rts.GameTick` only implements the fly-to-target behavior, and `AutoConstructPatch.OnEnable` logs its visibility predicate inputs as a remote-diagnosis aid, throttled to once per game session unless the button object itself is missing. `MyCheckButton.Checked` only refreshes the button colours: its label lives on `OnChecked` handlers, so any path that sets `Checked` directly (periodic reconcile, shortcut key, `ConfigEntry.SettingChanged`) must refresh the label too.
-- **Auto-construct planner:** `AutoConstructPatch` keeps a construction-site plan while drones work, chooses among a fixed candidate set using the native 120-target construction capacity, total drone travel cost, and player travel cost, then refines the strongest candidates to an actual ghost nearest the target-group center. Candidate scoring uses the planned flight altitude when evaluating build-range coverage, so arrival must release any detour altitude (`AvoidanceAltitude`) and restore `ConstructionFlightAltitude`; otherwise the drones cannot reach part of the ghosts the score was based on. The angular fan axes are derived in the planet-local frame (`player.uRotation` is universal and must be inverse-rotated by `planet.runtimeRotation`), because prebuild and player positions are planet-local. It replans before the current site is empty when the remaining local workload no longer covers the next flight. Candidate evaluation has fixed limits and uses allocation-free arrays; local construction checks scan actual hash entries instead of trusting stale module counters and include ghosts whose materials can be delivered from the mecha package. Ghost eligibility mirrors the material-delivery filter in `ConstructionModuleComponent.GameTick` (`ItemProto.constructableIdHash` plus `PlanetFactory.HasEnemyBuildingNear`), because a ghost the game will never deliver items to can never launch a drone and would park the mecha on a site that makes no progress; the enemy-proximity probe is skipped entirely when the planet has no Dark Fog ground bases.
-- **Auto-construct flight settling:** `BeginFlightSettling`/`UpdateFlightSettling`/`EndFlightSettling` implement a two-stage wait: a fixed tick countdown that covers the latency between `Player.ClearOrders()` and `PlayerMove_Fly` decaying `rtsVelocity`, followed by a residual-speed check bounded by a timeout. The residual check must be gated on the separate `_flightSettlePending` flag, not on the countdown, or it becomes unreachable the moment the countdown reaches zero. A route deferred by this wait is re-issued with `bypassBrake` so it cannot be deferred again after a timeout and stall the mecha. `Player.Order(OrderNode.Stop, false)` followed by `Player.ClearOrders()` is a no-op that only adds a stray order gizmo at the planet centre: the actual braking comes from `PlayerMove_Fly` decaying `rtsVelocity` whenever there is no unreached order.
-- **Auto-construct configuration split:** `FactoryConfigProvider.AutoConstructEnabled` gates the `AutoConstructPatch` Harmony patch; `AutoConstructButtonEnabled` only controls button visibility. Do not tie patch activation to the button config — hiding the button would then silently disable the feature, and the button is the only in-game way to toggle it.
-- **Auto-construct final pass:** When at most eight eligible construction ghosts remain, the planner bypasses site-hold hysteresis and routes directly to the nearest remaining ghost. The final-pass count is capped at nine during the existing prebuild scan, so large construction queues do not incur an additional unbounded performance cost.
-- **Auto-construct maintenance:** Planner scan reset, final-pass nearest-ghost routing, and route-arrival/recovery transitions use shared state helpers; no-op UI lifecycle forwarding is removed.
-- **Auto-cruise:** UXAssist exposes one auto-cruise implementation through `PlayerPatch.AutoNavigation`; the former legacy cruise path and algorithm-selection branch are removed. Its Harmony patches follow `AutoCruiseEnabled`, so a user who disables the feature does not keep a transpiler on the hot `PlayerController.GameTick` installed. The shared `ToggleAutoCruise` key and in-game button control the session state, and starting requires a resolvable target so the feature cannot emit a "started" and a "stopped" popup in the same frame. All user-facing strings say auto-cruise / `自动巡航`; do not reintroduce `自动导航`, which collides with the game's own `PlayerNavigation` autopilot and its `太空导航` indicators. Auto-cruise yields to that autopilot (`player.navigation.navigating`) instead of fighting it over `uVelocity`. The configuration entry is presented as `Enable auto-cruise`, and its navigation options are grouped beneath it as indented 13-point sub-options. Steering follows the original `PlayerMove_Sail.GameTick` interpolation cap of 1.6 degrees per tick for the ordinary sail velocity and explicitly chooses a stable turn plane for antiparallel velocity and target directions. During warp, the added displacement uses `currentWarpVelocity` along mecha heading; after the game's heading update, a postfix tops up the warp heading toward the requested direction so the actual heading reaches the same 1.6-degree-per-tick minimum instead of lagging behind the ordinary velocity vector. Auto-cruise also reduces `warpSpeedControl` toward the game's 0.2 floor as heading error grows; manual warp speed controls take precedence. Target resolution is validated once and applied atomically for both the UI and tick path; moving-target velocity is converted to universal coordinates; direct sail steering only runs while the player is sailing. Target state and reusable obstacle data are reset through one navigation lifecycle path. Satellite targets use a target corridor: an orbiting parent is ignored when the direct player-to-target segment is clear, shrinks its avoidance radius so it cannot contain the target, and otherwise follows a current-heading-selected tangent around the parent before returning to the satellite. `SpaceSector.dfHives` is only allocated by `SetForNewGame` and by `Import` when the save carries hive data, so obstacle collection must null-check it exactly like the game does.
-- **Auto-cruise sail reference frame and braking:** `PlayerMove_Sail.GameTick` and `PlayerNavigation.DetermineSailVelocity` blend the planet frame velocity by altitude (`Clamp01((600 - altitude) / 450)`) and it is fully gone above 600 m. `visual_uvel` must use that same blend, because `PlayerController.UpdateRotation` runs after the whole action loop and turns `visual_uvel` into the mecha heading and the speed readout; subtracting the unblended planet velocity visibly misaims the mecha near a planet. For the same reason the mod does not write `uRotation` from the sail postfix — the game recomputes it immediately afterwards. Braking must be applied directly (the original's 0.008-per-tick decay branch), not folded into the turn interpolation, which would weaken it by up to `1/t`. Fixed targets are speed-capped on approach (`GetApproachSpeedLimit`) so the mecha reaches the arrival radius below the 75 m/s planet-relative speed that `PlayerMove_Sail` requires before handing over to `PlayerMove_Fly`, and warp is released early enough for that brake to settle — the game's own warp guard only covers planets, never stars.
-- **Auto-cruise flight input:** In the original `PlayerMove_Fly.GameTick`, `PlayerController.input0.y = 1` matches manual forward movement and `input1.y = 1` matches manual upward thrust. In `PlayerMove_Walk`, `input0.z` is the jump axis: the first press jumps and sets `flyUpChance`, the next one calls `SwitchToFly`, so holding it lifts off within two ticks. The auto-cruise handlers must preserve these axes and signs so the mecha leaves a planet with the same orientation and motion as manual control.
-- **Shortcut input timing:** UXAssist dispatches mod shortcuts from a postfix of the original `VFInput.OnUpdate`, after DSP has refreshed its current modifier and UI input state. Do not move shortcut polling back to an independent plugin `Update()` or a logic-tick callback: CommonAPI `PressKeyBind.keyValue` combines Unity's current-frame `Input.GetKeyDown()` with `CombineKey` modifier caches refreshed by `VFInput.OnUpdate`. Polling before that refresh can miss a shortcut when a modifier changes in the same frame, which is easier to encounter at low frame rates. Keep the typing/menu guards and per-frame registry guards.
-- **UI clone initialization and text measurement:** UXAssist UI factories and dependent mods' direct UI clones treat runtime DSP objects as style sources only; after `Instantiate`, they explicitly reset stateful `UIButton`, `Text`, `Image`, `InputField`, `Slider`, and `UIComboBox` fields that can otherwise carry source state. Use `UXAssist.UI.Util.GetPreferredWidth` for dynamic text width because it invalidates DSP's custom text-generator cache before reading `preferredWidth`; do not replace it with a generic `TextGenerator` or canvas-wide rebuild without validating the rendered result.
-- **Transpiler patches:** Performance-critical mods (LabOpt, MechaDronesTweaks) use `[HarmonyTranspiler]` to rewrite IL instructions directly for maximum efficiency. All transpilers in UXAssist, CheatEnabler, and UniverseGenTweaks carry a standard header comment (`// Harmony transpiler:`, `// Target:`, `// Fallback:`) documenting the target method and fallback behavior. `UXAssist.Common.Patching.TranspilerGuard` provides a reusable `CodeMatcher.Finish` helper that returns original instructions when a matcher becomes invalid.
-- **Mod-compatibility reflection:** Use `UXAssist.Common.ModCompat.ModCompatHelper` for BepInEx plugin detection, external mod type/method/field resolution, and property-setter lookup. Preserve the old public type identity with a forwarding or inherited compatibility facade when a refactor moves a type that external mods may locate through reflection; build and verify that the legacy reflection target forwards to the refactored implementation. Use `UXAssist.Common.Utils.DysonSphereReflection` for the DSPOptimizations-compatible `DysonSphereLayer` private fields (`totalNodeSP`, `totalFrameSP`, `totalCP`) instead of resolving them locally in each consumer.
-- **Build quality gates:** Root `.editorconfig` defines suggestion-only C# style conventions. `Directory.Build.props` enables `TreatWarningsAsErrors` with `NoWarn>0618` for the expected obsolete-API usage, so any new warning fails the build. `.github/workflows/build.yml` runs a Release build and packages the three main mods on every push/PR.
-- **Save persistence:** Mods that need to persist data use the `IModCanSave` interface from DSPModSave.
-- **Cloned UI button reset:** `UXAssist.UI.Util.ResetButton` calls the original `UIButton.Init` before resetting copied interaction state, preserving the original `Transition.normalColor` values. Do not replace cloned UI styles with guessed colors such as `Color.white`; clear runtime state while retaining the source's default style.
+- Fix root causes with minimal focused changes. Do not alter unrelated behavior, add copyright headers, commit changes, or create branches unless requested.
+- Before handoff, run the narrowest relevant build or test, then `git diff --check`. Mention unrelated pre-existing failures instead of changing them.
