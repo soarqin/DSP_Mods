@@ -33,19 +33,21 @@ internal static class FactoryBuildPatches
         private const float FlightSettleRtsSpeed = 4f;
         private const float FlightSettleTangentialSpeed = 6f;
         private const float CandidateMergeDistance = 6f;
-        private const float AvoidanceAltitude = 35f;
         private const float AvoidanceClearance = 2.5f;
         private const float StuckDistance = 1.5f;
         private const int StuckTickThreshold = 45;
         private const float OrbitRadialMovementThreshold = 0.75f;
         private const float OrbitAngleProgressThreshold = 0.5f;
         private const int OrbitTickThreshold = 45;
-        private const int MaxDetourAttempts = 8;
+        private const int RecoveryWaypointHistorySize = 12;
         private const float LocalRouteRadiusMultiplier = 3f;
         private const float RouteCorridorWidthFactor = 0.8f;
-        private static readonly float[] DetourRadiusScales = { 1f, 1.5f, 2f, 3f };
+        private static readonly float[] DetourRadiusScales = { 1f, 1.5f, 2f, 3f, 4f, 6f, 8f, 12f };
+        private static readonly float[] DetourForwardScales = { 0.25f, 0.5f, 1f, 2f, 4f };
+        private static readonly float[] EscapeDistanceScales = { 0.5f, 1f, 1.5f, 2f, 3f, 4f, 6f };
         private static readonly int[] DetourSideSigns = { -1, 1 };
         private static readonly Collider[] ObstacleOverlapColliders = new Collider[8];
+        private static readonly Vector3[] RecentRecoveryWaypoints = new Vector3[RecoveryWaypointHistorySize];
 
         /// <summary>
         /// Physics layers probed when looking for flight obstacles: bit 9 (building colliders) and
@@ -58,9 +60,9 @@ internal static class FactoryBuildPatches
         private static int _stuckTicks;
         private static float _bestRouteAngle;
         private static int _orbitTicks;
-        private static bool _orbitRecoveryUsed;
-        private static int _detourCount;
         private static bool _isAvoidingObstacle;
+        private static int _recoveryWaypointStart;
+        private static int _recoveryWaypointCount;
         private static Vector3 _pendingWaypoint;
         private static bool _hasPendingWaypoint;
         private static Vector3 _constructionDestination;
@@ -73,7 +75,6 @@ internal static class FactoryBuildPatches
         private static int _flightSettleWaitTicks;
         private static Vector3 _deferredRoute;
         private static bool _hasDeferredRoute;
-        private static bool _deferredRouteKeepAltitude;
         private static int _planAstroId;
         private static long _lastPlanAttemptTick;
         private static bool _hasPlanAttempted;
@@ -204,21 +205,17 @@ internal static class FactoryBuildPatches
                 if (!IsPlannerDue(timei) || !TryCreatePlan(factory, player, timei)) return;
             }
 
-            MaintainAvoidanceAltitude(player);
-
             if (_flightSettlePending && !UpdateFlightSettling(player)) return;
 
             if (_hasDeferredRoute)
             {
                 var deferredRoute = _deferredRoute;
-                var raiseAltitude = _deferredRouteKeepAltitude;
                 _deferredRoute = Vector3.zero;
                 _hasDeferredRoute = false;
-                _deferredRouteKeepAltitude = false;
                 // The braking this route was deferred for has already happened, so bypass the brake
                 // check. Re-evaluating it here could defer the same route again and, if the settling
                 // wait ends on its timeout instead of on a low speed, keep the mecha stationary.
-                IssueRoute(player, deferredRoute, raiseAltitude, true);
+                IssueRoute(player, deferredRoute, true);
                 return;
             }
 
@@ -238,6 +235,11 @@ internal static class FactoryBuildPatches
 
             if (_autoOrder != null && player.orders.currentOrder == null)
             {
+                if (_isAvoidingObstacle)
+                {
+                    RememberRecoveryWaypoint(player.position, planet.realRadius);
+                }
+
                 _autoOrder = null;
                 _stuckTicks = 0;
                 _lastPosition = player.position;
@@ -246,7 +248,7 @@ internal static class FactoryBuildPatches
                     var pendingWaypoint = _pendingWaypoint;
                     _pendingWaypoint = Vector3.zero;
                     _hasPendingWaypoint = false;
-                    IssueRoute(player, pendingWaypoint, true, true);
+                    TryIssueRecoveryRoute(player, pendingWaypoint);
                     return;
                 }
 
@@ -254,9 +256,7 @@ internal static class FactoryBuildPatches
                 {
                     if (_isAvoidingObstacle)
                     {
-                        _isAvoidingObstacle = false;
-                        _detourCount = 0;
-                        IssueRoute(player, _constructionDestination, false, true);
+                        TryIssueRecoveryRoute(player, _constructionDestination);
                         return;
                     }
 
@@ -285,9 +285,13 @@ internal static class FactoryBuildPatches
 
             if (_autoOrder == null)
             {
-                _isAvoidingObstacle = false;
-                _detourCount = 0;
-                IssueRoute(player, _constructionDestination, false);
+                if (_isAvoidingObstacle)
+                {
+                    TryIssueRecoveryRoute(player, _constructionDestination, true);
+                    return;
+                }
+
+                IssueRoute(player, _constructionDestination);
                 return;
             }
 
@@ -308,29 +312,23 @@ internal static class FactoryBuildPatches
             var orbitDetected = DetectOrbit(player, routeTarget, moved, radialMovement);
             if (_stuckTicks >= StuckTickThreshold || orbitDetected)
             {
-                if (orbitDetected)
+                RememberRecoveryWaypoint(player.position, planet.realRadius);
+                if (_isAvoidingObstacle && routeTarget != _constructionDestination)
                 {
-                    _orbitRecoveryUsed = true;
-                    CancelAutoMotion(player);
+                    RememberRecoveryWaypoint(routeTarget, planet.realRadius);
                 }
 
-                var altitude = _isAvoidingObstacle ? AvoidanceAltitude : GetCurrentAltitude(player);
-                if (_detourCount < MaxDetourAttempts && TryFindDetour(player, routeTarget, altitude, out var detour, out var pendingWaypoint))
+                if (orbitDetected)
                 {
-                    _detourCount++;
-                    _isAvoidingObstacle = true;
-                    _pendingWaypoint = pendingWaypoint;
-                    _hasPendingWaypoint = pendingWaypoint.sqrMagnitude > 0.01f;
-                    IssueRecoveryRoute(player, detour);
-                }
-                else
-                {
-                    _detourCount = 0;
                     _isAvoidingObstacle = true;
                     _pendingWaypoint = Vector3.zero;
                     _hasPendingWaypoint = false;
-                    IssueRecoveryRoute(player, _constructionDestination);
+                    CancelAutoMotion(player);
+                    return;
                 }
+
+                _isAvoidingObstacle = true;
+                TryIssueRecoveryRoute(player, routeTarget, true);
 
                 _stuckTicks = 0;
                 _lastPosition = player.position;
@@ -386,18 +384,11 @@ internal static class FactoryBuildPatches
             _constructionArrivalTick = timei;
             _hasConstructionArrival = true;
             _stuckTicks = 0;
-            // A detour raises the flight altitude to AvoidanceAltitude, but the planner scored this
-            // site's build-range coverage at ConstructionFlightAltitude. Release the detour state on
-            // arrival, otherwise the mecha keeps hovering high enough that the construction drones
-            // cannot reach part of the ghosts that score was based on.
             _isAvoidingObstacle = false;
-            _detourCount = 0;
+            _recoveryWaypointStart = 0;
+            _recoveryWaypointCount = 0;
             _pendingWaypoint = Vector3.zero;
             _hasPendingWaypoint = false;
-            if (player.movementState == EMovementState.Fly)
-            {
-                player.controller.actionFly.targetAltitude = ConstructionFlightAltitude;
-            }
 
             BeginFlightSettling();
         }
@@ -654,13 +645,12 @@ internal static class FactoryBuildPatches
             EndFlightSettling();
             _deferredRoute = Vector3.zero;
             _hasDeferredRoute = false;
-            _deferredRouteKeepAltitude = false;
             _stuckTicks = 0;
             _bestRouteAngle = 0f;
             _orbitTicks = 0;
-            _orbitRecoveryUsed = false;
-            _detourCount = 0;
             _isAvoidingObstacle = false;
+            _recoveryWaypointStart = 0;
+            _recoveryWaypointCount = 0;
             _pendingWaypoint = Vector3.zero;
             _hasPendingWaypoint = false;
             _lastPosition = player.position;
@@ -1085,7 +1075,7 @@ internal static class FactoryBuildPatches
             }
 
             _orbitTicks += (int)AutoConstructTickInterval;
-            return !_orbitRecoveryUsed && _orbitTicks >= OrbitTickThreshold;
+            return _orbitTicks >= OrbitTickThreshold;
         }
 
         private static void BeginFlightSettling()
@@ -1135,30 +1125,33 @@ internal static class FactoryBuildPatches
             return false;
         }
 
-        private static void QueueRouteAfterFlightSettle(Vector3 target, bool raiseAltitude)
+        private static void QueueRouteAfterFlightSettle(Vector3 target)
         {
             _deferredRoute = target;
-            _deferredRouteKeepAltitude = raiseAltitude;
             _hasDeferredRoute = true;
         }
 
-        private static void IssueRecoveryRoute(Player player, Vector3 target)
+        private static bool TryIssueRecoveryRoute(Player player, Vector3 target, bool stalled = false)
         {
-            // Recovery must take over before the mecha comes to a stop, so it deliberately skips
-            // the flight-settling wait that a normal route change goes through.
-            player.controller.actionFly.targetAltitude = AvoidanceAltitude;
-            EndFlightSettling();
-            _deferredRoute = Vector3.zero;
-            _hasDeferredRoute = false;
-            _deferredRouteKeepAltitude = false;
-            IssueRoute(player, target, true, true);
-        }
+            if (TryFindRecoveryRoute(player, target, stalled, out var detour, out var pendingWaypoint))
+            {
+                _isAvoidingObstacle = true;
+                _pendingWaypoint = pendingWaypoint;
+                _hasPendingWaypoint = pendingWaypoint.sqrMagnitude > 0.01f;
+                EndFlightSettling();
+                _deferredRoute = Vector3.zero;
+                _hasDeferredRoute = false;
+                IssueRoute(player, detour, true);
+                return true;
+            }
 
-        private static void MaintainAvoidanceAltitude(Player player)
-        {
-            if (!_isAvoidingObstacle || player.movementState != EMovementState.Fly) return;
+            if (_recoveryWaypointCount > 0)
+            {
+                _recoveryWaypointStart = (_recoveryWaypointStart + 1) % RecoveryWaypointHistorySize;
+                _recoveryWaypointCount--;
+            }
 
-            player.controller.actionFly.targetAltitude = AvoidanceAltitude;
+            return false;
         }
 
         private static bool ShouldBrakeBeforeRoute(Player player, Vector3 targetPosition)
@@ -1204,14 +1197,9 @@ internal static class FactoryBuildPatches
             _hasPendingWaypoint = false;
         }
 
-        /// <param name="raiseAltitude">
-        /// Lifts the mecha to <see cref="AvoidanceAltitude"/> for the duration of the route, used
-        /// for detours and recoveries that have to clear an obstacle.
-        /// </param>
         private static void IssueRoute(
             Player player,
             Vector3 targetPosition,
-            bool raiseAltitude,
             bool bypassBrake = false)
         {
             var direction = targetPosition - player.position;
@@ -1220,7 +1208,7 @@ internal static class FactoryBuildPatches
             if (!bypassBrake && ShouldBrakeBeforeRoute(player, targetPosition))
             {
                 CancelAutoMotion(player);
-                QueueRouteAfterFlightSettle(targetPosition, raiseAltitude);
+                QueueRouteAfterFlightSettle(targetPosition);
                 return;
             }
 
@@ -1228,10 +1216,28 @@ internal static class FactoryBuildPatches
             player.Order(_autoOrder, false);
             _bestRouteAngle = Vector3.Angle(player.position.normalized, targetPosition.normalized);
             _orbitTicks = 0;
-            if (raiseAltitude && player.movementState == EMovementState.Fly)
+        }
+
+        private static bool TryFindRecoveryRoute(Player player, Vector3 routeTarget, bool stalled, out Vector3 detour, out Vector3 pendingWaypoint)
+        {
+            detour = default;
+            pendingWaypoint = default;
+            var planet = player.planetData;
+            if (planet == null) return false;
+
+            var altitude = GetCurrentAltitude(player);
+            if (!stalled && IsPathClear(player, routeTarget, altitude) &&
+                (routeTarget == _constructionDestination || IsFlightPointClear(routeTarget, altitude, planet.realRadius)))
             {
-                player.controller.actionFly.targetAltitude = AvoidanceAltitude;
+                detour = routeTarget;
+                return true;
             }
+
+            if (TryFindDetour(player, routeTarget, altitude, out detour, out pendingWaypoint)) return true;
+
+            return stalled && TryFindLocalEscape(
+                player, routeTarget, MinimumSiteMoveDistance * 2f, altitude, planet.realRadius,
+                Mathf.Max(1f, planet.realRadius * 0.75f), out detour, out pendingWaypoint);
         }
 
         private static bool TryFindDetour(Player player, Vector3 routeTarget, float altitude, out Vector3 detour, out Vector3 pendingWaypoint)
@@ -1245,6 +1251,7 @@ internal static class FactoryBuildPatches
             var finalDirection = routeTarget.normalized;
             var path = GetFlightPoint(finalDirection, altitude, planet.realRadius) - origin;
             if (path.sqrMagnitude < 0.01f) return false;
+
             var obstacleBounds = new Bounds();
             var hasObstacle = false;
             var overlapCount = Physics.OverlapSphereNonAlloc(
@@ -1280,61 +1287,263 @@ internal static class FactoryBuildPatches
             if (side.sqrMagnitude < 0.01f) return false;
 
             var footprintRadius = GetObstacleFootprintRadius(obstacleBounds, anchor);
-            var fallbackDetour = default(Vector3);
-            var fallbackWaypoint = default(Vector3);
-            var fallbackClearCount = -1;
-            var optionCount = DetourRadiusScales.Length * DetourSideSigns.Length;
-            for (var optionIndex = 0; optionIndex < optionCount; optionIndex++)
+            var maximumSurfaceOffset = Mathf.Max(1f, planet.realRadius * 0.75f);
+            for (var scaleIndex = 0; scaleIndex < DetourRadiusScales.Length; scaleIndex++)
             {
-                var scaleIndex = optionIndex / DetourSideSigns.Length;
-                var sideIndex = optionIndex % DetourSideSigns.Length;
-                var routeOffset = footprintRadius * DetourRadiusScales[scaleIndex];
-                var lateralOffset = routeOffset * DetourSideSigns[sideIndex];
-                var forwardOffset = routeOffset;
-                var entry = SurfaceOffset(anchor, side * lateralOffset - forward * forwardOffset, planet.realRadius);
-                var exit = SurfaceOffset(anchor, side * lateralOffset + forward * forwardOffset, planet.realRadius);
-                var entryClear = IsPathClear(player, entry, altitude);
-                var exitClear = IsPathClear(entry, exit, altitude, planet.realRadius);
-                var finalClear = IsPathClear(exit, finalDirection, altitude, planet.realRadius);
-                if (entryClear && exitClear && finalClear)
+                var routeOffset = Mathf.Min(footprintRadius * DetourRadiusScales[scaleIndex], maximumSurfaceOffset);
+                for (var forwardIndex = 0; forwardIndex < DetourForwardScales.Length; forwardIndex++)
                 {
-                    detour = entry * planet.realRadius;
-                    pendingWaypoint = exit * planet.realRadius;
-                    return true;
-                }
-
-                var clearCount = (entryClear ? 1 : 0) + (exitClear ? 1 : 0) + (finalClear ? 1 : 0);
-                if (clearCount > fallbackClearCount)
-                {
-                    fallbackClearCount = clearCount;
-                    fallbackDetour = entry * planet.realRadius;
-                    fallbackWaypoint = exit * planet.realRadius;
-                }
-
-                var candidate = SurfaceOffset(anchor, side * lateralOffset, planet.realRadius);
-                var candidateEntryClear = IsPathClear(player, candidate, altitude);
-                var candidateFinalClear = IsPathClear(candidate, finalDirection, altitude, planet.realRadius);
-                if (candidateEntryClear && candidateFinalClear)
-                {
-                    detour = candidate * planet.realRadius;
-                    pendingWaypoint = default;
-                    return true;
-                }
-
-                var candidateClearCount = (candidateEntryClear ? 1 : 0) + (candidateFinalClear ? 1 : 0);
-                if (candidateClearCount > fallbackClearCount)
-                {
-                    fallbackClearCount = candidateClearCount;
-                    fallbackDetour = candidate * planet.realRadius;
-                    fallbackWaypoint = default;
+                    var forwardOffset = routeOffset * DetourForwardScales[forwardIndex];
+                    for (var sideIndex = 0; sideIndex < DetourSideSigns.Length; sideIndex++)
+                    {
+                        var lateralOffset = routeOffset * DetourSideSigns[sideIndex];
+                        var entry = SurfaceOffset(anchor, side * lateralOffset - forward * forwardOffset, planet.realRadius);
+                        var exit = SurfaceOffset(anchor, side * lateralOffset + forward * forwardOffset, planet.realRadius);
+                        if (TryUseDetourPair(
+                                player, entry, exit, finalDirection, altitude, planet.realRadius,
+                                out detour, out pendingWaypoint))
+                        {
+                            return true;
+                        }
+                    }
                 }
             }
 
-            if (fallbackClearCount < 0) return false;
+            for (var scaleIndex = 0; scaleIndex < DetourRadiusScales.Length; scaleIndex++)
+            {
+                var routeOffset = Mathf.Min(footprintRadius * DetourRadiusScales[scaleIndex], maximumSurfaceOffset);
+                for (var sideIndex = 0; sideIndex < DetourSideSigns.Length; sideIndex++)
+                {
+                    var lateralOffset = routeOffset * DetourSideSigns[sideIndex];
+                    for (var forwardIndex = 0; forwardIndex < DetourForwardScales.Length; forwardIndex++)
+                    {
+                        var forwardOffset = routeOffset * DetourForwardScales[forwardIndex];
+                        var candidate = SurfaceOffset(anchor, side * lateralOffset + forward * forwardOffset, planet.realRadius);
+                        if (TryUseSingleDetour(
+                                player, candidate, finalDirection, altitude, planet.realRadius,
+                                out detour, out pendingWaypoint))
+                        {
+                            return true;
+                        }
 
-            detour = fallbackDetour;
-            pendingWaypoint = fallbackWaypoint;
+                        candidate = SurfaceOffset(anchor, side * lateralOffset - forward * forwardOffset, planet.realRadius);
+                        if (TryUseSingleDetour(
+                                player, candidate, finalDirection, altitude, planet.realRadius,
+                                out detour, out pendingWaypoint))
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            if (TryFindObstacleEscape(
+                    player, anchor, forward, side, footprintRadius, altitude,
+                    planet.realRadius, maximumSurfaceOffset, out detour))
+            {
+                pendingWaypoint = default;
+                return true;
+            }
+
+            return TryFindLocalEscape(
+                player, routeTarget, footprintRadius, altitude, planet.realRadius,
+                maximumSurfaceOffset, out detour, out pendingWaypoint);
+        }
+
+        private static bool TryUseDetourPair(
+            Player player,
+            Vector3 entry,
+            Vector3 exit,
+            Vector3 finalDirection,
+            float altitude,
+            float realRadius,
+            out Vector3 detour,
+            out Vector3 pendingWaypoint)
+        {
+            detour = default;
+            pendingWaypoint = default;
+            if (!IsUsefulRecoveryWaypoint(player, entry, realRadius)) return false;
+            if (!IsPathClear(player, entry, altitude) || !IsFlightPointClear(entry, altitude, realRadius)) return false;
+            if (!IsPathClear(entry, exit, altitude, realRadius) || !IsFlightPointClear(exit, altitude, realRadius)) return false;
+            if (!IsPathClear(exit, finalDirection, altitude, realRadius)) return false;
+
+            detour = entry * realRadius;
+            pendingWaypoint = exit * realRadius;
             return true;
+        }
+
+        private static bool TryUseSingleDetour(
+            Player player,
+            Vector3 candidate,
+            Vector3 finalDirection,
+            float altitude,
+            float realRadius,
+            out Vector3 detour,
+            out Vector3 pendingWaypoint)
+        {
+            detour = default;
+            pendingWaypoint = default;
+            if (!IsUsefulRecoveryWaypoint(player, candidate, realRadius)) return false;
+            if (!IsPathClear(player, candidate, altitude) || !IsFlightPointClear(candidate, altitude, realRadius)) return false;
+            if (!IsPathClear(candidate, finalDirection, altitude, realRadius)) return false;
+
+            detour = candidate * realRadius;
+            return true;
+        }
+
+        private static bool TryFindObstacleEscape(
+            Player player,
+            Vector3 anchor,
+            Vector3 forward,
+            Vector3 side,
+            float footprintRadius,
+            float altitude,
+            float realRadius,
+            float maximumSurfaceOffset,
+            out Vector3 detour)
+        {
+            detour = default;
+            for (var scaleIndex = 0; scaleIndex < EscapeDistanceScales.Length; scaleIndex++)
+            {
+                var distance = Mathf.Min(footprintRadius * EscapeDistanceScales[scaleIndex], maximumSurfaceOffset);
+                for (var sideIndex = 0; sideIndex < DetourSideSigns.Length; sideIndex++)
+                {
+                    var sideOffset = side * (distance * DetourSideSigns[sideIndex]);
+                    if (TryUseEscapePoint(
+                            player, SurfaceOffset(anchor, sideOffset, realRadius), altitude, realRadius, out detour))
+                    {
+                        return true;
+                    }
+
+                    for (var forwardIndex = 0; forwardIndex < DetourForwardScales.Length; forwardIndex++)
+                    {
+                        var forwardOffset = forward * (distance * DetourForwardScales[forwardIndex]);
+                        if (TryUseEscapePoint(
+                                player, SurfaceOffset(anchor, sideOffset + forwardOffset, realRadius), altitude, realRadius, out detour) ||
+                            TryUseEscapePoint(
+                                player, SurfaceOffset(anchor, sideOffset - forwardOffset, realRadius), altitude, realRadius, out detour))
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        private static bool TryFindLocalEscape(
+            Player player,
+            Vector3 routeTarget,
+            float footprintRadius,
+            float altitude,
+            float realRadius,
+            float maximumSurfaceOffset,
+            out Vector3 detour,
+            out Vector3 pendingWaypoint)
+        {
+            detour = default;
+            pendingWaypoint = default;
+            var currentDirection = player.position.normalized;
+            var forward = Vector3.ProjectOnPlane(routeTarget.normalized, currentDirection).normalized;
+            if (forward.sqrMagnitude < 0.01f)
+            {
+                forward = Vector3.ProjectOnPlane(player.controller.velocity, currentDirection).normalized;
+            }
+
+            if (forward.sqrMagnitude < 0.01f)
+            {
+                forward = Vector3.ProjectOnPlane(Vector3.up, currentDirection).normalized;
+            }
+
+            if (forward.sqrMagnitude < 0.01f)
+            {
+                forward = Vector3.ProjectOnPlane(Vector3.right, currentDirection).normalized;
+            }
+
+            var side = Vector3.Cross(currentDirection, forward).normalized;
+            if (side.sqrMagnitude < 0.01f) return false;
+
+            for (var scaleIndex = 0; scaleIndex < EscapeDistanceScales.Length; scaleIndex++)
+            {
+                var distance = Mathf.Min(footprintRadius * EscapeDistanceScales[scaleIndex], maximumSurfaceOffset);
+                for (var sideIndex = 0; sideIndex < DetourSideSigns.Length; sideIndex++)
+                {
+                    var signedSide = side * (distance * DetourSideSigns[sideIndex]);
+                    if (TryUseEscapePoint(
+                            player, SurfaceOffset(currentDirection, signedSide, realRadius), altitude, realRadius, out detour))
+                    {
+                        return true;
+                    }
+
+                    if (TryUseEscapePoint(
+                            player, SurfaceOffset(currentDirection, signedSide - forward * distance, realRadius), altitude, realRadius, out detour) ||
+                        TryUseEscapePoint(
+                            player, SurfaceOffset(currentDirection, signedSide + forward * distance, realRadius), altitude, realRadius, out detour) ||
+                        TryUseEscapePoint(
+                            player, SurfaceOffset(currentDirection, -forward * distance, realRadius), altitude, realRadius, out detour))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        private static bool TryUseEscapePoint(
+            Player player,
+            Vector3 candidate,
+            float altitude,
+            float realRadius,
+            out Vector3 detour)
+        {
+            detour = default;
+            if (!IsUsefulRecoveryWaypoint(player, candidate, realRadius)) return false;
+            if (!IsPathClear(player, candidate, altitude) || !IsFlightPointClear(candidate, altitude, realRadius)) return false;
+
+            detour = candidate * realRadius;
+            return true;
+        }
+
+        private static bool IsUsefulRecoveryWaypoint(Player player, Vector3 candidate, float realRadius)
+        {
+            var arrivalDistance = Mathf.Max(0.25f, player.speed * 0.1f);
+            if (player.movementState >= EMovementState.Fly) arrivalDistance *= 1.5f;
+            var minimumDistance = Mathf.Max(MinimumSiteMoveDistance, arrivalDistance + AvoidanceClearance);
+            var surfaceDelta = (candidate.normalized - player.position.normalized) * realRadius;
+            if (surfaceDelta.sqrMagnitude <= minimumDistance * minimumDistance) return false;
+
+            for (var historyIndex = 0; historyIndex < _recoveryWaypointCount; historyIndex++)
+            {
+                var recentDirection = RecentRecoveryWaypoints[(_recoveryWaypointStart + historyIndex) % RecoveryWaypointHistorySize];
+                var recentDelta = (candidate.normalized - recentDirection) * realRadius;
+                if (recentDelta.sqrMagnitude < MinimumSiteMoveDistance * MinimumSiteMoveDistance) return false;
+            }
+
+            return true;
+        }
+
+        private static void RememberRecoveryWaypoint(Vector3 position, float realRadius)
+        {
+            var direction = position.normalized;
+            for (var historyIndex = 0; historyIndex < _recoveryWaypointCount; historyIndex++)
+            {
+                var recentDirection = RecentRecoveryWaypoints[(_recoveryWaypointStart + historyIndex) % RecoveryWaypointHistorySize];
+                var delta = (direction - recentDirection) * realRadius;
+                if (delta.sqrMagnitude < MinimumSiteMoveDistance * MinimumSiteMoveDistance) return;
+            }
+
+            var index = (_recoveryWaypointStart + _recoveryWaypointCount) % RecoveryWaypointHistorySize;
+            RecentRecoveryWaypoints[index] = direction;
+            if (_recoveryWaypointCount < RecoveryWaypointHistorySize)
+            {
+                _recoveryWaypointCount++;
+            }
+            else
+            {
+                _recoveryWaypointStart = (_recoveryWaypointStart + 1) % RecoveryWaypointHistorySize;
+            }
         }
 
         private static float GetObstacleFootprintRadius(Bounds bounds, Vector3 anchor)
@@ -1357,6 +1566,13 @@ internal static class FactoryBuildPatches
         {
             var planet = player.planetData;
             return planet != null && IsPathClear(player.position.normalized, targetDirection, altitude, planet.realRadius);
+        }
+
+        private static bool IsFlightPointClear(Vector3 direction, float altitude, float realRadius)
+        {
+            var point = GetFlightPoint(direction, altitude, realRadius);
+            return Physics.OverlapSphereNonAlloc(
+                       point, AvoidanceClearance, ObstacleOverlapColliders, ObstacleLayerMask, QueryTriggerInteraction.Collide) == 0;
         }
 
         private static bool IsPathClear(Vector3 startDirection, Vector3 targetDirection, float altitude, float realRadius)
@@ -1387,7 +1603,7 @@ internal static class FactoryBuildPatches
 
         private static float GetCurrentAltitude(Player player)
         {
-            return Mathf.Clamp(player.position.magnitude - player.planetData.realRadius, 15f, AvoidanceAltitude);
+            return Mathf.Max(2f, player.position.magnitude - player.planetData.realRadius);
         }
 
         private static void ResetNavigation()
@@ -1397,9 +1613,9 @@ internal static class FactoryBuildPatches
             _stuckTicks = 0;
             _bestRouteAngle = 0f;
             _orbitTicks = 0;
-            _orbitRecoveryUsed = false;
-            _detourCount = 0;
             _isAvoidingObstacle = false;
+            _recoveryWaypointStart = 0;
+            _recoveryWaypointCount = 0;
             _pendingWaypoint = Vector3.zero;
             _hasPendingWaypoint = false;
             _constructionDestination = Vector3.zero;
@@ -1410,7 +1626,6 @@ internal static class FactoryBuildPatches
             EndFlightSettling();
             _deferredRoute = Vector3.zero;
             _hasDeferredRoute = false;
-            _deferredRouteKeepAltitude = false;
             _planAstroId = 0;
             _lastPlanAttemptTick = 0;
             _hasPlanAttempted = false;

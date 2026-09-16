@@ -40,6 +40,8 @@
 - `AutoConstructEnabled` controls patch activation; `AutoConstructButtonEnabled` controls only button visibility. Never couple them.
 - Keep planning bounded and allocation-free. Follow native construction eligibility and planet-local surface movement semantics.
 - The planner owns only its generated `MoveTo` orders. Clear an active auto order before resetting planner state on disable or planet changes, without clearing user orders. Recovery detours must return control to the construction route.
+- Keep obstacle recovery at the current flight altitude. Validate lateral detour and escape waypoints against physics before issuing them, and retain recovery state to retry broader routes instead of treating an exhausted candidate list as success.
+- Let native flight control settle altitude after construction arrival; do not force a target altitude from auto-construct. The native non-gas flight baseline is 15f, while gas planets use a different lower bound.
 
 ### Auto-cruise
 
