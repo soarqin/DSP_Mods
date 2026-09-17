@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>LiveStreamAssist research</title>
+  <style>
+    :root { color-scheme: dark; }
+    html, body { margin: 0; background: transparent; font: 18px/1.4 system-ui, sans-serif; color: #f2f5f8; }
+    .card {
+      min-width: 320px; max-width: 420px; padding: 16px 18px;
+      background: rgba(12, 18, 28, 0.72); border-radius: 10px;
+    }
+    .label { opacity: 0.65; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; }
+    .title { margin: 4px 0 10px; font-size: 22px; font-weight: 650; }
+    .bar { height: 10px; background: #1d2a3c; border-radius: 999px; overflow: hidden; }
+    .fill { height: 100%; width: 0; background: #3d9cff; }
+    .meta { margin-top: 8px; font-variant-numeric: tabular-nums; font-size: 14px; opacity: 0.9; }
+    .status { margin-top: 8px; font-size: 13px; opacity: 0.7; }
+    input {
+      width: 100%; margin: 0 0 12px; box-sizing: border-box; padding: 6px 8px;
+      border: 0; border-radius: 6px; background: #1d2a3c; color: inherit;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <input id="url" value="ws://127.0.0.1:18080/api/v1">
+    <div class="label">Current research</div>
+    <div class="title" id="title">Connecting…</div>
+    <div class="bar"><div class="fill" id="fill"></div></div>
+    <div class="meta" id="meta"></div>
+    <div class="status" id="status"></div>
+  </div>
+  <script>
+    const qs = new URLSearchParams(location.search);
+    const urlInput = document.getElementById("url");
+    const titleEl = document.getElementById("title");
+    const fillEl = document.getElementById("fill");
+    const metaEl = document.getElementById("meta");
+    const statusEl = document.getElementById("status");
+    urlInput.value = qs.get("ws") || urlInput.value;
+
+    let ws, seq = 0, pending = new Map(), pollTimer, backoff = 500;
+
+    function rpc(method, params) {
+      const id = "r-" + (++seq);
+      return new Promise((resolve, reject) => {
+        pending.set(id, { resolve, reject });
+        ws.send(JSON.stringify({ jsonrpc: "2.0", id, method, params: params || {} }));
+      });
+    }
+
+    function fmt(n) {
+      try { return BigInt(n).toString(); } catch { return String(n ?? ""); }
+    }
+
+    function pct(up, need) {
+      try {
+        const n = BigInt(need || "0");
+        if (n === 0n) return 0;
+        return Number(BigInt(up || "0") * 10000n / n) / 100;
+      } catch { return 0; }
+    }
+
+    async function tick() {
+      const tech = await rpc("data.read", { root: "history", path: ["currentTech"] });
+      if (tech.error) throw new Error(tech.error.data && tech.error.data.kind || tech.error.message);
+      const id = tech.result.value;
+      if (!id) {
+        titleEl.textContent = "No active research";
+        fillEl.style.width = "0%";
+        metaEl.textContent = "";
+        statusEl.textContent = "session " + (tech.result.sessionId || "");
+        return;
+      }
+      const state = await rpc("data.read", {
+        root: "history",
+        path: ["techStates", { key: id }],
+        select: ["curLevel", "hashUploaded", "hashNeeded"]
+      });
+      if (state.error) throw new Error(state.error.data && state.error.data.kind || state.error.message);
+      const v = state.result.value;
+      const p = pct(v.hashUploaded, v.hashNeeded);
+      titleEl.textContent = "Tech " + id + "  Lv " + v.curLevel;
+      fillEl.style.width = p.toFixed(2) + "%";
+      metaEl.textContent = fmt(v.hashUploaded) + " / " + fmt(v.hashNeeded) + "  (" + p.toFixed(1) + "%)";
+      statusEl.textContent = "session " + (state.result.sessionId || "");
+    }
+
+    function connect() {
+      statusEl.textContent = "Connecting";
+      ws = new WebSocket(urlInput.value);
+      ws.onopen = () => {
+        backoff = 500;
+        statusEl.textContent = "Connected";
+        pollTimer = setInterval(() => { tick().catch(err => { statusEl.textContent = err.message; }); }, 1000);
+        tick().catch(err => { statusEl.textContent = err.message; });
+      };
+      ws.onmessage = ev => {
+        const msg = JSON.parse(ev.data);
+        const wait = pending.get(msg.id);
+        if (!wait) return;
+        pending.delete(msg.id);
+        wait.resolve(msg);
+      };
+      ws.onclose = () => {
+        clearInterval(pollTimer);
+        pending.forEach(p => p.reject(new Error("disconnected")));
+        pending.clear();
+        titleEl.textContent = "Disconnected";
+        statusEl.textContent = "Retrying";
+        setTimeout(connect, backoff);
+        backoff = Math.min(backoff * 2, 8000);
+      };
+    }
+
+    urlInput.onchange = () => { if (ws) ws.close(); };
+    connect();
+  </script>
+</body>
+</html>

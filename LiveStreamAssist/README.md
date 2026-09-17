@@ -26,5 +26,7 @@ Port = 18080
 
 Then connect to `ws://<host>:18080/api/v1`. There is no authentication. Use a LAN bind address or `0.0.0.0` only on trusted networks. Configuration changes require a game restart.
 
+Open [examples/research-overlay.html](https://github.com/soarqin/DSP_Mods/blob/master/LiveStreamAssist/examples/research-overlay.html) in a browser or OBS Browser Source to show the current research ID, level, and hash progress. Default URL is `ws://127.0.0.1:18080/api/v1`; override with `?ws=`.
+
 - [WebSocket API reference](https://github.com/soarqin/DSP_Mods/blob/master/LiveStreamAssist/docs/WebSocketApi.md)
 - [WebSocket design and transport migration plan](https://github.com/soarqin/DSP_Mods/blob/master/LiveStreamAssist/docs/WebSocketDesign.md)

@@ -21,66 +21,82 @@ function New-OpCts {
     [Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds($TimeoutSec))
 }
 
+function Get-ConnSocket {
+    param($Conn)
+    if ($null -eq $Conn) { return $null }
+    if ($Conn -is [hashtable]) {
+        if ($Conn.ContainsKey('Ws')) { return $Conn['Ws'] }
+        return $null
+    }
+    if ($Conn.PSObject.Properties.Name -contains 'Ws') { return $Conn.Ws }
+    return $null
+}
+
 function Connect-Api {
     param([string] $Uri)
     $ws = [Net.WebSockets.ClientWebSocket]::new()
     $cts = New-OpCts
     try {
-        $ws.ConnectAsync([Uri]$Uri, $cts.Token).GetAwaiter().GetResult()
+        $null = $ws.ConnectAsync([Uri]$Uri, $cts.Token).GetAwaiter().GetResult()
     } catch {
-        $ws.Dispose()
+        $null = $ws.Dispose()
         throw
     } finally {
-        $cts.Dispose()
+        $null = $cts.Dispose()
     }
-    return @{ Ws = $ws }
+    [pscustomobject]@{ Ws = $ws }
 }
 
 function Close-Api {
     param($Conn)
-    if (-not $Conn) { return }
+    $ws = Get-ConnSocket $Conn
+    if ($null -eq $ws) { return }
     $cts = New-OpCts
     try {
-        if ($Conn.Ws.State -eq [Net.WebSockets.WebSocketState]::Open -or
-            $Conn.Ws.State -eq [Net.WebSockets.WebSocketState]::CloseReceived) {
-            $Conn.Ws.CloseAsync([Net.WebSockets.WebSocketCloseStatus]::NormalClosure, '', $cts.Token).GetAwaiter().GetResult()
+        if ($ws.State -eq [Net.WebSockets.WebSocketState]::Open -or
+            $ws.State -eq [Net.WebSockets.WebSocketState]::CloseReceived) {
+            $null = $ws.CloseAsync([Net.WebSockets.WebSocketCloseStatus]::NormalClosure, '', $cts.Token).GetAwaiter().GetResult()
         }
     } catch { }
-    finally { $cts.Dispose() }
-    try { $Conn.Ws.Dispose() } catch { }
+    finally { $null = $cts.Dispose() }
+    try { $null = $ws.Dispose() } catch { }
 }
 
 function Send-Text {
     param($Conn, [string] $Text, [bool] $End = $true)
+    $ws = Get-ConnSocket $Conn
     $bytes = $utf8.GetBytes($Text)
     $seg = [ArraySegment[byte]]::new($bytes)
     $cts = New-OpCts
     try {
-        $Conn.Ws.SendAsync($seg, [Net.WebSockets.WebSocketMessageType]::Text, $End, $cts.Token).GetAwaiter().GetResult()
-    } finally { $cts.Dispose() }
+        $null = $ws.SendAsync($seg, [Net.WebSockets.WebSocketMessageType]::Text, $End, $cts.Token).GetAwaiter().GetResult()
+    } finally { $null = $cts.Dispose() }
 }
 
 function Receive-Message {
     param($Conn)
+    $ws = Get-ConnSocket $Conn
     $buffer = [byte[]]::new(65536)
     $ms = [IO.MemoryStream]::new()
     $cts = New-OpCts
     try {
         do {
             $seg = [ArraySegment[byte]]::new($buffer)
-            $result = $Conn.Ws.ReceiveAsync($seg, $cts.Token).GetAwaiter().GetResult()
+            $result = $ws.ReceiveAsync($seg, $cts.Token).GetAwaiter().GetResult()
             if ($result.MessageType -eq [Net.WebSockets.WebSocketMessageType]::Close) {
-                return @{ Closed = $true; CloseStatus = [int]$Conn.Ws.CloseStatus; Text = $null }
+                $code = 0
+                if ($null -ne $ws.CloseStatus) { $code = [int]$ws.CloseStatus }
+                return [pscustomobject]@{ Closed = $true; CloseStatus = $code; Text = $null }
             }
             if ($result.MessageType -ne [Net.WebSockets.WebSocketMessageType]::Text -or $ms.Length + $result.Count -gt 262144) {
                 throw 'Expected a text response within maxResponseBytes'
             }
-            $ms.Write($buffer, 0, $result.Count)
+            $null = $ms.Write($buffer, 0, $result.Count)
         } while (-not $result.EndOfMessage)
-        return @{ Closed = $false; Text = $utf8.GetString($ms.ToArray()) }
+        return [pscustomobject]@{ Closed = $false; CloseStatus = 0; Text = $utf8.GetString($ms.ToArray()) }
     } finally {
-        $ms.Dispose()
-        $cts.Dispose()
+        $null = $ms.Dispose()
+        $null = $cts.Dispose()
     }
 }
 
@@ -167,12 +183,12 @@ try {
 
     $cts = New-OpCts
     try {
-        $conn.Ws.SendAsync(
+        $null = (Get-ConnSocket $conn).SendAsync(
             [ArraySegment[byte]]::new([byte[]](1, 2, 3)),
             [Net.WebSockets.WebSocketMessageType]::Binary,
             $true,
             $cts.Token).GetAwaiter().GetResult()
-    } finally { $cts.Dispose() }
+    } finally { $null = $cts.Dispose() }
     $bin = Receive-Message $conn
     Assert-True ($bin.Closed -and $bin.CloseStatus -eq 1003) "binary rejected $($bin.CloseStatus)"
 
@@ -200,10 +216,10 @@ try {
         $response = $http.SendAsync($request, [Net.Http.HttpCompletionOption]::ResponseHeadersRead, $cts.Token).GetAwaiter().GetResult()
         Assert-True ([int]$response.StatusCode -eq 404) 'wrong path HTTP rejection'
     } finally {
-        if ($null -ne $response) { $response.Dispose() }
-        $request.Dispose()
-        $http.Dispose()
-        $cts.Dispose()
+        if ($null -ne $response) { $null = $response.Dispose() }
+        $null = $request.Dispose()
+        $null = $http.Dispose()
+        $null = $cts.Dispose()
     }
 
     $conn = Connect-Api $ServerUri
