@@ -10,3 +10,10 @@ Keeps the Dyson Sphere Program statistics window active during a live stream by 
 - Closing the statistics window stops the assist automatically.
 
 The mod requires UXAssist.
+
+## Developer documentation
+
+The WebSocket API is planned and is not implemented yet.
+
+- [WebSocket API reference](https://github.com/soarqin/DSP_Mods/blob/master/LiveStreamAssist/docs/WebSocketApi.md)
+- [WebSocket design and implementation plan](https://github.com/soarqin/DSP_Mods/blob/master/LiveStreamAssist/docs/WebSocketDesign.md)
