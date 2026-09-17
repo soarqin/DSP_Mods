@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Reflection;
+using System.Reflection.Emit;
 using LiveStreamAssist.Api;
 using UnityEngine;
 
@@ -25,6 +27,11 @@ static class Program
             Int64Precision(reader);
             NonFinite(reader);
             UnityAndStreamBlocked(reader);
+            NullCollectionPaging(reader);
+            RuntimeProjectionMembers(reader);
+            UnsignedEnum(reader);
+            RuntimeTypeBoundary(reader);
+            FrameworkInternals(reader);
         }
         finally
         {
@@ -170,6 +177,59 @@ static class Program
         return false;
     }
 
+    static void NullCollectionPaging(ReflectionReader reader)
+    {
+        var result = reader.Read(new DerivedFixture(), typeof(DerivedFixture), new[] { new PathSeg("Arr") },
+            new ReadOptions { HasLimit = true, Limit = 1 });
+        Check(result.Error == null && result.IsNull, "null array with paging remains null");
+    }
+
+    static void RuntimeProjectionMembers(ReflectionReader reader)
+    {
+        var values = new BaseFixture[] { new DerivedFixture { Visible = 42 } };
+        var options = new ReadOptions { HasSelect = true, Select = new[] { "Visible" } };
+        var result = reader.Read(values, values.GetType(), Array.Empty<PathSeg>(), options);
+        Check(result.Error == null, "page projection resolves members on actual derived objects");
+        var empty = reader.Read(Array.Empty<BaseFixture>(), typeof(BaseFixture[]), Array.Empty<PathSeg>(), options);
+        Check(empty.Error == null, "empty page does not resolve unread member names");
+    }
+
+    static void UnsignedEnum(ReflectionReader reader)
+    {
+        try
+        {
+            var result = reader.Read(WideEnum.Max, typeof(WideEnum), Array.Empty<PathSeg>(), default);
+            Check(result.Error == null && result.Encoded is Dictionary<string, object> value &&
+                  Equals(value["value"], "18446744073709551615"), "ulong enum preserves its full range");
+        }
+        catch (OverflowException)
+        {
+            Check(false, "ulong enum preserves its full range");
+        }
+    }
+
+    static void RuntimeTypeBoundary(ReflectionReader reader)
+    {
+        var assembly = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName("UnlistedFixture"), AssemblyBuilderAccess.Run);
+        var type = assembly.DefineDynamicModule("main").DefineType("ForeignFixture", TypeAttributes.Public, typeof(BaseFixture));
+        type.DefineField("Secret", typeof(int), FieldAttributes.Public);
+        var foreign = (BaseFixture)Activator.CreateInstance(type.CreateType());
+        var result = reader.Read(foreign, typeof(BaseFixture), new[] { new PathSeg("Secret") }, default);
+        Check(result.Error?.Kind == "UNSUPPORTED_TYPE", "runtime type cannot bypass the allowed assembly boundary");
+        var described = reader.Describe(foreign, typeof(BaseFixture), Array.Empty<PathSeg>());
+        Check(described.Error?.Kind == "UNSUPPORTED_TYPE", "describe enforces the runtime type boundary");
+    }
+
+    static void FrameworkInternals(ReflectionReader reader)
+    {
+        var list = new GameListFixture();
+        var result = reader.Read(list, list.GetType(), new[] { new PathSeg("_items") }, default);
+        Check(result.Error?.Kind == "MEMBER_NOT_FOUND", "game-defined subclasses do not expose BCL container internals");
+        var array = Array.CreateInstance(typeof(BaseFixture), new[] { 1 }, new[] { 5 });
+        result = reader.Read(array, array.GetType(), Array.Empty<PathSeg>(), default);
+        Check(result.Error?.Kind == "UNSUPPORTED_TYPE", "nonzero-based game arrays are rejected");
+    }
+
     static void Check(bool cond, string name)
     {
         if (cond)
@@ -183,12 +243,16 @@ static class Program
     }
 }
 
-class BaseFixture
+public class BaseFixture
 {
     int baseSecret;
 
     public void SetBaseSecret(int value) => baseSecret = value;
 }
+
+enum WideEnum : ulong { Max = ulong.MaxValue }
+
+class GameListFixture : List<int>;
 
 class DerivedFixture : BaseFixture
 {

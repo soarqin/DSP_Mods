@@ -13,6 +13,8 @@ The mod requires UXAssist.
 
 ## WebSocket API
 
+The in-tree listener uses in-process ASP.NET Core 2.3 Kestrel (managed sockets). Unity 2022/Mono and LAN acceptance remain pending. The design document below defines the remaining gates.
+
 Disabled by default. In the BepInEx config file, set:
 
 ```text
@@ -25,4 +27,4 @@ Port = 18080
 Then connect to `ws://<host>:18080/api/v1`. There is no authentication. Use a LAN bind address or `0.0.0.0` only on trusted networks. Configuration changes require a game restart.
 
 - [WebSocket API reference](https://github.com/soarqin/DSP_Mods/blob/master/LiveStreamAssist/docs/WebSocketApi.md)
-- [WebSocket design and implementation plan](https://github.com/soarqin/DSP_Mods/blob/master/LiveStreamAssist/docs/WebSocketDesign.md)
+- [WebSocket design and transport migration plan](https://github.com/soarqin/DSP_Mods/blob/master/LiveStreamAssist/docs/WebSocketDesign.md)

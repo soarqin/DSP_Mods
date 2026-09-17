@@ -6,18 +6,77 @@
     <Version>1.0.0</Version>
     <PackageId>LiveStreamAssist</PackageId>
     <RootNamespace>LiveStreamAssist</RootNamespace>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\UXAssist\UXAssist.csproj" />
-    <PackageReference Include="Fleck" Version="1.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Hosting" Version="2.3.13" />
+    <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.3.13" />
+    <PackageReference Include="Microsoft.AspNetCore.Server.Kestrel" Version="2.3.13" />
+    <PackageReference Include="Microsoft.AspNetCore.Server.Kestrel.Core" Version="2.3.13" />
+    <PackageReference Include="Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets" Version="2.3.13" />
+    <PackageReference Include="Microsoft.AspNetCore.WebSockets" Version="2.3.13" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="System.Net.WebSockets.WebSocketProtocol" Version="5.1.3" />
     <Compile Remove="tools\**" />
     <None Include="tools\**" />
   </ItemGroup>
+  <ItemGroup>
+    <WebSocketRuntimeDll Include="$(TargetDir)Microsoft.AspNetCore.Connections.Abstractions.dll" />
+    <WebSocketRuntimeDll Include="$(TargetDir)Microsoft.AspNetCore.Hosting.Abstractions.dll" />
+    <WebSocketRuntimeDll Include="$(TargetDir)Microsoft.AspNetCore.Hosting.dll" />
+    <WebSocketRuntimeDll Include="$(TargetDir)Microsoft.AspNetCore.Hosting.Server.Abstractions.dll" />
+    <WebSocketRuntimeDll Include="$(TargetDir)Microsoft.AspNetCore.Http.Abstractions.dll" />
+    <WebSocketRuntimeDll Include="$(TargetDir)Microsoft.AspNetCore.Http.dll" />
+    <WebSocketRuntimeDll Include="$(TargetDir)Microsoft.AspNetCore.Http.Extensions.dll" />
+    <WebSocketRuntimeDll Include="$(TargetDir)Microsoft.AspNetCore.Http.Features.dll" />
+    <WebSocketRuntimeDll Include="$(TargetDir)Microsoft.AspNetCore.Server.Kestrel.Core.dll" />
+    <WebSocketRuntimeDll Include="$(TargetDir)Microsoft.AspNetCore.Server.Kestrel.dll" />
+    <WebSocketRuntimeDll Include="$(TargetDir)Microsoft.AspNetCore.Server.Kestrel.Https.dll" />
+    <WebSocketRuntimeDll Include="$(TargetDir)Microsoft.AspNetCore.Server.Kestrel.Transport.Abstractions.dll" />
+    <WebSocketRuntimeDll Include="$(TargetDir)Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets.dll" />
+    <WebSocketRuntimeDll Include="$(TargetDir)Microsoft.AspNetCore.WebSockets.dll" />
+    <WebSocketRuntimeDll Include="$(TargetDir)Microsoft.AspNetCore.WebUtilities.dll" />
+    <WebSocketRuntimeDll Include="$(TargetDir)Microsoft.Bcl.AsyncInterfaces.dll" />
+    <WebSocketRuntimeDll Include="$(TargetDir)Microsoft.Extensions.Configuration.Abstractions.dll" />
+    <WebSocketRuntimeDll Include="$(TargetDir)Microsoft.Extensions.Configuration.Binder.dll" />
+    <WebSocketRuntimeDll Include="$(TargetDir)Microsoft.Extensions.Configuration.dll" />
+    <WebSocketRuntimeDll Include="$(TargetDir)Microsoft.Extensions.Configuration.EnvironmentVariables.dll" />
+    <WebSocketRuntimeDll Include="$(TargetDir)Microsoft.Extensions.Configuration.FileExtensions.dll" />
+    <WebSocketRuntimeDll Include="$(TargetDir)Microsoft.Extensions.DependencyInjection.Abstractions.dll" />
+    <WebSocketRuntimeDll Include="$(TargetDir)Microsoft.Extensions.DependencyInjection.dll" />
+    <WebSocketRuntimeDll Include="$(TargetDir)Microsoft.Extensions.Diagnostics.Abstractions.dll" />
+    <WebSocketRuntimeDll Include="$(TargetDir)Microsoft.Extensions.FileProviders.Abstractions.dll" />
+    <WebSocketRuntimeDll Include="$(TargetDir)Microsoft.Extensions.FileProviders.Physical.dll" />
+    <WebSocketRuntimeDll Include="$(TargetDir)Microsoft.Extensions.FileSystemGlobbing.dll" />
+    <WebSocketRuntimeDll Include="$(TargetDir)Microsoft.Extensions.Hosting.Abstractions.dll" />
+    <WebSocketRuntimeDll Include="$(TargetDir)Microsoft.Extensions.Logging.Abstractions.dll" />
+    <WebSocketRuntimeDll Include="$(TargetDir)Microsoft.Extensions.Logging.Debug.dll" />
+    <WebSocketRuntimeDll Include="$(TargetDir)Microsoft.Extensions.Logging.dll" />
+    <WebSocketRuntimeDll Include="$(TargetDir)Microsoft.Extensions.ObjectPool.dll" />
+    <WebSocketRuntimeDll Include="$(TargetDir)Microsoft.Extensions.Options.dll" />
+    <WebSocketRuntimeDll Include="$(TargetDir)Microsoft.Extensions.Primitives.dll" />
+    <WebSocketRuntimeDll Include="$(TargetDir)Microsoft.Net.Http.Headers.dll" />
+    <WebSocketRuntimeDll Include="$(TargetDir)Newtonsoft.Json.dll" />
+    <WebSocketRuntimeDll Include="$(TargetDir)System.Buffers.dll" />
+    <WebSocketRuntimeDll Include="$(TargetDir)System.Collections.Immutable.dll" />
+    <WebSocketRuntimeDll Include="$(TargetDir)System.Diagnostics.DiagnosticSource.dll" />
+    <WebSocketRuntimeDll Include="$(TargetDir)System.IO.Pipelines.dll" />
+    <WebSocketRuntimeDll Include="$(TargetDir)System.Memory.dll" />
+    <WebSocketRuntimeDll Include="$(TargetDir)System.Net.WebSockets.WebSocketProtocol.dll" />
+    <WebSocketRuntimeDll Include="$(TargetDir)System.Numerics.Vectors.dll" />
+    <WebSocketRuntimeDll Include="$(TargetDir)System.Reflection.Metadata.dll" />
+    <WebSocketRuntimeDll Include="$(TargetDir)System.Runtime.CompilerServices.Unsafe.dll" />
+    <WebSocketRuntimeDll Include="$(TargetDir)System.Security.Cryptography.Cng.dll" />
+    <WebSocketRuntimeDll Include="$(TargetDir)System.Text.Encodings.Web.dll" />
+    <WebSocketRuntimeDll Include="$(TargetDir)System.Threading.Tasks.Extensions.dll" />
+    <WebSocketRuntimeDll Include="$(TargetDir)System.ValueTuple.dll" />
+  </ItemGroup>
   <Target Name="AddWebSocketRuntimeDependencies" BeforeTargets="ZipMod">
+    <Error Condition="'%(WebSocketRuntimeDll.Identity)' != '' And !Exists('%(WebSocketRuntimeDll.Identity)')"
+           Text="Missing WebSocket runtime dependency: %(WebSocketRuntimeDll.Identity)" />
     <ItemGroup>
-      <_PackRootFiles Include="$(TargetDir)Fleck.dll" Condition="Exists('$(TargetDir)Fleck.dll')" />
-      <_PackRootFiles Include="$(TargetDir)Newtonsoft.Json.dll" Condition="Exists('$(TargetDir)Newtonsoft.Json.dll')" />
+      <_PackRootFiles Include="@(WebSocketRuntimeDll)" />
     </ItemGroup>
   </Target>
 </Project>

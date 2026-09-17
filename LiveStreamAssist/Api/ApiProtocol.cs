@@ -26,8 +26,8 @@ internal static class ApiLimits
     public const int RequestTimeoutMs = 5000;
     public const int MaxRequestsPerFrame = 8;
     public const int MainThreadBudgetMs = 2;
-    public const int MaxIncomingSocketBytes = MaxRequestBytes + 8192;
     public const int CloseGoingAway = 1001;
+    public const int CloseProtocolError = 1002;
     public const int CloseUnsupportedData = 1003;
     public const int CloseInvalidPayload = 1007;
     public const int ClosePolicyViolation = 1008;
@@ -214,14 +214,14 @@ internal static class ApiProtocol
         MethodRoots, MethodDescribe, MethodRead
     };
 
-    static readonly JsonSerializer Serializer = JsonSerializer.Create(new JsonSerializerSettings
+    static readonly JsonSerializerSettings SerializerSettings = new JsonSerializerSettings
     {
         TypeNameHandling = TypeNameHandling.None,
         DateParseHandling = DateParseHandling.None,
         NullValueHandling = NullValueHandling.Include,
         Formatting = Formatting.None,
         MaxDepth = ApiLimits.MaxJsonDepth
-    });
+    };
 
     public static bool IsSystemMethod(string method) => SystemMethods.Contains(method);
     public static bool IsDataMethod(string method) => DataMethods.Contains(method);
@@ -327,7 +327,7 @@ internal static class ApiProtocol
         }
 
         JObject parms;
-        if (!obj.TryGetValue("params", out var paramsToken) || paramsToken == null || paramsToken.Type == JTokenType.Null)
+        if (!obj.TryGetValue("params", out var paramsToken))
             parms = new JObject();
         else if (paramsToken is JObject p)
             parms = p;
@@ -482,7 +482,7 @@ internal static class ApiProtocol
         using (var json = new JsonTextWriter(writer))
         {
             json.Formatting = Formatting.None;
-            Serializer.Serialize(json, value);
+            JsonSerializer.Create(SerializerSettings).Serialize(json, value);
             json.Flush();
             writer.Flush();
             return bounded.ToArray();
@@ -521,7 +521,7 @@ internal static class ApiProtocol
             return ApiErrors.InvalidParams("apiMajor must be a positive 32-bit integer.");
 
         var missing = new List<string>();
-        if (parms.TryGetValue("requiredCapabilities", out var capToken) && capToken != null && capToken.Type != JTokenType.Null)
+        if (parms.TryGetValue("requiredCapabilities", out var capToken))
         {
             if (!(capToken is JArray arr))
                 return ApiErrors.InvalidParams("requiredCapabilities must be an array.");
@@ -571,7 +571,7 @@ internal static class ApiProtocol
         if (!TryParseRoot(parms, out var root, out error)) return false;
         if (!TryParsePath(parms, out var path, out error)) return false;
         var options = new ReadOptions();
-        if (parms.TryGetValue("select", out var selectToken) && selectToken != null && selectToken.Type != JTokenType.Null)
+        if (parms.TryGetValue("select", out var selectToken))
         {
             if (!(selectToken is JArray arr))
             {
@@ -622,7 +622,7 @@ internal static class ApiProtocol
             options.Select = names;
         }
 
-        if (parms.TryGetValue("offset", out var offsetToken) && offsetToken != null && offsetToken.Type != JTokenType.Null)
+        if (parms.TryGetValue("offset", out var offsetToken))
         {
             if (!TryGetInt32(offsetToken, out var offset) || offset < 0)
             {
@@ -634,7 +634,7 @@ internal static class ApiProtocol
             options.Offset = offset;
         }
 
-        if (parms.TryGetValue("limit", out var limitToken) && limitToken != null && limitToken.Type != JTokenType.Null)
+        if (parms.TryGetValue("limit", out var limitToken))
         {
             if (!TryGetInt32(limitToken, out var limit))
             {
@@ -692,7 +692,7 @@ internal static class ApiProtocol
     {
         path = Array.Empty<PathSeg>();
         error = null;
-        if (!parms.TryGetValue("path", out var token) || token == null || token.Type == JTokenType.Null)
+        if (!parms.TryGetValue("path", out var token))
             return true;
         if (!(token is JArray arr))
         {

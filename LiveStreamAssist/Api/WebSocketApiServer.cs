@@ -1,67 +1,97 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
+using System.Net.WebSockets;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
-using Fleck;
-using Newtonsoft.Json.Linq;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 
 namespace LiveStreamAssist.Api;
+
+internal sealed class ProducedResponse
+{
+    public object Result;
+    public ApiError Error;
+}
 
 internal sealed class PendingRequest
 {
     int _done;
     public ApiConnection Connection;
     public string Id;
-    public bool IsActive => System.Threading.Volatile.Read(ref _done) == 0 && Connection != null && Connection.IsOpen;
+    readonly TaskCompletionSource<ProducedResponse> _tcs =
+        new TaskCompletionSource<ProducedResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
 
-    public bool TryMarkDone() => System.Threading.Interlocked.Exchange(ref _done, 1) == 0;
+    public Task<ProducedResponse> Completion => _tcs.Task;
+    public bool IsActive => Volatile.Read(ref _done) == 0 && Connection != null && Connection.IsOpen;
 
-    public bool Complete(ApiError error)
+    public bool TryComplete(ApiError error)
     {
-        if (error == null || !TryMarkDone()) return false;
-        Connection.Deliver(this, null, error);
-        return true;
+        if (error == null || Interlocked.Exchange(ref _done, 1) != 0) return false;
+        return _tcs.TrySetResult(new ProducedResponse { Error = error });
     }
 
-    public bool CompleteResult(object result)
+    public bool TryCompleteResult(object result)
     {
-        if (!TryMarkDone()) return false;
-        Connection.Deliver(this, result, null);
+        if (Interlocked.Exchange(ref _done, 1) != 0) return false;
+        return _tcs.TrySetResult(new ProducedResponse { Result = result });
+    }
+
+    public bool TryCancel()
+    {
+        if (Interlocked.Exchange(ref _done, 1) != 0) return false;
+        _tcs.TrySetCanceled();
         return true;
     }
 }
 
-internal sealed class ApiConnection
+internal sealed class ApiConnection : IDisposable
 {
     readonly WebSocketApiServer _server;
-    readonly IWebSocketConnection _socket;
     readonly object _gate = new object();
     readonly Dictionary<string, PendingRequest> _outstanding = new Dictionary<string, PendingRequest>(StringComparer.Ordinal);
     readonly Queue<SendItem> _sendQueue = new Queue<SendItem>();
-    bool _sending;
+    readonly SemaphoreSlim _sendSignal = new SemaphoreSlim(0);
+    readonly SemaphoreSlim _sendGate = new SemaphoreSlim(1, 1);
+    readonly CancellationTokenSource _cancellation = new CancellationTokenSource();
+    WebSocket _socket;
+    Task _closeTask;
+    bool _closing;
     bool _closed;
-    int _pending;
+    bool _sending;
 
-    public ApiConnection(WebSocketApiServer server, IWebSocketConnection socket)
+    public ApiConnection(WebSocketApiServer server)
     {
         _server = server;
-        _socket = socket;
+    }
+
+    public void Attach(WebSocket socket)
+    {
+        lock (_gate)
+        {
+            _socket = socket;
+            if (!_closed) return;
+        }
+        socket.Abort();
+    }
+
+    public CancellationToken Cancellation => _cancellation.Token;
+
+    public Task CloseCompletion
+    {
+        get { lock (_gate) return _closeTask ?? Task.CompletedTask; }
     }
 
     public bool IsOpen
     {
         get
         {
-            lock (_gate) return !_closed && _socket.IsAvailable;
-        }
-    }
-
-    public int Pending
-    {
-        get
-        {
-            lock (_gate) return _pending;
+            lock (_gate) return !_closed && !_closing;
         }
     }
 
@@ -71,14 +101,14 @@ internal sealed class ApiConnection
         busy = false;
         lock (_gate)
         {
-            if (_closed) return null;
+            if (_closed || _closing) return null;
             if (_outstanding.ContainsKey(id))
             {
                 duplicate = true;
                 return null;
             }
 
-            if (_pending >= ApiLimits.MaxPendingRequestsPerConnection || !_server.TryIncrementPending())
+            if (_outstanding.Count >= ApiLimits.MaxPendingRequestsPerConnection || !_server.TryIncrementPending())
             {
                 busy = true;
                 return null;
@@ -86,7 +116,7 @@ internal sealed class ApiConnection
 
             var pending = new PendingRequest { Connection = this, Id = id };
             _outstanding[id] = pending;
-            _pending++;
+            _ = DeliverAsync(pending);
             return pending;
         }
     }
@@ -94,7 +124,7 @@ internal sealed class ApiConnection
     public bool CanSendBusy()
     {
         lock (_gate)
-            return !_closed && _sendQueue.Count < ApiLimits.MaxPendingRequestsPerConnection;
+            return !_closed && !_closing && _sendQueue.Count + (_sending ? 1 : 0) < ApiLimits.MaxPendingRequestsPerConnection;
     }
 
     public void EnqueueError(object id, ApiError error)
@@ -110,166 +140,229 @@ internal sealed class ApiConnection
             return;
         }
 
-        EnqueueSend(payload);
-    }
-
-    public void Deliver(PendingRequest pending, object result, ApiError error)
-    {
-        Release(pending.Id);
-        if (_closed) return;
-        byte[] payload;
-        try
-        {
-            payload = ApiProtocol.SerializeEnvelope(pending.Id, result, error);
-        }
-        catch (ResponseTooLargeException)
-        {
-            try
-            {
-                payload = ApiProtocol.SerializeEnvelope(pending.Id, null, ApiErrors.LimitExceeded("Response exceeds maxResponseBytes."));
-            }
-            catch (ResponseTooLargeException)
-            {
-                Close(ApiLimits.CloseTryAgainLater);
-                return;
-            }
-        }
-
-        EnqueueSend(payload);
+        EnqueueSend(new SendItem { Payload = payload, EnqueuedMs = _server.NowMs });
     }
 
     public void Release(string id)
     {
+        var released = false;
         lock (_gate)
         {
-            if (id != null)
-                _outstanding.Remove(id);
-            if (_pending > 0)
-                _pending--;
+            if (id != null && _outstanding.Remove(id))
+            {
+                released = true;
+            }
         }
 
-        _server.DecrementPending();
+        if (released) _server.DecrementPending();
     }
 
-    public void EnqueueSend(byte[] payload)
+    public void Close(int code) => _ = CloseAsync(code);
+
+    public Task CloseAsync(int code)
     {
         lock (_gate)
         {
-            if (_closed) return;
-            if (_sendQueue.Count >= ApiLimits.MaxPendingRequestsPerConnection)
-            {
-                CloseLocked(ApiLimits.CloseTryAgainLater);
-                return;
-            }
+            if (_closeTask != null) return _closeTask;
+            if (_closed) return Task.CompletedTask;
+            _closing = true;
+            _sendQueue.Clear();
+            _cancellation.CancelAfter(ApiLimits.RequestTimeoutMs);
+            _sendSignal.Release();
+            return _closeTask = Task.Run(SendCloseAsync);
+        }
 
-            _sendQueue.Enqueue(new SendItem { Payload = payload, EnqueuedMs = _server.NowMs });
-            if (!_sending)
+        async Task SendCloseAsync()
+        {
+            var entered = false;
+            try
             {
-                _sending = true;
-                DrainSend();
+                await _sendGate.WaitAsync(Cancellation).ConfigureAwait(false);
+                entered = true;
+                var ws = _socket;
+                if (ws == null)
+                {
+                    NotifyDisconnected();
+                    return;
+                }
+                if (ws.State == WebSocketState.Open || ws.State == WebSocketState.CloseReceived)
+                    await ws.CloseOutputAsync((WebSocketCloseStatus)code, "", Cancellation).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                LiveStreamAssist.Logger.LogWarning($"API close failed: {ex.Message}");
+                AbortSend(_socket);
+            }
+            finally
+            {
+                if (entered) _sendGate.Release();
             }
         }
-    }
-
-    public void Close(int code)
-    {
-        lock (_gate) CloseLocked(code);
     }
 
     public void NotifyDisconnected()
-    {
-        FinishClose(null);
-    }
-
-    void CloseLocked(int code)
-    {
-        FinishClose(code);
-    }
-
-    void FinishClose(int? code)
     {
         PendingRequest[] pending;
         lock (_gate)
         {
             if (_closed) return;
             _closed = true;
+            pending = SnapshotPending();
+            _outstanding.Clear();
             _sendQueue.Clear();
-            _sending = false;
-            pending = new PendingRequest[_outstanding.Count];
-            if (_outstanding.Count > 0)
-                _outstanding.Values.CopyTo(pending, 0);
-        }
-
-        if (code.HasValue)
-        {
-            try
-            {
-                if (_socket.IsAvailable)
-                    _socket.Close(code.Value);
-            }
-            catch (Exception ex)
-            {
-                LiveStreamAssist.Logger.LogWarning($"API close failed: {ex.Message}");
-            }
         }
 
         _server.OnConnectionClosed(this);
         foreach (var item in pending)
-            item.Complete(ApiErrors.RequestTimeout());
+        {
+            item.TryCancel();
+            _server.DecrementPending();
+        }
+        _cancellation.Cancel();
     }
 
-    void DrainSend()
+    public async Task RunSendLoop(WebSocket ws, CancellationToken ct)
     {
-        SendItem item;
-        lock (_gate)
-        {
-            if (_closed || _sendQueue.Count == 0)
-            {
-                _sending = false;
-                return;
-            }
-
-            item = _sendQueue.Peek();
-            if (_server.NowMs - item.EnqueuedMs > ApiLimits.RequestTimeoutMs)
-            {
-                CloseLocked(ApiLimits.CloseTryAgainLater);
-                return;
-            }
-
-            _sendQueue.Dequeue();
-        }
-
-        Task task;
+        using var disconnected = ct.Register(NotifyDisconnected);
         try
         {
-            var text = Encoding.UTF8.GetString(item.Payload);
-            task = _socket.Send(text);
+            while (!Cancellation.IsCancellationRequested && IsOpen)
+            {
+                await _sendSignal.WaitAsync(Cancellation).ConfigureAwait(false);
+                SendItem item;
+                lock (_gate)
+                {
+                    if (_closed || _closing) return;
+                    if (_sendQueue.Count == 0) continue;
+                    item = _sendQueue.Dequeue();
+                    _sending = true;
+                }
+
+                var remaining = ApiLimits.RequestTimeoutMs - (_server.NowMs - item.EnqueuedMs);
+                if (remaining <= 0)
+                {
+                    AbortSend(ws);
+                    return;
+                }
+
+                using (var timeout = CancellationTokenSource.CreateLinkedTokenSource(Cancellation))
+                {
+                    timeout.CancelAfter((int)remaining);
+                    var entered = false;
+                    try
+                    {
+                        await _sendGate.WaitAsync(timeout.Token).ConfigureAwait(false);
+                        entered = true;
+                        if (!IsOpen) return;
+                        await ws.SendAsync(new ArraySegment<byte>(item.Payload), WebSocketMessageType.Text, true,
+                            timeout.Token).ConfigureAwait(false);
+                    }
+                    catch (Exception ex)
+                    {
+                        LiveStreamAssist.Logger.LogWarning($"API send failed: {ex.Message}");
+                        AbortSend(ws);
+                        return;
+                    }
+                    finally
+                    {
+                        if (entered) _sendGate.Release();
+                        lock (_gate) _sending = false;
+                    }
+                }
+
+                if (item.Id != null)
+                    Release(item.Id);
+            }
         }
-        catch (Exception)
+        catch (OperationCanceledException)
         {
+        }
+        catch (Exception ex)
+        {
+            LiveStreamAssist.Logger.LogWarning($"API send loop failed: {ex.Message}");
+            AbortSend(ws);
+        }
+    }
+
+    async Task DeliverAsync(PendingRequest pending)
+    {
+        try
+        {
+            var produced = await pending.Completion.ConfigureAwait(false);
+            if (!IsOpen) return;
+            byte[] payload;
+            try
+            {
+                payload = ApiProtocol.SerializeEnvelope(pending.Id, produced.Result, produced.Error);
+            }
+            catch (ResponseTooLargeException)
+            {
+                payload = ApiProtocol.SerializeEnvelope(pending.Id, null,
+                    ApiErrors.LimitExceeded("Response exceeds maxResponseBytes."));
+            }
+
+            EnqueueSend(new SendItem { Payload = payload, Id = pending.Id, EnqueuedMs = _server.NowMs });
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (Exception ex)
+        {
+            LiveStreamAssist.Logger.LogError($"API response serialization failed: {ex}");
             Close(ApiLimits.CloseTryAgainLater);
-            return;
+        }
+    }
+
+    void EnqueueSend(SendItem item)
+    {
+        lock (_gate)
+        {
+            if (_closed || _closing) return;
+            if (_sendQueue.Count + (_sending ? 1 : 0) < ApiLimits.MaxPendingRequestsPerConnection)
+            {
+                _sendQueue.Enqueue(item);
+                _sendSignal.Release();
+                return;
+            }
         }
 
-        if (task == null)
-        {
-            Close(ApiLimits.CloseTryAgainLater);
-            return;
-        }
+        Close(ApiLimits.CloseTryAgainLater);
+    }
 
-        task.ContinueWith(_ => DrainSend(), System.Threading.CancellationToken.None,
-            TaskContinuationOptions.None, TaskScheduler.Default);
+    void AbortSend(WebSocket ws)
+    {
+        try { ws?.Abort(); }
+        catch (Exception ex) { LiveStreamAssist.Logger.LogWarning($"API abort failed: {ex.Message}"); }
+        NotifyDisconnected();
+    }
+
+    public void Dispose()
+    {
+        NotifyDisconnected();
+        _cancellation.Dispose();
+        _sendSignal.Dispose();
+        _sendGate.Dispose();
+    }
+
+    PendingRequest[] SnapshotPending()
+    {
+        var pending = new PendingRequest[_outstanding.Count];
+        if (_outstanding.Count > 0)
+            _outstanding.Values.CopyTo(pending, 0);
+        return pending;
     }
 
     struct SendItem
     {
         public byte[] Payload;
+        public string Id;
         public long EnqueuedMs;
     }
 }
 
 internal sealed class WebSocketApiServer
 {
+    static readonly UTF8Encoding Utf8Throw = new UTF8Encoding(false, true);
     readonly IPAddress _address;
     readonly int _port;
     readonly string _modVersion;
@@ -279,9 +372,13 @@ internal sealed class WebSocketApiServer
     readonly object _gate = new object();
     readonly List<ApiConnection> _connections = new List<ApiConnection>();
     readonly System.Diagnostics.Stopwatch _clock = System.Diagnostics.Stopwatch.StartNew();
-    WebSocketServer _listener;
+    readonly CancellationTokenSource _cts = new CancellationTokenSource();
+    IWebHost _host;
+    Task _startTask;
+    Task _stopTask;
     int _pending;
     bool _alive;
+    bool _stopped;
 
     public WebSocketApiServer(
         IPAddress address,
@@ -301,53 +398,101 @@ internal sealed class WebSocketApiServer
 
     public long NowMs => _clock.ElapsedMilliseconds;
 
-    public void Start()
+    public void Start() => StartAsync().GetAwaiter().GetResult();
+
+    public Task StartAsync()
     {
-        var host = _address.Equals(IPAddress.Any) ? "0.0.0.0" : _address.ToString();
-        if (_address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
-            host = "[" + host + "]";
-        var location = "ws://" + host + ":" + _port;
-        FleckLog.Level = LogLevel.Error;
-        FleckLog.LogAction = (level, message, ex) =>
-        {
-            if (level == LogLevel.Error)
-                LiveStreamAssist.Logger.LogError(ex != null ? message + ": " + ex : message);
-        };
-        var server = new WebSocketServer(location, false);
-        server.RestartAfterListenError = false;
-        server.Start(OnSocket);
         lock (_gate)
         {
-            _listener = server;
-            _alive = true;
+            if (_stopped) return Task.CompletedTask;
+            return _startTask ?? (_startTask = Task.Run(StartHostAsync));
         }
-
-        LiveStreamAssist.Logger.LogInfo($"WebSocket API listening on {location}{ApiLimits.Path}");
     }
 
-    public void Stop()
+    async Task StartHostAsync()
     {
-        ApiConnection[] conns;
-        WebSocketServer listener;
-        lock (_gate)
-        {
-            if (!_alive && _listener == null) return;
-            _alive = false;
-            listener = _listener;
-            _listener = null;
-            conns = _connections.ToArray();
-            _connections.Clear();
-        }
-
-        foreach (var conn in conns)
-            conn.Close(ApiLimits.CloseGoingAway);
         try
         {
-            listener?.Dispose();
+            _cts.Token.ThrowIfCancellationRequested();
+            await StartHostCoreAsync().ConfigureAwait(false);
         }
-        catch (Exception ex)
+        catch
         {
-            LiveStreamAssist.Logger.LogWarning($"WebSocket API listener dispose failed: {ex.Message}");
+            _ = StopAsync();
+            throw;
+        }
+    }
+
+    async Task StartHostCoreAsync()
+    {
+        var host = new WebHostBuilder()
+            .UseSetting(WebHostDefaults.PreventHostingStartupKey, "true")
+            .UseContentRoot(Path.GetDirectoryName(typeof(WebSocketApiServer).Assembly.Location) ?? ".")
+            .ConfigureLogging(logging => logging.ClearProviders().AddProvider(new HostLogger()))
+            .UseKestrel(options =>
+            {
+                options.Listen(_address, _port);
+                options.AddServerHeader = false;
+                options.Limits.MaxConcurrentConnections = ApiLimits.MaxConnections + 2;
+                options.Limits.MaxConcurrentUpgradedConnections = ApiLimits.MaxConnections;
+                options.Limits.MaxRequestHeadersTotalSize = 16 * 1024;
+                options.Limits.RequestHeadersTimeout = TimeSpan.FromSeconds(5);
+                options.Limits.MaxRequestBodySize = 1024;
+            })
+            .UseSockets()
+            .Configure(app =>
+            {
+                app.UseWebSockets(new WebSocketOptions { ReceiveBufferSize = 4096 });
+                app.Run(HandleHttp);
+            })
+            .Build();
+        lock (_gate)
+        {
+            _host = host;
+            _alive = !_stopped;
+        }
+
+        await host.StartAsync(_cts.Token).ConfigureAwait(false);
+        lock (_gate)
+        {
+            if (_stopped) return;
+        }
+        var displayed = _address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6
+            ? "[" + _address + "]" : _address.ToString();
+        LiveStreamAssist.Logger.LogInfo($"WebSocket API listening on ws://{displayed}:{_port}{ApiLimits.Path}");
+    }
+
+    public void Stop() => _ = StopAsync();
+
+    public Task StopAsync()
+    {
+        lock (_gate)
+        {
+            if (_stopTask != null) return _stopTask;
+            _stopped = true;
+            _alive = false;
+            var conns = _connections.ToArray();
+            var startup = _startTask;
+            return _stopTask = Task.Run(async () =>
+            {
+                try { _cts.Cancel(); }
+                catch (Exception ex) { LiveStreamAssist.Logger.LogWarning($"API cancel failed: {ex.Message}"); }
+                foreach (var conn in conns)
+                    conn.Close(ApiLimits.CloseGoingAway);
+                if (startup != null)
+                {
+                    try { await startup.ConfigureAwait(false); }
+                    catch (Exception) { /* Startup failures are reported by the feature owner. */ }
+                }
+                IWebHost host;
+                lock (_gate)
+                {
+                    host = _host;
+                    _host = null;
+                }
+                DisposeHost(host);
+                _cts.Dispose();
+            });
         }
     }
 
@@ -375,73 +520,181 @@ internal sealed class WebSocketApiServer
             _connections.Remove(connection);
     }
 
-    void OnSocket(IWebSocketConnection socket)
+    async Task HandleHttp(HttpContext context)
     {
-        var conn = new ApiConnection(this, socket);
-        var bounded = socket as WebSocketConnection;
-        if (bounded != null && bounded.Handler != null)
-            bounded.Handler = new BoundedHandler(bounded.Handler, ApiLimits.MaxIncomingSocketBytes);
-
-        var path = socket.ConnectionInfo?.Path ?? "";
-        var q = path.IndexOf('?');
-        if (q >= 0) path = path.Substring(0, q);
-
-        socket.OnOpen = () =>
-        {
-            if (!string.Equals(path, ApiLimits.Path, StringComparison.Ordinal))
-            {
-                conn.Close(ApiLimits.ClosePolicyViolation);
-                return;
-            }
-
-            lock (_gate)
-            {
-                if (!_alive || _connections.Count >= ApiLimits.MaxConnections)
-                {
-                    conn.Close(ApiLimits.CloseTryAgainLater);
-                    return;
-                }
-
-                _connections.Add(conn);
-            }
-        };
-        socket.OnBinary = _ => conn.Close(ApiLimits.CloseUnsupportedData);
-        socket.OnMessage = message => OnMessage(conn, bounded, message);
-        socket.OnClose = () =>
-        {
-            if (bounded?.Handler is BoundedHandler)
-                ((BoundedHandler)bounded.Handler).Reset();
-            conn.NotifyDisconnected();
-        };
-        socket.OnError = ex => LiveStreamAssist.Logger.LogWarning($"WebSocket API connection error: {ex.Message}");
-        var prevPing = socket.OnPing;
-        socket.OnPing = data =>
-        {
-            if (bounded?.Handler is BoundedHandler h) h.Reset();
-            prevPing?.Invoke(data);
-        };
-    }
-
-    void OnMessage(ApiConnection conn, WebSocketConnection raw, string message)
-    {
-        if (raw?.Handler is BoundedHandler bounded)
-            bounded.Reset();
         bool alive;
         lock (_gate) alive = _alive;
-        if (!alive || !conn.IsOpen) return;
-        if (message == null || Encoding.UTF8.GetByteCount(message) > ApiLimits.MaxRequestBytes)
+        if (!alive)
         {
-            conn.Close(ApiLimits.CloseMessageTooBig);
+            context.Response.StatusCode = 503;
             return;
         }
 
-        if (!ApiProtocol.TryParseMessage(message, out var request, out var parseError, out var id))
+        var path = context.Request.Path.Value ?? "";
+        if (!string.Equals(path, ApiLimits.Path, StringComparison.Ordinal))
+        {
+            context.Response.StatusCode = 404;
+            return;
+        }
+
+        if (!context.WebSockets.IsWebSocketRequest)
+        {
+            context.Response.StatusCode = 400;
+            return;
+        }
+
+        ApiConnection conn;
+        lock (_gate)
+        {
+            if (!_alive || _connections.Count >= ApiLimits.MaxConnections)
+            {
+                context.Response.StatusCode = 503;
+                return;
+            }
+
+            conn = new ApiConnection(this);
+            _connections.Add(conn);
+        }
+
+        try
+        {
+            WebSocket ws;
+            using (_cts.Token.Register(context.Abort))
+                ws = await context.WebSockets.AcceptWebSocketAsync().ConfigureAwait(false);
+            conn.Attach(ws);
+            await RunConnection(ws, conn, context.RequestAborted).ConfigureAwait(false);
+        }
+        finally
+        {
+            conn.NotifyDisconnected();
+            await conn.CloseCompletion.ConfigureAwait(false);
+            conn.Dispose();
+        }
+    }
+
+    async Task RunConnection(WebSocket ws, ApiConnection conn, CancellationToken aborted)
+    {
+        using (ws)
+        {
+            var send = conn.RunSendLoop(ws, aborted);
+            try
+            {
+                await ReceiveLoop(ws, conn).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            catch (WebSocketException ex)
+            {
+                LiveStreamAssist.Logger.LogWarning($"API websocket error: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                LiveStreamAssist.Logger.LogWarning($"API connection failed: {ex.Message}");
+            }
+            finally
+            {
+                conn.NotifyDisconnected();
+                try { ws.Abort(); }
+                catch (Exception ex) { LiveStreamAssist.Logger.LogWarning($"API abort failed: {ex.Message}"); }
+                try { await send.ConfigureAwait(false); }
+                catch (Exception ex) { LiveStreamAssist.Logger.LogWarning($"API send join failed: {ex.Message}"); }
+            }
+        }
+    }
+
+    async Task ReceiveLoop(WebSocket ws, ApiConnection conn)
+    {
+        var buffer = new byte[4096];
+        var payload = new byte[ApiLimits.MaxRequestBytes];
+        var used = 0;
+        long? messageDeadlineMs = null;
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(conn.Cancellation);
+        while ((ws.State == WebSocketState.Open || ws.State == WebSocketState.CloseSent) && !conn.Cancellation.IsCancellationRequested)
+        {
+            var remaining = messageDeadlineMs.HasValue && conn.IsOpen ? messageDeadlineMs.Value - NowMs : Timeout.Infinite;
+            if (messageDeadlineMs.HasValue && conn.IsOpen && remaining <= 0)
+            {
+                await conn.CloseAsync(ApiLimits.CloseTryAgainLater).ConfigureAwait(false);
+                continue;
+            }
+            timeout.CancelAfter((int)remaining);
+            WebSocketReceiveResult result;
+            try
+            {
+                result = await ws.ReceiveAsync(new ArraySegment<byte>(buffer), timeout.Token).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
+
+            if (result.MessageType == WebSocketMessageType.Close)
+            {
+                var status = result.CloseStatus.GetValueOrDefault(WebSocketCloseStatus.NormalClosure);
+                if (status == WebSocketCloseStatus.Empty) status = WebSocketCloseStatus.NormalClosure;
+                await conn.CloseAsync((int)status).ConfigureAwait(false);
+                return;
+            }
+
+            if (!conn.IsOpen) continue;
+            if (result.MessageType == WebSocketMessageType.Binary)
+            {
+                await conn.CloseAsync(ApiLimits.CloseUnsupportedData).ConfigureAwait(false);
+                continue;
+            }
+
+            if (messageDeadlineMs.HasValue && NowMs >= messageDeadlineMs.Value)
+            {
+                await conn.CloseAsync(ApiLimits.CloseTryAgainLater).ConfigureAwait(false);
+                continue;
+            }
+
+            if (used > ApiLimits.MaxRequestBytes - result.Count)
+            {
+                await conn.CloseAsync(ApiLimits.CloseMessageTooBig).ConfigureAwait(false);
+                continue;
+            }
+
+            Buffer.BlockCopy(buffer, 0, payload, used, result.Count);
+            used += result.Count;
+            if (!result.EndOfMessage)
+            {
+                if (!messageDeadlineMs.HasValue) messageDeadlineMs = NowMs + ApiLimits.RequestTimeoutMs;
+                continue;
+            }
+            timeout.CancelAfter(Timeout.Infinite);
+
+            string text;
+            try
+            {
+                text = used == 0 ? "" : Utf8Throw.GetString(payload, 0, used);
+            }
+            catch (ArgumentException)
+            {
+                await conn.CloseAsync(ApiLimits.CloseInvalidPayload).ConfigureAwait(false);
+                continue;
+            }
+
+            used = 0;
+            messageDeadlineMs = null;
+            HandleMessage(conn, text);
+        }
+    }
+
+    void HandleMessage(ApiConnection conn, string message)
+    {
+        if (!conn.IsOpen) return;
+        var parsed = ApiProtocol.TryParseMessage(message, out var request, out var parseError, out var id);
+        if (!parsed && !(id is string))
         {
             conn.EnqueueError(id, parseError);
             return;
         }
 
-        var pending = conn.TryAdmit(request.Id, out var duplicate, out var busy);
+        var requestId = parsed ? request.Id : (string)id;
+        var admittedMs = NowMs;
+        var pending = conn.TryAdmit(requestId, out var duplicate, out var busy);
         if (pending == null)
         {
             if (duplicate)
@@ -453,18 +706,24 @@ internal sealed class WebSocketApiServer
             if (busy)
             {
                 if (conn.CanSendBusy())
-                    conn.EnqueueError(request.Id, ApiErrors.ServerBusy());
+                    conn.EnqueueError(requestId, ApiErrors.ServerBusy());
                 else
                     conn.Close(ApiLimits.CloseTryAgainLater);
             }
 
             return;
         }
+
         try
         {
+            if (!parsed)
+            {
+                pending.TryComplete(parseError);
+                return;
+            }
             if (!ApiProtocol.IsSystemMethod(request.Method) && !ApiProtocol.IsDataMethod(request.Method))
             {
-                pending.Complete(ApiErrors.MethodNotFound());
+                pending.TryComplete(ApiErrors.MethodNotFound());
                 return;
             }
 
@@ -472,21 +731,21 @@ internal sealed class WebSocketApiServer
             {
                 var handled = ApiProtocol.HandleSystem(request.Method, request.Params, _version(), _modVersion);
                 if (handled is ApiError sysErr)
-                    pending.Complete(sysErr);
+                    pending.TryComplete(sysErr);
                 else
-                    pending.CompleteResult(handled);
+                    pending.TryCompleteResult(handled);
                 return;
             }
 
             if (!ApiProtocol.TryParseDataCall(request, out var call, out var callErr))
             {
-                pending.Complete(callErr);
+                pending.TryComplete(callErr);
                 return;
             }
 
             if (call.Method != DataMethod.Roots && !WebSocketApiFeature.IsKnownRoot(call.Root))
             {
-                pending.Complete(ApiErrors.RootNotFound(call.Root));
+                pending.TryComplete(ApiErrors.RootNotFound(call.Root));
                 return;
             }
 
@@ -496,49 +755,49 @@ internal sealed class WebSocketApiServer
                 Pending = pending,
                 Call = call,
                 Generation = session.Generation,
-                DeadlineMs = NowMs + ApiLimits.RequestTimeoutMs
+                DeadlineMs = admittedMs + ApiLimits.RequestTimeoutMs
             };
             if (!_dispatcher.TryEnqueue(work))
-                pending.Complete(ApiErrors.RequestTimeout());
+                pending.TryComplete(ApiErrors.ServerBusy());
         }
         catch (Exception ex)
         {
             LiveStreamAssist.Logger.LogError($"API request handling failed: {ex}");
-            pending.Complete(ApiErrors.InternalError());
+            pending.TryComplete(ApiErrors.InternalError());
         }
     }
-}
 
-sealed class BoundedHandler : IHandler
-{
-    readonly IHandler _inner;
-    readonly int _max;
-    int _consumed;
-
-    public BoundedHandler(IHandler inner, int max)
+    static void DisposeHost(IWebHost host)
     {
-        _inner = inner;
-        _max = max;
+        if (host == null) return;
+        try
+        {
+            host.StopAsync(TimeSpan.FromMilliseconds(ApiLimits.RequestTimeoutMs)).GetAwaiter().GetResult();
+        }
+        catch (Exception ex)
+        {
+            LiveStreamAssist.Logger.LogWarning($"WebSocket API host stop failed: {ex.Message}");
+        }
+
+        try { host.Dispose(); }
+        catch (Exception ex) { LiveStreamAssist.Logger.LogWarning($"WebSocket API host dispose failed: {ex.Message}"); }
     }
 
-    public void Reset() => _consumed = 0;
-
-    public byte[] CreateHandshake(string subProtocol = null) => _inner.CreateHandshake(subProtocol);
-
-    public void Receive(IEnumerable<byte> data)
+    sealed class HostLogger : ILoggerProvider, ILogger
     {
-        var n = 0;
-        foreach (var _ in data)
-            n++;
-        if (_consumed > _max - n)
-            throw new WebSocketException(WebSocketStatusCodes.MessageTooBig);
-        _consumed += n;
-        _inner.Receive(data);
-    }
+        public ILogger CreateLogger(string categoryName) => this;
+        public IDisposable BeginScope<TState>(TState state) where TState : notnull => null;
+        public bool IsEnabled(LogLevel level) => level >= LogLevel.Warning && level != LogLevel.None;
+        public void Dispose() { }
 
-    public byte[] FrameText(string text) => _inner.FrameText(text);
-    public byte[] FrameBinary(byte[] bytes) => _inner.FrameBinary(bytes);
-    public byte[] FramePing(byte[] bytes) => _inner.FramePing(bytes);
-    public byte[] FramePong(byte[] bytes) => _inner.FramePong(bytes);
-    public byte[] FrameClose(int code) => _inner.FrameClose(code);
+        public void Log<TState>(LogLevel level, EventId eventId, TState state, Exception exception,
+            Func<TState, Exception, string> formatter)
+        {
+            if (!IsEnabled(level)) return;
+            var message = "WebSocket host: " + formatter(state, exception);
+            if (exception != null) message += "\n" + exception;
+            if (level >= LogLevel.Error) LiveStreamAssist.Logger.LogError(message);
+            else LiveStreamAssist.Logger.LogWarning(message);
+        }
+    }
 }

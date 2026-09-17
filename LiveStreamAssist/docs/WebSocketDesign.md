@@ -1,6 +1,8 @@
-# LiveStreamAssist WebSocket Design and Implementation Plan
+# LiveStreamAssist WebSocket Design and Transport Migration Plan
 
-Status: code is in tree; real-game/LAN acceptance is still blocked. Transport is Fleck **1.2.0** plus Newtonsoft.Json **13.0.3**. Fixture checks pass via `dotnet build LiveStreamAssist/tools/ReflectionReaderCheck/ReflectionReaderCheck.csproj -c Release` then `LiveStreamAssist/tools/ReflectionReaderCheck/bin/Release/net472/ReflectionReaderCheck.exe`. Enable the listener with BepInEx `WebSocketApi.Enabled` and rerun `LiveStreamAssist/tools/Test-WebSocketApi.ps1` in DSP.
+Status: **in-process Kestrel transport implemented; desktop regressions pass; Unity/LAN and full conformance acceptance pending**. Production code explicitly pins ASP.NET Core **2.3.13** hosting, HTTP, Kestrel Core, Sockets, and WebSockets, `System.Net.WebSockets.WebSocketProtocol` **5.1.3**, and Newtonsoft.Json **13.0.3**. Fleck is removed. The desktop probe verifies a fragmented echo round trip; production-code checks cover connection cleanup, admission, deadlines, shutdown, and loopback requests. DSP/Unity Mono, Autobahn, and LAN checks have not passed.
+
+The next remaining work is an actual DSP run of the probe/mod, then M3 conformance. Keep the mod on `net472`. A standalone gateway is a last-resort fallback after concrete in-process failures, not the default design.
 
 The [API reference](WebSocketApi.md) defines the client-visible contract. This document defines the scope, implementation constraints, source references, work order, and acceptance checks. Keep API usage documentation separate from implementation investigation and progress notes.
 
@@ -16,8 +18,11 @@ The following decisions were confirmed with the user and must survive a session 
 - Reserve API statistics through `system.stats`, returning `available: false` and `metrics: null`; advertise `api.stats: false`.
 - Do not implement subscriptions, application notifications, batch requests, game writes, arbitrary method invocation, or script evaluation.
 - Preserve the existing Ctrl+F8 statistics-window feature and its independent state.
+- The game uses Unity 2022. Standard-library APIs, selected NuGet assets, and the entire runtime dependency graph must work in its actual Mono player.
+- Prefer an in-process implementation. Consider a standalone gateway only when maintained, compatible in-process options cannot satisfy the compatibility and conformance gates.
+- Retire Fleck and its internal-handler workaround. Do not carry them forward as the normal transport or as an automatic runtime fallback.
 
-Keep the implementation small: one listener, a fixed method switch, fixed root providers, a bounded main-thread dispatcher, and shallow result projection. No RPC framework, general-purpose reflection service, dependency-injection container, external server process, HTTP REST API, web dashboard, or custom WebSocket framing implementation is required.
+Keep the implementation small: one listener, a fixed method switch, fixed root providers, a bounded main-thread dispatcher, and shallow result projection. Use only the hosting services required by Kestrel; do not refactor the mod's feature architecture into a dependency-injection framework. No MVC, SignalR, REST API, web dashboard, general-purpose reflection service, or custom WebSocket framing implementation is required.
 
 The initial listener configuration and all wire limits are defined in [API connection settings](WebSocketApi.md#connection) and [API limits](WebSocketApi.md#limits). Keep those tables as the single documentation source for their values. Configuration is startup-only in v1; do not introduce live configuration reload as part of this work.
 
@@ -27,10 +32,48 @@ The initial listener configuration and all wire limits are defined in [API conne
 2. Inspect `git status` and the current diff. Treat existing changes as user work. Check whether some phases have already been implemented rather than assuming this document's initial status still describes the checkout.
 3. Read the source entry points in the next section. Preserve the host-owned feature lifecycle and existing keyboard handling.
 4. Recheck runtime-specific assumptions against the installed game's original assemblies if DSP or Unity has changed. Do not use stripped reference DLL method bodies as evidence.
-5. Complete phases in dependency order. Mark a phase complete only after its acceptance checks pass; identify unavailable real-game or LAN checks as blocked, not passed.
+5. Complete the migration phases in dependency order. M0 must pass before adopting a replacement in production code. Mark checks complete only after running them; an unavailable DSP or LAN test is blocked, not passed and not proof that an in-process solution is impossible.
 6. If pausing between sessions, update this document's current status, remaining phase checks, selected dependency versions, and concrete blockers. Replace stale notes instead of appending a chronological transcript. Keep project-specific guidance here; `AGENTS.md` should contain only a link to this document.
 
-The API reference is the source of truth for method names, message shapes, numeric error codes, null behavior, and capability names. Resolve any conflict with this plan before implementing it. The transport package/version is intentionally provisional until Phase 0; that is not permission to redesign the protocol or expand the confirmed scope.
+The API reference is the source of truth for method names, message shapes, numeric error codes, null behavior, and capability names. Resolve any conflict with this plan before implementing it. The migration replaces transport and repairs its integration; it does not restart the reflection feature from scratch or expand the API scope. Do not preserve an implementation bug by weakening the documented contract.
+
+## Transport decision and evidence
+
+Research baseline: **2026-09-17**. The preferred candidate is the **serviced ASP.NET Core 2.3 package line for .NET Framework**, using Kestrel's managed socket transport and its WebSocket middleware in the game process. This is a package-based `netstandard2.0` route, not a requirement to load a modern .NET runtime into Unity.
+
+Microsoft explicitly lists Kestrel, its socket transport, and WebSocket middleware in the [supported 2.3 package set][aspnet-support]. Its [servicing advisory][aspnet-advisory] distinguishes this line from unsupported ASP.NET Core 2.1/2.2 packages and from running old .NET Core runtimes. The reviewed [WebSockets 2.3.13][websockets-package] and [Sockets transport 2.3.13][sockets-package] packages publish `netstandard2.0` assets and September 2026 servicing releases. Recheck the latest supported patch when implementing; patch numbers need not be identical across all packages.
+
+The [reviewed middleware source][middleware-source] obtains an opaque stream through Kestrel's `IHttpUpgradeFeature` and constructs the WebSocket through the protocol dependency. The [socket transport source][sockets-source] uses the managed socket transport. This avoids the game's unimplemented `HttpListenerContext.AcceptWebSocketAsync` path.
+
+Important qualifications:
+
+- Microsoft's support statement concerns ASP.NET Core on .NET Framework; it is **not a certification of Unity's Mono player**. M0 still requires an actual DSP run.
+- This is a serviced compatibility line, not the current ASP.NET Core feature line. The required standard is the [API's RFC 6455/HTTP/1.1 profile](WebSocketApi.md#websocket-interoperability), not a claim of HTTP/2, HTTP/3, compression, or future extension support.
+- The transitive [WebSocketProtocol package][protocol-package] labels its standalone factory API obsolete. Do not build a new handshake stack around that API. Use the maintained middleware's existing integration, review the exact resolved protocol package and advisories, and verify which concrete WebSocket implementation is loaded. A package's Microsoft ownership alone is not sufficient acceptance evidence.
+
+### Candidate disposition
+
+| Candidate | Disposition and evidence |
+| --- | --- |
+| ASP.NET Core 2.3 + managed Kestrel Sockets + WebSockets | First candidate for M0: serviced packages and a compatible declared API surface. Actual Mono loading, protocol behavior, and resource bounds remain to be tested. |
+| Fleck 1.2.0 | Retired by the user's requirement. The reviewed [repository head][fleck-source] is a 2021 core commit; do not imply the repository is formally archived. The retired handler wrapper did not enforce a message-level limit. |
+| TouchSocket.Http 4.3.x | Maintained and publishes compatible targets, but not an approved drop-in. The [reviewed 4.3.6 frame parser][touch-frame] allocates from the advertised payload length before an application callback; the [framework-target project][touch-project] also references `System.Web`. The [4.3.7 package][touch-package] is newer than the reviewed source snapshot. Reconsider only with matching released source and passing gates, without a private framing fork. |
+| SuperSocket.WebSocket.Server 2.1.0 | The [current package][supersocket-package] requires .NET 6 or later, so it is not a compatible in-process replacement for this `net472` mod. Do not select an old preview merely to obtain a different TFM. |
+| A separate supported .NET LTS gateway | Conditional fallback only; see [Fallback boundary](#fallback-boundary). It adds packaging, IPC, and process-lifetime responsibilities and must not be introduced just because game testing is unavailable. |
+
+### Unity and dependency compatibility rules
+
+The [Unity 2022.3 documentation][unity-profile] describes .NET Standard 2.1 and .NET Framework API compatibility profiles and explicitly excludes .NET Core-targeted managed plugins. The installed player, not a Unity Editor setting in a different project, is the runtime to validate.
+
+1. Keep `LiveStreamAssist.csproj` and its UXAssist reference on the existing `net472` path. For the replacement, select actual `netstandard2.0` or compatible .NET Framework assets, including transitive dependencies. Unity's support for Standard 2.1 does not make a Standard-2.1-only package a valid SDK project reference from `net472`.
+2. Do not reference `net6.0`, `net8.0`, or `net10.0` implementation DLLs in the mod. Do not add a `Microsoft.AspNetCore.App` framework reference, switch to `Microsoft.NET.Sdk.Web`, or retarget shared mods to make an incompatible package restore.
+3. Package version and target framework are different facts. A dependency such as `System.IO.Pipelines` or `Microsoft.Extensions.Options` can have an 8.x version and still supply a compatible asset; inspect the selected asset path and its APIs instead of deciding from its version number.
+4. Inspect `project.assets.json`, resolved runtime copy items, assembly references, and the actual game load results. Pay particular attention to `System.Memory`, `System.Buffers`, `System.Threading.Tasks.Extensions`, `System.Runtime.CompilerServices.Unsafe`, `System.IO.Pipelines`, and `Microsoft.Extensions.*`, including conflicts with other installed mods.
+5. Never replace the game's `mscorlib`, `System`, `System.Core`, `netstandard`, Unity assemblies, or framework facades to make the host start. Do not ship reference assemblies from a package's `ref` directory. Conversely, do not discard every `System.*` DLL: reviewed package implementations such as `System.Net.WebSockets.WebSocketProtocol.dll` may be required runtime dependencies.
+6. Use the classic `WebHostBuilder`/`IWebHost` hosting surface and `WebSocket` array-segment/task APIs available to the selected target. Avoid APIs copied from modern examples, such as `WebApplication.CreateBuilder`, `Task.WaitAsync`, or memory-based WebSocket overloads absent from the compile/runtime surface. Use ordinary task cancellation/timeouts where necessary.
+7. A successful desktop .NET Framework build or console run is only an early check. `MissingMethodException`, `TypeLoadException`, `NotImplementedException`, or unsupported socket behavior in the actual player fails M0. Do not conceal such failures with warning suppression, private-reflection patches, or global assembly-resolution hooks.
+
+Prospective direct dependencies are the supported 2.3.x hosting/Kestrel components, `Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets`, and `Microsoft.AspNetCore.WebSockets`, plus the existing Newtonsoft.Json dependency. Prefer explicit components if a convenience package brings unused transports. Select the latest compatible serviced protocol dependency as well; do not let a minimum transitive constraint silently pin an obsolete patch. Record and lock the exact approved graph after M0.
 
 ## Repository entry points
 
@@ -41,6 +84,10 @@ Paths in this table are relative to the repository root.
 | `LiveStreamAssist/LiveStreamAssist.cs` / `LiveStreamAssist.Awake` | BepInEx plugin startup; performs localization setup and feature discovery. Bind API configuration before discovery. |
 | `LiveStreamAssist/LiveStreamAssist.cs` / `LiveStreamAssistFeature` | Existing feature, order 50; owns Ctrl+F8 and statistics-window switching. Its `_enabled` flag is not the server-enabled flag. |
 | `LiveStreamAssist/LiveStreamAssist.csproj` | Inherits `net472`, currently references UXAssist, and owns the mod version. Add only the server's required dependencies and project-scoped packaging customization here. |
+| `LiveStreamAssist/Api/WebSocketApiServer.cs` | Kestrel host, `ApiConnection`, and `PendingRequest`; owns transport lifetime, admission, bounded I/O, and host-error logging. |
+| `LiveStreamAssist/Api/MainThreadDispatcher.cs` | Current game-work queue and completion path; inspect physical queue bounds and timeout behavior as well as frame budgets. |
+| `LiveStreamAssist/Api/ApiProtocol.cs` | Reuse the JSON-RPC contract and system methods; review serializer concurrency and remove transport-specific raw-socket limits. |
+| `LiveStreamAssist/tools/ReflectionReaderCheck/` | Existing fixture runner. Preserve its coverage; it does not prove WebSocket conformance or game-runtime compatibility. |
 | `UXAssist/Common/ModFeatures/ModFeatureRegistry.cs` | Initializes discovered features eagerly. UXAssist alone drives `StartAll`, `UninitAll`, and update dispatchers. |
 | `UXAssist/UXAssist.cs` / `Update` | Skips feature updates while `VFInput.inputing` or `DSPGame.IsMenuDemo` is true. This is unsuitable as the sole server request pump. |
 | `UXAssist/Common/GameLogic.cs` | Supplies `OnDataLoaded`, `OnGameBegin`, and `OnGameEnd` callbacks. Use the fully qualified UXAssist type or the existing `GameLogicProc` alias to avoid DSP's own `GameLogic` type. |
@@ -78,22 +125,39 @@ ilspycmd --disable-updatecheck -t System.Net.HttpListenerContext <managed>/Syste
 
 Replace placeholders and quote paths containing spaces. Do not depend on this session's temporary decompilation output or a hard-coded Steam drive letter. Do not commit game DLLs or decompiled game source.
 
-## Intended code organization
+### Transport integration invariants
+
+Keep these rules when changing the transport. The desktop harness exercises the production classes with controlled work scheduling and sockets; it does not replace the Unity acceptance gate.
+
+| Code path | Required behavior |
+| --- | --- |
+| `ReceiveLoop` | Bound complete-message payloads, preserve fragmentation state across empty fragments, and cancel stalled partial reads independently of the next receive completion. |
+| `ApiConnection.NotifyDisconnected` / `Dispose` | Cancel I/O and wake an idle sender, clear queued output, and release every admission exactly once. Overflow must use this cleanup path rather than setting the terminal flag early. |
+| `TryAdmit` / `DeliverAsync` / `RunSendLoop` | Retain IDs and admission slots through delivery. Include active sends in output capacity, and deduct queued time from the send deadline. Invalid requests with a reliable ID still participate in duplicate-ID checks. |
+| `CloseAsync` / `ReceiveLoop` | Serialize close output with application sends; leave peer-close reception to the single receive loop. Bound the handshake and abort stalled I/O. |
+| `MainThreadDispatcher` | Watch queued and executing work, bound the physical queue, and remove canceled entries. Completion continuations must not serialize inline in the game-work producer. |
+| `StartAsync` / `StopAsync` / `HandleHttp` | One startup/shutdown task per owner, no resurrection after stop, no disposal racing startup, and concrete connection reservations that can be canceled during upgrade. |
+| `WebSocketApiFeature` | Bind clocks and failure callbacks to their originating owner, publish immutable snapshots with cross-thread visibility, and invalidate only old-session work. |
+| `ApiProtocol` / `ReflectionReader` | Use per-operation serializers, reject explicitly null typed parameters, and apply runtime/declaration type boundaries consistently to reads, descriptions, and projections. |
+| `tools/Test-WebSocketApi.ps1` | Use per-operation deadlines, strict-mode-safe optional access, bounded reads, and cleanup after failed upgrades. Require an actual HTTP rejection rather than treating every connection failure as a passed route test. |
+
+## Code organization
 
 Use these responsibilities as the starting layout; keep small private helpers with their owner rather than creating an interface or service for each step.
 
-| Planned file | Responsibility |
+| File | Responsibility after migration |
 | --- | --- |
-| `LiveStreamAssist/Api/WebSocketApiFeature.cs` | Configuration references, feature lifecycle, version publication, game-session tracking, and root providers. Suggested feature order: 51. |
-| `LiveStreamAssist/Api/WebSocketApiServer.cs` | Listener, connections, message admission, serialized sends, and connection cleanup. |
+| `LiveStreamAssist/Api/WebSocketApiFeature.cs` | Preserve configuration, feature order 51, Unity-context capture, version publication, sessions, and root providers; coordinate asynchronous host lifetime. |
+| `LiveStreamAssist/Api/WebSocketApiServer.cs` | Private Kestrel host and `System.Net.WebSockets.WebSocket` connection loops, bounded admission, serialized sends, and cleanup. Keep framework-specific types here. |
 | `LiveStreamAssist/Api/ApiProtocol.cs` | DTOs, error constants, validation, fixed method dispatch, system methods, and the API version constant. |
 | `LiveStreamAssist/Api/ReflectionReader.cs` | Shared path resolution, allowed-member discovery, value projection, and detached result construction. |
-| `LiveStreamAssist/Api/MainThreadDispatcher.cs` | Bounded request queue, one scheduled pump, cancellation, and deadline/session checks. |
+| `LiveStreamAssist/Api/MainThreadDispatcher.cs` | Physically bounded game-work queue, one scheduled pump, cancellation, and detached completion; no JSON serialization or socket work. |
 | `LiveStreamAssist/tools/Test-WebSocketApi.ps1` | Runnable WebSocket integration checks using PowerShell 7 and `System.Net.WebSockets.ClientWebSocket`. |
+| `LiveStreamAssist/tools/WebSocketTransportCheck/` | Desktop `net472` echo probe and production transport/dispatcher regression checks. Keep test-only echo behavior out of the production API. |
 
 Bind the three API settings in plugin startup before `ModFeatureRegistry.Discover`. Use a separate `[ModFeature]` class for the server. Do not have LiveStreamAssist call registry dispatchers, add a second shared update driver, relax UXAssist's menu/typing guards, or attach server activation to Ctrl+F8.
 
-Keep `net472`. Prefer one managed Mono-compatible WebSocket server dependency, initially evaluate Fleck, and explicitly reference Newtonsoft.Json. LuaScriptEngine's transitive Newtonsoft.Json reference does not make that DLL a guaranteed runtime dependency of LiveStreamAssist. Pin versions only after compatibility verification; record the chosen versions in this document and the project file.
+Keep Newtonsoft.Json for the existing API encoding. Do not migrate the JSON contract to SignalR or a different serializer as part of replacing Fleck. No new general-purpose transport factory or public abstraction is needed; isolate the selected framework at the existing server boundary.
 
 ## Runtime design
 
@@ -101,12 +165,25 @@ Keep `net472`. Prefer one managed Mono-compatible WebSocket server dependency, i
 
 - `Init`: prepare configuration references and non-network state. Keep initialization safe if the API is disabled.
 - `Start`: if enabled, capture `SynchronizationContext.Current` on Unity's main thread, initialize a server owner instance, subscribe to game lifecycle events, and start the listener without blocking the game loop. If the current context is null or is not Unity's installed context, fail startup with a useful log; a newly constructed generic `SynchronizationContext` is not a main-thread dispatcher.
+- Build/start the private `IWebHost` on a worker and observe its startup task. Initialize owner/admission state before requests can arrive. Use explicit configuration from the mod rather than process-global URL settings, console lifetime, or unrelated hosting-startup discovery. Do not call `Run()` or terminate the game process when the host stops.
 - Publish version data from `GameLogicProc.OnDataLoaded`. If starting after preload, use the original preload completion flags to populate it immediately. Publish an immutable snapshot; network callbacks never read `GameConfig` or Unity state directly. Preserve this snapshot across save changes.
 - Source `modVersion` from generated `PluginInfo.PLUGIN_VERSION`. Keep `apiVersion` independent, initially `1.0.0`. Use the explicit `System.Version` name if parsing the API version to avoid DSP's global `Version` type.
 - Subscribe to `OnGameBegin` and `OnGameEnd` for session transitions. Account for starting after a game has already begun.
 - `Uninit`: stop admitting work, invalidate the owner/session, cancel requests, unsubscribe events, close the listener, and close connections. Clear metadata caches owned by the server. Posted callbacks must check their old owner token so they cannot run against a restarted instance.
 - Startup errors, including an occupied port or invalid settings, disable only this server instance and are logged. Do not silently bind a different address/port or let an exception escape into other features' startup/shutdown.
 - Start/stop and cleanup must be idempotent. Never synchronously wait on a task whose completion needs the Unity thread during shutdown.
+- Bound and observe `StopAsync`; dispose the host off the Unity thread, including startup-failure paths. A stopped or superseded owner cannot resume startup and leave a listener behind. Keep lifecycle/event-state transitions coordinated with the existing main-thread feature owner.
+- Forward Kestrel warnings/errors to the mod logger so runtime failures before the API handler are visible. The host must not require process-global logging configuration.
+
+### Kestrel connection and receive loop
+
+- Explicitly select the managed socket transport and the configured IP endpoint. Do not use `HttpListener`, HTTP.sys, IIS integration, or Libuv. Use the supported WebSocket middleware for handshake validation and the opaque-stream upgrade; do not recreate handshake or frame parsing in mod code.
+- Restrict the route to `/api/v1` before upgrade. Return an HTTP rejection for other paths, invalid handshakes, or exhausted upgrade capacity. Bound ordinary HTTP connections, upgraded connections, request-header size, and header-read time using supported host options. A Kestrel HTTP request-body limit is not a WebSocket message limit.
+- Await the connection handler for the lifetime of the WebSocket so the HTTP request pipeline does not dispose the upgraded stream prematurely. Each connection owns one receive loop, one serialized application send loop, and cancellation linked to server shutdown and client disconnect.
+- Read through the target-compatible `ReceiveAsync(ArraySegment<byte>, CancellationToken)` API. Accumulate at most `maxRequestBytes`, checking before each append; deliver one complete text message only when `EndOfMessage` is true. Handle an empty message as a JSON parse failure, not as a disconnect. Give an incomplete message an operation deadline once it starts, while allowing an otherwise idle connection to remain open.
+- Let the maintained protocol implementation handle masking, RSV/opcode validation, fragmentation state, ping/pong, and close parsing. Use strict UTF-8 decoding for the bounded completed text. Do not install another private-handler hook or write a frame parser to compensate for failed conformance.
+- Keep compression/extensions disabled for the v1 profile. Preserve binary-message rejection (`1003`), invalid UTF-8 (`1007`), invalid framing (`1002`), oversized messages (`1009`), and application policy errors (`1008`) as distinct outcomes.
+- Await and observe sends. Apply a deadline covering both queued time and the active send; use a bounded close attempt followed by `Abort`/disposal if the peer cannot drain. Do not send reserved close status values, swallow a failed send and continue, or launch overlapping application sends.
 
 ### Root providers and readiness
 
@@ -138,15 +215,20 @@ WebSocket callback
        -> one Unity SynchronizationContext.Post pump
        -> recheck connection, deadline, session, and readiness
        -> resolve root/path and build detached result
-  -> serialize and send off the Unity thread
+       -> asynchronous completion signal only
+  -> worker serializes within the output cap
+  -> serialized send; release admission only after delivery/cancellation
 ```
 
 - Network receive, JSON parsing, serialization, and socket sends stay off the Unity thread. Avoid accidentally capturing Unity's context in network async continuations.
 - Only one pump callback may be scheduled per server owner at a time. Process work within the API's per-frame count and soft-time budget, then repost remaining work. Do not busy-wait, spin, or post one unbounded callback per request. Track the Unity frame for the budget if the context is pumped more than once in a frame.
 - Use a standard queue with a small lock or `ConcurrentQueue` with correct admission accounting. A custom scheduler or lock-free queue is unnecessary. If using task completions, run continuations asynchronously so response work does not execute inline in the pump.
 - A request owns one admission slot until response delivery or cancellation. Capacity includes outgoing responses. Serialize sends per connection, bound the send queue, and close slow consumers rather than retaining unlimited output.
-- Expiry is based on monotonic elapsed time, not `Time.time` or game ticks. Check expiry before reading. Once timed out, work cannot later emit success. A deadline does not abort a getter halfway through; the read policy must keep getters short and bounded.
-- Cancellation and session invalidation must remove or cheaply skip queued work and release its slot. Use one completion path so timeout, disconnect, and successful reads cannot double-complete or leak admission counts.
+- Distinguish response production from terminal delivery: `admitted -> result/error produced -> response sent or connection canceled`. Keep the ID reserved through the last step. A task completion source with asynchronous continuations is sufficient; do not serialize or release the slot inside its main-thread producer.
+- Expiry is based on monotonic elapsed time, not `Time.time` or game ticks. A worker-enforced production deadline must fire even when Unity stops pumping. Check expiry before reading as well. Once timed out, work cannot later emit success. A deadline does not abort a getter halfway through; the read policy must keep getters short and bounded.
+- Reuse the documented timeout duration for a separate bounded send deadline beginning at response enqueue, including the active send. A send timeout closes/aborts the connection; it must not interleave a second error envelope into a partly transmitted response.
+- Connection cancellation removes or cheaply skips queued work and releases its slot exactly once. Session invalidation and production timeout instead produce the documented error; retain the ID and slot until that error is sent or the connection is canceled. Use one terminal cleanup path so competing outcomes cannot double-complete or leak admission counts.
+- Enforce a physical game-work queue bound even after canceled requests release network admission. A queue full of stale entries is not permission to allocate another unbounded queue or task list. Bound unslotted parse/busy-error responses as well.
 - The only mutable game references exist during main-thread execution. Return scalar values, strings, copied arrays/pages, and plain snapshot dictionaries/DTOs; never pass a live DSP object, boxed game struct with nested references, `MemberInfo`, or `UnityEngine.Object` to the background JSON serializer.
 
 ### Session transitions
@@ -180,94 +262,121 @@ Use one resolver/member-policy path for `data.read`, `data.describe`, and projec
 
 Catch reflection/getter failures at the request boundary and map them to the API errors. Retain diagnostic exceptions in local logs, not response bodies. System methods and generic game-data methods must share envelope/error handling; do not introduce parallel protocol implementations.
 
-## Implementation phases
+## Migration phases
 
-### Phase 0: runtime transport verification
+Checkmarks describe the completed work below; stated desktop results do not close the separate Unity/LAN gates. Keep evidence for the tested package graph and actual game runtime with the current phase status.
 
-- [x] Inspect the current project state and original runtime assumptions listed above.
-- [x] Evaluate Fleck first as a single managed WebSocket server dependency, plus an explicit Newtonsoft.Json dependency, while retaining `net472`.
-- [ ] Verify the server inside actual DSP/BepInEx/Mono using a standard WebSocket client. A standalone .NET console server is not evidence of game-runtime compatibility. **Blocked: DSP was not launched in the implementation session.**
-- [x] Verify text-message fragmentation, invalid UTF-8 handling, binary rejection, connection closure, and request-size enforcement before unbounded message accumulation. Check the library's behavior before promising a limit that its callbacks cannot enforce.
-- [ ] Verify path rejection, clean listener disposal, occupied-port failure, and a bounded serialized send path. **Code is present; in-game confirmation blocked.**
-- [x] Record the selected package versions and any necessary runtime dependency DLLs here; pin them in `LiveStreamAssist.csproj`.
+### M0: prove the in-process compatibility path
 
-Selected packages: Fleck **1.2.0**, Newtonsoft.Json **13.0.3**. Packaged runtime DLLs: `Fleck.dll`, `Newtonsoft.Json.dll`. Fleck 1.2.0 has no max-message API; incoming size is capped by wrapping `IHandler.Receive` at `maxRequestBytes + 8KiB` socket bytes, then checking UTF-8 payload length in `OnMessage`. Invalid UTF-8 uses Fleck's thrower `UTF8Encoding` and close `1007`. Binary frames close `1003`.
+- [x] Build a small `net472` probe with the latest serviced ASP.NET Core 2.3 hosting, managed socket transport, and WebSocket packages. The researched transport/middleware baseline is 2.3.13; resolve compatible current versions for the other components and the protocol dependency instead of assuming all version numbers match.
+- [x] Inspect and record the selected compile/runtime assets and transitive closure, including the concrete protocol assembly. Check advisories and the upstream support statement, not just the package title or a computed NuGet compatibility list.
+- [x] Prove that the probe uses managed Kestrel Sockets and the maintained middleware upgrade path, with no fallback to the game's `HttpListener` implementation, Libuv, HTTP.sys, or a hand-written handshake/parser.
+- [ ] Run the same candidate in actual DSP/Unity 2022 Mono. Record game/Unity versions, architecture, loaded assembly identities/locations, and the WebSocket implementation type. Test both a clean supported installation and coexistence with the normal mod set. **Blocked: DSP was not launched.**
+- [ ] Verify a real opening handshake, fragmented text with interleaved ping, exact ping/pong payload behavior, a bounded oversized input, and closing/releasing the listener. An advertised huge frame length must not trigger an allocation proportional to that length before the application can enforce its limit. **Desktop checks cover handshake, fragmented round trips, payload limits, and listener release. Interleaved ping/pong and huge advertised lengths remain unverified.**
+- [ ] Confirm an idle API, startup failure, and normal shutdown do not disturb Ctrl+F8 or the shared feature lifecycle. Verify a port already in use fails softly. **Blocked: DSP.**
+- [x] Record a go/no-go decision and the exact graph to adopt. If a compatible package asset is missing or an actual Mono API fails, record the concrete failing call/assembly rather than suppressing it.
 
-If Fleck cannot meet the runtime or bounded-buffer requirements, evaluate one other small managed Mono-compatible server library and document the reason. Do not write a new framing stack, switch to an ASP.NET host, change the target framework, or add multiple competing transports to hide an unresolved compatibility problem. Treat missing real-game verification as a blocker.
-
-Exit condition: the selected transport can actually listen, exchange bounded messages, and release its resources in the game's runtime. Reuse the verified code in the implementation rather than leaving a second prototype server in the tree.
-
-### Phase 1: lifecycle, protocol, and system methods
-
-- [x] Add the separate API feature and startup-only configuration; preserve the existing feature's registration and state.
-- [x] Implement request validation, ID tracking, fixed dispatch, response/error envelopes, capacity accounting, and serial sends.
-- [x] Implement `system.ping`, `system.info`, and `system.validate` with the specified state-independent semantics.
-- [x] Implement only the `system.stats` placeholder. Keep `api.stats` and `subscriptions` false; advertise reflection capabilities only when their implementations are ready.
-- [x] Publish runtime version metadata through main-thread initialization/lifecycle code and handle late feature startup.
-- [x] Add the integration script's no-save mode for system methods, malformed messages, invalid IDs, unknown methods, incompatible majors/capabilities, and the statistics placeholder.
-
-Exit condition: system methods work from local and LAN clients without authentication, including at the main menu. Version fields match the running game after preload. Startup/stop failures do not interrupt other features. Invalid requests produce the documented response or transport closure.
-
-### Phase 2: main-thread queries and reflection
-
-- [x] Add the bounded synchronization-context pump and current-session admission state.
-- [x] Add the seven fixed root providers and readiness checks, including the menu-demo exclusion and paused-game allowance.
-- [x] Implement the shared member policy, exact getter allowlist, typed path traversal, null handling, and deterministic metadata listing.
-- [x] Implement scalar encoding, summaries, explicit projections, and array/list pages exactly as the API reference specifies.
-- [x] Attach `sessionId` and `gameTick` to game-data results; ensure returned snapshots contain no live game references.
-- [x] Extend the integration script with `-RequireGame` checks that discover roots, read `history.currentTech`, read `history.techQueue`, and inspect/read a research state using an ID obtained from the game.
-- [x] Leave one small runnable set of fixture-based checks for the production reflection/projection code, covering inherited private fields, blocked getters, null intermediates/terminals, dictionary key types, indexes, shallow cyclic references, 64-bit precision, and non-finite values.
-
-Fixture run command (repository root; copies `netstandard.dll` and Unity core modules from the installed game):
+Desktop probe (repository root):
 
 ```powershell
-dotnet build LiveStreamAssist/tools/ReflectionReaderCheck/ReflectionReaderCheck.csproj -c Release
-& LiveStreamAssist/tools/ReflectionReaderCheck/bin/Release/net472/ReflectionReaderCheck.exe
+dotnet build LiveStreamAssist/tools/WebSocketTransportCheck/WebSocketTransportCheck.csproj -c Release
+& LiveStreamAssist/tools/WebSocketTransportCheck/bin/Release/net472/WebSocketTransportCheck.exe
+& LiveStreamAssist/tools/WebSocketTransportCheck/bin/Release/net472/WebSocketTransportCheck.exe --regression
 ```
 
-Keep fixture checks outside the shipped plugin and out of the remote root catalog. Use the smallest repository-compatible harness; no new testing framework or abstraction is required solely for these checks. Exercise the production reader, not a reimplementation of it, and record the exact run command here once its layout is chosen.
+Observed desktop identities: Kestrel.Core **2.3.13**, Transport.Sockets **2.3.13**, WebSockets middleware **2.3.13**, protocol type `System.Net.WebSockets.ManagedWebSocket` from `System.Net.WebSockets.WebSocketProtocol` **5.1.3**. Microsoft.Extensions.* **8.x** assets selected as `lib/net462`. Newtonsoft.Json **13.0.3**. No Libuv package. The harness references the production project, and all 34 transport/hosting package versions match its lock file. Unity/Mono adoption remains unconfirmed.
 
-Exit condition: returned research values match the in-game data, precision is preserved beyond `2^53`, rejected members cannot be reached through alternate read/describe/projection paths, and queries execute on Unity's main thread while typing or paused.
+The desktop regression harness loads Unity type metadata but runs on the Windows CLR. Its test-only `App.config` binds `netstandard` to the desktop 2.0 facade; Unity's Mono 2.1 type forwarders are not interchangeable with CLR forwarders. This configuration and the copied test host/game assemblies are not mod package contents and do not establish Mono compatibility.
 
-### Phase 3: lifecycle races, resource bounds, and recovery
+Exit condition: the candidate actually starts, exchanges bounded messages, and disposes under the game's runtime using the intended managed assemblies. Desktop-only tests or an unavailable DSP launch leave M0 blocked. Investigate supported in-process alternatives before crossing the fallback boundary.
 
-- [ ] Verify a queued read cannot run against a different save after loading, unloading, or reloading a session. **Blocked: needs a running save.**
-- [ ] Verify timeout/disconnect/session-change races release admission capacity once and cannot emit late or duplicate success responses. **Single completion path is implemented; in-game race verification blocked.**
-- [ ] Verify menu, loading, pause, space-travel root absence, and game-end behavior match the documented error distinctions. **Blocked: needs DSP.**
-- [ ] Exercise capacity and payload limits with multiple clients, fragmented oversized input, slow readers, and large projections/pages. Output must stay bounded during serialization, not merely fail after allocation. **Bounded send/receive/serialize is implemented; multi-client DSP run blocked.**
-- [ ] Verify an ordinary query still succeeds after malformed requests, busy responses, and other recoverable errors. **Covered by Test-WebSocketApi.ps1; needs DSP.**
-- [ ] Verify idempotent stop, released listener ports, ignored callbacks after disposal, and fail-soft behavior when another process owns the configured port. **Blocked: needs DSP / occupied-port check.**
-- [ ] Regress Ctrl+F8 startup/stop, window closure, and the existing randomized tab switching. **Blocked: needs DSP.**
+### M1: replace the Fleck transport
 
-Exit condition: the server remains usable after recoverable failures, old sessions cannot leak through queued work, and overload cannot create unbounded queues or main-thread network work. Report actual observations rather than asserting an unmeasured FPS or latency guarantee.
+- [x] Replace the listener and connection implementation at `WebSocketApiServer.cs` using the M0-approved graph. Keep framework-specific hosting types at this boundary.
+- [x] Implement explicit endpoint/path handling, bounded pre-upgrade and upgraded connection admission, and a correctly awaited WebSocket connection lifetime.
+- [x] Implement the single receive loop and bounded complete-message assembly using the standard WebSocket API. Remove all Fleck references, `BoundedHandler`, handler casts/reflection, and `MaxIncomingSocketBytes`.
+- [x] Coordinate asynchronous host startup/stop with the existing feature owner and cancellation token. Dispose partial startup instances and prevent late callbacks from resurrecting stopped state.
+- [x] Retain API version `1.0.0`, the existing configuration keys/defaults, seven methods, root providers, reflection policy, game-session identifiers, numeric encoding, and statistics placeholder. Do not add authentication or subscriptions.
 
-### Phase 4: packaging and final handoff
+Exit condition: the production request path no longer uses Fleck or a private frame implementation, and the original API requests work through the new host. This does not yet establish all race/resource guarantees.
 
-- [x] Add the selected runtime dependencies to LiveStreamAssist's package, scoped to this project.
-- [ ] Build, run the fixture checks and integration script, and complete the manual real-game/LAN acceptance matrix below. **Fixture checks passed; integration script and LAN matrix blocked without DSP.**
-- [ ] Inspect the resulting ZIP and test a clean install with only the manifest-declared dependencies and packaged runtime DLLs. Do not rely on DLLs provided incidentally by LuaScriptEngine or the development environment.
-- [x] Update the API reference and project README to describe verified implemented behavior. Remove the planned-only status only when the implementation is actually ready.
-- [x] Update this design document's current status, dependency selection, verified environment, and any remaining blockers. Keep `AGENTS.md` as a documentation pointer instead of copying this plan into it.
-- [x] Run `git diff --check` and review the final diff for unrelated changes.
+### M2: repair completion, accounting, and deadlines
 
-The existing `ZipMod` target does not gather dependency DLLs automatically. Prefer a project-local target with `BeforeTargets="ZipMod"` that adds the explicitly selected runtime DLLs to `_PackRootFiles`; the shared target will then stage them along with the plugin. Confirm the ordering and actual resolved filenames in the build output. Do not copy the entire output directory: that can include game references, Unity assemblies, BepInEx assemblies, and UXAssist itself. No shared packaging redesign is needed.
+- [x] Separate detached result production from delivery. No Unity-thread completion path may serialize JSON or enter a socket send. Verify thread affinity rather than assuming an async method automatically moves work to another thread.
+- [x] Keep request IDs and per-connection/global slots until the response is sent or the connection is canceled. Test success, error, timeout, disconnect, and stop races for exactly-once slot release. **Desktop held-send, overflow, timeout, and disconnect checks pass; in-game transitions remain pending.**
+- [x] Enforce response-production deadlines on a worker while the Unity pump is intentionally blocked. Do not cancel the receive loop merely because one game-data request times out.
+- [x] Enforce queued and active-send deadlines, observe failed tasks, and bound close attempts before aborting failed transports. Include the active send in queue/memory accounting.
+- [x] Put a hard bound on the physical game-work queue and remove/prune canceled entries. Repeated timeouts while the game loop is stopped must not accumulate stale work without limit.
+- [x] Make response serialization safe under concurrency while preserving the byte cap and existing JSON encoding.
+- [x] Preserve session-generation checks and invalidate queued old-save work. Already produced/in-transit snapshots remain tagged with the sampling session; never claim they can be recalled.
+- [x] Retain and rerun the reflection fixture checks. Add focused deterministic checks for these transport-integration defects using held completions/fake work scheduling, not production-only debug endpoints. **Reflection fixtures and the production `--regression` harness pass.**
 
-The project README can link to source-hosted developer documentation so its links also work when the README is distributed without the repository's `docs` folder.
+Exit condition: a blocked Unity frame does not block system methods or timeout responses; all queues remain bounded; slots and IDs survive until terminal delivery/cancellation; no late success follows a timeout.
+
+### M3: conformance and game integration
+
+- [ ] Run a pinned [Autobahn Testsuite][autobahn] configuration in `fuzzingclient` mode against a test-only echo host using the same approved transport packages and configuration path. Use its isolated toolchain image and record the image digest, case results, and justified exclusions. Do not expose an echo method on the production JSON-RPC endpoint. Probe `--echo` exists; Autobahn was not run.
+- [ ] Test opening-handshake validation separately: HTTP method/version, required Upgrade/Connection tokens, WebSocket version/key, invalid paths, capacity rejection, and oversized or stalled headers. Autobahn's documented opening-handshake coverage is incomplete.
+- [ ] Cover masking direction, RSV/reserved opcodes, continuation ordering, interleaved control frames, control-frame FIN/size rules, invalid length encodings, UTF-8 across fragments, close status/reason validation, and ping/pong payload equality.
+- [ ] Test application limits separately with the real v1 settings: exact boundary and boundary-plus-one payloads, byte-by-byte fragmentation, multiple messages in one socket read, interleaved pings, and huge advertised lengths. Do not mistake an Autobahn echo expectation for a requirement to accept application payloads above 64 KiB.
+- [ ] Use a raw-socket/fuzzing test tool for invalid frames; `ClientWebSocket` intentionally does not generate many malformed frame cases. Keep malformed-frame generation in test tooling, not production transport code.
+- [x] Repair the PowerShell smoke harness: per-operation cancellation, response-ID matching, optional-field checks under strict mode, buffer/socket cleanup, and HTTP handshake-rejection handling. Move duplicate-outstanding-ID checks to a held-request harness so a legitimately completed first request does not create a timing-dependent failure.
+- [ ] Run no-save and active-save API checks, then real-game pause/text-input, loading, space travel, save switch/reload, and Ctrl+F8 regressions. Run a LAN client from a second machine and a current browser/OBS browser source. **Blocked: DSP.**
+- [ ] Exercise multiple clients and slow/non-reading consumers, blocked game work, malformed input followed by valid input, port conflicts, repeated start/stop, and shutdown during startup/read/send.
+
+Desktop production checks pass for fragmented JSON, binary/invalid-UTF-8/oversized rejection (`1003`/`1007`/`1009`), duplicate IDs (`1008`), shutdown (`1001`), blocked-pump timeout delivery, stalled fragments, occupied ports, and startup/stop races. Full framing conformance, multi-client stress, and actual game/LAN scenarios remain open.
+
+Autobahn proves the covered transport behavior, not the reflection API or Unity scheduling. Compression/other unsupported extensions and application size limits must be accounted for explicitly. A partial run, waived core-protocol failure, or test against a different runtime/package build is not a full pass. Seek an upstream fix for a required protocol defect; do not reconstruct a private frame layer to turn the report green.
+
+Exit condition: the applicable RFC 6455 cases and application/resource tests pass with recorded evidence, and the actual Unity/Mono plus LAN integration matrix passes. No unmeasured FPS, latency, or future-standard guarantee is implied.
+
+### M4: packaging and maintained delivery
+
+- [x] Replace the two-DLL Fleck packaging list with the audited runtime closure of the approved host, while retaining project-local packaging customization.
+- [x] Pin the approved package versions and record the resolved graph, selected TFMs, and source/support references. Use a project-local package lock and locked restore for repeatable validation once the graph is approved; do not change dependency policy for unrelated mods.
+- [x] Fail packaging when a required runtime dependency is absent. Do not silently drop mandatory files behind `Exists` conditions, copy the entire build output, or ship reference/game/framework assemblies.
+- [x] Verify the final assembly references and ZIP contain no Fleck dependency or leftover handler shim. Remove stale Fleck files only from LiveStreamAssist-owned staging/install locations; other mods may legitimately use their own copies.
+- [ ] Test the packaged mod on a clean installation containing the declared BepInEx/UXAssist dependencies, then with the ordinary mod set. Do not depend on a developer machine's shared .NET runtime or incidental plugin DLLs. **Blocked: DSP.**
+- [x] Update API/README status only after the documented gates pass. Record the approved graph, exact probe/conformance commands, runtime evidence, and any remaining blocker in this document. Keep `AGENTS.md` as a link only. **Status records remaining Unity/LAN blockers; do not treat this as a full gate pass.**
+- [ ] Run the narrow build/fixture/smoke checks and `git diff --check`; review the diff for unrelated changes. **Release builds, fixtures, desktop transport checks, and ZipMod pass. The PowerShell script parses successfully; its game/LAN run is still pending.**
+
+Use the existing project-local `BeforeTargets="ZipMod"` extension point and `_PackRootFiles`, driven by an audited dependency list or filtered resolved-runtime items. Include required supporting implementations such as the approved protocol/buffer packages, while excluding game references, Unity/BepInEx assemblies, and UXAssist itself. Record why each packaged assembly is needed; a `System.*` filename alone neither includes nor excludes it.
+
+### Maintenance policy
+
+- Review upstream support, servicing releases, and package advisories before a mod release and when an advisory affects shipped dependencies. Old release dates alone do not prove abandonment, and frequent releases alone do not prove conformance.
+- Review updates within the supported compatibility line. Do not automatically upgrade package majors or switch to a `net6.0+` asset because it has a higher version number. Avoid floating transport versions in a released build.
+- For every runtime-dependency update, inspect the graph/TFM diff, run the transport/protocol regressions and Unity smoke tests, and retain the conformance configuration/results. Rerun the wider game/LAN matrix when runtime behavior or hosting changes.
+- Prefer upstream fixes and serviced packages over local protocol patches. Track a discovered defect with a minimal reproducer and regression case. If a necessary fix cannot be obtained on a supported compatible line, reopen the selection decision instead of permanently freezing an unmaintained fork.
+- Keep compiler/audit policy intact. Document an actual compatibility limitation rather than suppressing it to obtain a green build. This process reduces maintenance risk; it does not promise bug-free dependencies.
+
+## Fallback boundary
+
+The user requested in-process investigation first. A standalone gateway becomes an option only after recording concrete failures of the preferred route and reasonable maintained in-process alternatives: unavailable Mono APIs, an unresolvable assembly-identity conflict, required protocol defects without a supported fix, or loss of upstream support. Missing access to DSP, a failed search, or extra package DLLs is not such evidence.
+
+If this boundary is reached, revise the architecture before implementation: a supported .NET LTS process can own Kestrel/WebSockets while the Unity `net472` mod continues to own reflection and main-thread snapshots. The public API should remain compatible. Specify bounded local IPC, connection/request routing, deadlines, session invalidation, startup failure, parent/child exit cleanup, packaging, and runtime servicing in that revision. Modern .NET assemblies must remain in the separate process, never loaded into Unity. Do not scaffold or ship this fallback alongside a working in-process host.
 
 ## Validation commands and acceptance matrix
 
-Run commands from the repository root. These are implementation-time commands; their inclusion here does not mean the server, scripts, or runtime checks already exist or have passed.
+Run commands from the repository root. These target the existing mod and tools; their inclusion does not mean the replacement or runtime checks have passed. When adding the M0 probe and M3 conformance harness, record their exact build/run commands, test configuration path, and pinned toolchain version here.
 
 Before the integration commands, install the built mod and its required DLLs, set `WebSocketApi.Enabled` to true, and restart DSP. Run no-save checks at the main menu, then open a save for `-RequireGame`. For the LAN check, configure the actual LAN bind address or `0.0.0.0` before restarting and connect from the second machine to the server's real LAN address, not to `0.0.0.0`.
 
 ```powershell
-dotnet restore LiveStreamAssist/LiveStreamAssist.csproj
+dotnet restore LiveStreamAssist/LiveStreamAssist.csproj --locked-mode
 dotnet build LiveStreamAssist/LiveStreamAssist.csproj -c Release --no-restore
+dotnet build LiveStreamAssist/tools/WebSocketTransportCheck/WebSocketTransportCheck.csproj -c Release
+& LiveStreamAssist/tools/WebSocketTransportCheck/bin/Release/net472/WebSocketTransportCheck.exe
+& LiveStreamAssist/tools/WebSocketTransportCheck/bin/Release/net472/WebSocketTransportCheck.exe --regression
+dotnet build LiveStreamAssist/tools/ReflectionReaderCheck/ReflectionReaderCheck.csproj -c Release
+& LiveStreamAssist/tools/ReflectionReaderCheck/bin/Release/net472/ReflectionReaderCheck.exe
 pwsh -NoProfile -File LiveStreamAssist/tools/Test-WebSocketApi.ps1 -ServerUri ws://127.0.0.1:18080/api/v1
 pwsh -NoProfile -File LiveStreamAssist/tools/Test-WebSocketApi.ps1 -ServerUri ws://127.0.0.1:18080/api/v1 -RequireGame
 dotnet build LiveStreamAssist/LiveStreamAssist.csproj -t:ZipMod -c Release --no-restore
 git diff --check
 ```
+
+The fixture tools copy Unity metadata/facades from the installed game; the transport harness also copies BepInEx for desktop type loading. These copies are test-only. Use locked restore for repeatable validation; dependency updates require an explicit graph review and lock update. The packaged ZIP contains 49 declared runtime dependencies plus the plugin, manifest, README, and icon. Neither tool binaries/configuration nor game/core-framework/host assemblies belong in it.
 
 The smoke script must accept those parameters, require no WebSocket client package, close its sockets in cleanup, and exit nonzero when an assertion fails. `-RequireGame` fails clearly if a save is not ready; no-save mode skips only game-dependent assertions, not protocol/system checks. Repeat the relevant script from a second machine with the actual LAN address. A loopback-only run does not establish LAN acceptance.
 
@@ -275,7 +384,9 @@ Do not use game-mutating debug endpoints to make checks pass. If a particular re
 
 | Scenario | Required observation |
 | --- | --- |
+| Unity/Mono dependency loading | The reviewed runtime assets load from the intended locations without missing APIs, assembly conflicts, or framework replacement. |
 | Default configuration | API disabled, no listener, existing assist still works. |
+| Opening handshake / RFC 6455 | Valid clients connect; invalid handshakes and framing fail as specified; applicable conformance cases pass with recorded results. |
 | Preload / main menu | Ping works; version readiness is explicit; menu demo is not an available player root. |
 | Active save | Roots, metadata, research reads, projections, and pages are correct. |
 | Pause / text input | Data reads still complete through the Unity context. |
@@ -285,8 +396,12 @@ Do not use game-mutating debug endpoints to make checks pass. If a particular re
 | Cyclic object fixture | Shallow summaries and bounded explicit paths terminate without recursive graph export. |
 | Save switch / reload | Old queued requests fail; new queries carry a new session identifier. |
 | Invalid / oversized input | Documented JSON error or WebSocket close; no unlimited fragment buffer. |
+| Fragmentation / control frames | Payload accounting survives interleaved pings and TCP chunking; huge declared lengths cannot force proportional allocation. |
 | Multiple clients / slow consumer | Bounded admission and output; normal clients recover after pressure is removed. |
+| Blocked Unity pump | System methods and production deadlines still work; stale game-work entries remain bounded. |
+| Active send / ID reuse | IDs and slots stay reserved through delivery; send failure or timeout aborts without a second response or leaked capacity. |
 | Timeout / disconnect / stop | No double completion, leaked slots, stale game references, or Unity-thread wait deadlock. |
+| Startup / shutdown races | Occupied-port failure is isolated; stopping during startup leaves no orphan listener or late owner callbacks. |
 | Clean installation | All required third-party DLLs resolve without an incidental mod installation. |
 | Existing statistics assist | Ctrl+F8 and automatic tab switching retain their behavior. |
 
@@ -297,3 +412,18 @@ Normal validation remains the narrow LiveStreamAssist build, with warnings treat
 `system.stats` deliberately stops at the placeholder. When statistics are requested, define a concrete schema before enabling `api.stats`; likely candidates are current connections, completed/failed requests, bytes sent/received, and durations in milliseconds since server start. V1 admission counters are resource controls, not an excuse to expose an undocumented metrics schema.
 
 Subscriptions, writes, method invocation, authentication, additional root catalogs, aggregated gameplay endpoints, dictionary enumeration, and recursive object export require separate scope decisions. Do not implement extension scaffolding for them now.
+
+[aspnet-support]: https://dotnet.microsoft.com/en-us/platform/support/policy/aspnet/2.3-packages
+[aspnet-advisory]: https://devblogs.microsoft.com/dotnet/servicing-release-advisory-aspnetcore-23/
+[websockets-package]: https://www.nuget.org/packages/Microsoft.AspNetCore.WebSockets/2.3.13
+[sockets-package]: https://www.nuget.org/packages/Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets/2.3.13
+[middleware-source]: https://github.com/dotnet/aspnetcore/blob/1db07eda0330bfc87e383d1d65a50e9f0d43c6e9/src/Middleware/WebSockets/src/WebSocketMiddleware.cs
+[sockets-source]: https://github.com/dotnet/aspnetcore/blob/1db07eda0330bfc87e383d1d65a50e9f0d43c6e9/src/Servers/Kestrel/Transport.Sockets/src/SocketTransportFactory.cs
+[protocol-package]: https://www.nuget.org/packages/System.Net.WebSockets.WebSocketProtocol
+[fleck-source]: https://github.com/statianzo/Fleck/commit/45672e0781974bb04dbad1b94320756a33c60a6d
+[touch-frame]: https://github.com/RRQM/TouchSocket/blob/bf377c2a1363576e8b0ecb0924e9718f0093f0dc/src/TouchSocket.Http/WebSockets/Common/WSDataFrame.cs
+[touch-project]: https://github.com/RRQM/TouchSocket/blob/bf377c2a1363576e8b0ecb0924e9718f0093f0dc/src/TouchSocket.Http/TouchSocket.Http.csproj
+[touch-package]: https://www.nuget.org/packages/TouchSocket.Http/4.3.7
+[supersocket-package]: https://www.nuget.org/packages/SuperSocket.WebSocket.Server/2.1.0
+[unity-profile]: https://docs.unity3d.com/2022.3/Documentation/Manual/dotnetProfileSupport.html
+[autobahn]: https://github.com/crossbario/autobahn-testsuite

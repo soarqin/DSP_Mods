@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Net;
 using System.Threading;
+using System.Threading.Tasks;
 using BepInEx.Configuration;
 using UXAssist.Common.ModFeatures;
 using GameLogicProc = UXAssist.Common.GameLogic;
@@ -30,8 +31,8 @@ internal static class WebSocketApiFeature
     static WebSocketApiServer _server;
     static MainThreadDispatcher _dispatcher;
     static ReflectionReader _reader;
-    static GameVersionSnapshot _version = GameVersionSnapshot.Empty;
-    static SessionSnapshot _session = new SessionSnapshot(0, null);
+    static volatile GameVersionSnapshot _version = GameVersionSnapshot.Empty;
+    static volatile SessionSnapshot _session = new SessionSnapshot(0, null);
     static bool _started;
 
     public static void BindConfig(ConfigFile config)
@@ -78,8 +79,11 @@ internal static class WebSocketApiFeature
         }
 
         var token = new object();
-        var dispatcher = new MainThreadDispatcher(ctx, token, ExecuteWork, () => _server?.NowMs ?? 0);
-        var server = new WebSocketApiServer(address, port, PluginInfo.PLUGIN_VERSION, GetVersion, GetSession, dispatcher);
+        WebSocketApiServer server = null;
+        var dispatcher = new MainThreadDispatcher(ctx, token,
+            work => ReferenceEquals(_ownerToken, token) ? ExecuteWork(work) : ApiErrors.SessionChanged(),
+            () => server?.NowMs ?? 0);
+        server = new WebSocketApiServer(address, port, PluginInfo.PLUGIN_VERSION, GetVersion, GetSession, dispatcher);
         GameLogicProc.OnDataLoaded += OnDataLoaded;
         GameLogicProc.OnGameBegin += OnGameBegin;
         GameLogicProc.OnGameEnd += OnGameEnd;
@@ -91,21 +95,29 @@ internal static class WebSocketApiFeature
             _started = true;
         }
 
-        try
-        {
-            server.Start();
-        }
-        catch (Exception ex)
-        {
-            LiveStreamAssist.Logger.LogError($"WebSocket API failed to start: {ex}");
-            Uninit();
-            return;
-        }
-
         if (VFPreload.done || VFPreload.dbDone)
             PublishVersion();
         if (IsGameReady())
             BeginSession();
+        _ = StartServerAsync();
+
+        async Task StartServerAsync()
+        {
+            try
+            {
+                await server.StartAsync().ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                LiveStreamAssist.Logger.LogError($"WebSocket API failed to start: {ex}");
+                dispatcher.Stop();
+                await server.StopAsync().ConfigureAwait(false);
+                ctx.Post(_ =>
+                {
+                    if (ReferenceEquals(_ownerToken, token)) Uninit();
+                }, null);
+            }
+        }
     }
 
     public static void Uninit()
@@ -179,7 +191,7 @@ internal static class WebSocketApiFeature
             dispatcher = _dispatcher;
         }
 
-        dispatcher?.CancelQueued(_ => ApiErrors.SessionChanged());
+        dispatcher?.CancelQueued(work => work.Generation == _session.Generation ? null : ApiErrors.SessionChanged());
     }
 
     static void EndSession()
@@ -191,7 +203,7 @@ internal static class WebSocketApiFeature
             dispatcher = _dispatcher;
         }
 
-        dispatcher?.CancelQueued(_ => ApiErrors.SessionChanged());
+        dispatcher?.CancelQueued(work => work.Generation == _session.Generation ? null : ApiErrors.SessionChanged());
     }
 
     static bool IsGameReady()

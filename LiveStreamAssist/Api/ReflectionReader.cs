@@ -83,6 +83,8 @@ internal sealed class ReflectionReader
             Encoded = null
         };
         var effective = value == null ? declaredType : runtimeType ?? value.GetType();
+        if (!IsAllowedType(effective))
+            return Fail(ApiErrors.UnsupportedType());
         if (TryCollectionKind(effective, out var kind, out var elementType, out var keyType))
         {
             int? count = null;
@@ -118,7 +120,6 @@ internal sealed class ReflectionReader
                     (!string.Equals(nullKind, "array", StringComparison.Ordinal) &&
                      !string.Equals(nullKind, "list", StringComparison.Ordinal)))
                     return Fail(ApiErrors.InvalidParams("offset and limit are valid only for array or list terminals."));
-                return Fail(ApiErrors.InvalidParams("offset and limit require a non-null array or list."));
             }
 
             return new WalkResult { TypeName = typeName, IsNull = true, Encoded = null };
@@ -141,7 +142,7 @@ internal sealed class ReflectionReader
             if (options.HasSelect && TryCollectionKind(elementType, out _, out _, out _))
                 return Fail(ApiErrors.InvalidParams("select is invalid for collection elements."));
 
-            var page = ReadPage(value, actual, elementType, options);
+            var page = ReadPage(value, actual, options);
             if (page.Error != null) return page;
             page.TypeName = typeName;
             return page;
@@ -186,6 +187,8 @@ internal sealed class ReflectionReader
             if (current == null)
                 return new WalkStep { Error = ApiErrors.NullPath(i) };
             runtime = current.GetType();
+            if (!IsAllowedType(runtime))
+                return new WalkStep { Error = ApiErrors.UnsupportedType(i) };
             var seg = path[i];
             if (seg.Kind == PathKind.Member)
             {
@@ -228,27 +231,11 @@ internal sealed class ReflectionReader
         return new WalkStep { Value = current, DeclaredType = declared, RuntimeType = current == null ? null : current.GetType() };
     }
 
-    WalkResult ReadPage(object collection, Type collectionType, Type elementType, ReadOptions options)
+    WalkResult ReadPage(object collection, Type collectionType, ReadOptions options)
     {
         var total = GetCount(collection, collectionType);
         var offset = options.EffectiveOffset;
         var limit = options.EffectiveLimit;
-        if (options.HasSelect)
-        {
-            var probe = GetCached(elementType);
-            if (options.Select != null)
-            {
-                foreach (var name in options.Select)
-                {
-                    var slot = FindMember(elementType, name);
-                    if (slot == null) return Fail(ApiErrors.MemberNotFound(name));
-                    if (!slot.Allowed) return Fail(ApiErrors.MemberNotAllowed(name));
-                }
-            }
-
-            _ = probe;
-        }
-
         var items = new List<object>();
         if (offset < total)
         {
@@ -301,6 +288,7 @@ internal sealed class ReflectionReader
 
     WalkResult Project(object value, Type type, string[] select)
     {
+        if (!IsAllowedType(type)) return Fail(ApiErrors.UnsupportedType());
         var map = new Dictionary<string, object>(select.Length);
         foreach (var name in select)
         {
@@ -481,8 +469,11 @@ internal sealed class ReflectionReader
     CachedType BuildMembers(Type type)
     {
         var byName = new Dictionary<string, MemberSlot>(StringComparer.Ordinal);
+        if (!IsAllowedType(type) || IsScalar(Unwrap(type)) || TryCollectionKind(type, out _, out _, out _))
+            return new CachedType { ByName = byName, Exposed = Array.Empty<MemberInfoDto>() };
         for (var t = type; t != null && t != typeof(object); t = t.BaseType)
         {
+            if (!IsAllowedType(t) || TryCollectionKind(t, out _, out _, out _)) break;
             foreach (var field in t.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly))
             {
                 if (field.IsStatic || field.IsDefined(typeof(CompilerGeneratedAttribute), false) || field.Name.IndexOf('<') >= 0)
@@ -546,7 +537,8 @@ internal sealed class ReflectionReader
         type = Unwrap(type);
         if (IsForbidden(type)) return false;
         if (IsScalar(type) || IsUnityStruct(type)) return true;
-        if (IsSupportedArray(type) || IsSupportedList(type) || IsSupportedDictionary(type)) return true;
+        if (type.IsArray) return IsSupportedArray(type);
+        if (IsSupportedList(type) || IsSupportedDictionary(type)) return true;
         if (type.Assembly == GameAssembly) return true;
         if (_extraAssemblies != null && _extraAssemblies.Contains(type.Assembly)) return true;
         return false;
@@ -556,7 +548,7 @@ internal sealed class ReflectionReader
     {
         if (!type.IsArray || type.GetArrayRank() != 1) return false;
         var element = type.GetElementType();
-        return element != null && !element.IsPointer && IsAllowedType(element);
+        return element != null && type == element.MakeArrayType() && IsAllowedType(element);
     }
 
     bool IsSupportedList(Type type)
@@ -656,11 +648,10 @@ internal sealed class ReflectionReader
         if (type.IsEnum)
         {
             var name = Enum.GetName(type, value);
-            var underlying = Convert.ToInt64(value, CultureInfo.InvariantCulture);
             encoded = new Dictionary<string, object>
             {
                 ["name"] = name,
-                ["value"] = underlying.ToString(CultureInfo.InvariantCulture)
+                ["value"] = Enum.Format(type, value, "D")
             };
             return true;
         }

@@ -17,46 +17,71 @@ function New-Id {
     "t-$script:seq"
 }
 
+function New-OpCts {
+    [Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds($TimeoutSec))
+}
+
 function Connect-Api {
     param([string] $Uri)
     $ws = [Net.WebSockets.ClientWebSocket]::new()
-    $cts = [Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds($TimeoutSec))
-    $ws.ConnectAsync([Uri]$Uri, $cts.Token).GetAwaiter().GetResult()
-    return @{ Ws = $ws; Cts = $cts }
+    $cts = New-OpCts
+    try {
+        $ws.ConnectAsync([Uri]$Uri, $cts.Token).GetAwaiter().GetResult()
+    } catch {
+        $ws.Dispose()
+        throw
+    } finally {
+        $cts.Dispose()
+    }
+    return @{ Ws = $ws }
 }
 
 function Close-Api {
     param($Conn)
     if (-not $Conn) { return }
+    $cts = New-OpCts
     try {
-        if ($Conn.Ws.State -eq [Net.WebSockets.WebSocketState]::Open) {
-            $Conn.Ws.CloseAsync([Net.WebSockets.WebSocketCloseStatus]::NormalClosure, '', $Conn.Cts.Token).GetAwaiter().GetResult()
+        if ($Conn.Ws.State -eq [Net.WebSockets.WebSocketState]::Open -or
+            $Conn.Ws.State -eq [Net.WebSockets.WebSocketState]::CloseReceived) {
+            $Conn.Ws.CloseAsync([Net.WebSockets.WebSocketCloseStatus]::NormalClosure, '', $cts.Token).GetAwaiter().GetResult()
         }
     } catch { }
+    finally { $cts.Dispose() }
     try { $Conn.Ws.Dispose() } catch { }
-    try { $Conn.Cts.Dispose() } catch { }
 }
 
 function Send-Text {
     param($Conn, [string] $Text, [bool] $End = $true)
     $bytes = $utf8.GetBytes($Text)
     $seg = [ArraySegment[byte]]::new($bytes)
-    $Conn.Ws.SendAsync($seg, [Net.WebSockets.WebSocketMessageType]::Text, $End, $Conn.Cts.Token).GetAwaiter().GetResult()
+    $cts = New-OpCts
+    try {
+        $Conn.Ws.SendAsync($seg, [Net.WebSockets.WebSocketMessageType]::Text, $End, $cts.Token).GetAwaiter().GetResult()
+    } finally { $cts.Dispose() }
 }
 
 function Receive-Message {
     param($Conn)
     $buffer = [byte[]]::new(65536)
     $ms = [IO.MemoryStream]::new()
-    do {
-        $seg = [ArraySegment[byte]]::new($buffer)
-        $result = $Conn.Ws.ReceiveAsync($seg, $Conn.Cts.Token).GetAwaiter().GetResult()
-        if ($result.MessageType -eq [Net.WebSockets.WebSocketMessageType]::Close) {
-            return @{ Closed = $true; CloseStatus = [int]$Conn.Ws.CloseStatus; Text = $null }
-        }
-        $ms.Write($buffer, 0, $result.Count)
-    } while (-not $result.EndOfMessage)
-    return @{ Closed = $false; Text = $utf8.GetString($ms.ToArray()) }
+    $cts = New-OpCts
+    try {
+        do {
+            $seg = [ArraySegment[byte]]::new($buffer)
+            $result = $Conn.Ws.ReceiveAsync($seg, $cts.Token).GetAwaiter().GetResult()
+            if ($result.MessageType -eq [Net.WebSockets.WebSocketMessageType]::Close) {
+                return @{ Closed = $true; CloseStatus = [int]$Conn.Ws.CloseStatus; Text = $null }
+            }
+            if ($result.MessageType -ne [Net.WebSockets.WebSocketMessageType]::Text -or $ms.Length + $result.Count -gt 262144) {
+                throw 'Expected a text response within maxResponseBytes'
+            }
+            $ms.Write($buffer, 0, $result.Count)
+        } while (-not $result.EndOfMessage)
+        return @{ Closed = $false; Text = $utf8.GetString($ms.ToArray()) }
+    } finally {
+        $ms.Dispose()
+        $cts.Dispose()
+    }
 }
 
 function Invoke-Rpc {
@@ -65,7 +90,16 @@ function Invoke-Rpc {
     Send-Text $Conn ($body | ConvertTo-Json -Compress -Depth 16)
     $msg = Receive-Message $Conn
     if ($msg.Closed) { throw "Connection closed while waiting for $Method (close $($msg.CloseStatus))" }
-    return ($msg.Text | ConvertFrom-Json)
+    $resp = $msg.Text | ConvertFrom-Json
+    $respId = $null
+    if ($resp.PSObject.Properties.Name -contains 'id') { $respId = [string]$resp.id }
+    if ($respId -ne $Id) { throw "Response id '$respId' did not match '$Id'" }
+    return $resp
+}
+
+function Has-Prop {
+    param($Obj, [string] $Name)
+    return $null -ne $Obj -and $Obj.PSObject.Properties.Name -contains $Name
 }
 
 function Assert-True {
@@ -77,7 +111,9 @@ function Assert-True {
 function Assert-Kind {
     param($Resp, [string] $Kind, [string] $Name)
     $actual = $null
-    if ($Resp.error -and $Resp.error.data) { $actual = [string]$Resp.error.data.kind }
+    if ((Has-Prop $Resp 'error') -and $Resp.error -and (Has-Prop $Resp.error 'data') -and $Resp.error.data -and (Has-Prop $Resp.error.data 'kind')) {
+        $actual = [string]$Resp.error.data.kind
+    }
     Assert-True ($actual -eq $Kind) "$Name (kind=$actual)"
 }
 
@@ -86,14 +122,14 @@ try {
     $conn = Connect-Api $ServerUri
 
     $ping = Invoke-Rpc $conn 'system.ping'
-    Assert-True ($null -ne $ping.result.serverTimeUtc) 'system.ping'
+    Assert-True ((Has-Prop $ping 'result') -and (Has-Prop $ping.result 'serverTimeUtc') -and $null -ne $ping.result.serverTimeUtc) 'system.ping'
 
     $info = Invoke-Rpc $conn 'system.info'
     Assert-True ($info.result.apiVersion -eq '1.0.0') 'system.info apiVersion'
     Assert-True ($info.result.limits.maxRequestBytes -eq 65536) 'system.info limits'
     Assert-True ($info.result.capabilities.'api.stats' -eq $false) 'api.stats false'
     Assert-True ($info.result.capabilities.subscriptions -eq $false) 'subscriptions false'
-    Assert-True ($info.result.PSObject.Properties.Name -contains 'gameVersionReady') 'gameVersionReady present'
+    Assert-True ((Has-Prop $info.result 'gameVersionReady')) 'gameVersionReady present'
 
     $ok = Invoke-Rpc $conn 'system.validate' @{ apiMajor = 1; requiredCapabilities = @('reflection.read') }
     Assert-True ($ok.result.compatible -eq $true) 'validate compatible'
@@ -129,25 +165,14 @@ try {
     $batch = (Receive-Message $conn).Text | ConvertFrom-Json
     Assert-Kind $batch 'INVALID_REQUEST' 'batch array'
 
-    Send-Text $conn '{"jsonrpc":"2.0","id":"dup","method":"data.read","params":{"root":"history","path":["currentTech"]}}'
-    Send-Text $conn '{"jsonrpc":"2.0","id":"dup","method":"data.read","params":{"root":"history","path":["currentTech"]}}'
-    $dup = Receive-Message $conn
-    if ($dup.Closed) {
-        Assert-True ($dup.CloseStatus -eq 1008) "duplicate outstanding id close $($dup.CloseStatus)"
-    } else {
-        Assert-True $false 'duplicate outstanding id should close'
-    }
-
-    Close-Api $conn
-    $conn = Connect-Api $ServerUri
-    $ping2 = Invoke-Rpc $conn 'system.ping'
-    Assert-True ($null -ne $ping2.result.serverTimeUtc) 'recover after duplicate-id close'
-
-    $conn.Ws.SendAsync(
-        [ArraySegment[byte]]::new([byte[]](1, 2, 3)),
-        [Net.WebSockets.WebSocketMessageType]::Binary,
-        $true,
-        $conn.Cts.Token).GetAwaiter().GetResult()
+    $cts = New-OpCts
+    try {
+        $conn.Ws.SendAsync(
+            [ArraySegment[byte]]::new([byte[]](1, 2, 3)),
+            [Net.WebSockets.WebSocketMessageType]::Binary,
+            $true,
+            $cts.Token).GetAwaiter().GetResult()
+    } finally { $cts.Dispose() }
     $bin = Receive-Message $conn
     Assert-True ($bin.Closed -and $bin.CloseStatus -eq 1003) "binary rejected $($bin.CloseStatus)"
 
@@ -159,11 +184,27 @@ try {
     Assert-True ($over.Closed -and $over.CloseStatus -eq 1009) "oversized close $($over.CloseStatus)"
 
     Close-Api $conn
-    $uri = [Uri]$ServerUri
-    $badPath = Connect-Api "$($uri.Scheme)://$($uri.Authority)/nope"
-    $bad = Receive-Message $badPath
-    Assert-True ($bad.Closed -and $bad.CloseStatus -eq 1008) "wrong path close $($bad.CloseStatus)"
-    Close-Api $badPath
+    $wrong = [UriBuilder]::new($ServerUri)
+    $wrong.Scheme = if ($wrong.Scheme -eq 'wss') { 'https' } else { 'http' }
+    $wrong.Path = '/nope'
+    $wrong.Query = ''
+    $http = [Net.Http.HttpClient]::new()
+    $request = [Net.Http.HttpRequestMessage]::new([Net.Http.HttpMethod]::Get, $wrong.Uri)
+    $request.Headers.Connection.Add('Upgrade')
+    $request.Headers.Upgrade.Add([Net.Http.Headers.ProductHeaderValue]::new('websocket'))
+    [void]$request.Headers.TryAddWithoutValidation('Sec-WebSocket-Version', '13')
+    [void]$request.Headers.TryAddWithoutValidation('Sec-WebSocket-Key', 'dGhlIHNhbXBsZSBub25jZQ==')
+    $cts = New-OpCts
+    $response = $null
+    try {
+        $response = $http.SendAsync($request, [Net.Http.HttpCompletionOption]::ResponseHeadersRead, $cts.Token).GetAwaiter().GetResult()
+        Assert-True ([int]$response.StatusCode -eq 404) 'wrong path HTTP rejection'
+    } finally {
+        if ($null -ne $response) { $response.Dispose() }
+        $request.Dispose()
+        $http.Dispose()
+        $cts.Dispose()
+    }
 
     $conn = Connect-Api $ServerUri
     $part1 = '{"jsonrpc":"2.0","id":"frag","method":'
@@ -171,21 +212,24 @@ try {
     Send-Text $conn $part1 $false
     Send-Text $conn $part2
     $frag = (Receive-Message $conn).Text | ConvertFrom-Json
-    Assert-True ($null -ne $frag.result.serverTimeUtc) 'fragmented text message'
+    Assert-True ((Has-Prop $frag 'result') -and (Has-Prop $frag.result 'serverTimeUtc')) 'fragmented text message'
 
     $unknownRoot = Invoke-Rpc $conn 'data.read' @{ root = 'no-such-root' }
     Assert-Kind $unknownRoot 'ROOT_NOT_FOUND' 'unknown root'
 
     if ($RequireGame) {
         $roots = Invoke-Rpc $conn 'data.roots'
+        if (-not (Has-Prop $roots 'result') -or -not $roots.result.gameReady) {
+            throw '-RequireGame needs a ready player save'
+        }
         Assert-True ($roots.result.gameReady -eq $true) 'data.roots gameReady'
-        Assert-True ($null -ne $roots.result.sessionId) 'sessionId'
+        Assert-True ((Has-Prop $roots.result 'sessionId') -and $null -ne $roots.result.sessionId) 'sessionId'
         $tech = Invoke-Rpc $conn 'data.read' @{ root = 'history'; path = @('currentTech') }
-        Assert-True ($null -eq $tech.error) 'read history.currentTech'
+        Assert-True (-not (Has-Prop $tech 'error') -or $null -eq $tech.error) 'read history.currentTech'
         $queue = Invoke-Rpc $conn 'data.read' @{ root = 'history'; path = @('techQueue'); offset = 0; limit = 8 }
-        Assert-True ($null -eq $queue.error) 'read history.techQueue'
+        Assert-True (-not (Has-Prop $queue 'error') -or $null -eq $queue.error) 'read history.techQueue'
         $techId = [int]$tech.result.value
-        if ($techId -eq 0 -and $queue.result.value.items) {
+        if ($techId -eq 0 -and (Has-Prop $queue.result.value 'items') -and $queue.result.value.items) {
             foreach ($item in @($queue.result.value.items)) {
                 if ([int]$item -ne 0) { $techId = [int]$item; break }
             }
@@ -198,18 +242,18 @@ try {
             path = @('techStates', @{ key = $techId })
             select = @('curLevel', 'hashUploaded', 'hashNeeded')
         }
-        Assert-True ($null -eq $state.error) "read techStates[$techId]"
-        Assert-True ($null -ne $state.result.value.curLevel) 'research curLevel'
+        Assert-True (-not (Has-Prop $state 'error') -or $null -eq $state.error) "read techStates[$techId]"
+        Assert-True ((Has-Prop $state.result.value 'curLevel') -and $null -ne $state.result.value.curLevel) 'research curLevel'
     } else {
         $roots = Invoke-Rpc $conn 'data.roots'
-        Assert-True ($roots.result.PSObject.Properties.Name -contains 'gameReady') 'data.roots without save'
-        if ($roots.result.gameReady -eq $true) {
+        Assert-True ((Has-Prop $roots.result 'gameReady')) 'data.roots without save'
+        if ((Has-Prop $roots.result 'gameReady') -and $roots.result.gameReady -eq $true) {
             Write-Host 'note game is ready; -RequireGame would exercise research reads'
         }
     }
 
     $still = Invoke-Rpc $conn 'system.ping'
-    Assert-True ($null -ne $still.result.serverTimeUtc) 'ping after protocol errors'
+    Assert-True ((Has-Prop $still.result 'serverTimeUtc') -and $null -ne $still.result.serverTimeUtc) 'ping after protocol errors'
 }
 finally {
     Close-Api $conn

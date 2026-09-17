@@ -24,25 +24,31 @@ internal sealed class MainThreadDispatcher
     readonly Queue<GameWork> _queue = new Queue<GameWork>();
     readonly GameWorkExecutor _execute;
     readonly Func<long> _nowMs;
+    readonly Func<int> _frameCount;
+    readonly Timer _watchdog;
+    GameWork _running;
     bool _pumpScheduled;
     bool _stopped;
     int _frame = -1;
     int _startedThisFrame;
     readonly Stopwatch _budget = new Stopwatch();
 
-    public MainThreadDispatcher(SynchronizationContext context, object token, GameWorkExecutor execute, Func<long> nowMs)
+    public MainThreadDispatcher(SynchronizationContext context, object token, GameWorkExecutor execute, Func<long> nowMs,
+        Func<int> frameCount = null)
     {
         _context = context;
         _token = token;
         _execute = execute;
         _nowMs = nowMs;
+        _frameCount = frameCount ?? (() => Time.frameCount);
+        _watchdog = new Timer(_ => SweepTimeouts(), null, 250, 250);
     }
 
     public bool TryEnqueue(GameWork work)
     {
         lock (_gate)
         {
-            if (_stopped) return false;
+            if (_stopped || _queue.Count >= ApiLimits.MaxPendingRequests) return false;
             _queue.Enqueue(work);
             ScheduleLocked();
             return true;
@@ -51,17 +57,19 @@ internal sealed class MainThreadDispatcher
 
     public void CancelQueued(Func<GameWork, ApiError> reason)
     {
-        List<GameWork> taken;
         lock (_gate)
         {
-            if (_queue.Count == 0) return;
-            taken = new List<GameWork>(_queue.Count);
-            while (_queue.Count > 0)
-                taken.Add(_queue.Dequeue());
+            var count = _queue.Count;
+            while (count-- > 0)
+            {
+                var work = _queue.Dequeue();
+                var error = reason(work);
+                if (error == null)
+                    _queue.Enqueue(work);
+                else
+                    work.Pending.TryComplete(error);
+            }
         }
-
-        foreach (var work in taken)
-            work.Pending.Complete(reason(work));
     }
 
     public void Stop()
@@ -69,9 +77,33 @@ internal sealed class MainThreadDispatcher
         lock (_gate)
         {
             _stopped = true;
+            _running?.Pending.TryComplete(ApiErrors.RequestTimeout());
         }
 
+        _watchdog.Dispose();
         CancelQueued(_ => ApiErrors.RequestTimeout());
+    }
+
+    void SweepTimeouts()
+    {
+        var now = _nowMs();
+        lock (_gate)
+        {
+            if (_stopped) return;
+            if (_running != null && now >= _running.DeadlineMs)
+                _running.Pending.TryComplete(ApiErrors.RequestTimeout());
+            var count = _queue.Count;
+            while (count-- > 0)
+            {
+                var work = _queue.Dequeue();
+                if (!work.Pending.IsActive)
+                    continue;
+                if (now >= work.DeadlineMs)
+                    work.Pending.TryComplete(ApiErrors.RequestTimeout());
+                else
+                    _queue.Enqueue(work);
+            }
+        }
     }
 
     void ScheduleLocked()
@@ -99,12 +131,12 @@ internal sealed class MainThreadDispatcher
 
     void Drain()
     {
-        var frame = Time.frameCount;
+        var frame = _frameCount();
         if (frame != _frame)
         {
             _frame = frame;
             _startedThisFrame = 0;
-            _budget.Restart();
+            _budget.Reset();
         }
 
         while (_startedThisFrame < ApiLimits.MaxRequestsPerFrame)
@@ -116,10 +148,17 @@ internal sealed class MainThreadDispatcher
             {
                 if (_stopped || _queue.Count == 0) return;
                 work = _queue.Dequeue();
+                _running = work;
             }
 
             _startedThisFrame++;
-            Run(work);
+            _budget.Start();
+            try { Run(work); }
+            finally
+            {
+                _budget.Stop();
+                lock (_gate) _running = null;
+            }
         }
     }
 
@@ -128,9 +167,9 @@ internal sealed class MainThreadDispatcher
         if (!work.Pending.IsActive)
             return;
         var now = _nowMs();
-        if (now > work.DeadlineMs)
+        if (now >= work.DeadlineMs)
         {
-            work.Pending.Complete(ApiErrors.RequestTimeout());
+            work.Pending.TryComplete(ApiErrors.RequestTimeout());
             return;
         }
 
@@ -142,21 +181,21 @@ internal sealed class MainThreadDispatcher
         catch (Exception ex)
         {
             LiveStreamAssist.Logger.LogError($"API game-data request failed: {ex}");
-            work.Pending.Complete(ApiErrors.InternalError());
+            work.Pending.TryComplete(ApiErrors.InternalError());
             return;
         }
 
         if (!work.Pending.IsActive)
             return;
-        if (_nowMs() > work.DeadlineMs)
+        if (_nowMs() >= work.DeadlineMs)
         {
-            work.Pending.Complete(ApiErrors.RequestTimeout());
+            work.Pending.TryComplete(ApiErrors.RequestTimeout());
             return;
         }
 
         if (result is ApiError err)
-            work.Pending.Complete(err);
+            work.Pending.TryComplete(err);
         else
-            work.Pending.CompleteResult(result);
+            work.Pending.TryCompleteResult(result);
     }
 }

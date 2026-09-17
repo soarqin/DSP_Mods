@@ -1,8 +1,8 @@
 # LiveStreamAssist WebSocket API
 
-Status: implemented contract for API `1.0.0`. Enable the listener with BepInEx setting `WebSocketApi.Enabled`. Real-game and LAN acceptance still need a DSP run; see the [design and implementation plan](WebSocketDesign.md).
+Status: API `1.0.0` compatibility contract. The in-tree transport is in-process ASP.NET Core 2.3 Kestrel; Unity/LAN acceptance is still pending. Enable the listener with BepInEx setting `WebSocketApi.Enabled`; see the [design and transport migration plan](WebSocketDesign.md).
 
-Audience: developers of live-stream overlays, OBS integrations, and other clients. Server architecture and implementation tasks are documented separately in the [design and implementation plan](WebSocketDesign.md).
+Audience: developers of live-stream overlays, OBS integrations, and other clients. Server architecture and implementation tasks are documented separately in the [design and transport migration plan](WebSocketDesign.md).
 
 ## Connection
 
@@ -12,7 +12,7 @@ ws://<host>:18080/api/v1
 
 The service supports local and LAN clients without authentication. No token, login request, or application-level handshake is required. The client sends requests after the WebSocket connection opens. Other URL paths are rejected and must not execute API requests.
 
-The planned BepInEx configuration section is `WebSocketApi`:
+The BepInEx configuration section is `WebSocketApi`:
 
 | Setting | Type | Default | Meaning |
 | --- | --- | --- | --- |
@@ -30,6 +30,18 @@ Suggested client sequence:
 4. Call `data.read` and schedule any subsequent polling in the client.
 
 There are no subscriptions or unsolicited application messages. Normal WebSocket control frames, including ping/pong and close frames, are transport operations rather than application notifications.
+
+## WebSocket interoperability
+
+The required transport profile is [RFC 6455](https://www.rfc-editor.org/rfc/rfc6455) over HTTP/1.1 Upgrade, using WebSocket version `13`. It is intended to interoperate with current browsers, OBS browser sources, and standard WebSocket clients. The migration does not change the JSON-RPC contract or require a new client SDK.
+
+- Client frames must be masked; server frames must not be masked. Invalid framing, reserved opcodes, and unnegotiated RSV bits are protocol errors (`1002`).
+- Fragmentation must preserve message boundaries and UTF-8 decoder state. Interleaved control frames do not restart or relax the complete-message byte limit.
+- Ping/pong and close handshakes follow RFC 6455. A pong responding to a ping carries the same payload. Invalid text or close-reason UTF-8 produces `1007`.
+- `permessage-deflate` and other extensions are not negotiated in v1. An extension offer can be declined while accepting an ordinary uncompressed WebSocket connection. HTTP/2 and HTTP/3 WebSocket transports are not advertised by this profile.
+- Invalid paths, invalid opening handshakes, and connection-capacity rejection may be rejected at the HTTP layer before upgrade. A client must not assume every unsuccessful connection produces a WebSocket close frame.
+
+These are acceptance requirements for the transport. Passing desktop checks does not imply full conformance or Unity/LAN acceptance; see the linked implementation status.
 
 ## Message format
 
@@ -123,7 +135,7 @@ These are the initial v1 defaults. `system.info.limits` is the authoritative sou
 | `maxRequestsPerFrame` | 8 | Maximum game-data requests started in one Unity frame. |
 | `mainThreadBudgetMs` | 2 | Soft main-thread scheduling budget per Unity frame. |
 
-Outstanding requests include queued reads, executing reads, and responses waiting to be sent. System methods also consume outstanding-request capacity, but do not consume the game-data execution budget. A saturated server returns `SERVER_BUSY` when it can deliver an error without growing the send queue; otherwise it closes the connection with `1013`.
+Outstanding requests include queued reads, executing reads, and responses waiting to be sent, including an active send. System methods also consume outstanding-request capacity, but do not consume the game-data execution budget. A saturated server returns `SERVER_BUSY` when it can deliver an error within the bounded send queue; otherwise it attempts to close the connection with `1013`. A stalled or broken transport is aborted if a close frame cannot be delivered within the send deadline.
 
 The main-thread budget does not preempt a running read. Deadlines are independent of game ticks and pause state. A timed-out request cannot later produce a success response. If a response cannot be delivered to a stalled client within the bounded send deadline, the connection closes instead of retaining output indefinitely.
 
@@ -486,10 +498,13 @@ Transport closure codes relevant to clients:
 | Code | Meaning |
 | --- | --- |
 | `1001` | Server is stopping. |
+| `1002` | WebSocket framing or protocol violation. |
 | `1003` | Binary application message is unsupported. |
 | `1007` | Invalid UTF-8 payload. |
 | `1008` | Protocol violation such as reuse of an outstanding ID. |
 | `1009` | Incoming message is too large. |
 | `1013` | Overload or inability to drain a bounded send queue. |
+
+Reserved status values such as `1005`, `1006`, and `1015` are not sent in close frames. A client may locally report `1006` when a transport is lost or aborted without a completed close handshake.
 
 Do not retry invalid paths unchanged in a tight loop. Game-state errors can be retried after discovery; overload and timeouts require client-side backoff. Reconnection creates a new request-ID namespace but does not restore any requests from the old connection.

@@ -37,7 +37,7 @@ foreach ($block in [regex]::Matches($vdfContent, $blockPattern, 'Singleline')) {
 
 if (-not $managed) { throw 'DSP Managed directory not found; cannot copy game facades for ReflectionReaderCheck.' }
 
-foreach ($name in @('netstandard.dll', 'UnityEngine.CoreModule.dll', 'UnityEngine.SharedInternalsModule.dll')) {
+foreach ($name in @('netstandard.dll', 'UnityEngine.dll', 'UnityEngine.CoreModule.dll', 'UnityEngine.SharedInternalsModule.dll')) {
     $src = Join-Path $managed $name
     if (-not (Test-Path $src)) { throw "Missing $src" }
     Copy-Item -LiteralPath $src -Destination (Join-Path $TargetDir $name) -Force
