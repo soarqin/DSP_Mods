@@ -1,6 +1,6 @@
 # LiveStreamAssist WebSocket API
 
-Status: planned contract for API `1.0.0`; the WebSocket service is not implemented yet. This reference describes the intended first release, not functionality available in the current mod.
+Status: implemented contract for API `1.0.0`. Enable the listener with BepInEx setting `WebSocketApi.Enabled`. Real-game and LAN acceptance still need a DSP run; see the [design and implementation plan](WebSocketDesign.md).
 
 Audience: developers of live-stream overlays, OBS integrations, and other clients. Server architecture and implementation tasks are documented separately in the [design and implementation plan](WebSocketDesign.md).
 

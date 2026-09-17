@@ -12,7 +12,7 @@
 - This repository contains independent BepInEx 5.x C# mods for Dyson Sphere Program. HarmonyLib patches game methods at runtime; `UXAssist` is the shared library used directly by `CheatEnabler` and `UniverseGenTweaks`.
 - Projects target `net472` or `netstandard2.1` with SDK-style `.csproj` files. Compile-time game references live in `AssemblyFromGame/`.
 - `DustbinPreloader` and `LabOptPreloader` are Mono.Cecil preloaders; their main mods consume the injected fields without reflection.
-- LiveStreamAssist: [project design and implementation plan](LiveStreamAssist/docs/WebSocketDesign.md).
+- LiveStreamAssist: [project design and implementation plan](LiveStreamAssist/docs/WebSocketDesign.md). The WebSocket API packages `Fleck.dll` and `Newtonsoft.Json.dll` through a project-local `ZipMod` `BeforeTargets` item; do not rely on other mods for those DLLs.
 
 ## Build
 

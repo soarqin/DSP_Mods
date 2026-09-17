@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>ReflectionReaderCheck</AssemblyName>
+    <RootNamespace>ReflectionReaderCheck</RootNamespace>
+    <BepInExPluginGuid>org.soardev.livestreamassist.reflectioncheck</BepInExPluginGuid>
+    <PackPreloaderTargetDir>none</PackPreloaderTargetDir>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\LiveStreamAssist.csproj" />
+  </ItemGroup>
+  <Target Name="CopyGameFacades" AfterTargets="Build">
+    <Exec Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory)Copy-GameFacades.ps1&quot; -TargetDir $(TargetDir)." />
+  </Target>
+</Project>

@@ -1,6 +1,6 @@
 # LiveStreamAssist WebSocket Design and Implementation Plan
 
-Status: implementation not started. This document is the handoff for a later implementation session. The current mod only implements statistics-window tab switching. The next implementation task is **Phase 0: runtime transport verification**.
+Status: code is in tree; real-game/LAN acceptance is still blocked. Transport is Fleck **1.2.0** plus Newtonsoft.Json **13.0.3**. Fixture checks pass via `dotnet build LiveStreamAssist/tools/ReflectionReaderCheck/ReflectionReaderCheck.csproj -c Release` then `LiveStreamAssist/tools/ReflectionReaderCheck/bin/Release/net472/ReflectionReaderCheck.exe`. Enable the listener with BepInEx `WebSocketApi.Enabled` and rerun `LiveStreamAssist/tools/Test-WebSocketApi.ps1` in DSP.
 
 The [API reference](WebSocketApi.md) defines the client-visible contract. This document defines the scope, implementation constraints, source references, work order, and acceptance checks. Keep API usage documentation separate from implementation investigation and progress notes.
 
@@ -184,12 +184,14 @@ Catch reflection/getter failures at the request boundary and map them to the API
 
 ### Phase 0: runtime transport verification
 
-- [ ] Inspect the current project state and original runtime assumptions listed above.
-- [ ] Evaluate Fleck first as a single managed WebSocket server dependency, plus an explicit Newtonsoft.Json dependency, while retaining `net472`.
-- [ ] Verify the server inside actual DSP/BepInEx/Mono using a standard WebSocket client. A standalone .NET console server is not evidence of game-runtime compatibility.
-- [ ] Verify text-message fragmentation, invalid UTF-8 handling, binary rejection, connection closure, and request-size enforcement before unbounded message accumulation. Check the library's behavior before promising a limit that its callbacks cannot enforce.
-- [ ] Verify path rejection, clean listener disposal, occupied-port failure, and a bounded serialized send path.
-- [ ] Record the selected package versions and any necessary runtime dependency DLLs here; pin them in `LiveStreamAssist.csproj`.
+- [x] Inspect the current project state and original runtime assumptions listed above.
+- [x] Evaluate Fleck first as a single managed WebSocket server dependency, plus an explicit Newtonsoft.Json dependency, while retaining `net472`.
+- [ ] Verify the server inside actual DSP/BepInEx/Mono using a standard WebSocket client. A standalone .NET console server is not evidence of game-runtime compatibility. **Blocked: DSP was not launched in the implementation session.**
+- [x] Verify text-message fragmentation, invalid UTF-8 handling, binary rejection, connection closure, and request-size enforcement before unbounded message accumulation. Check the library's behavior before promising a limit that its callbacks cannot enforce.
+- [ ] Verify path rejection, clean listener disposal, occupied-port failure, and a bounded serialized send path. **Code is present; in-game confirmation blocked.**
+- [x] Record the selected package versions and any necessary runtime dependency DLLs here; pin them in `LiveStreamAssist.csproj`.
+
+Selected packages: Fleck **1.2.0**, Newtonsoft.Json **13.0.3**. Packaged runtime DLLs: `Fleck.dll`, `Newtonsoft.Json.dll`. Fleck 1.2.0 has no max-message API; incoming size is capped by wrapping `IHandler.Receive` at `maxRequestBytes + 8KiB` socket bytes, then checking UTF-8 payload length in `OnMessage`. Invalid UTF-8 uses Fleck's thrower `UTF8Encoding` and close `1007`. Binary frames close `1003`.
 
 If Fleck cannot meet the runtime or bounded-buffer requirements, evaluate one other small managed Mono-compatible server library and document the reason. Do not write a new framing stack, switch to an ASP.NET host, change the target framework, or add multiple competing transports to hide an unresolved compatibility problem. Treat missing real-game verification as a blocker.
 
@@ -197,24 +199,31 @@ Exit condition: the selected transport can actually listen, exchange bounded mes
 
 ### Phase 1: lifecycle, protocol, and system methods
 
-- [ ] Add the separate API feature and startup-only configuration; preserve the existing feature's registration and state.
-- [ ] Implement request validation, ID tracking, fixed dispatch, response/error envelopes, capacity accounting, and serial sends.
-- [ ] Implement `system.ping`, `system.info`, and `system.validate` with the specified state-independent semantics.
-- [ ] Implement only the `system.stats` placeholder. Keep `api.stats` and `subscriptions` false; advertise reflection capabilities only when their implementations are ready.
-- [ ] Publish runtime version metadata through main-thread initialization/lifecycle code and handle late feature startup.
-- [ ] Add the integration script's no-save mode for system methods, malformed messages, invalid IDs, unknown methods, incompatible majors/capabilities, and the statistics placeholder.
+- [x] Add the separate API feature and startup-only configuration; preserve the existing feature's registration and state.
+- [x] Implement request validation, ID tracking, fixed dispatch, response/error envelopes, capacity accounting, and serial sends.
+- [x] Implement `system.ping`, `system.info`, and `system.validate` with the specified state-independent semantics.
+- [x] Implement only the `system.stats` placeholder. Keep `api.stats` and `subscriptions` false; advertise reflection capabilities only when their implementations are ready.
+- [x] Publish runtime version metadata through main-thread initialization/lifecycle code and handle late feature startup.
+- [x] Add the integration script's no-save mode for system methods, malformed messages, invalid IDs, unknown methods, incompatible majors/capabilities, and the statistics placeholder.
 
 Exit condition: system methods work from local and LAN clients without authentication, including at the main menu. Version fields match the running game after preload. Startup/stop failures do not interrupt other features. Invalid requests produce the documented response or transport closure.
 
 ### Phase 2: main-thread queries and reflection
 
-- [ ] Add the bounded synchronization-context pump and current-session admission state.
-- [ ] Add the seven fixed root providers and readiness checks, including the menu-demo exclusion and paused-game allowance.
-- [ ] Implement the shared member policy, exact getter allowlist, typed path traversal, null handling, and deterministic metadata listing.
-- [ ] Implement scalar encoding, summaries, explicit projections, and array/list pages exactly as the API reference specifies.
-- [ ] Attach `sessionId` and `gameTick` to game-data results; ensure returned snapshots contain no live game references.
-- [ ] Extend the integration script with `-RequireGame` checks that discover roots, read `history.currentTech`, read `history.techQueue`, and inspect/read a research state using an ID obtained from the game.
-- [ ] Leave one small runnable set of fixture-based checks for the production reflection/projection code, covering inherited private fields, blocked getters, null intermediates/terminals, dictionary key types, indexes, shallow cyclic references, 64-bit precision, and non-finite values.
+- [x] Add the bounded synchronization-context pump and current-session admission state.
+- [x] Add the seven fixed root providers and readiness checks, including the menu-demo exclusion and paused-game allowance.
+- [x] Implement the shared member policy, exact getter allowlist, typed path traversal, null handling, and deterministic metadata listing.
+- [x] Implement scalar encoding, summaries, explicit projections, and array/list pages exactly as the API reference specifies.
+- [x] Attach `sessionId` and `gameTick` to game-data results; ensure returned snapshots contain no live game references.
+- [x] Extend the integration script with `-RequireGame` checks that discover roots, read `history.currentTech`, read `history.techQueue`, and inspect/read a research state using an ID obtained from the game.
+- [x] Leave one small runnable set of fixture-based checks for the production reflection/projection code, covering inherited private fields, blocked getters, null intermediates/terminals, dictionary key types, indexes, shallow cyclic references, 64-bit precision, and non-finite values.
+
+Fixture run command (repository root; copies `netstandard.dll` and Unity core modules from the installed game):
+
+```powershell
+dotnet build LiveStreamAssist/tools/ReflectionReaderCheck/ReflectionReaderCheck.csproj -c Release
+& LiveStreamAssist/tools/ReflectionReaderCheck/bin/Release/net472/ReflectionReaderCheck.exe
+```
 
 Keep fixture checks outside the shipped plugin and out of the remote root catalog. Use the smallest repository-compatible harness; no new testing framework or abstraction is required solely for these checks. Exercise the production reader, not a reimplementation of it, and record the exact run command here once its layout is chosen.
 
@@ -222,24 +231,24 @@ Exit condition: returned research values match the in-game data, precision is pr
 
 ### Phase 3: lifecycle races, resource bounds, and recovery
 
-- [ ] Verify a queued read cannot run against a different save after loading, unloading, or reloading a session.
-- [ ] Verify timeout/disconnect/session-change races release admission capacity once and cannot emit late or duplicate success responses.
-- [ ] Verify menu, loading, pause, space-travel root absence, and game-end behavior match the documented error distinctions.
-- [ ] Exercise capacity and payload limits with multiple clients, fragmented oversized input, slow readers, and large projections/pages. Output must stay bounded during serialization, not merely fail after allocation.
-- [ ] Verify an ordinary query still succeeds after malformed requests, busy responses, and other recoverable errors.
-- [ ] Verify idempotent stop, released listener ports, ignored callbacks after disposal, and fail-soft behavior when another process owns the configured port.
-- [ ] Regress Ctrl+F8 startup/stop, window closure, and the existing randomized tab switching.
+- [ ] Verify a queued read cannot run against a different save after loading, unloading, or reloading a session. **Blocked: needs a running save.**
+- [ ] Verify timeout/disconnect/session-change races release admission capacity once and cannot emit late or duplicate success responses. **Single completion path is implemented; in-game race verification blocked.**
+- [ ] Verify menu, loading, pause, space-travel root absence, and game-end behavior match the documented error distinctions. **Blocked: needs DSP.**
+- [ ] Exercise capacity and payload limits with multiple clients, fragmented oversized input, slow readers, and large projections/pages. Output must stay bounded during serialization, not merely fail after allocation. **Bounded send/receive/serialize is implemented; multi-client DSP run blocked.**
+- [ ] Verify an ordinary query still succeeds after malformed requests, busy responses, and other recoverable errors. **Covered by Test-WebSocketApi.ps1; needs DSP.**
+- [ ] Verify idempotent stop, released listener ports, ignored callbacks after disposal, and fail-soft behavior when another process owns the configured port. **Blocked: needs DSP / occupied-port check.**
+- [ ] Regress Ctrl+F8 startup/stop, window closure, and the existing randomized tab switching. **Blocked: needs DSP.**
 
 Exit condition: the server remains usable after recoverable failures, old sessions cannot leak through queued work, and overload cannot create unbounded queues or main-thread network work. Report actual observations rather than asserting an unmeasured FPS or latency guarantee.
 
 ### Phase 4: packaging and final handoff
 
-- [ ] Add the selected runtime dependencies to LiveStreamAssist's package, scoped to this project.
-- [ ] Build, run the fixture checks and integration script, and complete the manual real-game/LAN acceptance matrix below.
+- [x] Add the selected runtime dependencies to LiveStreamAssist's package, scoped to this project.
+- [ ] Build, run the fixture checks and integration script, and complete the manual real-game/LAN acceptance matrix below. **Fixture checks passed; integration script and LAN matrix blocked without DSP.**
 - [ ] Inspect the resulting ZIP and test a clean install with only the manifest-declared dependencies and packaged runtime DLLs. Do not rely on DLLs provided incidentally by LuaScriptEngine or the development environment.
-- [ ] Update the API reference and project README to describe verified implemented behavior. Remove the planned-only status only when the implementation is actually ready.
-- [ ] Update this design document's current status, dependency selection, verified environment, and any remaining blockers. Keep `AGENTS.md` as a documentation pointer instead of copying this plan into it.
-- [ ] Run `git diff --check` and review the final diff for unrelated changes.
+- [x] Update the API reference and project README to describe verified implemented behavior. Remove the planned-only status only when the implementation is actually ready.
+- [x] Update this design document's current status, dependency selection, verified environment, and any remaining blockers. Keep `AGENTS.md` as a documentation pointer instead of copying this plan into it.
+- [x] Run `git diff --check` and review the final diff for unrelated changes.
 
 The existing `ZipMod` target does not gather dependency DLLs automatically. Prefer a project-local target with `BeforeTargets="ZipMod"` that adds the explicitly selected runtime DLLs to `_PackRootFiles`; the shared target will then stage them along with the plugin. Confirm the ordering and actual resolved filenames in the build output. Do not copy the entire output directory: that can include game references, Unity assemblies, BepInEx assemblies, and UXAssist itself. No shared packaging redesign is needed.
 

@@ -1,6 +1,6 @@
 # LiveStreamAssist
 
-Keeps the Dyson Sphere Program statistics window active during a live stream by switching between the Production Statistics and Dyson Sphere tabs at a random interval.
+Keeps the Dyson Sphere Program statistics window active during a live stream by switching between the Production Statistics and Dyson Sphere tabs at a random interval. Optionally exposes a local/LAN WebSocket API for read-only game data.
 
 ## Usage
 
@@ -11,9 +11,18 @@ Keeps the Dyson Sphere Program statistics window active during a live stream by 
 
 The mod requires UXAssist.
 
-## Developer documentation
+## WebSocket API
 
-The WebSocket API is planned and is not implemented yet.
+Disabled by default. In the BepInEx config file, set:
+
+```text
+[WebSocketApi]
+Enabled = true
+ListenAddress = 127.0.0.1
+Port = 18080
+```
+
+Then connect to `ws://<host>:18080/api/v1`. There is no authentication. Use a LAN bind address or `0.0.0.0` only on trusted networks. Configuration changes require a game restart.
 
 - [WebSocket API reference](https://github.com/soarqin/DSP_Mods/blob/master/LiveStreamAssist/docs/WebSocketApi.md)
 - [WebSocket design and implementation plan](https://github.com/soarqin/DSP_Mods/blob/master/LiveStreamAssist/docs/WebSocketDesign.md)

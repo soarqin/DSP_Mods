@@ -1,6 +1,7 @@
 using System.Reflection;
 using BepInEx;
 using CommonAPI.Systems;
+using LiveStreamAssist.Api;
 using UnityEngine;
 using UXAssist.Common;
 using UXAssist.Common.ModFeatures;
@@ -19,6 +20,7 @@ public class LiveStreamAssist : BaseUnityPlugin
     {
         I18N.Init();
         I18N.Add("KEYToggleLiveStreamAssist", "[LSA] Toggle live-stream statistics assist", "[LSA] \u5207\u6362\u76f4\u64ad\u7edf\u8ba1\u8f85\u52a9");
+        WebSocketApiFeature.BindConfig(Config);
         ModFeatureRegistry.Discover(Assembly.GetExecutingAssembly());
         I18N.Apply();
     }

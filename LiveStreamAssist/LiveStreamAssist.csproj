@@ -9,5 +9,15 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\UXAssist\UXAssist.csproj" />
+    <PackageReference Include="Fleck" Version="1.2.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <Compile Remove="tools\**" />
+    <None Include="tools\**" />
   </ItemGroup>
+  <Target Name="AddWebSocketRuntimeDependencies" BeforeTargets="ZipMod">
+    <ItemGroup>
+      <_PackRootFiles Include="$(TargetDir)Fleck.dll" Condition="Exists('$(TargetDir)Fleck.dll')" />
+      <_PackRootFiles Include="$(TargetDir)Newtonsoft.Json.dll" Condition="Exists('$(TargetDir)Newtonsoft.Json.dll')" />
+    </ItemGroup>
+  </Target>
 </Project>
