@@ -16,8 +16,8 @@
     .fill { height: 100%; width: 0; background: #3d9cff; }
     .meta { margin-top: 8px; font-variant-numeric: tabular-nums; font-size: 14px; opacity: 0.9; }
     .status { margin-top: 8px; font-size: 13px; opacity: 0.7; }
-    input {
-      width: 100%; margin: 0 0 12px; box-sizing: border-box; padding: 6px 8px;
+    input, select {
+      width: 100%; margin: 0 0 8px; box-sizing: border-box; padding: 6px 8px;
       border: 0; border-radius: 6px; background: #1d2a3c; color: inherit;
     }
   </style>
@@ -25,97 +25,93 @@
 <body>
   <div class="card">
     <input id="url" value="ws://127.0.0.1:18080/api/v1">
+    <select id="lang">
+      <option value="1033">English</option>
+      <option value="2052">简体中文</option>
+      <option value="1036">Français</option>
+      <option value="1031">Deutsch</option>
+      <option value="1041">日本語</option>
+    </select>
     <div class="label">Current research</div>
     <div class="title" id="title">Connecting…</div>
     <div class="bar"><div class="fill" id="fill"></div></div>
     <div class="meta" id="meta"></div>
     <div class="status" id="status"></div>
   </div>
+  <script src="../js/generated/dsp-text.js"></script>
+  <script src="../js/livestream-assist.js"></script>
   <script>
     const qs = new URLSearchParams(location.search);
     const urlInput = document.getElementById("url");
+    const langInput = document.getElementById("lang");
     const titleEl = document.getElementById("title");
     const fillEl = document.getElementById("fill");
     const metaEl = document.getElementById("meta");
     const statusEl = document.getElementById("status");
     urlInput.value = qs.get("ws") || urlInput.value;
 
-    let ws, seq = 0, pending = new Map(), pollTimer, backoff = 500;
+    const text = LiveStreamAssist.GameText.fromGenerated({ language: qs.get("lang") || langInput.value });
+    langInput.value = String(text.lcid);
+    if (!langInput.value) { langInput.value = "1033"; text.setLanguage(1033); }
+    const client = new LiveStreamAssist.Client({
+      url: urlInput.value,
+      onStatus: function (status) { statusEl.textContent = status; }
+    });
+    const query = new LiveStreamAssist.GameQuery(client);
+    let pollTimer;
+    let pollGeneration = 0;
+    let validatedInfo = null;
 
-    function rpc(method, params) {
-      const id = "r-" + (++seq);
-      return new Promise((resolve, reject) => {
-        pending.set(id, { resolve, reject });
-        ws.send(JSON.stringify({ jsonrpc: "2.0", id, method, params: params || {} }));
-      });
-    }
+    langInput.onchange = function () { text.setLanguage(langInput.value); };
 
-    function fmt(n) {
-      try { return BigInt(n).toString(); } catch { return String(n ?? ""); }
-    }
-
-    function pct(up, need) {
-      try {
-        const n = BigInt(need || "0");
-        if (n === 0n) return 0;
-        return Number(BigInt(up || "0") * 10000n / n) / 100;
-      } catch { return 0; }
-    }
-
-    async function tick() {
-      const tech = await rpc("data.read", { root: "history", path: ["currentTech"] });
-      if (tech.error) throw new Error(tech.error.data && tech.error.data.kind || tech.error.message);
-      const id = tech.result.value;
-      if (!id) {
+    async function tick(generation) {
+      const research = await query.getCurrentResearch();
+      if (generation !== pollGeneration) return;
+      if (!research.active) {
         titleEl.textContent = "No active research";
         fillEl.style.width = "0%";
         metaEl.textContent = "";
-        statusEl.textContent = "session " + (tech.result.sessionId || "");
         return;
       }
-      const state = await rpc("data.read", {
-        root: "history",
-        path: ["techStates", { key: id }],
-        select: ["curLevel", "hashUploaded", "hashNeeded"]
-      });
-      if (state.error) throw new Error(state.error.data && state.error.data.kind || state.error.message);
-      const v = state.result.value;
-      const p = pct(v.hashUploaded, v.hashNeeded);
-      titleEl.textContent = "Tech " + id + "  Lv " + v.curLevel;
-      fillEl.style.width = p.toFixed(2) + "%";
-      metaEl.textContent = fmt(v.hashUploaded) + " / " + fmt(v.hashNeeded) + "  (" + p.toFixed(1) + "%)";
-      statusEl.textContent = "session " + (state.result.sessionId || "");
+      const percentage = research.progressPercent || 0;
+      titleEl.textContent = text.techDisplayName(research.techId, research.curLevel) || ("Tech " + research.techId);
+      fillEl.style.width = Math.max(0, Math.min(100, percentage)).toFixed(2) + "%";
+      metaEl.textContent = text.formatKmg(research.hashUploaded) + " / " + text.formatKmg(research.hashNeeded) + "  (" + percentage.toFixed(1) + "%)";
     }
 
-    function connect() {
-      statusEl.textContent = "Connecting";
-      ws = new WebSocket(urlInput.value);
-      ws.onopen = () => {
-        backoff = 500;
-        statusEl.textContent = "Connected";
-        pollTimer = setInterval(() => { tick().catch(err => { statusEl.textContent = err.message; }); }, 1000);
-        tick().catch(err => { statusEl.textContent = err.message; });
-      };
-      ws.onmessage = ev => {
-        const msg = JSON.parse(ev.data);
-        const wait = pending.get(msg.id);
-        if (!wait) return;
-        pending.delete(msg.id);
-        wait.resolve(msg);
-      };
-      ws.onclose = () => {
-        clearInterval(pollTimer);
-        pending.forEach(p => p.reject(new Error("disconnected")));
-        pending.clear();
-        titleEl.textContent = "Disconnected";
-        statusEl.textContent = "Retrying";
-        setTimeout(connect, backoff);
-        backoff = Math.min(backoff * 2, 8000);
-      };
+    async function poll(generation) {
+      if (generation !== pollGeneration) return;
+      try {
+        await client.connect(urlInput.value);
+        if (generation !== pollGeneration) return;
+        if (!client.infoSnapshot || validatedInfo !== client.infoSnapshot) {
+          const info = await client.systemInfo();
+          if (generation !== pollGeneration) return;
+          await client.validate({ apiMajor: 1, requiredCapabilities: ["reflection.read"] });
+          if (generation !== pollGeneration) return;
+          validatedInfo = info;
+        }
+        await tick(generation);
+        if (generation === pollGeneration) statusEl.textContent = "connected";
+      } catch (error) {
+        if (generation === pollGeneration) statusEl.textContent = error.kind || error.message;
+      } finally {
+        if (generation === pollGeneration) pollTimer = setTimeout(function () { poll(generation); }, 1000);
+      }
     }
 
-    urlInput.onchange = () => { if (ws) ws.close(); };
-    connect();
+    function stop() {
+      pollGeneration += 1;
+      clearTimeout(pollTimer);
+      client.close();
+      validatedInfo = null;
+    }
+
+    function start() { stop(); poll(pollGeneration); }
+
+    urlInput.onchange = start;
+    addEventListener("pagehide", stop);
+    start();
   </script>
 </body>
 </html>

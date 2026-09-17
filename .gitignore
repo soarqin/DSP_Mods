@@ -26,3 +26,7 @@ build/
 /.worktrees/
 /.pi*/
 /.opencode/
+
+# Python
+__pycache__/
+*.pyc

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>LiveStreamAssist stats</title>
+  <style>
+    :root { color-scheme: dark; }
+    html, body { margin: 0; background: transparent; font: 16px/1.4 system-ui, sans-serif; color: #f2f5f8; }
+    .card {
+      min-width: 360px; max-width: 520px; padding: 16px 18px;
+      background: rgba(12, 18, 28, 0.72); border-radius: 10px;
+    }
+    .row { display: flex; justify-content: space-between; gap: 12px; margin: 6px 0; font-variant-numeric: tabular-nums; }
+    .label { opacity: 0.65; }
+    h1 { margin: 0 0 8px; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.7; font-weight: 600; }
+    h2 { margin: 14px 0 6px; font-size: 18px; font-weight: 650; }
+    input, select {
+      width: 100%; margin: 0 0 8px; box-sizing: border-box; padding: 6px 8px;
+      border: 0; border-radius: 6px; background: #1d2a3c; color: inherit;
+    }
+    .status { margin-top: 10px; font-size: 13px; opacity: 0.7; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <input id="url" value="ws://127.0.0.1:18080/api/v1">
+    <select id="lang">
+      <option value="1033">English</option>
+      <option value="2052">简体中文</option>
+      <option value="1036">Français</option>
+      <option value="1031">Deutsch</option>
+      <option value="1041">日本語</option>
+    </select>
+    <input id="itemId" value="1101" title="Item ID">
+    <h1>Item</h1>
+    <h2 id="itemName">—</h2>
+    <div class="row"><span class="label">Production / min</span><span id="prod">—</span></div>
+    <div class="row"><span class="label">Theoretical / min</span><span id="prodRef">—</span></div>
+    <div class="row"><span class="label">Consumption / min</span><span id="cons">—</span></div>
+    <div class="row"><span class="label">Theoretical / min</span><span id="consRef">—</span></div>
+    <h1>Research</h1>
+    <h2 id="techName">—</h2>
+    <div class="row"><span class="label">Progress</span><span id="techProg">—</span></div>
+    <h1>Dyson sphere</h1>
+    <div class="row"><span class="label">Generation</span><span id="dyson">—</span></div>
+    <div class="status" id="status">Connecting</div>
+  </div>
+  <script src="../js/generated/dsp-text.js"></script>
+  <script src="../js/livestream-assist.js"></script>
+  <script>
+    const qs = new URLSearchParams(location.search);
+    const urlInput = document.getElementById("url");
+    const langInput = document.getElementById("lang");
+    const itemInput = document.getElementById("itemId");
+    const statusEl = document.getElementById("status");
+    urlInput.value = qs.get("ws") || urlInput.value;
+    itemInput.value = qs.get("item") || itemInput.value;
+
+    const text = LiveStreamAssist.GameText.fromGenerated({ language: qs.get("lang") || langInput.value });
+    langInput.value = String(text.lcid);
+    if (!langInput.value) { langInput.value = "1033"; text.setLanguage(1033); }
+    const client = new LiveStreamAssist.Client({
+      url: urlInput.value,
+      onStatus: function (status) { statusEl.textContent = status; }
+    });
+    const query = new LiveStreamAssist.GameQuery(client);
+    let pollTimer;
+    let pollGeneration = 0;
+    let validatedInfo = null;
+
+    langInput.onchange = function () { text.setLanguage(langInput.value); };
+
+    async function tick(generation) {
+      const itemId = parseInt(itemInput.value, 10) || 1101;
+      const results = await Promise.allSettled([
+        query.getItemRates(itemId),
+        query.getCurrentResearch(),
+        query.getDysonPower()
+      ]);
+      if (generation !== pollGeneration) return;
+      const failed = results.find(function (result) { return result.status === "rejected"; });
+      if (failed) throw failed.reason;
+      const [rates, research, dyson] = results.map(function (result) { return result.value; });
+      document.getElementById("itemName").textContent = text.itemName(itemId) || ("Item " + itemId);
+      document.getElementById("prod").textContent = text.formatRate(rates.production);
+      document.getElementById("prodRef").textContent = text.formatRate(rates.theoreticalProduction);
+      document.getElementById("cons").textContent = text.formatRate(rates.consumption);
+      document.getElementById("consRef").textContent = text.formatRate(rates.theoreticalConsumption);
+      if (!research.active) {
+        document.getElementById("techName").textContent = "No active research";
+        document.getElementById("techProg").textContent = "";
+      } else {
+        document.getElementById("techName").textContent = text.techDisplayName(research.techId, research.curLevel) || ("Tech " + research.techId);
+        document.getElementById("techProg").textContent = (research.progressPercent || 0).toFixed(1) + "%";
+      }
+      document.getElementById("dyson").textContent = text.formatPower(dyson.watts);
+    }
+
+    async function poll(generation) {
+      if (generation !== pollGeneration) return;
+      try {
+        await client.connect(urlInput.value);
+        if (generation !== pollGeneration) return;
+        if (!client.infoSnapshot || validatedInfo !== client.infoSnapshot) {
+          const info = await client.systemInfo();
+          if (generation !== pollGeneration) return;
+          await client.validate({ apiMajor: 1, requiredCapabilities: ["reflection.read"] });
+          if (generation !== pollGeneration) return;
+          validatedInfo = info;
+        }
+        await tick(generation);
+        if (generation === pollGeneration) statusEl.textContent = "connected";
+      } catch (error) {
+        if (generation === pollGeneration) statusEl.textContent = error.kind || error.message;
+      } finally {
+        if (generation === pollGeneration) pollTimer = setTimeout(function () { poll(generation); }, 2000);
+      }
+    }
+
+    function stop() {
+      pollGeneration += 1;
+      clearTimeout(pollTimer);
+      client.close();
+      validatedInfo = null;
+    }
+
+    function start() { stop(); poll(pollGeneration); }
+
+    urlInput.onchange = start;
+    addEventListener("pagehide", stop);
+    start();
+  </script>
+</body>
+</html>
