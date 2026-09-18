@@ -35,6 +35,7 @@
 - `PatchImpl<T>.Enable(true)` must remain fail-soft: log, unpatch, and leave the patch unset if Harmony application fails so config delegate chains remain consistent.
 - Overlay UI state must converge from actual game state on periodic updates, not depend only on one-shot event or patch callbacks. Cloned controls must reset runtime state while retaining source styles; use `UXAssist.UI.Util.GetPreferredWidth` for dynamic text and `ResetButton` for cloned buttons.
 - LiveStreamAssist browser overlays must use single-flight polling and discard stale work after connection changes. Compound queries must reject mixed session IDs; cache only positive production indices so newly tracked items remain discoverable.
+- LiveStreamAssist production reads must schedule the native extra-info calculator for queried factories independently of the statistics UI. Deduplicate and throttle refreshes, let active native batches finish, and clear pending factory indices and deadlines at session boundaries.
 
 ## Automation Architecture
 

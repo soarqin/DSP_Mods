@@ -80,7 +80,7 @@ Compound queries reject with `SESSION_CHANGED` instead of combining reads from d
 
 - `window`: `1min` (default), `10min`, `1hour`, `10hour`, `100hour`, `total`. The default 1-minute window matches the statistics panel's shortest rate view: `ProductStat.total[1]` production and `total[8]` consumption, already items/min.
 - `scope`: omitted/`'cluster'` sums every factory; `'localPlanet'` uses `localPlanet.factoryIndex`; `{ factoryIndex }` reads one factory.
-- Result fields: `production`, `consumption`, `theoreticalProduction`, `theoreticalConsumption`. Theoretical values are `refProductSpeed` / `refConsumeSpeed`, which the game stores in items/min after the production extra-info calculator runs. They stay 0 until the statistics window refreshes that extra info (LiveStreamAssist's Ctrl+F8 assist helps keep that window open).
+- Result fields: `production`, `consumption`, `theoreticalProduction`, `theoreticalConsumption`. Theoretical values are the game's `refProductSpeed` / `refConsumeSpeed` in items/min. The server queues queried factories for the native production extra-info calculator without requiring the statistics window or Ctrl+F8 assist. Refresh requests are deduplicated and limited to once per factory every two seconds; an active calculation batch finishes before more factories are queued. Initial polls can return zero, and later polls can return the previous values until the native batch reaches that factory.
 
 Pass an array of positive integer item ids to share the factory scan; duplicates do not multiply totals. Only existing product indices are cached, so newly produced items become visible on later polls. An unbuilt local planet returns zero rates; an unavailable local planet during space travel still raises `ROOT_UNAVAILABLE`.
 

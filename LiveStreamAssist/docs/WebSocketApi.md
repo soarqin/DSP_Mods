@@ -291,6 +291,8 @@ Use `data.describe` to discover the permitted surface. If inheritance hides a na
 
 Reflected values use DSP's native units and member names. The API does not localize member names, convert values to UI display units, or calculate aggregate gameplay statistics.
 
+Successful reads beneath `statistics.production.factoryStatPool[index]` (also reachable through `game.statistics`) request a refresh of that factory's native production extra info. The game calculates these derived caches in its normal chart ticks; no statistics window needs to be open. Requests are deduplicated and throttled to once per factory every two seconds, and work requested during an active batch is queued on a later production read after the batch finishes. Reads still return the current cached values: `refProductSpeed` and `refConsumeSpeed` can initially be zero or remain stale until that factory is processed. Descriptions do not request a refresh.
+
 ### `data.describe`
 
 Parameters: `root` and optional `path` only.

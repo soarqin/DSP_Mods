@@ -27,6 +27,7 @@ internal static class WebSocketApiFeature
     };
 
     static readonly object Gate = new object();
+    static readonly ProductionExtraInfoRefresh ProductionRefresh = new ProductionExtraInfoRefresh();
     static object _ownerToken;
     static WebSocketApiServer _server;
     static MainThreadDispatcher _dispatcher;
@@ -48,6 +49,7 @@ internal static class WebSocketApiFeature
     public static void Init()
     {
         _reader = new ReflectionReader();
+        ProductionRefresh.Reset();
         ReflectionReader.Warn = msg => LiveStreamAssist.Logger.LogWarning(msg);
         _version = GameVersionSnapshot.Empty;
         _session = new SessionSnapshot(0, null);
@@ -144,6 +146,7 @@ internal static class WebSocketApiFeature
         try { server?.Stop(); }
         catch (Exception ex) { LiveStreamAssist.Logger.LogWarning($"WebSocket API server stop failed: {ex.Message}"); }
         _reader?.ClearCache();
+        ProductionRefresh.Reset();
         ReflectionReader.Warn = null;
     }
 
@@ -182,6 +185,7 @@ internal static class WebSocketApiFeature
 
     static void BeginSession()
     {
+        ProductionRefresh.Reset();
         MainThreadDispatcher dispatcher;
         int oldGeneration;
         lock (Gate)
@@ -196,6 +200,7 @@ internal static class WebSocketApiFeature
 
     static void EndSession()
     {
+        ProductionRefresh.Reset();
         MainThreadDispatcher dispatcher;
         lock (Gate)
         {
@@ -262,6 +267,17 @@ internal static class WebSocketApiFeature
             return walked.Error;
         if (_session.Generation != work.Generation)
             return ApiErrors.SessionChanged();
+        if (call.Method == DataMethod.Read)
+        {
+            var production = GameMain.statistics?.production;
+            var calculator = production?.extraInfoCalculator;
+            if (calculator != null)
+            {
+                // Native GameTickCharts refreshes derived statistics without opening the statistics UI.
+                ProductionRefresh.OnRead(call, GameMain.data.factoryCount, calculator.calculating,
+                    _server.NowMs, calculator.AddFactory);
+            }
+        }
         var tick = GameMain.gameTick.ToString(CultureInfo.InvariantCulture);
         if (call.Method == DataMethod.Describe)
             return BuildDescribe(walked, session.SessionId, tick);

@@ -13,7 +13,7 @@ using Newtonsoft.Json.Linq;
 
 namespace WebSocketTransportCheck;
 
-static class ProductionChecks
+static partial class ProductionChecks
 {
     static int _failed;
     [ThreadStatic] static bool _producing;
@@ -25,6 +25,7 @@ static class ProductionChecks
         await QueueOverflowReleasesAdmission();
         await StopBeforeStart();
         NullParameters();
+        ProductionStatisticsRefresh();
         await ActiveSendRetainsAdmission();
         await SendDeadlineIncludesQueueTime();
         await ExecutingWorkTimesOut();
