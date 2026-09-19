@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>直播数据面板</title>
+  <style>
+    :root { color-scheme: dark; }
+    html, body { margin: 0; background: transparent; color: #eef3f8; font: 15px/1.5 "Segoe UI", "Microsoft YaHei", system-ui, sans-serif; }
+    [hidden] { display: none; }
+    .panel { display: flex; flex-direction: column; gap: 10px; width: max-content; min-width: 320px; max-width: 640px; }
+    .card { padding: 10px 14px 12px; background: rgba(9, 14, 22, 0.78); border: 1px solid rgba(255, 255, 255, 0.07); border-radius: 10px; box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25); }
+    h1 { display: flex; align-items: baseline; justify-content: space-between; margin: 0 0 8px; font-size: 12px; font-weight: 600; letter-spacing: 0.14em; color: #9db1c5; }
+    h1 .unit { font-size: 11px; font-weight: 500; letter-spacing: normal; color: #6d8296; }
+    table { border-collapse: collapse; }
+    td { padding: 3px 0 3px 14px; white-space: nowrap; }
+    td:first-child { padding-left: 0; }
+    tr.material > td { border-top: 1px solid rgba(255, 255, 255, 0.06); }
+    tr:first-child > td { border-top: 0; }
+    .itemCell { padding-right: 10px; }
+    .item { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+    .icon { width: 32px; height: 32px; border-radius: 5px; flex: none; }
+    .num { text-align: right; font-variant-numeric: tabular-nums; }
+    .lbl { margin-right: 6px; font-size: 12px; color: #7f93a6; }
+    .val { font-weight: 600; }
+    .val.prod { color: #71de8d; }
+    .val.cons { color: #ff8a70; }
+    .val.ref { color: #aebfce; font-weight: 500; }
+    .tech { display: flex; align-items: center; gap: 8px; padding: 3px 0; }
+    .tech .name { flex: 1; }
+    .tech .level { font-weight: 600; font-variant-numeric: tabular-nums; color: #bfe3ff; }
+    .tech .level.done { color: #71de8d; }
+    .research { display: flex; align-items: center; gap: 10px; }
+    .research .name { font-size: 17px; font-weight: 650; }
+    .progressRow { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+    .bar { flex: 1; height: 8px; overflow: hidden; border-radius: 4px; background: rgba(255, 255, 255, 0.12); }
+    .bar > div { height: 100%; width: 0; border-radius: 4px; background: #58b7d8; }
+    .pct { min-width: 56px; text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+    .hash { margin-top: 4px; font-size: 12px; color: #7f93a6; font-variant-numeric: tabular-nums; }
+    .bigValue { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .status { margin-top: 8px; font-size: 12px; color: #7f93a6; }
+    .status.error { color: #ff8a70; }
+  </style>
+</head>
+<body>
+  <div class="panel" id="panel"></div>
+  <div class="status" id="status">连接中…</div>
+  <script src="../js/generated/dsp-text.js"></script>
+  <script src="../js/generated/dsp-icons.js"></script>
+  <script src="../js/livestream-assist.js"></script>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const statusEl = document.getElementById("status");
+    const panel = document.getElementById("panel");
+    const POLL_INTERVAL = 2000;
+    const WINDOW_LABELS = { "1min": "每分钟", "10min": "10分钟", "1hour": "1小时", "10hour": "10小时", "100hour": "100小时", total: "累计" };
+    const STATUS_TEXT = { connecting: "连接中…", connected: "已连接", disconnected: "已断开" };
+
+    let pollTimer;
+    let pollGeneration = 0;
+    let validatedInfo = null;
+
+    function el(tag, className, parent) {
+      const element = document.createElement(tag);
+      if (className) element.className = className;
+      if (parent) parent.appendChild(element);
+      return element;
+    }
+
+    function setIcon(img, url) {
+      img.src = url || "";
+      img.hidden = !url;
+    }
+
+    function setStatus(message, isError) {
+      statusEl.textContent = message;
+      statusEl.classList.toggle("error", !!isError);
+    }
+
+    function parseIdList(raw, label) {
+      if (!raw) return [];
+      const ids = [];
+      for (const token of raw.split(/[,，\s]+/)) {
+        if (!token) continue;
+        const id = Number(token);
+        if (!Number.isInteger(id) || id <= 0) throw new Error("无效的" + label + "ID: " + token);
+        ids.push(id);
+      }
+      return Array.from(new Set(ids));
+    }
+
+    function flagEnabled(name) {
+      const value = params.get(name);
+      return value == null || value === "" || !/^(0|false)$/i.test(value);
+    }
+
+    function buildItemsSection(itemIds, windowName) {
+      const section = el("section", "card", panel);
+      const title = el("h1", "", section);
+      title.textContent = "材料生产 / 消耗";
+      const unit = el("span", "unit", title);
+      unit.textContent = WINDOW_LABELS[windowName] + (windowName === "total" ? "（个）" : "（个/分钟）");
+      const table = el("table", "", section);
+      const rows = {};
+      for (const id of itemIds) {
+        const prodRow = el("tr", "material", table);
+        const itemCell = el("td", "itemCell", prodRow);
+        itemCell.rowSpan = 2;
+        const item = el("div", "item", itemCell);
+        const img = el("img", "icon", item);
+        img.alt = "";
+        setIcon(img, icons.itemIcon(id));
+        const name = el("span", "", item);
+        name.textContent = text.itemName(id) || ("物品 " + id);
+        const refRow = el("tr", "", table);
+        function valueCell(row, label, valueClass) {
+          const cell = el("td", "num", row);
+          const lbl = el("span", "lbl", cell);
+          lbl.textContent = label;
+          const val = el("span", "val " + valueClass, cell);
+          val.textContent = "—";
+          return val;
+        }
+        rows[id] = {
+          prod: valueCell(prodRow, "生产", "prod"),
+          prodRef: valueCell(prodRow, "理论生产", "ref"),
+          cons: valueCell(refRow, "消耗", "cons"),
+          consRef: valueCell(refRow, "理论消耗", "ref")
+        };
+        rows[id].prod.id = "item-" + id + "-prod";
+        rows[id].prodRef.id = "item-" + id + "-prodRef";
+        rows[id].cons.id = "item-" + id + "-cons";
+        rows[id].consRef.id = "item-" + id + "-consRef";
+      }
+      return { rows };
+    }
+
+    function buildTechsSection(techIds) {
+      const section = el("section", "card", panel);
+      const title = el("h1", "", section);
+      title.textContent = "科技等级";
+      const rows = {};
+      for (const id of techIds) {
+        const row = el("div", "tech", section);
+        const img = el("img", "icon", row);
+        img.alt = "";
+        setIcon(img, icons.techIcon(id));
+        const name = el("span", "name", row);
+        name.textContent = text.techName(id) || ("科技 " + id);
+        const level = el("span", "level", row);
+        level.id = "tech-" + id;
+        level.textContent = "—";
+        rows[id] = level;
+      }
+      return { rows };
+    }
+
+    function buildResearchSection() {
+      const section = el("section", "card", panel);
+      const title = el("h1", "", section);
+      title.textContent = "当前研究";
+      const head = el("div", "research", section);
+      const img = el("img", "icon", head);
+      img.alt = "";
+      const name = el("span", "name", head);
+      name.id = "researchName";
+      name.textContent = "—";
+      const progressRow = el("div", "progressRow", section);
+      const bar = el("div", "bar", progressRow);
+      const fill = el("div", "", bar);
+      const pct = el("span", "pct", progressRow);
+      pct.id = "researchPct";
+      const hash = el("div", "hash", section);
+      hash.id = "researchHash";
+      return { img, name, fill, pct, hash };
+    }
+
+    function buildDysonSection() {
+      const section = el("section", "card", panel);
+      const title = el("h1", "", section);
+      title.textContent = "戴森球发电量";
+      const value = el("div", "bigValue", section);
+      value.id = "dysonWatts";
+      value.textContent = "—";
+      return { value };
+    }
+
+    const windowName = params.get("window") || "1min";
+    const hasSectionParams = params.has("items") || params.has("techs") || params.has("research") || params.has("dyson");
+    const showResearch = params.has("research") ? flagEnabled("research") : !hasSectionParams;
+    const showDyson = params.has("dyson") ? flagEnabled("dyson") : !hasSectionParams;
+    const sections = {};
+
+    let itemIds = [];
+    let techIds = [];
+    let text;
+    let icons;
+    let client;
+    let query;
+    let fatal = null;
+    try {
+      if (!Object.prototype.hasOwnProperty.call(LiveStreamAssist.RATE_WINDOWS, windowName)) {
+        throw new Error("未知的统计窗口: " + windowName);
+      }
+      itemIds = parseIdList(params.get("items"), "材料");
+      techIds = parseIdList(params.get("techs"), "科技");
+      text = LiveStreamAssist.GameText.fromGenerated({ language: params.get("lang") || "zh-CN" });
+      icons = LiveStreamAssist.GameIcons.fromGenerated();
+      if (itemIds.length) sections.items = buildItemsSection(itemIds, windowName);
+      if (techIds.length) sections.techs = buildTechsSection(techIds);
+      if (showResearch) sections.research = buildResearchSection();
+      if (showDyson) sections.dyson = buildDysonSection();
+      client = new LiveStreamAssist.Client({
+        url: params.get("ws") || "ws://127.0.0.1:18080/api/v1",
+        onStatus: function (status) { if (STATUS_TEXT[status]) setStatus(STATUS_TEXT[status]); }
+      });
+      query = new LiveStreamAssist.GameQuery(client);
+    } catch (error) {
+      fatal = error;
+      setStatus("初始化失败: " + (error.message || error), true);
+    }
+
+    function formatActual(value, perMinute) {
+      return perMinute ? text.formatRate(value) : text.formatKmg(value);
+    }
+
+    function renderRates(rates) {
+      for (const row of rates) {
+        const cells = sections.items.rows[row.itemId];
+        if (!cells) continue;
+        cells.prod.textContent = formatActual(row.production, row.perMinute);
+        cells.cons.textContent = formatActual(row.consumption, row.perMinute);
+        cells.prodRef.textContent = text.formatRate(row.theoreticalProduction);
+        cells.consRef.textContent = text.formatRate(row.theoreticalConsumption);
+      }
+    }
+
+    function renderTechs(states) {
+      for (const state of states) {
+        const level = sections.techs.rows[state.techId];
+        if (!level) continue;
+        if (state.maxLevel > 0) {
+          level.textContent = state.curLevel + "/" + state.maxLevel;
+        } else {
+          level.textContent = state.unlocked ? "已解锁" : "未解锁";
+        }
+        level.classList.toggle("done", !!state.unlocked);
+      }
+    }
+
+    function renderResearch(research) {
+      const section = sections.research;
+      if (!research || !research.active) {
+        section.img.hidden = true;
+        section.name.textContent = "暂无进行中的研究";
+        section.fill.style.width = "0%";
+        section.pct.textContent = "";
+        section.hash.textContent = "";
+        return;
+      }
+      setIcon(section.img, icons.techIcon(research.techId));
+      section.name.textContent = text.techDisplayName(research.techId, research.curLevel) || ("科技 " + research.techId);
+      const percent = Math.max(0, Math.min(100, research.progressPercent || 0));
+      section.fill.style.width = percent + "%";
+      section.pct.textContent = percent.toFixed(1) + "%";
+      section.hash.textContent = text.formatKmg(research.hashUploaded) + " / " + text.formatKmg(research.hashNeeded) + " 哈希";
+    }
+
+    function renderDyson(dyson) {
+      sections.dyson.value.textContent = text.formatPower(dyson.watts);
+    }
+
+    function errorStatus(error) {
+      if (error && error.kind === "GAME_NOT_READY") return "等待游戏就绪…";
+      if (error && error.kind === "SESSION_CHANGED") return "存档已切换，正在重新同步…";
+      return "错误: " + ((error && (error.kind || error.message)) || error);
+    }
+
+    async function tick(generation) {
+      const jobs = [];
+      if (sections.items) jobs.push(query.getItemRates(itemIds, { window: windowName }));
+      if (sections.techs) jobs.push(Promise.all(techIds.map(id => query.getTechState(id))));
+      if (sections.research) jobs.push(query.getCurrentResearch());
+      if (sections.dyson) jobs.push(query.getDysonPower());
+      const results = await Promise.allSettled(jobs);
+      if (generation !== pollGeneration) return;
+      const failed = results.find(result => result.status === "rejected");
+      if (failed) throw failed.reason;
+      let index = 0;
+      if (sections.items) renderRates(results[index++].value);
+      if (sections.techs) renderTechs(results[index++].value);
+      if (sections.research) renderResearch(results[index++].value);
+      if (sections.dyson) renderDyson(results[index++].value);
+    }
+
+    async function poll(generation) {
+      if (generation !== pollGeneration || fatal) return;
+      try {
+        await client.connect(client.url);
+        if (generation !== pollGeneration) return;
+        if (!client.infoSnapshot || validatedInfo !== client.infoSnapshot) {
+          const info = await client.systemInfo();
+          if (generation !== pollGeneration) return;
+          await client.validate({ apiMajor: 1, requiredCapabilities: ["reflection.read"] });
+          if (generation !== pollGeneration) return;
+          validatedInfo = info;
+        }
+        await tick(generation);
+        if (generation === pollGeneration) setStatus("已连接");
+      } catch (error) {
+        if (generation === pollGeneration) setStatus(errorStatus(error), true);
+      } finally {
+        if (generation === pollGeneration) pollTimer = setTimeout(function () { poll(generation); }, POLL_INTERVAL);
+      }
+    }
+
+    function stop() {
+      pollGeneration += 1;
+      clearTimeout(pollTimer);
+      if (client) client.close();
+      validatedInfo = null;
+    }
+
+    addEventListener("pagehide", stop);
+    if (!fatal) poll(pollGeneration);
+  </script>
+</body>
+</html>

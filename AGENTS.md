@@ -13,7 +13,7 @@
 - Projects target `net472` or `netstandard2.1` with SDK-style `.csproj` files. Compile-time game references live in `AssemblyFromGame/`.
 - `DustbinPreloader` and `LabOptPreloader` are Mono.Cecil preloaders; their main mods consume the injected fields without reflection.
 - LiveStreamAssist: [WebSocket architecture, transport migration, and validation](LiveStreamAssist/docs/WebSocketDesign.md). Overlay JS client: [LiveStreamAssist/js/README.md](LiveStreamAssist/js/README.md).
-- LiveStreamAssist JS clients keep `Client` as the JSON-RPC transport, `GameQuery` as the overlay data layer, and `GameText` offline from generated locale/proto dictionaries. Do not have `GameText` call the WebSocket API. Edit `js/src/` and rebuild the bundle with `python LiveStreamAssist/js/scripts/pack_js.py`; refresh `js/generated/dsp-text.js` with `python LiveStreamAssist/js/scripts/generate_text.py` from a local DSP install. Run the JS and Python checks documented in `LiveStreamAssist/js/README.md`.
+- LiveStreamAssist JS clients keep `Client` as the JSON-RPC transport, `GameQuery` as the overlay data layer, and `GameText`/`GameIcons` offline from generated locale/proto dictionaries and extracted game icons. Do not have the offline layers call the WebSocket API. Edit `js/src/` and rebuild the bundle with `python LiveStreamAssist/js/scripts/pack_js.py`; refresh `js/generated/dsp-text.js` and `js/generated/dsp-icons.js` with `python LiveStreamAssist/js/scripts/generate_text.py` and `generate_icons.py` from a local DSP install. Run the JS and Python checks documented in `LiveStreamAssist/js/README.md`.
 
 ## Build
 

@@ -10,6 +10,7 @@ parts = [
     SRC / "client.js",
     SRC / "query.js",
     SRC / "text.js",
+    SRC / "icons.js",
     SRC / "footer.js",
 ]
 text = "".join(path.read_text(encoding="utf-8") for path in parts)

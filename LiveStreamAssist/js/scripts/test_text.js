@@ -6,7 +6,7 @@ const vm = require("node:vm");
 const { ROOT, createHarness } = require("./test_helpers");
 
 test("the packed script matches its sources", () => {
-  const names = ["header", "format", "client", "query", "text", "footer"];
+  const names = ["header", "format", "client", "query", "text", "icons", "footer"];
   const sources = names.map(name => fs.readFileSync(path.join(ROOT, "src", name + ".js"), "utf8").replace(/\r\n/g, "\n")).join("");
   const packed = fs.readFileSync(path.join(ROOT, "livestream-assist.js"), "utf8").replace(/\r\n/g, "\n");
   assert.ok(packed === sources, "The bundle is stale; run python LiveStreamAssist/js/scripts/pack_js.py.");

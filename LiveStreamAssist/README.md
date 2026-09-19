@@ -30,8 +30,9 @@ Open the overlay examples in a browser or OBS Browser Source. Default URL is `ws
 
 - [examples/research-overlay.html](https://github.com/soarqin/DSP_Mods/blob/master/LiveStreamAssist/examples/research-overlay.html) shows the current research name, level, and hash progress.
 - [examples/stats-overlay.html](https://github.com/soarqin/DSP_Mods/blob/master/LiveStreamAssist/examples/stats-overlay.html) also shows item production/consumption per minute and Dyson sphere generation.
+- [examples/live-dashboard.html](https://github.com/soarqin/DSP_Mods/blob/master/LiveStreamAssist/examples/live-dashboard.html) is a Chinese live-stream panel driven by URL parameters: selected item rates in a game-style table, tech levels, current research, and Dyson sphere generation.
 
-The overlays use the [JS client](js/README.md): `Client` for JSON-RPC, `GameQuery` for those reads, and `GameText` for localized names and DSP KMG formatting. Keep the `examples/` and `js/` directories side by side when copying an overlay. `GameText` does not call the WebSocket API; regenerate `js/generated/dsp-text.js` from the repository root with `python LiveStreamAssist/js/scripts/generate_text.py`.
+The overlays use the [JS client](js/README.md): `Client` for JSON-RPC, `GameQuery` for those reads, and `GameText`/`GameIcons` for offline localized names, DSP KMG formatting, and extracted game icons. Keep the `examples/` and `js/` directories side by side when copying an overlay. The offline data never calls the WebSocket API; regenerate `js/generated/dsp-text.js` and `js/generated/dsp-icons.js` from the repository root with `python LiveStreamAssist/js/scripts/generate_text.py` and `python LiveStreamAssist/js/scripts/generate_icons.py`.
 
 - [WebSocket API reference](https://github.com/soarqin/DSP_Mods/blob/master/LiveStreamAssist/docs/WebSocketApi.md)
 - [WebSocket design and transport migration plan](https://github.com/soarqin/DSP_Mods/blob/master/LiveStreamAssist/docs/WebSocketDesign.md)

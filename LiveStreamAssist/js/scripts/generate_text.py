@@ -249,7 +249,10 @@ def find_game_root(explicit: str | None) -> Path | None:
     return None
 
 
-def extract_proto_ids(game_root: Path, unity_version: str) -> dict[str, dict[str, str]]:
+def extract_proto_map(
+    game_root: Path, unity_version: str, class_names: set[str] | None = None
+) -> dict[str, dict[int, dict]]:
+    """Extract prototype entries keyed by kind and ID, keeping the raw fields."""
     try:
         import UnityPy
         from UnityPy.helpers.TypeTreeGenerator import TypeTreeGenerator
@@ -259,6 +262,7 @@ def extract_proto_ids(game_root: Path, unity_version: str) -> dict[str, dict[str
             "Install LiveStreamAssist/js/scripts/requirements.txt."
         ) from exc
 
+    wanted = class_names or KIND_FROM_SET
     data_dir = game_root / "DSPGAME_Data"
     generator = TypeTreeGenerator(unity_version)
     generator.load_local_game(str(game_root))
@@ -269,15 +273,15 @@ def extract_proto_ids(game_root: Path, unity_version: str) -> dict[str, dict[str
             continue
         script = obj.read()
         class_name = getattr(script, "m_ClassName", "")
-        if class_name in KIND_FROM_SET:
+        if class_name in wanted:
             script_ids[obj.path_id] = class_name
 
     resources = UnityPy.load(str(data_dir / "resources.assets"))
     nodes = {
         class_name: generator.get_nodes_up("Assembly-CSharp.dll", class_name)
-        for class_name in KIND_FROM_SET
+        for class_name in wanted
     }
-    ids: dict[str, dict[str, str]] = {kind: {} for kind in KIND_FROM_SET.values()}
+    protos: dict[str, dict[int, dict]] = {KIND_FROM_SET[cn]: {} for cn in wanted}
     for obj in resources.objects:
         if getattr(obj.type, "name", str(obj.type)) != "MonoBehaviour":
             continue
@@ -293,10 +297,22 @@ def extract_proto_ids(game_root: Path, unity_version: str) -> dict[str, dict[str
         tree = obj.read_typetree(nodes[class_name], check_read=False)
         for proto in tree.get("dataArray") or []:
             proto_id = proto.get("ID")
-            name = proto.get("Name")
-            if not proto_id or not name:
+            if not proto_id:
                 continue
-            ids[kind][str(int(proto_id))] = name
+            protos[kind][int(proto_id)] = proto
+    return {kind: mapping for kind, mapping in protos.items() if mapping}
+
+
+def extract_proto_ids(game_root: Path, unity_version: str) -> dict[str, dict[str, str]]:
+    ids: dict[str, dict[str, str]] = {}
+    for kind, protos in extract_proto_map(game_root, unity_version).items():
+        mapping: dict[str, str] = {}
+        for proto_id, proto in protos.items():
+            name = proto.get("Name")
+            if not name:
+                continue
+            mapping[str(proto_id)] = name
+        ids[kind] = mapping
     return {kind: mapping for kind, mapping in ids.items() if mapping}
 
 

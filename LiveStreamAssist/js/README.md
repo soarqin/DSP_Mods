@@ -2,22 +2,25 @@
 
 Browser helper for the [WebSocket API](../docs/WebSocketApi.md). It is intended for OBS Browser Sources and local overlay pages with BigInt and `Promise.allSettled` support. There is no npm build; load the packed script as a classic `<script>`.
 
-The library has three layers:
+The library has four layers:
 
 | Layer | Script surface | WebSocket? | Role |
 | --- | --- | --- | --- |
 | Low-level client | `LiveStreamAssist.Client` | Yes | JSON-RPC 2.0 transport, method wrappers, pending-request limit |
 | High-level query | `LiveStreamAssist.GameQuery` | Yes | Common overlay reads: item rates, research, Dyson power |
 | Game text | `LiveStreamAssist.GameText` | No | ID to localized name, DSP KMG formatting |
+| Game icons | `LiveStreamAssist.GameIcons` | No | ID to icon data URL extracted from game textures |
 
-`GameText` never sends API requests. Names come from generated dictionaries converted from the game's `Locale/` files and prototype tables.
+`GameText` and `GameIcons` never send API requests. Names come from generated dictionaries converted from the game's `Locale/` files and prototype tables; icons come from textures extracted from a local install.
 
 ## Files
 
 - `livestream-assist.js` — packed browser bundle
 - `generated/dsp-text.js` — generated locale/proto dictionary
+- `generated/dsp-icons.js` — generated item/tech icon data URLs
 - `src/` — layer sources concatenated by `scripts/pack_js.py`
 - `scripts/generate_text.py` — regenerate text data from a local DSP install
+- `scripts/generate_icons.py` — regenerate icon data from a local DSP install
 
 ## Overlay usage
 
@@ -54,8 +57,21 @@ Examples:
 
 - [research-overlay.html](../examples/research-overlay.html)
 - [stats-overlay.html](../examples/stats-overlay.html)
+- [live-dashboard.html](../examples/live-dashboard.html)
 
-Keep `examples/` and `js/` side by side when copying these pages. Both examples retry failed connections, wait for each polling cycle to finish before scheduling another, and discard old results when the URL changes. Use `?lang=en`, `?lang=zh-CN`, or an LCID such as `?lang=2052`; the stats example also accepts `?item=1101`.
+Keep `examples/` and `js/` side by side when copying these pages. The examples retry failed connections, wait for each polling cycle to finish before scheduling another, and discard stale results after connection changes. Use `?lang=en`, `?lang=zh-CN`, or an LCID such as `?lang=2052`; the stats example also accepts `?item=1101`.
+
+The Chinese live-dashboard page shows only the sections selected by URL parameters and defaults to research plus Dyson power when none are given:
+
+```text
+?items=1101,1203&techs=1001,1104&research=1&dyson=1&window=1min
+```
+
+- `items` renders the game-style rate table: each material has two rows (production with its theoretical value, then consumption with its theoretical value) sharing one icon and name cell.
+- `techs` renders tech levels: `cur/max` for repeatable techs, 已解锁/未解锁 for one-time techs.
+- `research` renders the current tech with a progress bar and hash counters.
+- `dyson` renders total Dyson sphere power generation.
+- `window` selects the rate window (`1min` default, `10min`, `1hour`, `10hour`, `100hour`, `total`).
 
 ## Low-level client
 
@@ -102,12 +118,20 @@ Load `generated/dsp-text.js` before the library, then `GameText.fromGenerated({ 
 - `techDisplayName(id, curLevel)` matches `TechState.currentTechString`: name, or name + `杠等级` + level
 - `formatKmg`, `formatPower`, `formatEnergy` match `StringBuilderUtility.WriteKMG` / `WriteKMGPower` / `WriteKMGEnergy`: values below 10000 stay raw, then k/M/G/T/P/E with three leading digits. Decimal separators follow the selected language (`小数点`).
 
-## Regenerating text data
+## Game icons
+
+Load `generated/dsp-icons.js` before the library, then `GameIcons.fromGenerated()`.
+
+- `itemIcon(id)`, `techIcon(id)`, and `icon(kind, id)` return PNG data URLs extracted from the game's `Icons/ItemRecipe` and `Icons/Tech` textures, or `null` for unknown IDs.
+- The data file is around 3.5 MB because it embeds every item and tech icon; pages should keep referencing it from disk like the other generated data.
+
+## Regenerating text and icon data
 
 Requires a local DSP install plus `pip install -r LiveStreamAssist/js/scripts/requirements.txt`.
 
 ```text
 python LiveStreamAssist/js/scripts/generate_text.py --game-root "<DSP install>"
+python LiveStreamAssist/js/scripts/generate_icons.py --game-root "<DSP install>"
 python LiveStreamAssist/js/scripts/pack_js.py
 ```
 
@@ -119,7 +143,7 @@ Run from the repository root. JavaScript checks use Node.js 20 or later and requ
 
 ```text
 python LiveStreamAssist/js/scripts/pack_js.py
-node --test LiveStreamAssist/js/scripts/test_client.js LiveStreamAssist/js/scripts/test_query.js LiveStreamAssist/js/scripts/test_text.js LiveStreamAssist/js/scripts/test_overlays.js
+node --test LiveStreamAssist/js/scripts/test_client.js LiveStreamAssist/js/scripts/test_query.js LiveStreamAssist/js/scripts/test_text.js LiveStreamAssist/js/scripts/test_overlays.js LiveStreamAssist/js/scripts/test_dashboard.js
 python LiveStreamAssist/js/scripts/test_text.py
 ```
 
