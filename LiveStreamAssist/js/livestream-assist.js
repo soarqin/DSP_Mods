@@ -516,6 +516,19 @@
     });
   };
 
+  GameQuery.prototype.getClusterString = function () {
+    var self = this;
+    var context = {};
+    return this._read({ root: "game", path: ["gameDesc", "clusterString"] }, context).then(function (result) {
+      self._assertSession(context);
+      return {
+        clusterString: result.value == null ? "" : String(result.value),
+        sessionId: result.sessionId,
+        gameTick: result.gameTick
+      };
+    });
+  };
+
   GameQuery.prototype._factoryIds = function (scope, context) {
     if (scope === "localPlanet") {
       return this._read({ root: "localPlanet", path: ["factoryIndex"] }, context).then(function (result) {

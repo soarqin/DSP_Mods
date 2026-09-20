@@ -527,8 +527,13 @@ internal sealed class ReflectionReader
 
     static bool IsAllowedProperty(PropertyInfo prop)
     {
-        return prop.DeclaringType == typeof(GameHistoryData) &&
-               string.Equals(prop.Name, "currentTech", StringComparison.Ordinal);
+        if (prop.DeclaringType == typeof(GameHistoryData))
+            return string.Equals(prop.Name, "currentTech", StringComparison.Ordinal);
+
+        if (prop.DeclaringType == typeof(GameDesc))
+            return string.Equals(prop.Name, "clusterString", StringComparison.Ordinal);
+
+        return false;
     }
 
     bool IsAllowedType(Type type)

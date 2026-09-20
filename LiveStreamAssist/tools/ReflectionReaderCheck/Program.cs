@@ -20,6 +20,7 @@ static class Program
         {
             InheritedPrivateFields(reader);
             BlockedGetter(reader);
+            ClusterStringProperty(reader);
             NullIntermediateAndTerminal(reader);
             DictionaryKeys(reader);
             Indexes(reader);
@@ -69,6 +70,13 @@ static class Program
         Check(backing.Error != null && backing.Error.Kind == "MEMBER_NOT_FOUND", "backing field not exposed");
         var desc = reader.Describe(obj, typeof(DerivedFixture), Array.Empty<PathSeg>());
         Check(!HasMember(desc, "Boom"), "blocked getter omitted from describe");
+    }
+
+    static void ClusterStringProperty(ReflectionReader reader)
+    {
+        var described = reader.Describe(null, typeof(GameDesc), Array.Empty<PathSeg>());
+        Check(described.Error == null && HasMember(described, "clusterString"),
+            "cluster string property is allowlisted");
     }
 
     static void NullIntermediateAndTerminal(ReflectionReader reader)

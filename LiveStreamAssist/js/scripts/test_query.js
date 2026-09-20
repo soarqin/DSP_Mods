@@ -76,6 +76,15 @@ test("research from different saves is not combined", async () => {
   await assert.rejects(query.getCurrentResearch(), { kind: "SESSION_CHANGED" });
 });
 
+test("cluster string reads the active game description", async () => {
+  const { query, calls } = createQuery(() => result("12345678-64-A10"));
+  const cluster = await query.getClusterString();
+  assert.equal(cluster.clusterString, "12345678-64-A10");
+  assert.equal(cluster.sessionId, "save-a");
+  assert.equal(calls[0].root, "game");
+  assert.equal(calls[0].path.join("."), "gameDesc.clusterString");
+});
+
 test("research progress keeps integer precision", async () => {
   const { query } = createQuery(() => result({
     hashUploaded: "9007199254740993", hashNeeded: "18014398509481986", curLevel: 1

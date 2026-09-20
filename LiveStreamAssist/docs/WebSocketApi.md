@@ -285,7 +285,7 @@ Strings are literal member names, not expressions: `"history.currentTech"` is no
 
 V1 supports one-dimensional zero-based arrays, concrete BCL `List<T>`, and concrete BCL `Dictionary<TKey, TValue>` with `Int32` or string keys. String keys are not converted to integers. Other collection implementations and arbitrary `IEnumerable` enumeration are unsupported.
 
-Fields can be public or non-public instance fields on permitted game-data types. Static fields, compiler-generated backing fields, methods, setters, and indexer properties are not exposed. Property reads require an explicit server allowlist. The initial property allowlist contains `GameHistoryData.currentTech`; other getters are not automatically allowed merely because they are public or have no setter.
+Fields can be public or non-public instance fields on permitted game-data types. Static fields, compiler-generated backing fields, methods, setters, and indexer properties are not exposed. Property reads require an explicit server allowlist. The property allowlist contains `GameHistoryData.currentTech` and `GameDesc.clusterString`; other getters are not automatically allowed merely because they are public or have no setter.
 
 Use `data.describe` to discover the permitted surface. If inheritance hides a name, the most-derived declaration wins. Field/property traversal through runtime infrastructure such as Unity native objects, delegates, reflection objects, streams, or synchronization objects is unsupported.
 

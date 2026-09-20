@@ -251,6 +251,7 @@ Use one resolver/member-policy path for `data.read`, `data.describe`, and projec
    | Declaring type | Property | Verified behavior |
    | --- | --- | --- |
    | `GameHistoryData` | `currentTech` | Public auto-property getter returning its backing value; private setter is not exposed. |
+   | `GameDesc` | `clusterString` | Formats the current cluster seed/address from `galaxySeed`, `starCount`, resource mode, and combat difficulty fields without mutating game state. |
 
    Additional properties require a concrete query need and inspection of the original getter and any called methods. Record the exact declaration and reason here and update the API reference before adding it. Do not allow every public getter, call a setter, or bypass a rejected getter through its compiler-generated backing field.
 
@@ -258,7 +259,7 @@ Use one resolver/member-policy path for `data.read`, `data.describe`, and projec
 6. Keep projections shallow as specified by the API. Explicit paths may follow cyclic references within the path limit, but summaries terminate output traversal. No graph serializer, persistent object handles, reference registry, or general cycle-resolution framework is needed.
 7. Encode 64-bit values and other scalars before passing snapshots to JSON serialization. Use Newtonsoft.Json without automatic CLR type construction (`TypeNameHandling.None`); parse request DTO/token data only. Never use `SerializeObject` or `JToken.FromObject` on an arbitrary game object.
 8. Bound serialized output while producing it, not after creating an unlimited JSON string. Bound snapshot construction too: enforce projection/page limits and reject obviously oversized strings before copying/encoding them. Metadata discovery is shallow and must not execute listed getters.
-9. Cache successful type/member metadata, not requests or failed arbitrary path strings. Use a bounded cache (for example, at most 1024 entries, then stop adding entries) rather than a new eviction framework. Clear it on server uninitialization.
+9. Cache successful type/member metadata, not requests or failed arbitrary path strings. Use a bounded cache (for example, at most 1024 entries, then stop adding entries) rather than a new eviction framework. Clear it on server uninitialization. `ReflectionReader` stores the resolved `FieldInfo`/`PropertyInfo` objects in this per-type cache; it must still read live member values for every request instead of caching mutable game state.
 
 Catch reflection/getter failures at the request boundary and map them to the API errors. Retain diagnostic exceptions in local logs, not response bodies. System methods and generic game-data methods must share envelope/error handling; do not introduce parallel protocol implementations.
 

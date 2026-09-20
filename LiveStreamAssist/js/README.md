@@ -105,6 +105,11 @@ Pass an array of positive integer item ids to share the factory scan; duplicates
 - `getTechState(techId)` reads `history.techStates[techId]`.
 - `getCurrentResearch()` reads `history.currentTech`, then that tech's state. `techId === 0` means no active research. `progressPercent` uses integer hash math, same as the sample overlay.
 
+### Current cluster
+
+- `getClusterString()` reads `game.gameDesc.clusterString`, the current Dyson Sphere Program star-cluster seed/address string.
+- The result is `{ clusterString, sessionId, gameTick }`; the string is sampled on the game thread and is not cached across sessions.
+
 ### Dyson power
 
 `getDysonPower()` sums `game.dysonSpheres[i].energyGenCurrentTick` across non-null spheres, projecting energy fields in collection pages. `getDysonPower({ starIndex })` reads only that sphere. Watts are `joulesPerTick * 60` (DSP ticks per second). `originalWatts` is the pre-Dark-Fog-debuff figure. Star display names use `overrideName` or `name` because `displayName` is a getter and is not readable through the API. Empty results retain their session metadata.
