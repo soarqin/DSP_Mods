@@ -37,6 +37,8 @@
     .pct { min-width: 56px; text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
     .hash { margin-top: 4px; font-size: 12px; color: #7f93a6; font-variant-numeric: tabular-nums; }
     .bigValue { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .cluster { display: flex; align-items: baseline; gap: 8px; }
+    .cluster .value { font-size: 16px; font-weight: 650; font-variant-numeric: tabular-nums; }
     .status { margin-top: 8px; font-size: 12px; color: #7f93a6; }
     .status.error { color: #ff8a70; }
   </style>
@@ -91,6 +93,16 @@
     function flagEnabled(name) {
       const value = params.get(name);
       return value == null || value === "" || !/^(0|false)$/i.test(value);
+    }
+
+    function buildClusterSection() {
+      const section = el("section", "card cluster", panel);
+      const label = el("span", "lbl", section);
+      label.textContent = "星区";
+      const value = el("span", "value", section);
+      value.id = "clusterString";
+      value.textContent = "—";
+      return { value };
     }
 
     function buildItemsSection(itemIds, windowName) {
@@ -205,6 +217,7 @@
       techIds = parseIdList(params.get("techs"), "科技");
       text = LiveStreamAssist.GameText.fromGenerated({ language: params.get("lang") || "zh-CN" });
       icons = LiveStreamAssist.GameIcons.fromGenerated();
+      sections.cluster = buildClusterSection();
       if (itemIds.length) sections.items = buildItemsSection(itemIds, windowName);
       if (techIds.length) sections.techs = buildTechsSection(techIds);
       if (showResearch) sections.research = buildResearchSection();
@@ -221,6 +234,10 @@
 
     function formatActual(value, perMinute) {
       return perMinute ? text.formatRate(value) : text.formatKmg(value);
+    }
+
+    function renderCluster(cluster) {
+      sections.cluster.value.textContent = cluster.clusterString || "—";
     }
 
     function renderRates(rates) {
@@ -277,6 +294,7 @@
 
     async function tick(generation) {
       const jobs = [];
+      if (sections.cluster) jobs.push(query.getClusterString());
       if (sections.items) jobs.push(query.getItemRates(itemIds, { window: windowName }));
       if (sections.techs) jobs.push(Promise.all(techIds.map(id => query.getTechState(id))));
       if (sections.research) jobs.push(query.getCurrentResearch());
@@ -286,6 +304,7 @@
       const failed = results.find(result => result.status === "rejected");
       if (failed) throw failed.reason;
       let index = 0;
+      if (sections.cluster) renderCluster(results[index++].value);
       if (sections.items) renderRates(results[index++].value);
       if (sections.techs) renderTechs(results[index++].value);
       if (sections.research) renderResearch(results[index++].value);
