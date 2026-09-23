@@ -51,7 +51,7 @@
 
 ### Auto-cruise
 
-- `PlayerPatch.AutoNavigation` is the only auto-cruise implementation. Its Harmony patches follow `AutoCruiseEnabled`; use auto-cruise terminology in user-facing text rather than the game's native autopilot terminology.
+- `PlayerPatch.AutoNavigation` is the only auto-cruise implementation. Its Harmony patches follow `AutoCruiseEnabled`; use auto-cruise terminology in user-facing text rather than the game's native autopilot terminology. Keep persistent status and the current configured shortcut on the auto-cruise button, without a separate HUD label; fix its left edge so adaptive width grows rightward without overlapping the auto-construct button.
 - Use one navigation lifecycle path for target state and reusable obstacle data. Require a resolvable target, yield to `player.navigation.navigating`, and reject an active native autopilot before reporting that auto-cruise started.
 - Preserve native movement and braking conventions; manual warp input takes precedence.
 

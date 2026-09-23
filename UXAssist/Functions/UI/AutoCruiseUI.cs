@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UXAssist.Common;
 using UXAssist.UI;
+using Util = UXAssist.UI.Util;
 
 namespace UXAssist.Functions.UI;
 
@@ -12,7 +13,6 @@ internal static class AutoCruiseUI
     {
         if (Time.frameCount % 30 == 0)
         {
-            Patches.PlayerPatch.AutoNavigation.UpdateUiTip();
             UpdateToggleAutoCruiseCheckButtonVisiblility();
         }
     }
@@ -24,13 +24,13 @@ internal static class AutoCruiseUI
         var rectTrans = ToggleAutoCruise.rectTrans;
         rectTrans.anchorMax = new Vector2(0.5f, 0f);
         rectTrans.anchorMin = new Vector2(0.5f, 0f);
-        rectTrans.pivot = new Vector2(0.5f, 0f);
-        rectTrans.anchoredPosition3D = new Vector3(0f, 185f, 0f);
+        rectTrans.pivot = new Vector2(0f, 0f);
+        rectTrans.anchoredPosition3D = new Vector3(-80f, 185f, 0f);
         rectTrans.localScale = new Vector3(1f, 1f, 1f);
 
         UpdateToggleAutoCruiseCheckButtonVisiblility();
-        ToggleAutoCruise.OnChecked += UpdateToggleAutoCruiseLabel;
         ToggleAutoCruise.OnChecked += Patches.PlayerPatch.AutoNavigation.Toggle;
+        ToggleAutoCruise.OnChecked += UpdateToggleAutoCruiseCheckButtonVisiblility;
     }
 
     public static void UpdateToggleAutoCruiseCheckButtonVisiblility()
@@ -49,8 +49,10 @@ internal static class AutoCruiseUI
     private static void UpdateToggleAutoCruiseLabel()
     {
         if (ToggleAutoCruise == null) return;
-        ToggleAutoCruise.SetLabelText(ToggleAutoCruise.Checked
+        var labelKey = ToggleAutoCruise.Checked
             ? I18NKeys.DisableAutoCruise
-            : I18NKeys.EnableAutoCruise);
+            : I18NKeys.EnableAutoCruise;
+        ToggleAutoCruise.SetLabelText($"{labelKey.Translate()} [{Patches.PlayerPatch.AutoNavigation.ShortcutText}]");
+        ToggleAutoCruise.WithSize(Mathf.Max(160f, Util.GetPreferredWidth(ToggleAutoCruise.labelText) + 20f), 40f);
     }
 }

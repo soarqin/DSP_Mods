@@ -160,8 +160,6 @@ public static class I18NKeys
     public const string AutoBoostMinimalEnergy = "Auto boost minimal energy";
     public const string DarkFogHiveFollowDistance = "Dark Fog Hive follow distance";
     public const string DarkFogCarrierFollowDistance = "Dark Fog Carrier follow distance";
-    public const string AutoCruiseActive = "Auto-cruise active";
-    public const string AutoCruiseEnableHint = "Press {0} to enable auto-cruise";
     public const string AutoCruiseStarted = "Auto-cruise started";
     public const string AutoCruiseStopped = "Auto-cruise stopped";
     public const string AutoCruiseNoTarget = "Auto-cruise needs a navigation target";
@@ -425,8 +423,6 @@ You can set 2 shortcut keys in Settings panel:
         I18N.Add(AutoBoostMinimalEnergy, "Minimum energy for auto boost (MJ)", "自动加速最低能量(MJ)");
         I18N.Add(DarkFogHiveFollowDistance, "Dark Fog Hive follow distance (AU)", "黑雾巢穴跟踪距离(AU)");
         I18N.Add(DarkFogCarrierFollowDistance, "Dark Fog Carrier follow distance (m)", "黑雾火种跟踪距离(m)");
-        I18N.Add(AutoCruiseActive, "Auto-cruise active", "自动巡航中");
-        I18N.Add(AutoCruiseEnableHint, "Press {0} to enable auto-cruise", "按 {0} 启用自动巡航");
         I18N.Add(AutoCruiseStarted, "Auto-cruise started", "自动巡航启动");
         I18N.Add(AutoCruiseStopped, "Auto-cruise stopped", "自动巡航关闭");
         I18N.Add(AutoCruiseNoTarget, "Auto-cruise needs a navigation target", "自动巡航需要先设置导航目标");

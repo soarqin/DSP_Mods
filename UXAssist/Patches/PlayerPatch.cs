@@ -6,10 +6,8 @@ using BepInEx.Configuration;
 using CommonAPI.Systems;
 using HarmonyLib;
 using UnityEngine;
-using UnityEngine.UI;
 using UXAssist.Common;
 using UXAssist.Common.Patching;
-using Object = UnityEngine.Object;
 
 namespace UXAssist.Patches;
 
@@ -346,7 +344,6 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
         private const double StarApproachArrivalSpeed    = 300.0;
 
         private static bool _enabled;
-        private static Text _uiTipText;
 
         private static int             _targetId;
         private static VectorLF3       _targetUniversePosition;
@@ -363,24 +360,17 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 
 
         public static bool IsActive => _enabled;
+        internal static string ShortcutText => KeyBindings.GetKeyBindingText(_autoDriveKey);
 
         protected override void OnEnable()
         {
-            EnsureUiTip();
-            global::UXAssist.Common.GameLogic.OnGameBegin += EnsureUiTip;
             global::UXAssist.Common.GameLogic.OnGameEnd += ResetState;
         }
 
         protected override void OnDisable()
         {
-            global::UXAssist.Common.GameLogic.OnGameBegin -= EnsureUiTip;
             global::UXAssist.Common.GameLogic.OnGameEnd -= ResetState;
             ResetState();
-            if (_uiTipText != null)
-            {
-                Object.Destroy(_uiTipText.gameObject);
-                _uiTipText = null;
-            }
         }
 
         public static void Awake(ConfigFile config)
@@ -422,23 +412,6 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
             AutoCruiseEnabled.SettingChanged += NavigationModeChanged;
         }
 
-        public static void EnsureUiTip()
-        {
-            if (_uiTipText != null)
-            {
-                UpdateUiTip();
-                return;
-            }
-            if (UIRoot.instance?.uiGame?.generalTips?.modeText == null)
-                return;
-            Text originText = UIRoot.instance.uiGame.generalTips.modeText;
-            _uiTipText = Object.Instantiate(originText, originText.transform.parent);
-            _uiTipText.gameObject.SetActive(false);
-            _uiTipText.rectTransform.anchoredPosition = new Vector2(0f, 160f);
-            _uiTipText.fontStyle = FontStyle.Normal;
-            UpdateUiTip();
-        }
-
         public static void Toggle()
         {
             if (!AutoCruiseEnabled.Value)
@@ -469,7 +442,7 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
             _enabled = true;
             ResetTargetState();
             UIRealtimeTip.Popup(I18NKeys.AutoCruiseStarted.Translate(), sound: false);
-            UpdateUiTip();
+            global::UXAssist.Functions.UIFunctions.UpdateToggleAutoCruiseCheckButtonVisiblility();
         }
 
         private static void StopAutoNavigation(bool showTip = true)
@@ -479,7 +452,7 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
             ResetTargetState();
             if (wasEnabled && showTip && !DSPGame.IsMenuDemo && GameMain.isRunning)
                 UIRealtimeTip.Popup(I18NKeys.AutoCruiseStopped.Translate(), sound: false);
-            UpdateUiTip();
+            global::UXAssist.Functions.UIFunctions.UpdateToggleAutoCruiseCheckButtonVisiblility();
         }
 
         private static void ResetTargetState()
@@ -509,24 +482,7 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
             // Follow the config with the Harmony patches themselves, so a user who turns auto-cruise off
             // does not keep a transpiler on PlayerController.GameTick and two postfixes installed.
             Enable(AutoCruiseEnabled.Value);
-            if (AutoCruiseEnabled.Value)
-                UpdateUiTip();
             global::UXAssist.Functions.UIFunctions.UpdateToggleAutoCruiseCheckButtonVisiblility();
-        }
-
-        public static void UpdateUiTip()
-        {
-            if (_uiTipText == null)
-                return;
-
-            bool showTip = GameMain.isRunning && !DSPGame.IsMenuDemo && AutoCruiseEnabled.Value && (_enabled || HasNavigationTarget());
-            _uiTipText.gameObject.SetActive(showTip);
-            if (!showTip)
-                return;
-
-            _uiTipText.text = _enabled
-                ? I18NKeys.AutoCruiseActive.Translate()
-                : string.Format(I18NKeys.AutoCruiseEnableHint.Translate(), KeyBindings.GetKeyBindingText(_autoDriveKey));
         }
 
         public static bool HasNavigationTarget()

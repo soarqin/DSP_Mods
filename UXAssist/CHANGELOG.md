@@ -3,8 +3,15 @@
 
 ## Changlog
 
-* Unreleased
-  * Support Dyson Sphere Program 0.10.35.29057. See [compatibility analysis](../docs/GameCompatibility-0.10.35.md).
+* 1.6.0
+  * Support Dyson Sphere Program 0.10.35.29057.
+  * New feature: `Orbital Collector product limit`, with an `Apply to universe` option.
+  * `Auto-cruise`: Reworked navigation with a new algorithm and more options:
+    * `Stop on manual input`, `Use warp` (with minimum energy), `Auto boost` (with minimum energy), `Dark Fog Hive follow distance` and `Dark Fog Carrier follow distance`.
+    * The button now shows the configured shortcut key and active status, replacing the separate on-screen hint.
+  * `Auto-construct`: Improved routing, obstacle recovery, and drone travel efficiency.
+  * `Tweak building buffers`: Now shows original in-game default values for reference.
+  * Fix UI color issues on some panels and controls.
   * Restore expanded foundation brushes, Restore Terrain support, and player actions in globe view.
   * Update Ray Receiver buffers and item refunds, vein-depletion alerts, handcrafting shortcuts, and batch technology buyout controls.
   * Preserve soil progression when hiding soil-change tips and safely restore saved brush sizes when expanded brushes are disabled.
@@ -408,6 +415,18 @@
 
 ## 更新日志
 
+* 1.6.0
+  * 支持戴森球计划 0.10.35.29057。
+  * 新功能：`轨道采集器产物上限`，支持`应用到全宇宙`。
+  * `自动巡航`：重写了导航算法并新增更多选项：
+    * `手动输入时停止`、`启用曲速`（含最低能量）、`自动加速`（含最低能量）、`黑雾巢穴跟踪距离`和`黑雾火种跟踪距离`。
+    * 按钮上显示当前快捷键和状态，不再显示单独的屏幕提示。
+  * `自动建造`：改进了路径规划、障碍恢复和运输效率。
+  * `调整建筑输入缓冲`：现在显示游戏内原始默认值供参考。
+  * 修复部分面板和控件的显示颜色问题。
+  * 恢复扩展地基刷子、恢复地形支持以及球面视图中的玩家操作。
+  * 更新射线接收器缓存和物品返还、矿脉枯竭提醒、手动制造快捷键以及批量购买科技控件。
+  * 隐藏沙土变动提示时保留沙土进度，禁用扩展刷子时安全恢复已保存的刷子大小。
 * 1.5.9
   * `不渲染工厂建筑实体(除了传送带和分拣器)`：新增子选项`同时隐藏分拣器`，可一并隐藏分拣器，只保留传送带可见。
 * 1.5.8

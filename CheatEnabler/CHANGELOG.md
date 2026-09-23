@@ -3,10 +3,9 @@
 
 ## Changlog
 
-* Unreleased
-  * Support Dyson Sphere Program 0.10.35.29057. See [compatibility analysis](../docs/GameCompatibility-0.10.35.md).
-  * Update `Terraform anyway` for the separate foundation and Restore Terrain workflows. Preserve soil gains and prevent negative soil balances when resources are insufficient.
 * 2.4.5
+  * Support Dyson Sphere Program 0.10.35.29057.
+  * Update `Terraform anyway` for the separate foundation and Restore Terrain workflows. Preserve soil gains and prevent negative soil balances when resources are insufficient.
   * New button `Generate illegal dyson shells for all layers without nodes and shells`, which is used to extend dyson layers.
     * You must enable `IllegalDysonShellFunctionsEnabled` of `DysonSphere` section in config to see it.
   * `Finish build immediately`: Fix a crash when pasting a blueprint containing the first Planetary Shield Generator on a planet.
@@ -195,6 +194,8 @@
 ## 更新日志
 
 * 2.4.5
+  * 支持戴森球计划 0.10.35.29057。
+  * 更新`强行改造地形`以适配独立地基和恢复地形的工作流程。在资源不足时保留沙土收益并防止负沙土平衡。
   * 新按钮 `为所有没有节点和壳的层级生成仙术戴森壳`，用于扩展新戴森壳层面的时候。
     * 你必须在设置文件里开启`DysonSphere`分类的`IllegalDysonShellFunctionsEnabled`才能看到它。
   * `立即完成建造`：修复在行星上粘贴包含首座行星护盾发生器的蓝图时可能崩溃的问题。
