@@ -138,9 +138,11 @@ internal static class VeinProtectionPatch
                                         {
                                             var venType = (int)veinPool[veinId].type;
                                             var pos = veinPool[veinId].pos;
+                                            var hasMinerLostAllVeins = GameMain.preferences.mineralExhaustionAlertMode == 2 &&
+                                                factory.factorySystem.WillMinerLoseAllVeins(veinId);
                                             factory.RemoveVeinWithComponents(veinId);
                                             factory.RecalculateVeinGroup(groupIndex);
-                                            factory.NotifyVeinExhausted(venType, groupIndex, pos);
+                                            factory.NotifyVeinExhausted(venType, groupIndex, pos, hasMinerLostAllVeins);
                                             veinCount = __instance.veinCount;
                                         }
                                         else
@@ -242,7 +244,7 @@ internal static class VeinProtectionPatch
                                         factory.veinAnimPool[veinId].time = amount >= 25000 ? 0f : 1f - amount * VeinData.oilSpeedMultiplier;
                                         if (amount <= 2500)
                                         {
-                                            factory.NotifyVeinExhausted((int)veinPool[veinId].type, groupIndex, veinPool[veinId].pos);
+                                            factory.NotifyVeinExhausted((int)veinPool[veinId].type, groupIndex, veinPool[veinId].pos, false);
                                         }
                                     }
                                 }

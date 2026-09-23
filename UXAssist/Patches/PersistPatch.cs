@@ -20,6 +20,16 @@ public class PersistPatch : PatchImpl<PersistPatch>
         Enable(false);
     }
 
+    [HarmonyPostfix]
+    [HarmonyPatch(typeof(GamePrefsData), nameof(GamePrefsData.LateRestore))]
+    private static void GamePrefsData_LateRestore_Postfix(GamePrefsData __instance)
+    {
+        if (Factory.ArchitectModePatch.LargerAreaForTerraform.GetHarmony() != null) return;
+        var reformTool = __instance.gameData?.mainPlayer?.controller?.actionBuild?.reformTool;
+        if (reformTool != null)
+            reformTool.brushSize = System.Math.Min(reformTool.brushSize, BuildTool_Reform.MAX_BRUSH_SIZE);
+    }
+
     // Check for noModifier while pressing hotkeys on build bar
     // Harmony transpiler: UIBuildMenu__OnUpdate_Transpiler
     // Target: UIBuildMenu._OnUpdate

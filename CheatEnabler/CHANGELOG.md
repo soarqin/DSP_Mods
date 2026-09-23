@@ -3,6 +3,9 @@
 
 ## Changlog
 
+* Unreleased
+  * Support Dyson Sphere Program 0.10.35.29057. See [compatibility analysis](../docs/GameCompatibility-0.10.35.md).
+  * Update `Terraform anyway` for the separate foundation and Restore Terrain workflows. Preserve soil gains and prevent negative soil balances when resources are insufficient.
 * 2.4.5
   * New button `Generate illegal dyson shells for all layers without nodes and shells`, which is used to extend dyson layers.
     * You must enable `IllegalDysonShellFunctionsEnabled` of `DysonSphere` section in config to see it.

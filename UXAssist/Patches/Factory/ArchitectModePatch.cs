@@ -4,6 +4,7 @@ using System.Reflection.Emit;
 using HarmonyLib;
 using UnityEngine;
 using UXAssist.Common;
+using UXAssist.Common.Patching;
 
 namespace UXAssist.Patches.Factory;
 
@@ -163,8 +164,8 @@ internal static class ArchitectModePatch
             return matcher.InstructionEnumeration();
         }
         // Harmony transpiler: BuildAreaLimitRemoval_Transpiler
-        // Target: BuildTool_Addon.CheckBuildConditions, BuildTool_Click.CheckBuildConditions, BuildTool_Dismantle.DetermineMoreChainTargets, BuildTool_Dismantle.DeterminePreviews, BuildTool_Inserter.CheckBuildConditions, BuildTool_Path.CheckBuildConditions, BuildTool_Reform.ReformAction, BuildTool_Upgrade.DetermineMoreChainTargets, BuildTool_Upgrade.DeterminePreviews
-        // Fallback: None — patch will fail loudly if the target method body changes.
+        // Target: BuildTool_Addon.CheckBuildConditions, BuildTool_Click.CheckBuildConditions, BuildTool_Dismantle.DetermineMoreChainTargets, BuildTool_Dismantle.DeterminePreviews, BuildTool_Inserter.CheckBuildConditions, BuildTool_Path.CheckBuildConditions, BuildTool_Reform.ExecuteBrushAction, BuildTool_Upgrade.DetermineMoreChainTargets, BuildTool_Upgrade.DeterminePreviews
+        // Fallback: TranspilerGuard returns original instructions when the build-area check is not found.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(BuildTool_Addon), nameof(BuildTool_Addon.CheckBuildConditions))]
         [HarmonyPatch(typeof(BuildTool_Click), nameof(BuildTool_Click.CheckBuildConditions))]
@@ -172,7 +173,7 @@ internal static class ArchitectModePatch
         [HarmonyPatch(typeof(BuildTool_Dismantle), nameof(BuildTool_Dismantle.DeterminePreviews))]
         [HarmonyPatch(typeof(BuildTool_Inserter), nameof(BuildTool_Inserter.CheckBuildConditions))]
         [HarmonyPatch(typeof(BuildTool_Path), nameof(BuildTool_Path.CheckBuildConditions))]
-        [HarmonyPatch(typeof(BuildTool_Reform), nameof(BuildTool_Reform.ReformAction))]
+        [HarmonyPatch(typeof(BuildTool_Reform), nameof(BuildTool_Reform.ExecuteBrushAction))]
         [HarmonyPatch(typeof(BuildTool_Upgrade), nameof(BuildTool_Upgrade.DetermineMoreChainTargets))]
         [HarmonyPatch(typeof(BuildTool_Upgrade), nameof(BuildTool_Upgrade.DeterminePreviews))]
         private static IEnumerable<CodeInstruction> BuildAreaLimitRemoval_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -190,6 +191,8 @@ internal static class ArchitectModePatch
                 new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(Mecha), nameof(Mecha.buildArea))),
                 new CodeMatch(OpCodes.Mul)
             );
+            if (matcher.IsInvalid)
+                return matcher.Finish(instructions, UXAssist.Logger, nameof(BuildAreaLimitRemoval_Transpiler));
             matcher.Repeat(m => m.RemoveInstructions(9).InsertAndAdvance(new CodeInstruction(OpCodes.Ldc_R4, 100000000.0f)));
             return matcher.InstructionEnumeration();
         }
@@ -216,23 +219,40 @@ internal static class ArchitectModePatch
 
     internal class LargerAreaForTerraform : PatchImpl<LargerAreaForTerraform>
     {
-        // Harmony transpiler: BuildTool_Reform_ReformAction_Transpiler
-        // Target: BuildTool_Reform.ReformAction
-        // Fallback: None — patch will fail loudly if the target method body changes.
-        [HarmonyTranspiler, HarmonyPatch(typeof(BuildTool_Reform), nameof(BuildTool_Reform.ReformAction))]
-        private static IEnumerable<CodeInstruction> BuildTool_Reform_ReformAction_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        private const int MaxBrushSize = 30;
+
+        protected override void OnDisable()
+        {
+            var reformTool = GameMain.mainPlayer?.controller?.actionBuild?.reformTool;
+            if (reformTool != null)
+                reformTool.brushSize = Math.Min(reformTool.brushSize, BuildTool_Reform.MAX_BRUSH_SIZE);
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(BuildTool_Reform), nameof(BuildTool_Reform.PrepareBrushPoints))]
+        private static void BuildTool_Reform_PrepareBrushPoints_Prefix(BuildTool_Reform __instance)
+        {
+            __instance.brushSize = Math.Max(1, Math.Min(__instance.brushSize, MaxBrushSize));
+            if (__instance.cursorPoints.Length < MaxBrushSize * MaxBrushSize)
+                Array.Resize(ref __instance.cursorPoints, MaxBrushSize * MaxBrushSize);
+            if (__instance.cursorIndices.Length < MaxBrushSize * MaxBrushSize)
+                Array.Resize(ref __instance.cursorIndices, MaxBrushSize * MaxBrushSize);
+        }
+
+        // Harmony transpiler: BuildTool_Reform_ExecuteBrushAction_Transpiler
+        // Target: BuildTool_Reform.ExecuteBrushAction
+        // Fallback: TranspilerGuard returns original instructions when the brush limit is not found.
+        [HarmonyTranspiler, HarmonyPatch(typeof(BuildTool_Reform), nameof(BuildTool_Reform.ExecuteBrushAction))]
+        private static IEnumerable<CodeInstruction> BuildTool_Reform_ExecuteBrushAction_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
         {
             var matcher = new CodeMatcher(instructions, generator);
             matcher.MatchForward(false,
                 new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(BuildTool_Reform), nameof(BuildTool_Reform.brushSize))),
-                new CodeMatch(ci => ci.opcode == OpCodes.Ldc_I4_S && ci.OperandIs(10))
+                new CodeMatch(ci => ci.LoadsConstant(BuildTool_Reform.MAX_BRUSH_SIZE))
             );
-            matcher.Repeat(m => m.Advance(1).SetAndAdvance(OpCodes.Ldc_I4_S, 30));
-            matcher.Start().MatchForward(false,
-                new CodeMatch(ci => ci.opcode == OpCodes.Ldc_I4_S && ci.OperandIs(10)),
-                new CodeMatch(OpCodes.Stfld, AccessTools.Field(typeof(BuildTool_Reform), nameof(BuildTool_Reform.brushSize)))
-            );
-            matcher.Repeat(m => m.SetAndAdvance(OpCodes.Ldc_I4_S, 30));
+            if (matcher.IsInvalid)
+                return matcher.Finish(instructions, UXAssist.Logger, nameof(BuildTool_Reform_ExecuteBrushAction_Transpiler));
+            matcher.Advance(1).Set(OpCodes.Ldc_I4, MaxBrushSize);
             return matcher.InstructionEnumeration();
         }
     }

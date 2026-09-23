@@ -7,6 +7,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UXAssist.Common;
 using UXAssist.Common.GameConstants;
+using UXAssist.Common.Patching;
 using GameLogicProc = UXAssist.Common.GameLogic;
 
 namespace UXAssist.Patches;
@@ -265,21 +266,35 @@ public static class TechPatch
     {
         // Harmony transpiler: UITechNode_UpdateInfoDynamic_Transpiler
         // Target: UITechNode.UpdateInfoDynamic
-        // Fallback: None — patch will fail loudly if the target method body changes.
+        // Fallback: TranspilerGuard returns original instructions when the buyout visibility expression is not found.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(UITechNode), nameof(UITechNode.UpdateInfoDynamic))]
         private static IEnumerable<CodeInstruction> UITechNode_UpdateInfoDynamic_Transpiler(IEnumerable<CodeInstruction> instructions)
         {
             var matcher = new CodeMatcher(instructions);
             matcher.MatchForward(false,
-                new CodeMatch(OpCodes.Ldsfld, AccessTools.Field(typeof(UITechTree), nameof(UITechTree.showProperty))),
-                new CodeMatch(ci => ci.IsLdloc()),
-                new CodeMatch(OpCodes.And)
-            ).Advance(1).SetAndAdvance(OpCodes.Ldloc_3, null).InsertAndAdvance(
-                new CodeInstruction(OpCodes.Ldc_I4_0),
-                new CodeInstruction(OpCodes.Ceq)
+                new CodeMatch(OpCodes.Ldsfld, AccessTools.Field(typeof(UITechTree), nameof(UITechTree.showProperty)))
+            );
+            if (matcher.IsInvalid)
+                return matcher.Finish(instructions, UXAssist.Logger, nameof(UITechNode_UpdateInfoDynamic_Transpiler));
+            var start = matcher.Pos;
+            var labels = matcher.Labels.ToArray();
+            matcher.MatchForward(false, new CodeMatch(instruction => instruction.IsStloc()));
+            if (matcher.IsInvalid)
+                return matcher.Finish(instructions, UXAssist.Logger, nameof(UITechNode_UpdateInfoDynamic_Transpiler));
+            var count = matcher.Pos - start;
+            matcher.Start().Advance(start).RemoveInstructions(count).Insert(
+                new CodeInstruction(OpCodes.Ldarg_0).WithLabels(labels),
+                new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(UITechNode), nameof(UITechNode.techProto))),
+                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(BatchBuyoutTech), nameof(CanShowBuyoutButton)))
             );
             return matcher.InstructionEnumeration();
+        }
+
+        private static bool CanShowBuyoutButton(TechProto techProto)
+        {
+            return UITechTree.showProperty && !GameMain.sandboxToolsEnabled &&
+                !techProto.IsHiddenTech && !techProto.IsObsolete && !GameMain.history.TechUnlocked(techProto.ID);
         }
 
         [HarmonyPrefix]

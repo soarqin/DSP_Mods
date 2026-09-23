@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Reflection.Emit;
 using HarmonyLib;
 using UXAssist.Common;
+using UXAssist.Common.Patching;
 
 namespace UXAssist.Patches.Factory;
 
@@ -69,26 +70,22 @@ internal static class BuildingBufferPatch
         }
         // Harmony transpiler: PowerGeneratorComponent_GameTick_Gamma_Transpiler
         // Target: PowerGeneratorComponent.GameTick_Gamma
-        // Fallback: None — patch will fail loudly if the target method body changes.
+        // Fallback: TranspilerGuard returns original instructions when the catalyst buffer check is not found.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(PowerGeneratorComponent), nameof(PowerGeneratorComponent.GameTick_Gamma))]
         private static IEnumerable<CodeInstruction> PowerGeneratorComponent_GameTick_Gamma_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
         {
-            /*
-             * Patch:
-             *  bool flag3 = keyFrame && useIon && (float)this.catalystPoint < 72000f;
-             * To:
-             *  bool flag3 = keyFrame && useIon && this.catalystPoint < 3600 * ReceiverBufferCount.Value;
-             */
             var matcher = new CodeMatcher(instructions, generator);
             matcher.MatchForward(false,
                 new CodeMatch(OpCodes.Ldarg_0),
-                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(PowerGeneratorComponent), nameof(PowerGeneratorComponent.catalystPoint))),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(PowerGeneratorComponent), nameof(PowerGeneratorComponent.catalystCount))),
                 new CodeMatch(OpCodes.Conv_R4),
-                new CodeMatch(OpCodes.Ldc_R4, 72000f),
+                new CodeMatch(OpCodes.Ldc_R4, 20f),
                 new CodeMatch(OpCodes.Clt)
             );
-            matcher.Advance(2).RemoveInstructions(2).Insert(new CodeInstruction(OpCodes.Ldc_I4, FactoryPatch.ReceiverBufferCount.Value * 3600));
+            if (matcher.IsInvalid)
+                return matcher.Finish(instructions, UXAssist.Logger, nameof(PowerGeneratorComponent_GameTick_Gamma_Transpiler));
+            matcher.Advance(2).RemoveInstructions(2).Insert(new CodeInstruction(OpCodes.Ldc_I4, FactoryPatch.ReceiverBufferCount.Value));
             return matcher.InstructionEnumeration();
         }
         // Harmony transpiler: AssemblerComponent_UpdateNeeds_Transpiler

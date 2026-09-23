@@ -351,9 +351,8 @@ public static class PlanetFunctions
                         var productId = powerGen.productId;
                         var productCount = (int)powerGen.productCount;
                         if (productId != 0 && productCount > 0) AddReturnedItem(productId, productCount, 0, returnedItems);
-                        int catalystId = powerGen.catalystId;
-                        var catalystPointDiv = powerGen.catalystPoint / 3600;
-                        if (catalystId != 0 && catalystPointDiv > 0) AddReturnedItem(catalystId, catalystPointDiv, powerGen.catalystIncPoint / 3600, returnedItems);
+                        var catalystId = powerGen.catalystId;
+                        if (catalystId != 0 && powerGen.catalystCount > 0) AddReturnedItem(catalystId, powerGen.catalystCount, powerGen.catalystInc, returnedItems);
                     }
                 }
                 #endregion

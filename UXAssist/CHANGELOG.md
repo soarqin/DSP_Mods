@@ -3,6 +3,11 @@
 
 ## Changlog
 
+* Unreleased
+  * Support Dyson Sphere Program 0.10.35.29057. See [compatibility analysis](../docs/GameCompatibility-0.10.35.md).
+  * Restore expanded foundation brushes, Restore Terrain support, and player actions in globe view.
+  * Update Ray Receiver buffers and item refunds, vein-depletion alerts, handcrafting shortcuts, and batch technology buyout controls.
+  * Preserve soil progression when hiding soil-change tips and safely restore saved brush sizes when expanded brushes are disabled.
 * 1.5.9
   * `Do not render factory entities (except belts and sorters)`: Add sub-option `Hide sorters too` to also hide sorters, leaving only belts visible.
 * 1.5.8

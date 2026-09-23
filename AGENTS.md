@@ -31,9 +31,10 @@
 - Prefer `UXAssist/Common/GameConstants` for item, tech, logistics, and Dyson sphere constants instead of inline literals.
 - Persist mod data through `IModCanSave` from DSPModSave.
 - Use `ModCompatHelper` for external plugin/type/member resolution and preserve legacy public type identities when refactoring reflection targets. Use `DysonSphereReflection` for DSPOptimizations-compatible Dyson sphere fields.
-- Performance-sensitive Harmony transpilers must include the standard target/fallback header and use `TranspilerGuard` when a matcher can fail; returning original instructions is the fallback.
+- Performance-sensitive Harmony transpilers must include the standard target/fallback header and use `TranspilerGuard` when a matcher can fail; returning original instructions is the fallback. Match named enum members and semantic calls or fields instead of hard-coded enum values or local-variable slots.
 - `PatchImpl<T>.Enable(true)` must remain fail-soft: log, unpatch, and leave the patch unset if Harmony application fails so config delegate chains remain consistent.
 - Overlay UI state must converge from actual game state on periodic updates, not depend only on one-shot event or patch callbacks. Cloned controls must reset runtime state while retaining source styles; use `UXAssist.UI.Util.GetPreferredWidth` for dynamic text and `ResetButton` for cloned buttons.
+- UI-only options must preserve native progression, statistics, and event delivery. Suppress presentation handlers rather than bypassing authoritative game-state setters.
 - LiveStreamAssist browser overlays must use single-flight polling and discard stale work after connection changes. Compound queries must reject mixed session IDs; cache only positive production indices so newly tracked items remain discoverable.
 - LiveStreamAssist production reads must schedule the native extra-info calculator for queried factories independently of the statistics UI. Deduplicate and throttle refreshes, let active native batches finish, and clear pending factory indices and deadlines at session boundaries.
 - LiveStreamAssist `ReflectionReader` caches bounded per-type member metadata and clears it during API uninitialization; do not cache mutable game values or arbitrary request results.
@@ -56,5 +57,6 @@
 
 ## Review Standard
 
-- Fix root causes with minimal focused changes. Do not alter unrelated behavior, add copyright headers, commit changes, push branches, or create branches unless requested. Use normal pushes; do not rewrite remote history unless explicitly requested.
+- Fix root causes with minimal focused changes. Do not alter unrelated behavior, add copyright headers, commit changes, push branches, or create branches unless requested. Commit only task-related files and leave unrelated working-tree changes untouched. Use normal pushes; do not rewrite remote history unless explicitly requested.
 - Before handoff, run the narrowest relevant build or test, then `git diff --check`. Mention unrelated pre-existing failures instead of changing them.
+- For game updates, also check Harmony target resolution and affected IL patterns against the original game DLL; compilation alone does not validate runtime patches.
