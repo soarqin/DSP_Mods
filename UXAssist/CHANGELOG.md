@@ -15,7 +15,6 @@
   * Restore expanded foundation brushes, Restore Terrain support, and player actions in globe view.
   * Update Ray Receiver buffers and item refunds, vein-depletion alerts, handcrafting shortcuts, and batch technology buyout controls.
   * Preserve soil progression when hiding soil-change tips and safely restore saved brush sizes when expanded brushes are disabled.
-* 1.5.9
   * `Do not render factory entities (except belts and sorters)`: Add sub-option `Hide sorters too` to also hide sorters, leaving only belts visible.
 * 1.5.8
   * `Initialize This Planet`: Fix a possible crash.
@@ -427,7 +426,6 @@
   * 恢复扩展地基刷子、恢复地形支持以及球面视图中的玩家操作。
   * 更新射线接收器缓存和物品返还、矿脉枯竭提醒、手动制造快捷键以及批量购买科技控件。
   * 隐藏沙土变动提示时保留沙土进度，禁用扩展刷子时安全恢复已保存的刷子大小。
-* 1.5.9
   * `不渲染工厂建筑实体(除了传送带和分拣器)`：新增子选项`同时隐藏分拣器`，可一并隐藏分拣器，只保留传送带可见。
 * 1.5.8
   * `初始化本行星`：修复可能的崩溃。
