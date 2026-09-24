@@ -181,25 +181,27 @@ internal static class WindTurbinesPowerGlobalCoverage
         if (enable)
         {
             if (_patched) return;
+            var prefabDesc = LDB.items?.Select(WindTurbineId)?.prefabDesc;
+            if (prefabDesc == null) return;
+            _oldCoverRadius = prefabDesc.powerCoverRadius;
+            _oldConnectDistance = prefabDesc.powerConnectDistance;
+            prefabDesc.powerCoverRadius = WindTurbineNewCoverageDistance;
+            prefabDesc.powerConnectDistance = WindTurbineNewCoverageDistance;
+            _prefabdesc = prefabDesc;
             _patched = true;
-            var itemProto = LDB.items.Select(WindTurbineId);
-            _oldCoverRadius = itemProto.prefabDesc.powerCoverRadius;
-            _oldConnectDistance = itemProto.prefabDesc.powerConnectDistance;
-            itemProto.prefabDesc.powerCoverRadius = WindTurbineNewCoverageDistance;
-            itemProto.prefabDesc.powerConnectDistance = WindTurbineNewCoverageDistance;
-            _prefabdesc = itemProto.prefabDesc;
         }
         else
         {
             if (!_patched) return;
-            _patched = false;
             _prefabdesc.powerCoverRadius = _oldCoverRadius;
             _prefabdesc.powerConnectDistance = _oldConnectDistance;
+            _patched = false;
         }
 
         // Iterate all factories and update wind turbines power nodes
-        if (GameMain.data == null) return;
-        foreach (var factory in GameMain.data.factories)
+        var factories = GameMain.data?.factories;
+        if (factories == null) return;
+        foreach (var factory in factories)
         {
             var powerSystem = factory?.powerSystem;
             if (powerSystem == null) continue;

@@ -3,6 +3,8 @@
 
 ## Changlog
 
+* Unreleased
+  * `Do not render factory entities`: Fix activation after DSP 0.10.35.29057 by removing fixed local-variable slots from raycast filtering. Preserve belts and optional sorter visibility.
 * 1.6.0
   * Support Dyson Sphere Program 0.10.35.29057.
   * New feature: `Orbital Collector product limit`, with an `Apply to universe` option.

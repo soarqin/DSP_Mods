@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 using HarmonyLib;
 using UnityEngine;
 using UXAssist.Common;
+using UXAssist.Common.Patching;
 using GameLogicProc = UXAssist.Common.GameLogic;
 
 namespace UXAssist.Patches.Factory;
@@ -51,38 +52,41 @@ internal static class RenderingPatch
         }
         // Harmony transpiler: RaycastLogic_GameTick_Transpiler
         // Target: RaycastLogic.GameTick
-        // Fallback: None — patch will fail loudly if the target method body changes.
+        // Fallback: TranspilerGuard returns original instructions when the collider skip or entity lookup is not found.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(RaycastLogic), nameof(RaycastLogic.GameTick))]
         private static IEnumerable<CodeInstruction> RaycastLogic_GameTick_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
         {
             var matcher = new CodeMatcher(instructions, generator);
             matcher.MatchForward(false,
-                new CodeMatch(OpCodes.Ldc_I4_0),
-                new CodeMatch(OpCodes.Brtrue));
-            var branch1 = (Label)matcher.Advance(1).Operand;
-            var branch2 = generator.DefineLabel();
-            matcher.Start().MatchForward(false,
-                new CodeMatch(OpCodes.Call),
-                new CodeMatch(ci => ci.IsStloc()),
-                new CodeMatch(OpCodes.Call),
-                new CodeMatch(ci => ci.IsStloc()),
-                new CodeMatch(OpCodes.Call),
-                new CodeMatch(ci => ci.IsStloc()),
+                new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(Phys), nameof(Phys.RayCastOBB))),
+                new CodeMatch(instruction => instruction.opcode == OpCodes.Brfalse || instruction.opcode == OpCodes.Brfalse_S));
+            if (matcher.IsInvalid)
+                return matcher.Finish(instructions, UXAssist.Logger, nameof(RaycastLogic_GameTick_Transpiler));
+            var skipCollider = (Label)matcher.InstructionAt(1).operand;
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(PlanetFactory), nameof(PlanetFactory.entityPool))),
                 new CodeMatch(ci => ci.IsLdloc()),
-                new CodeMatch(ci => ci.Branches(out _)),
-                new CodeMatch(OpCodes.Ldarg_0)
-            ).Advance(8).InsertAndAdvance(
-                new CodeInstruction(OpCodes.Ldloc_S, 45),
-                new CodeInstruction(OpCodes.Brtrue, branch2),
-                new CodeInstruction(OpCodes.Ldarg_0),
-                new CodeInstruction(OpCodes.Ldloc_S, 33),
-                new CodeInstruction(OpCodes.Ldloc_S, 35),
-                Transpilers.EmitDelegate((RaycastLogic l, ColliderData[] colliderPool, int j) => !HideSorters && l.factory.entityPool[colliderPool[j].objId].inserterId > 0),
-                new CodeInstruction(OpCodes.Brfalse, branch1)
+                new CodeMatch(OpCodes.Ldelema, typeof(EntityData)),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(EntityData), nameof(EntityData.modelIndex))));
+            if (matcher.IsInvalid)
+                return matcher.Finish(instructions, UXAssist.Logger, nameof(RaycastLogic_GameTick_Transpiler));
+            var visibleEntity = generator.DefineLabel();
+            matcher.Advance(3).InsertAndAdvance(
+                new CodeInstruction(OpCodes.Dup).MoveLabelsFrom(matcher.Instruction),
+                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(DoNotRenderEntities), nameof(IsVisibleEntity))),
+                new CodeInstruction(OpCodes.Brtrue, visibleEntity),
+                new CodeInstruction(OpCodes.Pop),
+                new CodeInstruction(OpCodes.Br, skipCollider)
             );
-            matcher.Labels.Add(branch2);
+            matcher.Labels.Add(visibleEntity);
             return matcher.InstructionEnumeration();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool IsVisibleEntity(ref EntityData entity)
+        {
+            return entity.beltId > 0 || !HideSorters && entity.inserterId > 0;
         }
     }
 

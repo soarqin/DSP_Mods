@@ -3,6 +3,8 @@
 
 ## Changlog
 
+* Unreleased
+  * `PowerGlobalCoverage`: Fix a startup crash before wind-turbine prefabs finish loading. Retry after preload without corrupting activation state or the original power ranges, and tolerate unallocated factory data.
 * 2.4.5
   * Support Dyson Sphere Program 0.10.35.29057.
   * Update `Terraform anyway` for the separate foundation and Restore Terrain workflows. Preserve soil gains and prevent negative soil balances when resources are insufficient.

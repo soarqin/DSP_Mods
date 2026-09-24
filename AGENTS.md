@@ -26,12 +26,13 @@
 ## Architecture
 
 - `ModFeatureRegistry` discovers dependent-mod features during `Awake`; feature initialization is eager, while UXAssist alone drives the deferred start, input, update, and uninitialization lifecycle. Keep dispatchers internal and idempotent.
+- Proto-dependent features must tolerate calls before preload completes and retry via `UXAssist.Common.GameLogic.OnDataLoaded`. Mark changes applied only after capturing valid originals and successfully mutating the proto.
 - Dispatch UXAssist shortcuts from the postfix of `VFInput.OnUpdate`, after DSP refreshes modifier and UI state. Keep typing/menu guards and per-frame registry guards; do not poll from an independent `Update()` or logic-tick callback.
 - Register localization keys through each project registration class and use `.Translate()` with keys. Do not add Chinese literals at call sites.
 - Prefer `UXAssist/Common/GameConstants` for item, tech, logistics, and Dyson sphere constants instead of inline literals.
 - Persist mod data through `IModCanSave` from DSPModSave.
 - Use `ModCompatHelper` for external plugin/type/member resolution and preserve legacy public type identities when refactoring reflection targets. Use `DysonSphereReflection` for DSPOptimizations-compatible Dyson sphere fields.
-- Performance-sensitive Harmony transpilers must include the standard target/fallback header and use `TranspilerGuard` when a matcher can fail; returning original instructions is the fallback. Match named enum members and semantic calls or fields instead of hard-coded enum values or local-variable slots.
+- Performance-sensitive Harmony transpilers must include the standard target/fallback header and use `TranspilerGuard` when a matcher can fail; returning original instructions is the fallback. Match named enum members and semantic calls or fields instead of hard-coded enum values or local-variable slots. Validate injected stack operand types and branch destinations, not just successful matching.
 - `PatchImpl<T>.Enable(true)` must remain fail-soft: log, unpatch, and leave the patch unset if Harmony application fails so config delegate chains remain consistent.
 - Overlay UI state must converge from actual game state on periodic updates, not depend only on one-shot event or patch callbacks. Cloned controls must reset runtime state while retaining source styles; use `UXAssist.UI.Util.GetPreferredWidth` for dynamic text and `ResetButton` for cloned buttons.
 - UI-only options must preserve native progression, statistics, and event delivery. Suppress presentation handlers rather than bypassing authoritative game-state setters.
