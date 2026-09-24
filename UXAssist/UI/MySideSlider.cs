@@ -44,8 +44,12 @@ public class MySideSlider : MonoBehaviour
         if (width == 0) width = 160f;
         if (sl.slider.transform is RectTransform rectTrans)
         {
-            rectTrans.localPosition = new Vector3(width, rectTrans.localPosition.y, rectTrans.localPosition.z);
-            rectTrans.sizeDelta = new Vector2(width, rectTrans.sizeDelta.y);
+            var sliderHeight = rectTrans.rect.height;
+            rectTrans.anchorMin = new Vector2(0f, 0.5f);
+            rectTrans.anchorMax = new Vector2(0f, 0.5f);
+            rectTrans.pivot = new Vector2(0f, 0.5f);
+            rectTrans.anchoredPosition3D = Vector3.zero;
+            rectTrans.sizeDelta = new Vector2(width, sliderHeight);
         }
         sl.Value = 0f;
 
@@ -55,16 +59,11 @@ public class MySideSlider : MonoBehaviour
         sl.labelText.alignment = textWidth <= 0f ? TextAnchor.MiddleLeft : TextAnchor.MiddleRight;
         if (sl.labelText.transform is RectTransform rectTrans2)
         {
-            if (textWidth > 0f)
-            {
-                rectTrans2.sizeDelta = new Vector2(textWidth, rectTrans2.sizeDelta.y);
-            }
-            else
-            {
-                rectTrans2.sizeDelta = new Vector2(-textWidth, rectTrans2.sizeDelta.y);
-            }
-            rectTrans2.pivot = new Vector2(0f, 1f);
-            rectTrans2.localPosition = new Vector3(textWidth <= 0f ? width + 10f : width, rectTrans2.localPosition.y, rectTrans2.localPosition.z);
+            rectTrans2.anchorMin = Vector2.zero;
+            rectTrans2.anchorMax = new Vector2(0f, 1f);
+            rectTrans2.pivot = new Vector2(0f, 0.5f);
+            rectTrans2.anchoredPosition3D = new Vector3(textWidth <= 0f ? width + 10f : width, 0f, 0f);
+            rectTrans2.sizeDelta = new Vector2(Mathf.Abs(textWidth), 0f);
         }
         sl.labelFormat = "G";
 

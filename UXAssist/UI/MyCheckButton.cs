@@ -51,7 +51,7 @@ public class MyCheckButton : MonoBehaviour
                 txt.rectTransform.anchorMax = new Vector2(0f, 1f);
                 txt.rectTransform.anchorMin = new Vector2(0f, 1f);
                 txt.rectTransform.pivot = new Vector2(0f, 1f);
-                txt.rectTransform.localPosition = new Vector3(0f, 0f, 0f);
+                txt.rectTransform.anchoredPosition3D = new Vector3(0f, 0f, 0f);
             }
             var localizer = comp.GetComponent<Localizer>();
             if (localizer) DestroyImmediate(localizer);
@@ -155,12 +155,12 @@ public class MyCheckButton : MonoBehaviour
     {
         var width = rectTrans.sizeDelta.x;
         var height = rectTrans.sizeDelta.y;
-        labelText.rectTransform.localPosition = new Vector3(icon != null ? _iconWidth : 0f, 0f, 0f);
+        labelText.rectTransform.anchoredPosition3D = new Vector3(icon != null ? _iconWidth : 0f, 0f, 0f);
         labelText.rectTransform.sizeDelta = new Vector2(icon != null ? width - _iconWidth : width, height);
         if (icon != null)
         {
             icon.rectTransform.sizeDelta = new Vector2(_iconWidth, _iconWidth);
-            icon.rectTransform.localPosition = new Vector3(0f, -height * 0.5f, 0f);
+            icon.rectTransform.anchoredPosition3D = new Vector3(0f, -height * 0.5f, 0f);
         }
     }
 
@@ -200,7 +200,7 @@ public class MyCheckButton : MonoBehaviour
             rect.anchorMin = new Vector2(0f, 1f);
             rect.pivot = new Vector2(0f, 0.5f);
             var height = rectTrans.sizeDelta.y;
-            rect.localPosition = new Vector3(0f, -height * 0.5f, 0f);
+            rect.anchoredPosition3D = new Vector3(0f, -height * 0.5f, 0f);
             iconGo.SetActive(sprite != null);
             UpdateSize();
         }

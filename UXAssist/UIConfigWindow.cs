@@ -707,7 +707,7 @@ public static class UIConfigWindow
             txt = wnd.AddText2(x + 20f, y, tab4, I18NKeys.UseWarpMinimalEnergy, 13, "use-warp-minimal-energy");
             var warpEnergySlider = wnd.AddSideSlider(
                 x + 20f + UI.Util.GetPreferredWidth(txt) + 5f,
-                y + 6f,
+                y,
                 tab4,
                 PlayerPatch.UseWarperMinimalEnergy,
                 new EnergyMapper( ),
@@ -716,21 +716,22 @@ public static class UIConfigWindow
                 - 100f).WithFontSize(13);
             y += 27f;
             txt = wnd.AddText2(x + 20f, y, tab4, I18NKeys.DistanceToUseWarp, 13, "text-new-navigation-distance-to-warp");
-            var newNavDistanceSlider = wnd.AddSlider(
+            var newNavDistanceSlider = wnd.AddSideSlider(
                 x + 20f + UI.Util.GetPreferredWidth(txt) + 5f,
-                y + 6f,
+                y,
                 tab4,
                 PlayerPatch.UseWarperDistance,
                 new DistanceMapper( ),
                 "0.0",
-                200f);
+                200f,
+                -100f).WithFontSize(13);
             y += 27f;
             var speedUpCheckBox = wnd.AddCheckBox(x + 20f, y, tab4, PlayerPatch.UseSpeedUp, I18NKeys.AutoBoost, 13);
             y += 27f;
             txt = wnd.AddText2(x + 20f, y, tab4, I18NKeys.AutoBoostMinimalEnergy, 13, "auto-boost-minimal-energy");
             var speedUpEnergySlider = wnd.AddSideSlider(
                 x + 20f + UI.Util.GetPreferredWidth(txt) + 5f,
-                y + 6f,
+                y,
                 tab4,
                 PlayerPatch.UseSpeedUpMinimalEnergy,
                 new EnergyMapper( ),
@@ -741,7 +742,7 @@ public static class UIConfigWindow
             txt = wnd.AddText2(x + 20f, y, tab4, I18NKeys.DarkFogHiveFollowDistance, 13, "dark-fog-hive-follow-distance");
             var dfHiveSlider = wnd.AddSideSlider(
                 x + 20f + UI.Util.GetPreferredWidth(txt) + 5f,
-                y + 6f,
+                y,
                 tab4,
                 PlayerPatch.DFHiveFollowDistance,
                 new DistanceMapperHive( ),
@@ -752,7 +753,7 @@ public static class UIConfigWindow
             txt = wnd.AddText2(x + 20f, y, tab4, I18NKeys.DarkFogCarrierFollowDistance, 13, "dark-fog-carrier-follow-distance");
             var dfCarrierSlider = wnd.AddSideSlider(
                 x + 20f + UI.Util.GetPreferredWidth(txt) + 5f,
-                y + 6f,
+                y,
                 tab4,
                 PlayerPatch.DFCarrierFollowDistance,
                 new DistanceMapperCarrier( ),
