@@ -13,17 +13,6 @@ using Object = UnityEngine.Object;
 
 namespace UXAssist.Patches.Logistics;
 
-internal static class RealtimeInfoPanelPatch
-{
-    public static void OnUpdate()
-    {
-        if (LogisticsPatch.RealtimeLogisticsInfoPanelEnabled.Value)
-        {
-            RealtimeLogisticsInfoPanel.StationInfoPanelsUpdate();
-        }
-    }
-}
-
 internal class LogisticsConstrolPanelImprovement : PatchImpl<LogisticsConstrolPanelImprovement>
 {
     private static int ItemIdHintUnderMouse()
@@ -182,7 +171,7 @@ internal static class RealtimeLogisticsInfoPanel
     private static readonly Color OrderInColor = new(108f / 255, 187f / 255, 214f / 255);
     private static readonly Color OrderOutColor = new(255f / 255, 161f / 255, 109.5f / 255);
 
-    private static int _lastPlanetId;
+    private static PlanetTransport _lastTransport;
 
     private static int _localStorageMax = LogisticsConstants.DefaultLocalStorageMax;
     private static int _remoteStorageMax = LogisticsConstants.DefaultRemoteStorageMax;
@@ -220,23 +209,8 @@ internal static class RealtimeLogisticsInfoPanel
 
     internal static void Enable(bool on)
     {
-        // Toggle the defensive localPlanet setter hook regardless of whether the GUI
-        // root has been initialized yet (InitGUI may run later via OnDataLoaded).
-        LocalPlanetWatcher.Enable(on);
-        if (_stationTipsRoot == null) return;
-        if (!on)
-        {
-            HideAndRecycleStationTips();
-            return;
-        }
-        if (DSPGame.IsMenuDemo || !GameMain.isRunning)
-        {
-            _lastPlanetId = 0;
-            _stationTipsRoot.SetActive(false);
-            return;
-        }
-        _lastPlanetId = GameMain.data?.localPlanet?.id ?? 0;
-        _stationTipsRoot.SetActive(_lastPlanetId != 0);
+        PanelUpdatePatch.Enable(on);
+        if (!on) HideAndRecycleStationTips();
     }
 
     internal static void EnableBars(bool on)
@@ -513,10 +487,10 @@ internal static class RealtimeLogisticsInfoPanel
     {
         if (!stationTip) return;
         var go = stationTip.gameObject;
+        go.SetActive(false);
         if (_stationTipsRecycleCount < StationTipsRecycle.Length)
         {
             stationTip.ResetStationTip();
-            go.SetActive(false);
             StationTipsRecycle[_stationTipsRecycleCount++] = stationTip;
         }
         else
@@ -525,7 +499,6 @@ internal static class RealtimeLogisticsInfoPanel
             // StationTip MonoBehaviour). Destroying only the component would leave the
             // GameObject and all its UI children orphaned under _stationTipsRoot,
             // causing "ghost" tips to remain visible whenever the root is reactivated.
-            go.SetActive(false);
             Object.Destroy(go);
         }
     }
@@ -551,7 +524,7 @@ internal static class RealtimeLogisticsInfoPanel
     {
         _stationTipsRoot?.SetActive(false);
         RecycleStationTips();
-        _lastPlanetId = 0;
+        _lastTransport = null;
     }
 
     private static StationTip AllocateStationTip()
@@ -572,25 +545,16 @@ internal static class RealtimeLogisticsInfoPanel
 
     internal static void StationInfoPanelsUpdate()
     {
-        if (DSPGame.IsMenuDemo || !GameMain.isRunning) return;
-        var localPlanet = GameMain.data?.localPlanet;
-        if (localPlanet == null || !localPlanet.factoryLoaded)
-        {
-            _stationTipsRoot.SetActive(false);
-            if (_lastPlanetId == 0) return;
-            RecycleStationTips();
-            _lastPlanetId = 0;
-            return;
-        }
-
-        if (_lastPlanetId != localPlanet.id)
-        {
-            RecycleStationTips();
-            _lastPlanetId = localPlanet.id;
-        }
-
-        var factory = localPlanet.factory;
+        if (_stationTipsRoot == null) return;
+        var localPlanet = DSPGame.IsMenuDemo || !GameMain.isRunning ? null : GameMain.data?.localPlanet;
+        var factory = localPlanet is { factoryLoaded: true } ? localPlanet.factory : null;
         var transport = factory?.transport;
+        if (_lastTransport != transport)
+        {
+            RecycleStationTips();
+            _lastTransport = transport;
+        }
+
         if (transport is not { stationCursor: > 1 } || (UIGame.viewMode != EViewMode.Normal && UIGame.viewMode != EViewMode.Globe))
         {
             _stationTipsRoot.SetActive(false);
@@ -610,6 +574,7 @@ internal static class RealtimeLogisticsInfoPanel
         var forward = GameCamera.main.transform.forward;
         var realRadius = localPlanet.realRadius;
 
+        var stationPool = transport.stationPool;
         var stationCount = transport.stationCursor;
         if (stationCount > _stationTips.Length)
         {
@@ -623,26 +588,26 @@ internal static class RealtimeLogisticsInfoPanel
             Array.Resize(ref _stationTips, newSize);
         }
 
-        for (var i = stationCount - 1; i > 0; i--)
+        for (var stationId = stationCount - 1; stationId > 0; stationId--)
         {
-            var stationComponent = transport.stationPool[i];
-            if (stationComponent == null || i != stationComponent.id)
+            var stationComponent = stationPool[stationId];
+            if (stationComponent == null || stationId != stationComponent.id)
             {
-                RecycleStationTip(i);
+                RecycleStationTip(stationId);
                 continue;
             }
             var storageArray = stationComponent.storage;
             if (storageArray == null)
             {
-                RecycleStationTip(i);
+                RecycleStationTip(stationId);
                 continue;
             }
 
-            var stationTip = _stationTips[i];
+            var stationTip = _stationTips[stationId];
             if (!stationTip)
             {
                 stationTip = AllocateStationTip();
-                _stationTips[i] = stationTip;
+                _stationTips[stationId] = stationTip;
             }
 
             var position = factory.entityPool[stationComponent.entityId].pos.normalized;
@@ -699,23 +664,13 @@ internal static class RealtimeLogisticsInfoPanel
         }
     }
 
-    // Defensive Harmony hook on GameData.localPlanet setter.
-    // It guarantees tips are hidden and recycled when the local planet id changes,
-    // even if UXAssist.Update() is skipped that frame (e.g. by VFInput.inputing
-    // while the player is typing while transitioning between planets, or by a brief
-    // !GameMain.isRunning state during loading). _lastPlanetId is reset to 0 here so
-    // the next StationInfoPanelsUpdate() re-validates factoryLoaded/transport/viewMode
-    // and re-allocates fresh tips for the new planet.
-    private class LocalPlanetWatcher : PatchImpl<LocalPlanetWatcher>
+    private class PanelUpdatePatch : PatchImpl<PanelUpdatePatch>
     {
-        [HarmonyPrefix]
-        [HarmonyPatch(typeof(GameData), nameof(GameData.localPlanet), MethodType.Setter)]
-        private static void GameData_localPlanet_Setter_Prefix(GameData __instance, PlanetData value)
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(UIGame), nameof(UIGame._OnUpdate))]
+        private static void UIGame_OnUpdate_Postfix()
         {
-            var oldId = __instance.localPlanet?.id ?? 0;
-            var newId = value?.id ?? 0;
-            if (oldId == newId) return;
-            HideAndRecycleStationTips();
+            StationInfoPanelsUpdate();
         }
     }
 
@@ -839,7 +794,7 @@ internal static class RealtimeLogisticsInfoPanel
         internal void ResetStationTip()
         {
             _layout = EStationTipLayout.None;
-            for (var i = _storageMaxSlotCount - 1; i >= 0; i--)
+            for (var i = _storageItems.Length - 1; i >= 0; i--)
             {
                 _countTexts[i].gameObject.SetActive(false);
                 _sliderBg[i].gameObject.SetActive(false);

@@ -20,13 +20,14 @@
 - `Directory.Build.props` supplies common frameworks, BepInEx packages, game references, warning policy, and the `UpdateGameDlls` dependency. `Directory.Build.targets` defines `ZipMod` and `CopyToParentPackage`.
 - Normal validation: `dotnet build <project>/<project>.csproj -c Release --no-restore`.
 - Refresh game references explicitly with `dotnet build UpdateGameDlls/UpdateGameDlls.csproj`; the script compares timestamps and uses `assembly-publicizer --strip --overwrite`. Missing DSP or the publicizer is a warning, not a build failure.
-- Package main mods with `dotnet build -t:ZipMod -c Release`; package preloaders with `dotnet build -t:CopyToParentPackage -c Release`. The mod `.csproj` `<Version>` is the single version source and packaging synchronizes `package/manifest.json`.
+- Package main mods with `dotnet build -t:ZipMod -c Release`; package preloaders with `dotnet build -t:CopyToParentPackage -c Release`. The mod `.csproj` `<Version>` is the single version source and packaging synchronizes `package/manifest.json`. Keep the English `CHANGELOG.md` release heading aligned with `<Version>`, carrying forward existing unreleased notes without rewriting historical entries.
 - Treat warnings as errors except the intentional obsolete API warning `0618`; do not weaken this policy to hide new warnings.
 
 ## Architecture
 
 - `ModFeatureRegistry` discovers dependent-mod features during `Awake`; feature initialization is eager, while UXAssist alone drives the deferred start, input, update, and uninitialization lifecycle. Keep dispatchers internal and idempotent.
 - Proto-dependent features must tolerate calls before preload completes and retry via `UXAssist.Common.GameLogic.OnDataLoaded`. Mark changes applied only after capturing valid originals and successfully mutating the proto.
+- Architect-mode virtual stock applies only to player inventory and construction previews, including logistics bots, drones, and vessels. Keep cached package statistics consistent for inlined getters, preserve physical capacity and native ref/out contracts, and restore native statistics on disable.
 - Dispatch UXAssist shortcuts from the postfix of `VFInput.OnUpdate`, after DSP refreshes modifier and UI state. Keep typing/menu guards and per-frame registry guards; do not poll from an independent `Update()` or logic-tick callback.
 - Register localization keys through each project registration class and use `.Translate()` with keys. Do not add Chinese literals at call sites.
 - Prefer `UXAssist/Common/GameConstants` for item, tech, logistics, and Dyson sphere constants instead of inline literals.
@@ -34,7 +35,8 @@
 - Use `ModCompatHelper` for external plugin/type/member resolution and preserve legacy public type identities when refactoring reflection targets. Use `DysonSphereReflection` for DSPOptimizations-compatible Dyson sphere fields.
 - Performance-sensitive Harmony transpilers must include the standard target/fallback header and use `TranspilerGuard` when a matcher can fail; returning original instructions is the fallback. Match named enum members and semantic calls or fields instead of hard-coded enum values or local-variable slots. Validate injected stack operand types and branch destinations, not just successful matching.
 - `PatchImpl<T>.Enable(true)` must remain fail-soft: log, unpatch, and leave the patch unset if Harmony application fails so config delegate chains remain consistent.
-- Overlay UI state must converge from actual game state on periodic updates, not depend only on one-shot event or patch callbacks. Cloned controls must reset runtime state while retaining source styles; use `UXAssist.UI.Util.GetPreferredWidth` for dynamic text and `ResetButton` for cloned buttons. Shared button sizing must use anchor-relative child positions so text and icons remain aligned after a button pivot changes.
+- Overlay UI state must converge from actual game state on periodic updates, not depend only on one-shot event or patch callbacks. Treat replacement of a planet transport as a lifecycle boundary and clear its dependent overlays once. Station IDs are reusable indices, and a stable planet ID or factory reference does not imply stable transport ownership. Cloned controls must reset runtime state while retaining source styles; use `UXAssist.UI.Util.GetPreferredWidth` for dynamic text and `ResetButton` for cloned buttons. Shared button sizing must use anchor-relative child positions so text and icons remain aligned after a button pivot changes.
+- Logistics station overlays must refresh through the native UI lifecycle, independently of typing guards. Reconcile cached tips against live station/entity identities and recycle local tips when stations are removed.
 - UI-only options must preserve native progression, statistics, and event delivery. Suppress presentation handlers rather than bypassing authoritative game-state setters.
 - LiveStreamAssist browser overlays must use single-flight polling and discard stale work after connection changes. Compound queries must reject mixed session IDs; cache only positive production indices so newly tracked items remain discoverable.
 - LiveStreamAssist production reads must schedule the native extra-info calculator for queried factories independently of the statistics UI. Deduplicate and throttle refreshes, let active native batches finish, and clear pending factory indices and deadlines at session boundaries.
@@ -59,6 +61,6 @@
 
 ## Review Standard
 
-- Fix root causes with minimal focused changes. Do not alter unrelated behavior, add copyright headers, commit changes, push branches, or create branches unless requested. Commit only task-related files and leave unrelated working-tree changes untouched. Use normal pushes; do not rewrite remote history unless explicitly requested.
+- Fix root causes with minimal focused changes. Do not alter unrelated behavior, add copyright headers, commit changes, push branches, or create branches unless requested. Stage and commit only explicitly named task-related files, leaving unrelated working-tree changes untouched. Use normal pushes; do not rewrite remote history unless explicitly requested.
 - Before handoff, run the narrowest relevant build or test, then `git diff --check`. Mention unrelated pre-existing failures instead of changing them.
 - For game updates, also check Harmony target resolution and affected IL patterns against the original game DLL; compilation alone does not validate runtime patches.

@@ -30,6 +30,9 @@ public static class ItemIds
     public const int ProliferatorMkIII = 1143;
 
     /* Logistics carriers */
+    public const int LogisticsDrone = 5001;
+    public const int LogisticsVessel = 5002;
+    public const int LogisticsBot = 5003;
     public const int SpaceWarper = 1126;
 
     /* Matrices */

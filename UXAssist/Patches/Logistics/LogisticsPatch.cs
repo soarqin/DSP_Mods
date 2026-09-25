@@ -95,8 +95,6 @@ public static class LogisticsPatch
         RealtimeLogisticsInfoPanel.Enable(false);
     }
 
-    public static void OnUpdate() => RealtimeInfoPanelPatch.OnUpdate();
-
     public static void OnInputUpdate()
     {
         if (DSPGame.IsMenuDemo) return;

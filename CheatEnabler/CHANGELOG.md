@@ -3,7 +3,10 @@
 
 ## Changlog
 
-* Unreleased
+* 2.4.6
+  * `Architect mode`: Restore infinite-building behavior and keep construction previews, inventory queries, and cached package statistics in sync.
+  * `Architect mode`: Increase the default virtual stock from 100 to 999 and explicitly include Logistics Bots, Logistics Drones, and Logistics Vessels.
+  * `Architect mode`: Fix item withdrawal results without consuming real stock or affecting unrelated storage. Preserve physical package capacity and restore native statistics when the mode is disabled.
   * `PowerGlobalCoverage`: Fix a startup crash before wind-turbine prefabs finish loading. Retry after preload without corrupting activation state or the original power ranges, and tolerate unallocated factory data.
 * 2.4.5
   * Support Dyson Sphere Program 0.10.35.29057.

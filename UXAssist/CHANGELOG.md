@@ -3,7 +3,9 @@
 
 ## Changlog
 
-* Unreleased
+* 1.6.1
+  * `Real-time logistic stations info panel`: Clear old panels after `Initialize this planet`, even though the planet ID remains unchanged.
+  * `Real-time logistic stations info panel`: Continue refreshing while typing and remove dismantled stations on the next UI update, with fewer lifecycle hooks and redundant per-frame checks.
   * `Do not render factory entities`: Fix activation after DSP 0.10.35.29057 by removing fixed local-variable slots from raycast filtering. Preserve belts and optional sorter visibility.
 * 1.6.0
   * Support Dyson Sphere Program 0.10.35.29057.
