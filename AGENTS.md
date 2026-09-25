@@ -9,7 +9,7 @@
 
 ## Project
 
-- This repository contains independent BepInEx 5.x C# mods for Dyson Sphere Program. HarmonyLib patches game methods at runtime; `UXAssist` is the shared library used directly by `CheatEnabler` and `UniverseGenTweaks`.
+- This repository contains independent BepInEx 5.x C# mods for Dyson Sphere Program. HarmonyLib patches game methods at runtime; `UXAssist` (User eXperience Assistant) is the shared library used directly by `CheatEnabler` and `UniverseGenTweaks`.
 - Projects target `net472` or `netstandard2.1` with SDK-style `.csproj` files. Compile-time game references live in `AssemblyFromGame/`.
 - `DustbinPreloader` and `LabOptPreloader` are Mono.Cecil preloaders; their main mods consume the injected fields without reflection.
 - LiveStreamAssist: [WebSocket architecture, transport migration, and validation](LiveStreamAssist/docs/WebSocketDesign.md). Overlay JS client: [LiveStreamAssist/js/README.md](LiveStreamAssist/js/README.md).
@@ -22,6 +22,7 @@
 - Refresh game references explicitly with `dotnet build UpdateGameDlls/UpdateGameDlls.csproj`; the script compares timestamps and uses `assembly-publicizer --strip --overwrite`. Missing DSP or the publicizer is a warning, not a build failure.
 - Package main mods with `dotnet build -t:ZipMod -c Release`; package preloaders with `dotnet build -t:CopyToParentPackage -c Release`. The mod `.csproj` `<Version>` is the single version source and packaging synchronizes `package/manifest.json`. Keep the latest English and Chinese `CHANGELOG.md` release headings and notes aligned with `<Version>`. Group user-visible changes by feature, omit implementation-only details, and carry forward existing unreleased notes without rewriting historical entries.
 - Treat warnings as errors except the intentional obsolete API warning `0618`; do not weaken this policy to hide new warnings.
+- Export Thunderstore package icons as 256x256 PNG files and verify their format and dimensions. For circular exports, apply an antialiased alpha mask to the approved artwork instead of regenerating it; preserve RGB pixels and make the exterior fully transparent. Convey the mod's function through familiar, conventionally oriented symbols rather than lettering. Preserve DSP motifs and consistent materials across related mod icons. During localized edits, preserve all unrequested geometry, placement and styling from the chosen reference; do not redesign surrounding structures to produce an overlap. Use clear foreground occlusion for intersecting forms without losing the main symbol's silhouette, and check contrast in 64x64 and 32x32 side-by-side previews. Keep unselected icon candidates under `artifacts/`, outside release package directories.
 
 ## Architecture
 
