@@ -4,9 +4,8 @@
 ## Changlog
 
 * 1.6.1
-  * `Real-time logistic stations info panel`: Clear old panels after `Initialize this planet`, even though the planet ID remains unchanged.
-  * `Real-time logistic stations info panel`: Continue refreshing while typing and remove dismantled stations on the next UI update, with fewer lifecycle hooks and redundant per-frame checks.
-  * `Do not render factory entities`: Fix activation after DSP 0.10.35.29057 by removing fixed local-variable slots from raycast filtering. Preserve belts and optional sorter visibility.
+  * `Real-time logistic stations info panel`: Fix lingering panels after dismantling stations or initializing a planet, and keep panels updating while typing.
+  * `Do not render factory entities (except belts and sorters)`: Fix the option not taking effect after updating to DSP 0.10.35.29057.
 * 1.6.0
   * Support Dyson Sphere Program 0.10.35.29057.
   * New feature: `Orbital Collector product limit`, with an `Apply to universe` option.
@@ -418,6 +417,9 @@
 
 ## 更新日志
 
+* 1.6.1
+  * `物流站实时信息面板`：修复拆除物流站或初始化本行星后面板残留的问题，输入文字时也会保持刷新。
+  * `不渲染工厂建筑实体(除了传送带和分拣器)`：修复更新到戴森球计划 0.10.35.29057 后该选项不生效的问题。
 * 1.6.0
   * 支持戴森球计划 0.10.35.29057。
   * 新功能：`轨道采集器产物上限`，支持`应用到全宇宙`。

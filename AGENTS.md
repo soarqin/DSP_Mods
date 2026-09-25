@@ -3,7 +3,7 @@
 ## Rules
 
 - Update `AGENTS.md` after each task by editing current guidance directly. Keep only project standards and durable architecture references; do not retain investigation evidence, task histories, completed plans, or implementation snapshots.
-- Write all documentation and code comments in English.
+- Write documentation and code comments in English, except for the Chinese sections of bilingual changelogs.
 - Inspect the original DSP game DLL, never the stripped publicized copy in `AssemblyFromGame/`, when method bodies are required. Locate DSP using the Steam registry and `steamapps/libraryfolders.vdf` as `UpdateGameDlls.ps1` does, then decompile `<game_root>/DSPGAME_Data/Managed/Assembly-CSharp.dll`.
 - Resolve in-game terminology from `<game_root>/Locale/`: `Names` contains keys, `1033` is English, and `2052` is Simplified Chinese.
 
@@ -20,7 +20,7 @@
 - `Directory.Build.props` supplies common frameworks, BepInEx packages, game references, warning policy, and the `UpdateGameDlls` dependency. `Directory.Build.targets` defines `ZipMod` and `CopyToParentPackage`.
 - Normal validation: `dotnet build <project>/<project>.csproj -c Release --no-restore`.
 - Refresh game references explicitly with `dotnet build UpdateGameDlls/UpdateGameDlls.csproj`; the script compares timestamps and uses `assembly-publicizer --strip --overwrite`. Missing DSP or the publicizer is a warning, not a build failure.
-- Package main mods with `dotnet build -t:ZipMod -c Release`; package preloaders with `dotnet build -t:CopyToParentPackage -c Release`. The mod `.csproj` `<Version>` is the single version source and packaging synchronizes `package/manifest.json`. Keep the English `CHANGELOG.md` release heading aligned with `<Version>`, carrying forward existing unreleased notes without rewriting historical entries.
+- Package main mods with `dotnet build -t:ZipMod -c Release`; package preloaders with `dotnet build -t:CopyToParentPackage -c Release`. The mod `.csproj` `<Version>` is the single version source and packaging synchronizes `package/manifest.json`. Keep the latest English and Chinese `CHANGELOG.md` release headings and notes aligned with `<Version>`. Group user-visible changes by feature, omit implementation-only details, and carry forward existing unreleased notes without rewriting historical entries.
 - Treat warnings as errors except the intentional obsolete API warning `0618`; do not weaken this policy to hide new warnings.
 
 ## Architecture

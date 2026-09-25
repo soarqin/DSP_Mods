@@ -4,10 +4,8 @@
 ## Changlog
 
 * 2.4.6
-  * `Architect mode`: Restore infinite-building behavior and keep construction previews, inventory queries, and cached package statistics in sync.
-  * `Architect mode`: Increase the default virtual stock from 100 to 999 and explicitly include Logistics Bots, Logistics Drones, and Logistics Vessels.
-  * `Architect mode`: Fix item withdrawal results without consuming real stock or affecting unrelated storage. Preserve physical package capacity and restore native statistics when the mode is disabled.
-  * `PowerGlobalCoverage`: Fix a startup crash before wind-turbine prefabs finish loading. Retry after preload without corrupting activation state or the original power ranges, and tolerate unallocated factory data.
+  * `Architect mode`: Restore unlimited use of buildings, Logistics Bots, Logistics Drones, and Logistics Vessels, and increase the default displayed count from 100 to 999.
+  * `Wind Turbines do global power coverage`: Fix a possible startup crash when enabled.
 * 2.4.5
   * Support Dyson Sphere Program 0.10.35.29057.
   * Update `Terraform anyway` for the separate foundation and Restore Terrain workflows. Preserve soil gains and prevent negative soil balances when resources are insufficient.
@@ -198,6 +196,9 @@
 
 ## 更新日志
 
+* 2.4.6
+  * `建筑师模式`：修复建筑、配送运输机、物流运输机和星际物流运输船无法无限使用的问题，默认显示数量由 100 提高至 999。
+  * `风力涡轮机供电覆盖全球`：修复启用后可能导致启动崩溃的问题。
 * 2.4.5
   * 支持戴森球计划 0.10.35.29057。
   * 更新`强行改造地形`以适配独立地基和恢复地形的工作流程。在资源不足时保留沙土收益并防止负沙土平衡。
