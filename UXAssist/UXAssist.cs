@@ -17,6 +17,7 @@ using UXAssist.Functions.Factory;
 using UXAssist.Patches;
 using UXAssist.Patches.Factory;
 using UXAssist.Patches.Logistics;
+using UXAssist.Production;
 using UXAssist.UI;
 using Util = UXAssist.Common.Util;
 using GameLogicProc = UXAssist.Common.GameLogic;
@@ -239,6 +240,7 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
 
         // UI Patches
         GameLogicProc.Enable(true);
+        ProductionCatalogService.Init();
 
         UIConfigWindow.Init();
 
@@ -280,6 +282,7 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
         _patches?.Do(type => type.GetMethod("Uninit")?.Invoke(null, null));
 
         MyWindowManager.Enable(false);
+        ProductionCatalogService.Uninit();
         GameLogicProc.Enable(false);
     }
 

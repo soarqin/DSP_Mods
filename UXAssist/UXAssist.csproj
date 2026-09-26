@@ -10,6 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="tools/**/*.cs" />
     <Reference Include="System.Runtime.Serialization" />
     <PackageReference Include="DysonSphereProgram.Modding.CommonAPI" Version="1.*" />
     <PackageReference Include="DysonSphereProgram.Modding.DSPModSave" Version="1.*" />
