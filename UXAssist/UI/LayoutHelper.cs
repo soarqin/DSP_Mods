@@ -39,8 +39,10 @@ public static class LayoutHelper
         var dst = UnityEngine.Object.Instantiate(src);
         dst.gameObject.name = objName;
         var btn = dst.GetComponent<UIButton>();
+        var tipSettings = btn.tips;
         Util.ResetButton(btn);
         Util.NormalizeRectWithTopLeft(btn, x, y, parent);
+        btn.tips = tipSettings;
         btn.tips.topLevel = true;
         btn.tips.tipTitle = label;
         btn.tips.tipText = tip;

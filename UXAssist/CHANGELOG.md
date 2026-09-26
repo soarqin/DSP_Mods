@@ -4,6 +4,8 @@
 ## Changlog
 
 * 1.6.1
+  * `Settings help`: Restore the game's native tips on question-mark buttons.
+  * `Auto-cruise`: Align the settings sliders and reduce spacing between their tracks and values.
   * `Real-time logistic stations info panel`: Fix lingering panels after dismantling stations or initializing a planet, and keep panels updating while typing.
   * `Do not render factory entities (except belts and sorters)`: Fix the option not taking effect after updating to DSP 0.10.35.29057.
 * 1.6.0
@@ -418,6 +420,8 @@
 ## 更新日志
 
 * 1.6.1
+  * `设置提示`：修复问号按钮的游戏内提示不显示的问题。
+  * `自动巡航`：统一设置滑条的起始位置，并缩小滑条与数值之间的间距。
   * `物流站实时信息面板`：修复拆除物流站或初始化本行星后面板残留的问题，输入文字时也会保持刷新。
   * `不渲染工厂建筑实体(除了传送带和分拣器)`：修复更新到戴森球计划 0.10.35.29057 后该选项不生效的问题。
 * 1.6.0

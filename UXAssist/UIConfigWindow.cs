@@ -703,63 +703,37 @@ public static class UIConfigWindow
             var autoStopCheckBox = wnd.AddCheckBox(x + 20f, y, tab4, PlayerPatch.StopOnArrivalAndInput, I18NKeys.StopAutoCruiseOnManualInput, 13);
             y += 27f;
             var useWarpCheckBox = wnd.AddCheckBox(x + 20f, y, tab4, PlayerPatch.UseWarper, I18NKeys.UseWarp, 13);
+            var autoCruiseSliderLabelWidth = 0f;
             y += 27f;
+            var warpEnergyY = y;
             txt = wnd.AddText2(x + 20f, y, tab4, I18NKeys.UseWarpMinimalEnergy, 13, "use-warp-minimal-energy");
-            var warpEnergySlider = wnd.AddSideSlider(
-                x + 20f + UI.Util.GetPreferredWidth(txt) + 5f,
-                y,
-                tab4,
-                PlayerPatch.UseWarperMinimalEnergy,
-                new EnergyMapper( ),
-                "0",
-                200f,
-                - 100f).WithFontSize(13);
+            autoCruiseSliderLabelWidth = Mathf.Max(autoCruiseSliderLabelWidth, UI.Util.GetPreferredWidth(txt));
             y += 27f;
+            var newNavDistanceY = y;
             txt = wnd.AddText2(x + 20f, y, tab4, I18NKeys.DistanceToUseWarp, 13, "text-new-navigation-distance-to-warp");
-            var newNavDistanceSlider = wnd.AddSideSlider(
-                x + 20f + UI.Util.GetPreferredWidth(txt) + 5f,
-                y,
-                tab4,
-                PlayerPatch.UseWarperDistance,
-                new DistanceMapper( ),
-                "0.0",
-                200f,
-                -100f).WithFontSize(13);
+            autoCruiseSliderLabelWidth = Mathf.Max(autoCruiseSliderLabelWidth, UI.Util.GetPreferredWidth(txt));
             y += 27f;
             var speedUpCheckBox = wnd.AddCheckBox(x + 20f, y, tab4, PlayerPatch.UseSpeedUp, I18NKeys.AutoBoost, 13);
             y += 27f;
+            var speedUpEnergyY = y;
             txt = wnd.AddText2(x + 20f, y, tab4, I18NKeys.AutoBoostMinimalEnergy, 13, "auto-boost-minimal-energy");
-            var speedUpEnergySlider = wnd.AddSideSlider(
-                x + 20f + UI.Util.GetPreferredWidth(txt) + 5f,
-                y,
-                tab4,
-                PlayerPatch.UseSpeedUpMinimalEnergy,
-                new EnergyMapper( ),
-                "0",
-                200f,
-                - 100f).WithFontSize(13);
+            autoCruiseSliderLabelWidth = Mathf.Max(autoCruiseSliderLabelWidth, UI.Util.GetPreferredWidth(txt));
             y += 27f;
+            var dfHiveY = y;
             txt = wnd.AddText2(x + 20f, y, tab4, I18NKeys.DarkFogHiveFollowDistance, 13, "dark-fog-hive-follow-distance");
-            var dfHiveSlider = wnd.AddSideSlider(
-                x + 20f + UI.Util.GetPreferredWidth(txt) + 5f,
-                y,
-                tab4,
-                PlayerPatch.DFHiveFollowDistance,
-                new DistanceMapperHive( ),
-                "0.0",
-                200f,
-                - 100f).WithFontSize(13);
+            autoCruiseSliderLabelWidth = Mathf.Max(autoCruiseSliderLabelWidth, UI.Util.GetPreferredWidth(txt));
             y += 27f;
+            var dfCarrierY = y;
             txt = wnd.AddText2(x + 20f, y, tab4, I18NKeys.DarkFogCarrierFollowDistance, 13, "dark-fog-carrier-follow-distance");
-            var dfCarrierSlider = wnd.AddSideSlider(
-                x + 20f + UI.Util.GetPreferredWidth(txt) + 5f,
-                y,
-                tab4,
-                PlayerPatch.DFCarrierFollowDistance,
-                new DistanceMapperCarrier( ),
-                "0.0",
-                200f,
-                - 100f).WithFontSize(13);
+            autoCruiseSliderLabelWidth = Mathf.Max(autoCruiseSliderLabelWidth, UI.Util.GetPreferredWidth(txt));
+
+            var sliderX = x + 20f + autoCruiseSliderLabelWidth + 5f;
+            const float sliderWidth = 160f;
+            var warpEnergySlider = wnd.AddSideSlider(sliderX, warpEnergyY, tab4, PlayerPatch.UseWarperMinimalEnergy, new EnergyMapper(), "0", sliderWidth, -100f).WithFontSize(13);
+            var newNavDistanceSlider = wnd.AddSideSlider(sliderX, newNavDistanceY, tab4, PlayerPatch.UseWarperDistance, new DistanceMapper(), "0.0", sliderWidth, -100f).WithFontSize(13);
+            var speedUpEnergySlider = wnd.AddSideSlider(sliderX, speedUpEnergyY, tab4, PlayerPatch.UseSpeedUpMinimalEnergy, new EnergyMapper(), "0", sliderWidth, -100f).WithFontSize(13);
+            var dfHiveSlider = wnd.AddSideSlider(sliderX, dfHiveY, tab4, PlayerPatch.DFHiveFollowDistance, new DistanceMapperHive(), "0.0", sliderWidth, -100f).WithFontSize(13);
+            var dfCarrierSlider = wnd.AddSideSlider(sliderX, dfCarrierY, tab4, PlayerPatch.DFCarrierFollowDistance, new DistanceMapperCarrier(), "0.0", sliderWidth, -100f).WithFontSize(13);
 
             PlayerPatch.AutoCruiseEnabled.SettingChanged += NavSettingChanged;
             PlayerPatch.UseWarper.SettingChanged += NavSettingChanged;
