@@ -46,9 +46,20 @@ internal static class TwoPhaseSimplex
         if (rowCount == 0)
             return new LinearSolveResult(LinearSolveStatus.Optimal, new double[columnCount]);
 
+        // Optimal values scale linearly with the right-hand side; normalize it so tolerances do not depend on rates.
+        var rightHandScale = 0.0;
+        foreach (var value in rightHandSide)
+        {
+            if (double.IsNaN(value) || double.IsInfinity(value))
+                throw new ArgumentException("The right-hand side contains a non-finite number.");
+            rightHandScale = Math.Max(rightHandScale, Math.Abs(value));
+        }
+
+        if (rightHandScale == 0) rightHandScale = 1;
         var width = columnCount + rowCount;
         var tableau = new double[rowCount, width + 1];
         var basis = new int[rowCount];
+        var isBasic = new bool[width];
         for (var row = 0; row < rowCount; row++)
         {
             var scale = 0.0;
@@ -59,27 +70,27 @@ internal static class TwoPhaseSimplex
                 scale = Math.Max(scale, Math.Abs(coefficients[row, column]));
             }
 
-            if (double.IsNaN(rightHandSide[row]) || double.IsInfinity(rightHandSide[row]))
-                throw new ArgumentException("The right-hand side contains a non-finite number.");
+            var rightHand = rightHandSide[row] / rightHandScale;
             if (scale == 0)
             {
-                if (Math.Abs(rightHandSide[row]) > PivotTolerance)
+                if (Math.Abs(rightHand) > PivotTolerance)
                     return new LinearSolveResult(LinearSolveStatus.Infeasible);
                 scale = 1;
             }
 
-            var sign = rightHandSide[row] < 0 ? -1 : 1;
+            var sign = rightHand < 0 ? -1 : 1;
             for (var column = 0; column < columnCount; column++)
                 tableau[row, column] = sign * coefficients[row, column] / scale;
             tableau[row, columnCount + row] = 1;
-            tableau[row, width] = sign * rightHandSide[row] / scale;
+            tableau[row, width] = sign * rightHand / scale;
             basis[row] = columnCount + row;
+            isBasic[columnCount + row] = true;
         }
 
         var artificialObjective = new double[width];
         for (var row = 0; row < rowCount; row++) artificialObjective[columnCount + row] = 1;
         var iterations = 0;
-        var firstStatus = Optimize(tableau, basis, artificialObjective, Array.Empty<double[]>(),
+        var firstStatus = Optimize(tableau, basis, isBasic, artificialObjective, Array.Empty<double[]>(),
             columnCount, ref iterations, iterationBudget, cancellation);
         if (firstStatus != LinearSolveStatus.Optimal)
             return new LinearSolveResult(firstStatus == LinearSolveStatus.Unbounded
@@ -93,8 +104,8 @@ internal static class TwoPhaseSimplex
 
             for (var column = 0; column < columnCount; column++)
             {
-                if (Contains(basis, column) || Math.Abs(tableau[row, column]) <= PivotTolerance) continue;
-                Pivot(tableau, basis, row, column);
+                if (isBasic[column] || Math.Abs(tableau[row, column]) <= PivotTolerance) continue;
+                Pivot(tableau, basis, isBasic, row, column);
                 break;
             }
         }
@@ -104,7 +115,7 @@ internal static class TwoPhaseSimplex
         {
             var costs = new double[width];
             Array.Copy(objective, costs, columnCount);
-            var status = Optimize(tableau, basis, costs, optimizedObjectives, columnCount,
+            var status = Optimize(tableau, basis, isBasic, costs, optimizedObjectives, columnCount,
                 ref iterations, iterationBudget, cancellation);
             if (status != LinearSolveStatus.Optimal) return new LinearSolveResult(status);
             optimizedObjectives.Add(costs);
@@ -114,13 +125,13 @@ internal static class TwoPhaseSimplex
         for (var row = 0; row < rowCount; row++)
         {
             if (basis[row] < columnCount)
-                values[basis[row]] = Math.Max(0, tableau[row, width]);
+                values[basis[row]] = Math.Max(0, tableau[row, width]) * rightHandScale;
         }
 
         return new LinearSolveResult(LinearSolveStatus.Optimal, values);
     }
 
-    private static LinearSolveStatus Optimize(double[,] tableau, int[] basis, double[] costs,
+    private static LinearSolveStatus Optimize(double[,] tableau, int[] basis, bool[] isBasic, double[] costs,
         IReadOnlyList<double[]> previousCosts, int enteringLimit, ref int iterations, int budget,
         CancellationToken cancellation)
     {
@@ -132,7 +143,7 @@ internal static class TwoPhaseSimplex
             var entering = -1;
             for (var column = 0; column < enteringLimit; column++)
             {
-                if (Contains(basis, column) || ReducedCost(tableau, basis, costs, column) >= -ReducedTolerance)
+                if (isBasic[column] || ReducedCost(tableau, basis, costs, column) >= -ReducedTolerance)
                     continue;
                 var preservesPrevious = true;
                 foreach (var previous in previousCosts)
@@ -169,7 +180,7 @@ internal static class TwoPhaseSimplex
             }
 
             if (leaving < 0) return LinearSolveStatus.Unbounded;
-            Pivot(tableau, basis, leaving, entering);
+            Pivot(tableau, basis, isBasic, leaving, entering);
             iterations++;
         }
     }
@@ -182,17 +193,7 @@ internal static class TwoPhaseSimplex
         return reduced;
     }
 
-    private static bool Contains(int[] basis, int column)
-    {
-        foreach (var basic in basis)
-        {
-            if (basic == column) return true;
-        }
-
-        return false;
-    }
-
-    private static void Pivot(double[,] tableau, int[] basis, int pivotRow, int pivotColumn)
+    private static void Pivot(double[,] tableau, int[] basis, bool[] isBasic, int pivotRow, int pivotColumn)
     {
         var rowCount = basis.Length;
         var width = tableau.GetLength(1);
@@ -211,6 +212,8 @@ internal static class TwoPhaseSimplex
         }
 
         tableau[pivotRow, pivotColumn] = 1;
+        isBasic[basis[pivotRow]] = false;
+        isBasic[pivotColumn] = true;
         basis[pivotRow] = pivotColumn;
     }
 }

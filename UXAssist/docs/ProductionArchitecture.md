@@ -46,7 +46,7 @@ var selection = capture.CreateRequest(proliferationEnabled: true);
 var report = new FactoryBlackBoxAnalyzer(ProductionCatalogService.Current).Analyze(selection);
 ```
 
-`Capture` accepts existing entity IDs and negative prebuild IDs. Its optional third argument is a `BlueprintSelectionContext`; use `OperatingParametersByObjectId` to supply missing settings keyed by those same signed IDs. `FromBlueprint(blueprintBuildings, context)` captures a blueprint without live game objects and uses `OperatingParametersByIndex`, keyed by blueprint index. Supplied settings override captured values before validation. In particular, fractionator circulation and stack size must describe the intended full-load input, not transient inventory contents; `FluidItemId` can identify the input when the fractionator has not been filled.
+`Capture` accepts existing entity IDs and negative prebuild IDs. Its optional third argument is a `BlueprintSelectionContext`; use `OperatingParametersByObjectId` to supply missing settings keyed by those same signed IDs. `FromBlueprint(blueprintBuildings, context)` captures a blueprint without live game objects, decodes settings through the native blueprint-paste path, and uses `OperatingParametersByIndex`, keyed by blueprint index. Supplied settings override captured values before validation. In particular, fractionator circulation and stack size must describe the intended full-load input, not transient inventory contents; `FluidItemId` can identify the input when the fractionator has not been filled. Transient runtime throttles, such as a miner's output backlog damper, are never captured.
 
 The capture is read-only and does not alter the game's selection. `CreateRequest` carries capture diagnostics into the analyzer, so stale or unrecognized selected objects cannot turn into a falsely complete empty report. Duplicate selected IDs are diagnosed and counted once. Assembler proliferation modes are decoded from the native parameter array; lab modes use their native mode field. Nonproductive recipes use native acceleration rather than an invalid extra-products mode.
 
@@ -60,13 +60,15 @@ All parameters below are numbers in a building snapshot's `OperatingParameters`.
 | --- | --- |
 | Fractionator | A fractionation recipe, `CirculatingItemsPerMinute`, and `StackSize`. The throughput limit is 30 cargo per second times the stack size, or `1800 * StackSize` items per minute. Only successful conversions consume inputs; circulation changes throughput and power without becoming an external material input. The native power formula uses items per second, not per minute. |
 | Energy exchanger | `Mode0`: charging `1`, discharging `-1`, idle `0`. Charging converts empty accumulators to full ones and draws grid power. Discharging converts them back and is reported as discharge capacity, not generation. Coating accelerates both directions and is preserved on the output accumulator. |
-| Ray receiver | `Mode0`: `0` for grid generation or its native photon item ID; `LensItemId`: zero or a compatible catalyst; `SolarEnergyLossRate`: technology loss fraction. Missing loss leaves photon flows available but Dyson power incomplete. Ideal full illumination and warmup use the native 2.5 warmup factor, eightfold photon mode energy, and one lens per 36,000 game ticks. Grid generation and Dyson demand are separate. |
+| Ray receiver | `Mode0`: `0` for grid generation or its native photon item ID; `LensItemId`: zero or a compatible catalyst; `SolarEnergyLossRate`: technology loss fraction. Missing loss leaves photon flows available but Dyson power incomplete. Without a selected receiver, the planner keeps lens-free photon flows and leaves power incomplete; lens wear and speedup require a receiver. Ideal full illumination and warmup use the native 2.5 warmup factor, eightfold photon mode energy, and one lens per 36,000 game ticks. Grid generation and Dyson demand are separate. |
 | Renewable generator | Wind, solar, and geothermal use ideal standard conditions and their rated generation. Local wind strength, day/night illumination, and geothermal ground heat do not modify this full-load model. |
-| Miner or water extractor | `ResourceItemId`, `MiningSpeedMultiplier`, and `VeinCount` or `OilUnits` for the matching resource. Optional `MachineSpeedFactor` and `SpeedDamper` default to 1. Live capture records raw miner speed divided by 10,000 separately from the damper. Output scales by speed times damper; power uses `ratio = SpeedDamper * MachineSpeedFactor * MachineSpeedFactor` and `workingWatts * ratio + idleWatts * (1 - ratio)`. |
+| Miner or water extractor | `ResourceItemId`, `MiningSpeedMultiplier`, and `VeinCount` or `OilUnits` for the matching resource. Optional `MachineSpeedFactor` defaults to 1; live capture records the raw miner speed divided by 10,000. The native speed damper only throttles backed-up output, so full load assumes its unobstructed value of 1. Output scales by machine speed; power uses `ratio = MachineSpeedFactor * MachineSpeedFactor` and `workingWatts * ratio + idleWatts * (1 - ratio)`. |
 | Gas collector | `GasCount`, `GasTotalHeat`, `MiningSpeedMultiplier`, and each `GasItemId{n}` and `GasSpeedPerSecond{n}`. Native self-power recovery and collection technology scale all gas outputs, which are reported per minute. Collector working energy reduces recovered gas; it is not counted again as grid consumption. |
-| Fuel generator | `FuelItemId` compatible with the generator. Artificial stars also require native `Mode0` (sandbox boost). Output and burned fuel follow the native fuel type and proliferation rule. |
-| EM-rail ejector or vertical launching silo | `LaunchAvailable` plus the native boost mode (`Mode1` for ejectors, `Mode0` for silos); boosted modes also require `BoostEnabled`. An available ideal target consumes one ammunition item per completed charge/cooldown cycle. Proliferation changes both launch speed and working power. `LaunchesPerMinute` is separate from item production. |
+| Fuel generator | `FuelItemId` compatible with the generator. Artificial stars also require the native boost mode `Mode0`, with `BoostEnabled` when it is set. Output and burned fuel follow the native fuel type and proliferation rule. |
+| EM-rail ejector or vertical launching silo | `LaunchAvailable` plus the native boost mode (`Mode1` for ejectors, `Mode0` for silos), with `BoostEnabled` when it is set. An available ideal target consumes one ammunition item per completed charge/cooldown cycle. Proliferation changes both launch speed and working power. `LaunchesPerMinute` is separate from item production. |
 | Research-mode lab | `ResearchMode = 1`, `TechId`, and `ResearchSpeed`. The captured technology supplies matrix point requirements. Native matrix proliferation increases hashes and power, not matrix input per base hash; `ResearchHashesPerMinute` is separate from item production. |
+
+Native blueprint paste applies a stored boost mode only while sandbox tools are enabled, so `BoostEnabled` states whether the boost is actually applied. Live capture reports the applied boost of ejectors, silos, and artificial stars; blueprint callers must supply it for boosted buildings.
 
 The ejector and silo assume a usable orbit or node when `LaunchAvailable = 1`; their native geometric visibility and construction schedules are outside this full-load model. Power reports exclude logistics stations, distributors, transport, and mecha charging. Auxiliary power must come from an explicitly supplied list.
 
@@ -76,13 +78,16 @@ The belt-signal generator uses `ProductionPlanner` material reports, not its for
 
 ## Validation
 
-Use compilation and static review for development checks:
+Use compilation, the synthetic game-free checks, and static review for development checks:
 
 ```powershell
 dotnet build UXAssist/UXAssist.csproj -c Release --no-restore
 dotnet build CheatEnabler/CheatEnabler.csproj -c Release --no-restore
+dotnet run --project UXAssist/tools/ProductionCheck/ProductionCheck.csproj -c Release
 git diff --check
 ```
+
+`ProductionCheck` compiles the pure-managed production sources and the belt-signal statistics with hand-built catalogs. Update its expectations together with any intended change to production rules.
 
 Compare special mechanics against method bodies in the original DSP DLL; the publicized repository reference is not an implementation source. Builds and DLL inspection do not establish in-game correctness. In-game acceptance is manual; automated tests and save parsing are not required.
 
@@ -93,8 +98,8 @@ Use a test game for the following manual checks. Compare full-load rates only wi
 - Supply fractionator circulation and stack context. For native 1% fractionation with fully sprayed input, 1,800 circulating items per minute yield 36 conversions per minute; at stack size 4, 7,200 circulating items per minute yield 144. Check throughput-dependent power separately.
 - Request full accumulators and critical photons through the catalog's default synthetic routes. Confirm that missing building or receiver-loss settings produce incomplete power rather than an invented result.
 - Charge and discharge sprayed accumulators, then consume or deliver them with spraying enabled. Confirm acceleration in both directions and no repeated spray charge for inherited coating. Compare self-spraying enabled and disabled.
-- Select miners at different machine speeds, a gas collector, and renewable generators. Check native miner power scaling, per-minute gas output without added grid demand, and ideal rated renewable power rather than local conditions.
-- Select ray receivers in both modes, fuel generators, ejectors, and silos. Toggle proliferation and compare working power, generation, accumulator exchange, and Dyson demand as separate quantities.
+- Select miners at different machine speeds, including one with a backed-up output, a gas collector, and renewable generators. Check native miner power scaling, full-load miner output regardless of the output backlog, per-minute gas output without added grid demand, and ideal rated renewable power rather than local conditions.
+- Select ray receivers in both modes, fuel generators, ejectors, and silos. Toggle proliferation and compare working power, generation, accumulator exchange, and Dyson demand as separate quantities. In a sandbox game, capture boosted artificial stars and launchers, and confirm that blueprint analysis of boosted buildings requires `BoostEnabled`.
 - Remove an upstream producer from a mixed production selection. Confirm that downstream capacity is unchanged and the missing material appears as required external supply. Check intermediate excess around the smallest selected producer's net output threshold.
 - Combine planner targets with shared coproducts, explicit raw-material boundaries, and alternate selected recipes. Confirm material conservation, shared surplus reuse, and no introduction of unselected recipes.
 - Toggle belt-signal proliferation and reload a game. Confirm that existing belts use the new catalog, item generation continues, and fractional production and consumption statistics remain independent.

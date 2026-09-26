@@ -43,7 +43,8 @@ public static class BlueprintSelectionReader
     public static BlueprintSelectionCapture Capture(PlanetFactory factory, IEnumerable<int> selectedObjectIds,
         BlueprintSelectionContext context)
     {
-        if (factory == null || ProductionCatalogService.Current == null)
+        var catalog = ProductionCatalogService.Current;
+        if (factory == null || catalog == null)
             return Failure(ProductionDiagnosticCode.DataNotReady, "Factory or production data is not loaded.");
         if (selectedObjectIds == null)
             return Failure(ProductionDiagnosticCode.InvalidRequest, "The selected object IDs are required.");
@@ -60,56 +61,52 @@ public static class BlueprintSelectionReader
                 continue;
             }
 
-            if (!IsLiveObject(factory, objectId))
+            var protoId = GetLiveProtoId(factory, objectId);
+            if (protoId == 0)
             {
                 diagnostics.Add(new ProductionDiagnostic(ProductionDiagnosticCode.InvalidRequest,
                     "A blueprint-selected object no longer exists."));
                 continue;
             }
 
+            if (!catalog.Buildings.TryGetValue(protoId, out var building)) continue;
             var parameters = new BuildingParameters();
             if (!parameters.CopyFromFactoryObject(objectId, factory, false))
             {
                 diagnostics.Add(new ProductionDiagnostic(ProductionDiagnosticCode.InvalidRequest,
-                    "The selected building's settings could not be captured."));
+                    "The selected building's settings could not be captured.", buildingItemId: protoId));
                 continue;
             }
 
-            if (!ProductionCatalogService.Current.Buildings.ContainsKey(parameters.itemId)) continue;
             var operation = new Dictionary<string, double>();
-            var mode = GetMode(parameters);
             var speedFactor = GetLiveSpeed(factory, objectId, parameters.type, operation);
             AddSettings(parameters, operation);
-            var kind = ProductionCatalogService.Current.Buildings[parameters.itemId].Kind;
-            if (parameters.type == BuildingType.Lab && operation.ContainsKey("ResearchMode"))
-                CaptureResearchSettings(factory, operation);
-            if (kind == ProductionBuildingKind.Miner)
-                CaptureMiningSettings(factory, objectId,
-                    ProductionCatalogService.Current.Buildings[parameters.itemId], operation);
-            if (kind == ProductionBuildingKind.Collector)
-                CaptureCollectionSettings(factory, operation);
-            if (kind == ProductionBuildingKind.FuelGenerator)
-                CaptureFuelSettings(factory, objectId, operation);
-            if (kind == ProductionBuildingKind.RayReceiver)
-                CaptureRaySettings(factory, objectId, operation);
-            if (kind == ProductionBuildingKind.Ejector || kind == ProductionBuildingKind.Silo)
-                CaptureLaunchSettings(factory, objectId, kind, operation);
-            if (context?.OperatingParametersByObjectId.TryGetValue(objectId, out var supplied) == true && supplied != null)
+            if (operation.ContainsKey("ResearchMode")) CaptureResearchSettings(factory, operation);
+            switch (building.Kind)
             {
-                foreach (var entry in supplied) operation[entry.Key] = entry.Value;
+                case ProductionBuildingKind.Miner:
+                    CaptureMiningSettings(factory, objectId, building, operation);
+                    break;
+                case ProductionBuildingKind.Collector:
+                    CaptureCollectionSettings(factory, operation);
+                    break;
+                case ProductionBuildingKind.FuelGenerator:
+                    CaptureFuelSettings(factory, objectId, operation);
+                    break;
+                case ProductionBuildingKind.RayReceiver:
+                    CaptureRaySettings(factory, objectId, operation);
+                    break;
+                case ProductionBuildingKind.Ejector:
+                case ProductionBuildingKind.Silo:
+                    CaptureLaunchSettings(factory, objectId, building.Kind, operation);
+                    break;
             }
 
-            var recipeId = kind == ProductionBuildingKind.Fractionator
+            ApplySupplied(context?.OperatingParametersByObjectId, objectId, operation);
+            var recipeId = building.Kind == ProductionBuildingKind.Fractionator
                 ? GetLiveFractionationRecipe(factory, objectId) : parameters.recipeId;
-            if (kind == ProductionBuildingKind.Fractionator &&
-                operation.TryGetValue("FluidItemId", out var fluidItemId))
-                recipeId = FindFractionationRecipe((int)fluidItemId);
-            ReportMissingSettings(kind, parameters, operation, diagnostics);
-            if (kind == ProductionBuildingKind.Fractionator && recipeId == 0)
-                diagnostics.Add(new ProductionDiagnostic(ProductionDiagnosticCode.MissingOperatingParameter,
-                    "The fractionator's input item is not selected.", buildingItemId: parameters.itemId));
-            snapshots.Add(new ProductionBuildingSnapshot(objectId, parameters.itemId, recipeId, 1,
-                mode, speedFactor, operation));
+            snapshots.Add(CreateSnapshot(catalog, building, objectId, parameters, recipeId, speedFactor, operation,
+                diagnostics));
         }
 
         return new BlueprintSelectionCapture(snapshots, diagnostics);
@@ -118,7 +115,8 @@ public static class BlueprintSelectionReader
     public static BlueprintSelectionCapture FromBlueprint(IEnumerable<BlueprintBuilding> buildings,
         BlueprintSelectionContext context = null)
     {
-        if (ProductionCatalogService.Current == null)
+        var catalog = ProductionCatalogService.Current;
+        if (catalog == null)
             return Failure(ProductionDiagnosticCode.DataNotReady, "Production data is not loaded.");
         if (buildings == null)
             return Failure(ProductionDiagnosticCode.InvalidRequest, "A blueprint building list is required.");
@@ -142,43 +140,32 @@ public static class BlueprintSelectionReader
                 continue;
             }
 
+            var item = LDB.items.Select(blueprint.itemId);
             var model = LDB.models.Select(blueprint.modelIndex);
-            if (model?.prefabDesc == null || LDB.items.Select(blueprint.itemId) == null)
+            if (item == null || model?.prefabDesc == null)
             {
                 diagnostics.Add(new ProductionDiagnostic(ProductionDiagnosticCode.UnknownItem,
                     "A blueprint building's model or item is unknown.", buildingItemId: blueprint.itemId));
                 continue;
             }
 
-            if (!ProductionCatalogService.Current.Buildings.ContainsKey(blueprint.itemId)) continue;
+            if (!catalog.Buildings.TryGetValue(blueprint.itemId, out var building)) continue;
 
-            var parameters = new BuildingParameters
+            // Decode the settings the same way native blueprint paste does.
+            var parameters = new BuildingParameters();
+            parameters.CopyFromBuildPreview(new BuildPreview
             {
-                type = ClassifyNativeType(model.prefabDesc),
-                itemId = blueprint.itemId,
-                modelIndex = blueprint.modelIndex,
+                item = item,
+                desc = model.prefabDesc,
                 recipeId = blueprint.recipeId,
-                filterId = blueprint.filterId
-            };
-            parameters.FromParamsArray(blueprint.parameters);
+                filterId = blueprint.filterId,
+                parameters = blueprint.parameters
+            });
             var operation = new Dictionary<string, double>();
             AddSettings(parameters, operation);
-            if (context?.OperatingParametersByIndex.TryGetValue(blueprint.index, out var supplied) == true)
-            {
-                foreach (var entry in supplied) operation[entry.Key] = entry.Value;
-            }
-
-            var kind = ProductionCatalogService.Current.Buildings[blueprint.itemId].Kind;
-            var recipeId = blueprint.recipeId;
-            if (kind == ProductionBuildingKind.Fractionator &&
-                operation.TryGetValue("FluidItemId", out var fluidItemId))
-                recipeId = FindFractionationRecipe((int)fluidItemId);
-            ReportMissingSettings(kind, parameters, operation, diagnostics);
-            if (kind == ProductionBuildingKind.Fractionator && recipeId == 0)
-                diagnostics.Add(new ProductionDiagnostic(ProductionDiagnosticCode.MissingOperatingParameter,
-                    "A blueprint fractionator needs its input item.", buildingItemId: blueprint.itemId));
-            snapshots.Add(new ProductionBuildingSnapshot(0, blueprint.itemId, recipeId, 1,
-                GetMode(parameters), operatingParameters: operation));
+            ApplySupplied(context?.OperatingParametersByIndex, blueprint.index, operation);
+            snapshots.Add(CreateSnapshot(catalog, building, 0, parameters, parameters.recipeId, null, operation,
+                diagnostics));
         }
 
         return new BlueprintSelectionCapture(snapshots, diagnostics);
@@ -190,15 +177,39 @@ public static class BlueprintSelectionReader
             new[] { new ProductionDiagnostic(code, message) });
     }
 
-    private static bool IsLiveObject(PlanetFactory factory, int objectId)
+    private static int GetLiveProtoId(PlanetFactory factory, int objectId)
     {
         if (objectId > 0)
             return factory.entityPool != null && objectId < factory.entityCursor &&
-                   objectId < factory.entityPool.Length && factory.entityPool[objectId].id == objectId;
-        if (objectId >= 0 || objectId == int.MinValue) return false;
+                   objectId < factory.entityPool.Length && factory.entityPool[objectId].id == objectId
+                ? factory.entityPool[objectId].protoId : 0;
+        if (objectId == 0 || objectId == int.MinValue) return 0;
         var prebuildId = -objectId;
         return factory.prebuildPool != null && prebuildId < factory.prebuildCursor &&
-               prebuildId < factory.prebuildPool.Length && factory.prebuildPool[prebuildId].id == prebuildId;
+               prebuildId < factory.prebuildPool.Length && factory.prebuildPool[prebuildId].id == prebuildId
+            ? factory.prebuildPool[prebuildId].protoId : 0;
+    }
+
+    private static void ApplySupplied(IReadOnlyDictionary<int, Dictionary<string, double>> supplied, int key,
+        IDictionary<string, double> operation)
+    {
+        if (supplied == null || !supplied.TryGetValue(key, out var settings) || settings == null) return;
+        foreach (var entry in settings) operation[entry.Key] = entry.Value;
+    }
+
+    private static ProductionBuildingSnapshot CreateSnapshot(ProductionCatalog catalog, ProductionBuilding building,
+        int objectId, BuildingParameters parameters, int recipeId, double? speedFactor,
+        Dictionary<string, double> operation, ICollection<ProductionDiagnostic> diagnostics)
+    {
+        if (building.Kind == ProductionBuildingKind.Fractionator &&
+            operation.TryGetValue("FluidItemId", out var fluidItemId))
+            recipeId = FindFractionationRecipe((int)fluidItemId);
+        ReportMissingSettings(building, parameters, operation, diagnostics);
+        if (building.Kind == ProductionBuildingKind.Fractionator && recipeId == 0)
+            diagnostics.Add(new ProductionDiagnostic(ProductionDiagnosticCode.MissingOperatingParameter,
+                "The fractionator's input item is not selected.", buildingItemId: building.ItemId));
+        return new ProductionBuildingSnapshot(objectId, building.ItemId, recipeId, 1, GetMode(catalog, parameters),
+            speedFactor, operation);
     }
 
     private static double? GetLiveSpeed(PlanetFactory factory, int objectId, BuildingType type,
@@ -245,7 +256,6 @@ public static class BlueprintSelectionReader
         if (minerId <= 0 || minerId >= pool.Length || pool[minerId].id != minerId) return;
         ref var miner = ref pool[minerId];
         operation["MachineSpeedFactor"] = miner.speed / ProductionUnits.FixedPointScale;
-        operation["SpeedDamper"] = miner.speedDamper;
         if (building.MinerKind == ProductionMinerKind.Water || miner.veinCount <= 0 ||
             miner.veins == null || miner.veinCount > miner.veins.Length || factory.veinPool == null) return;
 
@@ -300,8 +310,10 @@ public static class BlueprintSelectionReader
         var generatorId = factory.entityPool[objectId].powerGenId;
         var pool = factory.powerSystem.genPool;
         if (generatorId <= 0 || generatorId >= pool.Length || pool[generatorId].id != generatorId) return;
-        var fuelId = pool[generatorId].curFuelId > 0 ? pool[generatorId].curFuelId : pool[generatorId].fuelId;
+        ref var generator = ref pool[generatorId];
+        var fuelId = generator.curFuelId > 0 ? generator.curFuelId : generator.fuelId;
         if (fuelId > 0) operation["FuelItemId"] = fuelId;
+        if (generator.fuelMask == 4) operation[SandboxBoost.EnabledKey] = generator.boost ? 1 : 0;
     }
 
     private static void CaptureRaySettings(PlanetFactory factory, int objectId,
@@ -331,7 +343,7 @@ public static class BlueprintSelectionReader
             var siloId = entity.siloId;
             if (system.siloPool == null || siloId <= 0 || siloId >= system.siloPool.Length ||
                 system.siloPool[siloId].id != siloId) return;
-            operation["BoostEnabled"] = system.siloPool[siloId].boost ? 1 : 0;
+            operation[SandboxBoost.EnabledKey] = system.siloPool[siloId].boost ? 1 : 0;
             operation["LaunchAvailable"] = factory.dysonSphere != null &&
                                            factory.dysonSphere.GetAutoNodeCount() > 0 ? 1 : 0;
             return;
@@ -341,7 +353,7 @@ public static class BlueprintSelectionReader
         if (system.ejectorPool == null || ejectorId <= 0 || ejectorId >= system.ejectorPool.Length ||
             system.ejectorPool[ejectorId].id != ejectorId) return;
         ref var ejector = ref system.ejectorPool[ejectorId];
-        operation["BoostEnabled"] = ejector.boost ? 1 : 0;
+        operation[SandboxBoost.EnabledKey] = ejector.boost ? 1 : 0;
         var swarm = factory.dysonSphere?.swarm;
         operation["LaunchAvailable"] = 0;
         if (swarm?.orbits == null) return;
@@ -378,15 +390,14 @@ public static class BlueprintSelectionReader
     {
         operation["Mode0"] = parameters.mode0;
         operation["Mode1"] = parameters.mode1;
-        operation["Mode2"] = parameters.mode2;
-        operation["FilterItemId"] = parameters.filterId;
         if (parameters.type == BuildingType.Lab && parameters.mode0 == 2)
             operation["ResearchMode"] = 1;
     }
 
-    private static void ReportMissingSettings(ProductionBuildingKind kind, BuildingParameters parameters,
+    private static void ReportMissingSettings(ProductionBuilding building, BuildingParameters parameters,
         IReadOnlyDictionary<string, double> operation, ICollection<ProductionDiagnostic> diagnostics)
     {
+        var kind = building.Kind;
         var requiredKey = parameters.type == BuildingType.Lab && parameters.mode0 == 2 ? "TechId" :
             kind == ProductionBuildingKind.Miner ? "ResourceItemId" :
             kind == ProductionBuildingKind.Collector ? "GasCount" :
@@ -395,24 +406,24 @@ public static class BlueprintSelectionReader
         if (requiredKey != null && !operation.ContainsKey(requiredKey))
             diagnostics.Add(new ProductionDiagnostic(ProductionDiagnosticCode.MissingOperatingParameter,
                 $"The selected building needs the {requiredKey} operating parameter.",
-                buildingItemId: parameters.itemId));
+                buildingItemId: building.ItemId));
         if (parameters.type == BuildingType.Lab && parameters.mode0 == 2 &&
             !operation.ContainsKey("ResearchSpeed"))
             diagnostics.Add(new ProductionDiagnostic(ProductionDiagnosticCode.MissingOperatingParameter,
                 "The research lab needs the current research technology speed.",
-                buildingItemId: parameters.itemId));
+                buildingItemId: building.ItemId));
         if (kind == ProductionBuildingKind.Fractionator && !operation.ContainsKey("StackSize"))
             diagnostics.Add(new ProductionDiagnostic(ProductionDiagnosticCode.MissingOperatingParameter,
-                "The fractionator needs its circulating stack size.", buildingItemId: parameters.itemId));
+                "The fractionator needs its circulating stack size.", buildingItemId: building.ItemId));
         if (kind == ProductionBuildingKind.RayReceiver)
         {
             if (!operation.ContainsKey("LensItemId"))
                 diagnostics.Add(new ProductionDiagnostic(ProductionDiagnosticCode.MissingOperatingParameter,
-                    "The receiver needs a lens item ID, or zero for no lens.", buildingItemId: parameters.itemId));
+                    "The receiver needs a lens item ID, or zero for no lens.", buildingItemId: building.ItemId));
             if (!operation.ContainsKey("SolarEnergyLossRate"))
                 diagnostics.Add(new ProductionDiagnostic(ProductionDiagnosticCode.MissingOperatingParameter,
                     "The receiver needs the solar energy loss technology setting.",
-                    buildingItemId: parameters.itemId));
+                    buildingItemId: building.ItemId));
         }
         if (kind == ProductionBuildingKind.Collector)
         {
@@ -420,7 +431,7 @@ public static class BlueprintSelectionReader
                 !operation.ContainsKey("MiningSpeedMultiplier"))
                 diagnostics.Add(new ProductionDiagnostic(ProductionDiagnosticCode.MissingOperatingParameter,
                     "The collector needs the planet's gas energy and current mining technology speed.",
-                    buildingItemId: parameters.itemId));
+                    buildingItemId: building.ItemId));
             if (operation.TryGetValue("GasCount", out var count) && count > 0 && count <= 16 &&
                 count == Math.Truncate(count))
             {
@@ -430,38 +441,34 @@ public static class BlueprintSelectionReader
                         operation.ContainsKey($"GasSpeedPerSecond{index}")) continue;
                     diagnostics.Add(new ProductionDiagnostic(ProductionDiagnosticCode.MissingOperatingParameter,
                         $"The collector needs gas item and speed for resource {index}.",
-                        buildingItemId: parameters.itemId));
+                        buildingItemId: building.ItemId));
                 }
             }
         }
-        if (kind == ProductionBuildingKind.Ejector || kind == ProductionBuildingKind.Silo)
-        {
-            if (!operation.ContainsKey("LaunchAvailable"))
-                diagnostics.Add(new ProductionDiagnostic(ProductionDiagnosticCode.MissingOperatingParameter,
-                    "The launcher needs a usable orbit or Dyson-sphere node setting.",
-                    buildingItemId: parameters.itemId));
-            var boostKey = kind == ProductionBuildingKind.Ejector ? "Mode1" : "Mode0";
-            if (operation.TryGetValue(boostKey, out var boostMode) && boostMode == 1 &&
-                !operation.ContainsKey("BoostEnabled"))
-                diagnostics.Add(new ProductionDiagnostic(ProductionDiagnosticCode.MissingOperatingParameter,
-                    "The launcher needs its current sandbox boost setting.",
-                    buildingItemId: parameters.itemId));
-        }
+        if ((kind == ProductionBuildingKind.Ejector || kind == ProductionBuildingKind.Silo) &&
+            !operation.ContainsKey("LaunchAvailable"))
+            diagnostics.Add(new ProductionDiagnostic(ProductionDiagnosticCode.MissingOperatingParameter,
+                "The launcher needs a usable orbit or Dyson-sphere node setting.",
+                buildingItemId: building.ItemId));
+        var boostKey = SandboxBoost.ModeKey(building);
+        if (boostKey != null && operation.TryGetValue(boostKey, out var boostMode) && boostMode == 1 &&
+            !operation.ContainsKey(SandboxBoost.EnabledKey))
+            diagnostics.Add(new ProductionDiagnostic(ProductionDiagnosticCode.MissingOperatingParameter,
+                "The building needs its current sandbox boost setting.", buildingItemId: building.ItemId));
         if (kind == ProductionBuildingKind.Miner)
         {
             if (!operation.ContainsKey("MiningSpeedMultiplier"))
                 diagnostics.Add(new ProductionDiagnostic(ProductionDiagnosticCode.MissingOperatingParameter,
-                    "The miner needs the current mining technology speed.", buildingItemId: parameters.itemId));
-            var minerKind = ProductionCatalogService.Current.Buildings[parameters.itemId].MinerKind;
-            var factorName = minerKind == ProductionMinerKind.Vein ? "VeinCount" :
-                minerKind == ProductionMinerKind.Oil ? "OilUnits" : null;
+                    "The miner needs the current mining technology speed.", buildingItemId: building.ItemId));
+            var factorName = building.MinerKind == ProductionMinerKind.Vein ? "VeinCount" :
+                building.MinerKind == ProductionMinerKind.Oil ? "OilUnits" : null;
             if (factorName != null && !operation.ContainsKey(factorName))
                 diagnostics.Add(new ProductionDiagnostic(ProductionDiagnosticCode.MissingOperatingParameter,
-                    $"The miner needs its {factorName} resource factor.", buildingItemId: parameters.itemId));
+                    $"The miner needs its {factorName} resource factor.", buildingItemId: building.ItemId));
         }
     }
 
-    private static ProliferationMode GetMode(BuildingParameters parameters)
+    private static ProliferationMode GetMode(ProductionCatalog catalog, BuildingParameters parameters)
     {
         if (parameters.type != BuildingType.Assembler && parameters.type != BuildingType.Lab)
             return ProliferationMode.None;
@@ -473,22 +480,7 @@ public static class BlueprintSelectionReader
         if (parameters.type == BuildingType.Assembler)
             BuildingParameters.SimpleParamFromParamsArray(parameters.type, parameters.parameters,
                 ref recipeId, ref filterId, ref mode0, ref mode1);
-        var recipe = LDB.recipes.Select(recipeId);
-        return mode1 == 1 || recipe != null && !recipe.productive
+        return mode1 == 1 || catalog.Recipes.TryGetValue(recipeId, out var recipe) && !recipe.Productive
             ? ProliferationMode.Speedup : ProliferationMode.ExtraProducts;
-    }
-
-    private static BuildingType ClassifyNativeType(PrefabDesc prefab)
-    {
-        if (prefab.isAssembler) return BuildingType.Assembler;
-        if (prefab.isLab) return BuildingType.Lab;
-        if (prefab.isEjector) return BuildingType.Ejector;
-        if (prefab.isSilo) return BuildingType.Silo;
-        if (prefab.isPowerExchanger) return BuildingType.Exchanger;
-        if (prefab.gammaRayReceiver) return BuildingType.Gamma;
-        if (prefab.minerType != EMinerType.None) return BuildingType.Miner;
-        if (prefab.isPowerGen && prefab.fuelMask == 4) return BuildingType.ArtifacialStar;
-        if (prefab.geothermal) return BuildingType.Geothermal;
-        return BuildingType.Other;
     }
 }

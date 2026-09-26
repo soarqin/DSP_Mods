@@ -66,22 +66,10 @@ public sealed class MiningProcessAdapter : IProductionProcessAdapter
             machineSpeed = suppliedSpeed;
         }
 
-        var speedDamper = 1.0;
-        if (operatingParameters.TryGetValue("SpeedDamper", out var suppliedDamper))
-        {
-            if (!FinitePositive(suppliedDamper))
-            {
-                diagnostic = new ProductionDiagnostic(ProductionDiagnosticCode.InvalidRequest,
-                    "The miner speed damper must be positive.", buildingItemId: building.ItemId);
-                return false;
-            }
-
-            speedDamper = suppliedDamper;
-        }
-
+        // The native speed damper only throttles backed-up output, so full load keeps its unobstructed value of 1.
         var perMinute = ProductionUnits.TicksPerMinute * ProductionUnits.FixedPointScale /
-                        building.MiningPeriodTicks * miningSpeed * machineSpeed * speedDamper * resourceFactor;
-        var powerRatio = speedDamper * machineSpeed * machineSpeed;
+                        building.MiningPeriodTicks * miningSpeed * machineSpeed * resourceFactor;
+        var powerRatio = machineSpeed * machineSpeed;
         var workingWatts = building.WorkingPowerWatts * powerRatio +
                            building.IdlePowerWatts * (1 - powerRatio);
         if (!FinitePositive(perMinute) || workingWatts < 0 ||

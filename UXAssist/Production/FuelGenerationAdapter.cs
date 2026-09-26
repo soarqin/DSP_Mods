@@ -57,17 +57,15 @@ public sealed class FuelGenerationAdapter : IProductionProcessAdapter
         }
 
         var boostFactor = 1.0;
-        if (building.FuelMask == 4)
+        var boostModeKey = SandboxBoost.ModeKey(building);
+        if (boostModeKey != null)
         {
-            if (!operatingParameters.TryGetValue("Mode0", out var boostMode) ||
-                (boostMode != 0 && boostMode != 1))
-            {
-                diagnostic = new ProductionDiagnostic(ProductionDiagnosticCode.MissingOperatingParameter,
-                    "Select the artificial star's native boost setting.", buildingItemId: building.ItemId);
+            if (!SandboxBoost.TryResolve(operatingParameters, boostModeKey, building.ItemId, out var boosted,
+                    out diagnostic))
                 return false;
-            }
 
-            boostFactor = (boostMode == 1 ? 100 : 1) * fuel.StarOutputMultiplier;
+            // Artificial stars apply the sandbox boost and the strange annihilation fuel multiplier natively.
+            boostFactor = (boosted ? 100 : 1) * fuel.StarOutputMultiplier;
         }
 
         var proliferationFactor = mode == ProliferationMode.None ? 1 :
