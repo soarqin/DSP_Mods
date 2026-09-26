@@ -27,6 +27,7 @@ build/
 /.pi*/
 /.opencode/
 /.playwright*/
+/.codegraph/
 
 # Python
 __pycache__/
