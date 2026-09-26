@@ -72,6 +72,7 @@ public static class ItemIds
     public const int HydrogenFuelRod = 6001;
     public const int DeuteronFuelRod = 6002;
     public const int AntimatterFuelRod = 6003;
+    public const int StrangeAnnihilationFuelRod = 1804;
     public const int StrangeMatter = 6004;
     public const int Foundation = 6005;
     public const int Metaverse = 6006; // also called property/meta-data item
