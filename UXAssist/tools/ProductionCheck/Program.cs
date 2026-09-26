@@ -17,6 +17,7 @@ internal static class Program
         IntermediateBoundary();
         ExternalSurplusAndNaturalOverrides();
         ClosedLoopAndInfeasible();
+        LargeRatesConserve();
         ProliferatorSupply();
         ProliferatorGradesAndFinishedSpraying();
         BlackBoxBalancesAndThreshold();
@@ -45,7 +46,13 @@ internal static class Program
         var building = catalog.Buildings[10];
         Check(evaluator.TryEvaluate(catalog, recipe, building, ProliferationMode.None, 0, null,
             out var plain, out _), "ordinary process evaluates");
-        Equal(1, plain.CyclesPerBuildingPerMinute, "recipe tick duration");
+        Equal(1, plain.CyclesPerBuildingPerMinute, "a 3600-tick recipe completes one cycle per minute");
+        var oneSecond = new ProductionRecipe(105, ProductionRecipeCategory.Assemble, 60, true, recipe.Inputs,
+            recipe.Outputs);
+        Check(evaluator.TryEvaluate(catalog, oneSecond, building, ProliferationMode.None, 0, null,
+            out var nativeSecond, out _), "one-second process evaluates");
+        Equal(60, nativeSecond.CyclesPerBuildingPerMinute,
+            "native 60 ticks per second give a 60-tick recipe 60 cycles per minute");
         Equal(1000, plain.WorkingPowerWatts, "working watts");
         Check(evaluator.TryEvaluate(catalog, recipe, building, ProliferationMode.Speedup, 4, null,
             out var speedup, out _), "speedup process evaluates");
@@ -184,6 +191,54 @@ internal static class Program
             new[] { 0.0 }, new[] { 0.0 }, new[] { 1.0 });
         var failure = new ProductionPlanner(impossible).Calculate(Request((11, 3)));
         Check(failure.Diagnostics.Single().Code == ProductionDiagnosticCode.Infeasible, "infeasible loop diagnosed");
+    }
+
+    private static void LargeRatesConserve()
+    {
+        // Uneven ratios, coproducts, and spraying accumulate rounding that scales with the ledger rates.
+        var random = new Random(12345);
+        var items = Enumerable.Range(1, 8).Select(id => new ProductionItem(id, 0, true, false, 0, 0)).ToList();
+        items.Add(new ProductionItem(9, 909, false, false, 4, 60));
+        var recipes = new List<ProductionRecipe>
+        {
+            new ProductionRecipe(909, ProductionRecipeCategory.Assemble, 3600, true,
+                new[] { new KeyValuePair<int, double>(1, 1.7), new KeyValuePair<int, double>(2, 0.9) },
+                new[] { new KeyValuePair<int, double>(9, 1) })
+        };
+        for (var id = 10; id < 70; id++)
+        {
+            items.Add(new ProductionItem(id, 1000 + id, false, false, 0, 0));
+            var inputs = new Dictionary<int, double>();
+            for (var count = random.Next(1, 4); count > 0; count--)
+            {
+                var input = random.Next(1, id);
+                if (input == 9) input = 1;
+                inputs[input] = inputs.GetValueOrDefault(input) + Math.Round(random.NextDouble() * 5 + 0.1, 3);
+            }
+
+            var outputs = new Dictionary<int, double> { [id] = Math.Round(random.NextDouble() * 3 + 0.2, 3) };
+            if (random.NextDouble() < 0.3 && id > 11)
+                outputs[random.Next(10, id)] = Math.Round(random.NextDouble() + 0.05, 3);
+            recipes.Add(new ProductionRecipe(1000 + id, ProductionRecipeCategory.Assemble,
+                60 + random.Next(0, 600), random.NextDouble() < 0.7, inputs, outputs));
+        }
+
+        var catalog = new ProductionCatalog(items, recipes,
+            new[] { new ProductionBuilding(10, ProductionRecipeCategory.Assemble, 1.5, 270000, 12000) },
+            new[] { 0.0, 0.25, 0.5, 0.75, 1.0 },
+            new[] { 0.0, 0.125, 0.2, 0.225, 0.25 },
+            new[] { 1.0, 1.3, 1.7, 2.1, 2.5 });
+        foreach (var scale in new[] { 1e-3, 1, 1e7 })
+        {
+            var request = Request((69, 7.3 * scale), (65, 3.1 * scale), (58, 1.9 * scale));
+            request.ProliferationEnabled = true;
+            request.ProliferatorItemId = 9;
+            request.SelfSprayProliferator = true;
+            request.SprayDeliveredItems.Add(69);
+            var report = new ProductionPlanner(catalog).Calculate(request);
+            Check(report.MaterialComplete && report.PowerComplete,
+                $"a plan scaled by {scale} conserves every ledger row");
+        }
     }
 
     private static void ProliferatorSupply()
@@ -339,22 +394,32 @@ internal static class Program
         request.Buildings.Add(new ProductionBuildingSnapshot(301, 30, 501, 1, ProliferationMode.None,
             operatingParameters: new Dictionary<string, double>
             {
-                ["CirculatingItemsPerMinute"] = 120,
+                ["CirculatingItemsPerMinute"] = 7200,
                 ["StackSize"] = 4
             }));
         var analyzer = new FactoryBlackBoxAnalyzer(catalog);
         var plain = analyzer.Analyze(request);
         Check(plain.MaterialComplete && plain.PowerComplete, "native fractionation inputs valid");
-        Equal(1.2, plain.ItemFlows[1].RequiredExternalSupply, "circulating fluid not an external import");
-        Equal(1.2, plain.ItemFlows[2].GrossProduction, "native fractionation probability");
-        Equal(5500, plain.Power.ConsumptionWatts, "native fractionation throughput power");
-        Equal(120, plain.Groups[0].Process.CirculatingItemsPerBuildingPerMinute,
+        Equal(72, plain.ItemFlows[1].RequiredExternalSupply, "circulating fluid not an external import");
+        Equal(72, plain.ItemFlows[2].GrossProduction, "native fractionation probability");
+        Equal(5500, plain.Power.ConsumptionWatts, "native fractionation power uses items per second");
+        Equal(7200, plain.Groups[0].Process.CirculatingItemsPerBuildingPerMinute,
             "fractionation reports circulation separately");
 
         request.ProliferationEnabled = true;
         var sprayed = analyzer.Analyze(request);
-        Equal(2.4, sprayed.ItemFlows[2].GrossProduction, "native fractionation speedup probability");
+        Equal(144, sprayed.ItemFlows[2].GrossProduction, "native fractionation speedup probability");
         Equal(13750, sprayed.Power.ConsumptionWatts, "native fractionation proliferation power");
+
+        request.ProliferationEnabled = false;
+        request.Buildings[0] = new ProductionBuildingSnapshot(301, 30, 501, 1, ProliferationMode.None,
+            operatingParameters: new Dictionary<string, double>
+            {
+                ["CirculatingItemsPerMinute"] = 1800,
+                ["StackSize"] = 1
+            });
+        Equal(1000, analyzer.Analyze(request).Power.ConsumptionWatts,
+            "an unstacked full buffer does not raise fractionation power");
 
         var bad = new FactoryBlackBoxRequest();
         bad.Buildings.Add(new ProductionBuildingSnapshot(301, 30, 501, 1, ProliferationMode.None));
@@ -436,20 +501,13 @@ internal static class Program
         var request = new FactoryBlackBoxRequest();
         request.Buildings.Add(new ProductionBuildingSnapshot(90, 90, 0, 1, ProliferationMode.None));
         request.Buildings.Add(new ProductionBuildingSnapshot(91, 91, 0, 1, ProliferationMode.None));
-        request.Buildings.Add(new ProductionBuildingSnapshot(92, 92, 0, 1, ProliferationMode.None,
-            operatingParameters: new Dictionary<string, double> { ["GeothermalStrength"] = 0.5 }));
+        request.Buildings.Add(new ProductionBuildingSnapshot(92, 92, 0, 1, ProliferationMode.None));
         var report = new FactoryBlackBoxAnalyzer(catalog).Analyze(request);
-        Check(report.MaterialComplete && report.PowerComplete, "ideal renewable generation complete");
-        Equal(12600, report.Power.GenerationWatts, "wind solar geothermal watts distinguished");
+        Check(report.MaterialComplete && report.PowerComplete && report.Diagnostics.Count == 0,
+            "ideal renewable generation complete");
+        Equal(16200, report.Power.GenerationWatts, "wind solar geothermal use ideal rated generation");
         Equal(0, report.Power.ConsumptionWatts, "renewable generation is not demand");
         Check(report.ItemFlows.Count == 0, "renewable generators do not invent products");
-
-        request.Buildings[2] = new ProductionBuildingSnapshot(92, 92, 0, 1, ProliferationMode.None);
-        var incomplete = new FactoryBlackBoxAnalyzer(catalog).Analyze(request);
-        Check(incomplete.MaterialComplete && !incomplete.PowerComplete && incomplete.Power == null,
-            "unknown ground heat leaves only power incomplete");
-        Check(incomplete.Diagnostics.Single().Code == ProductionDiagnosticCode.MissingOperatingParameter,
-            "missing geothermal strength diagnosed");
     }
 
     private static void MiningResources()
@@ -492,11 +550,26 @@ internal static class Program
         var analyzer = new FactoryBlackBoxAnalyzer(catalog);
         var report = analyzer.Analyze(request);
         Check(report.MaterialComplete && report.PowerComplete, "native vein oil water mining complete");
-        Equal(8, report.ItemFlows[1].GrossProduction, "vein coverage multiplies native rate");
-        Equal(5, report.ItemFlows[2].GrossProduction, "oil resource factor retained");
-        Equal(2, report.ItemFlows[3].GrossProduction, "water pump uses planet resource type");
+        Equal(480, report.ItemFlows[1].GrossProduction, "vein coverage multiplies native rate");
+        Equal(300, report.ItemFlows[2].GrossProduction, "oil resource factor retained");
+        Equal(120, report.ItemFlows[3].GrossProduction, "water pump uses planet resource type");
         Equal(3600, report.Power.ConsumptionWatts, "each mining facility draws working power");
         Check(!report.ItemFlows.ContainsKey(0), "miners never invent zero-ID resources");
+
+        request.Buildings[0] = new ProductionBuildingSnapshot(20, 20, 0, 1, ProliferationMode.None,
+            operatingParameters: new Dictionary<string, double>
+            {
+                ["ResourceItemId"] = 1,
+                ["VeinCount"] = 4,
+                ["MiningSpeedMultiplier"] = 2,
+                ["MachineSpeedFactor"] = 1.5,
+                ["SpeedDamper"] = 0.02
+            });
+        var fast = analyzer.Analyze(request);
+        Equal(720, fast.ItemFlows[1].GrossProduction,
+            "machine speed scales output while a transient output damper is ignored at full load");
+        Equal(1200 * 2.25 + 1400 + 1000, fast.Power.ConsumptionWatts,
+            "miner power follows the square of machine speed");
 
         request.Buildings[0] = new ProductionBuildingSnapshot(20, 20, 0, 1, ProliferationMode.None,
             operatingParameters: new Dictionary<string, double>
@@ -573,16 +646,32 @@ internal static class Program
             "explicit unsupported fuel productivity mode is rejected");
 
         request.ProliferationEnabled = false;
+        var starSettings = new Dictionary<string, double>
+        {
+            ["FuelItemId"] = 1804,
+            ["Mode0"] = 1,
+            ["BoostEnabled"] = 1
+        };
         request.Buildings[0] = new ProductionBuildingSnapshot(31, 31, 0, 1, ProliferationMode.None,
-            operatingParameters: new Dictionary<string, double>
-            {
-                ["FuelItemId"] = 1804,
-                ["Mode0"] = 1
-            });
+            operatingParameters: starSettings);
         var star = analyzer.Analyze(request);
         Equal(2000000, star.Power.GenerationWatts, "star boost and special fuel native multiplier");
         Equal(60, star.ItemFlows[1804].GrossConsumption,
             "star generation accounts for boosted fuel burn");
+
+        starSettings["BoostEnabled"] = 0;
+        request.Buildings[0] = new ProductionBuildingSnapshot(31, 31, 0, 1, ProliferationMode.None,
+            operatingParameters: starSettings);
+        Equal(20000, analyzer.Analyze(request).Power.GenerationWatts,
+            "a stored star boost flag outside sandbox mode keeps only the special fuel multiplier");
+
+        starSettings.Remove("BoostEnabled");
+        request.Buildings[0] = new ProductionBuildingSnapshot(31, 31, 0, 1, ProliferationMode.None,
+            operatingParameters: starSettings);
+        var unknownBoost = analyzer.Analyze(request);
+        Check(!unknownBoost.PowerComplete && unknownBoost.Diagnostics.Single().Code ==
+              ProductionDiagnosticCode.MissingOperatingParameter,
+            "a boosted star blueprint needs the sandbox boost state");
     }
 
     private static void BlackBoxBalancesAndThreshold()
@@ -595,10 +684,10 @@ internal static class Program
         };
         var recipes = new[]
         {
-            new ProductionRecipe(401, ProductionRecipeCategory.Assemble, 60, true,
+            new ProductionRecipe(401, ProductionRecipeCategory.Assemble, 3600, true,
                 new[] { new KeyValuePair<int, double>(1, 1) },
                 new[] { new KeyValuePair<int, double>(2, 60) }),
-            new ProductionRecipe(402, ProductionRecipeCategory.Assemble, 60, true,
+            new ProductionRecipe(402, ProductionRecipeCategory.Assemble, 3600, true,
                 new[] { new KeyValuePair<int, double>(2, 150) },
                 new[] { new KeyValuePair<int, double>(3, 1) })
         };
@@ -872,6 +961,16 @@ internal static class Program
         Equal(1, planned.Groups.Single().EquivalentBuildings.Value,
             "photon plan uses equivalent receivers for peak and Dyson demand");
 
+        var unbuilt = new ProductionPlanRequest();
+        unbuilt.Targets.Add(new ProductionTarget(456, 24));
+        var photonsOnly = new ProductionPlanner(catalog).Calculate(unbuilt);
+        Check(photonsOnly.MaterialComplete && !photonsOnly.PowerComplete && photonsOnly.Power == null,
+            "photons without a selected receiver keep material flows and leave power incomplete");
+        Equal(24, photonsOnly.ItemFlows[456].GrossProduction, "receiver-independent photon output is planned");
+        unbuilt.OperatingParametersByRecipe[999] = new Dictionary<string, double> { ["LensItemId"] = 123 };
+        Check(new ProductionPlanner(catalog).Calculate(unbuilt).Diagnostics.Single().Code ==
+              ProductionDiagnosticCode.MissingBuilding, "lens wear without a selected receiver is not invented");
+
         parameters.Remove("SolarEnergyLossRate");
         request.Buildings[0] = new ProductionBuildingSnapshot(1, 51, 0, 1,
             ProliferationMode.None, operatingParameters: parameters);
@@ -923,7 +1022,7 @@ internal static class Program
         var sprayed = analyzer.Analyze(request);
         Equal(240, sprayed.ItemFlows[101].GrossConsumption, "ammo speedup shortens both ejector phases");
         Equal(60, sprayed.ItemFlows[102].GrossConsumption, "ammo speedup shortens both silo phases");
-        Equal(4800, sprayed.Power.ConsumptionWatts, "launchers do not use manufacturing power multiplier");
+        Equal(12000, sprayed.Power.ConsumptionWatts, "ammo proliferation raises native launcher power");
 
         ejectorSettings["Mode1"] = 1;
         ejectorSettings["BoostEnabled"] = 1;
@@ -980,11 +1079,11 @@ internal static class Program
         var analyzer = new FactoryBlackBoxAnalyzer(catalog);
         var report = analyzer.Analyze(request);
         Check(report.MaterialComplete && report.PowerComplete, "gas collection uses captured planet resources");
-        Equal(4.5, report.ItemFlows[111].GrossProduction,
-            "native gas self-power recovery and mining technology scale first resource");
-        Equal(1.8, report.ItemFlows[112].GrossProduction,
+        Equal(270, report.ItemFlows[111].GrossProduction,
+            "native gas self-power recovery and mining technology scale per-second speed to a minute");
+        Equal(108, report.ItemFlows[112].GrossProduction,
             "second gas resource is not lost by a single-output adapter");
-        Equal(1000, report.Power.ConsumptionWatts, "gas collection includes native energy demand");
+        Equal(0, report.Power.ConsumptionWatts, "collector working energy is recovered gas, not grid demand");
 
         settings.Remove("GasSpeedPerSecond1");
         request.Buildings[0] = new ProductionBuildingSnapshot(1, 81, 0, 1,
@@ -1129,10 +1228,11 @@ internal static class Program
             new[] { 1.0, 1.3, 1.7, 2.1, 2.5 });
     }
 
+    // Synthetic recipes last 3600 ticks, so a unit-speed building completes one cycle per minute.
     private static ProductionRecipe Recipe(int id, (int id, double count)[] input,
         (int id, double count)[] output, bool productive = true)
     {
-        return new ProductionRecipe(id, ProductionRecipeCategory.Assemble, 60, productive,
+        return new ProductionRecipe(id, ProductionRecipeCategory.Assemble, 3600, productive,
             input.Select(flow => new KeyValuePair<int, double>(flow.id, flow.count)),
             output.Select(flow => new KeyValuePair<int, double>(flow.id, flow.count)));
     }

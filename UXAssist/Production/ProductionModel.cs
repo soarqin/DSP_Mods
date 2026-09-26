@@ -245,6 +245,15 @@ public sealed class ProductionBuilding
         AmmunitionItemId = ammunitionItemId;
         CollectorSpeedMultiplier = collectorSpeedMultiplier;
     }
+
+    internal ProductionBuilding WithSpeedFactor(double speedFactor)
+    {
+        return new ProductionBuilding(ItemId, Category, speedFactor, WorkingPowerWatts, IdlePowerWatts, Kind,
+            RatedGenerationWatts, ExchangeRateWatts, AccumulatorEnergyJoules, EmptyAccumulatorItemId,
+            FullAccumulatorItemId, RenewableSource, MinerKind, MiningPeriodTicks, FuelMask, FuelUseWatts,
+            PowerProductItemId, PowerProductEnergyJoules, CatalystMask, LaunchChargeTicks, LaunchCooldownTicks,
+            AmmunitionItemId, CollectorSpeedMultiplier);
+    }
 }
 
 public sealed class ProductionCatalog

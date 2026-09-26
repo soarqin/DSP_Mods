@@ -238,9 +238,15 @@ public sealed partial class ProductionPlanner
         for (var row = 0; row < constraintCount; row++)
         {
             var balance = -rhs[row];
+            var magnitude = Math.Max(1, Math.Abs(rhs[row]));
             for (var column = 0; column < columnCount; column++)
-                balance += matrix[row, column] * solution.Values[column];
-            if (Math.Abs(balance) > 1e-7 * Math.Max(1, Math.Abs(rhs[row])))
+            {
+                var term = matrix[row, column] * solution.Values[column];
+                balance += term;
+                magnitude = Math.Max(magnitude, Math.Abs(term));
+            }
+
+            if (Math.Abs(balance) > 1e-7 * magnitude)
                 return Fail(ProductionDiagnosticCode.ConservationFailure,
                     "The solved production ledger does not conserve this item.",
                     row < rows.Length ? rows[row] : reusableSprayItems[(row - rows.Length) / 2]);

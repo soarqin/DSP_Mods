@@ -17,10 +17,14 @@ public sealed class RayReceiverAdapter : IProductionProcessAdapter
     {
         process = null;
         diagnostic = null;
-        if (building?.Kind != ProductionBuildingKind.RayReceiver)
+        if (building == null)
+            return TryEvaluateWithoutReceiver(recipe, mode, operatingParameters, out process, out diagnostic);
+
+        if (building.Kind != ProductionBuildingKind.RayReceiver)
         {
-            diagnostic = new ProductionDiagnostic(ProductionDiagnosticCode.MissingBuilding,
-                "Select a ray receiver to evaluate photon generation.", recipeId: recipe?.Id ?? 0);
+            diagnostic = new ProductionDiagnostic(ProductionDiagnosticCode.IncompatibleBuilding,
+                "The selected building cannot receive Dyson-sphere rays.", recipeId: recipe?.Id ?? 0,
+                buildingItemId: building.ItemId);
             return false;
         }
 
@@ -138,6 +142,34 @@ public sealed class RayReceiverAdapter : IProductionProcessAdapter
             generationWatts: photonMode ? 0 : energyWatts,
             dysonSphereRequirementWatts: lossKnown ? energyWatts / (1 - solarLoss * 0.6) : (double?)null,
             powerKnown: lossKnown);
+        return true;
+    }
+
+    // Photon output per cycle does not depend on the receiver, but lens wear, speedup, and power do.
+    private static bool TryEvaluateWithoutReceiver(ProductionRecipe recipe, ProliferationMode mode,
+        IReadOnlyDictionary<string, double> operatingParameters, out ProductionProcess process,
+        out ProductionDiagnostic diagnostic)
+    {
+        process = null;
+        diagnostic = null;
+        if (recipe.Inputs.Count != 0 || recipe.Outputs.Count != 1)
+        {
+            diagnostic = new ProductionDiagnostic(ProductionDiagnosticCode.UnsupportedProcess,
+                "A photon recipe must have one output and no inputs.", recipeId: recipe.Id);
+            return false;
+        }
+
+        if (mode != ProliferationMode.None ||
+            operatingParameters != null && operatingParameters.TryGetValue("LensItemId", out var lensId) &&
+            lensId != 0)
+        {
+            diagnostic = new ProductionDiagnostic(ProductionDiagnosticCode.MissingBuilding,
+                "Select a ray receiver to evaluate lens consumption and speedup.", recipeId: recipe.Id);
+            return false;
+        }
+
+        process = new ProductionProcess(recipe.Id, 0, ProliferationMode.None, 0,
+            Array.Empty<KeyValuePair<int, double>>(), recipe.Outputs, 0, 0, false);
         return true;
     }
 
