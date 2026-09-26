@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+    <Compile Include="../../Production/*.cs"
+             Exclude="../../Production/ProductionCatalogReader.cs;../../Production/BlueprintSelectionReader.cs" />
+    <Compile Include="../../Common/GameConstants/ItemIds.cs" />
+    <Compile Include="../../../CheatEnabler/Patches/Factory/BeltSignalSourceStats.cs" />
+  </ItemGroup>
+</Project>
