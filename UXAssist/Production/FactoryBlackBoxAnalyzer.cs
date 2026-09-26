@@ -145,36 +145,9 @@ public sealed class FactoryBlackBoxAnalyzer
                 continue;
             }
 
-            if (snapshot.SpeedFactor.HasValue)
-                building = new ProductionBuilding(building.ItemId, building.Category, snapshot.SpeedFactor.Value,
-                    building.WorkingPowerWatts, building.IdlePowerWatts, building.Kind,
-                    building.RatedGenerationWatts, building.ExchangeRateWatts,
-                    building.AccumulatorEnergyJoules, building.EmptyAccumulatorItemId,
-                    building.FullAccumulatorItemId, building.RenewableSource,
-                    building.MinerKind, building.MiningPeriodTicks,
-                    building.FuelMask, building.FuelUseWatts,
-                    building.PowerProductItemId, building.PowerProductEnergyJoules,
-                    building.CatalystMask, building.LaunchChargeTicks,
-                    building.LaunchCooldownTicks, building.AmmunitionItemId,
-                    building.CollectorSpeedMultiplier);
+            if (snapshot.SpeedFactor.HasValue) building = building.WithSpeedFactor(snapshot.SpeedFactor.Value);
             var mode = request.ProliferationEnabled
-                ? building.Kind == ProductionBuildingKind.Fractionator
-                    ? ProliferationMode.Speedup : building.Kind == ProductionBuildingKind.Exchanger &&
-                        snapshot.OperatingParameters.TryGetValue("Mode0", out var exchangerMode) && exchangerMode != 0
-                        ? ProliferationMode.Speedup : building.Kind == ProductionBuildingKind.FuelGenerator
-                            ? ProliferationMode.Speedup : building.Kind == ProductionBuildingKind.RayReceiver
-                                ? snapshot.OperatingParameters.TryGetValue("LensItemId", out var lensId) && lensId > 0
-                                    ? ProliferationMode.Speedup : ProliferationMode.None
-                                : building.Kind == ProductionBuildingKind.Collector
-                                    ? ProliferationMode.None
-                                : building.Category == ProductionRecipeCategory.Research && snapshot.RecipeId == 0 &&
-                                  snapshot.OperatingParameters.TryGetValue("ResearchMode", out var researchModeSetting) &&
-                                  researchModeSetting > 0 ? ProliferationMode.ExtraProducts
-                                : building.Kind == ProductionBuildingKind.Ejector ||
-                                  building.Kind == ProductionBuildingKind.Silo
-                                    ? ProliferationMode.Speedup
-                                : snapshot.ProliferationMode
-                : ProliferationMode.None;
+                ? FullProliferationMode(building, snapshot) : ProliferationMode.None;
             if (!_evaluator.TryEvaluate(_catalog, recipe, building, mode,
                     mode == ProliferationMode.None ? 0 : _catalog.MaximumProliferationLevel,
                     snapshot.OperatingParameters, out var process, out var diagnostic))
@@ -248,6 +221,32 @@ public sealed class FactoryBlackBoxAnalyzer
             ? ProductionStatus.Complete : materialComplete || powerComplete || groups.Count > 0
                 ? ProductionStatus.Partial : ProductionStatus.Failed;
         return new ProductionReport(status, materialComplete, powerComplete, flows, groups, diagnostics, power);
+    }
+
+    private static ProliferationMode FullProliferationMode(ProductionBuilding building,
+        ProductionBuildingSnapshot snapshot)
+    {
+        var parameters = snapshot.OperatingParameters;
+        switch (building.Kind)
+        {
+            case ProductionBuildingKind.Fractionator:
+            case ProductionBuildingKind.FuelGenerator:
+            case ProductionBuildingKind.Ejector:
+            case ProductionBuildingKind.Silo:
+                return ProliferationMode.Speedup;
+            case ProductionBuildingKind.Exchanger:
+                return parameters.TryGetValue("Mode0", out var exchangerMode) && exchangerMode != 0
+                    ? ProliferationMode.Speedup : snapshot.ProliferationMode;
+            case ProductionBuildingKind.RayReceiver:
+                return parameters.TryGetValue("LensItemId", out var lensId) && lensId > 0
+                    ? ProliferationMode.Speedup : ProliferationMode.None;
+            case ProductionBuildingKind.Collector:
+                return ProliferationMode.None;
+            default:
+                return building.Category == ProductionRecipeCategory.Research && snapshot.RecipeId == 0 &&
+                       parameters.TryGetValue("ResearchMode", out var researchMode) && researchMode > 0
+                    ? ProliferationMode.ExtraProducts : snapshot.ProliferationMode;
+        }
     }
 
     private static Dictionary<int, double> Scale(IReadOnlyDictionary<int, double> flows, double factor)

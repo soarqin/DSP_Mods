@@ -58,27 +58,9 @@ public sealed class LaunchProcessAdapter : IProductionProcessAdapter
             return false;
         }
 
-        var boostModeKey = building.Kind == ProductionBuildingKind.Ejector ? "Mode1" : "Mode0";
-        if (!operatingParameters.TryGetValue(boostModeKey, out var boostMode) ||
-            (boostMode != 0 && boostMode != 1) ||
-            boostMode == 1 && !operatingParameters.ContainsKey("BoostEnabled"))
-        {
-            diagnostic = new ProductionDiagnostic(ProductionDiagnosticCode.MissingOperatingParameter,
-                "Provide the launcher's native boost mode and whether sandbox boost is active.",
-                buildingItemId: building.ItemId);
+        if (!SandboxBoost.TryResolve(operatingParameters, SandboxBoost.ModeKey(building), building.ItemId,
+                out var boosted, out diagnostic))
             return false;
-        }
-
-        var boosted = operatingParameters.TryGetValue("BoostEnabled", out var boostEnabled) &&
-                      boostEnabled == 1;
-        if (operatingParameters.ContainsKey("BoostEnabled") &&
-            (boostEnabled != 0 && boostEnabled != 1 || boosted && boostMode != 1))
-        {
-            diagnostic = new ProductionDiagnostic(ProductionDiagnosticCode.InvalidRequest,
-                "The sandbox boost setting conflicts with the launcher's native mode.",
-                buildingItemId: building.ItemId);
-            return false;
-        }
 
         var speedBonus = 0.0;
         var powerMultiplier = 1.0;
