@@ -26,6 +26,7 @@ build/
 /.worktrees/
 /.pi*/
 /.opencode/
+/.playwright*/
 
 # Python
 __pycache__/
