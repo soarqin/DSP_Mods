@@ -21,6 +21,7 @@ public sealed partial class ProductionPlanner
         var groups = new List<ProductionGroupFlow>();
         var activeRecipes = new HashSet<int>();
         var powerComplete = true;
+        var factoryPowerComplete = true;
         var workingPower = 0.0;
         var peakPower = 0.0;
         var generationWatts = 0.0;
@@ -74,6 +75,7 @@ public sealed partial class ProductionPlanner
                 if (equivalentBuildings.Value > int.MaxValue || double.IsInfinity(equivalentBuildings.Value))
                 {
                     powerComplete = false;
+                    factoryPowerComplete = false;
                     warnings.Add(new ProductionDiagnostic(ProductionDiagnosticCode.InvalidRequest,
                         "The rounded deployment count exceeds the supported range.", recipeId: process.RecipeId));
                 }
@@ -82,6 +84,8 @@ public sealed partial class ProductionPlanner
                     deploymentCount = Math.Max(1, (int)Math.Ceiling(equivalentBuildings.Value - 1e-9));
                     consumedWatts = equivalentBuildings.Value * process.WorkingPowerWatts;
                     peakWatts = deploymentCount.Value * process.WorkingPowerWatts;
+                    if (consumedWatts.Value < 0 || double.IsNaN(consumedWatts.Value) ||
+                        double.IsInfinity(consumedWatts.Value)) factoryPowerComplete = false;
                     workingPower += consumedWatts.Value;
                     peakPower += peakWatts.Value;
                     generationWatts += equivalentBuildings.Value * process.GenerationWatts;
@@ -93,6 +97,7 @@ public sealed partial class ProductionPlanner
             else
             {
                 powerComplete = false;
+                factoryPowerComplete = false;
                 if (!warnings.Any(warning => warning.RecipeId == process.RecipeId &&
                                              (warning.Code == ProductionDiagnosticCode.MissingBuilding ||
                                               warning.Code == ProductionDiagnosticCode.IncompatibleBuilding)))
@@ -116,6 +121,7 @@ public sealed partial class ProductionPlanner
             if (auxiliary == null || auxiliary.Count <= 0 || auxiliary.RecipeId != 0)
             {
                 powerComplete = false;
+                factoryPowerComplete = false;
                 warnings.Add(new ProductionDiagnostic(ProductionDiagnosticCode.InvalidRequest,
                     "Auxiliary power requires a positive building count and no production recipe."));
                 continue;
@@ -136,6 +142,7 @@ public sealed partial class ProductionPlanner
                 double.IsInfinity(building.WorkingPowerWatts * auxiliary.Count))
             {
                 powerComplete = false;
+                factoryPowerComplete = false;
                 warnings.Add(new ProductionDiagnostic(ProductionDiagnosticCode.UnsupportedProcess,
                     "The auxiliary building has no rated working power.",
                     buildingItemId: auxiliary.BuildingItemId));
@@ -192,7 +199,8 @@ public sealed partial class ProductionPlanner
             request.AuxiliaryBuildings.Count == 0 ? ProductionPowerScope.ProductionBuildings :
                 ProductionPowerScope.ProductionBuildingsAndAuxiliary) : null;
         var status = powerComplete && diagnostics.Count == 0 ? ProductionStatus.Complete : ProductionStatus.Partial;
-        return new ProductionReport(status, true, powerComplete, itemFlows, groups, diagnostics, power);
+        return new ProductionReport(status, true, powerComplete, itemFlows, groups, diagnostics, power,
+            new ProductionPowerBreakdown(workingPower, 0, factoryPowerComplete, true));
     }
 
     private static Dictionary<int, double> ScaleFlows(IReadOnlyDictionary<int, double> flows, double multiplier)
