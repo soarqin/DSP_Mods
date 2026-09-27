@@ -117,6 +117,29 @@ public sealed class FactoryBlackBoxAnalyzer
                 continue;
             }
 
+            if (snapshot.RecipeId == 0 && building.Kind == ProductionBuildingKind.Logistics)
+            {
+                double? logisticsWatts = null;
+                if (!snapshot.OperatingParameters.TryGetValue("ChargePowerWatts", out var chargePowerWatts))
+                    diagnostics.Add(new ProductionDiagnostic(ProductionDiagnosticCode.MissingOperatingParameter,
+                        "The selected logistics facility needs its configured charging power.",
+                        buildingItemId: snapshot.BuildingItemId));
+                else if (chargePowerWatts < 0 || double.IsNaN(chargePowerWatts) ||
+                         double.IsInfinity(chargePowerWatts * snapshot.Count))
+                    diagnostics.Add(new ProductionDiagnostic(ProductionDiagnosticCode.InvalidRequest,
+                        "The selected logistics charging power must be finite and nonnegative.",
+                        buildingItemId: snapshot.BuildingItemId));
+                else
+                    logisticsWatts = chargePowerWatts * snapshot.Count;
+
+                if (logisticsWatts.HasValue) consumptionWatts += logisticsWatts.Value;
+                else powerComplete = false;
+                groups.Add(new ProductionGroupFlow(null, snapshot.Count, 0, snapshot.Count, snapshot.Count,
+                    logisticsWatts, logisticsWatts, Array.Empty<KeyValuePair<int, double>>(),
+                    Array.Empty<KeyValuePair<int, double>>()));
+                continue;
+            }
+
             if (snapshot.RecipeId == 0 && (building.Kind == ProductionBuildingKind.Ordinary ||
                                            building.Kind == ProductionBuildingKind.Auxiliary))
             {
