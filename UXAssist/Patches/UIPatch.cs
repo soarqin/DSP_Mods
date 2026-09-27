@@ -37,6 +37,8 @@ public class UIPatch : PatchImpl<UIPatch>
 
     private class PlanetVeinUtilization : PatchImpl<PlanetVeinUtilization>
     {
+        private const float CountLabelGap = 4f;
+        private const float MinCountWidth = 36f;
         private static VeinTypeInfo[] planetVeinCount = null;
         private static VeinTypeInfo[] starVeinCount = null;
         private static readonly Dictionary<int, bool> tmpGroups = [];
@@ -47,6 +49,7 @@ public class UIPatch : PatchImpl<UIPatch>
             {
                 foreach (VeinTypeInfo vti in planetVeinCount)
                 {
+                    vti.Reset();
                     if (vti.textCtrl != null)
                     {
                         Object.Destroy(vti.textCtrl.gameObject);
@@ -58,6 +61,7 @@ public class UIPatch : PatchImpl<UIPatch>
             {
                 foreach (VeinTypeInfo vti in starVeinCount)
                 {
+                    vti.Reset();
                     if (vti.textCtrl != null)
                     {
                         Object.Destroy(vti.textCtrl.gameObject);
@@ -153,12 +157,18 @@ public class UIPatch : PatchImpl<UIPatch>
             tmpGroups.Clear();
         }
 
-        private static void FormatResource(int refId, UIResAmountEntry uiresAmountEntry, VeinTypeInfo vt)
+        private static void FormatResource(UIResAmountEntry uiresAmountEntry, VeinTypeInfo vt)
         {
+            RectTransform labelRect = uiresAmountEntry.labelText.rectTransform;
+            if (vt.labelRect != labelRect)
+            {
+                vt.RestoreLabel();
+                vt.labelRect = labelRect;
+                vt.labelOffsetMinX = labelRect.offsetMin.x;
+            }
             if (vt.textCtrl == null)
             {
-                var parent = uiresAmountEntry.labelText.transform.parent;
-                vt.textCtrl = Object.Instantiate(uiresAmountEntry.valueText, parent);
+                vt.textCtrl = Object.Instantiate(uiresAmountEntry.valueText, labelRect.parent);
                 vt.textCtrl.font = uiresAmountEntry.labelText.font;
                 vt.textCtrl.text = "";
                 vt.textCtrl.color = uiresAmountEntry.normalColor;
@@ -166,22 +176,22 @@ public class UIPatch : PatchImpl<UIPatch>
                 vt.textCtrl.fontStyle = FontStyle.Normal;
                 vt.textCtrl.horizontalOverflow = HorizontalWrapMode.Overflow;
                 vt.textCtrl.verticalOverflow = VerticalWrapMode.Overflow;
-                RectTransform trans = vt.textCtrl.rectTransform;
-                var pos = uiresAmountEntry.rectTrans.localPosition;
-                pos.x = pos.x + uiresAmountEntry.iconImage.rectTransform.localPosition.x - 25f;
-                trans.localPosition = pos;
-                Vector2 size = trans.sizeDelta;
-                size.x = 40f;
-                trans.sizeDelta = size;
-            }
-            else
-            {
-                RectTransform trans = vt.textCtrl.rectTransform;
-                Vector3 pos = trans.localPosition;
-                pos.y = uiresAmountEntry.rectTrans.localPosition.y;
-                trans.localPosition = pos;
+                vt.textCtrl.resizeTextForBestFit = false;
+                vt.textCtrl.raycastTarget = false;
             }
             vt.textCtrl.text = $"{vt.numVeinGroupsWithCollector}/{vt.numVeinGroups}";
+            float countWidth = Mathf.Max(MinCountWidth, Mathf.Ceil(UI.Util.GetPreferredWidth(vt.textCtrl)));
+            RectTransform countRect = vt.textCtrl.rectTransform;
+            if (countRect.parent != labelRect.parent)
+            {
+                countRect.SetParent(labelRect.parent, false);
+            }
+            countRect.anchorMin = labelRect.anchorMin;
+            countRect.anchorMax = new Vector2(labelRect.anchorMin.x, labelRect.anchorMax.y);
+            countRect.pivot = new Vector2(0f, labelRect.pivot.y);
+            countRect.offsetMin = new Vector2(vt.labelOffsetMinX, labelRect.offsetMin.y);
+            countRect.offsetMax = new Vector2(vt.labelOffsetMinX + countWidth, labelRect.offsetMax.y);
+            labelRect.offsetMin = new Vector2(vt.labelOffsetMinX + countWidth + CountLabelGap, labelRect.offsetMin.y);
         }
 
         private static void InitializeVeinCountArray(VeinTypeInfo[] veinCountArray)
@@ -236,7 +246,6 @@ public class UIPatch : PatchImpl<UIPatch>
             }
 
             // update each resource to show the following vein group info:
-            //     Iron:  <number of vein groups with miners> / <total number of vein groups>
             foreach (UIResAmountEntry uiresAmountEntry in __instance.entries)
             {
                 int refId = uiresAmountEntry.refId;
@@ -245,11 +254,11 @@ public class UIPatch : PatchImpl<UIPatch>
                     var vt = planetVeinCount[refId];
                     if (vt.numVeinGroups > 0)
                     {
-                        FormatResource(refId, uiresAmountEntry, vt);
+                        FormatResource(uiresAmountEntry, vt);
                     }
-                    else if (vt.textCtrl != null)
+                    else
                     {
-                        vt.textCtrl.text = "";
+                        vt.Reset();
                     }
                 }
             }
@@ -296,7 +305,6 @@ public class UIPatch : PatchImpl<UIPatch>
                 }
             }
             // update each resource to show the following vein group info:
-            //     Iron:  <number of vein groups with miners> / <total number of vein groups>
             foreach (UIResAmountEntry uiresAmountEntry in __instance.entries)
             {
                 int refId = uiresAmountEntry.refId;
@@ -305,11 +313,11 @@ public class UIPatch : PatchImpl<UIPatch>
                     var vt = starVeinCount[refId];
                     if (vt.numVeinGroups > 0)
                     {
-                        FormatResource(refId, uiresAmountEntry, vt);
+                        FormatResource(uiresAmountEntry, vt);
                     }
-                    else if (vt.textCtrl != null)
+                    else
                     {
-                        vt.textCtrl.text = "";
+                        vt.Reset();
                     }
                 }
             }
@@ -322,11 +330,23 @@ public class UIPatch : PatchImpl<UIPatch>
         public int numVeinGroups;
         public int numVeinGroupsWithCollector;
         public Text textCtrl;
+        public RectTransform labelRect;
+        public float labelOffsetMinX;
+
+        public void RestoreLabel()
+        {
+            if (labelRect != null)
+            {
+                labelRect.offsetMin = new Vector2(labelOffsetMinX, labelRect.offsetMin.y);
+            }
+            labelRect = null;
+        }
 
         public void Reset()
         {
             numVeinGroups = 0;
             numVeinGroupsWithCollector = 0;
+            RestoreLabel();
             if (textCtrl != null)
             {
                 textCtrl.text = "";

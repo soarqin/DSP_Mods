@@ -4,6 +4,7 @@
 ## Changlog
 
 * 1.6.1
+  * `Planet vein utilization`: Move vein-group counts to the left of resource names to avoid overlapping the game's new buttons.
   * `Settings help`: Restore the game's native tips on question-mark buttons.
   * `Auto-cruise`: Align the settings sliders and reduce spacing between their tracks and values.
   * `Real-time logistic stations info panel`: Fix lingering panels after dismantling stations or initializing a planet, and keep panels updating while typing.
@@ -420,6 +421,7 @@
 ## 更新日志
 
 * 1.6.1
+  * `宇宙视图行星/星系矿脉数量显示`：将矿脉数量移至矿物名称左侧，避免与游戏新版按钮重叠。
   * `设置提示`：修复问号按钮的游戏内提示不显示的问题。
   * `自动巡航`：统一设置滑条的起始位置，并缩小滑条与数值之间的间距。
   * `物流站实时信息面板`：修复拆除物流站或初始化本行星后面板残留的问题，输入文字时也会保持刷新。
