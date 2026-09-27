@@ -173,6 +173,8 @@ public static class BlueprintSelectionReader
             });
             var operation = new Dictionary<string, double>();
             AddSettings(parameters, operation);
+            if (operation.ContainsKey("ResearchMode"))
+                operation["ResearchMatrixSink"] = 1;
             if (building.Kind == ProductionBuildingKind.Logistics)
                 CaptureStoredChargePower(building, parameters, blueprint.parameters, operation);
             ApplySupplied(context?.OperatingParametersByIndex, blueprint.index, operation);
@@ -449,7 +451,9 @@ public static class BlueprintSelectionReader
         IReadOnlyDictionary<string, double> operation, ICollection<ProductionDiagnostic> diagnostics)
     {
         var kind = building.Kind;
-        var requiredKey = parameters.type == BuildingType.Lab && parameters.mode0 == 2 ? "TechId" :
+        var researchNeedsTechnology = parameters.type == BuildingType.Lab && parameters.mode0 == 2 &&
+            (!operation.TryGetValue("ResearchMatrixSink", out var matrixSink) || matrixSink != 1);
+        var requiredKey = researchNeedsTechnology ? "TechId" :
             kind == ProductionBuildingKind.Miner ? "ResourceItemId" :
             kind == ProductionBuildingKind.Collector ? "GasCount" :
             kind == ProductionBuildingKind.FuelGenerator ? "FuelItemId" :
@@ -458,8 +462,7 @@ public static class BlueprintSelectionReader
             diagnostics.Add(new ProductionDiagnostic(ProductionDiagnosticCode.MissingOperatingParameter,
                 $"The selected building needs the {requiredKey} operating parameter.",
                 buildingItemId: building.ItemId));
-        if (parameters.type == BuildingType.Lab && parameters.mode0 == 2 &&
-            !operation.ContainsKey("ResearchSpeed"))
+        if (researchNeedsTechnology && !operation.ContainsKey("ResearchSpeed"))
             diagnostics.Add(new ProductionDiagnostic(ProductionDiagnosticCode.MissingOperatingParameter,
                 "The research lab needs the current research technology speed.",
                 buildingItemId: building.ItemId));
