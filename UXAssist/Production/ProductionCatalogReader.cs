@@ -190,6 +190,8 @@ public static class ProductionCatalogReader
         if (prefab.isPowerGen)
             return prefab.photovoltaic || prefab.windForcedPower || prefab.geothermal
                 ? ProductionBuildingKind.RenewableGenerator : ProductionBuildingKind.FuelGenerator;
+        if (prefab.isStation || prefab.isDispenser || prefab.isBattleBase)
+            return ProductionBuildingKind.Logistics;
         if (prefab.isPowerConsumer && !prefab.isStation && !prefab.isDispenser)
             return ProductionBuildingKind.Auxiliary;
         return ProductionBuildingKind.Ordinary;

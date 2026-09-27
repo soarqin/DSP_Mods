@@ -46,7 +46,8 @@ public enum ProductionBuildingKind
     RenewableGenerator,
     Ejector,
     Silo,
-    Auxiliary
+    Auxiliary,
+    Logistics
 }
 
 public enum RenewablePowerSource

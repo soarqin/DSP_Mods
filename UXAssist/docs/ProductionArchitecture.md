@@ -52,6 +52,8 @@ The capture is read-only and does not alter the game's selection. `CreateRequest
 
 The global proliferation switch uses the highest level supported by the captured proliferator items while preserving each production building's acceleration or extra-products setting. It also controls fuel and launch-ammunition proliferation. The black box assumes input coating is supplied externally and does not add proliferator consumption for that coating.
 
+Selected Planetary and Interstellar Logistics Stations, Logistics Distributors, and Battlefield Analysis Bases contribute their configured maximum charging power to both `Power.ConsumptionWatts` and `PeakConsumptionWatts`. These are charging limits, not current draw, inventory flow, or accumulator exchange. A manual building snapshot supplies `ChargePowerWatts` in watts; live capture reads the consumer's configured work energy per tick, while prebuild and blueprint captures use native stored settings or prefab defaults when no setting is applied. Missing or invalid charging power makes the power result unknown without discarding material results. Advanced Mining Machines retain their mining power calculation rather than gaining a second charger; orbital collectors recover their own fuel instead of drawing grid power.
+
 ## Special-process settings
 
 All parameters below are numbers in a building snapshot's `OperatingParameters`. A live capture supplies available values from the selected factory; either capture path may need supplementary context. Do not infer missing resource coverage, inventory contents, research technology, orbit readiness, or sandbox settings. Planner callers supply recipe-specific values through `OperatingParametersByRecipe`, including for synthetic recipes.
@@ -70,7 +72,7 @@ All parameters below are numbers in a building snapshot's `OperatingParameters`.
 
 Native blueprint paste applies a stored boost mode only while sandbox tools are enabled, so `BoostEnabled` states whether the boost is actually applied. Live capture reports the applied boost of ejectors, silos, and artificial stars; blueprint callers must supply it for boosted buildings.
 
-The ejector and silo assume a usable orbit or node when `LaunchAvailable = 1`; their native geometric visibility and construction schedules are outside this full-load model. Power reports exclude logistics stations, distributors, transport, and mecha charging. Auxiliary power must come from an explicitly supplied list.
+The ejector and silo assume a usable orbit or node when `LaunchAvailable = 1`; their native geometric visibility and construction schedules are outside this full-load model. Planner power excludes logistics charging, transport, and mecha charging; the fixed-building report includes charging limits for selected logistics facilities but does not simulate transport energy. Auxiliary power must come from an explicitly supplied list.
 
 ## CheatEnabler migration
 
@@ -95,6 +97,7 @@ Use a test game for the following manual checks. Compare full-load rates only wi
 
 - Check ordinary production and mining against native cycle periods and the per-minute UI. A 60-tick recipe at unit speed completes 60 cycles per minute before proliferation.
 - Capture assemblers in acceleration and extra-products modes, nonproductive recipes, prebuilds, and stacked labs. Confirm that each captured mode and building count matches the selection.
+- Select logistics stations, distributors, and battle bases with different charge-power settings. Compare live, prebuild, and blueprint maximum demand with their native charging sliders; confirm that advanced miners and gas collectors do not gain an additional charging term.
 - Supply fractionator circulation and stack context. For native 1% fractionation with fully sprayed input, 1,800 circulating items per minute yield 36 conversions per minute; at stack size 4, 7,200 circulating items per minute yield 144. Check throughput-dependent power separately.
 - Request full accumulators and critical photons through the catalog's default synthetic routes. Confirm that missing building or receiver-loss settings produce incomplete power rather than an invented result.
 - Charge and discharge sprayed accumulators, then consume or deliver them with spraying enabled. Confirm acceleration in both directions and no repeated spray charge for inherited coating. Compare self-spraying enabled and disabled.
