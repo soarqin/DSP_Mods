@@ -22,6 +22,7 @@ internal static class Program
         ProliferatorGradesAndFinishedSpraying();
         BlackBoxBalancesAndThreshold();
         BlackBoxMixedModesAndDeficits();
+        LogisticsChargingPower();
         FractionationFlow();
         AccumulatorRoundTrip();
         RenewableGeneration();
@@ -787,6 +788,86 @@ internal static class Program
             "global no-proliferation restores native power for every tier");
         Equal(1.5, plain.ItemFlows[4].GrossProduction,
             "disabling proliferation does not throttle a shorted downstream recipe");
+    }
+
+    private static void LogisticsChargingPower()
+    {
+        var catalog = new ProductionCatalog(new[]
+        {
+            new ProductionItem(1, 0, true, false, 0, 0),
+            new ProductionItem(2, 101, false, false, 0, 0)
+        }, new[] { Recipe(101, new[] { (1, 1.0) }, new[] { (2, 1.0) }) }, new[]
+        {
+            new ProductionBuilding(10, ProductionRecipeCategory.Assemble, 1, 1000, 100),
+            new ProductionBuilding(20, ProductionRecipeCategory.None, 0, 3000000, 100,
+                ProductionBuildingKind.Logistics),
+            new ProductionBuilding(21, ProductionRecipeCategory.None, 0, 15000000, 100,
+                ProductionBuildingKind.Logistics),
+            new ProductionBuilding(22, ProductionRecipeCategory.None, 0, 300000, 100,
+                ProductionBuildingKind.Logistics),
+            new ProductionBuilding(23, ProductionRecipeCategory.None, 0, 600000, 100,
+                ProductionBuildingKind.Logistics)
+        }, new[] { 0.0 }, new[] { 0.0 }, new[] { 1.0 });
+        var request = new FactoryBlackBoxRequest();
+        request.Buildings.Add(new ProductionBuildingSnapshot(1, 10, 101, 1, ProliferationMode.None));
+        request.Buildings.Add(new ProductionBuildingSnapshot(2, 20, 0, 2, ProliferationMode.None,
+            operatingParameters: new Dictionary<string, double> { ["ChargePowerWatts"] = 3000000 }));
+        request.Buildings.Add(new ProductionBuildingSnapshot(3, 20, 0, 1, ProliferationMode.None,
+            operatingParameters: new Dictionary<string, double> { ["ChargePowerWatts"] = 4000000 }));
+        request.Buildings.Add(new ProductionBuildingSnapshot(4, 21, 0, 1, ProliferationMode.None,
+            operatingParameters: new Dictionary<string, double> { ["ChargePowerWatts"] = 15000000 }));
+        request.Buildings.Add(new ProductionBuildingSnapshot(5, 22, 0, 1, ProliferationMode.None,
+            operatingParameters: new Dictionary<string, double> { ["ChargePowerWatts"] = 300000 }));
+        request.Buildings.Add(new ProductionBuildingSnapshot(6, 23, 0, 1, ProliferationMode.None,
+            operatingParameters: new Dictionary<string, double> { ["ChargePowerWatts"] = 600000 }));
+        var analyzer = new FactoryBlackBoxAnalyzer(catalog);
+        var report = analyzer.Analyze(request);
+        Check(report.MaterialComplete && report.PowerComplete,
+            "selected logistics chargers have complete power and no material demand");
+        Equal(25901000, report.Power.ConsumptionWatts,
+            "theoretical grid demand sums each selected facility's configured charging limit");
+        Equal(25901000, report.Power.PeakConsumptionWatts,
+            "selected facilities use the same peak and full-load charging power");
+        Equal(6000000, report.Groups[1].ConsumptionWatts.Value,
+            "multiple identical chargers multiply their configured charging power");
+        Equal(4000000, report.Groups[2].ConsumptionWatts.Value,
+            "separately configured chargers of the same type stay independent");
+        Equal(1, report.ItemFlows[2].GrossProduction,
+            "logistics charging does not change manufacturing capacity");
+        Equal(0, report.Power.AccumulatorChargingWatts,
+            "logistics charging is not accumulator exchange");
+
+        request.Buildings[1] = new ProductionBuildingSnapshot(2, 20, 0, 2, ProliferationMode.None);
+        var missing = analyzer.Analyze(request);
+        Check(missing.MaterialComplete && !missing.PowerComplete && missing.Power == null &&
+              missing.Groups[1].ConsumptionWatts == null &&
+              missing.Diagnostics.Any(diagnostic =>
+                  diagnostic.Code == ProductionDiagnosticCode.MissingOperatingParameter &&
+                  diagnostic.BuildingItemId == 20),
+            "missing logistics settings invalidate power without losing material results");
+        Equal(1, missing.ItemFlows[2].GrossProduction,
+            "manufacturing still reports materials with an unknown charger");
+
+        foreach (var invalidWatts in new[] { -1.0, double.NaN, double.PositiveInfinity })
+        {
+            request.Buildings[1] = new ProductionBuildingSnapshot(2, 20, 0, 2, ProliferationMode.None,
+                operatingParameters: new Dictionary<string, double> { ["ChargePowerWatts"] = invalidWatts });
+            var invalid = analyzer.Analyze(request);
+            Check(invalid.MaterialComplete && !invalid.PowerComplete && invalid.Power == null &&
+                  invalid.Diagnostics.Any(diagnostic =>
+                      diagnostic.Code == ProductionDiagnosticCode.InvalidRequest &&
+                      diagnostic.BuildingItemId == 20),
+                "invalid logistics charge power is diagnosed independently of material flows");
+        }
+
+        request.Buildings[1] = new ProductionBuildingSnapshot(2, 20, 0, 2, ProliferationMode.None,
+            operatingParameters: new Dictionary<string, double> { ["ChargePowerWatts"] = 3000000 });
+        request.Buildings.Add(request.Buildings[1]);
+        var duplicate = analyzer.Analyze(request);
+        Equal(25901000, duplicate.Power.ConsumptionWatts,
+            "repeated object selections do not double-count logistics charging");
+        Check(duplicate.Diagnostics.Any(diagnostic => diagnostic.Code == ProductionDiagnosticCode.DuplicateSelection),
+            "repeated logistics facility selection is diagnosed");
     }
 
     private static void BeltSignalStatistics()

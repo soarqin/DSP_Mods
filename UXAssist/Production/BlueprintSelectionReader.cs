@@ -81,6 +81,16 @@ public static class BlueprintSelectionReader
             var operation = new Dictionary<string, double>();
             var speedFactor = GetLiveSpeed(factory, objectId, parameters.type, operation);
             AddSettings(parameters, operation);
+            if (building.Kind == ProductionBuildingKind.Logistics)
+            {
+                if (objectId > 0)
+                    CaptureLiveChargePower(factory, objectId, operation);
+                else
+                {
+                    ref var prebuild = ref factory.prebuildPool[-objectId];
+                    CaptureStoredChargePower(building, parameters, prebuild.parameters, operation);
+                }
+            }
             if (operation.ContainsKey("ResearchMode")) CaptureResearchSettings(factory, operation);
             switch (building.Kind)
             {
@@ -163,6 +173,8 @@ public static class BlueprintSelectionReader
             });
             var operation = new Dictionary<string, double>();
             AddSettings(parameters, operation);
+            if (building.Kind == ProductionBuildingKind.Logistics)
+                CaptureStoredChargePower(building, parameters, blueprint.parameters, operation);
             ApplySupplied(context?.OperatingParametersByIndex, blueprint.index, operation);
             snapshots.Add(CreateSnapshot(catalog, building, 0, parameters, parameters.recipeId, null, operation,
                 diagnostics));
@@ -195,6 +207,45 @@ public static class BlueprintSelectionReader
     {
         if (supplied == null || !supplied.TryGetValue(key, out var settings) || settings == null) return;
         foreach (var entry in settings) operation[entry.Key] = entry.Value;
+    }
+
+    private static void CaptureLiveChargePower(PlanetFactory factory, int objectId,
+        IDictionary<string, double> operation)
+    {
+        var powerSystem = factory.powerSystem;
+        var pool = powerSystem?.consumerPool;
+        var consumerId = factory.entityPool[objectId].powerConId;
+        if (pool == null || consumerId <= 0 || consumerId >= powerSystem.consumerCursor ||
+            consumerId >= pool.Length || pool[consumerId].id != consumerId ||
+            pool[consumerId].entityId != objectId) return;
+        operation["ChargePowerWatts"] = pool[consumerId].workEnergyPerTick * ProductionUnits.TicksPerSecond;
+    }
+
+    private static void CaptureStoredChargePower(ProductionBuilding building, BuildingParameters parameters,
+        int[] storedParameters, IDictionary<string, double> operation)
+    {
+        var watts = building.WorkingPowerWatts;
+        switch (parameters.type)
+        {
+            case BuildingType.Station:
+                if (storedParameters != null &&
+                    storedParameters.Length >= BuildingParameters.kStationParamsLength && storedParameters[320] > 0)
+                    watts = storedParameters[320] * ProductionUnits.TicksPerSecond;
+                break;
+            case BuildingType.Dispenser:
+                if (storedParameters != null && storedParameters.Length >= BuildingParameters.kAddonParamsLength)
+                    watts = storedParameters[2] * ProductionUnits.TicksPerSecond;
+                break;
+            case BuildingType.BattleBase:
+                var index = parameters.mode1 == 0 ? 10 : 70;
+                if (storedParameters != null && storedParameters.Length > index)
+                    watts = storedParameters[index] * ProductionUnits.TicksPerSecond;
+                break;
+            default:
+                return;
+        }
+
+        operation["ChargePowerWatts"] = watts;
     }
 
     private static ProductionBuildingSnapshot CreateSnapshot(ProductionCatalog catalog, ProductionBuilding building,
