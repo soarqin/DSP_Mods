@@ -3,6 +3,8 @@
 
 ## Changlog
 
+* 1.6.2
+  * `Blueprint descriptions`: Add a row with an Auto-fill description button and a right-hand Proliferation checkbox above all description boxes in the browser, copy, and paste inspectors. Replace the main description with wrapping, nonempty Missing, Excess, Input, Output, and Research lines: group each warning category under one label and omit the per-minute suffix while keeping per-minute rates. Cap upstream inputs at sustainable downstream throughput even when unrelated parameters are unknown, without assuming unknown downstream demand is zero; keep independently known rated outputs and power. Budget every research-mode lab at full working power, and treat one selected lab as an outlet for all six matrix types made within the blueprint, regardless of the save's technology or research speed. Display positive net matrix output only under Research, after other buildings' known matrix use; keep unrelated final products under Output. Do not invent matrix consumption rates or imports, and do not flag the accepted output as excess. Keep Power as the only optional generated custom field, showing factory and logistics demand only when present and marking unknown demand separately. Report necessary coproducts and incomplete results, preserve other custom fields, and never save automatically. Fix false coproduct output in mixed production lines and at fractional building ratios.
 * 1.6.1
   * `Larger area for terraform`: Restore 11x11 through 30x30 foundation and Restore Terrain brushes after DSP 0.10.35.29104.
   * Fix the title-screen background turning black, even when the UXAssist window is closed.
@@ -422,6 +424,8 @@
 
 ## 更新日志
 
+* 1.6.2
+  * `蓝图说明`：在蓝图浏览、复制和粘贴界面的所有说明框上方增加「自动填写说明」按钮，并将「增产」复选框放在按钮右侧。直接用可换行内容替换原说明：按需依次显示「缺少：」「多余：」「输入：」「输出：」「研究：」，缺少或多余的物品共用一次行标签；标签不再显示「每分钟」，材料速率仍按每分钟计算。上游产量超过下游需求时，即使其他参数未知，也按已知下游的可持续产量估算输入；不把未知下游需求当作零。独立可确定的输出和耗电仍按额定值计算。所有研究模式研究站都按额定满负荷计入耗电；只要蓝图内有一座研究站，就假设它能接纳蓝图内产出的全部六种矩阵，不受存档科技或研究速度影响。扣除蓝图内其他建筑已知的矩阵消耗后，仅将净产量写入「研究」行；其他最终产物仍写入「输出」行。既不虚构研究站的矩阵消耗速率或外部需求，也不把被接纳的矩阵计为多余产量。仅在有耗电或耗电未知时生成「耗电」自定义字段，分别标注工厂与物流的有效类别。标出必要的联产盈余和数据不完整的结果；保留其他自定义字段，也不自动保存蓝图。修复混合生产线及非整数建筑配比下的副产物误报。
 * 1.6.1
   * `范围铺设地基的最大区域扩大`：适配 DSP 0.10.35.29104，恢复 11x11 至 30x30 的铺设地基与恢复地形范围。
   * 修复标题画面背景变黑的问题，包括关闭 UXAssist 窗口后背景仍不显示的情况。

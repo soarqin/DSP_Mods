@@ -267,17 +267,20 @@ public sealed class ProductionCatalog
     public IReadOnlyDictionary<int, ProductionRecipe> Recipes { get; }
     public IReadOnlyDictionary<int, ProductionBuilding> Buildings { get; }
     public IReadOnlyDictionary<int, ProductionTechnology> Technologies { get; }
+    public IReadOnlyCollection<int> ResearchMatrixItemIds { get; }
     public int MaximumProliferationLevel { get; }
 
     public ProductionCatalog(IEnumerable<ProductionItem> items, IEnumerable<ProductionRecipe> recipes,
         IEnumerable<ProductionBuilding> buildings, double[] speedBonus, double[] extraBonus, double[] powerMultiplier,
-        IEnumerable<ProductionTechnology> technologies = null)
+        IEnumerable<ProductionTechnology> technologies = null, IEnumerable<int> researchMatrixItemIds = null)
     {
         Items = new ReadOnlyDictionary<int, ProductionItem>(items.ToDictionary(item => item.Id));
         Recipes = new ReadOnlyDictionary<int, ProductionRecipe>(recipes.ToDictionary(recipe => recipe.Id));
         Buildings = new ReadOnlyDictionary<int, ProductionBuilding>(buildings.ToDictionary(building => building.ItemId));
         Technologies = new ReadOnlyDictionary<int, ProductionTechnology>(
             (technologies ?? Array.Empty<ProductionTechnology>()).ToDictionary(tech => tech.Id));
+        ResearchMatrixItemIds = Array.AsReadOnly((researchMatrixItemIds ?? Array.Empty<int>())
+            .Where(itemId => Items.ContainsKey(itemId)).Distinct().OrderBy(itemId => itemId).ToArray());
         _speedBonus = (double[])speedBonus.Clone();
         _extraBonus = (double[])extraBonus.Clone();
         _powerMultiplier = (double[])powerMultiplier.Clone();

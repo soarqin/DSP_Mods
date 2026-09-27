@@ -5,6 +5,27 @@ namespace UXAssist.Common;
 public static class I18NKeys
 {
     public const string Unknown = "Unknown";
+    public const string BlueprintAutoFillDescription = "UXAssist Blueprint Auto-fill description";
+    public const string BlueprintProliferation = "UXAssist Blueprint Proliferation";
+    public const string BlueprintPower = "UXAssist Blueprint Power";
+    public const string BlueprintPowerEnglish = "Power";
+    public const string BlueprintPowerChinese = "耗电";
+    public const string BlueprintInputLine = "UXAssist Blueprint Input Line";
+    public const string BlueprintOutputLine = "UXAssist Blueprint Output Line";
+    public const string BlueprintResearchLine = "UXAssist Blueprint Research Line";
+    public const string BlueprintFactoryPower = "UXAssist Blueprint Factory Power";
+    public const string BlueprintLogisticsPower = "UXAssist Blueprint Logistics Power";
+    public const string BlueprintMissing = "UXAssist Blueprint Missing";
+    public const string BlueprintExcess = "UXAssist Blueprint Excess";
+    public const string BlueprintKnownPortion = "UXAssist Blueprint Known Portion";
+    public const string BlueprintInvalid = "Cannot fill description: the blueprint is invalid.";
+    public const string BlueprintEmpty = "Cannot fill description: the blueprint has no buildings.";
+    public const string BlueprintDataUnavailable = "Production data is unavailable. Wait for it to load and try again.";
+    public const string BlueprintCalculationFailed = "Production calculation failed; no description was generated.";
+    public const string BlueprintDescriptionTooLong = "The generated description exceeds the game's 2,000-character limit. Reduce the blueprint's material types and try again.";
+    public const string BlueprintFieldLimit = "At most {0} custom fields are allowed. Remove an unused field and try again.";
+    public const string BlueprintInvalidFields = "Custom fields have invalid formatting. Fix them and try again.";
+    public const string BlueprintPartial = "Some building settings or recipes are unavailable; generated values show known portions.";
     public const string DoYouWantToUseMetadataToBuyoutTheFollowingTech = "Do you want to use metadata to buyout the following tech?";
     public const string TheFollowingIsTheRequiredMetadataForBuyout = "The following is the required metadata for buyout:";
     public const string BatchBuyoutTech = "Batch buyout tech";
@@ -199,6 +220,25 @@ public static class I18NKeys
     public static void Register()
     {
         I18N.Add(Unknown, "Unknown", "未知");
+        I18N.Add(BlueprintAutoFillDescription, "Auto-fill description", "自动填写说明");
+        I18N.Add(BlueprintProliferation, "Proliferation", "增产");
+        I18N.Add(BlueprintPower, BlueprintPowerEnglish, BlueprintPowerChinese);
+        I18N.Add(BlueprintInputLine, "Input: ", "输入：");
+        I18N.Add(BlueprintOutputLine, "Output: ", "输出：");
+        I18N.Add(BlueprintResearchLine, "Research: ", "研究：");
+        I18N.Add(BlueprintFactoryPower, "Factory power", "工厂耗电");
+        I18N.Add(BlueprintLogisticsPower, "Logistics power", "物流耗电");
+        I18N.Add(BlueprintMissing, "Missing: ", "缺少：");
+        I18N.Add(BlueprintExcess, "Excess: ", "多余：");
+        I18N.Add(BlueprintKnownPortion, "(known portion)", "（已知部分）");
+        I18N.Add(BlueprintInvalid, BlueprintInvalid, "蓝图无效，请重新选择蓝图后重试。");
+        I18N.Add(BlueprintEmpty, BlueprintEmpty, "蓝图中没有建筑，请选择包含建筑的蓝图后重试。");
+        I18N.Add(BlueprintDataUnavailable, BlueprintDataUnavailable, "生产数据尚未加载，请等待加载完成后重试。");
+        I18N.Add(BlueprintCalculationFailed, BlueprintCalculationFailed, "生产计算失败，未生成说明。");
+        I18N.Add(BlueprintDescriptionTooLong, BlueprintDescriptionTooLong, "生成的说明超过游戏允许的 2000 字，请减少蓝图中的材料种类后重试。");
+        I18N.Add(BlueprintFieldLimit, BlueprintFieldLimit, "自定义字段最多 {0} 个，请先删除不需要的字段再重试。");
+        I18N.Add(BlueprintInvalidFields, BlueprintInvalidFields, "自定义字段格式无效，请先修正后重试。");
+        I18N.Add(BlueprintPartial, BlueprintPartial, "部分建筑缺少运行参数或配方；生成结果仅显示可计算的部分。");
         I18N.Add(DoYouWantToUseMetadataToBuyoutTheFollowingTech, "Do you want to use metadata to buyout the following tech?", "要使用元数据买断以下科技吗？");
         I18N.Add(TheFollowingIsTheRequiredMetadataForBuyout, "The following is the required metadata for buyout:", "以下是买断所需元数据：");
         I18N.Add(BatchBuyoutTech, "Batch buyout tech", "批量买断科技");

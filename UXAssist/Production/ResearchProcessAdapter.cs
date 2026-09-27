@@ -18,11 +18,7 @@ public sealed class ResearchProcessAdapter : IProductionProcessAdapter
         process = null;
         diagnostic = null;
         if (operatingParameters == null ||
-            !operatingParameters.TryGetValue("ResearchMode", out var researchMode) || researchMode != 1 ||
-            !operatingParameters.TryGetValue("TechId", out var techId) ||
-            techId <= 0 || techId > int.MaxValue || techId != Math.Truncate(techId) ||
-            !operatingParameters.TryGetValue("ResearchSpeed", out var researchSpeed) ||
-            !FinitePositive(researchSpeed))
+            !operatingParameters.TryGetValue("ResearchMode", out var researchMode) || researchMode != 1)
         {
             diagnostic = new ProductionDiagnostic(ProductionDiagnosticCode.MissingOperatingParameter,
                 "Research mode needs a lab technology and current research speed.",
@@ -30,12 +26,41 @@ public sealed class ResearchProcessAdapter : IProductionProcessAdapter
             return false;
         }
 
-        if (!catalog.Technologies.TryGetValue((int)techId, out var tech))
+        var matrixSink = operatingParameters.TryGetValue("ResearchMatrixSink", out var sinkSetting) &&
+                         sinkSetting == 1;
+        var researchSpeed = 0.0;
+        ProductionTechnology technology = null;
+        if (matrixSink)
         {
-            diagnostic = new ProductionDiagnostic(ProductionDiagnosticCode.InvalidRequest,
-                "The selected technology is not a lab-research technology.",
-                buildingItemId: building.ItemId);
-            return false;
+            if (catalog.ResearchMatrixItemIds.Count == 0)
+            {
+                diagnostic = new ProductionDiagnostic(ProductionDiagnosticCode.MissingOperatingParameter,
+                    "The catalog has no native research matrix item IDs.",
+                    buildingItemId: building.ItemId);
+                return false;
+            }
+        }
+        else
+        {
+            if (!operatingParameters.TryGetValue("TechId", out var techId) || techId <= 0 ||
+                techId > int.MaxValue || techId != Math.Truncate(techId) ||
+                !operatingParameters.TryGetValue("ResearchSpeed", out researchSpeed) ||
+                !FinitePositive(researchSpeed))
+            {
+                diagnostic = new ProductionDiagnostic(ProductionDiagnosticCode.MissingOperatingParameter,
+                    "Research mode needs a lab technology and current research speed.",
+                    buildingItemId: building.ItemId);
+                return false;
+            }
+
+            if (!catalog.Technologies.TryGetValue((int)techId, out technology))
+            {
+                diagnostic = new ProductionDiagnostic(ProductionDiagnosticCode.InvalidRequest,
+                    "The selected technology is not a lab-research technology.",
+                    buildingItemId: building.ItemId);
+                return false;
+            }
+
         }
 
         if (mode != ProliferationMode.None && mode != ProliferationMode.ExtraProducts)
@@ -60,7 +85,7 @@ public sealed class ResearchProcessAdapter : IProductionProcessAdapter
         var baseHashes = 3600.0 * researchSpeed;
         var hashRate = baseHashes * (1 + extraBonus);
         var workingWatts = building.WorkingPowerWatts * powerMultiplier;
-        if (!FinitePositive(hashRate) || !FinitePositive(workingWatts))
+        if (!FinitePositive(workingWatts) || !matrixSink && !FinitePositive(hashRate))
         {
             diagnostic = new ProductionDiagnostic(ProductionDiagnosticCode.InvalidRequest,
                 "The research hash rate or power demand is outside the supported range.",
@@ -69,19 +94,22 @@ public sealed class ResearchProcessAdapter : IProductionProcessAdapter
         }
 
         var inputs = new List<KeyValuePair<int, double>>();
-        foreach (var requirement in tech.MatrixPointsPerHash)
+        if (!matrixSink)
         {
-            if (!catalog.Items.ContainsKey(requirement.Key) || !FinitePositive(requirement.Value) ||
-                !FinitePositive(researchSpeed * requirement.Value))
+            foreach (var requirement in technology.MatrixPointsPerHash)
             {
-                diagnostic = new ProductionDiagnostic(ProductionDiagnosticCode.InvalidRequest,
-                    "The technology has an invalid matrix point requirement.",
-                    itemId: requirement.Key, buildingItemId: building.ItemId);
-                return false;
-            }
+                if (!catalog.Items.ContainsKey(requirement.Key) || !FinitePositive(requirement.Value) ||
+                    !FinitePositive(researchSpeed * requirement.Value))
+                {
+                    diagnostic = new ProductionDiagnostic(ProductionDiagnosticCode.InvalidRequest,
+                        "The technology has an invalid matrix point requirement.",
+                        itemId: requirement.Key, buildingItemId: building.ItemId);
+                    return false;
+                }
 
-            inputs.Add(new KeyValuePair<int, double>(requirement.Key,
-                researchSpeed * requirement.Value));
+                inputs.Add(new KeyValuePair<int, double>(requirement.Key,
+                    researchSpeed * requirement.Value));
+            }
         }
 
         process = new ProductionProcess(0, building.ItemId, mode,
