@@ -19,7 +19,7 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="System.Net.WebSockets.WebSocketProtocol" Version="5.1.3" />
     <Compile Remove="tools\**" />
-    <None Include="tools\**" />
+    <None Include="tools\**" Exclude="tools\**\bin\**;tools\**\obj\**" />
   </ItemGroup>
   <ItemGroup>
     <WebSocketRuntimeDll Include="$(TargetDir)Microsoft.AspNetCore.Connections.Abstractions.dll" />
