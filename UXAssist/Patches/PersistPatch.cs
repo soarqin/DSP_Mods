@@ -228,36 +228,27 @@ public class PersistPatch : PatchImpl<PersistPatch>
         return matcher.InstructionEnumeration();
     }
 
-    // Disable rendering when Player is hidden (Press F11 twice)
-    // Harmony transpiler: GameLogic_LateUpdate_Transpiler
-    // Target: GameLogic.LateUpdate, GameLogic.Draw, GameLogic.DrawPost
-    // Fallback: None — patch will fail loudly if the target method body changes.
-    [HarmonyTranspiler]
+    private static bool ShouldHideSpaceScene()
+    {
+        return !DSPGame.IsMenuDemo && !DSPGame.IsCombatCutscene &&
+               UIRoot.instance?.uiGame?.hideAllUI0 == true &&
+               GameMain.localPlanet == null && GameMain.mainPlayer?.controller?.modelVisible == false;
+    }
+
+    [HarmonyPrefix]
     [HarmonyPatch(typeof(GameLogic), nameof(GameLogic.LateUpdate))]
     [HarmonyPatch(typeof(GameLogic), nameof(GameLogic.Draw))]
     [HarmonyPatch(typeof(GameLogic), nameof(GameLogic.DrawPost))]
-    private static IEnumerable<CodeInstruction> GameLogic_LateUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+    private static bool GameLogic_Render_Prefix()
     {
-        var matcher = new CodeMatcher(instructions, generator);
-        matcher.Start();
-        matcher.CreateLabel(out var label);
-        matcher.InsertAndAdvance(
-            Transpilers.EmitDelegate(bool () =>
-            {
-                return GameMain.localPlanet == null && !GameMain.mainPlayer.controller.modelVisible;
-            }),
-            new CodeInstruction(OpCodes.Brfalse, label),
-            new CodeInstruction(OpCodes.Ret)
-        );
-
-        return matcher.InstructionEnumeration();
+        return !ShouldHideSpaceScene();
     }
 
     [HarmonyPostfix]
     [HarmonyPatch(typeof(UniverseSimulator), nameof(UniverseSimulator.SetPlanetSimulator))]
     private static void UniverseSimulator_SetPlanetSimulator_Postfix(UniverseSimulator __instance, PlanetSimulator sim)
     {
-        if (GameMain.localPlanet == null && !GameMain.mainPlayer.controller.modelVisible) sim.gameObject.SetActive(false);
+        if (ShouldHideSpaceScene()) sim.gameObject.SetActive(false);
     }
 
     #region Cluster Upload Result

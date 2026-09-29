@@ -40,6 +40,7 @@
 - Logistics station overlays must refresh through the native UI lifecycle, independently of typing guards. Reconcile cached tips against live station/entity identities and recycle local tips when stations are removed.
 - Planet vein utilization counters belong before resource labels, not beside native icons or highlight controls. Restore original label layout when rows are reused or the feature is disabled.
 - UI-only options must preserve native progression, statistics, and event delivery. Suppress presentation handlers rather than bypassing authoritative game-state setters.
+- Space-scene rendering suppression must require the native in-game hide-UI state and exclude menu demos and combat cutscenes. A hidden player model alone does not imply hidden scenery; use the same eligibility check for drawing and planet-simulator visibility.
 - LiveStreamAssist browser overlays must use single-flight polling and discard stale work after connection changes. Compound queries must reject mixed session IDs; cache only positive production indices so newly tracked items remain discoverable.
 - LiveStreamAssist production reads must schedule the native extra-info calculator for queried factories independently of the statistics UI. Deduplicate and throttle refreshes, let active native batches finish, and clear pending factory indices and deadlines at session boundaries.
 - LiveStreamAssist `ReflectionReader` caches bounded per-type member metadata and clears it during API uninitialization; do not cache mutable game values or arbitrary request results.
