@@ -1,6 +1,6 @@
 # UpdateGameDlls.ps1
 # Finds the Dyson Sphere Program installation via Steam registry and libraryfolders.vdf,
-# then uses assembly-publicizer to refresh AssemblyFromGame/ if the game DLLs are newer.
+# then uses assembly-publicizer to refresh AssemblyFromGame/ when the generated references differ.
 
 param(
     [string]$ProjectRoot = $PSScriptRoot
@@ -13,6 +13,20 @@ $DSP_APPID  = '1366540'
 $DSP_DLLS   = @('Assembly-CSharp.dll', 'UnityEngine.UI.dll')
 $MANAGED_SUBPATH = 'DSPGAME_Data\Managed'
 $OUTPUT_DIR = Join-Path $ProjectRoot 'AssemblyFromGame'
+
+function Get-FileSha256([string]$Path) {
+    $stream = [IO.File]::OpenRead($Path)
+    try {
+        $sha256 = [Security.Cryptography.SHA256]::Create()
+        try {
+            return [BitConverter]::ToString($sha256.ComputeHash($stream)).Replace('-', '')
+        } finally {
+            $sha256.Dispose()
+        }
+    } finally {
+        $stream.Dispose()
+    }
+}
 
 # ---------------------------------------------------------------------------
 # 1. Locate Steam installation via registry
@@ -130,44 +144,54 @@ if (-not $publicizer) {
 }
 
 # ---------------------------------------------------------------------------
-# 5. For each DLL: compare timestamps, publicize if game copy is newer
+# 5. Publicize each DLL in staging and compare the generated reference contents
 # ---------------------------------------------------------------------------
 $updated = 0
-foreach ($dll in $DSP_DLLS) {
-    $srcFile = Join-Path $managedDir $dll
-    $dstFile = Join-Path $OUTPUT_DIR $dll
+$stagingDir = Join-Path ([IO.Path]::GetTempPath()) ("DSP_Mods-publicized-" + [guid]::NewGuid().ToString('N'))
+New-Item -ItemType Directory -Path $stagingDir | Out-Null
+New-Item -ItemType Directory -Path $OUTPUT_DIR -Force | Out-Null
 
-    if (-not (Test-Path $srcFile)) {
-        Write-Warning "UpdateGameDlls: Source DLL not found: $srcFile"
-        continue
-    }
+try {
+    foreach ($dll in $DSP_DLLS) {
+        $srcFile = Join-Path $managedDir $dll
+        $dstFile = Join-Path $OUTPUT_DIR $dll
 
-    $srcTime = (Get-Item $srcFile).LastWriteTimeUtc
-    $needsUpdate = $true
-
-    if (Test-Path $dstFile) {
-        $dstTime = (Get-Item $dstFile).LastWriteTimeUtc
-        if ($srcTime -le $dstTime) {
-            Write-Host "UpdateGameDlls: $dll is up-to-date (game: $srcTime, local: $dstTime)"
-            $needsUpdate = $false
+        if (-not (Test-Path $srcFile)) {
+            Write-Warning "UpdateGameDlls: Source DLL not found: $srcFile"
+            continue
         }
-    }
 
-    if ($needsUpdate) {
-        Write-Host "UpdateGameDlls: Publicizing $dll (game: $srcTime) ..."
-        # --overwrite writes directly to <output>/<dll> (no -publicized postfix)
-        & $publicizer $srcFile --strip --overwrite --output $OUTPUT_DIR
+        $srcTime = (Get-Item $srcFile).LastWriteTimeUtc
+        Write-Host "UpdateGameDlls: Publicizing $dll for comparison (game: $srcTime) ..."
+        & $publicizer $srcFile --strip --overwrite --output $stagingDir
         if ($LASTEXITCODE -ne 0) {
             Write-Error "UpdateGameDlls: assembly-publicizer failed for $dll (exit code $LASTEXITCODE)"
             exit 1
         }
-        # Preserve the source timestamp on the output so future comparisons are stable
-        $outFile = Join-Path $OUTPUT_DIR $dll
-        if (Test-Path $outFile) {
-            (Get-Item $outFile).LastWriteTimeUtc = $srcTime
+
+        $candidateFile = Join-Path $stagingDir $dll
+        if (-not (Test-Path $candidateFile)) {
+            Write-Error "UpdateGameDlls: Publicized DLL not found: $candidateFile"
+            exit 1
         }
+
+        if (Test-Path $dstFile) {
+            $candidateHash = Get-FileSha256 $candidateFile
+            $currentHash = Get-FileSha256 $dstFile
+            if ($candidateHash -eq $currentHash) {
+                Write-Host "UpdateGameDlls: $dll is up-to-date."
+                continue
+            }
+        }
+
+        Copy-Item -LiteralPath $candidateFile -Destination $dstFile -Force
+        (Get-Item $dstFile).LastWriteTimeUtc = $srcTime
         $updated++
         Write-Host "UpdateGameDlls: $dll updated."
+    }
+} finally {
+    if (Test-Path -LiteralPath $stagingDir) {
+        Remove-Item -LiteralPath $stagingDir -Recurse -Force
     }
 }
 

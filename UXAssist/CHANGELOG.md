@@ -4,6 +4,7 @@
 ## Changlog
 
 * 1.6.1
+  * `Larger area for terraform`: Restore 11x11 through 30x30 foundation and Restore Terrain brushes after DSP 0.10.35.29104.
   * Fix the title-screen background turning black, even when the UXAssist window is closed.
   * `Planet vein utilization`: Move vein-group counts to the left of resource names to avoid overlapping the game's new buttons.
   * `Settings help`: Restore the game's native tips on question-mark buttons.
@@ -422,6 +423,7 @@
 ## 更新日志
 
 * 1.6.1
+  * `范围铺设地基的最大区域扩大`：适配 DSP 0.10.35.29104，恢复 11x11 至 30x30 的铺设地基与恢复地形范围。
   * 修复标题画面背景变黑的问题，包括关闭 UXAssist 窗口后背景仍不显示的情况。
   * `宇宙视图行星/星系矿脉数量显示`：将矿脉数量移至矿物名称左侧，避免与游戏新版按钮重叠。
   * `设置提示`：修复问号按钮的游戏内提示不显示的问题。

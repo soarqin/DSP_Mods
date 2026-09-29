@@ -239,6 +239,27 @@ internal static class ArchitectModePatch
                 Array.Resize(ref __instance.cursorIndices, MaxBrushSize * MaxBrushSize);
         }
 
+        // Harmony transpiler: BuildTool_Reform_PreparePoints_Transpiler
+        // Target: BuildTool_Reform.PrepareFlattenPoints, BuildTool_Reform.PrepareRestorePoints
+        // Fallback: TranspilerGuard returns original instructions when the operation-local brush limit is not found.
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(BuildTool_Reform), nameof(BuildTool_Reform.PrepareFlattenPoints))]
+        [HarmonyPatch(typeof(BuildTool_Reform), nameof(BuildTool_Reform.PrepareRestorePoints))]
+        private static IEnumerable<CodeInstruction> BuildTool_Reform_PreparePoints_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var matcher = new CodeMatcher(instructions, generator);
+            matcher.MatchForward(false,
+                new CodeMatch(OpCodes.Ldarg_0),
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(BuildTool_Reform), nameof(BuildTool_Reform.brushSize))),
+                new CodeMatch(ci => ci.LoadsConstant(BuildTool_Reform.MAX_BRUSH_SIZE)),
+                new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(Math), nameof(Math.Min), [typeof(int), typeof(int)]))
+            );
+            if (matcher.IsInvalid)
+                return matcher.Finish(instructions, UXAssist.Logger, nameof(BuildTool_Reform_PreparePoints_Transpiler));
+            matcher.Advance(2).Set(OpCodes.Ldc_I4, MaxBrushSize);
+            return matcher.InstructionEnumeration();
+        }
+
         // Harmony transpiler: BuildTool_Reform_ExecuteBrushAction_Transpiler
         // Target: BuildTool_Reform.ExecuteBrushAction
         // Fallback: TranspilerGuard returns original instructions when the brush limit is not found.
