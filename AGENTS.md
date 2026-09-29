@@ -20,7 +20,7 @@
 
 ## Build
 
-- `Directory.Build.props` supplies common frameworks, BepInEx packages, game references, warning policy, and the `UpdateGameDlls` dependency. `Directory.Build.targets` defines `ZipMod` and `CopyToParentPackage`.
+- `Directory.Build.props` supplies common frameworks, BepInEx packages, game references, warning policy, and the `UpdateGameDlls` dependency. `Directory.Build.targets` defines `ZipMod` and `CopyToParentPackage`. Exclude nested test-tool `bin` and `obj` artifacts from parent-mod item globs, including explicit `None` includes, while keeping test sources visible.
 - Normal validation: `dotnet build <project>/<project>.csproj -c Release --no-restore`. If NuGet assets are missing, run `dotnet restore <project>/<project>.csproj` before retrying the build.
 - Keep temporary verification projects under the mod's excluded root `obj/` directory. Remove abandoned generated outputs when their source project is gone so the SDK source glob cannot compile them into the mod.
 - Refresh game references explicitly with `dotnet build UpdateGameDlls/UpdateGameDlls.csproj`; the script publicizes installed DLLs in staging and compares generated content hashes so checkout timestamps cannot hide game updates. Missing DSP or the publicizer is a warning, not a build failure. If `assembly-publicizer` requires an unavailable .NET runtime, retry with process-local `DOTNET_ROLL_FORWARD=Major` rather than changing global runtime settings. Verify discovery warnings against the actual configured library directories and original managed DLLs; absence from the VDF `apps` list alone does not establish that DSP is uninstalled.
