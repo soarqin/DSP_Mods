@@ -11,6 +11,7 @@
     <NoWarn>0618</NoWarn>
     <AnalysisLevel>none</AnalysisLevel>
     <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
+    <DefaultItemExcludesInProjectFolder>$(DefaultItemExcludesInProjectFolder);tools/**/bin/**;tools/**/obj/**</DefaultItemExcludesInProjectFolder>
     <RestoreAdditionalProjectSources>https://nuget.bepinex.dev/v3/index.json</RestoreAdditionalProjectSources>
     <!-- Set to true in projects that include a CHANGELOG.md in the package -->
     <PackHasChangelog>false</PackHasChangelog>
