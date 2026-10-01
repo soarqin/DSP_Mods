@@ -160,12 +160,6 @@ public class UIPatch : PatchImpl<UIPatch>
         private static void FormatResource(UIResAmountEntry uiresAmountEntry, VeinTypeInfo vt)
         {
             RectTransform labelRect = uiresAmountEntry.labelText.rectTransform;
-            if (vt.labelRect != labelRect)
-            {
-                vt.RestoreLabel();
-                vt.labelRect = labelRect;
-                vt.labelOffsetMinX = labelRect.offsetMin.x;
-            }
             if (vt.textCtrl == null)
             {
                 vt.textCtrl = Object.Instantiate(uiresAmountEntry.valueText, labelRect.parent);
@@ -186,12 +180,10 @@ public class UIPatch : PatchImpl<UIPatch>
             {
                 countRect.SetParent(labelRect.parent, false);
             }
-            countRect.anchorMin = labelRect.anchorMin;
-            countRect.anchorMax = new Vector2(labelRect.anchorMin.x, labelRect.anchorMax.y);
-            countRect.pivot = new Vector2(0f, labelRect.pivot.y);
-            countRect.offsetMin = new Vector2(vt.labelOffsetMinX, labelRect.offsetMin.y);
-            countRect.offsetMax = new Vector2(vt.labelOffsetMinX + countWidth, labelRect.offsetMax.y);
-            labelRect.offsetMin = new Vector2(vt.labelOffsetMinX + countWidth + CountLabelGap, labelRect.offsetMin.y);
+            countRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, countWidth);
+            Vector3 countPosition = uiresAmountEntry.rectTrans.localPosition;
+            countPosition.x = labelRect.localPosition.x + labelRect.rect.xMin - countWidth * (1f - countRect.pivot.x) - CountLabelGap;
+            countRect.localPosition = countPosition;
         }
 
         private static void InitializeVeinCountArray(VeinTypeInfo[] veinCountArray)
@@ -330,23 +322,11 @@ public class UIPatch : PatchImpl<UIPatch>
         public int numVeinGroups;
         public int numVeinGroupsWithCollector;
         public Text textCtrl;
-        public RectTransform labelRect;
-        public float labelOffsetMinX;
-
-        public void RestoreLabel()
-        {
-            if (labelRect != null)
-            {
-                labelRect.offsetMin = new Vector2(labelOffsetMinX, labelRect.offsetMin.y);
-            }
-            labelRect = null;
-        }
 
         public void Reset()
         {
             numVeinGroups = 0;
             numVeinGroupsWithCollector = 0;
-            RestoreLabel();
             if (textCtrl != null)
             {
                 textCtrl.text = "";

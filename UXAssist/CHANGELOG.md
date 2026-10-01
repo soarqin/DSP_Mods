@@ -3,6 +3,8 @@
 
 ## Changlog
 
+* 1.6.2
+  * `Planet vein utilization`: Restore the original vertical alignment of vein-group counts and keep resource names in their original positions.
 * 1.6.1
   * `Larger area for terraform`: Restore 11x11 through 30x30 foundation and Restore Terrain brushes after DSP 0.10.35.29104.
   * Fix the title-screen background turning black, even when the UXAssist window is closed.
@@ -422,6 +424,8 @@
 
 ## 更新日志
 
+* 1.6.2
+  * `宇宙视图行星/星系矿脉数量显示`：修复矿脉数量文字偏下和矿物名称向右偏移的问题。
 * 1.6.1
   * `范围铺设地基的最大区域扩大`：适配 DSP 0.10.35.29104，恢复 11x11 至 30x30 的铺设地基与恢复地形范围。
   * 修复标题画面背景变黑的问题，包括关闭 UXAssist 窗口后背景仍不显示的情况。
