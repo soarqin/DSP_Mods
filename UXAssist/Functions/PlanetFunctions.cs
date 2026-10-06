@@ -478,6 +478,12 @@ public static class PlanetFunctions
 
             factory.BeforeDismantleObject(id);
 
+            if (ed.markerId != 0)
+            {
+                factory.digitalSystem.RemoveMarkerComponent(ed.markerId);
+                ed.markerId = 0;
+            }
+
             if (ed.colliderId != 0)
             {
                 physics.RemoveLinkedColliderData(ed.colliderId);
