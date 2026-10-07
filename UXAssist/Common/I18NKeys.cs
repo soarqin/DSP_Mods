@@ -312,12 +312,12 @@ Close this function to resume mining and pumping, usually when you have enough l
         I18N.Add(BuildTeslaTowerAndWirelessPowerTowerAlternately, "Build Tesla Tower and Wireless Power Tower alternately", "交替建造电力感应塔和无线输电塔");
         I18N.Add(AutoConstructButton, "Auto-construct button", "自动建造按钮");
         I18N.Add(BeltSignalsForBuyOutDarkFogItemsAutomatically, "Belt signals for buy out dark fog items automatically", "用于自动购买黑雾物品的传送带信号");
-        I18N.Add(MemoryUnit, "Memory Unit", "存储单元");
-        I18N.Add(EnergyFragment, "Energy Fragment", "能量碎片");
-        I18N.Add(SiliconNeuron, "Silicon Neuron", "硅基神经元");
+        I18N.Add(MemoryUnit, "Dark Fog Matrix", "黑雾矩阵");
+        I18N.Add(EnergyFragment, "Energy Shard", "能量碎片");
+        I18N.Add(SiliconNeuron, "Silicon-based Neuron", "硅基神经元");
         I18N.Add(NegentropySingularity, "Negentropy Singularity", "负熵奇点");
-        I18N.Add(MatterReassembler, "Matter Reassembler", "物质重组器");
-        I18N.Add(VirtualParticle, "Virtual Particle", "虚粒子");
+        I18N.Add(MatterReassembler, "Matter Recombinator", "物质重组器");
+        I18N.Add(VirtualParticle, "Core Element", "核心素");
         I18N.Add(CtrlShiftClickToPickItemsFromWholeBelts, "Ctrl+Shift+Click to pick items from whole belts", "按住Ctrl+Shift点击从整条传送带抓取物品");
         I18N.Add(IncludeBranchesOfBelts, "Include branches of belts", "包含传送带分支");
         I18N.Add(IncludeConnectedInserters, "Include connected inserters (and their connected belts if above is checked)", "包含连接的分拣器(若勾选上面的选项则包含分拣器连接的传送带)");

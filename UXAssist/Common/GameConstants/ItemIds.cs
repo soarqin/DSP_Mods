@@ -62,11 +62,11 @@ public static class ItemIds
 
     /* Dark Fog items (combat expansion) */
     public const int DarkFogMemoryUnit = 5201;
-    public const int DarkFogEnergyFragment = 5202;
-    public const int DarkFogSiliconNeuron = 5203;
+    public const int DarkFogSiliconNeuron = 5202;
+    public const int DarkFogMatterReassembler = 5203;
     public const int DarkFogNegentropySingularity = 5204;
-    public const int DarkFogMatterReassembler = 5205;
-    public const int DarkFogVirtualParticle = 5206;
+    public const int DarkFogVirtualParticle = 5205;
+    public const int DarkFogEnergyFragment = 5206;
 
     /* Fuel and advanced items */
     public const int HydrogenFuelRod = 6001;
@@ -80,8 +80,8 @@ public static class ItemIds
     public static readonly int[] ExtraOreItemIds =
     [
         Water, SulfuricAcid, Hydrogen, Deuterium, Photon,
-        DarkFogMemoryUnit, DarkFogEnergyFragment, DarkFogSiliconNeuron,
-        DarkFogNegentropySingularity, DarkFogMatterReassembler, DarkFogVirtualParticle
+        DarkFogMemoryUnit, DarkFogSiliconNeuron, DarkFogMatterReassembler,
+        DarkFogNegentropySingularity, DarkFogVirtualParticle, DarkFogEnergyFragment
     ];
 
     public static readonly HashSet<int> ExtraProliferationItemIds =
@@ -114,10 +114,10 @@ public static class ItemIds
         (ProliferatorMkIII, 25f)
     ];
 
-    /* Aliases used by UXAssist belt signal buy-out logic. */
+    /* Dark Fog materials used by production calculations. */
     public static readonly int[] DarkFogItemIds =
     [
-        DarkFogMemoryUnit, DarkFogVirtualParticle, DarkFogEnergyFragment,
-        DarkFogNegentropySingularity, DarkFogSiliconNeuron, DarkFogMatterReassembler
+        DarkFogMemoryUnit, DarkFogSiliconNeuron, DarkFogMatterReassembler,
+        DarkFogNegentropySingularity, DarkFogVirtualParticle, DarkFogEnergyFragment
     ];
 }

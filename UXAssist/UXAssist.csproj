@@ -15,12 +15,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="assets/signal/energy-fragment.png" />
-    <EmbeddedResource Include="assets/signal/memory.png" />
-    <EmbeddedResource Include="assets/signal/negentropy.png" />
-    <EmbeddedResource Include="assets/signal/reassembler.png" />
-    <EmbeddedResource Include="assets/signal/silicon-neuron.png" />
-    <EmbeddedResource Include="assets/signal/virtual-particle.png" />
+    <EmbeddedResource Include="assets/signal/dark-fog-matrix.png" />
+    <EmbeddedResource Include="assets/signal/energy-shard.png" />
+    <EmbeddedResource Include="assets/signal/silicon-based-neuron.png" />
+    <EmbeddedResource Include="assets/signal/negentropy-singularity.png" />
+    <EmbeddedResource Include="assets/signal/matter-recombinator.png" />
+    <EmbeddedResource Include="assets/signal/core-element.png" />
     <EmbeddedResource Include="assets/icon/in.png" />
     <EmbeddedResource Include="assets/icon/out.png" />
     <EmbeddedResource Include="assets/icon/keep.png" />

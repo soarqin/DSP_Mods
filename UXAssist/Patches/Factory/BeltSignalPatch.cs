@@ -58,8 +58,18 @@ internal static class BeltSignalPatch
         private static bool _initialized;
         private static bool _loaded;
         private static long _clusterSeedKey;
-        private static readonly int[] DarkFogItemIds = ItemIds.DarkFogItemIds;
-        private static readonly int[] DarkFogItemExchangeRate = [20, 60, 30, 30, 30, 10];
+        // Signal IDs and persisted stock use this legacy order, not numeric item-ID order.
+        // The native bundle gives 10 of each of three materials for one Metaverse.
+        // A belt selects one material, so its equivalent single-material rate is 30.
+        private static readonly (int ItemId, int ExchangeRate, string NameKey, string IconPath)[] DarkFogBuyOutDefinitions =
+        [
+            (ItemIds.DarkFogMemoryUnit, 20, I18NKeys.MemoryUnit, "assets/signal/dark-fog-matrix.png"),
+            (ItemIds.DarkFogEnergyFragment, 60, I18NKeys.EnergyFragment, "assets/signal/energy-shard.png"),
+            (ItemIds.DarkFogSiliconNeuron, 30, I18NKeys.SiliconNeuron, "assets/signal/silicon-based-neuron.png"),
+            (ItemIds.DarkFogNegentropySingularity, 30, I18NKeys.NegentropySingularity, "assets/signal/negentropy-singularity.png"),
+            (ItemIds.DarkFogMatterReassembler, 30, I18NKeys.MatterReassembler, "assets/signal/matter-recombinator.png"),
+            (ItemIds.DarkFogVirtualParticle, 10, I18NKeys.VirtualParticle, "assets/signal/core-element.png")
+        ];
         public static readonly int[] DarkFogItemsInVoid = [0, 0, 0, 0, 0, 0];
         private static Dictionary<int, uint>[] _signalBelts = new Dictionary<int, uint>[64];
         private static readonly HashSet<int> SignalBeltFactoryIndices = [];
@@ -88,66 +98,20 @@ internal static class BeltSignalPatch
             if (!_initialized || _loaded) return;
             var assembly = Assembly.GetExecutingAssembly();
             var signals = LDB._signals;
-            SignalProto[] protos =
-            [
-                new SignalProto
-                {
-                    ID = 301,
-                    Name = "Memory Unit",
-                    GridIndex = 3801,
-                    IconPath = "assets/signal/memory.png",
-                    _iconSprite = Util.LoadEmbeddedSprite("assets/signal/memory.png", assembly),
-                    SID = ""
-                },
-                new SignalProto
-                {
-                    ID = 302,
-                    Name = "Energy Fragment",
-                    GridIndex = 3802,
-                    IconPath = "assets/signal/energy-fragment.png",
-                    _iconSprite = Util.LoadEmbeddedSprite("assets/signal/energy-fragment.png", assembly),
-                    SID = ""
-                },
-                new SignalProto
-                {
-                    ID = 303,
-                    Name = "Silicon Neuron",
-                    GridIndex = 3803,
-                    IconPath = "assets/signal/silicon-neuron.png",
-                    _iconSprite = Util.LoadEmbeddedSprite("assets/signal/silicon-neuron.png", assembly),
-                    SID = ""
-                },
-                new SignalProto
-                {
-                    ID = 304,
-                    Name = "Negentropy Singularity",
-                    GridIndex = 3804,
-                    IconPath = "assets/signal/negentropy.png",
-                    _iconSprite = Util.LoadEmbeddedSprite("assets/signal/negentropy.png", assembly),
-                    SID = ""
-                },
-                new SignalProto
-                {
-                    ID = 305,
-                    Name = "Matter Reassembler",
-                    GridIndex = 3805,
-                    IconPath = "assets/signal/reassembler.png",
-                    _iconSprite = Util.LoadEmbeddedSprite("assets/signal/reassembler.png", assembly),
-                    SID = ""
-                },
-                new SignalProto
-                {
-                    ID = 306,
-                    Name = "Virtual Particle",
-                    GridIndex = 3806,
-                    IconPath = "assets/signal/virtual-particle.png",
-                    _iconSprite = Util.LoadEmbeddedSprite("assets/signal/virtual-particle.png", assembly),
-                    SID = ""
-                },
-            ];
-            foreach (var proto in protos)
+            var protos = new SignalProto[DarkFogBuyOutDefinitions.Length];
+            for (var i = 0; i < protos.Length; i++)
             {
-                proto.name = proto.Name.Translate();
+                var definition = DarkFogBuyOutDefinitions[i];
+                protos[i] = new SignalProto
+                {
+                    ID = 301 + i,
+                    Name = definition.NameKey,
+                    name = definition.NameKey.Translate(),
+                    GridIndex = 3801 + i,
+                    IconPath = definition.IconPath,
+                    _iconSprite = Util.LoadEmbeddedSprite(definition.IconPath, assembly),
+                    SID = ""
+                };
             }
 
             var index = signals.dataArray.Length;
@@ -358,7 +322,8 @@ internal static class BeltSignalPatch
                     var cargoPath = cargoTraffic.GetCargoPath(belt.segPathId);
                     var itemIdx = kvp.Value;
                     if (cargoPath == null) continue;
-                    var itemId = DarkFogItemIds[itemIdx];
+                    var definition = DarkFogBuyOutDefinitions[itemIdx];
+                    var itemId = definition.ItemId;
                     var consume = (byte)Math.Min(DarkFogItemsInVoid[itemIdx], 4);
                     if (consume < 4)
                     {
@@ -369,7 +334,7 @@ internal static class BeltSignalPatch
                             propertySystem.AddItemConsumption(_clusterSeedKey, ItemIds.Metaverse, metaverse);
                             var mainPlayer = GameMain.mainPlayer;
                             GameMain.history.AddPropertyItemConsumption(ItemIds.Metaverse, metaverse, true);
-                            var count = DarkFogItemExchangeRate[itemIdx] * metaverse;
+                            var count = definition.ExchangeRate * metaverse;
                             DarkFogItemsInVoid[itemIdx] += count;
                             consume = (byte)Math.Min(DarkFogItemsInVoid[itemIdx], 4);
                             mainPlayer.mecha.AddProductionStat(itemId, count, mainPlayer.nearestFactory);

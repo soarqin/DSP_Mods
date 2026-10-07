@@ -27,6 +27,7 @@
 
 ## Architecture
 
+- UXAssist Dark Fog buy-out belt signals keep each item ID, per-Metaverse rate, localization key, and embedded icon path in one definition. Name embedded icon files after the current English item names and synchronize resource includes and loader paths when renaming them. Preserve the legacy signal and saved-stock order. Rates represent equivalent single-material value: a native bundle of 10 Silicon-based Neurons, 10 Negentropy Singularities, and 10 Matter Recombinators per Metaverse corresponds to 30 of any one selected material per Metaverse.
 - `ModFeatureRegistry` discovers dependent-mod features during `Awake`; feature initialization is eager, while UXAssist alone drives the deferred start, input, update, and uninitialization lifecycle. Keep dispatchers internal and idempotent.
 - Proto-dependent features must tolerate calls before preload completes and retry via `UXAssist.Common.GameLogic.OnDataLoaded`. Mark changes applied only after capturing valid originals and successfully mutating the proto.
 - Architect-mode virtual stock applies only to player inventory and construction previews, including logistics bots, drones, and vessels. Keep cached package statistics consistent for inlined getters, preserve physical capacity and native ref/out contracts, and restore native statistics on disable.

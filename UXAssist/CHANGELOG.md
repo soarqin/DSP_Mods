@@ -3,7 +3,8 @@
 
 ## Changlog
 
-* 1.6.2
+* 1.6.2 - Unrelease
+  * `Belt signals for buy out dark fog items automatically`: Use the current in-game material names and retain the original exchange ratios.
   * `Initialize This Planet`: Fix an occasional array index error after initializing a planet with Holo Beacons.
   * `Planet vein utilization`: Restore the original vertical alignment of vein-group counts and keep resource names in their original positions.
 * 1.6.1
@@ -425,7 +426,8 @@
 
 ## 更新日志
 
-* 1.6.2
+* 1.6.2 - Unreleased
+  * `用于自动购买黑雾物品的传送带信号`：统一使用当前游戏中的材料名称，保留原有兑换比例。
   * `初始化本行星`：修复行星上存在全息信标时，初始化后可能出现数组越界报错的问题。
   * `宇宙视图行星/星系矿脉数量显示`：修复矿脉数量文字偏下和矿物名称向右偏移的问题。
 * 1.6.1

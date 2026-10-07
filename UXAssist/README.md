@@ -73,13 +73,13 @@
     * Belt signals for buy out dark fog items automatically
       * 6 belt signals are added to the signal panel, which can be used to buy out dark fog items automatically.
       * Generated items are stacked in 4 items.
-      * Exchange ratio is following the original game design, aka:
-        * 1 Metaverse = 20 Dark Fog Matrices
-        * 1 Metaverse = 60 Engery Shards
-        * 1 Metaverse = 30 Silicon-based Neurons
-        * 1 Metaverse = 30 Negentropy Singularities
-        * 1 Metaverse = 30 Matter Recombinators
-        * 1 Metaverse = 10 Core Elements
+      * Exchange ratios follow the original game design. The native mixed bundle gives 10 each of Silicon-based Neurons, Negentropy Singularities, and Matter Recombinators for 1 Metaverse; a belt chooses one material at an equivalent rate of 30:
+        * 1 Metaverse = 20 Dark Fog Matrices (item `5201`)
+        * 1 Metaverse = 60 Energy Shards (item `5206`)
+        * 1 Metaverse = 30 Silicon-based Neurons (item `5202`)
+        * 1 Metaverse = 30 Negentropy Singularities (item `5204`)
+        * 1 Metaverse = 30 Matter Recombinators (item `5203`)
+        * 1 Metaverse = 10 Core Elements (item `5205`)
     * Tweak building buffer
       * Factory recipe buffer formula: take the larger value between `Assembler buffer time multiplier(in seconds) * items needed per second` and `Assembler buffer minimum multiplier * items needed per recipe`
         * `Assembler buffer time multiplier(in seconds)`: Range 2-10, default is 4 (same as game)
@@ -240,7 +240,7 @@
     * 用于自动购买黑雾物品的传送带信号
       * 在信号面板上添加了6个传送带信号，可以用于自动购买黑雾道具。
       * 生成的物品堆叠数为4。
-      * 兑换比率遵循原始游戏设计，即：
+      * 兑换比率遵循原始游戏设计。原生组合兑换用 1 个元宇宙换取硅基神经元、负熵奇点和物质重组器各 10 个；传送带只选择其中一种材料，等值兑换数量为 30 个：
         * 1个元宇宙 = 20个黑雾矩阵
         * 1个元宇宙 = 60个能量碎片
         * 1个元宇宙 = 30个硅基神经元
