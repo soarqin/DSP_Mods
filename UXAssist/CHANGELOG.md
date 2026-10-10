@@ -4,6 +4,7 @@
 ## Changlog
 
 * 1.6.2 - Unrelease
+  * `Dismantle blueprint selected buildings`: Respect sandbox instant-dismantle settings when discarding logistics station contents, and return them normally outside instant dismantling.
   * `Treat stack items as single in monitor components`: Fix the option taking effect at game startup when disabled, until toggled on and off.
   * `Building options`: Honor saved toggle states at startup for off-grid construction, power-pole dragging, fast tank transfers, and Ctrl+Shift belt pickup.
   * `Belt signals for buy out dark fog items automatically`: Use the current in-game material names and retain the original exchange ratios.
@@ -429,6 +430,7 @@
 ## 更新日志
 
 * 1.6.2 - Unreleased
+  * `拆除蓝图选中的建筑`：按沙盒模式的瞬间拆除设置销毁物流站库存；常规拆除时仍正常返还库存。
   * `在流速计中将堆叠物品视为单个物品`：修复未勾选时仍在启动游戏后生效、必须切换一次才能关闭的问题。
   * `建造选项`：修复不对齐网格建造、拖建电线杆、储液罐快速存取和 Ctrl+Shift 拾取整段传送带物品在启动时忽略已保存开关的问题。
   * `用于自动购买黑雾物品的传送带信号`：统一使用当前游戏中的材料名称，保留原有兑换比例。
