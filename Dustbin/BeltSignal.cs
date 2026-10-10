@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Reflection.Emit;
 using HarmonyLib;
 using UnityEngine;
 
@@ -110,16 +109,17 @@ public static class BeltSignal
     private static void SetSignalBelt(int factory, int beltId)
     {
         var signalBelts = GetOrCreateSignalBelts(factory);
-        signalBelts.Add(beltId);
+        signalBelts?.Add(beltId);
     }
 
     private static HashSet<int> GetOrCreateSignalBelts(int index)
     {
         HashSet<int> obj;
-        if (index < 0) return null;
+        if (index < 0 || _signalBelts == null) return null;
         if (index >= _signalBeltsCapacity)
         {
             var newCapacity = _signalBeltsCapacity * 2;
+            while (newCapacity <= index) newCapacity *= 2;
             var newSignalBelts = new HashSet<int>[newCapacity];
             Array.Copy(_signalBelts, newSignalBelts, _signalBeltsCapacity);
             _signalBelts = newSignalBelts;
@@ -138,7 +138,7 @@ public static class BeltSignal
 
     private static HashSet<int> GetSignalBelts(int index)
     {
-        return index >= 0 && index < _signalBeltsCapacity ? _signalBelts[index] : null;
+        return _signalBelts != null && index >= 0 && index < _signalBeltsCapacity ? _signalBelts[index] : null;
     }
 
     private static void RemoveSignalBelt(int factory, int beltId)
@@ -171,21 +171,17 @@ public static class BeltSignal
 
     [HarmonyPrefix]
     [HarmonyPatch(typeof(CargoTraffic), nameof(CargoTraffic.RemoveBeltComponent))]
-    public static void CargoTraffic_RemoveBeltComponent_Prefix(int id)
+    public static void CargoTraffic_RemoveBeltComponent_Prefix(CargoTraffic __instance, int id)
     {
-        var planet = GameMain.localPlanet;
-        if (planet == null) return;
-        RemoveSignalBelt(planet.factoryIndex, id);
+        RemoveSignalBelt(__instance.factory.index, id);
     }
 
     [HarmonyPostfix]
     [HarmonyPatch(typeof(CargoTraffic), nameof(CargoTraffic.SetBeltSignalIcon))]
     public static void CargoTraffic_SetBeltSignalIcon_Postfix(CargoTraffic __instance, int signalId, int entityId)
     {
-        var planet = GameMain.localPlanet;
-        if (planet == null) return;
         var factory = __instance.factory;
-        var factoryIndex = planet.factoryIndex;
+        var factoryIndex = factory.index;
         var beltId = factory.entityPool[entityId].beltId;
         if (signalId == 410)
         {
@@ -197,39 +193,33 @@ public static class BeltSignal
         }
     }
 
-    [HarmonyTranspiler]
-    [HarmonyPatch(typeof(GameData), nameof(GameData.GameTick))]
-    public static IEnumerable<CodeInstruction> GameData_GameTick_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+    [HarmonyPostfix]
+    [HarmonyPatch(typeof(GameLogic), nameof(GameLogic.OnFactoryFrameBegin))]
+    public static void GameLogic_OnFactoryFrameBegin_Postfix(GameLogic __instance)
     {
-        var matcher = new CodeMatcher(instructions, generator);
-        matcher.MatchForward(false,
-            new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(PerformanceMonitor), nameof(PerformanceMonitor.EndSample)))
-        ).Advance(1).Insert(
-            Transpilers.EmitDelegate(() =>
+        var data = __instance.data;
+        var factories = data?.factories;
+        if (factories == null || _signalBelts == null) return;
+        for (var i = 0; i < data.factoryCount; i++)
+        {
+            var factory = factories[i];
+            if (factory == null) continue;
+            var belts = GetSignalBelts(factory.index);
+            if (belts == null || belts.Count == 0) continue;
+            var consumeRegister = data.statistics.production.factoryStatPool[factory.index].consumeRegister;
+            var cargoTraffic = factory.cargoTraffic;
+            foreach (var beltId in belts)
             {
-                var factories = GameMain.data?.factories;
-                if (factories == null) return;
-                foreach (var factory in factories)
-                {
-                    if (factory == null) continue;
-                    var index = factory.index;
-                    var belts = GetSignalBelts(index);
-                    if (belts == null || belts.Count == 0) continue;
-                    var consumeRegister = GameMain.statistics.production.factoryStatPool[index].consumeRegister;
-                    var cargoTraffic = factory.cargoTraffic;
-                    foreach (var beltId in belts)
-                    {
-                        ref var belt = ref cargoTraffic.beltPool[beltId];
-                        var cargoPath = cargoTraffic.GetCargoPath(belt.segPathId);
-                        if (cargoPath == null) continue;
-                        int itemId;
-                        if ((itemId = cargoPath.TryPickItem(belt.segIndex + belt.segPivotOffset - 5, 12, out var stack, out _)) <= 0) continue;
-                        consumeRegister[itemId] += stack;
-                        Dustbin.CalcGetSands(itemId, stack, 0);
-                    }
-                }
-            })
-        );
-        return matcher.InstructionEnumeration();
+                if (beltId <= 0 || beltId >= cargoTraffic.beltCursor) continue;
+                ref var belt = ref cargoTraffic.beltPool[beltId];
+                if (belt.id != beltId) continue;
+                var cargoPath = cargoTraffic.GetCargoPath(belt.segPathId);
+                if (cargoPath == null) continue;
+                var itemId = cargoPath.TryPickItem(belt.segIndex + belt.segPivotOffset - 5, 12, out var stack, out _);
+                if (itemId <= 0) continue;
+                consumeRegister[itemId] += stack;
+                Dustbin.CalcGetSands(itemId, stack, 0);
+            }
+        }
     }
 }

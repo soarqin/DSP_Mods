@@ -13,9 +13,28 @@
   <ItemGroup>
     <PackageReference Include="DysonSphereProgram.Modding.DSPModSave" Version="1.*" />
     <PackageReference Include="DysonSphereProgram.Modding.NebulaMultiplayerModApi" Version="2.0.0" />
+    <ProjectReference Include="..\DustbinPreloader\DustbinPreloader.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="assets/icon/signal-410.png" />
   </ItemGroup>
+
+  <!-- Compile against the current game with the same fields injected at runtime. -->
+  <Target Name="UsePreloaderGameReference" BeforeTargets="CoreCompile" DependsOnTargets="ResolveReferences">
+    <MSBuild Projects="..\DustbinPreloader\DustbinPreloader.csproj" Targets="GetTargetPath" Properties="Configuration=$(Configuration)">
+      <Output TaskParameter="TargetOutputs" ItemName="_DustbinPreloaderTarget" />
+    </MSBuild>
+    <PropertyGroup>
+      <_DustbinGameReference>$(MSBuildProjectDirectory)\$(IntermediateOutputPath)game-reference\Assembly-CSharp.dll</_DustbinGameReference>
+      <_OriginalGameReference>@(ReferencePath->WithMetadataValue('Filename', 'Assembly-CSharp'))</_OriginalGameReference>
+    </PropertyGroup>
+    <Exec Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\GenerateGameReference.ps1&quot; -InputAssembly &quot;$(_OriginalGameReference)&quot; -OutputAssembly &quot;$(_DustbinGameReference)&quot; -PreloaderAssembly &quot;@(_DustbinPreloaderTarget)&quot; -CecilAssembly &quot;@(ReferencePath->WithMetadataValue('Filename', 'Mono.Cecil'))&quot; -BepInExAssembly &quot;@(ReferencePath->WithMetadataValue('Filename', 'BepInEx'))&quot; -UnityAssembly &quot;@(ReferencePath->WithMetadataValue('Filename', 'UnityEngine.CoreModule'))&quot;" />
+    <ItemGroup>
+      <ReferencePath Remove="$(_OriginalGameReference)" />
+      <ReferencePath Include="$(_DustbinGameReference)" Private="false" />
+      <ReferencePathWithRefAssemblies Remove="$(_OriginalGameReference)" />
+      <ReferencePathWithRefAssemblies Include="$(_DustbinGameReference)" Private="false" />
+    </ItemGroup>
+  </Target>
 </Project>
