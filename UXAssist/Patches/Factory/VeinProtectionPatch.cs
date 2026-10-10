@@ -8,7 +8,7 @@ using GameLogicProc = UXAssist.Common.GameLogic;
 namespace UXAssist.Patches.Factory;
 
 [ModFeature("VeinProtection")]
-internal static class VeinProtectionPatch
+internal static partial class VeinProtectionPatch
 {
     public static void Enable(bool enable)
     {
@@ -30,7 +30,7 @@ internal static class VeinProtectionPatch
         GameLogicProc.OnGameEnd -= ProtectVeinsFromExhaustion.ResetState;
     }
 
-    internal class ProtectVeinsFromExhaustion : PatchImpl<ProtectVeinsFromExhaustion>
+    internal partial class ProtectVeinsFromExhaustion : PatchImpl<ProtectVeinsFromExhaustion>
     {
         public static int KeepVeinAmount = 100;
         public static float KeepOilSpeed = 1f;

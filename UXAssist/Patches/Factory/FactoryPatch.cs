@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Runtime.CompilerServices;
 using BepInEx.Configuration;
 using CommonAPI.Systems;
 using UnityEngine;
@@ -12,6 +13,10 @@ namespace UXAssist.Patches.Factory;
 [ModFeature("Factory", Order = 10)]
 public static class FactoryPatch
 {
+    /// <summary>Returns the mining cost rate shared by vein-protection display calculations.</summary>
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    public static float GetMiningCostRate(GameHistoryData history) => history.miningCostRate;
+
     public static ConfigEntry<bool> UnlimitInteractiveEnabled;
     public static ConfigEntry<bool> RemoveSomeConditionEnabled;
     public static ConfigEntry<bool> NightLightEnabled;

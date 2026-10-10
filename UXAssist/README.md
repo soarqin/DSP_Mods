@@ -59,6 +59,7 @@
       * You can set multiplier for tanks' operation speed
       * This affects manually fill in to and/or take out from tanks, as well as transfer from upper to lower level.
     * Protect veins from exhaustion
+      * Mining-rate estimates, mining resource counts, and miner hover counts exclude veins stopped by protection; remaining reserves stay visible.
       * Default protection thresholds are 1,000 remaining vein units and an oil extraction rate of 1.0/s; change them in the config file.
       * Mining or pumping stops at the configured threshold. Disable protection to resume consuming the remaining resources.
       * Vein mining can continue at the threshold when `Veins Utilization` reduces the mining cost rate to zero.
@@ -248,6 +249,7 @@
       * 你可以设置储液罐操作速度的倍率
       * 影响手动注入和抽取，以及从储液罐上层传输到下层的速度
     * 保护矿脉不会耗尽
+      * 开采速度估算、开采中资源数量和采矿机悬浮信息不计入因保护而停采的矿脉；剩余储量仍正常显示。
       * 默认保护阈值为矿脉剩余量 1,000、采油速度 1.0/s，可在配置文件中修改。
       * 达到阈值时停止采矿或抽油；关闭保护后可继续消耗剩余资源。
       * `矿物利用` 将采矿消耗降到零后，即使达到保护阈值也可继续采矿。

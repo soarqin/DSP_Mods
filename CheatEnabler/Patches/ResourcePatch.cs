@@ -35,9 +35,10 @@ public static class ResourcePatch
     {
         static private readonly float InfiniteResourceRate = 0f;
         // Harmony transpiler: Transpiler
-        // Target: FactorySystem.GameTick, GameLogic._miner_parallel, PlanetTransport.GameTick, UIChartAstroResource.CalculateMaxAmount, UIChartVeinGroup.CalculateMaxAmount, UIControlPanelAdvancedMinerEntry._OnUpdate, UIControlPanelVeinCollectorPanel._OnUpdate, UIMinerWindow._OnUpdate, UIMiningUpgradeLabel.Update, UIVeinCollectorPanel._OnUpdate
+        // Target: FactorySystem.GameTick, GameLogic._miner_parallel, PlanetTransport.GameTick, FactoryPatch.GetMiningCostRate (UXAssist), UIChartAstroResource.CalculateMaxAmount, UIChartVeinGroup.CalculateMaxAmount, UIControlPanelAdvancedMinerEntry._OnUpdate, UIControlPanelVeinCollectorPanel._OnUpdate, UIMinerWindow._OnUpdate, UIMiningUpgradeLabel.Update, UIVeinCollectorPanel._OnUpdate
         // Fallback: None — patch will fail loudly if the target method body changes.
         [HarmonyTranspiler]
+        [HarmonyPatch(typeof(UXAssist.Patches.Factory.FactoryPatch), nameof(UXAssist.Patches.Factory.FactoryPatch.GetMiningCostRate))]
         [HarmonyPatch(typeof(FactorySystem), nameof(FactorySystem.GameTick), typeof(long), typeof(bool))]
         [HarmonyPatch(typeof(GameLogic), nameof(GameLogic._miner_parallel))]
         [HarmonyPatch(typeof(PlanetTransport), nameof(PlanetTransport.GameTick))]
