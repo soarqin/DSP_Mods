@@ -13,7 +13,12 @@
   * General:
     * Enable Dev Shortcuts (check config panel for usage)
     * Disable Abnormal Checks
-    * Unlock techs with key-modifiers (Ctrl/Alt/Shift)
+    * Quickly upgrade/downgrade tech with key-modifiers (click the tech tree while holding Ctrl/Alt/Shift)
+      * `Alt` raises a tech to its maximum level, or reverts it to locked while downgrade mode is on
+      * `Caps Lock` toggles downgrade mode; toggling reports itself with a realtime tip and a critical warning banner
+      * Downgrading also reverts the upgrade values the tech had applied, so repeated up/down cycles do not drift
+      * This option now replaces the old unlock-only behaviour; it keeps the same config entry
+      * The `?` button in the tech tree window shows the full key reference
     * Remove all metadata consumption records
     * Remove metadata consumption record in current game
     * Clear metadata flag which bans achievements
@@ -88,7 +93,12 @@
   * 常规：
     * 启用开发模式快捷键(使用说明见设置面板)
     * 屏蔽异常检测
-    * 使用组合键解锁科技（Ctrl/Alt/Shift）
+    * 使用组合键快速升降级科技（按住 Ctrl/Alt/Shift 点击科技树）
+      * `Alt` 将科技升到最大等级；开启降级模式后则回退到未解锁
+      * `Caps Lock` 切换降级模式，切换时会用实时弹窗和严重警告横幅提示
+      * 降级会同时回退该科技已应用的升级数值，反复升降级不会产生数值漂移
+      * 本选项已取代原来的「仅解锁」行为，配置文件条目保持不变
+      * 科技树界面的 `?` 按钮显示完整组合键说明
     * 移除所有元数据消耗记录
     * 移除当前存档的元数据消耗记录
     * 解除当前存档因使用元数据导致的成就限制

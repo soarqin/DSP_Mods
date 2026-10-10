@@ -91,10 +91,11 @@ public static class UIConfigWindow
         y += 30f;
         wnd.AddCheckBox(x, y, tab1, GamePatch.AbnormalDisablerEnabled, "Disable Abnormal Checks");
         y += 36f;
-        cb = wnd.AddCheckBox(x, y, tab1, GamePatch.UnlockTechEnabled, "Unlock Tech with Key-Modifiers");
+        cb = wnd.AddCheckBox(x, y, tab1, TechTweaksPatch.Enabled, Localization.UnlockDowngradeTechWithKeyModifiers);
         x += cb.Width + 5f;
         y += 6f;
-        wnd.AddTipsButton2(x, y, tab1, "Unlock Tech with Key-Modifiers", "Unlock Tech with Key-Modifiers Tips", "unlock-tech-tips");
+        wnd.AddTipsButton2(x, y, tab1, Localization.UnlockDowngradeTechWithKeyModifiers,
+            Localization.TechModifierHelpBody, "unlock-tech-tips");
         x = 0f;
         y += 30f + 36f;
         wnd.AddButton(x, y, 400f, tab1, "Remove all metadata consumption records", 16, "button-remove-all-metadata-consumption", PlayerFunctions.RemoveAllMetadataConsumptions);

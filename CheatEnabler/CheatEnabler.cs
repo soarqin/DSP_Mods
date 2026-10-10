@@ -23,8 +23,9 @@ public class CheatEnabler : BaseUnityPlugin
         GamePatch.DevShortcutsEnabled = Config.Bind("General", "DevShortcuts", false, "Enable DevMode shortcuts");
         GamePatch.AbnormalDisablerEnabled = Config.Bind("General", "DisableAbnormalChecks", false,
             "disable all abnormal checks");
-        GamePatch.UnlockTechEnabled = Config.Bind("General", "UnlockTech", false,
-            "Unlock clicked tech by holding key-modifilers(Shift/Alt/Ctrl)");
+        TechTweaksPatch.Enabled = Config.Bind("General", "UnlockTech", false,
+            "Unlock clicked tech by holding key-modifilers(Shift/Alt/Ctrl), and downgrade them by holding the " +
+            "same modifiers while downgrade mode is on (toggle it with Caps Lock)");
         FactoryPatch.ImmediateEnabled = Config.Bind("Build", "ImmediateBuild", false,
             "Build immediately");
         FactoryPatch.ArchitectModeEnabled = Config.Bind("Build", "Architect", false,

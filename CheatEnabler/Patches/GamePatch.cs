@@ -15,13 +15,11 @@ public static class GamePatch
 {
     public static ConfigEntry<bool> DevShortcutsEnabled;
     public static ConfigEntry<bool> AbnormalDisablerEnabled;
-    public static ConfigEntry<bool> UnlockTechEnabled;
 
     public static void Init()
     {
         DevShortcutsEnabled.SettingChanged += (_, _) => DevShortcuts.Enable(DevShortcutsEnabled.Value);
         AbnormalDisablerEnabled.SettingChanged += (_, _) => AbnormalDisabler.Enable(AbnormalDisablerEnabled.Value);
-        UnlockTechEnabled.SettingChanged += (_, _) => UnlockTech.Enable(UnlockTechEnabled.Value);
         GameLogicProc.OnGameEnd += ResetState;
     }
 
@@ -29,13 +27,11 @@ public static class GamePatch
     {
         DevShortcuts.Enable(DevShortcutsEnabled.Value);
         AbnormalDisabler.Enable(AbnormalDisablerEnabled.Value);
-        UnlockTech.Enable(UnlockTechEnabled.Value);
     }
 
     public static void Uninit()
     {
         GameLogicProc.OnGameEnd -= ResetState;
-        UnlockTech.Enable(false);
         AbnormalDisabler.Enable(false);
         DevShortcuts.Enable(false);
     }
@@ -213,127 +209,4 @@ public static class GamePatch
         }
     }
 
-    public class UnlockTech : PatchImpl<UnlockTech>
-    {
-        private static void UnlockTechRecursive(GameHistoryData history, [NotNull] TechProto techProto, int maxLevel = 10000)
-        {
-            var techStates = history.techStates;
-            var techID = techProto.ID;
-            if (techStates == null || !techStates.TryGetValue(techID, out var value))
-            {
-                return;
-            }
-
-            if (value.unlocked)
-            {
-                return;
-            }
-
-            var maxLvl = Math.Min(maxLevel < 0 ? value.curLevel - maxLevel - 1 : maxLevel, value.maxLevel);
-
-            foreach (var preid in techProto.PreTechs)
-            {
-                var preProto = LDB.techs.Select(preid);
-                if (preProto != null)
-                    UnlockTechRecursive(history, preProto, techProto.PreTechsMax ? 10000 : -1);
-            }
-
-            foreach (var preid in techProto.PreTechsImplicit)
-            {
-                var preProto = LDB.techs.Select(preid);
-                if (preProto != null)
-                    UnlockTechRecursive(history, preProto, techProto.PreTechsMax ? 10000 : -1);
-            }
-
-            if (value.curLevel < techProto.Level) value.curLevel = techProto.Level;
-            while (value.curLevel <= maxLvl)
-            {
-                if (value.curLevel == 0)
-                {
-                    foreach (var recipe in techProto.UnlockRecipes)
-                    {
-                        history.UnlockRecipe(recipe);
-                    }
-                }
-
-                for (var j = 0; j < techProto.UnlockFunctions.Length; j++)
-                {
-                    history.UnlockTechFunction(techProto.UnlockFunctions[j], techProto.UnlockValues[j], value.curLevel);
-                }
-
-                for (var k = 0; k < techProto.AddItems.Length; k++)
-                {
-                    history.GainTechAwards(techProto.AddItems[k], techProto.AddItemCounts[k]);
-                }
-
-                value.curLevel++;
-            }
-
-            value.unlocked = maxLvl >= value.maxLevel;
-            value.curLevel = value.unlocked ? maxLvl : maxLvl + 1;
-            value.hashNeeded = techProto.GetHashNeeded(value.curLevel);
-            value.hashUploaded = value.unlocked ? value.hashNeeded : 0;
-            techStates[techID] = value;
-            history.RegFeatureKey(1000100);
-            history.NotifyTechUnlock(techID, maxLvl, true);
-        }
-
-        private static void OnClickTech(UITechNode node)
-        {
-            var history = GameMain.history;
-            if (VFInput.shift)
-            {
-                if (VFInput.alt) return;
-                if (VFInput.control)
-                    UnlockTechRecursive(history, node.techProto, -100);
-                else
-                    UnlockTechRecursive(history, node.techProto, -1);
-            }
-            else
-            {
-                if (VFInput.control)
-                {
-                    if (!VFInput.alt)
-                        UnlockTechRecursive(history, node.techProto, -10);
-                    else
-                        return;
-                }
-                else if (VFInput.alt)
-                {
-                    UnlockTechRecursive(history, node.techProto);
-                }
-                else
-                {
-                    return;
-                }
-            }
-
-            history.VerifyTechQueue();
-            if (history.currentTech != history.techQueue[0])
-            {
-                history.currentTech = history.techQueue[0];
-            }
-        }
-        // Harmony transpiler: UITechNode_OnPointerDown_Transpiler
-        // Target: UITechNode.OnPointerDown
-        // Fallback: None — patch will fail loudly if the target method body changes.
-        [HarmonyTranspiler]
-        [HarmonyPatch(typeof(UITechNode), nameof(UITechNode.OnPointerDown))]
-        private static IEnumerable<CodeInstruction> UITechNode_OnPointerDown_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
-        {
-            var matcher = new CodeMatcher(instructions, generator);
-            matcher.MatchForward(false,
-                new CodeMatch(OpCodes.Ldarg_0),
-                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(UITechNode), nameof(UITechNode.tree))),
-                new CodeMatch(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(UITechTree), nameof(UITechTree.selected)))
-            );
-            var labels = matcher.Labels;
-            matcher.Labels = null;
-            matcher.Insert(
-                new CodeInstruction(OpCodes.Ldarg_0).WithLabels(labels),
-                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(UnlockTech), nameof(UnlockTech.OnClickTech)))
-            );
-            return matcher.InstructionEnumeration();
-        }
-    }
 }

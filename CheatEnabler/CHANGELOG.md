@@ -3,6 +3,14 @@
 
 ## Changlog
 
+* 2.4.7
+  * `Unlock Tech with Key-Modifiers` becomes `Quickly upgrade/downgrade tech with key-modifiers`.
+    * Holding `Shift` / `Ctrl` / `Ctrl + Shift` / `Alt` while clicking a tech adds 1 / 10 / 100 / all levels; all direct prerequisites are unlocked as well.
+    * `Caps Lock` toggles downgrade mode; the same modifiers then subtract 1 / 10 / 100 levels, or revert the tech to locked.
+    * Downgrading reverts the tech's upgrade values as well, including multiplicative, assignment, and boolean tech functions, so repeated up/down cycles do not drift.
+    * Toggling downgrade mode reports itself like the other toggles: a realtime tip popup plus a critical warning banner. The banner shows on its own, without requiring `Build without condition` or `No collision` to be on, and outranks both of them while they are.
+    * The `?` button in the tech tree window shows the full upgrade and downgrade key reference, using the same title and text as the config panel's tip button.
+    * While the option is off, neither the `?` button nor the `Caps Lock` toggle is active, so the key cannot collide with other bindings.
 * 2.4.6
   * `Architect mode`: Restore unlimited use of buildings, Logistics Bots, Logistics Drones, and Logistics Vessels, and increase the default displayed count from 100 to 999.
   * `Wind Turbines do global power coverage`: Fix a possible startup crash when enabled.
@@ -196,6 +204,14 @@
 
 ## 更新日志
 
+* 2.4.7
+  * `使用组合键点击解锁科技` 改为 `使用组合键快速升降级科技`。
+    * 按住 `Shift` / `Ctrl` / `Ctrl + Shift` / `Alt` 点击科技，分别提升 1 / 10 / 100 / 全部等级；所有直接前置科技也会被解锁。
+    * `Caps Lock` 切换降级模式，开启后同样的组合键变为降低 1 / 10 / 100 等级，或将科技回退到未解锁。
+    * 降级同时回退科技带来的升级数值，覆盖乘法型、赋值型和布尔型科技函数，因此反复升降级不会产生数值漂移。
+    * 切换降级模式会像其它开关一样提示：实时弹窗 + 严重警告横幅。横幅可独立显示，不需要开启`无条件建造`或`无碰撞`；这两个开启时，降级模式的提示优先显示。
+    * 科技树界面的 `?` 按钮显示完整的升降级组合键说明，标题与文本同 MOD 设置面板的提示按钮一致。
+    * 关闭该选项时，科技界面不显示 `?` 按钮，`Caps Lock` 也不生效，避免与原版其它键位冲突。
 * 2.4.6
   * `建筑师模式`：修复建筑、配送运输机、物流运输机和星际物流运输船无法无限使用的问题，默认显示数量由 100 提高至 999。
   * `风力涡轮机供电覆盖全球`：修复启用后可能导致启动崩溃的问题。
