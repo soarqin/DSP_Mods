@@ -212,7 +212,7 @@ public static class TankPatch
                 }
                 if (thisTank.fluidCount < thisTank.fluidCapacity || thisTank.IsDustbin)
                 {
-                    if (cargoTraffic.GetItemIdAtRear(belt) != thisFluidId || thisTank.nextTankId <= 0) return;
+                    if (cargoTraffic.GetItemIdAtRear(belt) != thisFluidId) return;
                     if (cargoTraffic.TryPickItemAtRear(belt, thisFluidId, null, out stack, out inc) <= 0 || thisTank.IsDustbin) return;
                     thisTank.fluidCount += stack;
                     thisTank.fluidInc += inc;
