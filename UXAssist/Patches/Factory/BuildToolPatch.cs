@@ -6,6 +6,7 @@ using HarmonyLib;
 using UnityEngine;
 using UnityEngine.UI;
 using UXAssist.Common;
+using UXAssist.Common.GameConstants;
 using GameLogicProc = UXAssist.Common.GameLogic;
 
 namespace UXAssist.Patches.Factory;
@@ -383,7 +384,8 @@ internal static class BuildToolPatch
         {
             GameLogicProc.OnGameBegin += OnGameBegin;
             GameLogicProc.OnGameEnd += OnGameEnd;
-            FixProto();
+            GameLogicProc.OnDataLoaded += OnGameBegin;
+            OnGameBegin();
         }
 
         protected override void OnDisable()
@@ -391,6 +393,7 @@ internal static class BuildToolPatch
             UnfixProto();
             GameLogicProc.OnGameEnd -= OnGameEnd;
             GameLogicProc.OnGameBegin -= OnGameBegin;
+            GameLogicProc.OnDataLoaded -= OnGameBegin;
         }
 
         public static void AlternatelyChanged()
@@ -406,7 +409,11 @@ internal static class BuildToolPatch
 
         private static void FixProto()
         {
-            if (DSPGame.IsMenuDemo) return;
+            if (DSPGame.IsMenuDemo || _powerPoleProto == null || OldDragBuild.Count > 0) return;
+            foreach (var id in PowerPoleIds)
+            {
+                if (LDB.items?.Select(id)?.prefabDesc == null) return;
+            }
             OldDragBuild.Clear();
             OldDragBuildDist.Clear();
             foreach (var id in PowerPoleIds)
@@ -443,7 +450,7 @@ internal static class BuildToolPatch
 
         private static void OnGameBegin()
         {
-            _powerPoleProto ??= LDB.items.Select(2201);
+            _powerPoleProto ??= LDB.items?.Select(ItemIds.TeslaTower);
             FixProto();
         }
 

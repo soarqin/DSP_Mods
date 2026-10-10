@@ -57,6 +57,9 @@ public static class ItemIds
     public const int FrameMaterial = 1503;
     public const int DysonSphereComponent = 1802;
 
+    /* Power nodes */
+    public const int TeslaTower = 2201;
+
     /* Power generators */
     public const int WindTurbine = 2203;
 
