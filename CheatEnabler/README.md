@@ -80,6 +80,15 @@
     * Teleport to outer space
     * Teleport to selected astronomical
 
+## Belt signal generator example
+
+1. Open the UXAssist settings, select `Cheat Enabler` -> `Factory`, and enable `Belt signal generator`.
+2. Leave `Belt signal alt format` unchecked for this example.
+3. Click a conveyor belt and choose the item you want to generate as its signal icon.
+4. Set the signal number to `6001` to generate one item per second. Leave room on the belt for the generated items.
+
+The item icon selects the output; no hotkey is needed.
+
 ## Notes
 
 * Please upgrade `BepInEx` 5.4.21 or later if using with [BlueprintTweaks](https://dsp.thunderstore.io/package/kremnev8/BlueprintTweaks/) to avoid possible conflicts.
@@ -173,6 +182,15 @@
     * 无需空间翘曲器即可曲速飞行
     * 传送到外太空
     * 传送到选定的天体
+
+## 传送带信号物品生成示例
+
+1. 打开 UXAssist 设置，在 `Cheat Enabler` -> `工厂` 中勾选 `传送带信号物品生成`。
+2. 此示例保持 `传送带信号替换格式` 不勾选。
+3. 点击传送带，将需要生成的物品选为信号图标。
+4. 将信号数值设为 `6001`，即可每秒生成一个物品。传送带上需要有空位接收物品。
+
+信号图标决定生成哪种物品，无需快捷键。
 
 ## 注意事项
 
