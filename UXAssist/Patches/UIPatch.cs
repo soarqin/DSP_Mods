@@ -35,6 +35,14 @@ public class UIPatch : PatchImpl<UIPatch>
         GameLogicProc.OnGameBegin -= PlanetVeinUtilization.OnGameBegin;
     }
 
+    [HarmonyPostfix]
+    [HarmonyPatch(typeof(UIEscMenu), nameof(UIEscMenu._OnOpen))]
+    private static void UIEscMenu__OnOpen_Postfix()
+    {
+        // Pausing stops general-tip updates before they can dismiss the hovered entity.
+        UIGeneralTips.instance?.entityBriefInfo?.SetInfo(null, 0);
+    }
+
     private class PlanetVeinUtilization : PatchImpl<PlanetVeinUtilization>
     {
         private const float CountLabelGap = 4f;

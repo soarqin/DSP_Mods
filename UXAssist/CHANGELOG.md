@@ -4,6 +4,7 @@
 ## Changlog
 
 * 1.6.2 - Unrelease
+  * Close building and belt hover popups when opening the pause menu so they cannot obscure menu controls.
   * `Protect veins from exhaustion`: Exclude protected veins from mining-rate estimates, mining resource counts, and miner hover counts while retaining their remaining reserves.
   * `Dismantle blueprint selected buildings`: Respect sandbox instant-dismantle settings when discarding logistics station contents, and return them normally outside instant dismantling.
   * `Treat stack items as single in monitor components`: Fix the option taking effect at game startup when disabled, until toggled on and off.
@@ -431,6 +432,7 @@
 ## 更新日志
 
 * 1.6.2 - Unreleased
+  * 打开暂停菜单时关闭建筑和传送带的悬浮提示，避免提示遮挡菜单。
   * `保护矿脉不会枯竭`：开采速度估算、开采中资源数量和采矿机悬浮信息不再把受保护的矿脉计入开采；仍保留剩余储量显示。
   * `拆除蓝图选中的建筑`：按沙盒模式的瞬间拆除设置销毁物流站库存；常规拆除时仍正常返还库存。
   * `在流速计中将堆叠物品视为单个物品`：修复未勾选时仍在启动游戏后生效、必须切换一次才能关闭的问题。
