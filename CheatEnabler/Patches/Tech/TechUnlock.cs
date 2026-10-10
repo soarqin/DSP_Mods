@@ -5,8 +5,8 @@ namespace CheatEnabler.Patches.Tech;
 /// <summary>
 /// Upgrade side - unlock techs by clicking them with a key-modifier held while downgrade mode is off.
 ///
-/// <see cref="UnlockTechRecursive"/> mirrors the built-in <see cref="GamePatch.UnlockTech"/>
-/// implementation so the reference behaviour is reproduced exactly: prerequisites are unlocked
+/// <see cref="UnlockTechRecursive"/> preserves the previous modifier-click upgrade behavior. The
+/// prerequisites are unlocked
 /// recursively (<c>PreTechs</c> / <c>PreTechsImplicit</c>, driven by <c>PreTechsMax</c>), recipes are
 /// unlocked on level 0, every level calls <c>UnlockTechFunction</c>, tech awards are granted, the hash
 /// counters are maintained and <c>NotifyTechUnlock</c> plus <c>RegFeatureKey(1000100)</c> are fired.

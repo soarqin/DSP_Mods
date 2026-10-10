@@ -8,6 +8,7 @@ using HarmonyLib;
 using UnityEngine;
 using UXAssist.Common;
 using UXAssist.Common.ModFeatures;
+using UXAssist.Common.Patching;
 using GameLogicProc = UXAssist.Common.GameLogic;
 
 namespace CheatEnabler.Patches.Factory;
@@ -202,95 +203,91 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         }
         GameMain.data?.warningSystem?.UpdateCriticalWarningText();
     }
+
+    private static bool HasCustomCriticalWarning() =>
+        Tech.DowngradeMode.IsOn || NoConditionEnabled?.Value == true || NoCollisionEnabled?.Value == true;
+
+    private static string GetCustomCriticalWarningText()
+    {
+        if (Tech.DowngradeMode.IsOn) return Localization.TechDowngradeModeWarning.Translate();
+        if (NoConditionEnabled?.Value == true) return Localization.BuildWithoutConditionIsEnabled.Translate();
+        if (NoCollisionEnabled?.Value == true) return Localization.NoCollisionIsEnabled.Translate();
+        return null;
+    }
+
+    private static void ApplyCustomCriticalWarningText(WarningSystem warning)
+    {
+        string text = GetCustomCriticalWarningText();
+        if (text != null) warning.criticalWarningTexts = text + "\r\n";
+    }
+
     // Harmony transpiler: WarningSystem_hasCriticalWarning_Transpiler
     // Target: WarningSystem.hasCriticalWarning (getter)
-    // Fallback: None — patch will fail loudly if the target method body changes.
+    // Fallback: TranspilerGuard returns original instructions and logs a warning.
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(WarningSystem), nameof(WarningSystem.hasCriticalWarning), MethodType.Getter)]
-    private static IEnumerable<CodeInstruction> WarningSystem_hasCriticalWarning_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+    private static IEnumerable<CodeInstruction> WarningSystem_hasCriticalWarning_Transpiler(
+        IEnumerable<CodeInstruction> instructions, ILGenerator generator)
     {
-        // The original body is `criticalWarnings.Count > 0`. The chain appended here ORs the feature
-        // switches on top of it, in display priority order: whichever one matches first owns the banner,
-        // because UpdateCriticalWarningText bails out before assigning any custom text when this getter is
-        // false. Tech downgrade mode therefore has to come first: it must show on its own, without either
-        // build toggle being on.
         var matcher = new CodeMatcher(instructions, generator);
-        var downgrade = generator.DefineLabel();
-        var noCondition = generator.DefineLabel();
-        var noCollision = generator.DefineLabel();
-        matcher.End().MatchBack(false,
-            new CodeMatch(OpCodes.Ret)
-        ).RemoveInstructions(1);
-        matcher.InsertAndAdvance(
-            new CodeInstruction(OpCodes.Brfalse, downgrade),
-            new CodeInstruction(OpCodes.Ldc_I4_1),
-            new CodeInstruction(OpCodes.Ret),
-            new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(Tech.DowngradeMode), nameof(Tech.DowngradeMode.IsOn))).WithLabels(downgrade),
-            new CodeInstruction(OpCodes.Brfalse, noCondition),
-            new CodeInstruction(OpCodes.Ldc_I4_1),
-            new CodeInstruction(OpCodes.Ret),
-            new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(FactoryPatch), nameof(NoConditionEnabled))).WithLabels(noCondition),
-            new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(ConfigEntry<bool>), nameof(ConfigEntry<bool>.Value))),
-            new CodeInstruction(OpCodes.Brfalse, noCollision),
-            new CodeInstruction(OpCodes.Ldc_I4_1),
-            new CodeInstruction(OpCodes.Ret),
-            new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(FactoryPatch), nameof(NoCollisionEnabled))).WithLabels(noCollision),
-            new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(ConfigEntry<bool>), nameof(ConfigEntry<bool>.Value))),
-            new CodeInstruction(OpCodes.Ret)
-        );
-        return matcher.InstructionEnumeration();
+        matcher.End().MatchBack(false, new CodeMatch(OpCodes.Ret));
+        if (matcher.IsInvalid)
+        {
+            return matcher.Finish(instructions, global::CheatEnabler.CheatEnabler.Logger,
+                nameof(WarningSystem_hasCriticalWarning_Transpiler));
+        }
+
+        var labels = matcher.Labels;
+        matcher.Labels = new List<Label>();
+        matcher.Insert(
+            new CodeInstruction(OpCodes.Call,
+                AccessTools.Method(typeof(FactoryPatch), nameof(HasCustomCriticalWarning))).WithLabels(labels),
+            new CodeInstruction(OpCodes.Or));
+        return matcher.Finish(instructions, global::CheatEnabler.CheatEnabler.Logger,
+            nameof(WarningSystem_hasCriticalWarning_Transpiler));
     }
+
     // Harmony transpiler: WarningSystem_UpdateCriticalWarningText_Transpiler
     // Target: WarningSystem.UpdateCriticalWarningText
-    // Fallback: None — patch will fail loudly if the target method body changes.
+    // Fallback: TranspilerGuard returns original instructions and logs a warning.
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(WarningSystem), nameof(WarningSystem.UpdateCriticalWarningText))]
-    private static IEnumerable<CodeInstruction> WarningSystem_UpdateCriticalWarningText_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+    private static IEnumerable<CodeInstruction> WarningSystem_UpdateCriticalWarningText_Transpiler(
+        IEnumerable<CodeInstruction> instructions, ILGenerator generator)
     {
         var matcher = new CodeMatcher(instructions, generator);
         matcher.MatchForward(false,
             new CodeMatch(OpCodes.Ldarg_0),
             new CodeMatch(OpCodes.Ldstr, ""),
-            new CodeMatch(OpCodes.Call, AccessTools.PropertySetter(typeof(WarningSystem), nameof(WarningSystem.criticalWarningTexts)))
-        );
+            new CodeMatch(OpCodes.Call,
+                AccessTools.PropertySetter(typeof(WarningSystem), nameof(WarningSystem.criticalWarningTexts))));
+        if (matcher.IsInvalid)
+        {
+            return matcher.Finish(instructions, global::CheatEnabler.CheatEnabler.Logger,
+                nameof(WarningSystem_UpdateCriticalWarningText_Transpiler));
+        }
+
         matcher.Repeat(m =>
         {
-            var label1 = generator.DefineLabel();
             m.Advance(3).InsertAndAdvance(
                 new CodeInstruction(OpCodes.Ldarg_0),
-                Transpilers.EmitDelegate((WarningSystem w) =>
-                    {
-                        // Only one of these can own the banner, so they form a display priority chain:
-                        // tech downgrade mode (a transient state the player has to notice) outranks the
-                        // two build toggles the player turned on deliberately.
-                        if (Tech.DowngradeMode.IsOn)
-                        {
-                            w.criticalWarningTexts = Localization.TechDowngradeModeWarning.Translate() + "\r\n";
-                        }
-                        else if (NoConditionEnabled.Value)
-                        {
-                            w.criticalWarningTexts = Localization.BuildWithoutConditionIsEnabled.Translate() + "\r\n";
-                        }
-                        else if (NoCollisionEnabled.Value)
-                        {
-                            w.criticalWarningTexts = Localization.NoCollisionIsEnabled.Translate() + "\r\n";
-                        }
-                    }
-                )
-            );
-            if (m.Opcode == OpCodes.Ret)
-            {
-                m.InsertAndAdvance(
-                    new CodeInstruction(OpCodes.Ldarg_0),
-                    new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(WarningSystem), nameof(WarningSystem.onCriticalWarningTextChanged))),
-                    new CodeInstruction(OpCodes.Brfalse_S, label1),
-                    new CodeInstruction(OpCodes.Ldarg_0),
-                    new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(WarningSystem), nameof(WarningSystem.onCriticalWarningTextChanged))),
-                    new CodeInstruction(OpCodes.Callvirt, AccessTools.Method(typeof(Action), nameof(Action.Invoke)))
-                );
-                m.Labels.Add(label1);
-            }
+                new CodeInstruction(OpCodes.Call,
+                    AccessTools.Method(typeof(FactoryPatch), nameof(ApplyCustomCriticalWarningText))));
+            if (m.Opcode != OpCodes.Ret) return;
+
+            var label = generator.DefineLabel();
+            m.InsertAndAdvance(
+                new CodeInstruction(OpCodes.Ldarg_0),
+                new CodeInstruction(OpCodes.Ldfld,
+                    AccessTools.Field(typeof(WarningSystem), nameof(WarningSystem.onCriticalWarningTextChanged))),
+                new CodeInstruction(OpCodes.Brfalse, label),
+                new CodeInstruction(OpCodes.Ldarg_0),
+                new CodeInstruction(OpCodes.Ldfld,
+                    AccessTools.Field(typeof(WarningSystem), nameof(WarningSystem.onCriticalWarningTextChanged))),
+                new CodeInstruction(OpCodes.Callvirt, AccessTools.Method(typeof(Action), nameof(Action.Invoke))));
+            m.Labels.Add(label);
         });
-        return matcher.InstructionEnumeration();
+        return matcher.Start().Finish(instructions, global::CheatEnabler.CheatEnabler.Logger,
+            nameof(WarningSystem_UpdateCriticalWarningText_Transpiler));
     }
 }

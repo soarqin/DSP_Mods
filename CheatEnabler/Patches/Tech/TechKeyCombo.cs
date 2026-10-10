@@ -3,8 +3,7 @@ namespace CheatEnabler.Patches.Tech;
 /// <summary>
 /// The key-modifier semantics shared by the upgrade and the downgrade side.
 ///
-/// The mapping mirrors the built-in <see cref="GamePatch.UnlockTech"/> handler so both features behave
-/// identically, and the downgrade side is its exact mirror:
+/// Both directions use the same modifier mapping:
 ///
 /// <list type="table">
 /// <item><term>Shift</term><description>+1 / -1</description></item>

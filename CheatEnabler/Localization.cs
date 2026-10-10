@@ -58,6 +58,10 @@ Press Caps Lock to toggle Tech Downgrade Mode: the key-modifiers above then decr
 The features above come from the mod: CheatEnabler
 """;
     public const string PackageResizeSkippedOccupiedCells = "Package resize skipped: occupied cells would be removed";
+    public const string TechDowngradeDeliveryOccupied = "Cannot downgrade tech: empty the delivery slots being removed and wait for deliveries to finish";
+    public const string TechDowngradeDronesBusy = "Cannot downgrade tech: wait for construction drones to return";
+    public const string TechDowngradeFleetsOccupied = "Cannot downgrade tech: recall and empty the fleets being removed";
+    public const string TechDowngradeUnsupportedFunction = "Cannot downgrade tech: an unsupported tech function requires a mod update";
     public const string DevShortcuts = "Dev Shortcuts";
     public const string DevShortcutsTips = "Dev Shortcuts Tips";
     public const string UnlockTechWithKeyModifiersTips = "Unlock Tech with Key-Modifiers Tips";
@@ -207,8 +211,17 @@ The features above come from the mod: CheatEnabler
 
 以上功能来源于MOD：CheatEnabler
 """);
-        I18N.Add(PackageResizeSkippedOccupiedCells, "Package resize skipped: occupied cells would be removed",
-            "背包扩容回退已跳过：有物品的格子会被移除，未缩小背包");
+        I18N.Add(PackageResizeSkippedOccupiedCells,
+            "Cannot downgrade tech: empty the inventory cells being removed and retry",
+            "无法降级科技：请先清空缩容将移除的机舱格子，再重试");
+        I18N.Add(TechDowngradeDeliveryOccupied, TechDowngradeDeliveryOccupied,
+            "无法降级科技：请先清空缩容将移除的物流清单格子，并等待配送完成");
+        I18N.Add(TechDowngradeDronesBusy, TechDowngradeDronesBusy,
+            "无法降级科技：请等待建设无人机返回");
+        I18N.Add(TechDowngradeFleetsOccupied, TechDowngradeFleetsOccupied,
+            "无法降级科技：请先召回并清空缩容将移除的编队");
+        I18N.Add(TechDowngradeUnsupportedFunction, TechDowngradeUnsupportedFunction,
+            "无法降级科技：存在尚未支持的科技效果，请更新 MOD 后重试");
         I18N.Add(DevShortcuts, "Dev Shortcuts", "开发模式快捷键");
         I18N.Add(DevShortcutsTips, """
 Caution: Some function may trigger abnormal check!

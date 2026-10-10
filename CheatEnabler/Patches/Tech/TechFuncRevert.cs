@@ -5,29 +5,10 @@ using UnityEngine;
 namespace CheatEnabler.Patches.Tech
 {
     /// <summary>
-    /// F4 - the downgrade side of <c>GameHistoryData.UnlockTechFunction</c>.
-    ///
-    /// <para><b>Chosen approach: A (per-function inverse operation), with recomputation for the
-    /// functions where an inverse is either impossible or not drift free.</b></para>
-    ///
-    /// <para>Why A rather than B (reset to base plus full replay): a replay has to re-run every side
-    /// effect of <c>UnlockTechFunction</c> on the live game objects. Several of those are ratchets that
-    /// cannot be replayed safely - <c>func 30/31</c> rescale existing logistics station storage
-    /// proportionally through <c>PlanetTransport.OnTechFunctionUnlocked</c>, and <c>func 5/38</c> resize
-    /// the player's package. Replaying them would double-apply the scaling instead of restoring it.
-    /// Inverse operations touch exactly the field that was changed and nothing else, and they need no
-    /// snapshot, so they also survive save/load.</para>
-    ///
-    /// <para>Where an inverse is not available the value is recomputed from
-    /// <c>Configs.freeMode</c> - the very table <c>GameHistoryData.SetForNewGame</c> uses to
-    /// initialise the field - plus the set of levels still applied across all techs. That covers the
-    /// multiplicative functions (no float drift, and <c>func 20</c> recovers from the game's 0 clamp,
-    /// which a division can never undo), the assignment functions (a plain subtraction is wrong when
-    /// the value came from a different tech) and the boolean / one-way functions (there is no
-    /// "unset" call in the game).</para>
-    ///
-    /// <para>Every case of the original switch (1-45, 61-86, 99 - ids 46-60 and 87-98 do not exist)
-    /// is handled below or explicitly delegated to <see cref="Recompute"/>.</para>
+    /// Reverts the fields changed by GameHistoryData.UnlockTechFunction. Lossy, multiplicative,
+    /// assignment and boolean functions are recomputed from native defaults and surviving levels.
+    /// Package geometry and station limits are reconciled once per click; native unlock side effects
+    /// must never be replayed across the whole tech tree.
     /// </summary>
     internal static class TechFuncRevert
     {
@@ -113,6 +94,7 @@ namespace CheatEnabler.Patches.Tech
                         {
                             mecha.coreEnergyCap = 0.0;
                         }
+                        mecha.coreEnergy = Math.Min(mecha.coreEnergy, mecha.coreEnergyCap);
                     }
 
                     TechDowngrade.MarkDirty(func);
@@ -224,9 +206,7 @@ namespace CheatEnabler.Patches.Tech
                     break;
 
                 case 30:
-                    // PlanetTransport.OnTechFunctionUnlocked rescaled every local station's storage when
-                    // this was applied; shrinking the *count* back is the inverse the game itself uses
-                    // when the field is lowered, so no extra rescale is performed here.
+                    // Existing station limits are rescaled once after all levels have been reverted.
                     history.localStationExtraStorage = Math.Max(0, history.localStationExtraStorage - num);
                     break;
 
@@ -260,7 +240,7 @@ namespace CheatEnabler.Patches.Tech
                     break;
 
                 case 36:
-                    history.dispenserDeliveryMaxAngle = Math.Max(0f, history.dispenserDeliveryMaxAngle - (float)value);
+                    history.dispenserDeliveryMaxAngle = Math.Max(0f, history.dispenserDeliveryMaxAngle - num);
                     break;
 
                 case 37: // feature keys: recomputed
@@ -321,6 +301,7 @@ namespace CheatEnabler.Patches.Tech
                     if (mecha != null)
                     {
                         mecha.energyShieldCapacity = Math.Max(0L, mecha.energyShieldCapacity - num);
+                        mecha.energyShieldEnergy = Math.Min(mecha.energyShieldEnergy, mecha.energyShieldCapacity);
                     }
 
                     break;
@@ -369,25 +350,25 @@ namespace CheatEnabler.Patches.Tech
                 case 77:
                     if (mecha != null && mecha.groundCombatModule != null)
                     {
-                        mecha.groundCombatModule.fleetCount = Math.Max(0, mecha.groundCombatModule.fleetCount - num);
+                        mecha.groundCombatModule.fleetCount = Math.Max(0, mecha.groundCombatModule.fleetCount - (int)value);
                     }
 
                     break;
 
                 case 78:
-                    history.groundFleetPortCount = Math.Max(0, history.groundFleetPortCount - num);
+                    history.groundFleetPortCount = Math.Max(0, history.groundFleetPortCount - (int)value);
                     break;
 
                 case 79:
                     if (mecha != null && mecha.spaceCombatModule != null)
                     {
-                        mecha.spaceCombatModule.fleetCount = Math.Max(0, mecha.spaceCombatModule.fleetCount - num);
+                        mecha.spaceCombatModule.fleetCount = Math.Max(0, mecha.spaceCombatModule.fleetCount - (int)value);
                     }
 
                     break;
 
                 case 80:
-                    history.spaceFleetPortCount = Math.Max(0, history.spaceFleetPortCount - num);
+                    history.spaceFleetPortCount = Math.Max(0, history.spaceFleetPortCount - (int)value);
                     break;
 
                 case 81:
@@ -399,18 +380,8 @@ namespace CheatEnabler.Patches.Tech
                     break;
 
                 case 82:
-                    // The forward operation is `range *= 1 + value / range`, which is exactly
-                    // `range += value`; the inverse is therefore a plain subtraction.
-                    if (mecha != null)
-                    {
-                        mecha.laserLocalAttackRange = Math.Max(0f, mecha.laserLocalAttackRange - (float)value);
-                        mecha.laserSpaceAttackRange = Math.Max(0f, mecha.laserSpaceAttackRange - (float)value);
-                    }
-
-                    break;
-
                 case 83:
-                    RevertLaserDamage(mecha, num);
+                    TechDowngrade.MarkDirty(func);
                     break;
 
                 case 84:
@@ -466,7 +437,7 @@ namespace CheatEnabler.Patches.Tech
             {
                 case 5:
                 case 38:
-                    ReconcilePackage(history, freeMode);
+                    ReconcilePackage(history);
                     break;
 
                 case 4:
@@ -576,7 +547,15 @@ namespace CheatEnabler.Patches.Tech
                     break;
 
                 case 76:
-                    history.autoReconstructSpeed = PickMax(history, func, 0);
+                    int speed = 0;
+                    ForEachAppliedFunction(history, func, (proto, lastApplied, value) =>
+                        speed = Math.Max(speed, (int)value));
+                    history.autoReconstructSpeed = speed;
+                    break;
+
+                case 82:
+                case 83:
+                    RecomputeLaser(history, freeMode, mecha, func);
                     break;
 
                 case 86:
@@ -728,7 +707,8 @@ namespace CheatEnabler.Patches.Tech
             return found;
         }
 
-        internal static void ForEachAppliedFunction(GameHistoryData history, int func, Action<TechProto, int, double> visit)
+        internal static void ForEachAppliedFunction(GameHistoryData history, int func, Action<TechProto, int, double> visit,
+            IReadOnlyDictionary<int, int> targets = null)
         {
             if (history.techStates == null)
             {
@@ -744,7 +724,13 @@ namespace CheatEnabler.Patches.Tech
                     continue;
                 }
 
-                if (!TechDowngrade.TryGetLastAppliedLevel(history, proto, out int lastApplied))
+                int lastApplied;
+                if (targets != null && targets.TryGetValue(proto.ID, out int target))
+                {
+                    lastApplied = target;
+                    if (lastApplied < proto.Level) continue;
+                }
+                else if (!TechDowngrade.TryGetLastAppliedLevel(history, proto, out lastApplied))
                 {
                     continue;
                 }
@@ -774,158 +760,233 @@ namespace CheatEnabler.Patches.Tech
                 mecha.hp = maxApplied;
             }
 
-            if (mecha.hp < 1)
-            {
-                mecha.hp = 1;
-            }
+            mecha.hp = Math.Max(0, mecha.hp);
         }
 
         /// <summary>
-        /// func 83 scales every laser stat by <c>1 + num / laserLocalDamage</c> measured *before* the
-        /// change. The integer rounding makes the transform lossy, so the previous damage value is
-        /// recovered as <c>laserLocalDamage - num</c> and the other stats are divided by the same
-        /// factor.
+        /// Both ranges use the factor computed from the local range. Damage and energy use native
+        /// integer rounding on every level, so division cannot recover the previous values exactly.
         /// </summary>
-        private static void RevertLaserDamage(Mecha mecha, int num)
+        private static void RecomputeLaser(GameHistoryData history, ModeConfig config, Mecha mecha, int func)
         {
             if (mecha == null)
             {
                 return;
             }
 
-            int damageAfter = mecha.laserLocalDamage;
-            int damageBefore = damageAfter - num;
-            if (damageBefore < 1)
+            if (func == 82)
             {
-                damageBefore = 1;
+                mecha.laserLocalAttackRange = config.mechaLocalLaserAttackRange;
+                mecha.laserSpaceAttackRange = config.mechaSpaceLaserAttackRange;
+            }
+            else
+            {
+                mecha.laserLocalDamage = config.mechaLocalLaserDamage;
+                mecha.laserSpaceDamage = config.mechaSpaceLaserDamage;
+                mecha.laserEnergyCapacity = config.mechaLaserEnergyCapacity;
+                mecha.laserLocalEnergyCost = config.mechaLocalLaserEnergyCost;
+                mecha.laserSpaceEnergyCost = config.mechaSpaceLaserEnergyCost;
             }
 
-            float inverseFactor = damageAfter > 0 ? (float)damageBefore / damageAfter : 1f;
-            mecha.laserLocalDamage = damageBefore;
-            mecha.laserSpaceDamage = (int)(mecha.laserSpaceDamage * inverseFactor + 0.5f);
-            mecha.laserEnergyCapacity = (int)(mecha.laserEnergyCapacity * inverseFactor + 0.5f);
-            mecha.laserLocalEnergyCost = (int)(mecha.laserLocalEnergyCost * inverseFactor + 0.5f);
-            mecha.laserSpaceEnergyCost = (int)(mecha.laserSpaceEnergyCost * inverseFactor + 0.5f);
+            ForEachAppliedFunction(history, func, (proto, lastApplied, value) =>
+            {
+                for (int level = proto.Level; level <= lastApplied; level++)
+                {
+                    if (func == 82)
+                    {
+                        float factor = 1f + (float)(value / mecha.laserLocalAttackRange);
+                        mecha.laserLocalAttackRange *= factor;
+                        mecha.laserSpaceAttackRange *= factor;
+                    }
+                    else
+                    {
+                        float factor = 1f + (float)ToInt(value) / mecha.laserLocalDamage;
+                        mecha.laserLocalDamage = (int)(mecha.laserLocalDamage * factor + 0.5f);
+                        mecha.laserSpaceDamage = (int)(mecha.laserSpaceDamage * factor + 0.5f);
+                        mecha.laserEnergyCapacity = (int)(mecha.laserEnergyCapacity * factor + 0.5f);
+                        mecha.laserLocalEnergyCost = (int)(mecha.laserLocalEnergyCost * factor + 0.5f);
+                        mecha.laserSpaceEnergyCost = (int)(mecha.laserSpaceEnergyCost * factor + 0.5f);
+                    }
+                }
+            });
+            if (func == 83) mecha.laserEnergy = Math.Min(mecha.laserEnergy, mecha.laserEnergyCapacity);
+        }
+
+        /// <summary>Rejects the whole cascade before any state changes if capacity would hide live contents.</summary>
+        internal static bool CanRevert(GameHistoryData history, IReadOnlyDictionary<int, int> targets)
+        {
+            Player player = GameMain.mainPlayer;
+            if (Configs.freeMode == null || history.gameData == null || player?.mecha == null ||
+                player.package?.grids == null || player.deliveryPackage?.grids == null)
+            {
+                TechLog.Warn("downgrade skipped: game data is not ready");
+                return false;
+            }
+
+            var removed = new Dictionary<int, int>();
+            bool deliveryUnlockRemoved = false;
+            foreach (var pair in targets)
+            {
+                TechProto proto = LDB.techs.Select(pair.Key);
+                int count = TechDowngrade.GetLastAppliedLevel(history.techStates[pair.Key]) - pair.Value;
+                deliveryUnlockRemoved |= pair.Value < proto.Level &&
+                    TechDowngrade.Contains(proto.UnlockRecipes, TechDowngrade.DeliveryPackageRecipeId);
+                for (int j = 0; j < proto.UnlockFunctions.Length; j++)
+                {
+                    int func = proto.UnlockFunctions[j];
+                    if (!(func is >= 1 and <= 45 or >= 61 and <= 86 or 99))
+                    {
+                        TechLog.Warn($"downgrade skipped: unsupported tech function {func} in tech {proto.ID}");
+                        UIRealtimeTip.Popup(Localization.TechDowngradeUnsupportedFunction.Translate());
+                        return false;
+                    }
+
+                    int value = func is >= 77 and <= 80 ? (int)proto.UnlockValues[j] : ToInt(proto.UnlockValues[j]);
+                    removed.TryGetValue(func, out int previous);
+                    removed[func] = previous + value * count;
+                }
+            }
+
+            int packageCols = player.GetPackageColumnCount();
+            int packageRows = (player.package.size - 1) / packageCols + 1;
+            bool resizePackage = removed.ContainsKey(5) || removed.ContainsKey(38);
+            if (resizePackage)
+            {
+                GetPackageGeometry(history, targets, out packageCols, out packageRows);
+                if (!CanResizePackage(player, packageCols, packageRows))
+                {
+                    UIRealtimeTip.Popup(Localization.PackageResizeSkippedOccupiedCells.Translate());
+                    return false;
+                }
+            }
+
+            DeliveryPackage delivery = player.deliveryPackage;
+            removed.TryGetValue(32, out int deliveryColsRemoved);
+            int deliveryCols = Math.Max(0, delivery.colCount - deliveryColsRemoved);
+            int deliveryRows = resizePackage ? Math.Min(DeliveryPackage.MAX_ROWCOUNT, packageRows) : delivery.rowCount;
+            bool deliveryLocked = deliveryUnlockRemoved &&
+                !TechDowngrade.IsRecipeGranted(history, TechDowngrade.DeliveryPackageRecipeId, targets);
+            for (int i = 0; i < delivery.grids.Length; i++)
+            {
+                if (!delivery.IsGridActive(i) || (!deliveryLocked &&
+                    i / DeliveryPackage.MAX_COLCOUNT < deliveryRows &&
+                    DeliveryPackage.MAX_COLCOUNT - 1 - i % DeliveryPackage.MAX_COLCOUNT < deliveryCols)) continue;
+                if (delivery.grids[i].count > 0 || delivery.grids[i].ordered != 0)
+                {
+                    UIRealtimeTip.Popup(Localization.TechDowngradeDeliveryOccupied.Translate());
+                    return false;
+                }
+            }
+
+            removed.TryGetValue(1, out int dronesRemoved);
+            if (dronesRemoved > player.mecha.constructionModule.droneIdleCount)
+            {
+                UIRealtimeTip.Popup(Localization.TechDowngradeDronesBusy.Translate());
+                return false;
+            }
+
+            removed.TryGetValue(77, out int groundFleetsRemoved);
+            removed.TryGetValue(79, out int spaceFleetsRemoved);
+            if (!CanRemoveFleets(player.mecha.groundCombatModule, groundFleetsRemoved) ||
+                !CanRemoveFleets(player.mecha.spaceCombatModule, spaceFleetsRemoved))
+            {
+                UIRealtimeTip.Popup(Localization.TechDowngradeFleetsOccupied.Translate());
+                return false;
+            }
+
+            return true;
+        }
+
+        private static bool CanRemoveFleets(CombatModuleComponent module, int removed)
+        {
+            if (removed <= 0 || module?.moduleFleets == null) return true;
+            int target = Math.Max(0, module.fleetCount - removed);
+            for (int i = target; i < Math.Min(module.fleetCount, module.moduleFleets.Length); i++)
+            {
+                ModuleFleet fleet = module.moduleFleets[i];
+                if (fleet.fleetId != 0) return false;
+                if (fleet.fighters == null) continue;
+                foreach (ModuleFighter fighter in fleet.fighters)
+                {
+                    if (fighter.count > 0 || fighter.craftId != 0) return false;
+                }
+            }
+
+            return true;
+        }
+
+        internal static void ReconcileStationStorage(GameHistoryData history, int localBefore, int remoteBefore)
+        {
+            int localDelta = history.localStationExtraStorage - localBefore;
+            int remoteDelta = history.remoteStationExtraStorage - remoteBefore;
+            if (localDelta == 0 && remoteDelta == 0) return;
+            GameData data = history.gameData;
+            for (int i = 0; i < data.factoryCount; i++)
+            {
+                PlanetTransport transport = data.factories[i]?.transport;
+                if (transport == null) continue;
+                // Native scaling uses the already updated capacity and the signed change. Passing a
+                // negative delta restores the configured station limits without removing stored items.
+                if (localDelta != 0) transport.OnTechFunctionUnlocked(30, localDelta, 0);
+                if (remoteDelta != 0) transport.OnTechFunctionUnlocked(31, remoteDelta, 0);
+            }
+        }
+
+        private static void GetPackageGeometry(GameHistoryData history, IReadOnlyDictionary<int, int> targets,
+            out int columns, out int rows)
+        {
+            const int baseColumns = 10;
+            int baseSize = Configs.freeMode.playerPackageSize;
+            int columnCount = baseColumns;
+            int rowCount = (baseSize - 1) / baseColumns + 1;
+            ForEachAppliedFunction(history, 38, (proto, last, value) =>
+                columnCount += ToInt(value) * (last - proto.Level + 1), targets);
+            ForEachAppliedFunction(history, 5, (proto, last, value) =>
+                rowCount += ToInt(value) * (last - proto.Level + 1), targets);
+            columns = columnCount;
+            rows = rowCount;
+        }
+
+        private static bool CanResizePackage(Player player, int columns, int rows)
+        {
+            StorageComponent package = player.package;
+            int oldColumns = player.GetPackageColumnCount();
+            for (int i = 0; i < package.size; i++)
+            {
+                if (package.grids[i].itemId != 0 && (i / oldColumns >= rows || i % oldColumns >= columns))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         /// <summary>
-        /// func 5 and func 38 both resize the player's package: func 5 adds whole rows
-        /// (<c>SetSize(size + num * colCount)</c>) and func 38 changes the column count, which re-lays-out
-        /// every row.
-        ///
-        /// Neither can be undone by simply calling the game's resize in reverse:
-        /// <c>StorageComponent.SetSize(int, int, int)</c> iterates the *whole* backing array and computes
-        /// <c>row * newcol + col</c>, so shrinking the column count runs past the new size and throws
-        /// <c>IndexOutOfRangeException</c> (verified in game). The geometry is therefore recomputed from
-        /// the base values and the levels still applied, and the grid is re-laid-out cell by cell.
-        ///
-        /// If an occupied cell would fall outside the target layout the resize is refused and reported -
-        /// no item is ever destroyed, and the tech level is still reverted.
+        /// Native SetSize cannot shrink columns safely. Preserve each retained cell's position and
+        /// metadata; CanRevert has already checked every cell that the new layout would remove.
         /// </summary>
-        private static void ReconcilePackage(GameHistoryData history, ModeConfig freeMode)
+        private static void ReconcilePackage(GameHistoryData history)
         {
             Player player = GameMain.mainPlayer;
-            if (player?.package == null)
-            {
-                return;
-            }
-
-            // Player.SetForNewGame(): packageColCount = 10, package = Configs.freeMode.playerPackageSize cells.
-            const int baseCols = 10;
-            int baseSize = freeMode.playerPackageSize;
-            if (baseSize <= 0)
-            {
-                baseSize = baseCols * 4;
-            }
-
-            int baseRows = (baseSize - 1) / baseCols + 1;
-            int targetCols = baseCols;
-            int targetRows = baseRows;
-
-            // Each applied level adds its value: func 38 to the column count, func 5 to the row count.
-            ForEachAppliedFunction(history, 38, (proto, lastApplied, value) =>
-                targetCols += ToInt(value) * (lastApplied - proto.Level + 1));
-            ForEachAppliedFunction(history, 5, (proto, lastApplied, value) =>
-                targetRows += ToInt(value) * (lastApplied - proto.Level + 1));
-
-            if (targetCols < baseCols)
-            {
-                targetCols = baseCols;
-            }
-
-            if (targetRows < baseRows)
-            {
-                targetRows = baseRows;
-            }
-
+            GetPackageGeometry(history, null, out int targetCols, out int targetRows);
             int targetSize = targetRows * targetCols;
-
             StorageComponent package = player.package;
-            StorageComponent.GRID[] oldGrid = package.grids;
-            if (oldGrid == null)
-            {
-                return;
-            }
-
-            int oldCols = player.packageColCount < 1 ? baseCols : player.packageColCount;
-            int oldSize = package.size;
-            if (oldSize <= 0)
-            {
-                return;
-            }
-
-            int oldRows = (oldSize - 1) / oldCols + 1;
-            if (oldCols == targetCols && oldSize == targetSize)
-            {
-                return;
-            }
-
-            for (int r = 0; r < oldRows; r++)
-            {
-                for (int c = 0; c < oldCols; c++)
-                {
-                    int index = r * oldCols + c;
-                    if (index >= oldGrid.Length || index >= oldSize || oldGrid[index].itemId == 0)
-                    {
-                        continue;
-                    }
-
-                    if (r < targetRows && c < targetCols)
-                    {
-                        continue;
-                    }
-
-                    TechLog.Warn($"package resize skipped: cell {index} (row {r}, column {c}) is not empty and would " +
-                               "fall outside the new layout, so no item is destroyed. The tech level was still reverted.");
-                    UIRealtimeTip.Popup(Localization.PackageResizeSkippedOccupiedCells.Translate());
-                    return;
-                }
-            }
+            int oldCols = player.GetPackageColumnCount();
+            if (oldCols == targetCols && package.size == targetSize) return;
 
             var newGrid = new StorageComponent.GRID[targetSize];
-            for (int r = 0; r < oldRows; r++)
+            for (int i = 0; i < package.size; i++)
             {
-                for (int c = 0; c < oldCols; c++)
-                {
-                    if (r >= targetRows || c >= targetCols)
-                    {
-                        continue;
-                    }
-
-                    int from = r * oldCols + c;
-                    if (from >= oldGrid.Length || from >= oldSize)
-                    {
-                        continue;
-                    }
-
-                    newGrid[r * targetCols + c] = oldGrid[from];
-                }
+                int row = i / oldCols;
+                int col = i % oldCols;
+                if (row < targetRows && col < targetCols) newGrid[row * targetCols + col] = package.grids[i];
             }
 
             player.packageColCount = targetCols;
             package.grids = newGrid;
             package.size = targetSize;
-            package.searchStart = 0;
+            package.SetBans(Math.Min(package.bans, targetSize));
             package.ResetOptimizationFlags();
             package.NotifyStorageChange();
             package.NotifyStorageSizeChange();

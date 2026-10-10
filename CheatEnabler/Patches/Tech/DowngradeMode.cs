@@ -20,7 +20,8 @@ internal static class DowngradeMode
     /// <summary>Per-frame <c>Caps Lock</c> poll; driven by the mod feature registry input hook.</summary>
     public static void Update()
     {
-        if (TechTweaksPatch.Enabled == null || !TechTweaksPatch.Enabled.Value)
+        if (TechTweaksPatch.Enabled == null || !TechTweaksPatch.Enabled.Value ||
+            TechTweaksPatch.Impl.GetHarmony() == null || DSPGame.IsMenuDemo || !GameMain.isRunning)
         {
             return;
         }
@@ -45,6 +46,8 @@ internal static class DowngradeMode
 
     public static void Reset()
     {
+        if (!IsOn) return;
         IsOn = false;
+        GameMain.data?.warningSystem?.UpdateCriticalWarningText();
     }
 }

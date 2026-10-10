@@ -3,8 +3,7 @@ using System;
 namespace CheatEnabler.Patches.Tech;
 
 /// <summary>
-/// Entry point injected into <c>UITechNode.OnPointerDown</c>. Decides between "do nothing", "hand over
-/// to the built-in UnlockTech feature", "upgrade" and "downgrade".
+/// Entry point injected into UITechNode.OnPointerDown, shared by upgrade and downgrade clicks.
 /// </summary>
 internal static class TechClickHandler
 {

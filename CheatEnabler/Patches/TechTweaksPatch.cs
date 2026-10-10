@@ -1,9 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Reflection.Emit;
-using CheatEnabler.Patches.Tech;
 using BepInEx.Configuration;
+using CheatEnabler.Patches.Tech;
 using HarmonyLib;
 using UXAssist.Common;
 using UXAssist.Common.ModFeatures;
@@ -12,20 +11,7 @@ using GameLogicProc = UXAssist.Common.GameLogic;
 
 namespace CheatEnabler.Patches;
 
-/// <summary>
-/// Unlock / downgrade techs by clicking the tech tree with a key-modifier held.
-///
-/// This replaces the previous unlock-only handler: the option keeps its original config key
-/// (<c>General/UnlockTech</c>) and its position in the config panel, but now it also owns downgrade
-/// mode, so a single switch covers both directions.
-///
-/// <list type="bullet">
-/// <item><c>UITechNode.OnPointerDown</c> - transpiler that injects <see cref="TechClickHandler"/>.</item>
-/// <item><c>UITechTree._OnOpen</c> / <c>_OnFree</c> - create and release the help button.</item>
-/// <item>The per-frame <c>Caps Lock</c> poll runs through <see cref="OnInputUpdate"/>, the registry
-/// lifecycle hook, so no separate <c>VFInput.OnUpdate</c> patch is needed.</item>
-/// </list>
-/// </summary>
+/// <summary>Owns the General/UnlockTech option, session input and tech tree patches.</summary>
 [ModFeature("TechTweaks")]
 public static class TechTweaksPatch
 {
@@ -33,37 +19,23 @@ public static class TechTweaksPatch
 
     public static void Init()
     {
-        Enabled.SettingChanged += (_, _) =>
-        {
-            Impl.Enable(Enabled.Value);
-            DowngradeMode.Reset();
-        };
+        Enabled.SettingChanged += OnSettingChanged;
         GameLogicProc.OnGameEnd += ResetState;
     }
 
-    public static void Start()
-    {
-        Impl.Enable(Enabled.Value);
-    }
+    public static void Start() => Impl.Enable(Enabled.Value);
 
     public static void Uninit()
     {
+        Enabled.SettingChanged -= OnSettingChanged;
         GameLogicProc.OnGameEnd -= ResetState;
         Impl.Enable(false);
+        ResetState();
     }
 
-    /// <summary>Per-frame input hook driven by the mod feature registry.</summary>
-    public static void OnInputUpdate()
-    {
-        try
-        {
-            DowngradeMode.Update();
-        }
-        catch (Exception e)
-        {
-            Log.Warn($"downgrade mode update failed: {e}");
-        }
-    }
+    private static void OnSettingChanged(object sender, EventArgs args) => Impl.Enable(Enabled.Value);
+
+    public static void OnInputUpdate() => DowngradeMode.Update();
 
     private static void ResetState()
     {
@@ -71,106 +43,47 @@ public static class TechTweaksPatch
         TechTreeUI.Reset();
     }
 
-    /// <summary>Harmony patch slot to use; mirrors <c>HarmonyLib.HarmonyPatchType</c>.</summary>
-    private enum PatchKind
-    {
-        Postfix,
-        Prefix,
-        Transpiler
-    }
-
     public sealed class Impl : PatchImpl<Impl>
     {
         protected override void OnEnable()
         {
-            // Downgrade mode is a per-session switch and always starts out off.
             DowngradeMode.Reset();
-
-            PatchMethod(typeof(UITechNode), "OnPointerDown", nameof(UITechNode_OnPointerDown_Transpiler),
-                PatchKind.Transpiler);
-            PatchMethod(typeof(UITechTree), "_OnOpen", nameof(UITechTree_OnOpen_Postfix));
-            PatchMethod(typeof(UITechTree), "_OnFree", nameof(UITechTree_OnFree_Postfix));
+            UITechTree window = UIRoot.instance?.uiGame?.techTree;
+            if (window != null && window.active) UpdateHelpButton(window);
         }
 
-        protected override void OnDisable()
-        {
-            DowngradeMode.Reset();
-            TechTreeUI.Reset();
-        }
+        protected override void OnDisable() => ResetState();
 
-        private static void PatchMethod(Type type, string targetName, string patchName, PatchKind kind = PatchKind.Postfix)
-        {
-            var harmony = GetHarmony();
-            if (harmony == null)
-            {
-                Log.Warn($"cannot patch {type.Name}.{targetName}: this feature is not enabled");
-                return;
-            }
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(UITechTree), nameof(UITechTree._OnOpen))]
+        private static void UITechTree_OnOpen_Postfix(UITechTree __instance) => UpdateHelpButton(__instance);
 
-            MethodInfo target = AccessTools.Method(type, targetName);
-            if (target == null)
-            {
-                Log.Warn($"patch target {type.Name}.{targetName} not found; a game update may have changed it. " +
-                         "This part of the feature stays inactive.");
-                return;
-            }
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(UITechTree), nameof(UITechTree.OnLanguageChange))]
+        private static void UITechTree_OnLanguageChange_Postfix() => TechTreeUI.RefreshText();
 
-            MethodInfo patch = AccessTools.Method(typeof(Impl), patchName);
-            if (patch == null)
-            {
-                Log.Warn($"patch method {patchName} not found");
-                return;
-            }
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(UITechTree), nameof(UITechTree._OnFree))]
+        private static void UITechTree_OnFree_Postfix() => TechTreeUI.Reset();
 
-            try
-            {
-                harmony.Patch(target,
-                    kind == PatchKind.Prefix ? new HarmonyMethod(patch) : null,
-                    kind == PatchKind.Postfix ? new HarmonyMethod(patch) : null,
-                    kind == PatchKind.Transpiler ? new HarmonyMethod(patch) : null);
-            }
-            catch (Exception e)
-            {
-                Log.Warn($"failed to patch {type.Name}.{targetName}: {e.Message}");
-            }
-        }
-
-        private static void UITechTree_OnOpen_Postfix(UITechTree __instance)
+        private static void UpdateHelpButton(UITechTree window)
         {
             try
             {
-                TechTreeUI.OnTechTreeOpened(__instance);
+                TechTreeUI.OnTechTreeOpened(window);
             }
             catch (Exception e)
             {
-                Log.Warn($"creating the tech tree UI failed: {e}");
+                TechTreeUI.Reset();
+                CheatEnabler.Logger.LogWarning($"[TechTweaks] creating the tech tree help button failed: {e}");
             }
         }
 
-        private static void UITechTree_OnFree_Postfix()
-        {
-            try
-            {
-                TechTreeUI.OnTechTreeFreed();
-            }
-            catch (Exception e)
-            {
-                Log.Warn($"releasing the tech tree UI failed: {e}");
-            }
-        }
-
-        /// <summary>
-        /// Injects <c>TechClickHandler.OnClickTech(UITechNode)</c> at the start of the click handling.
-        /// The injection point is the <c>tree.selected</c> read, which is the first thing the method does
-        /// after the "tech id 1" early-out, so ignored nodes never reach the handler.
-        ///
-        /// The method is not rewritten in any other way; if the pattern is not found the original
-        /// instructions are returned unchanged and the feature simply does not react to clicks.
-        /// </summary>
         // Harmony transpiler: UITechNode_OnPointerDown_Transpiler
         // Target: UITechNode.OnPointerDown
-        // Fallback: TranspilerGuard returns the original instructions and logs a warning — the
-        //           key-modifier click handling then stays inactive instead of throwing.
+        // Fallback: TranspilerGuard returns original instructions and logs a warning.
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(UITechNode), nameof(UITechNode.OnPointerDown))]
         private static IEnumerable<CodeInstruction> UITechNode_OnPointerDown_Transpiler(
             IEnumerable<CodeInstruction> instructions, ILGenerator generator)
         {
@@ -180,36 +93,19 @@ public static class TechTweaksPatch
                 new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(UITechNode), nameof(UITechNode.tree))),
                 new CodeMatch(OpCodes.Callvirt,
                     AccessTools.PropertyGetter(typeof(UITechTree), nameof(UITechTree.selected))));
-
             if (matcher.IsInvalid)
             {
                 return matcher.Finish(instructions, CheatEnabler.Logger, nameof(UITechNode_OnPointerDown_Transpiler));
             }
 
-            MethodInfo handler = AccessTools.Method(typeof(TechClickHandler), nameof(TechClickHandler.OnClickTech));
-            if (handler == null)
-            {
-                Log.Warn("TechClickHandler.OnClickTech not found, key-modifier click handling is inactive");
-                return instructions;
-            }
-
-            // Move the labels of the matched instruction onto the injected sequence so that any branch
-            // which used to land there now runs the handler first.
-            List<Label> labels = matcher.Labels;
-            matcher.Labels = null;
+            var labels = matcher.Labels;
+            matcher.Labels = new List<Label>();
             matcher.Insert(
                 new CodeInstruction(OpCodes.Ldarg_0).WithLabels(labels),
-                new CodeInstruction(OpCodes.Call, handler));
+                new CodeInstruction(OpCodes.Call,
+                    AccessTools.Method(typeof(TechClickHandler), nameof(TechClickHandler.OnClickTech))));
 
             return matcher.Finish(instructions, CheatEnabler.Logger, nameof(UITechNode_OnPointerDown_Transpiler));
-        }
-    }
-
-    private static class Log
-    {
-        public static void Warn(string message)
-        {
-            CheatEnabler.Logger.LogWarning("[TechTweaks] " + message);
         }
     }
 }
