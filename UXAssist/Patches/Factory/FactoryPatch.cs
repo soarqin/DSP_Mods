@@ -163,13 +163,13 @@ public static class FactoryPatch
         BuildingBufferPatch.TweakBuildingBuffer.Enable(TweakBuildingBufferEnabled.Value);
         BuildToolPatch.PressShiftToTakeWholeBeltItems.Enable(PressShiftToTakeWholeBeltItemsEnabled.Value);
 
-        BuildToolPatch.Enable(true);
+        BuildToolPatch.EnableAlwaysOnPatches(true);
         UpdateTankFastFillInAndTakeOutMultiplierRealValue();
     }
 
     public static void Uninit()
     {
-        BuildToolPatch.Enable(false);
+        BuildToolPatch.EnableAlwaysOnPatches(false);
 
         BuildToolPatch.PressShiftToTakeWholeBeltItems.Enable(false);
         BuildingBufferPatch.TweakBuildingBuffer.Enable(false);

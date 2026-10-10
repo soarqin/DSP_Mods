@@ -4,6 +4,8 @@
 ## Changlog
 
 * 1.6.2 - Unrelease
+  * `Treat stack items as single in monitor components`: Fix the option taking effect at game startup when disabled, until toggled on and off.
+  * `Building options`: Honor saved toggle states at startup for off-grid construction, power-pole dragging, fast tank transfers, and Ctrl+Shift belt pickup.
   * `Belt signals for buy out dark fog items automatically`: Use the current in-game material names and retain the original exchange ratios.
   * `Initialize This Planet`: Fix an occasional array index error after initializing a planet with Holo Beacons.
   * `Planet vein utilization`: Restore the original vertical alignment of vein-group counts and keep resource names in their original positions.
@@ -427,6 +429,8 @@
 ## 更新日志
 
 * 1.6.2 - Unreleased
+  * `在流速计中将堆叠物品视为单个物品`：修复未勾选时仍在启动游戏后生效、必须切换一次才能关闭的问题。
+  * `建造选项`：修复不对齐网格建造、拖建电线杆、储液罐快速存取和 Ctrl+Shift 拾取整段传送带物品在启动时忽略已保存开关的问题。
   * `用于自动购买黑雾物品的传送带信号`：统一使用当前游戏中的材料名称，保留原有兑换比例。
   * `初始化本行星`：修复行星上存在全息信标时，初始化后可能出现数组越界报错的问题。
   * `宇宙视图行星/星系矿脉数量显示`：修复矿脉数量文字偏下和矿物名称向右偏移的问题。

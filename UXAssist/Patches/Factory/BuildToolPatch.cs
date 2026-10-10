@@ -12,14 +12,9 @@ namespace UXAssist.Patches.Factory;
 
 internal static class BuildToolPatch
 {
-    public static void Enable(bool enable)
+    public static void EnableAlwaysOnPatches(bool enable)
     {
         BuildGizmoPatch.Enable(enable);
-        OffGridBuilding.Enable(enable);
-        TreatStackingAsSingle.Enable(enable);
-        DragBuildPowerPoles.Enable(enable);
-        TankFastFillInAndTakeOut.Enable(enable);
-        PressShiftToTakeWholeBeltItems.Enable(enable);
     }
 
     private class BuildGizmoPatch : PatchImpl<BuildGizmoPatch>
