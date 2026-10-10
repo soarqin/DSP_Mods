@@ -116,6 +116,7 @@ public static class StoragePatch
             if (storagePool[storageId].id != storageId) return;
             var enabled = _storageDustbinCheckBox.Checked;
             storagePool[storageId].IsDustbin = enabled;
+            storagePool[storageId].ResetOptimizationFlags();
             if (!NebulaModAPI.IsMultiplayerActive) return;
             var planetId = window.factory.planetId;
             NebulaModAPI.MultiplayerSession.Network.SendPacketToLocalStar(new NebulaSupport.Packet.ToggleEvent(planetId, storageId, enabled));
@@ -208,6 +209,16 @@ public static class StoragePatch
         );
 
         return matcher.InstructionEnumeration();
+    }
+
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(StorageComponent), nameof(StorageComponent.AddCargo))]
+    private static bool StorageComponent_AddCargo_Prefix(StorageComponent __instance, ref Cargo cargo, ref bool __result)
+    {
+        if (!__instance.IsDustbin) return true;
+        __result = cargo.item > 0 && cargo.stack > 0;
+        if (__result) Dustbin.CalcGetSands(cargo.item, cargo.stack, cargo.inc);
+        return false;
     }
 
     /* We keep this to make MOD compatible with older version */
