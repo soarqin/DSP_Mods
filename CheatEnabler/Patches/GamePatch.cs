@@ -36,6 +36,12 @@ public static class GamePatch
         DevShortcuts.Enable(false);
     }
 
+    public static void OnInputUpdate()
+    {
+        if (!DevShortcutsEnabled.Value || DSPGame.IsMenuDemo || GameMain.isPaused || !GameMain.isRunning) return;
+        DevShortcuts.OnInputUpdate();
+    }
+
     private static void ResetState()
     {
         AbnormalDisabler.ResetState();
@@ -108,6 +114,7 @@ public static class GamePatch
 
         protected override void OnEnable()
         {
+            AttachToController(GameMain.mainPlayer?.controller);
             if (_test != null) _test.active = true;
         }
 
@@ -125,25 +132,36 @@ public static class GamePatch
         [HarmonyPatch(typeof(PlayerController), nameof(PlayerController.Init))]
         private static void PlayerController_Init_Postfix(PlayerController __instance)
         {
-            var cnt = __instance.actions.Length;
+            AttachToController(__instance);
+        }
+
+        private static void AttachToController(PlayerController controller)
+        {
+            if (controller?.actions == null) return;
+            foreach (var action in controller.actions)
+            {
+                if (action is not PlayerAction_Test test) continue;
+                _test = test;
+                _test.active = DevShortcutsEnabled.Value;
+                return;
+            }
+            var cnt = controller.actions.Length;
             var newActions = new PlayerAction[cnt + 1];
             for (var i = 0; i < cnt; i++)
             {
-                newActions[i] = __instance.actions[i];
+                newActions[i] = controller.actions[i];
             }
 
             _test = new PlayerAction_Test();
-            _test.Init(__instance.player);
+            _test.Init(controller.player);
             _test.active = DevShortcutsEnabled.Value;
             newActions[cnt] = _test;
-            __instance.actions = newActions;
+            controller.actions = newActions;
         }
 
-        [HarmonyPostfix]
-        [HarmonyPatch(typeof(PlayerAction_Test), nameof(PlayerAction_Test.GameTick))]
-        private static void PlayerAction_Test_GameTick_Postfix(PlayerAction_Test __instance)
+        internal static void OnInputUpdate()
         {
-            __instance.Update();
+            if (GetHarmony() != null && _test?.active == true) _test.Update();
         }
         // Harmony transpiler: PlayerAction_Test_Update_Transpiler
         // Target: PlayerAction_Test.Update

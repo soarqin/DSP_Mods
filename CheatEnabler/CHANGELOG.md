@@ -4,6 +4,7 @@
 ## Changlog
 
 * 2.4.7
+  * `Dev Shortcuts`: Work immediately when enabled after loading a save, and process each key press once per frame at accelerated game speeds.
   * Extend `Unlock Tech with Key-Modifiers` with a downgrade mode.
     * Press `Caps Lock` to toggle downgrade mode. Modifier clicks lower tech levels and revert their bonuses and dependent tech levels; `Alt` returns the tech to locked.
     * The current mode is shown by a popup and warning banner. A help button in the tech tree explains the key combinations.
@@ -201,6 +202,7 @@
 ## 更新日志
 
 * 2.4.7
+  * `开发模式快捷键`：修复载入存档后启用时不生效的问题；加速游戏时每次按键仍只执行一次。
   * `使用组合键点击解锁科技` 新增降级模式。
     * 按 `Caps Lock` 切换降级模式。按住组合键点击可降低科技等级，同时回退升级效果及后继科技等级；`Alt` 将科技回退到未解锁。
     * 弹窗和警告横幅显示当前模式，科技树中的帮助按钮提供组合键说明。
