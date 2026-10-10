@@ -209,22 +209,32 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
     [HarmonyPatch(typeof(WarningSystem), nameof(WarningSystem.hasCriticalWarning), MethodType.Getter)]
     private static IEnumerable<CodeInstruction> WarningSystem_hasCriticalWarning_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
     {
+        // The original body is `criticalWarnings.Count > 0`. The chain appended here ORs the feature
+        // switches on top of it, in display priority order: whichever one matches first owns the banner,
+        // because UpdateCriticalWarningText bails out before assigning any custom text when this getter is
+        // false. Tech downgrade mode therefore has to come first: it must show on its own, without either
+        // build toggle being on.
         var matcher = new CodeMatcher(instructions, generator);
-        var label1 = generator.DefineLabel();
-        var label2 = generator.DefineLabel();
+        var downgrade = generator.DefineLabel();
+        var noCondition = generator.DefineLabel();
+        var noCollision = generator.DefineLabel();
         matcher.End().MatchBack(false,
             new CodeMatch(OpCodes.Ret)
         ).RemoveInstructions(1);
         matcher.InsertAndAdvance(
-            new CodeInstruction(OpCodes.Brfalse, label1),
+            new CodeInstruction(OpCodes.Brfalse, downgrade),
             new CodeInstruction(OpCodes.Ldc_I4_1),
             new CodeInstruction(OpCodes.Ret),
-            new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(FactoryPatch), nameof(NoConditionEnabled))).WithLabels(label1),
+            new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(Tech.DowngradeMode), nameof(Tech.DowngradeMode.IsOn))).WithLabels(downgrade),
+            new CodeInstruction(OpCodes.Brfalse, noCondition),
+            new CodeInstruction(OpCodes.Ldc_I4_1),
+            new CodeInstruction(OpCodes.Ret),
+            new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(FactoryPatch), nameof(NoConditionEnabled))).WithLabels(noCondition),
             new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(ConfigEntry<bool>), nameof(ConfigEntry<bool>.Value))),
-            new CodeInstruction(OpCodes.Brfalse, label2),
+            new CodeInstruction(OpCodes.Brfalse, noCollision),
             new CodeInstruction(OpCodes.Ldc_I4_1),
             new CodeInstruction(OpCodes.Ret),
-            new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(FactoryPatch), nameof(NoCollisionEnabled))).WithLabels(label2),
+            new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(FactoryPatch), nameof(NoCollisionEnabled))).WithLabels(noCollision),
             new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(ConfigEntry<bool>), nameof(ConfigEntry<bool>.Value))),
             new CodeInstruction(OpCodes.Ret)
         );
@@ -250,7 +260,14 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
                 new CodeInstruction(OpCodes.Ldarg_0),
                 Transpilers.EmitDelegate((WarningSystem w) =>
                     {
-                        if (NoConditionEnabled.Value)
+                        // Only one of these can own the banner, so they form a display priority chain:
+                        // tech downgrade mode (a transient state the player has to notice) outranks the
+                        // two build toggles the player turned on deliberately.
+                        if (Tech.DowngradeMode.IsOn)
+                        {
+                            w.criticalWarningTexts = Localization.TechDowngradeModeWarning.Translate() + "\r\n";
+                        }
+                        else if (NoConditionEnabled.Value)
                         {
                             w.criticalWarningTexts = Localization.BuildWithoutConditionIsEnabled.Translate() + "\r\n";
                         }

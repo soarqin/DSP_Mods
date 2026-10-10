@@ -35,6 +35,29 @@ public static class Localization
     public const string DisableAbnormalChecks = "Disable Abnormal Checks";
     public const string Hotkey = "Hotkey";
     public const string UnlockTechWithKeyModifiers = "Unlock Tech with Key-Modifiers";
+    public const string UnlockDowngradeTechWithKeyModifiers = "Quickly upgrade/downgrade tech with key-modifiers";
+    public const string TechDowngradeModeOn = "Tech downgrade mode ON!";
+    public const string TechDowngradeModeOff = "Tech downgrade mode OFF!";
+    public const string TechDowngradeModeWarning = "!!Tech downgrade mode is ON!!";
+    public const string TechModifierHelpBody = """
+Click a tech on the tree while holding:
+  Shift: Tech level + 1
+  Ctrl: Tech level + 10
+  Ctrl + Shift: Tech level + 100
+  Alt: Tech level to MAX
+
+Note: all direct prerequisites will be unlocked as well.
+
+Press Caps Lock to toggle Tech Downgrade Mode: the key-modifiers above then decrease tech levels and revert the corresponding upgrade values.
+  Shift: Tech level - 1
+  Ctrl: Tech level - 10
+  Ctrl + Shift: Tech level - 100
+  Alt: revert to locked (level 0)
+(Shift+Alt and Ctrl+Alt do nothing)
+
+The features above come from the mod: CheatEnabler
+""";
+    public const string PackageResizeSkippedOccupiedCells = "Package resize skipped: occupied cells would be removed";
     public const string DevShortcuts = "Dev Shortcuts";
     public const string DevShortcutsTips = "Dev Shortcuts Tips";
     public const string UnlockTechWithKeyModifiersTips = "Unlock Tech with Key-Modifiers Tips";
@@ -145,6 +168,47 @@ public static class Localization
         I18N.Add(DisableAbnormalChecks, "Disable Abnormal Checks", "关闭数据异常检查");
         I18N.Add(Hotkey, "Hotkey", "快捷键");
         I18N.Add(UnlockTechWithKeyModifiers, "Unlock Tech with Key-Modifiers", "使用组合键点击解锁科技");
+        I18N.Add(UnlockDowngradeTechWithKeyModifiers, "Quickly upgrade/downgrade tech with key-modifiers", "使用组合键快速升降级科技");
+        I18N.Add(TechDowngradeModeOn, "Tech downgrade mode ON!", "科技降级模式已开启!");
+        I18N.Add(TechDowngradeModeOff, "Tech downgrade mode OFF!", "科技降级模式已关闭!");
+        I18N.Add(TechDowngradeModeWarning, "!!Tech downgrade mode is ON!!", "！！科技降级模式已开启！！");
+        I18N.Add(TechModifierHelpBody, """
+Click a tech on the tree while holding:
+  Shift: Tech level + 1
+  Ctrl: Tech level + 10
+  Ctrl + Shift: Tech level + 100
+  Alt: Tech level to MAX
+
+Note: all direct prerequisites will be unlocked as well.
+
+Press Caps Lock to toggle Tech Downgrade Mode: the key-modifiers above then decrease tech levels and revert the corresponding upgrade values.
+  Shift: Tech level - 1
+  Ctrl: Tech level - 10
+  Ctrl + Shift: Tech level - 100
+  Alt: revert to locked (level 0)
+(Shift+Alt and Ctrl+Alt do nothing)
+
+The features above come from the mod: CheatEnabler
+""", """
+按住以下组合键点击科技树：
+  Shift：科技等级 +1
+  Ctrl：科技等级 +10
+  Ctrl + Shift：科技等级 +100
+  Alt：科技等级升到最大
+
+注意：所有直接前置科技也会被解锁。
+
+按 Caps Lock 开启/关闭科技降级模式：开启后上述组合键变为降低科技等级，并回退对应升级数值。
+  Shift：科技等级 -1
+  Ctrl：科技等级 -10
+  Ctrl + Shift：科技等级 -100
+  Alt：直接回退到未解锁（0 级，锁定）
+（Shift+Alt 与 Ctrl+Alt 无效果）
+
+以上功能来源于MOD：CheatEnabler
+""");
+        I18N.Add(PackageResizeSkippedOccupiedCells, "Package resize skipped: occupied cells would be removed",
+            "背包扩容回退已跳过：有物品的格子会被移除，未缩小背包");
         I18N.Add(DevShortcuts, "Dev Shortcuts", "开发模式快捷键");
         I18N.Add(DevShortcutsTips, """
 Caution: Some function may trigger abnormal check!
