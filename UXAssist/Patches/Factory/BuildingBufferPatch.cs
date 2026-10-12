@@ -79,13 +79,12 @@ internal static class BuildingBufferPatch
             matcher.MatchForward(false,
                 new CodeMatch(OpCodes.Ldarg_0),
                 new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(PowerGeneratorComponent), nameof(PowerGeneratorComponent.catalystCount))),
-                new CodeMatch(OpCodes.Conv_R4),
-                new CodeMatch(OpCodes.Ldc_R4, 20f),
+                new CodeMatch(ci => ci.LoadsConstant(2)),
                 new CodeMatch(OpCodes.Clt)
             );
             if (matcher.IsInvalid)
                 return matcher.Finish(instructions, UXAssist.Logger, nameof(PowerGeneratorComponent_GameTick_Gamma_Transpiler));
-            matcher.Advance(2).RemoveInstructions(2).Insert(new CodeInstruction(OpCodes.Ldc_I4, FactoryPatch.ReceiverBufferCount.Value));
+            matcher.Advance(2).Set(OpCodes.Ldc_I4, FactoryPatch.ReceiverBufferCount.Value);
             return matcher.InstructionEnumeration();
         }
         // Harmony transpiler: AssemblerComponent_UpdateNeeds_Transpiler

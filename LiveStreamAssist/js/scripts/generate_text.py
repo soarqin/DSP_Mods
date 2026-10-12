@@ -34,7 +34,7 @@ KIND_FROM_SET = {
     "DoodadProtoSet": "doodad",
     "AbnormalityProtoSet": "abnormality",
     "FleetProtoSet": "fleet",
-    "CreationPartProtoSet": "creationPart",
+    "VehiclePartProtoSet": "creationPart",
     "EffectEmitterProtoSet": "effectEmitter",
     "MIDIProtoSet": "midi",
     "PlayerProtoSet": "player",

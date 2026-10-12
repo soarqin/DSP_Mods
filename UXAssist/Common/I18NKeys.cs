@@ -382,7 +382,7 @@ Assembler buffer minimum multiplier: 2
 Buffer count for assembling in labs: 6
 Extra buffer count for Self-evolution Labs: 3
 Buffer count for researching in labs: 10
-Ray Receiver Graviton Lens buffer count: 20
+Ray Receiver Graviton Lens buffer count: 2
 Ejector Solar Sails buffer count: 20
 Silo Rockets buffer count: 20
 """, """
@@ -392,7 +392,7 @@ Silo Rockets buffer count: 20
 研究站矩阵合成模式缓存数量：6
 自演化研究站矩阵额外缓冲数量：3
 研究站科研模式缓存数量：10
-射线接收器透镜缓冲数量：20
+射线接收器透镜缓冲数量：2
 弹射器太阳能帆缓冲数量：20
 发射井火箭缓冲数量：20
 """);

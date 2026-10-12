@@ -140,7 +140,7 @@ python LiveStreamAssist/js/scripts/generate_icons.py --game-root "<DSP install>"
 python LiveStreamAssist/js/scripts/pack_js.py
 ```
 
-The generator locates Steam/DSP the same way `UpdateGameDlls.ps1` does when `--game-root` is omitted. It reads BOM-aware `Locale/` files in the header's stable page order and extracts prototype id/name maps from `resources.assets`. Missing item or tech tables abort generation before overwriting the dictionary. Edit `src/` and repack rather than editing `livestream-assist.js` directly.
+The generator locates Steam/DSP the same way `UpdateGameDlls.ps1` does when `--game-root` is omitted. It reads BOM-aware `Locale/` files in the header's stable page order and extracts prototype id/name maps from `resources.assets`. DSP 0.10.35's `VehiclePartProtoSet` retains the existing `creationPart` dictionary group. Missing item or tech tables abort generation before overwriting the dictionary. Edit `src/` and repack rather than editing `livestream-assist.js` directly.
 
 ## Validation
 

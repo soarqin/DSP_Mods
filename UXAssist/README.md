@@ -100,7 +100,7 @@
         * `Buffer count for assembling in labs`: Range 2-20, default is 6 (same as game)
         * `Extra buffer count for Self-evolution Labs`: Range 1-10, default is 3 (same as game)
       * `Buffer count for researching in labs`: Range 2-20, default is 10 (same as game)
-      * `Ray Receiver Graviton Lens buffer count`: Range 1-20, default is 1 (game default is 20)
+      * `Ray Receiver Graviton Lens buffer count`: Range 1-20, default is 1 (game default is 2)
       * `Ejector Solar Sails buffer count`: Range 5-400 (step by 5); the game's original buffer holds 20
       * `Silo Rockets buffer count`: Range 1-40; the game's original buffer holds 20
   * Logistics
@@ -290,7 +290,7 @@
         * `研究站矩阵合成模式缓存数量`：范围2-20，默认为6(同游戏)
         * `自演化研究站矩阵额外缓冲数量`：范围1-10，默认为3(同游戏)
       * `研究站科研模式缓存数量`：范围2-20，默认为10(同游戏)
-      * `射线接收器透镜缓冲数量`：范围1-20，默认为1(游戏默认为20)
+      * `射线接收器透镜缓冲数量`：范围 1 至 20，默认值为 1（游戏原始值为 2）
       * `弹射太阳帆缓冲区数量`：范围 5 至 400（步进值为 5）；游戏原始缓冲数量为 20
       * `发射井火箭缓冲区数量`：范围 1 至 40；游戏原始缓冲数量为 20
   * 物流
