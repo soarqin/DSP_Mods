@@ -8,6 +8,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using UXAssist.Common;
 using UXAssist.Common.GameConstants;
+using UXAssist.Common.Patching;
 
 namespace UXAssist.Patches.Logistics;
 
@@ -360,32 +361,38 @@ internal class GreaterPowerUsageInLogistics : PatchImpl<GreaterPowerUsageInLogis
     }
     // Harmony transpiler: UIStationWindow_OnMaxMiningSpeedChange_Transpiler
     // Target: UIStationWindow.OnMaxMiningSpeedChange
-    // Fallback: None — patch will fail loudly if the target method body changes.
+    // Fallback: Return the original instructions if the native mining-speed calculation is not found.
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(UIStationWindow), nameof(UIStationWindow.OnMaxMiningSpeedChange))]
     private static IEnumerable<CodeInstruction> UIStationWindow_OnMaxMiningSpeedChange_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
     {
-        var matcher = new CodeMatcher(instructions, generator);
+        var original = instructions.ToList();
+        var matcher = new CodeMatcher(original, generator);
         matcher.MatchForward(false,
-            new CodeMatch(ci => ci.opcode == OpCodes.Ldc_I4 && ci.OperandIs(LogisticsConstants.MinMiningSpeedBase)),
-            new CodeMatch(OpCodes.Ldarg_1)
+            new CodeMatch(ci => ci.LoadsConstant(LogisticsConstants.MinMiningSpeedBase)),
+            new CodeMatch(OpCodes.Ldarg_1),
+            new CodeMatch(OpCodes.Ldc_R4, 0.5f),
+            new CodeMatch(OpCodes.Add),
+            new CodeMatch(OpCodes.Conv_I4),
+            new CodeMatch(ci => ci.LoadsConstant(LogisticsConstants.MiningSpeedFineStep)),
+            new CodeMatch(OpCodes.Mul),
+            new CodeMatch(OpCodes.Add),
+            new CodeMatch(ci => ci.IsStloc())
         );
-        var pos = matcher.Pos;
-        matcher.MatchForward(false,
-            new CodeMatch(OpCodes.Stloc_1)
-        );
-        var pos2 = matcher.Pos;
-        matcher.Start().Advance(pos);
-        var labels = matcher.Labels;
-        matcher.RemoveInstructions(pos2 - pos);
+        if (matcher.IsInvalid)
+            return matcher.Finish(original, UXAssist.Logger, nameof(UIStationWindow_OnMaxMiningSpeedChange_Transpiler));
+        var loadValue = new CodeInstruction(OpCodes.Ldarg_1).WithLabels(matcher.Labels);
+        loadValue.blocks.AddRange(matcher.Instruction.blocks);
+        matcher.RemoveInstructions(8);
         matcher.Insert(
-            new CodeInstruction(OpCodes.Ldarg_1).WithLabels(labels),
-            Transpilers.EmitDelegate((float value) =>
+            loadValue,
+            Transpilers.EmitDelegate<Func<float, int>>(value =>
             {
                 var intval = (int)(value + 0.5f);
-                if (intval <= LogisticsConstants.MiningSpeedSliderMaxDefault)
+                var defaultMax = (int)LogisticsConstants.MiningSpeedSliderMaxDefault;
+                if (intval <= defaultMax)
                     return intval * LogisticsConstants.MiningSpeedFineStep + LogisticsConstants.MinMiningSpeedBase;
-                return (intval - LogisticsConstants.MiningSpeedSliderMaxDefault) * LogisticsConstants.MiningSpeedCoarseStep + LogisticsConstants.MaxMiningSpeedBase;
+                return (intval - defaultMax) * LogisticsConstants.MiningSpeedCoarseStep + LogisticsConstants.MaxMiningSpeedBase;
             })
         );
         return matcher.InstructionEnumeration();

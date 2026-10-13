@@ -11,7 +11,7 @@ Method bodies and metadata come from the original `DSPGAME_Data/Managed/Assembly
 
 Versions come from each installation's `Updates/Versions.txt` and the installed `appmanifest_1366540.acf`. `AssemblyFromGame/Assembly-CSharp.dll` is refreshed only for compilation.
 
-## Findings and fix
+## Findings and fixes
 
 The native assembly has 67 changed method bodies, 11 added fields, 3 removed fields, and two replaced method signatures. No types are added or removed. Eight changed methods are directly targeted by maintained mod patches:
 
@@ -31,6 +31,10 @@ The fix replaces the integer constant in the current catalyst-count comparison w
 
 The bilingual help text and README now show the native threshold as **2**. UXAssist's existing **1.6.2** unreleased changelog includes the fix; mod versions are unchanged.
 
+A subsequent mining-speed regression check finds an existing type error in `Increase maximum power usage in Logistic Stations and Advanced Mining Machines`. A floating-point slider constant makes the injected conversion delegate return `Single`, but native `OnMaxMiningSpeedChange` stores that result in an `Int32` local and then in `MinerComponent.speed`. This invalid IL corrupts the actual speed, rather than only its displayed percentage. A check using the original handler and the pre-fix package DLL reproduces invalid integer values; the exact result of the invalid IL depends on the runtime.
+
+The conversion now explicitly returns `Int32`, preserves native rounding, and retains 100%–300% in 10-percentage-point steps and 400%–1,000% in 100-percentage-point steps. Its transpiler matches the complete native calculation without depending on a fixed local slot and returns the original instructions when that calculation is absent. For miners whose speed has already been corrupted, adjust the slider after installing the fix; the previous intended setting cannot be recovered reliably from the corrupted value.
+
 LiveStreamAssist's offline text generator also fails on both game versions because it asks the type-tree generator for the removed `CreationPartProtoSet`; the original DLL and asset script metadata contain `VehiclePartProtoSet`. Its extraction map now uses the current type while preserving the public `creationPart` dictionary group. Text and icons are regenerated from the current installation, including item 1211, technology 1509, recipe 162, signal 519, updated English guide text, and current localized vegetation names. The offline layers retain their existing behavior and make no WebSocket requests.
 
 ## Validation
@@ -41,6 +45,7 @@ LiveStreamAssist's offline text generator also fails on both game versions becau
 - Dustbin's actual preloader injects the two expected Boolean fields into a temporary copy of the original game assembly; its mod checks pass against that copy.
 - The receiver regression check fails before the fix because configuration value 1 leaves the native threshold at 2. After the fix, 21 assertions pass on each game version, covering thresholds 1, 2, 7, and 20, below/equal/above boundaries, emitted comparison types, preservation of surrounding instructions, and missing-pattern fallback.
 - 55 existing behavior assertions pass, including terrain buffer bounds, soil guards, saved brush restoration, and composition of both `ExecuteBrushAction` transpilers in either order.
+- 75 mining-speed assertions pass. The check executes the original handler with the injected conversion against real game data types, replacing only the Unity text setter with a recording function. It verifies actual miner-speed assignments and displayed percentages, every slider position, rounding boundaries, reopening readback, native event/station guards, the unpatched path, and complete/partial missing-pattern fallbacks. This check covers the return/local type mismatch that the earlier structural transpiler checks did not detect.
 - LiveStreamAssist's text and icon generators succeed against the current original game files; the dictionary includes 175 items and 315 technologies. Repacking the JS bundle produces no source changes.
 - 42 JS client/query/text/overlay checks and the Python locale/format checks pass. The full JS suite also includes seven pre-existing dashboard failures: its `FakeQuery` omits `getClusterString`, which the unchanged dashboard calls. The same seven failures reproduce in an isolated copy of the files from `HEAD`. These tests use their own mocked text data, independent of the regenerated dictionary.
 - `git diff --check` passes.

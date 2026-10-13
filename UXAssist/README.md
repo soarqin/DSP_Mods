@@ -104,6 +104,8 @@
       * `Ejector Solar Sails buffer count`: Range 5-400 (step by 5); the game's original buffer holds 20
       * `Silo Rockets buffer count`: Range 1-40; the game's original buffer holds 20
   * Logistics
+    * Increase maximum power usage in Logistic Stations and Advanced Mining Machines
+      * Extend the Advanced Mining Machine's speed slider from 100%–300% to 100%–1,000%, retaining 10-percentage-point steps through 300% and using 100-percentage-point steps above it.
     * Enhanced control for logistic storage capacities
       * Logistic storage capacities are not scaled on upgrading `Logistics Carrier Capacity`, if they are not set to maximum capacity or already greater than maximum capacity.
       * You can use arrow keys to adjust logistic storage capacities gracefully.
@@ -294,6 +296,8 @@
       * `弹射太阳帆缓冲区数量`：范围 5 至 400（步进值为 5）；游戏原始缓冲数量为 20
       * `发射井火箭缓冲区数量`：范围 1 至 40；游戏原始缓冲数量为 20
   * 物流
+    * 提升物流塔和大型采矿机的最大功耗
+      * 将大型采矿机开采速度滑条的范围从 100%–300% 扩展为 100%–1,000%；300% 以内每档增加 10 个百分点，之后每档增加 100 个百分点。
     * 物流塔存储数量限制控制改进
       * 当升级`运输机舱扩容`时，不会对各种物流塔的存储限制按比例提升，除非设置为最大允许容量或者已经超过升级后的最大容量。
       * 你可以使用方向键微调物流塔存储限制
