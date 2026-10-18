@@ -77,6 +77,7 @@ function New-PublishFixture {
     $script:requests = New-Object 'System.Collections.Generic.List[string]'
     $script:layout = $false
     $script:failStep = ''
+    $script:tcliVersionOutput = 'tcli 0.2.4+synthetic'
     $script:badArchive = ''
     $script:remoteState = 'available'
     $script:expectedNamespace = 'AnotherTeam'
@@ -86,8 +87,13 @@ function New-PublishFixture {
 }
 
 function Invoke-PublishDotNet {
-    param([string[]]$Arguments, [switch]$Capture, [string]$Secret)
+    param([string[]]$Arguments, [switch]$Capture, [string]$Secret, [int[]]$SuccessExitCodes = @(0))
     $script:calls.Add(($Arguments -join '|'))
+    if ($Arguments -contains '--version') {
+        Assert-Check ($Capture -and $SuccessExitCodes.Count -eq 2 -and 0 -in $SuccessExitCodes -and 1 -in $SuccessExitCodes) 'The tcli version check did not account for its nonstandard exit code.'
+        if ($script:failStep -eq 'tool') { throw 'Synthetic tool startup failure' }
+        return $script:tcliVersionOutput
+    }
     if ($Arguments[0] -eq 'msbuild') {
         if ($script:failStep -eq 'evaluate') { return 'not JSON' }
         $isPreloader = $Arguments[1] -like '*FixturePreloader.csproj'
@@ -151,6 +157,7 @@ function Invoke-PublishDotNet {
         return
     }
     if ($Arguments -contains 'publish') {
+        Assert-Check ($SuccessExitCodes.Count -eq 1 -and $SuccessExitCodes[0] -eq 0) 'Publication accepted a nonzero exit code.'
         Assert-Check ($Secret -ceq $script:syntheticToken) 'The output-redaction token is incorrect.'
         Assert-Check ([Environment]::GetEnvironmentVariable('TCLI_AUTH_TOKEN', 'Process') -ceq $script:syntheticToken) 'The child process token is incorrect.'
         Assert-Check (-not ($Arguments -contains '--token')) 'A token was put in the command line.'
@@ -239,7 +246,12 @@ try {
     try { $smallIcon.Save((Join-Path $script:fixturePackage 'icon.png'), [Drawing.Imaging.ImageFormat]::Png) } finally { $smallIcon.Dispose() }
     Assert-CheckThrows { Invoke-ModPublish $script:fixtureRoot Fixture AnotherTeam -DryRun } '*256x256 PNG*'
 
-    foreach ($failure in @('evaluate', 'restore', 'preloader', 'build')) {
+    New-PublishFixture
+    $script:tcliVersionOutput = 'Synthetic tool startup error without a version'
+    Assert-CheckThrows { Invoke-ModPublish $script:fixtureRoot Fixture AnotherTeam $externalTokenFile } '*recognizable tcli version*'
+    Assert-Check (-not $script:published -and $script:requests.Count -eq 0 -and $script:calls.Count -eq 1) 'An invalid tool version fell through to the build or publication.'
+
+    foreach ($failure in @('tool', 'evaluate', 'restore', 'preloader', 'build')) {
         New-PublishFixture
         $script:failStep = $failure
         if ($failure -eq 'restore') { [IO.File]::Delete($script:fixtureAssets) }
@@ -328,14 +340,35 @@ try {
 
     # Exercise redaction and nonzero exits without starting another process.
     $script:nativeExit = 0
+    $script:nativeOutput = "Synthetic tool output: $script:syntheticToken"
     function dotnet {
         param([Parameter(ValueFromRemainingArguments = $true)][string[]]$Arguments)
         $global:LASTEXITCODE = $script:nativeExit
-        return "Synthetic tool output: $script:syntheticToken"
+        return $script:nativeOutput
     }
     try {
         $redacted = & $script:realInvokeDotNet -Capture -Arguments @('stub') -Secret $script:syntheticToken
         Assert-Check ($redacted.Contains('[REDACTED]') -and -not $redacted.Contains($script:syntheticToken)) 'Native output exposed the token.'
+        # Exercise the actual preflight helper through the real exit-code wrapper.
+        $stubInvokeDotNet = ${function:Invoke-PublishDotNet}
+        try {
+            Set-Item -LiteralPath Function:Invoke-PublishDotNet -Value $script:realInvokeDotNet
+            $script:nativeOutput = 'tcli 0.2.4+synthetic'
+            foreach ($versionExit in @(0, 1)) {
+                $script:nativeExit = $versionExit
+                Assert-PublishTcli 6>$null
+                Assert-Check ($true) "The version check rejected tcli exit code $versionExit."
+            }
+            $script:nativeExit = 1
+            $script:nativeOutput = 'Synthetic tool restore failure'
+            Assert-CheckThrows { Assert-PublishTcli } '*recognizable tcli version*'
+            $script:nativeOutput = 'tcli 0.2.4+synthetic'
+            $script:nativeExit = 150
+            Assert-CheckThrows { Assert-PublishTcli } '*exit 150*'
+            $script:nativeExit = 1
+            Assert-CheckThrows { & $script:realInvokeDotNet -Capture -Arguments @('tool', 'run', 'tcli', '--', 'publish') } '*exit 1*'
+        } finally { Set-Item -LiteralPath Function:Invoke-PublishDotNet -Value $stubInvokeDotNet }
+        $script:nativeOutput = "Synthetic tool output: $script:syntheticToken"
         $script:nativeExit = 17
         Assert-CheckThrows { & $script:realInvokeDotNet -Arguments @('stub') -Secret $script:syntheticToken } '*exit 17*'
         Assert-CheckThrows { & $script:realInvokeDotNet -Capture -Arguments @('stub') -Secret $script:syntheticToken } '*exit 17*'

@@ -28,7 +28,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 function Invoke-PublishDotNet {
-    param([string[]]$Arguments, [switch]$Capture, [string]$Secret)
+    param([string[]]$Arguments, [switch]$Capture, [string]$Secret, [int[]]$SuccessExitCodes = @(0))
 
     $previousOutputEncoding = [Console]::OutputEncoding
     try {
@@ -46,12 +46,26 @@ function Invoke-PublishDotNet {
             if ($Capture) { $lines.Add($line) } else { Write-Host $line }
         }
         $commandExit = $LASTEXITCODE
-        if ($commandExit -ne 0) {
+        if ($commandExit -notin $SuccessExitCodes) {
             if ($Capture) { foreach ($line in $lines) { Write-Host $line } }
             throw "dotnet $($Arguments[0]) failed (exit $commandExit). No further publishing steps were run."
         }
         if ($Capture) { return ($lines -join [Environment]::NewLine) }
     } finally { [Console]::OutputEncoding = $previousOutputEncoding }
+}
+
+function Assert-PublishTcli {
+    try {
+        # tcli 0.2.4 returns 1 for --version because its parser treats it as an
+        # unparsed command. Accept it only here, with a recognizable version.
+        $versionOutput = Invoke-PublishDotNet -Capture -Arguments @('tool', 'run', 'tcli', '--', '--version') -SuccessExitCodes @(0, 1)
+        if ($versionOutput -notmatch '(?m)^tcli [0-9]+\.[0-9]+\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?\s*$') {
+            throw 'The version check did not return a recognizable tcli version.'
+        }
+        Write-Host $versionOutput
+    } catch {
+        throw "Cannot verify the pinned tcli tool. Run dotnet tool restore in the repository root, then dotnet tool run tcli -- --version to inspect startup diagnostics. $($_.Exception.Message)"
+    }
 }
 
 function Get-PublishJsonProperty {
@@ -282,10 +296,7 @@ function Invoke-ModPublish {
     Push-Location -LiteralPath $RepositoryRoot
     try {
         $null = Get-Command dotnet -CommandType Application -ErrorAction Stop
-        if (-not $DryRun) {
-            try { Invoke-PublishDotNet -Arguments @('tool', 'run', 'tcli', '--', '--version') }
-            catch { throw 'The pinned tcli tool cannot run. Run dotnet tool restore in the repository root and check its required .NET runtime.' }
-        }
+        if (-not $DryRun) { Assert-PublishTcli }
         $metadata = Get-PublishProject $projectPath
         $properties = $metadata.Properties
         if (-not [string]::IsNullOrEmpty($properties.PackPreloaderTargetDir)) { throw 'Select a main mod; this project is a preloader or helper.' }

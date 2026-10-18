@@ -3,7 +3,7 @@
 
 ## Changlog
 
-* 1.6.2 - Unrelease
+* 1.6.2
   * `Increase maximum power usage in Logistic Stations and Advanced Mining Machines`: Fix zero or corrupted mining speeds when adjusting an Advanced Mining Machine's speed slider with the option enabled.
   * `Tweak building buffers`: Restore the Ray Receiver Graviton Lens buffer setting on DSP 0.10.35.29104 and later, and correct the displayed native buffer value to 2.
   * `Drag building power poles`: Fix invalid alternating previews when enabling the option after loading a save, and restore original spacing when disabling it.
@@ -434,7 +434,7 @@
 
 ## 更新日志
 
-* 1.6.2 - Unreleased
+* 1.6.2
   * `提升物流塔和大型采矿机的最大功耗`：修复启用后调整大型采矿机开采速度时出现 0% 或异常速度的问题。
   * `调整建筑输入缓冲`：修复 DSP 0.10.35.29104 及后续版本中射线接收器透镜缓冲设置不生效的问题，并将显示的游戏原始值更正为 2。
   * `拖建电线杆`：修复载入存档后才启用功能时交替放置的预览异常，并在关闭时恢复原有间距。
