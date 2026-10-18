@@ -21,6 +21,10 @@ build/
 /*/package/patchers/
 /*/package/plugins/
 
+# Local credentials
+.env
+.env.*
+
 # Agent files
 /.omo/
 /.worktrees/
