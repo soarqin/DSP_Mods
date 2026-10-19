@@ -31,6 +31,11 @@ internal static partial class VeinProtectionPatch
             return count;
         }
 
+        private static int GetMiningVeinCountForWindow(MinerComponent miner, PlanetFactory factory)
+        {
+            return GetMiningVeinCount(ref miner, factory);
+        }
+
         private static int GetMiningVeinAmount(ref VeinData vein, PlanetFactory factory)
         {
             return IsProtectedVein(ref vein, FactoryPatch.GetMiningCostRate(factory.gameData.history)) ? 0 : vein.amount;
@@ -55,7 +60,11 @@ internal static partial class VeinProtectionPatch
                 new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(MinerComponent), nameof(MinerComponent.veinCount))),
                 new CodeMatch(ci => ci.opcode == OpCodes.Conv_R8 || ci.opcode == OpCodes.Conv_R4));
             if (matcher.IsInvalid) return matcher.Finish(original, UXAssist.Logger, nameof(MiningSpeed_Transpiler));
-            matcher.Repeat(m => ReplaceRead(m, factoryLoad, nameof(GetMiningVeinCount)));
+            // The window loads a struct value; the statistics paths load managed references.
+            var veinCountHelper = __originalMethod.DeclaringType == typeof(UIMinerWindow)
+                ? nameof(GetMiningVeinCountForWindow)
+                : nameof(GetMiningVeinCount);
+            matcher.Repeat(m => ReplaceRead(m, factoryLoad, veinCountHelper));
 
             matcher.Start().MatchForward(false,
                 new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(VeinData), nameof(VeinData.amount))),
