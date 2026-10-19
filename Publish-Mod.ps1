@@ -2,23 +2,20 @@
 <#
 .SYNOPSIS
 Builds and publishes one mod to the Dyson Sphere Program Thunderstore community.
+Resolves its Team from the service-account token before publishing.
 .PARAMETER EnvFile
 Optional token file. Defaults to .env in the caller's current directory when present,
 otherwise TCLI_AUTH_TOKEN is read from the process environment.
 .EXAMPLE
-.\Publish-Mod.ps1 -Project UXAssist -Namespace soarqin -DryRun
+.\Publish-Mod.ps1 -Project UXAssist -DryRun
 .EXAMPLE
-.\Publish-Mod.ps1 -Project Dustbin -Namespace soarqin -EnvFile C:\Secrets\thunderstore.env
+.\Publish-Mod.ps1 -Project Dustbin -EnvFile C:\Secrets\thunderstore.env
 #>
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)]
     [ValidatePattern('^[A-Za-z0-9_][A-Za-z0-9_.-]*\z')]
     [string]$Project,
-
-    [Parameter(Mandatory = $true)]
-    [ValidatePattern('^[A-Za-z0-9_]+\z')]
-    [string]$Namespace,
 
     [string]$EnvFile,
     [switch]$DryRun
@@ -180,6 +177,30 @@ function Get-PublishUserToken {
     return [Environment]::GetEnvironmentVariable('TCLI_AUTH_TOKEN', 'User')
 }
 
+function Get-PublishNamespace {
+    param([string]$Token)
+    $endpoint = 'https://thunderstore.io/api/experimental/current-user/'
+    try {
+        # Keep credentials on the fixed HTTPS endpoint and out of diagnostics.
+        $profile = Invoke-RestMethod -Uri $endpoint -Method Get -Headers @{ Authorization = "Bearer $Token" } -TimeoutSec 30 -MaximumRedirection 0 -ErrorAction Stop
+    } catch {
+        throw "Cannot query the token's Team at $endpoint. Check the service-account token, connectivity, and server availability before retrying; nothing was uploaded."
+    }
+    $username = Get-PublishJsonProperty $profile 'username'
+    $teamsProperty = if ($null -ne $profile) { $profile.PSObject.Properties['teams'] }
+    if ($username -isnot [string] -or [string]::IsNullOrWhiteSpace($username) -or
+        $null -eq $teamsProperty -or $teamsProperty.Value -isnot [array]) {
+        throw 'The current-user endpoint returned an unauthenticated or malformed response. Check the service-account token before publishing.'
+    }
+    $teams = $teamsProperty.Value
+    if ($teams.Count -eq 0) { throw 'The service-account token has no active Team. Check its Team membership before publishing.' }
+    if ($teams.Count -ne 1) { throw 'The token belongs to multiple Teams; publication requires exactly one Team.' }
+    if ($teams[0] -isnot [string] -or $teams[0] -notmatch '^[A-Za-z0-9_]+\z') {
+        throw 'The current-user endpoint returned an invalid Team name. Nothing was uploaded.'
+    }
+    return $teams[0]
+}
+
 function Assert-PublishChangelog {
     param([string]$Text, [string]$Version)
     $sections = @([regex]::Matches($Text, '(?is)<details\b[^>]*>(.*?)</details>') | ForEach-Object { $_.Groups[1].Value })
@@ -268,9 +289,9 @@ function Assert-PublishVersionAvailable {
 }
 
 function Invoke-ModPublish {
-    param([string]$RepositoryRoot, [string]$Project, [string]$Namespace, [string]$EnvFile, [switch]$DryRun)
-    if ($Project -notmatch '^[A-Za-z0-9_][A-Za-z0-9_.-]*\z' -or $Namespace -notmatch '^[A-Za-z0-9_]+\z') {
-        throw 'Supply one top-level -Project directory name and a non-empty alphanumeric/underscore -Namespace.'
+    param([string]$RepositoryRoot, [string]$Project, [string]$EnvFile, [switch]$DryRun)
+    if ($Project -notmatch '^[A-Za-z0-9_][A-Za-z0-9_.-]*\z') {
+        throw 'Supply one top-level -Project directory name.'
     }
     $projectDir = Join-Path $RepositoryRoot $Project
     $projectPath = Join-Path $projectDir "$Project.csproj"
@@ -287,6 +308,7 @@ function Invoke-ModPublish {
     $packageName = Get-PublishJsonProperty (Read-PublishJson $manifestPath) 'name'
     if ($packageName -isnot [string] -or $packageName -notmatch '^[A-Za-z0-9_]+\z') { throw 'The manifest must have a valid, non-empty string name.' }
     $token = $null
+    $namespace = $null
     # Resolve token files before changing to the repository's build directory.
     if (-not $DryRun) { $token = Get-PublishToken $EnvFile }
     $oldToken = [Environment]::GetEnvironmentVariable('TCLI_AUTH_TOKEN', 'Process')
@@ -296,7 +318,10 @@ function Invoke-ModPublish {
     Push-Location -LiteralPath $RepositoryRoot
     try {
         $null = Get-Command dotnet -CommandType Application -ErrorAction Stop
-        if (-not $DryRun) { Assert-PublishTcli }
+        if (-not $DryRun) {
+            Assert-PublishTcli
+            $namespace = Get-PublishNamespace $token
+        }
         $metadata = Get-PublishProject $projectPath
         $properties = $metadata.Properties
         if (-not [string]::IsNullOrEmpty($properties.PackPreloaderTargetDir)) { throw 'Select a main mod; this project is a preloader or helper.' }
@@ -340,6 +365,12 @@ function Invoke-ModPublish {
         if ($hasChangelog) { $files['CHANGELOG.md'] = Join-Path $projectDir 'CHANGELOG.md' }
         Assert-PublishArchive $zipPath $packageName $version $files $hasChangelog
 
+        $teamLabel = if ($DryRun) { 'not queried (resolved from token when publishing)' } else { $namespace }
+        Write-Host "Project: $Project | Team: $teamLabel | Package: $packageName | Version: $version"
+        Write-Host 'Community: dyson-sphere-program | Categories: empty (retain existing listing categories)'
+        Write-Host "ZIP: $zipPath"
+        if ($DryRun) { Write-Host 'Dry run complete. Package validated; Team lookup and upload were skipped.'; return }
+
         $configDir = Join-Path $configBase ([Guid]::NewGuid().ToString('N'))
         $null = [IO.Directory]::CreateDirectory($configDir)
         $configPath = Join-Path $configDir 'thunderstore.toml'
@@ -348,7 +379,7 @@ function Invoke-ModPublish {
 schemaVersion = "0.0.1"
 
 [package]
-namespace = "$Namespace"
+namespace = "$namespace"
 name = "$packageName"
 versionNumber = "$version"
 
@@ -361,17 +392,13 @@ communities = ["dyson-sphere-program"]
 categories = []
 "@
         [IO.File]::WriteAllText($configPath, $configText + [Environment]::NewLine, [Text.UTF8Encoding]::new($false))
-        Write-Host "Project: $Project | Team: $Namespace | Package: $packageName | Version: $version"
-        Write-Host 'Community: dyson-sphere-program | Categories: empty (retain existing listing categories)'
-        Write-Host "ZIP: $zipPath"
         Write-Host ('dotnet tool run tcli -- publish --config-path "{0}" --file "{1}"' -f $configPath, $zipPath)
-        if ($DryRun) { Write-Host 'Dry run complete. Package validated; no upload was attempted.'; return }
 
-        Assert-PublishVersionAvailable $Namespace $packageName $version
+        Assert-PublishVersionAvailable $namespace $packageName $version
         [Environment]::SetEnvironmentVariable('TCLI_AUTH_TOKEN', $token, 'Process')
         try { Invoke-PublishDotNet -Arguments @('tool', 'run', 'tcli', '--', 'publish', '--config-path', $configPath, '--file', $zipPath) -Secret $token }
-        catch { throw "Publication did not finish successfully. Inspect https://thunderstore.io/c/dyson-sphere-program/p/$Namespace/$packageName/v/$version/ before retrying; a submission may already have succeeded." }
-        Write-Host "Published: https://thunderstore.io/c/dyson-sphere-program/p/$Namespace/$packageName/"
+        catch { throw "Publication did not finish successfully. Inspect https://thunderstore.io/c/dyson-sphere-program/p/$namespace/$packageName/v/$version/ before retrying; a submission may already have succeeded." }
+        Write-Host "Published: https://thunderstore.io/c/dyson-sphere-program/p/$namespace/$packageName/"
     } finally {
         # PowerShell converts $null to an empty string for this .NET call.
         # Modern runtimes preserve empty environment values; use a true null.
@@ -390,7 +417,7 @@ categories = []
 }
 
 try {
-    Invoke-ModPublish -RepositoryRoot $PSScriptRoot -Project $Project -Namespace $Namespace -EnvFile $EnvFile -DryRun:$DryRun
+    Invoke-ModPublish -RepositoryRoot $PSScriptRoot -Project $Project -EnvFile $EnvFile -DryRun:$DryRun
 } catch {
     Write-Error -Message $_.Exception.Message -ErrorAction Continue
     exit 1

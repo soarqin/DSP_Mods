@@ -75,12 +75,15 @@ function New-PublishFixture {
     [IO.File]::WriteAllText((Join-Path $script:fixtureDir 'CHANGELOG.md'), '<details><summary>English</summary>' + "`n* 1.2.3`n</details><details><summary>Second language</summary>`n* 1.2.3`n</details>")
     $script:calls = New-Object 'System.Collections.Generic.List[string]'
     $script:requests = New-Object 'System.Collections.Generic.List[string]'
+    $script:profileRequests = New-Object 'System.Collections.Generic.List[string]'
     $script:layout = $false
     $script:failStep = ''
     $script:tcliVersionOutput = 'tcli 0.2.4+synthetic'
     $script:badArchive = ''
     $script:remoteState = 'available'
     $script:expectedNamespace = 'AnotherTeam'
+    $script:profileState = 'available'
+    $script:profileResponse = [pscustomobject]@{ username = 'synthetic-service-account'; teams = @($script:expectedNamespace) }
     $script:published = $false
     $script:capturedConfig = $null
     $script:capturedConfigPath = $null
@@ -163,7 +166,7 @@ function Invoke-PublishDotNet {
         Assert-Check (-not ($Arguments -contains '--token')) 'A token was put in the command line.'
         $script:capturedConfigPath = $Arguments[[Array]::IndexOf($Arguments, '--config-path') + 1]
         $script:capturedConfig = [IO.File]::ReadAllText($script:capturedConfigPath)
-        Assert-Check ($script:capturedConfig -match ('namespace = "' + $script:expectedNamespace + '"')) 'The supplied namespace was not used.'
+        Assert-Check ($script:capturedConfig.Contains('namespace = "' + $script:expectedNamespace + '"')) 'The namespace returned by the token lookup was not preserved.'
         Assert-Check ($script:capturedConfig -match 'name = "ManifestPackage"') 'Package Name was not read from the manifest.'
         Assert-Check ($script:capturedConfig -match 'communities = \["dyson-sphere-program"\]' -and $script:capturedConfig -match 'categories = \[\]') 'Community/categories are incorrect.'
         Assert-Check (-not $script:capturedConfig.Contains($script:syntheticToken)) 'A token was written to TOML.'
@@ -174,7 +177,16 @@ function Invoke-PublishDotNet {
 }
 
 function Invoke-RestMethod {
-    param([string]$Uri, [string]$Method, [int]$TimeoutSec, [string]$ErrorAction)
+    param([string]$Uri, [string]$Method, [int]$TimeoutSec, [string]$ErrorAction, [hashtable]$Headers, [int]$MaximumRedirection)
+    if ($Uri -eq 'https://thunderstore.io/api/experimental/current-user/') {
+        $script:profileRequests.Add($Uri)
+        Assert-Check ($Headers.Authorization -ceq "Bearer $script:syntheticToken") 'The Team lookup did not use the selected token as a Bearer credential.'
+        Assert-Check ($Method -eq 'Get' -and $TimeoutSec -eq 30 -and $PSBoundParameters.ContainsKey('MaximumRedirection') -and $MaximumRedirection -eq 0) 'The Team lookup could redirect credentials or lacked its request timeout.'
+        if ($script:profileState -match '^http ([0-9]+)$') { throw [PublishCheckHttpException]::new([int]$Matches[1]) }
+        if ($script:profileState -eq 'offline') { throw "Synthetic transport exception containing $script:syntheticToken" }
+        return $script:profileResponse
+    }
+    Assert-Check ($null -eq $Headers) 'Credentials were forwarded to the public version endpoint.'
     $script:requests.Add($Uri)
     if ($script:remoteState -eq 'available') { throw [PublishCheckHttpException]::new(404) }
     if ($script:remoteState -eq 'server error') { throw [PublishCheckHttpException]::new(503) }
@@ -185,6 +197,7 @@ function Invoke-RestMethod {
 
 try {
     New-PublishFixture
+    Assert-Check ('Namespace' -notin @($ast.ParamBlock.Parameters | ForEach-Object { $_.Name.VariablePath.UserPath })) 'The public script still accepts -Namespace.'
     $externalTokenFile = Join-Path $sandbox 'synthetic.env'
     [IO.File]::WriteAllText($externalTokenFile, "# Synthetic credentials only`nTCLI_AUTH_TOKEN='$script:syntheticToken'`n")
     [Environment]::SetEnvironmentVariable('TCLI_AUTH_TOKEN', $script:callerToken, 'Process')
@@ -215,40 +228,81 @@ try {
         Assert-CheckThrows { Get-PublishToken } '*Set a non-empty*'
     } finally { Pop-Location }
 
-    Invoke-ModPublish -RepositoryRoot $script:fixtureRoot -Project Fixture -Namespace AnotherTeam -DryRun -EnvFile 'does-not-exist' 6>$null
-    Assert-Check (-not $script:published -and $script:requests.Count -eq 0) 'DryRun attempted publication or remote checks.'
+    [Environment]::SetEnvironmentVariable('TCLI_AUTH_TOKEN', [NullString]::Value, 'Process')
+    $script:profileState = 'offline'
+    $dryOutput = @(Invoke-ModPublish -RepositoryRoot $script:fixtureRoot -Project Fixture -DryRun -EnvFile 'does-not-exist' 6>&1)
+    Assert-Check (-not $script:published -and $script:requests.Count -eq 0 -and $script:profileRequests.Count -eq 0) 'DryRun attempted publication or remote checks.'
     Assert-Check (@($script:calls | Where-Object { $_ -like 'tool|*' }).Count -eq 0) 'DryRun required tcli.'
-    foreach ($invalidNamespace in @('', 'Bad Team', "Team`n")) {
-        Assert-CheckThrows { Invoke-ModPublish $script:fixtureRoot Fixture $invalidNamespace -DryRun } '*-Namespace*'
-    }
-    Assert-CheckThrows { Invoke-ModPublish $script:fixtureRoot '..\Fixture' AnotherTeam -DryRun } '*-Project*'
-    Assert-CheckThrows { Invoke-ModPublish $script:fixtureRoot FixturePreloader AnotherTeam -DryRun } '*main mod*'
+    Assert-Check (($dryOutput -join "`n").Contains('not queried (resolved from token when publishing)')) 'DryRun claimed to know the Team without querying it.'
+    Assert-Check (-not [IO.Directory]::Exists((Join-Path $script:fixtureDir 'obj\thunderstore-publish'))) 'DryRun generated publishing configuration without a resolved Team.'
+    Assert-Check ([IO.File]::Exists($script:fixtureZip)) 'DryRun did not retain the prepared ZIP.'
+    [Environment]::SetEnvironmentVariable('TCLI_AUTH_TOKEN', $script:callerToken, 'Process')
+    Assert-CheckThrows { Invoke-ModPublish $script:fixtureRoot '..\Fixture' -DryRun } '*-Project*'
+    Assert-CheckThrows { Invoke-ModPublish $script:fixtureRoot FixturePreloader -DryRun } '*main mod*'
 
     New-PublishFixture
     $script:layout = $true
     $null = [IO.Directory]::CreateDirectory((Join-Path $script:fixturePackage 'patchers'))
     [IO.File]::WriteAllText((Join-Path $script:fixturePackage 'patchers\FixturePreloader.dll'), 'stale preloader')
-    Invoke-ModPublish $script:fixtureRoot Fixture AnotherTeam -DryRun 6>$null
+    Invoke-ModPublish $script:fixtureRoot Fixture -DryRun 6>$null
     Assert-Check (($script:calls | Where-Object { $_ -like 'build|*' } | Select-Object -First 1) -like '*CopyToParentPackage*') 'The preloader was not copied before the main mod was packaged.'
     Assert-Check ([IO.File]::ReadAllText((Join-Path $script:fixturePackage 'patchers\FixturePreloader.dll')) -ceq 'fresh preloader') 'A stale preloader was packaged.'
 
     foreach ($badZip in @('unsafe', 'duplicate', 'credential', 'missing DLL', 'stale DLL', 'wrong version')) {
         New-PublishFixture
         $script:badArchive = $badZip
-        Assert-CheckThrows { Invoke-ModPublish $script:fixtureRoot Fixture AnotherTeam -DryRun } '*ZIP*'
+        Assert-CheckThrows { Invoke-ModPublish $script:fixtureRoot Fixture -DryRun } '*ZIP*'
         Assert-Check (-not $script:published) 'An invalid ZIP was published.'
     }
     New-PublishFixture
     [IO.File]::WriteAllText((Join-Path $script:fixtureDir 'CHANGELOG.md'), "<details>`n* 1.2.3`n</details><details>`n* 1.2.2`n</details>")
-    Assert-CheckThrows { Invoke-ModPublish $script:fixtureRoot Fixture AnotherTeam -DryRun } '*every language*'
+    Assert-CheckThrows { Invoke-ModPublish $script:fixtureRoot Fixture -DryRun } '*every language*'
     New-PublishFixture
     $smallIcon = New-Object Drawing.Bitmap(128, 128)
     try { $smallIcon.Save((Join-Path $script:fixturePackage 'icon.png'), [Drawing.Imaging.ImageFormat]::Png) } finally { $smallIcon.Dispose() }
-    Assert-CheckThrows { Invoke-ModPublish $script:fixtureRoot Fixture AnotherTeam -DryRun } '*256x256 PNG*'
+    Assert-CheckThrows { Invoke-ModPublish $script:fixtureRoot Fixture -DryRun } '*256x256 PNG*'
+
+    $badProfiles = @(
+        @{ Response = $null; Pattern = '*unauthenticated or malformed*' },
+        @{ Response = [pscustomobject]@{ teams = @('AnotherTeam') }; Pattern = '*unauthenticated or malformed*' },
+        @{ Response = [pscustomobject]@{ username = $null; teams = @('AnotherTeam') }; Pattern = '*unauthenticated or malformed*' },
+        @{ Response = [pscustomobject]@{ username = 'synthetic' }; Pattern = '*unauthenticated or malformed*' },
+        @{ Response = [pscustomobject]@{ username = 'synthetic'; teams = $null }; Pattern = '*unauthenticated or malformed*' },
+        @{ Response = [pscustomobject]@{ username = 'synthetic'; teams = 'AnotherTeam' }; Pattern = '*unauthenticated or malformed*' },
+        @{ Response = [pscustomobject]@{ username = 'synthetic'; teams = @() }; Pattern = '*no active Team*' },
+        @{ Response = [pscustomobject]@{ username = 'synthetic'; teams = @('One', 'Two') }; Pattern = '*multiple Teams*' },
+        @{ Response = [pscustomobject]@{ username = 'synthetic'; teams = @('One', 'One') }; Pattern = '*multiple Teams*' },
+        @{ Response = [pscustomobject]@{ username = 'synthetic'; teams = @(123) }; Pattern = '*invalid Team name*' },
+        @{ Response = [pscustomobject]@{ username = 'synthetic'; teams = @('') }; Pattern = '*invalid Team name*' },
+        @{ Response = [pscustomobject]@{ username = 'synthetic'; teams = @('Bad Team') }; Pattern = '*invalid Team name*' },
+        @{ Response = [pscustomobject]@{ username = 'synthetic'; teams = @("Team`n") }; Pattern = '*invalid Team name*' }
+    )
+    foreach ($badProfile in $badProfiles) {
+        New-PublishFixture
+        $script:profileResponse = $badProfile.Response
+        Assert-CheckThrows { Invoke-ModPublish $script:fixtureRoot Fixture $externalTokenFile } $badProfile.Pattern
+        Assert-Check (-not $script:published -and $script:requests.Count -eq 0 -and $script:profileRequests.Count -eq 1 -and $script:calls.Count -eq 1) 'An ambiguous or invalid Team fell through to the build or publication.'
+        Assert-Check ((Get-Location).Path -ceq $savedLocation -and [Environment]::GetEnvironmentVariable('TCLI_AUTH_TOKEN', 'Process') -ceq $script:callerToken) 'A Team lookup failure changed the caller directory or token.'
+    }
+    foreach ($profileFailure in @('http 401', 'http 403', 'http 302', 'http 429', 'http 503', 'offline')) {
+        New-PublishFixture
+        $script:profileState = $profileFailure
+        $failureMessage = ''
+        try { Invoke-ModPublish $script:fixtureRoot Fixture $externalTokenFile 6>$null } catch { $failureMessage = $_.Exception.Message }
+        Assert-Check ($failureMessage -like '*Cannot query*Team*' -and -not $failureMessage.Contains($script:syntheticToken)) 'A failed Team lookup was ignored or exposed credentials.'
+        Assert-Check (-not $script:published -and $script:requests.Count -eq 0 -and $script:calls.Count -eq 1 -and $script:profileRequests.Count -eq 1) 'A failed Team lookup fell through to the build or publication.'
+    }
+    New-PublishFixture
+    $script:expectedNamespace = 'Mixed_CASE_42'
+    $script:profileResponse.teams = @($script:expectedNamespace)
+    $publishOutput = @(Invoke-ModPublish $script:fixtureRoot Fixture $externalTokenFile 6>&1)
+    Assert-Check (($publishOutput -join "`n").Contains('/Mixed_CASE_42/ManifestPackage/')) 'The published package link did not use the resolved Team.'
+    Assert-Check ($script:requests[0] -like '*/Mixed_CASE_42/ManifestPackage/1.2.3/') 'The version lookup did not use the resolved Team.'
+    Assert-Check (-not ($publishOutput -join "`n").Contains($script:syntheticToken)) 'Publication logs exposed the token.'
 
     New-PublishFixture
     $script:tcliVersionOutput = 'Synthetic tool startup error without a version'
-    Assert-CheckThrows { Invoke-ModPublish $script:fixtureRoot Fixture AnotherTeam $externalTokenFile } '*recognizable tcli version*'
+    Assert-CheckThrows { Invoke-ModPublish $script:fixtureRoot Fixture $externalTokenFile } '*recognizable tcli version*'
     Assert-Check (-not $script:published -and $script:requests.Count -eq 0 -and $script:calls.Count -eq 1) 'An invalid tool version fell through to the build or publication.'
 
     foreach ($failure in @('tool', 'evaluate', 'restore', 'preloader', 'build')) {
@@ -258,22 +312,22 @@ try {
         if ($failure -eq 'preloader') { $script:layout = $true }
         # Leave an older ZIP to ensure a failed build never publishes it.
         [IO.File]::WriteAllText($script:fixtureZip, 'old zip')
-        Assert-CheckThrows { Invoke-ModPublish $script:fixtureRoot Fixture AnotherTeam $externalTokenFile } '*'
+        Assert-CheckThrows { Invoke-ModPublish $script:fixtureRoot Fixture $externalTokenFile } '*'
         Assert-Check (-not $script:published -and $script:requests.Count -eq 0) 'A build failure fell through to publication.'
     }
     foreach ($remote in @('existing', 'server error', 'offline', 'malformed')) {
         New-PublishFixture
         $script:remoteState = $remote
-        Assert-CheckThrows { Invoke-ModPublish $script:fixtureRoot Fixture AnotherTeam $externalTokenFile } '*'
+        Assert-CheckThrows { Invoke-ModPublish $script:fixtureRoot Fixture $externalTokenFile } '*'
         Assert-Check (-not $script:published) 'An existing/unverifiable version was published.'
-        Assert-Check ($script:requests[0] -like '*/AnotherTeam/ManifestPackage/1.2.3/') 'The version lookup did not use the selected Team and manifest name.'
+        Assert-Check ($script:requests[0] -like '*/AnotherTeam/ManifestPackage/1.2.3/') 'The version lookup did not use the resolved Team and manifest name.'
     }
 
     foreach ($failure in @('', 'publish')) {
         New-PublishFixture
         $script:failStep = $failure
-        if ($failure) { Assert-CheckThrows { Invoke-ModPublish $script:fixtureRoot Fixture AnotherTeam $externalTokenFile } '*Inspect https://*before retrying*' }
-        else { Invoke-ModPublish $script:fixtureRoot Fixture AnotherTeam $externalTokenFile 6>$null }
+        if ($failure) { Assert-CheckThrows { Invoke-ModPublish $script:fixtureRoot Fixture $externalTokenFile } '*Inspect https://*before retrying*' }
+        else { Invoke-ModPublish $script:fixtureRoot Fixture $externalTokenFile 6>$null }
         Assert-Check ([Environment]::GetEnvironmentVariable('TCLI_AUTH_TOKEN', 'Process') -ceq $script:callerToken) 'The process token was not restored.'
         Assert-Check ((Get-Location).Path -ceq $savedLocation) 'The caller directory was not restored.'
         Assert-Check (-not [IO.Directory]::Exists([IO.Path]::GetDirectoryName($script:capturedConfigPath))) 'Generated configuration was not cleaned up.'
@@ -284,18 +338,18 @@ try {
     New-PublishFixture
     Push-Location -LiteralPath $sandbox
     try {
-        Invoke-ModPublish $script:fixtureRoot Fixture AnotherTeam 'synthetic.env' 6>$null
+        Invoke-ModPublish $script:fixtureRoot Fixture 'synthetic.env' 6>$null
         Assert-Check ((Get-Location).Path -ceq $sandbox) 'The external caller directory was not restored.'
         [IO.File]::WriteAllText((Join-Path $sandbox '.env'), "TCLI_AUTH_TOKEN=$script:syntheticToken")
         [IO.File]::WriteAllText((Join-Path $script:fixtureRoot '.env'), 'TCLI_AUTH_TOKEN=synthetic-wrong-repository-token')
         $script:published = $false
-        Invoke-ModPublish -RepositoryRoot $script:fixtureRoot -Project Fixture -Namespace AnotherTeam 6>$null
+        Invoke-ModPublish -RepositoryRoot $script:fixtureRoot -Project Fixture 6>$null
         Assert-Check $script:published 'Publication did not use .env from the caller directory.'
         Assert-Check ((Get-Location).Path -ceq $sandbox) 'Default .env lookup did not restore the caller directory.'
     } finally { Pop-Location }
     [Environment]::SetEnvironmentVariable('TCLI_AUTH_TOKEN', [NullString]::Value, 'Process')
     New-PublishFixture
-    Invoke-ModPublish $script:fixtureRoot Fixture AnotherTeam $externalTokenFile 6>$null
+    Invoke-ModPublish $script:fixtureRoot Fixture $externalTokenFile 6>$null
     Assert-Check ($null -eq [Environment]::GetEnvironmentVariable('TCLI_AUTH_TOKEN', 'Process')) 'An originally absent process token was not removed.'
 
     # Use real MSBuild output: string stubs cannot reproduce native decoding bugs.
