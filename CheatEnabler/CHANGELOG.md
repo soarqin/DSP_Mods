@@ -3,6 +3,7 @@
 
 ## Changlog
 
+* 2.4.8 - Unreleased
 * 2.4.7
   * `Dev Shortcuts`: Work immediately when enabled after loading a save, and process each key press once per frame at accelerated game speeds.
   * Extend `Unlock Tech with Key-Modifiers` with a downgrade mode.
@@ -201,6 +202,7 @@
 
 ## 更新日志
 
+* 2.4.8 - Unreleased
 * 2.4.7
   * `开发模式快捷键`：修复载入存档后启用时不生效的问题；加速游戏时每次按键仍只执行一次。
   * `使用组合键点击解锁科技` 新增降级模式。
