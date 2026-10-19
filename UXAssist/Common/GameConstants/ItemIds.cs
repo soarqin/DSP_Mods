@@ -63,6 +63,9 @@ public static class ItemIds
     /* Power generators */
     public const int WindTurbine = 2203;
 
+    /* Mining */
+    public const int MiningMachine = 2301;
+
     /* Dark Fog items (combat expansion) */
     public const int DarkFogMemoryUnit = 5201;
     public const int DarkFogSiliconNeuron = 5202;

@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UXAssist.Common;
 using UXAssist.Functions;
+using UXAssist.Functions.Factory;
 using UXAssist.ModsCompat;
 using UXAssist.Patches;
 using UXAssist.Patches.Logistics;
@@ -17,6 +18,7 @@ public static class UIConfigWindow
     private static RectTransform _windowTrans;
     private static RectTransform _dysonTab;
     private static UIButton _dysonInitBtn;
+    private static UnityEngine.UI.Text _quickMinerText;
     private static readonly UIButton[] DysonLayerBtn = new UIButton[10];
 
     public static void Init()
@@ -365,7 +367,13 @@ public static class UIConfigWindow
             UIMessageBox.Show(I18NKeys.DismantleAllBuildings.Translate(), I18NKeys.DismantleAllBuildingsConfirm.Translate(), I18NKeys.Cancel.Translate(), I18NKeys.OK.Translate(), UIMessageBox.QUESTION, null,
                 () => { PlanetFunctions.DismantleAll(false); })
         );
-        y += 72f;
+        y += 36f;
+        var quickMiner = wnd.AddButton(x, y, 240, tab2, I18NKeys.QuickBuildMiningMachines, 16, "button-quick-miners", QuickMinerBuild.Toggle);
+        _quickMinerText = quickMiner.transform.Find("button-text").GetComponent<UnityEngine.UI.Text>();
+        var quickMinerLocalizer = _quickMinerText.GetComponent<Localizer>();
+        if (quickMinerLocalizer != null) UnityEngine.Object.DestroyImmediate(quickMinerLocalizer);
+        wnd.AddTipsButton2(x + 250f, y + 6f, tab2, I18NKeys.QuickBuildMiningMachines, I18NKeys.QuickBuildMiningMachinesTips, "quick-miners-tips");
+        y += 36f;
         wnd.AddButton(x, y, 200, tab2, I18NKeys.QuickBuildOrbitalCollectors, 16, "button-init-planet", PlanetFunctions.BuildOrbitalCollectors);
         y += 30f;
         txt = wnd.AddText2(x + 10f, y, tab2, I18NKeys.MaximumCountToBuild, 15, "text-oc-build-count");
@@ -826,6 +834,8 @@ public static class UIConfigWindow
 
     private static void UpdateUI()
     {
+        if (_quickMinerText != null) _quickMinerText.text = (QuickMinerBuild.IsRunning
+            ? I18NKeys.QuickMinerCancelSearch : I18NKeys.QuickBuildMiningMachines).Translate();
         UpdateDysonShells();
     }
 

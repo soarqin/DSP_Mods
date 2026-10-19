@@ -3,13 +3,14 @@
   <PropertyGroup>
     <BepInExPluginGuid>org.soardev.uxassist</BepInExPluginGuid>
     <Description>DSP MOD - UXAssist</Description>
-    <Version>1.6.2</Version>
+    <Version>1.6.3</Version>
     <PackageId>UXAssist</PackageId>
     <RootNamespace>UXAssist</RootNamespace>
     <PackHasChangelog>true</PackHasChangelog>
   </PropertyGroup>
 
   <ItemGroup>
+    <Reference Include="System.Runtime.Serialization" />
     <PackageReference Include="DysonSphereProgram.Modding.CommonAPI" Version="1.*" />
     <PackageReference Include="DysonSphereProgram.Modding.DSPModSave" Version="1.*" />
   </ItemGroup>
