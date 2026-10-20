@@ -29,7 +29,7 @@ internal static class MinerPlacementGeometry
         }
     }
 
-    public static bool Intersects(Box a, Box b)
+    public static bool Intersects(in Box a, in Box b)
     {
         var delta = b.Center - a.Center;
         // Reject distant individual colliders before the full separating-axis test. This
@@ -50,7 +50,7 @@ internal static class MinerPlacementGeometry
                !Separated(Vector3.Cross(a.Z, b.Z), delta, a, b);
     }
 
-    private static bool Separated(Vector3 axis, Vector3 delta, Box a, Box b)
+    private static bool Separated(Vector3 axis, Vector3 delta, in Box a, in Box b)
     {
         if (axis.sqrMagnitude < 1e-10f) return false;
         var radius = a.Extents.x * Mathf.Abs(Vector3.Dot(axis, a.X)) +
@@ -62,7 +62,7 @@ internal static class MinerPlacementGeometry
         return Mathf.Abs(Vector3.Dot(delta, axis)) > radius;
     }
 
-    public static bool Intersects(Box box, ColliderData collider)
+    public static bool Intersects(in Box box, ColliderData collider)
     {
         switch (collider.shape)
         {

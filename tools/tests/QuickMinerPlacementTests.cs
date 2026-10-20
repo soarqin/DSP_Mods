@@ -40,22 +40,21 @@ internal static class QuickMinerPlacementTests
         ObstacleBoxes = [new Box(Collider(new Vector3(x, 0, 0), new Vector3(halfWidth, 0.4f, 0.4f), Quaternion.identity))]
     };
 
-    private static MinerPlacementSolver Solve(List<Candidate> candidates, int nodes, int? limit = null, int passes = 12)
+    private static MinerPlacementSolver Solve(List<Candidate> candidates, int nodes, int passes = 12)
     {
         var solver = new MinerPlacementSolver(candidates, nodes);
-        var search = limit.HasValue ? solver.Search(limit.Value, passes) : solver.Search(passes);
+        var search = solver.Search(passes);
         var steps = 0;
         while (search.MoveNext()) if (++steps > 2000000) throw new InvalidOperationException("Search did not terminate.");
         if (MinerPlacementSolver.WorkerCount > 0)
         {
             var parallel = new MinerPlacementSolver(candidates, nodes);
-            parallel.SearchAsync(limit ?? int.MaxValue, passes, CancellationToken.None).GetAwaiter().GetResult();
+            parallel.SearchAsync(passes, CancellationToken.None).GetAwaiter().GetResult();
             Check(parallel.BestScore == solver.BestScore && parallel.Best.SequenceEqual(solver.Best),
                 "Parallel scheduling must preserve the exact sequential layout, including ties.");
         }
         var buried = solver.Best.SelectMany(c => c.Buried).ToHashSet();
         var expected = solver.Best.Sum(c => c.Covered.Count(n => !buried.Contains(n)));
-        Check(solver.Best.Count <= (limit ?? int.MaxValue), "Explicit placement limit exceeded.");
         Check(solver.BestScore == expected, "Score does not match the final burial union.");
         for (var i = 0; i < solver.Best.Count; i++)
         {
@@ -63,17 +62,14 @@ internal static class QuickMinerPlacementTests
                 "Placed a miner below the minimum after the full burial union.");
             Check(MinerPlacementSolver.Fits(solver.Best[i], solver.Best.Take(i).ToList()), "Plan contains colliding miners.");
         }
-        if (solver.Best.Count < (limit ?? int.MaxValue))
+        var canImprove = candidates.Any(candidate =>
         {
-            var canImprove = candidates.Any(candidate =>
-            {
-                if (candidate.Covered.Length < MinerPlacementSolver.MinimumCoverage || !MinerPlacementSolver.Fits(candidate, solver.Best)) return false;
-                var trialBurial = buried.Concat(candidate.Buried).ToHashSet();
-                var counts = solver.Best.Append(candidate).Select(c => c.Covered.Count(n => !trialBurial.Contains(n))).ToArray();
-                return counts.All(count => count >= MinerPlacementSolver.MinimumCoverage) && counts.Sum() > expected;
-            });
-            Check(!canImprove, "Search left a legal positive-gain miner unplaced in its candidate set.");
-        }
+            if (candidate.Covered.Length < MinerPlacementSolver.MinimumCoverage || !MinerPlacementSolver.Fits(candidate, solver.Best)) return false;
+            var trialBurial = buried.Concat(candidate.Buried).ToHashSet();
+            var counts = solver.Best.Append(candidate).Select(c => c.Covered.Count(n => !trialBurial.Contains(n))).ToArray();
+            return counts.All(count => count >= MinerPlacementSolver.MinimumCoverage) && counts.Sum() > expected;
+        });
+        Check(!canImprove, "Search left a legal positive-gain miner unplaced in its candidate set.");
         return solver;
     }
 
@@ -84,43 +80,39 @@ internal static class QuickMinerPlacementTests
                 "Workers must not exceed four or half of the available logical processors.");
         Check(MinerPlacementSolver.GetWorkerCount(1) == 0, "Single-core machines must use the main-thread fallback.");
         var shared = new List<Candidate> { Placement(0, [0, 1, 2]), Placement(2, [0, 1, 2]), Placement(4, [0, 1, 2]) };
-        Check(Solve(shared, 3).BestScore == 9, "Default planning must include every compatible miner and count shared nodes per miner.");
-        // Explicit limits remain supported for replaying older stock-limited snapshots.
-        Check(Solve(shared, 3, 1).BestScore == 3, "An explicit one-miner limit must still be replayable.");
-        Check(Solve(shared, 3, 0).Best.Count == 0, "An explicit zero limit must still be replayable.");
+        Check(Solve(shared, 3).BestScore == 9, "Planning must include every compatible miner and count shared nodes per miner.");
         if (MinerPlacementSolver.WorkerCount > 0)
         {
             var oneWorker = new MinerPlacementSolver(shared, 3);
-            oneWorker.SearchAsync(int.MaxValue, 12, CancellationToken.None, 1).GetAwaiter().GetResult();
+            oneWorker.SearchAsync(12, CancellationToken.None, 1).GetAwaiter().GetResult();
             Check(oneWorker.BestScore == 9, "A two-logical-processor machine must work with just one background worker.");
         }
 
         var dense = new List<Candidate> { Placement(0, [0, 1, 2, 3, 4], halfWidth: 1.1f), Placement(-1.4f, [0, 1, 2]), Placement(1.4f, [2, 3, 4]) };
-        Check(Solve(dense, 5).BestScore == 6, "Default planning must prefer two smaller miners regardless of carried stock.");
-        Check(Solve(dense, 5, 1).BestScore == 5, "An older one-miner limit must preserve its different optimal layout.");
+        Check(Solve(dense, 5).BestScore == 6, "Planning must prefer two smaller miners regardless of carried stock.");
 
         var costlyBurial = new List<Candidate> { Placement(0, [0, 1, 2]), Placement(2, [0, 1, 2]), Placement(4, [1, 2, 3], [0]) };
-        Check(Solve(costlyBurial, 4, 3).BestScore == 6, "A higher total must not justify reducing existing miners from three nodes to two.");
-        Check(Solve(costlyBurial, 4, 3).Best.All(c => c.Buried.Length == 0), "Keep the valid burial-free layout.");
+        Check(Solve(costlyBurial, 4).BestScore == 6, "A higher total must not justify reducing existing miners from three nodes to two.");
+        Check(Solve(costlyBurial, 4).Best.All(c => c.Buried.Length == 0), "Keep the valid burial-free layout.");
         var goodBurial = new List<Candidate> { Placement(0, [0, 1, 2, 3]), Placement(2, [1, 2, 3, 4], [0]) };
-        Check(Solve(goodBurial, 5, 2).BestScore == 7, "A beneficial burial must remain possible when every miner retains three nodes.");
+        Check(Solve(goodBurial, 5).BestScore == 7, "A beneficial burial must remain possible when every miner retains three nodes.");
         var lowAfterBurial = new List<Candidate> { Placement(0, [0, 1, 2]), Placement(2, [3, 4, 5, 6], [0]) };
-        Check(Solve(lowAfterBurial, 7, 2).Best.Count == 1, "Replace a miner instead of leaving it with only two nodes.");
+        Check(Solve(lowAfterBurial, 7).Best.Count == 1, "Replace a miner instead of leaving it with only two nodes.");
         var manyNodes = new List<Candidate> { Placement(0, [0, 64, 100, 129]), Placement(2, [0, 100, 129], [64]) };
-        Check(Solve(manyNodes, 130, 2).BestScore == 6, "Coverage and burial must support groups larger than 64 nodes.");
+        Check(Solve(manyNodes, 130).BestScore == 6, "Coverage and burial must support groups larger than 64 nodes.");
         var manyMiners = Enumerable.Range(0, 65).Select(index => Placement(index * 2, [0, 1, 2])).ToList();
         Check(Solve(manyMiners, 3).BestScore == 195, "The collision cache must support more than 64 selected miners.");
-        Check(Solve([], 5, 10).BestScore == 0, "An obstructed patch should produce an empty plan.");
-        Check(Solve([Placement(0, [0]), Placement(2, [0, 1])], 2, 20).Best.Count == 0,
+        Check(Solve([], 5).BestScore == 0, "An obstructed patch should produce an empty plan.");
+        Check(Solve([Placement(0, [0]), Placement(2, [0, 1])], 2).Best.Count == 0,
             "One- and two-node miners must be invalid even when stock is abundant.");
         var valid = Placement(4, [0, 1, 2]);
-        Check(Solve([Placement(0, [0]), Placement(2, [0, 1]), valid], 3, 20).Best.SequenceEqual([valid]),
+        Check(Solve([Placement(0, [0]), Placement(2, [0, 1]), valid], 3).Best.SequenceEqual([valid]),
             "Do not append marginal miners to an otherwise valid layout.");
         var burialCycle = new List<Candidate>
         {
             Placement(0, [0, 1, 2], [6]), Placement(2, [3, 4, 5], [0]), Placement(4, [6, 7, 8], [3])
         };
-        Check(Solve(burialCycle, 9, 20).BestScore == 3,
+        Check(Solve(burialCycle, 9).BestScore == 3,
             "Reject cyclic burials that would repeatedly invalidate an earlier miner.");
 
         // Three columns all block three alternative rows. Duplicated high-scoring column
@@ -141,7 +133,7 @@ internal static class QuickMinerPlacementTests
         var coordinated = Enumerable.Range(0, 96).Select(_ => Bar(-2, 0, 0.4f, 4, 9)).ToList();
         coordinated.AddRange([Bar(0, 0, 0.4f, 4, 6), Bar(2, 0, 0.4f, 4, 6)]);
         coordinated.AddRange([Bar(0, -2, 4, 0.4f, 8), Bar(0, 0, 4, 0.4f, 8), Bar(0, 2, 4, 0.4f, 8)]);
-        Check(Solve(coordinated, 9, 3).BestScore == 24, "Must repack all three miners together to escape the 21-point layout.");
+        Check(Solve(coordinated, 9).BestScore == 24, "Must repack all three miners together to escape the 21-point layout.");
 
         // Four columns block all four better rows, beyond the three-miner repair radius.
         // Repeated poses must not bias every exploratory pass toward the strongest column.
@@ -163,7 +155,7 @@ internal static class QuickMinerPlacementTests
         var sharedBurial = new List<Candidate> { Placement(-4, Enumerable.Range(0, 8).ToArray()) };
         sharedBurial.AddRange([Placement(0, [8, 9, 10, 11, 12], [0, 1, 2, 3, 4, 5, 6, 7]),
             Placement(2, [8, 9, 10, 11, 12], [0, 1, 2, 3, 4, 5, 6, 7])]);
-        Check(Solve(sharedBurial, 13, 3).BestScore == 10, "Joint search must replace the invalidated miner and charge shared burial only once.");
+        Check(Solve(sharedBurial, 13).BestScore == 10, "Joint search must replace the invalidated miner and charge shared burial only once.");
     }
 
     private static bool CornerOracle(ColliderData a, ColliderData b)
@@ -289,7 +281,7 @@ internal static class QuickMinerPlacementTests
             if (beforeStart) cancellation.Cancel();
             else cancellation.CancelAfter(10);
             var solver = new MinerPlacementSolver(candidates, 3);
-            var work = solver.SearchAsync(int.MaxValue, 64, cancellation.Token);
+            var work = solver.SearchAsync(64, cancellation.Token);
             try
             {
                 work.GetAwaiter().GetResult();
@@ -328,9 +320,9 @@ internal static class QuickMinerPlacementTests
             }).ToArray(),
             candidates = Enumerable.Repeat(record, 4000).ToArray(), buildColliders = colliders.Take(3).ToArray(), minerColliders = colliders, obstacles = [],
             existingMiners = [new MinerPlacementDebug.ExistingMiner { entityId = 2, minerId = 0, prebuild = true, position = record.position, rotation = record.rotation, veins = [1, 2, 3] }],
-            phases = [new MinerPlacementDebug.Phase { name = "roundtrip", candidateCount = 4000, limit = int.MaxValue, passes = 2, score = 3, elapsedMilliseconds = 1, searchMilliseconds = 1, selected = [0] }],
+            phases = [new MinerPlacementDebug.Phase { name = "roundtrip", candidateCount = 4000, passes = 2, score = 3, elapsedMilliseconds = 1, searchMilliseconds = 1, selected = [0] }],
             placements = [new MinerPlacementDebug.Placement { candidate = 0, prebuildId = 1, coverObjectId = 0, itemRequired = 1, outcome = "placed", nativeCondition = "Ok", nativeVeins = [1, 2, 3], plannedVeins = [1, 2, 3], finalVeins = [1, 2, 3] }],
-            rejections = new MinerPlacementDebug.Rejections { attempted = 1, range = 0, mixedType = 0, noCoverage = 0, veinCollision = 0, buildingCollision = 0, ground = 0 }
+            rejections = new MinerPlacementDebug.Rejections { attempted = 1, range = 0, clearance = 0, mixedType = 0, noCoverage = 0, veinCollision = 0, buildingCollision = 0, ground = 0 }
         };
         var path = Path.Combine(AppContext.BaseDirectory, "replay-smoke.json");
         MinerPlacementDebug.Write(path, snapshot);
@@ -341,9 +333,9 @@ internal static class QuickMinerPlacementTests
               document.RootElement.GetProperty("buildColliders").GetArrayLength() == 3,
             "The production writer must serialize internal nested records, not just summary fields.");
         var roundtrip = JsonSerializer.Deserialize<MinerPlacementDebug.Snapshot>(snapshotJson, ReplayJson);
-        Check(roundtrip.schema == 2 && roundtrip.minimumCoverage == 3 && roundtrip.existingMiners[0].prebuild &&
+        Check(roundtrip.schema == 3 && roundtrip.minimumCoverage == 3 && roundtrip.existingMiners[0].prebuild &&
               roundtrip.workerCount <= roundtrip.logicalProcessors / 2 && roundtrip.phases[0].searchMilliseconds == 1 &&
-              roundtrip.initialStock == 0 && roundtrip.phases[0].limit == int.MaxValue && roundtrip.placements[0].itemRequired == 1 &&
+              roundtrip.initialStock == 0 && roundtrip.placements[0].itemRequired == 1 &&
               roundtrip.placements[0].plannedVeins.Length == 3 && roundtrip.placements[0].finalVeins[0] == 1 && roundtrip.rejections.attempted == 1,
             "Replay schema must retain existing miners, native placements and rejection counters.");
         Replay(path);
@@ -352,6 +344,7 @@ internal static class QuickMinerPlacementTests
     private static void Replay(string path, int minimumTotalCoverage = 0)
     {
         var snapshot = JsonSerializer.Deserialize<MinerPlacementDebug.Snapshot>(File.ReadAllText(path), ReplayJson);
+        // Schema 2 snapshots also recorded a stock limit, which the current search does not use.
         Check(snapshot.schema is 1 or 2 or 3, "Unsupported debug snapshot schema.");
         Check(snapshot.nodes != null && snapshot.candidates != null && snapshot.buildColliders != null && snapshot.minerColliders != null && snapshot.phases != null,
             "This snapshot contains summary data only and cannot be replayed. Run quick miner placement again with the updated build.");
@@ -365,26 +358,20 @@ internal static class QuickMinerPlacementTests
         {
             while (candidates.Count < phase.candidateCount)
                 candidates.Add(snapshot.candidates[candidates.Count].Restore(snapshot.buildColliders, snapshot.minerColliders));
-            if (phase.name == "stock-changed")
-            {
-                solver = new MinerPlacementSolver(candidates, snapshot.nodes.Length);
-                parallel = new MinerPlacementSolver(candidates, snapshot.nodes.Length);
-            }
             var timer = Stopwatch.StartNew();
-            var search = phase.limit == int.MaxValue ? solver.Search(phase.passes) : solver.Search(phase.limit, phase.passes);
+            var search = solver.Search(phase.passes);
             while (search.MoveNext()) { }
             var sequentialMilliseconds = timer.ElapsedMilliseconds;
             long parallelMilliseconds = 0;
             if (MinerPlacementSolver.WorkerCount > 0)
             {
                 timer.Restart();
-                parallel.SearchAsync(phase.limit, phase.passes, CancellationToken.None).GetAwaiter().GetResult();
+                parallel.SearchAsync(phase.passes, CancellationToken.None).GetAwaiter().GetResult();
                 parallelMilliseconds = timer.ElapsedMilliseconds;
                 Check(parallel.BestScore == solver.BestScore && parallel.Best.SequenceEqual(solver.Best),
                     "Recorded multi-stage replay must select the exact same layout on the worker pool.");
             }
             var buried = solver.Best.SelectMany(c => c.Buried).ToHashSet();
-            Check(solver.Best.Count <= phase.limit, "Replay exceeded the recorded placement limit.");
             Check(solver.BestScore == solver.Best.Sum(c => c.Covered.Count(n => !buried.Contains(n))), "Replay score differs from summed coverage after burial.");
             for (var i = 0; i < solver.Best.Count; i++)
             {

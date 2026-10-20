@@ -14,7 +14,7 @@ internal static class MinerPlacementDebug
     [Serializable]
     internal sealed class Snapshot
     {
-        public int schema = 2;
+        public int schema = 3;
         public string algorithm = "parallel-repack-v5-pose-exploration-min3-unlimited-stock";
         public int minimumCoverage = MinerPlacementSolver.MinimumCoverage;
         public string version, gameVersion, startedUtc, outcome, error;
@@ -105,8 +105,6 @@ internal static class MinerPlacementDebug
     {
         public string name;
         public int candidateCount, passes, score;
-        // Unlimited-stock snapshots may omit the legacy placement cap.
-        public int limit = int.MaxValue;
         public long elapsedMilliseconds, searchMilliseconds;
         public int[] selected;
     }
@@ -122,7 +120,7 @@ internal static class MinerPlacementDebug
     [Serializable]
     internal sealed class Rejections
     {
-        public int attempted, range, mixedType, noCoverage, veinCollision, buildingCollision, ground;
+        public int attempted, range, clearance, mixedType, noCoverage, veinCollision, buildingCollision, ground;
     }
 
     public static float[] Vector(Vector3 value) => [value.x, value.y, value.z];
