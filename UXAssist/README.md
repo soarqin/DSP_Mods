@@ -84,11 +84,11 @@
     * Quick build Mining Machines
       * Use the button on the Factory tab near Quick build Orbital Collectors. Places the full ordinary Mining Machine layout at the nearest solid vein group regardless of carried stock. Uses available miners from the inventory and hand; missing miners remain as ghosts awaiting materials. Every placed miner must retain at least 3 covered nodes after all planned burials; miners below that minimum are invalid.
       * Restores buried nodes unless obstructed by buildings, then searches individual native collision shapes so the miner's feet can interleave where the game permits.
-      * Uses multiple packing orders, local position/rotation refinement, body-width neighbor candidates, and coordinated repacking of up to three nearby miners to seek a high sum of vein counts across all placed miners. Shared nodes count once per miner; this bounded search does not guarantee a global optimum.
+      * Uses multiple packing orders, exploration keyed by placement pose as well as candidate index, local position/rotation refinement, body-width neighbor candidates, and coordinated repacking of up to three nearby miners to seek a high sum of vein counts across all placed miners. A final pass fills remaining compatible candidates when they increase total coverage while preserving the three-node minimum. Shared nodes count once per miner; this bounded search does not guarantee a global optimum.
       * Reuses collision checks and runs independent layout searches on up to 4 background workers, capped at half the available logical processors. Systems with one logical processor keep the search on the main thread with a frame budget. Native terrain checks and placement stay on the main thread; worker scheduling preserves the same layout as sequential search.
       * May bury unused nodes when that improves total coverage. Nodes already assigned to miners or miner prebuilds are protected. Ground, water, existing buildings, and construction range still apply.
       * Click again during calculation to cancel. Changing planets or leaving the game cancels automatically. Construction drones finish the prebuilds; belts and power supply are not placed.
-      * While tuning this feature, each calculation writes a timestamped JSON snapshot to `BepInEx/debug/UXAssist/QuickMiner/` in the active game profile, including nodes, native colliders, accepted candidates, search phases and their search times, logical processor and worker counts, existing miners, and native placement results. The completion tip stays visible for about 8 seconds; the log also records the result summary and full file path. Replay and compare sequential/parallel results without loading a save using `powershell -File tools/tests/Test-QuickMinerPlacement.ps1 -Snapshot <file.json>` from the repository root.
+      * While tuning this feature, each calculation writes a timestamped JSON snapshot to `BepInEx/debug/UXAssist/QuickMiner/` in the active game profile, including nodes, native colliders, accepted candidates, search phases and their search times, logical processor and worker counts, existing miners, and native placement results. The completion tip stays visible for about 8 seconds; the log also records the result summary and full file path. Replay and compare sequential/parallel results without loading a save using `powershell -File tools/tests/Test-QuickMinerPlacement.ps1 -Snapshot <file.json>` from the repository root. Replay fails if total coverage falls below the recorded result; add `-MinimumTotalCoverage <count>` to require a higher total.
     * Belt signals for buy out dark fog items automatically
       * 6 belt signals are added to the signal panel, which can be used to buy out dark fog items automatically.
       * Generated items are stacked in 4 items.
@@ -284,11 +284,11 @@
     * 快速铺设采矿机
       * 点击「工厂」页中轨道采集器按钮附近的按钮，在最近的固体矿脉生成完整的普通采矿机布局，数量不受库存限制。有采矿机时正常消耗背包和手持物品，不足的位置保留待建造虚影，等待补充材料。所有计划掩埋完成后，每台矿机仍须覆盖至少 3 个矿点；少于 3 个的视为无效，不予铺设。
       * 先还原未被建筑阻挡的掩埋矿点，再按原版独立碰撞体搜索布局，保留游戏允许的矿机脚部交叉空间。
-      * 比较多种铺设顺序，细调位置和朝向，按机身宽度补充紧邻候选，并允许邻近的两三台矿机一起重新布局，尽量提高各台矿机覆盖矿点数之和；同一矿点被多台矿机覆盖时重复计数。计算有界，不保证全局最优。
+      * 比较多种铺设顺序，同时按候选序号及位置朝向探索不同布局，细调位置和朝向，按机身宽度补充紧邻候选，并允许邻近的两三台矿机一起重新布局，尽量提高各台矿机覆盖矿点数之和。结束前再扫描全部候选，继续补入能提高总覆盖数、且不破坏每台至少覆盖 3 点要求的矿机。同一矿点被多台矿机覆盖时重复计数。计算有界，不保证全局最优。
       * 复用碰撞检查结果，使用最多 4 个后台线程并行搜索独立布局，线程数不超过可用逻辑线程数的一半。单逻辑线程系统继续在主线程按每帧预算计算。原生地形检查和实际铺设保留在主线程；并行调度与顺序搜索生成相同布局。
       * 允许掩埋未被使用的矿点来提高总覆盖数；保护已有矿机及待建造矿机使用的矿点。仍需满足地面、水面、现有建筑和建造范围要求。
       * 计算期间再次点击可取消，切换行星或退出游戏自动取消。待建造对象由建设机器人完成，不自动铺设传送带和电力设施。
-      * 功能调试期间，每次计算都会在当前游戏配置目录的 `BepInEx/debug/UXAssist/QuickMiner/` 下写入带时间戳的 JSON 文件，记录矿点、原生碰撞体、有效候选、搜索阶段及其搜索耗时、逻辑线程数和工作线程数、现有矿机和原生铺设校验结果。完成提示保留约 8 秒，日志也会记录结果摘要和文件的完整路径。在仓库根目录运行 `powershell -File tools/tests/Test-QuickMinerPlacement.ps1 -Snapshot <file.json>`，即可离线重放并比较顺序与并行搜索结果，无需读取存档。
+      * 功能调试期间，每次计算都会在当前游戏配置目录的 `BepInEx/debug/UXAssist/QuickMiner/` 下写入带时间戳的 JSON 文件，记录矿点、原生碰撞体、有效候选、搜索阶段及其搜索耗时、逻辑线程数和工作线程数、现有矿机和原生铺设校验结果。完成提示保留约 8 秒，日志也会记录结果摘要和文件的完整路径。在仓库根目录运行 `powershell -File tools/tests/Test-QuickMinerPlacement.ps1 -Snapshot <file.json>`，即可离线重放并比较顺序与并行搜索结果，无需读取存档。总覆盖数低于记录结果时，重放检查会失败；可追加 `-MinimumTotalCoverage <数量>`，要求达到更高的总覆盖数。
     * 用于自动购买黑雾物品的传送带信号
       * 在信号面板上添加了6个传送带信号，可以用于自动购买黑雾道具。
       * 生成的物品堆叠数为4。

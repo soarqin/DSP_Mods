@@ -4,7 +4,7 @@
 ## Changlog
 
 * 1.6.3 - Unreleased
-  * `Quick build Mining Machines`: Add a Factory-tab button that restores available buried nodes at the nearest solid vein group and searches dense layouts using native collision shapes, including interleaving feet and joint placement of nearby miners. Optimizes summed vein coverage, requires at least 3 covered nodes per miner after burial, may bury unused nodes, and places the full ordinary miner layout regardless of stock, leaving ghosts awaiting missing materials. Accelerates layout searches with up to 4 background workers, capped at half the available logical processors. Writes replayable JSON snapshots during feature tuning and keeps the completion tip visible for about 8 seconds.
+  * `Quick build Mining Machines`: Add a Factory-tab button that restores available buried nodes at the nearest solid vein group and searches dense layouts using native collision shapes, including interleaving feet, joint placement of nearby miners, and a final pass to fill remaining compatible positions. Optimizes summed vein coverage, requires at least 3 covered nodes per miner after burial, may bury unused nodes, and places the full ordinary miner layout regardless of stock, leaving ghosts awaiting missing materials. Accelerates layout searches with up to 4 background workers, capped at half the available logical processors. Writes replayable JSON snapshots during feature tuning and keeps the completion tip visible for about 8 seconds.
 * 1.6.2
   * `Increase maximum power usage in Logistic Stations and Advanced Mining Machines`: Fix zero or corrupted mining speeds when adjusting an Advanced Mining Machine's speed slider with the option enabled.
   * `Tweak building buffers`: Restore the Ray Receiver Graviton Lens buffer setting on DSP 0.10.35.29104 and later, and correct the displayed native buffer value to 2.
@@ -437,7 +437,7 @@
 ## 更新日志
 
 * 1.6.3 - Unreleased
-  * `快速铺设采矿机`：在「工厂」页增加按钮，还原最近固体矿脉中可还原的掩埋矿点，并按游戏实际碰撞体搜索密集布局，支持脚部交错和邻近矿机联动调整。以各台矿机覆盖矿点数之和为目标，要求每台在掩埋后仍覆盖至少 3 个矿点，允许掩埋未被使用的矿点，不受库存限制地生成完整布局，缺少采矿机的位置保留待建造虚影。使用最多 4 个后台线程加速布局搜索，线程数不超过可用逻辑线程数的一半。功能调试期间输出可离线重放的 JSON 数据，完成提示保留约 8 秒。
+  * `快速铺设采矿机`：在「工厂」页增加按钮，还原最近固体矿脉中可还原的掩埋矿点，并按游戏实际碰撞体搜索密集布局，支持脚部交错、邻近矿机联动调整及结束前补入剩余可用位置。以各台矿机覆盖矿点数之和为目标，要求每台在掩埋后仍覆盖至少 3 个矿点，允许掩埋未被使用的矿点，不受库存限制地生成完整布局，缺少采矿机的位置保留待建造虚影。使用最多 4 个后台线程加速布局搜索，线程数不超过可用逻辑线程数的一半。功能调试期间输出可离线重放的 JSON 数据，完成提示保留约 8 秒。
 * 1.6.2
   * `提升物流塔和大型采矿机的最大功耗`：修复启用后调整大型采矿机开采速度时出现 0% 或异常速度的问题。
   * `调整建筑输入缓冲`：修复 DSP 0.10.35.29104 及后续版本中射线接收器透镜缓冲设置不生效的问题，并将显示的游戏原始值更正为 2。

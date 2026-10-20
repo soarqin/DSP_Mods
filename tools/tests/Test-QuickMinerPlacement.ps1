@@ -1,7 +1,7 @@
 #requires -Version 5.1
 # Runs the production geometry and solver against the original game assemblies, without Unity.
 [CmdletBinding()]
-param([string]$GameRoot, [string]$Snapshot)
+param([string]$GameRoot, [string]$Snapshot, [ValidateRange(0, 2147483647)][int]$MinimumTotalCoverage = 0)
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -56,7 +56,7 @@ Set-Content -LiteralPath $project -Encoding UTF8 -Value @"
 "@
 if ($Snapshot) {
     $snapshotPath = (Resolve-Path -LiteralPath $Snapshot).Path
-    & dotnet run --project $project -c Release -- $snapshotPath
+    & dotnet run --project $project -c Release -- $snapshotPath $MinimumTotalCoverage
 } else {
     & dotnet run --project $project -c Release
 }

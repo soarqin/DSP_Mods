@@ -56,6 +56,20 @@ internal sealed class MinerPlacementSolver
         var work = RunBatch(passes, pass => GreedyPass(limit, pass, null, results, pass, cancellationToken), workers, cancellationToken);
         while (work.MoveNext()) yield return null;
         foreach (var result in results) Accept(result);
+        // Candidate indices shift when a few poses become invalid. Duplicated poses also
+        // get extra lottery tickets with index-based jitter. Keep the existing starts and
+        // add pose-based starts whose priorities survive filtering and duplicate candidates.
+        var keys = new uint[_candidates.Count];
+        for (var i = 0; i < keys.Length; i++)
+        {
+            if ((i & 127) == 0) { cancellationToken.ThrowIfCancellationRequested(); yield return null; }
+            keys[i] = PoseKey(_candidates[i]);
+        }
+        var additional = new SearchResult[Math.Max(0, passes - 2)];
+        work = RunBatch(additional.Length,
+            index => GreedyPass(limit, index + 2, null, additional, index, cancellationToken, keys), workers, cancellationToken);
+        while (work.MoveNext()) yield return null;
+        foreach (var result in additional) Accept(result);
         var seeds = new List<Candidate>(Best);
         results = new SearchResult[seeds.Count];
         work = RunBatch(seeds.Count, index => GreedyPass(limit, passes + index, seeds, results, index, cancellationToken), workers, cancellationToken);
@@ -63,9 +77,25 @@ internal sealed class MinerPlacementSolver
         foreach (var result in results) Accept(result);
         var repair = Repack(limit, workers, cancellationToken);
         while (repair.MoveNext()) yield return null;
+        // A local replacement can open space beyond its neighborhood. Saturate the full
+        // candidate set once more, preserving every selected miner's minimum coverage.
+        var refill = new SearchResult[1];
+        work = GreedyPass(limit, 0, new List<Candidate>(Best), refill, 0, cancellationToken, keepAllSeeds: true);
+        while (work.MoveNext()) yield return null;
+        Accept(refill[0]);
     }
 
-    private IEnumerator GreedyPass(int limit, int pass, List<Candidate> seeds, SearchResult[] results, int resultIndex, CancellationToken cancellationToken)
+    private static uint PoseKey(Candidate candidate)
+    {
+        // Quantize only the exploration key, never the geometry or collision tests.
+        var x = (int)Math.Round(candidate.X * 1000f);
+        var z = (int)Math.Round(candidate.Z * 1000f);
+        var yaw = (int)Math.Round(((candidate.Yaw % 360f + 360f) % 360f) * 10f);
+        return unchecked((uint)(x * 73856093 ^ z * 19349663 ^ yaw * 83492791));
+    }
+
+    private IEnumerator GreedyPass(int limit, int pass, List<Candidate> seeds, SearchResult[] results, int resultIndex,
+        CancellationToken cancellationToken, uint[] keys = null, bool keepAllSeeds = false)
     {
         var selected = new List<Candidate>();
         var buried = new bool[_nodeCount];
@@ -73,7 +103,7 @@ internal sealed class MinerPlacementSolver
         var score = 0;
         if (seeds != null)
             for (var i = 0; i < seeds.Count && selected.Count < limit; i++)
-                if (i != resultIndex) Add(seeds[i], selected, buried, uses, ref score);
+                if (keepAllSeeds || i != resultIndex) Add(seeds[i], selected, buried, uses, ref score);
         while (selected.Count < limit)
         {
             Candidate chosen = null;
@@ -86,12 +116,13 @@ internal sealed class MinerPlacementSolver
                     yield return null;
                 }
                 var candidate = _candidates[i];
-                if (seeds != null && ReferenceEquals(candidate, seeds[resultIndex])) continue;
+                if (seeds != null && !keepAllSeeds && ReferenceEquals(candidate, seeds[resultIndex])) continue;
                 if (seeds == null && pass == 0 && candidate.Buried.Length != 0) continue;
                 var gain = Gain(candidate, buried, uses, out var coverage);
                 if (coverage < MinimumCoverage || gain <= 0) continue;
                 // Deterministic exploration without depending on the game's random stream.
-                var hash = unchecked((uint)((i + 1) * 73856093 ^ (pass + 1) * 19349663 ^ (selected.Count + 1) * 83492791));
+                var hash = (keys == null ? unchecked((uint)((i + 1) * 73856093)) : keys[i]) ^
+                    unchecked((uint)((pass + 1) * 19349663 ^ (selected.Count + 1) * 83492791));
                 hash ^= hash >> 16;
                 hash = unchecked(hash * 0x7feb352dU);
                 hash ^= hash >> 15;

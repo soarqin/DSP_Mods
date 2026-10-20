@@ -15,7 +15,7 @@ internal static class MinerPlacementDebug
     internal sealed class Snapshot
     {
         public int schema = 2;
-        public string algorithm = "parallel-repack-v3-min3-unlimited-stock";
+        public string algorithm = "parallel-repack-v5-pose-exploration-min3-unlimited-stock";
         public int minimumCoverage = MinerPlacementSolver.MinimumCoverage;
         public string version, gameVersion, startedUtc, outcome, error;
         public int planetId, veinType, veinGroup, initialStock, placedCount, totalCoverage, buriedCount;
@@ -104,7 +104,9 @@ internal static class MinerPlacementDebug
     internal sealed class Phase
     {
         public string name;
-        public int candidateCount, limit, passes, score;
+        public int candidateCount, passes, score;
+        // Unlimited-stock snapshots may omit the legacy placement cap.
+        public int limit = int.MaxValue;
         public long elapsedMilliseconds, searchMilliseconds;
         public int[] selected;
     }

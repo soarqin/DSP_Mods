@@ -40,16 +40,16 @@ internal static class QuickMinerPlacementTests
         ObstacleBoxes = [new Box(Collider(new Vector3(x, 0, 0), new Vector3(halfWidth, 0.4f, 0.4f), Quaternion.identity))]
     };
 
-    private static MinerPlacementSolver Solve(List<Candidate> candidates, int nodes, int? limit = null)
+    private static MinerPlacementSolver Solve(List<Candidate> candidates, int nodes, int? limit = null, int passes = 12)
     {
         var solver = new MinerPlacementSolver(candidates, nodes);
-        var search = limit.HasValue ? solver.Search(limit.Value, 12) : solver.Search(12);
+        var search = limit.HasValue ? solver.Search(limit.Value, passes) : solver.Search(passes);
         var steps = 0;
         while (search.MoveNext()) if (++steps > 2000000) throw new InvalidOperationException("Search did not terminate.");
         if (MinerPlacementSolver.WorkerCount > 0)
         {
             var parallel = new MinerPlacementSolver(candidates, nodes);
-            parallel.SearchAsync(limit ?? int.MaxValue, 12, CancellationToken.None).GetAwaiter().GetResult();
+            parallel.SearchAsync(limit ?? int.MaxValue, passes, CancellationToken.None).GetAwaiter().GetResult();
             Check(parallel.BestScore == solver.BestScore && parallel.Best.SequenceEqual(solver.Best),
                 "Parallel scheduling must preserve the exact sequential layout, including ties.");
         }
@@ -62,6 +62,17 @@ internal static class QuickMinerPlacementTests
             Check(solver.Best[i].Covered.Count(n => !buried.Contains(n)) >= MinerPlacementSolver.MinimumCoverage,
                 "Placed a miner below the minimum after the full burial union.");
             Check(MinerPlacementSolver.Fits(solver.Best[i], solver.Best.Take(i).ToList()), "Plan contains colliding miners.");
+        }
+        if (solver.Best.Count < (limit ?? int.MaxValue))
+        {
+            var canImprove = candidates.Any(candidate =>
+            {
+                if (candidate.Covered.Length < MinerPlacementSolver.MinimumCoverage || !MinerPlacementSolver.Fits(candidate, solver.Best)) return false;
+                var trialBurial = buried.Concat(candidate.Buried).ToHashSet();
+                var counts = solver.Best.Append(candidate).Select(c => c.Covered.Count(n => !trialBurial.Contains(n))).ToArray();
+                return counts.All(count => count >= MinerPlacementSolver.MinimumCoverage) && counts.Sum() > expected;
+            });
+            Check(!canImprove, "Search left a legal positive-gain miner unplaced in its candidate set.");
         }
         return solver;
     }
@@ -131,6 +142,22 @@ internal static class QuickMinerPlacementTests
         coordinated.AddRange([Bar(0, 0, 0.4f, 4, 6), Bar(2, 0, 0.4f, 4, 6)]);
         coordinated.AddRange([Bar(0, -2, 4, 0.4f, 8), Bar(0, 0, 4, 0.4f, 8), Bar(0, 2, 4, 0.4f, 8)]);
         Check(Solve(coordinated, 9, 3).BestScore == 24, "Must repack all three miners together to escape the 21-point layout.");
+
+        // Four columns block all four better rows, beyond the three-miner repair radius.
+        // Repeated poses must not bias every exploratory pass toward the strongest column.
+        var duplicated = Enumerable.Range(0, 96).Select(_ => Bar(-3, 0, 0.4f, 5, 9)).ToList();
+        duplicated.AddRange([Bar(-1, 0, 0.4f, 5, 6), Bar(1, 0, 0.4f, 5, 6), Bar(3, 0, 0.4f, 5, 6)]);
+        duplicated.AddRange([Bar(0, -3, 5, 0.4f, 8), Bar(0, -1, 5, 0.4f, 8), Bar(0, 1, 5, 0.4f, 8), Bar(0, 3, 5, 0.4f, 8)]);
+        Check(Solve(duplicated, 9).BestScore == 32, "Pose-based starts must escape the duplicated 27-point column layout.");
+        duplicated.InsertRange(0, Enumerable.Range(0, 4).Select(index => Placement(100 + index * 2, [0])));
+        Check(Solve(duplicated, 9).BestScore == 32, "Filtering unrelated invalid poses must not destroy the better exploration path.");
+
+        // Local repacking can free a distant spot outside every six-meter neighborhood.
+        // The final layout must refill that spot instead of stopping after a local repair.
+        var refill = Enumerable.Range(0, 96).Select(_ => Bar(0, 0, 12, 0.4f, 200)).ToList();
+        refill.AddRange([Placement(-2, Enumerable.Range(0, 100).ToArray()), Placement(0, Enumerable.Range(0, 100).ToArray()),
+            Placement(2, Enumerable.Range(0, 100).ToArray()), Placement(10, [100, 101, 102])]);
+        Check(Solve(refill, 200, passes: 2).BestScore == 303, "Refill a valid miner outside the repacked neighborhood after freeing its footprint.");
 
         // A burial can be individually harmful but worthwhile when two replacements share it.
         var sharedBurial = new List<Candidate> { Placement(-4, Enumerable.Range(0, 8).ToArray()) };
@@ -322,10 +349,10 @@ internal static class QuickMinerPlacementTests
         Replay(path);
     }
 
-    private static void Replay(string path)
+    private static void Replay(string path, int minimumTotalCoverage = 0)
     {
         var snapshot = JsonSerializer.Deserialize<MinerPlacementDebug.Snapshot>(File.ReadAllText(path), ReplayJson);
-        Check(snapshot.schema is 1 or 2, "Unsupported debug snapshot schema.");
+        Check(snapshot.schema is 1 or 2 or 3, "Unsupported debug snapshot schema.");
         Check(snapshot.nodes != null && snapshot.candidates != null && snapshot.buildColliders != null && snapshot.minerColliders != null && snapshot.phases != null,
             "This snapshot contains summary data only and cannot be replayed. Run quick miner placement again with the updated build.");
         Console.WriteLine($"Snapshot: outcome={snapshot.outcome}, nodes={snapshot.nodes.Length}, candidates={snapshot.candidates.Length}, placed={snapshot.placedCount}, actual coverage={snapshot.totalCoverage}");
@@ -367,11 +394,13 @@ internal static class QuickMinerPlacementTests
             }
             Console.WriteLine($"Replay {phase.name}: recorded={phase.score}, current={solver.BestScore}, miners={solver.Best.Count}, candidates={candidates.Count}, sequential={sequentialMilliseconds}ms, workers={MinerPlacementSolver.WorkerCount}, parallel={parallelMilliseconds}ms");
         }
+        Check(solver.BestScore >= Math.Max(snapshot.totalCoverage, minimumTotalCoverage),
+            $"Replay reduced total coverage: recorded={snapshot.totalCoverage}, required={minimumTotalCoverage}, current={solver.BestScore}.");
     }
 
     public static void Main(string[] args)
     {
-        if (args.Length > 0) { Replay(args[0]); return; }
+        if (args.Length > 0) { Replay(args[0], args.Length > 1 ? int.Parse(args[1]) : 0); return; }
         GeometryChecks();
         SolverChecks();
         CancellationChecks();
