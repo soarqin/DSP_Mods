@@ -14,14 +14,14 @@ internal static class MinerPlacementDebug
     [Serializable]
     internal sealed class Snapshot
     {
-        public int schema = 3;
+        public int schema = 4;
         public string algorithm = "parallel-repack-v5-pose-exploration-min3-unlimited-stock";
         public int minimumCoverage = MinerPlacementSolver.MinimumCoverage;
         public string version, gameVersion, startedUtc, outcome, error;
         public int planetId, veinType, veinGroup, initialStock, placedCount, totalCoverage, buriedCount;
         public int logicalProcessors, workerCount;
         public float planetRadius, buildRange;
-        public bool unlimitedRange;
+        public bool unlimitedRange, allowVeinReform;
         public long elapsedMilliseconds;
         public float[] playerPosition, center, right, forward;
         public Node[] nodes;

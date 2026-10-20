@@ -373,6 +373,8 @@ public static class UIConfigWindow
         var quickMinerLocalizer = _quickMinerText.GetComponent<Localizer>();
         if (quickMinerLocalizer != null) UnityEngine.Object.DestroyImmediate(quickMinerLocalizer);
         wnd.AddTipsButton2(x + 250f, y + 6f, tab2, I18NKeys.QuickBuildMiningMachines, I18NKeys.QuickBuildMiningMachinesTips, "quick-miners-tips");
+        y += 30f;
+        wnd.AddCheckBox(x + 10f, y, tab2, QuickMinerBuild.AllowVeinReform, I18NKeys.QuickMinerAllowVeinReform, 13);
         y += 36f;
         wnd.AddButton(x, y, 200, tab2, I18NKeys.QuickBuildOrbitalCollectors, 16, "button-init-planet", PlanetFunctions.BuildOrbitalCollectors);
         y += 30f;

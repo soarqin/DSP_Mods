@@ -13,6 +13,7 @@ using UnityEngine;
 using UXAssist.Common;
 using UXAssist.Common.ModFeatures;
 using UXAssist.Functions;
+using UXAssist.Functions.Factory;
 using UXAssist.Patches;
 using UXAssist.Patches.Factory;
 using UXAssist.Patches.Logistics;
@@ -114,6 +115,8 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
             "Return logistic storage items to player when initializing planet");
         PlanetFunctions.ReturnBeltAFactoryItemsOnInitializeEnabled = Config.Bind("Planet", "ReturnBeltAFactoryItemsOnInitialize", false,
             "Return belt and factory items to player when initializing planet");
+        QuickMinerBuild.AllowVeinReform = Config.Bind("Factory", "QuickMinerAllowVeinReform", false,
+            "Allow quick miner placement to restore and bury veins. When disabled, skip all vein restoration and burial calculations.");
         FactoryPatch.RemoveBuildRangeLimitEnabled = Config.Bind("Factory", "RemoveBuildRangeLimit", false,
                 "Remove limit for build range and maximum count of drag building belts/buildings\nNote: this does not affect range limit for mecha drones' action");
         FactoryPatch.LargerAreaForUpgradeAndDismantleEnabled = Config.Bind("Factory", "LargerAreaForUpgradeAndDismantle", false,

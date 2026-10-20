@@ -40,15 +40,15 @@ internal static class QuickMinerPlacementTests
         ObstacleBoxes = [new Box(Collider(new Vector3(x, 0, 0), new Vector3(halfWidth, 0.4f, 0.4f), Quaternion.identity))]
     };
 
-    private static MinerPlacementSolver Solve(List<Candidate> candidates, int nodes, int passes = 12)
+    private static MinerPlacementSolver Solve(List<Candidate> candidates, int nodes, int passes = 12, bool allowVeinReform = true)
     {
-        var solver = new MinerPlacementSolver(candidates, nodes);
+        var solver = new MinerPlacementSolver(candidates, nodes, allowVeinReform);
         var search = solver.Search(passes);
         var steps = 0;
         while (search.MoveNext()) if (++steps > 2000000) throw new InvalidOperationException("Search did not terminate.");
         if (MinerPlacementSolver.WorkerCount > 0)
         {
-            var parallel = new MinerPlacementSolver(candidates, nodes);
+            var parallel = new MinerPlacementSolver(candidates, nodes, allowVeinReform);
             parallel.SearchAsync(passes, CancellationToken.None).GetAwaiter().GetResult();
             Check(parallel.BestScore == solver.BestScore && parallel.Best.SequenceEqual(solver.Best),
                 "Parallel scheduling must preserve the exact sequential layout, including ties.");
@@ -70,6 +70,12 @@ internal static class QuickMinerPlacementTests
             return counts.All(count => count >= MinerPlacementSolver.MinimumCoverage) && counts.Sum() > expected;
         });
         Check(!canImprove, "Search left a legal positive-gain miner unplaced in its candidate set.");
+        if (allowVeinReform && candidates.All(candidate => candidate.Buried.Length == 0))
+        {
+            var withoutReform = Solve(candidates, nodes, passes, false);
+            Check(withoutReform.BestScore == solver.BestScore && withoutReform.Best.SequenceEqual(solver.Best),
+                "Skipping reform calculations must preserve the exact layout for burial-free candidates.");
+        }
         return solver;
     }
 
@@ -156,6 +162,28 @@ internal static class QuickMinerPlacementTests
         sharedBurial.AddRange([Placement(0, [8, 9, 10, 11, 12], [0, 1, 2, 3, 4, 5, 6, 7]),
             Placement(2, [8, 9, 10, 11, 12], [0, 1, 2, 3, 4, 5, 6, 7])]);
         Check(Solve(sharedBurial, 13).BestScore == 10, "Joint search must replace the invalidated miner and charge shared burial only once.");
+    }
+
+    private static void WithoutReformChecks()
+    {
+        var candidates = new List<Candidate>
+        {
+            Placement(0, [0, 1, 2, 3, 4], halfWidth: 1.1f), Placement(-1.4f, [0, 1, 2]),
+            Placement(1.4f, [2, 3, 4]), Placement(4, [0, 1]), Placement(6, [0, 1, 2])
+        };
+        var expected = Solve(candidates, 5);
+        // No burial metadata or per-node state is needed when reform is disabled.
+        foreach (var candidate in candidates) candidate.Buried = null;
+        var solver = new MinerPlacementSolver(candidates, 0, false);
+        var search = solver.Search(12);
+        while (search.MoveNext()) { }
+        Check(solver.BestScore == expected.BestScore && solver.Best.SequenceEqual(expected.Best),
+            "Disabled reform must work without burial metadata or per-node accounting.");
+        if (MinerPlacementSolver.WorkerCount == 0) return;
+        var parallel = new MinerPlacementSolver(candidates, 0, false);
+        parallel.SearchAsync(12, CancellationToken.None).GetAwaiter().GetResult();
+        Check(parallel.BestScore == solver.BestScore && parallel.Best.SequenceEqual(solver.Best),
+            "Workers must also skip all burial calculations when reform is disabled.");
     }
 
     private static bool CornerOracle(ColliderData a, ColliderData b)
@@ -310,7 +338,7 @@ internal static class QuickMinerPlacementTests
         {
             version = "test", gameVersion = "test", startedUtc = "2026-10-19T00:00:00Z", outcome = "completed", error = "",
             planetId = 101, veinType = 1, veinGroup = 3, initialStock = 0, placedCount = 1, totalCoverage = 3, buriedCount = 0,
-            planetRadius = 200, buildRange = 80, unlimitedRange = true, elapsedMilliseconds = 1,
+            planetRadius = 200, buildRange = 80, unlimitedRange = true, allowVeinReform = false, elapsedMilliseconds = 1,
             logicalProcessors = Environment.ProcessorCount, workerCount = MinerPlacementSolver.WorkerCount,
             playerPosition = [0, 200, 0], center = [0, 200, 0], right = [1, 0, 0], forward = [0, 0, 1],
             nodes = Enumerable.Range(1, 3).Select(id => new MinerPlacementDebug.Node
@@ -333,11 +361,16 @@ internal static class QuickMinerPlacementTests
               document.RootElement.GetProperty("buildColliders").GetArrayLength() == 3,
             "The production writer must serialize internal nested records, not just summary fields.");
         var roundtrip = JsonSerializer.Deserialize<MinerPlacementDebug.Snapshot>(snapshotJson, ReplayJson);
-        Check(roundtrip.schema == 3 && roundtrip.minimumCoverage == 3 && roundtrip.existingMiners[0].prebuild &&
+        Check(roundtrip.schema == 4 && !roundtrip.allowVeinReform && roundtrip.minimumCoverage == 3 && roundtrip.existingMiners[0].prebuild &&
               roundtrip.workerCount <= roundtrip.logicalProcessors / 2 && roundtrip.phases[0].searchMilliseconds == 1 &&
               roundtrip.initialStock == 0 && roundtrip.placements[0].itemRequired == 1 &&
               roundtrip.placements[0].plannedVeins.Length == 3 && roundtrip.placements[0].finalVeins[0] == 1 && roundtrip.rejections.attempted == 1,
             "Replay schema must retain existing miners, native placements and rejection counters.");
+        Replay(path);
+        snapshot.allowVeinReform = true;
+        MinerPlacementDebug.Write(path, snapshot);
+        Check(JsonSerializer.Deserialize<MinerPlacementDebug.Snapshot>(File.ReadAllText(path), ReplayJson).allowVeinReform,
+            "Replay snapshots must preserve the enabled reform option.");
         Replay(path);
     }
 
@@ -345,15 +378,17 @@ internal static class QuickMinerPlacementTests
     {
         var snapshot = JsonSerializer.Deserialize<MinerPlacementDebug.Snapshot>(File.ReadAllText(path), ReplayJson);
         // Schema 2 snapshots also recorded a stock limit, which the current search does not use.
-        Check(snapshot.schema is 1 or 2 or 3, "Unsupported debug snapshot schema.");
+        Check(snapshot.schema is 1 or 2 or 3 or 4, "Unsupported debug snapshot schema.");
         Check(snapshot.nodes != null && snapshot.candidates != null && snapshot.buildColliders != null && snapshot.minerColliders != null && snapshot.phases != null,
             "This snapshot contains summary data only and cannot be replayed. Run quick miner placement again with the updated build.");
         Console.WriteLine($"Snapshot: outcome={snapshot.outcome}, nodes={snapshot.nodes.Length}, candidates={snapshot.candidates.Length}, placed={snapshot.placedCount}, actual coverage={snapshot.totalCoverage}");
         foreach (var failure in (snapshot.placements ?? []).Where(p => p.outcome != "placed").GroupBy(p => (p.outcome, p.nativeCondition)))
             Console.WriteLine($"Placement {failure.Key.outcome}: native={failure.Key.nativeCondition}, count={failure.Count()}");
         var candidates = new List<Candidate>();
-        var solver = new MinerPlacementSolver(candidates, snapshot.nodes.Length);
-        var parallel = new MinerPlacementSolver(candidates, snapshot.nodes.Length);
+        // Older snapshots always used restoration and burial, before the option existed.
+        var allowVeinReform = snapshot.schema < 4 || snapshot.allowVeinReform;
+        var solver = new MinerPlacementSolver(candidates, snapshot.nodes.Length, allowVeinReform);
+        var parallel = new MinerPlacementSolver(candidates, snapshot.nodes.Length, allowVeinReform);
         foreach (var phase in snapshot.phases)
         {
             while (candidates.Count < phase.candidateCount)
@@ -390,6 +425,7 @@ internal static class QuickMinerPlacementTests
         if (args.Length > 0) { Replay(args[0], args.Length > 1 ? int.Parse(args[1]) : 0); return; }
         GeometryChecks();
         SolverChecks();
+        WithoutReformChecks();
         CancellationChecks();
         ReplayChecks();
         var desc = new PrefabDesc { veinMiner = true, minerType = EMinerType.Vein };

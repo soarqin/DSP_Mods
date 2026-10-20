@@ -174,6 +174,7 @@ public static class I18NKeys
     public const string QuickBuildOrbitalCollectors = "Quick build Orbital Collectors";
     public const string QuickBuildMiningMachines = "Quick build Mining Machines";
     public const string QuickBuildMiningMachinesTips = "Quick build Mining Machines tips";
+    public const string QuickMinerAllowVeinReform = "Allow restoring/burying veins";
     public const string QuickMinerCancelSearch = "Cancel miner layout search";
     public const string QuickMinerSearching = "Searching for a dense miner layout";
     public const string QuickMinerCancelled = "Miner layout search cancelled";
@@ -449,7 +450,8 @@ You can set 2 shortcut keys in Settings panel:
         I18N.Add(DismantleAllBuildingsConfirm, "This operation will dismantle all buildings on this planet, are you sure?", "此操作将会拆除本行星上的所有建筑，确定吗？");
         I18N.Add(QuickBuildOrbitalCollectors, "Quick build Orbital Collectors", "快速建造轨道采集器");
         I18N.Add(QuickBuildMiningMachines, "Quick build Mining Machines", "快速铺设采矿机");
-        I18N.Add(QuickBuildMiningMachinesTips, "Places ordinary Mining Machine prebuilds at the nearest solid vein group. Restores buried nodes when no building obstructs them and no Dark Fog Planetary Base is nearby. Searches native collision shapes and maximizes the sum of each miner's vein count, counting shared nodes repeatedly. Every placed miner must retain at least 3 covered nodes after all planned burials. May bury unused nodes to improve the total. Places the full layout regardless of carried stock; missing miners remain as ghosts awaiting materials. Respects ground and construction range; does not lay belts or power poles. Click again to cancel the search.", "在最近的固体矿脉生成普通采矿机待建造对象。先还原未被建筑阻挡且不在黑雾行星基地附近的掩埋矿点，按游戏实际碰撞体搜索布局，以各台矿机覆盖矿点数之和为目标，同一矿点被多台矿机覆盖时重复计数。所有计划掩埋完成后，每台矿机仍须覆盖至少 3 个矿点。允许掩埋未被现有矿机使用的矿点，以提高总覆盖数。布局数量不受库存限制，采矿机不足的位置保留待建造虚影，等待补充材料。遵守地面和建造范围要求，不铺设传送带和电力设施。计算期间再次点击可取消。");
+        I18N.Add(QuickBuildMiningMachinesTips, "Places ordinary Mining Machine prebuilds at the nearest solid vein group. Allow restoring/burying veins is off by default: only visible nodes are used, and all restoration and burial calculations are skipped. Enable it to restore buried nodes when no building obstructs them and no Dark Fog Planetary Base is nearby, and to allow burying unused nodes to improve total coverage. Searches native collision shapes and maximizes the sum of each miner's vein count, counting shared nodes repeatedly. Every placed miner must retain at least 3 covered nodes after any planned burials. Places the full layout regardless of carried stock; missing miners remain as ghosts awaiting materials. Respects ground and construction range; does not lay belts or power poles. Option changes apply to the next calculation. Click again to cancel the search.", "在最近的固体矿脉生成普通采矿机待建造对象。「允许恢复/掩埋矿物」默认关闭：仅使用可见矿点，跳过所有恢复和掩埋计算。开启后，先恢复未被建筑阻挡且不在黑雾行星基地附近的掩埋矿点，并允许掩埋未被现有矿机使用的矿点来提高总覆盖数。按游戏实际碰撞体搜索布局，以各台矿机覆盖矿点数之和为目标，同一矿点被多台矿机覆盖时重复计数。所有计划掩埋完成后，每台矿机仍须覆盖至少 3 个矿点。布局数量不受库存限制，采矿机不足的位置保留待建造虚影，等待补充材料。遵守地面和建造范围要求，不铺设传送带和电力设施。选项变更从下次计算生效。计算期间再次点击可取消。");
+        I18N.Add(QuickMinerAllowVeinReform, "Allow restoring/burying veins", "允许恢复/掩埋矿物");
         I18N.Add(QuickMinerCancelSearch, "Cancel miner layout search", "取消采矿机布局计算");
         I18N.Add(QuickMinerSearching, "Searching for a dense miner layout... Click the button again to cancel.", "正在计算密集采矿机布局，再次点击按钮可取消。");
         I18N.Add(QuickMinerCancelled, "Miner layout search cancelled", "已取消采矿机布局计算");

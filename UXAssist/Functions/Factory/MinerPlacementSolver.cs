@@ -27,14 +27,17 @@ internal sealed class MinerPlacementSolver
 
     private readonly List<Candidate> _candidates;
     private readonly int _nodeCount;
+    private readonly bool _allowVeinReform;
     private int _bestBuriedCount;
     public List<Candidate> Best { get; private set; } = [];
     public int BestScore { get; private set; }
 
-    public MinerPlacementSolver(List<Candidate> candidates, int nodeCount)
+    // With reform disabled, the caller supplies only burial-free candidates.
+    public MinerPlacementSolver(List<Candidate> candidates, int nodeCount, bool allowVeinReform = true)
     {
         _candidates = candidates;
         _nodeCount = nodeCount;
+        _allowVeinReform = allowVeinReform;
     }
 
     public IEnumerator Search(int passes) => Search(passes, 0, CancellationToken.None);
@@ -109,7 +112,7 @@ internal sealed class MinerPlacementSolver
     private IEnumerator GreedyPass(int pass, uint[] keys, SeedCollisions seeds, int removed, SearchResult[] results, int resultIndex,
         CancellationToken cancellationToken)
     {
-        var layout = new Layout(_nodeCount);
+        var layout = new Layout(_nodeCount, _allowVeinReform);
         // Selected miners already proven compatible with each candidate, or -1 once it cannot
         // join. Layouts and burials only grow during a pass, so every exclusion is permanent.
         var verified = new int[_candidates.Count];
@@ -121,7 +124,7 @@ internal sealed class MinerPlacementSolver
                 verified[i] = (removed >= 0 && ReferenceEquals(_candidates[i], seeds.Seeds[removed])) || !seeds.AllowsWithout(i, removed)
                     ? -1 : layout.Selected.Count;
         }
-        else if (pass == 0)
+        else if (_allowVeinReform && pass == 0)
         {
             for (var i = 0; i < verified.Length; i++)
                 if (_candidates[i].Buried.Length != 0) verified[i] = -1;
@@ -159,7 +162,8 @@ internal sealed class MinerPlacementSolver
                     hash ^= hash >> 16;
                     jitter = 0.65f + (hash & 65535) / 65535f * 0.7f;
                 }
-                var value = gain * jitter - candidate.Buried.Length * 0.0001f;
+                var value = gain * jitter;
+                if (_allowVeinReform) value -= candidate.Buried.Length * 0.0001f;
                 if (value <= priority) continue;
                 if (!layout.FitsFrom(candidate, verified[i]) || !layout.PreservesCoverage(candidate))
                 {
@@ -319,7 +323,7 @@ internal sealed class MinerPlacementSolver
 
     private IEnumerator RepackRegion(SeedCollisions seeds, (int, int, int) region, SearchResult result, CancellationToken cancellationToken)
     {
-        var layout = new Layout(_nodeCount);
+        var layout = new Layout(_nodeCount, _allowVeinReform);
         var removed = new List<Candidate>();
         var centerX = 0f;
         var centerZ = 0f;
@@ -423,15 +427,17 @@ internal sealed class MinerPlacementSolver
 
     // A partial layout. Score counts each visible node once per covering miner; RawScore
     // ignores burials and is therefore an upper bound for pruning.
-    private sealed class Layout(int nodeCount)
+    private sealed class Layout(int nodeCount, bool allowVeinReform)
     {
         public readonly List<Candidate> Selected = [];
-        private readonly int[] _buried = new int[nodeCount], _uses = new int[nodeCount];
+        private readonly int[] _buried = allowVeinReform ? new int[nodeCount] : null,
+            _uses = allowVeinReform ? new int[nodeCount] : null;
         public int Score, RawScore, BuriedCount;
 
         public int Gain(Candidate candidate, out int coverage)
         {
             coverage = Coverage(candidate);
+            if (_buried == null) return coverage;
             var gain = coverage;
             foreach (var index in candidate.Buried) if (_buried[index] == 0) gain -= _uses[index];
             return gain;
@@ -439,6 +445,7 @@ internal sealed class MinerPlacementSolver
 
         private int Coverage(Candidate candidate)
         {
+            if (_buried == null) return candidate.Covered.Length;
             var coverage = 0;
             foreach (var index in candidate.Covered) if (_buried[index] == 0) coverage++;
             return coverage;
@@ -457,6 +464,7 @@ internal sealed class MinerPlacementSolver
         // Every selected miner already keeps the minimum, so only newly buried used nodes matter.
         public bool PreservesCoverage(Candidate candidate)
         {
+            if (_buried == null) return true;
             var affected = false;
             foreach (var index in candidate.Buried)
                 if (_buried[index] == 0 && _uses[index] > 0) { affected = true; break; }
@@ -474,6 +482,12 @@ internal sealed class MinerPlacementSolver
         public void Add(Candidate candidate)
         {
             RawScore += candidate.Covered.Length;
+            if (_buried == null)
+            {
+                Score = RawScore;
+                Selected.Add(candidate);
+                return;
+            }
             foreach (var index in candidate.Buried)
                 if (_buried[index]++ == 0) { Score -= _uses[index]; BuriedCount++; }
             foreach (var index in candidate.Covered)
@@ -489,6 +503,11 @@ internal sealed class MinerPlacementSolver
             var candidate = Selected[Selected.Count - 1];
             Selected.RemoveAt(Selected.Count - 1);
             RawScore -= candidate.Covered.Length;
+            if (_buried == null)
+            {
+                Score = RawScore;
+                return;
+            }
             foreach (var index in candidate.Covered)
             {
                 if (_buried[index] == 0) Score--;

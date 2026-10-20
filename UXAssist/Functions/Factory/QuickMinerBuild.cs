@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using BepInEx;
+using BepInEx.Configuration;
 using UnityEngine;
 using UXAssist.Common;
 using UXAssist.Common.GameConstants;
@@ -21,6 +22,8 @@ namespace UXAssist.Functions.Factory;
 [ModFeature("QuickMinerBuild")]
 public static class QuickMinerBuild
 {
+    public static ConfigEntry<bool> AllowVeinReform;
+
     private static Job _job;
     private static readonly Stopwatch FrameTimer = new();
     private static UIRealtimeTip _resultTip;
@@ -55,7 +58,7 @@ public static class QuickMinerBuild
         }
         try
         {
-            _job = new Job(player, planet);
+            _job = new Job(player, planet, AllowVeinReform.Value);
             UIRealtimeTip.Popup(I18NKeys.QuickMinerSearching.Translate());
         }
         catch (Exception exception)
@@ -177,12 +180,13 @@ public static class QuickMinerBuild
         private readonly List<ColliderData> _obstacles = [], _nearObstacles = [];
         private readonly List<Vector3> _ejectors = [];
         private readonly List<Candidate> _candidates = [];
-        private readonly List<int> _covered = [], _buried = [], _reachable = [], _touching = [];
+        private readonly List<int> _covered = [], _reachable = [], _touching = [];
+        private readonly List<int> _buried;
         private readonly Box[] _buildBoxes, _obstacleBoxes;
         private readonly ColliderData[] _nativeObstacles;
         private readonly ColliderData _body;
         private readonly float _footprintRadius, _halfDiagonal;
-        private readonly bool _capsule;
+        private readonly bool _capsule, _allowVeinReform;
         private readonly MinerPlacementDebug.Snapshot _debug = new();
         private readonly List<MinerPlacementDebug.Phase> _phases = [];
         private readonly List<MinerPlacementDebug.Placement> _placements = [];
@@ -202,10 +206,12 @@ public static class QuickMinerBuild
             GameMain.localPlanet == _planet && _planet.factory == _factory && _planet.physics == _physics && _planet.factoryLoaded;
         public bool WaitingForWorkers => _search != null && !_search.IsCompleted;
 
-        public Job(Player player, PlanetData planet)
+        public Job(Player player, PlanetData planet, bool allowVeinReform)
         {
             _player = player;
             _planet = planet;
+            _allowVeinReform = allowVeinReform;
+            _buried = allowVeinReform ? [] : null;
             _factory = planet.factory;
             _physics = planet.physics;
             _item = LDB.items.Select(ItemIds.MiningMachine);
@@ -237,6 +243,7 @@ public static class QuickMinerBuild
             _debug.playerPosition = MinerPlacementDebug.Vector(player.position);
             _debug.buildRange = player.mecha.buildArea;
             _debug.unlimitedRange = FactoryPatch.RemoveBuildRangeLimitEnabled.Value;
+            _debug.allowVeinReform = allowVeinReform;
             _debug.buildColliders = desc.buildColliders.Select(MinerPlacementDebug.Collider.Capture).ToArray();
             _debug.minerColliders = _nativeObstacles.Select(MinerPlacementDebug.Collider.Capture).ToArray();
             _debug.outcome = "cancelled";
@@ -276,7 +283,7 @@ public static class QuickMinerBuild
                 _result = I18NKeys.QuickMinerNoVeins.Translate();
                 yield break;
             }
-            RestoreTargetVeins();
+            if (_allowVeinReform) RestoreTargetVeins();
             var reach = 9.5f * _planet.realRadius / 200f;
             var width = _maxX - _minX + reach * 2;
             var depth = _maxZ - _minZ + reach * 2;
@@ -291,7 +298,7 @@ public static class QuickMinerBuild
                     yield return null;
                 }
             }
-            var solver = new MinerPlacementSolver(_candidates, _nodes.Count);
+            var solver = new MinerPlacementSolver(_candidates, _nodes.Count, _allowVeinReform);
             var work = Search(solver, "coarse", 10);
             while (work.MoveNext()) yield return null;
             work = Expand(solver.Best, 0.35f, 3f);
@@ -371,6 +378,7 @@ public static class QuickMinerBuild
             {
                 ref var vein = ref _factory.veinPool[i];
                 if (vein.id != i || vein.amount <= 0 || vein.type is EVeinType.None or EVeinType.Oil) continue;
+                if (!_allowVeinReform && vein.pos.magnitude < _planet.realRadius - 40f) continue;
                 var distance = (vein.pos.normalized * _planet.realRadius - _player.position).sqrMagnitude;
                 if (distance >= nearest) continue;
                 nearest = distance;
@@ -420,7 +428,7 @@ public static class QuickMinerBuild
                 }
             }
             FindEjectors(radius);
-            var reserved = ReservedNodes();
+            var reserved = _allowVeinReform ? ReservedNodes() : null;
             for (var i = 1; i < _factory.veinCursor; i++)
             {
                 ref var vein = ref _factory.veinPool[i];
@@ -432,7 +440,7 @@ public static class QuickMinerBuild
                     Id = i, Target = vein.groupIndex == group, Type = vein.type,
                     Position = vein.pos, OriginalPosition = vein.pos, Collider = _physics.GetColliderData(vein.colliderId),
                     Visible = vein.pos.magnitude >= _planet.realRadius - 40f,
-                    CanBury = vein.groupIndex == group && vein.minerCount == 0 && !reserved.Contains(i)
+                    CanBury = _allowVeinReform && vein.groupIndex == group && vein.minerCount == 0 && !reserved.Contains(i)
                 });
             }
             var existing = new List<MinerPlacementDebug.ExistingMiner>();
@@ -605,7 +613,7 @@ public static class QuickMinerBuild
             if (_covered.Count < MinerPlacementSolver.MinimumCoverage) { _debug.rejections.noCoverage++; return; }
             for (var i = 0; i < _buildBoxes.Length; i++)
                 _buildBoxes[i] = new Box(_item.prefabDesc.buildColliders[i].BindToObject(0, 0, EObjectType.None, pos, rotation));
-            _buried.Clear();
+            _buried?.Clear();
             foreach (var i in _touching)
             {
                 var node = _nodes[i];
@@ -613,8 +621,11 @@ public static class QuickMinerBuild
                 if (!node.CanBury) { _debug.rejections.veinCollision++; return; }
                 _buried.Add(i);
             }
-            foreach (var index in _buried) _covered.Remove(index);
-            if (_covered.Count < MinerPlacementSolver.MinimumCoverage) { _debug.rejections.noCoverage++; return; }
+            if (_allowVeinReform)
+            {
+                foreach (var index in _buried) _covered.Remove(index);
+                if (_covered.Count < MinerPlacementSolver.MinimumCoverage) { _debug.rejections.noCoverage++; return; }
+            }
             foreach (var obstacle in _nearObstacles)
                 if (Hits(obstacle)) { _debug.rejections.buildingCollision++; return; }
             if (!HasGround(pos, rotation)) { _debug.rejections.ground++; return; }
@@ -623,7 +634,7 @@ public static class QuickMinerBuild
             _candidates.Add(new Candidate
             {
                 X = x, Z = z, Yaw = yaw, Position = pos, Rotation = rotation, Radius = _footprintRadius,
-                Covered = _covered.ToArray(), Buried = _buried.ToArray(),
+                Covered = _covered.ToArray(), Buried = _buried?.ToArray() ?? [],
                 BuildBoxes = (Box[])_buildBoxes.Clone(), ObstacleBoxes = (Box[])_obstacleBoxes.Clone()
             });
         }
@@ -715,8 +726,9 @@ public static class QuickMinerBuild
                 return;
             }
             var placed = new List<(Candidate Candidate, int Prebuild, MinerPlacementDebug.Placement Debug)>();
-            var plannedBurial = layout.SelectMany(candidate => candidate.Buried).Select(index => _nodes[index].Id).ToHashSet();
-            var hidden = new Dictionary<int, Vector3>();
+            var plannedBurial = _allowVeinReform
+                ? layout.SelectMany(candidate => candidate.Buried).Select(index => _nodes[index].Id).ToHashSet() : null;
+            var hidden = _allowVeinReform ? new Dictionary<int, Vector3>() : null;
             var coverage = 0;
             var buriedCount = 0;
             var validator = new BuildTool_Click();
@@ -738,13 +750,16 @@ public static class QuickMinerBuild
                     };
                     _placements.Add(debug);
                     // No yield between burial, native validation, item consumption, and creation.
-                    foreach (var index in candidate.Buried)
+                    if (_allowVeinReform)
                     {
-                        var node = _nodes[index];
-                        ref var vein = ref _factory.veinPool[node.Id];
-                        if (vein.id != node.Id || hidden.ContainsKey(node.Id)) continue;
-                        hidden.Add(node.Id, vein.pos);
-                        SetVeinPosition(node.Id, vein.pos.normalized * (_planet.realRadius - 50f));
+                        foreach (var index in candidate.Buried)
+                        {
+                            var node = _nodes[index];
+                            ref var vein = ref _factory.veinPool[node.Id];
+                            if (vein.id != node.Id || hidden.ContainsKey(node.Id)) continue;
+                            hidden.Add(node.Id, vein.pos);
+                            SetVeinPosition(node.Id, vein.pos.normalized * (_planet.realRadius - 50f));
+                        }
                     }
                     // Validation needs current Unity colliders; GPU buffers are synced once at the end.
                     _physics.RefreshColliders();
@@ -775,11 +790,15 @@ public static class QuickMinerBuild
             {
                 validator._Free();
                 // A failed/shortened layout must not leave nodes buried for unplaced miners.
-                var needed = new HashSet<int>();
-                foreach (var entry in placed)
-                foreach (var index in entry.Candidate.Buried) needed.Add(_nodes[index].Id);
-                foreach (var entry in hidden)
-                    if (!needed.Contains(entry.Key)) SetVeinPosition(entry.Key, entry.Value);
+                if (_allowVeinReform)
+                {
+                    var needed = new HashSet<int>();
+                    foreach (var entry in placed)
+                    foreach (var index in entry.Candidate.Buried) needed.Add(_nodes[index].Id);
+                    foreach (var entry in hidden)
+                        if (!needed.Contains(entry.Key)) SetVeinPosition(entry.Key, entry.Value);
+                    buriedCount = needed.Count;
+                }
                 foreach (var entry in placed)
                 {
                     var ids = new List<int>();
@@ -796,8 +815,7 @@ public static class QuickMinerBuild
                     entry.Debug.finalVeins = ids.ToArray();
                     coverage += ids.Count;
                 }
-                buriedCount = needed.Count;
-                RefreshVeins(buriedCount > 0 ? 1 : 0);
+                if (_allowVeinReform) RefreshVeins(buriedCount > 0 ? 1 : 0);
             }
             _debug.placedCount = placed.Count;
             _debug.totalCoverage = coverage;
@@ -816,6 +834,7 @@ public static class QuickMinerBuild
                 if (vein.id != node.Id || vein.type != node.Type || vein.amount <= 0 || vein.colliderId <= 0 ||
                     (vein.pos - node.Position).sqrMagnitude > 0.0001f) return false;
             }
+            if (!_allowVeinReform) return true;
             var reserved = ReservedNodes();
             foreach (var candidate in layout)
             foreach (var index in candidate.Buried)
@@ -870,7 +889,8 @@ public static class QuickMinerBuild
                 if (!valid || preview.condition != EBuildCondition.Ok || preview.coverObjId != 0) return false;
                 // Include every planned burial now, so a later miner cannot reduce this one
                 // below the minimum after its item has already been consumed.
-                debug.plannedVeins = debug.nativeVeins.Where(id => !plannedBurial.Contains(id)).ToArray();
+                debug.plannedVeins = _allowVeinReform
+                    ? debug.nativeVeins.Where(id => !plannedBurial.Contains(id)).ToArray() : debug.nativeVeins;
                 if (debug.plannedVeins.Length < MinerPlacementSolver.MinimumCoverage)
                 { debug.outcome = "below-minimum-coverage"; return false; }
                 for (var i = 0; i < preview.paramCount; i++)
