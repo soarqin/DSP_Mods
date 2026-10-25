@@ -12,12 +12,6 @@ namespace UXAssist.Patches.Factory;
 
 internal static class RenderingPatch
 {
-    public static void Enable(bool enable)
-    {
-        DoNotRenderEntities.Enable(enable);
-        NightLight.Enable(enable);
-    }
-
     internal class DoNotRenderEntities : PatchImpl<DoNotRenderEntities>
     {
         public static bool HideSorters;
@@ -92,140 +86,173 @@ internal static class RenderingPatch
 
     internal class NightLight : PatchImpl<NightLight>
     {
-        private static bool _nightlightInitialized;
-        private static bool _mechaOnEarth;
-        private static AnimationState _sail;
         private static Light _sunlight;
+        private static Quaternion _sunlightLocalRotation;
+        private static PlanetSimulator _planetSimulator;
+        private static int _sunDirectionId;
+        private static int _globalSunDirectionId;
 
         protected override void OnEnable()
         {
-            GameLogicProc.OnGameEnd += OnGameEnd;
+            _sunDirectionId = Shader.PropertyToID("_SunDir");
+            _globalSunDirectionId = Shader.PropertyToID("_Global_SunDir");
+            GameLogicProc.OnGameEnd += RestoreSunlight;
         }
 
         protected override void OnDisable()
         {
-            GameLogicProc.OnGameEnd -= OnGameEnd;
-            if (_sunlight)
-            {
-                _sunlight.transform.localEulerAngles = new Vector3(0f, 180f);
-                _sunlight = null;
-            }
-            _sail = null;
-            _mechaOnEarth = false;
-            _nightlightInitialized = false;
+            GameLogicProc.OnGameEnd -= RestoreSunlight;
+            RestoreSunlight();
         }
 
-        private static void OnGameEnd()
+        private static void RestoreSunlight()
         {
-            if (_sunlight)
+            var sunlight = _sunlight;
+            if (sunlight)
+                sunlight.transform.localRotation = _sunlightLocalRotation;
+            var planetSimulator = _planetSimulator;
+            _sunlight = null;
+            _planetSimulator = null;
+
+            if ((!sunlight && !planetSimulator) || !GameMain.instance || !GameMain.instance._running || GameMain.instance.isMenuDemo || FactoryModel.whiteMode0) return;
+            var starSimulator = GameMain.universeSimulator?.LocalStarSimulator();
+            if (starSimulator)
+                Shader.SetGlobalVector(_globalSunDirectionId, starSimulator.transform.forward);
+            if (planetSimulator && planetSimulator.isActiveAndEnabled && planetSimulator.planetData != null)
             {
-                _sunlight.transform.localEulerAngles = new Vector3(0f, 180f);
-                _sunlight = null;
+                var rotation = GameMain.localPlanet?.runtimeRotation ?? Quaternion.identity;
+                var planet = planetSimulator.planetData;
+                Vector3 direction = Quaternion.Inverse(rotation) * (planet.star.uPosition - planet.uPosition).normalized;
+                ApplyPlanetSunlightDirection(planetSimulator, direction);
             }
-            _sail = null;
-            _mechaOnEarth = false;
-            _nightlightInitialized = false;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void UpdateSunlightAngle()
+        internal static Vector3 CalculateSunlightDirection(Vector3 surfaceUp, Vector3 cameraForward, Vector3 cameraUp, float angleX, float angleY)
         {
-            if (!_sunlight) return;
-            _sunlight.transform.rotation =
-                Quaternion.LookRotation(-GameMain.mainPlayer.transform.up + GameMain.mainPlayer.transform.forward * FactoryPatch.NightLightAngleX.Value / 10f +
-                                        GameMain.mainPlayer.transform.right * FactoryPatch.NightLightAngleY.Value / 10f);
+            surfaceUp.Normalize();
+            // Screen-right stays stable when the native globe camera's offset crosses its viewing axis.
+            var right = Vector3.ProjectOnPlane(Vector3.Cross(cameraUp, cameraForward), surfaceUp);
+            if (right.sqrMagnitude < 0.000001f)
+                right = Vector3.Cross(-cameraForward, surfaceUp);
+            right.Normalize();
+            var towardCamera = Vector3.Cross(surfaceUp, right);
+            return (surfaceUp - towardCamera * (angleX / 10f) - right * (angleY / 10f)).normalized;
         }
 
         [HarmonyPostfix]
-        [HarmonyPatch(typeof(GameMain), nameof(GameMain.LateUpdate))]
-        public static void GameMain_LateUpdate_Postfix(GameMain __instance)
+        [HarmonyPatch(typeof(GameCamera), nameof(GameCamera.FrameLogic))]
+        private static void UpdateLighting()
         {
-            if (__instance.isMenuDemo || !__instance._running) return;
-
-            if (!_nightlightInitialized)
+            var camera = GameCamera.main;
+            if (!camera) return;
+            var game = GameMain.instance;
+            var player = GameMain.mainPlayer;
+            var planet = GameMain.localPlanet;
+            if (!game || !game._running || game.isMenuDemo || player == null || planet == null ||
+                player.movementState == EMovementState.Sail || FactoryModel.whiteMode0)
             {
-                if (!GameMain.mainPlayer.controller.model.gameObject.activeInHierarchy) return;
-                if (_sail == null) _sail = GameMain.mainPlayer.animator.sails[GameMain.mainPlayer.animator.sailAnimIndex];
-                _nightlightInitialized = true;
-            }
-
-            var sailing = _sail && _sail.enabled;
-            if (_mechaOnEarth)
-            {
-                if (!sailing)
-                {
-                    UpdateSunlightAngle();
-                    return;
-                }
-                _mechaOnEarth = false;
-                if (!_sunlight) return;
-                _sunlight.transform.localEulerAngles = new Vector3(0f, 180f);
-                _sunlight = null;
+                RestoreSunlight();
                 return;
             }
 
-            if (sailing) return;
-            _mechaOnEarth = true;
-            if (_sunlight == null)
+            var universe = GameMain.universeSimulator;
+            var sunlight = universe?.LocalStarSimulator()?.sunLight;
+            var planetSimulator = universe?.FindPlanetSimulator(planet);
+            if (!sunlight || !planetSimulator)
             {
-                _sunlight = GameMain.universeSimulator?.LocalStarSimulator()?.sunLight;
+                RestoreSunlight();
+                return;
             }
+
+            var cameraTransform = camera.transform;
+            var target = GameCamera.generalTarget;
+            var surfaceUp = GameCamera.instance && GameCamera.instance.isPlanetMode
+                ? cameraTransform.position
+                : target ? target.position : player.position;
+            if (surfaceUp.sqrMagnitude < 0.000001f)
+            {
+                RestoreSunlight();
+                return;
+            }
+
+            if (_sunlight != sunlight || _planetSimulator != planetSimulator)
+            {
+                RestoreSunlight();
+                _sunlight = sunlight;
+                _sunlightLocalRotation = sunlight.transform.localRotation;
+                _planetSimulator = planetSimulator;
+            }
+
+            var direction = CalculateSunlightDirection(surfaceUp, cameraTransform.forward, cameraTransform.up,
+                FactoryPatch.NightLightAngleX.Value, FactoryPatch.NightLightAngleY.Value);
+            // Native camera updates run after the star and planet callbacks.
+            sunlight.transform.rotation = Quaternion.FromToRotation(Vector3.forward, -direction);
+            Shader.SetGlobalVector(_globalSunDirectionId, direction);
+            ApplyPlanetSunlightDirection(planetSimulator, direction);
         }
-        // Harmony transpiler: StarSimulator_LateUpdate_Transpiler
-        // Target: StarSimulator.LateUpdate
-        // Fallback: None — patch will fail loudly if the target method body changes.
+
+        private static void ApplyPlanetSunlightDirection(PlanetSimulator planetSimulator, Vector3 direction)
+        {
+            if (planetSimulator.surfaceRenderer != null && planetSimulator.surfaceRenderer.Length > 0 && planetSimulator.surfaceRenderer[0])
+                SetSunlightDirection(planetSimulator.surfaceRenderer[0].sharedMaterial, direction);
+            SetSunlightDirection(planetSimulator.reformMat0, direction);
+            SetSunlightDirection(planetSimulator.reformMat1, direction);
+            SetSunlightDirection(planetSimulator.atmoMat, direction);
+            SetSunlightDirection(planetSimulator.atmoMatLate, direction);
+        }
+
+        private static void SetSunlightDirection(Material material, Vector3 direction)
+        {
+            if (material) material.SetVector(_sunDirectionId, direction);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void SetNativeGlobalSunDirection(string _, Vector4 direction, StarSimulator simulator)
+        {
+            if (_sunlight && simulator.sunLight == _sunlight && !FactoryModel.whiteMode0) return;
+            Shader.SetGlobalVector(_globalSunDirectionId, direction);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void SetNativePlanetSunDirection(Material material, string _, Vector4 direction, PlanetSimulator simulator)
+        {
+            if (simulator == _planetSimulator && simulator.planetData == GameMain.localPlanet && !FactoryModel.whiteMode0 && _sunlight) return;
+            material.SetVector(_sunDirectionId, direction);
+        }
+
+        // Harmony transpiler: DeferNativeSunDirectionWrites
+        // Targets: StarSimulator.LateUpdate and PlanetSimulator.LateRefresh sun-direction setters.
+        // Fallback: TranspilerGuard returns original instructions when a sun-direction setter is not found.
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(StarSimulator), nameof(StarSimulator.LateUpdate))]
-        private static IEnumerable<CodeInstruction> StarSimulator_LateUpdate_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
-        {
-            var matcher = new CodeMatcher(instructions, generator);
-            var label1 = generator.DefineLabel();
-            var label2 = generator.DefineLabel();
-            matcher.MatchForward(false,
-                new CodeMatch(OpCodes.Ldarg_0),
-                new CodeMatch(OpCodes.Call, AccessTools.PropertyGetter(typeof(Component), nameof(Component.transform)))
-            ).InsertAndAdvance(
-                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(NightLight), nameof(_mechaOnEarth))),
-                new CodeInstruction(OpCodes.Brfalse_S, label1),
-                new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(GameMain), nameof(GameMain.mainPlayer))),
-                new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Player), nameof(Player.transform))),
-                new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Transform), nameof(Transform.up))),
-                new CodeInstruction(OpCodes.Stloc_0),
-                new CodeInstruction(OpCodes.Br_S, label2)
-            );
-            matcher.Labels.Add(label1);
-            matcher.MatchForward(false,
-                new CodeMatch(OpCodes.Stloc_0)
-            ).Advance(1).Labels.Add(label2);
-            return matcher.InstructionEnumeration();
-        }
-        // Harmony transpiler: PlanetSimulator_LateRefresh_Transpiler
-        // Target: PlanetSimulator.LateRefresh
-        // Fallback: None — patch will fail loudly if the target method body changes.
-        [HarmonyTranspiler]
         [HarmonyPatch(typeof(PlanetSimulator), nameof(PlanetSimulator.LateRefresh))]
-        private static IEnumerable<CodeInstruction> PlanetSimulator_LateRefresh_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        private static IEnumerable<CodeInstruction> DeferNativeSunDirectionWrites(IEnumerable<CodeInstruction> instructions, MethodBase original)
         {
-            // var vec = (NightlightEnabled ? GameMain.mainPlayer.transform.up : (Quaternion.Inverse(localPlanet.runtimeRotation) * (__instance.planetData.star.uPosition - __instance.planetData.uPosition).normalized));
-            var matcher = new CodeMatcher(instructions, generator);
-            var label1 = generator.DefineLabel();
-            var label2 = generator.DefineLabel();
-            matcher.MatchForward(false,
-                new CodeMatch(OpCodes.Stloc_1)
-            ).Advance(1).InsertAndAdvance(
-                new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(NightLight), nameof(_mechaOnEarth))),
-                new CodeInstruction(OpCodes.Brfalse_S, label1),
-                new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(GameMain), nameof(GameMain.mainPlayer))),
-                new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Player), nameof(Player.transform))),
-                new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Transform), nameof(Transform.up))),
-                new CodeInstruction(OpCodes.Stloc_2),
-                new CodeInstruction(OpCodes.Br_S, label2)
-            );
-            matcher.Labels.Add(label1);
-            matcher.MatchForward(false,
-                new CodeMatch(OpCodes.Ldsfld, AccessTools.Field(typeof(FactoryModel), nameof(FactoryModel.whiteMode0)))
-            ).Labels.Add(label2);
-            return matcher.InstructionEnumeration();
+            var isPlanet = original.DeclaringType == typeof(PlanetSimulator);
+            var property = isPlanet ? "_SunDir" : "_Global_SunDir";
+            var setter = isPlanet
+                ? AccessTools.Method(typeof(Material), nameof(Material.SetVector), [typeof(string), typeof(Vector4)])
+                : AccessTools.Method(typeof(Shader), nameof(Shader.SetGlobalVector), [typeof(string), typeof(Vector4)]);
+            var replacement = AccessTools.Method(typeof(NightLight), isPlanet ? nameof(SetNativePlanetSunDirection) : nameof(SetNativeGlobalSunDirection));
+            var matcher = new CodeMatcher(instructions);
+            var matched = false;
+            while (true)
+            {
+                matcher.MatchForward(false, new CodeMatch(OpCodes.Ldstr, property));
+                if (matcher.IsInvalid) break;
+                matcher.Advance(1).MatchForward(false, new CodeMatch(instruction => instruction.Calls(setter) || instruction.opcode == OpCodes.Ldstr));
+                if (matcher.IsInvalid)
+                    return matcher.Finish(instructions, UXAssist.Logger, nameof(DeferNativeSunDirectionWrites));
+                if (!matcher.Instruction.Calls(setter))
+                {
+                    UXAssist.Logger?.LogWarning($"Transpiler '{nameof(DeferNativeSunDirectionWrites)}' found an unexpected sun-direction write; returning original instructions.");
+                    return instructions;
+                }
+                matcher.InsertAndAdvance(new CodeInstruction(OpCodes.Ldarg_0).MoveLabelsFrom(matcher.Instruction));
+                matcher.Set(OpCodes.Call, replacement).Advance(1);
+                matched = true;
+            }
+            return matched ? matcher.InstructionEnumeration() : matcher.Finish(instructions, UXAssist.Logger, nameof(DeferNativeSunDirectionWrites));
         }
     }
 }

@@ -108,8 +108,6 @@ public static class FactoryPatch
         UnlimitInteractiveEnabled.SettingChanged += (_, _) => ArchitectModePatch.UnlimitInteractive.Enable(UnlimitInteractiveEnabled.Value);
         RemoveSomeConditionEnabled.SettingChanged += (_, _) => ArchitectModePatch.RemoveSomeConditionBuild.Enable(RemoveSomeConditionEnabled.Value);
         NightLightEnabled.SettingChanged += (_, _) => RenderingPatch.NightLight.Enable(NightLightEnabled.Value);
-        NightLightAngleX.SettingChanged += (_, _) => RenderingPatch.NightLight.UpdateSunlightAngle();
-        NightLightAngleY.SettingChanged += (_, _) => RenderingPatch.NightLight.UpdateSunlightAngle();
         RemoveBuildRangeLimitEnabled.SettingChanged += (_, _) => ArchitectModePatch.RemoveBuildRangeLimit.Enable(RemoveBuildRangeLimitEnabled.Value);
         LargerAreaForUpgradeAndDismantleEnabled.SettingChanged += (_, _) => ArchitectModePatch.LargerAreaForUpgradeAndDismantle.Enable(LargerAreaForUpgradeAndDismantleEnabled.Value);
         LargerAreaForTerraformEnabled.SettingChanged += (_, _) => ArchitectModePatch.LargerAreaForTerraform.Enable(LargerAreaForTerraformEnabled.Value);

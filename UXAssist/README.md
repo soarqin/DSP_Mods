@@ -44,6 +44,8 @@
     * Increase capacity of player order queue to 128 (from 16)
   * Factory
     * Sunlight at night
+      * Lighting follows the camera instead of Icarus's facing direction, including planet view. Negative X tilts the light toward the camera; negative Y shifts it to the right of the screen. Positive values reverse these directions. Existing angle values are retained.
+      * Lighting directions stay synchronized across buildings and terrain. Native lighting is restored when sailing, disabling the feature, or using the game's white rendering mode.
     * Remove some build conditions
     * Remove build count and range limit
     * Larger area for upgrade and dismantle (up to 31x31)
@@ -244,6 +246,8 @@
     * 将玩家指令队列的容量增加到128(原来为16)
   * 工厂
     * 夜间日光灯
+      * 光照随镜头变化，不再跟随机甲朝向，行星视图也适用。X 的负值使光线朝镜头倾斜，Y 的负值使光源向画面右侧偏移；正值反向。保留现有角度设置。
+      * 建筑与地表的光照方向保持一致。航行、关闭功能或进入游戏白模渲染时恢复原版光照。
     * 移除部分不影响游戏逻辑的建造条件
     * 移除建造数量和范围限制
     * 扩大范围升级和拆除区域（最大 31×31）

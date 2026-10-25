@@ -4,6 +4,7 @@
 ## Changlog
 
 * 1.6.3 - Unreleased
+  * `Sunlight at night`: Base lighting on the camera and the viewed surface instead of Icarus's facing direction, including planet view. Keep building, terrain, solar-panel, and belt lighting directions synchronized, recover when the active light or planet changes, and restore native lighting when sailing, disabling the feature, or using white rendering mode.
   * `Quick build Mining Machines`: Add a Factory-tab button that searches dense layouts at the nearest solid vein group using native collision shapes, including interleaving feet, joint placement of nearby miners, and a final pass to fill remaining compatible positions. `Allow restoring/burying veins` is off by default: uses only visible nodes and skips all restoration and burial calculations. When enabled, restores available buried nodes and may bury unused nodes to improve coverage. Optimizes summed vein coverage, requires at least 3 covered nodes per miner after any burial, and places the full ordinary miner layout regardless of stock, leaving ghosts awaiting missing materials. Accelerates layout searches with up to 4 background workers, capped at half the available logical processors. Writes replayable JSON snapshots during feature tuning and keeps the completion tip visible for about 8 seconds.
 * 1.6.2
   * `Increase maximum power usage in Logistic Stations and Advanced Mining Machines`: Fix zero or corrupted mining speeds when adjusting an Advanced Mining Machine's speed slider with the option enabled.
@@ -437,6 +438,7 @@
 ## 更新日志
 
 * 1.6.3 - Unreleased
+  * `夜间日光灯`：按镜头和当前观察位置的地表方向计算光照，不再跟随机甲朝向，行星视图也适用。统一建筑、地表、太阳能板和传送带的光照方向，在光源或行星切换后恢复功能，并在航行、关闭功能或白模渲染时恢复原版光照。
   * `快速铺设采矿机`：在「工厂」页增加按钮，按游戏实际碰撞体在最近的固体矿脉搜索密集布局，支持脚部交错、邻近矿机联动调整及结束前补入剩余可用位置。「允许恢复/掩埋矿物」默认关闭：仅使用可见矿点，跳过所有恢复和掩埋计算；开启后，恢复可恢复的掩埋矿点，并允许掩埋未被使用的矿点来提高覆盖数。以各台矿机覆盖矿点数之和为目标，要求每台在掩埋后仍覆盖至少 3 个矿点，不受库存限制地生成完整布局，缺少采矿机的位置保留待建造虚影。使用最多 4 个后台线程加速布局搜索，线程数不超过可用逻辑线程数的一半。功能调试期间输出可离线重放的 JSON 数据，完成提示保留约 8 秒。
 * 1.6.2
   * `提升物流塔和大型采矿机的最大功耗`：修复启用后调整大型采矿机开采速度时出现 0% 或异常速度的问题。
