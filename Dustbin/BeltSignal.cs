@@ -10,7 +10,6 @@ namespace Dustbin;
 public static class BeltSignal
 {
     private static HashSet<int>[] _signalBelts;
-    private static int _signalBeltsCapacity;
     private static bool _initialized;
     private static Harmony _patch;
 
@@ -26,7 +25,6 @@ public static class BeltSignal
             _patch?.UnpatchSelf();
             _patch = null;
             _signalBelts = null;
-            _signalBeltsCapacity = 0;
         }
     }
 
@@ -85,7 +83,6 @@ public static class BeltSignal
     {
         if (!GameMain.isRunning) return;
         _signalBelts = new HashSet<int>[64];
-        _signalBeltsCapacity = 64;
 
         var factories = GameMain.data?.factories;
         if (factories == null) return;
@@ -114,31 +111,19 @@ public static class BeltSignal
 
     private static HashSet<int> GetOrCreateSignalBelts(int index)
     {
-        HashSet<int> obj;
         if (index < 0 || _signalBelts == null) return null;
-        if (index >= _signalBeltsCapacity)
+        if (index >= _signalBelts.Length)
         {
-            var newCapacity = _signalBeltsCapacity * 2;
+            var newCapacity = _signalBelts.Length * 2;
             while (newCapacity <= index) newCapacity *= 2;
-            var newSignalBelts = new HashSet<int>[newCapacity];
-            Array.Copy(_signalBelts, newSignalBelts, _signalBeltsCapacity);
-            _signalBelts = newSignalBelts;
-            _signalBeltsCapacity = newCapacity;
+            Array.Resize(ref _signalBelts, newCapacity);
         }
-        else
-        {
-            obj = _signalBelts[index];
-            if (obj != null) return obj;
-        }
-
-        obj = [];
-        _signalBelts[index] = obj;
-        return obj;
+        return _signalBelts[index] ??= [];
     }
 
     private static HashSet<int> GetSignalBelts(int index)
     {
-        return _signalBelts != null && index >= 0 && index < _signalBeltsCapacity ? _signalBelts[index] : null;
+        return _signalBelts != null && index >= 0 && index < _signalBelts.Length ? _signalBelts[index] : null;
     }
 
     private static void RemoveSignalBelt(int factory, int beltId)
@@ -197,6 +182,7 @@ public static class BeltSignal
     [HarmonyPatch(typeof(GameLogic), nameof(GameLogic.OnFactoryFrameBegin))]
     public static void GameLogic_OnFactoryFrameBegin_Postfix(GameLogic __instance)
     {
+        // TrashSystemGameTick overlaps worker-thread inserters; mutate cargo before factory workers start.
         var data = __instance.data;
         var factories = data?.factories;
         if (factories == null || _signalBelts == null) return;
