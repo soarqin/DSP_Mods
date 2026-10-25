@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using static UXAssist.Production.ProductionMath;
 
 namespace UXAssist.Production;
 
@@ -42,8 +43,7 @@ public sealed class ResearchProcessAdapter : IProductionProcessAdapter
         }
         else
         {
-            if (!operatingParameters.TryGetValue("TechId", out var techId) || techId <= 0 ||
-                techId > int.MaxValue || techId != Math.Truncate(techId) ||
+            if (!operatingParameters.TryGetValue("TechId", out var techId) || !PositiveId(techId) ||
                 !operatingParameters.TryGetValue("ResearchSpeed", out researchSpeed) ||
                 !FinitePositive(researchSpeed))
             {
@@ -60,7 +60,6 @@ public sealed class ResearchProcessAdapter : IProductionProcessAdapter
                     buildingItemId: building.ItemId);
                 return false;
             }
-
         }
 
         if (mode != ProliferationMode.None && mode != ProliferationMode.ExtraProducts)
@@ -117,10 +116,5 @@ public sealed class ResearchProcessAdapter : IProductionProcessAdapter
             Array.Empty<KeyValuePair<int, double>>(), 1, workingWatts, true,
             researchHashesPerCycle: hashRate);
         return true;
-    }
-
-    private static bool FinitePositive(double value)
-    {
-        return value > 0 && !double.IsNaN(value) && !double.IsInfinity(value);
     }
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using static UXAssist.Production.ProductionMath;
 
 namespace UXAssist.Production;
 
@@ -36,8 +37,7 @@ public sealed partial class ProductionPlanner
             activeRecipes.Add(process.RecipeId);
             var output = ScaleFlows(process.OutputsPerCycle, executions);
             var input = ScaleFlows(process.InputsPerCycle, executions);
-            if (proliferatorItemId > 0 && process.ProliferationMode != ProliferationMode.None &&
-                process.SprayedInputsPerCycle > 0)
+            if (proliferatorItemId > 0 && SpraysInputs(process))
             {
                 var sprays = process.SprayedInputsPerCycle * executions;
                 foreach (var itemId in reusableSprayItems)
@@ -84,8 +84,7 @@ public sealed partial class ProductionPlanner
                     deploymentCount = Math.Max(1, (int)Math.Ceiling(equivalentBuildings.Value - 1e-9));
                     consumedWatts = equivalentBuildings.Value * process.WorkingPowerWatts;
                     peakWatts = deploymentCount.Value * process.WorkingPowerWatts;
-                    if (consumedWatts.Value < 0 || double.IsNaN(consumedWatts.Value) ||
-                        double.IsInfinity(consumedWatts.Value)) factoryPowerComplete = false;
+                    if (!FiniteNonnegative(consumedWatts.Value)) factoryPowerComplete = false;
                     workingPower += consumedWatts.Value;
                     peakPower += peakWatts.Value;
                     generationWatts += equivalentBuildings.Value * process.GenerationWatts;
@@ -137,9 +136,7 @@ public sealed partial class ProductionPlanner
 
             if (!_catalog.Buildings.TryGetValue(auxiliary.BuildingItemId, out var building) ||
                 building.Kind != ProductionBuildingKind.Auxiliary ||
-                building.WorkingPowerWatts < 0 || double.IsInfinity(building.WorkingPowerWatts) ||
-                double.IsNaN(building.WorkingPowerWatts) ||
-                double.IsInfinity(building.WorkingPowerWatts * auxiliary.Count))
+                !FiniteNonnegative(building.WorkingPowerWatts * auxiliary.Count))
             {
                 powerComplete = false;
                 factoryPowerComplete = false;
@@ -187,8 +184,8 @@ public sealed partial class ProductionPlanner
             var surplus = solution[surplusStart + index];
             var finalProduct = produced > 1e-9 && consumed <= 1e-9;
             itemFlows.Add(new ProductionItemFlow(itemId, produced, consumed, imported, known, delivered, surplus,
-                imported, finalProduct, produced > 1e-9 && consumed > 1e-9 && surplus > 1e-9,
-                0, producers.TryGetValue(itemId, out var producing) ? producing : Array.Empty<int>(),
+                imported, finalProduct,
+                producers.TryGetValue(itemId, out var producing) ? producing : Array.Empty<int>(),
                 consumers.TryGetValue(itemId, out var usingItem) ? usingItem : Array.Empty<int>()));
         }
 
@@ -201,21 +198,5 @@ public sealed partial class ProductionPlanner
         var status = powerComplete && diagnostics.Count == 0 ? ProductionStatus.Complete : ProductionStatus.Partial;
         return new ProductionReport(status, true, powerComplete, itemFlows, groups, diagnostics, power,
             new ProductionPowerBreakdown(workingPower, 0, factoryPowerComplete, true));
-    }
-
-    private static Dictionary<int, double> ScaleFlows(IReadOnlyDictionary<int, double> flows, double multiplier)
-    {
-        return flows.ToDictionary(flow => flow.Key, flow => flow.Value * multiplier);
-    }
-
-    private static void AddGroup(IDictionary<int, List<int>> groups, int itemId, int groupIndex)
-    {
-        if (!groups.TryGetValue(itemId, out var indices))
-        {
-            indices = new List<int>();
-            groups[itemId] = indices;
-        }
-
-        indices.Add(groupIndex);
     }
 }

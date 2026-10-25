@@ -27,6 +27,40 @@ internal static class ProductionUnits
     internal const double FixedPointScale = 10000;
 }
 
+internal static class ProductionMath
+{
+    internal static bool Finite(double value) => !double.IsNaN(value) && !double.IsInfinity(value);
+
+    internal static bool FinitePositive(double value) => value > 0 && Finite(value);
+
+    internal static bool FiniteNonnegative(double value) => value >= 0 && Finite(value);
+
+    // Item and technology IDs arrive as double operating parameters.
+    internal static bool PositiveId(double value) =>
+        value > 0 && value <= int.MaxValue && value == Math.Truncate(value);
+
+    internal static void AddFlow(IDictionary<int, double> flows, int itemId, double amount)
+    {
+        flows[itemId] = (flows.TryGetValue(itemId, out var previous) ? previous : 0) + amount;
+    }
+
+    internal static Dictionary<int, double> ScaleFlows(IReadOnlyDictionary<int, double> flows, double factor)
+    {
+        return flows.ToDictionary(flow => flow.Key, flow => flow.Value * factor);
+    }
+
+    internal static void AddGroup(IDictionary<int, List<int>> groups, int itemId, int groupIndex)
+    {
+        if (!groups.TryGetValue(itemId, out var indices))
+        {
+            indices = new List<int>();
+            groups[itemId] = indices;
+        }
+
+        indices.Add(groupIndex);
+    }
+}
+
 public enum ProliferationMode
 {
     None,

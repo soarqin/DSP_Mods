@@ -29,6 +29,7 @@ internal static class TwoPhaseSimplex
 {
     private const double PivotTolerance = 1e-10;
     private const double ReducedTolerance = 1e-8;
+    private const double RatioTieTolerance = 1e-9;
 
     internal static LinearSolveResult Solve(double[,] coefficients, double[] rightHandSide,
         IReadOnlyList<double[]> objectives, int iterationBudget, CancellationToken cancellation)
@@ -102,12 +103,19 @@ internal static class TwoPhaseSimplex
             if (Math.Abs(tableau[row, width]) > ReducedTolerance)
                 return new LinearSolveResult(LinearSolveStatus.Infeasible);
 
+            // The remaining artificial counts as zero. Pivot it out on its largest coefficient at exactly zero so a
+            // tiny residual divided by a tiny coefficient cannot move the other rows.
+            var pivotColumn = -1;
             for (var column = 0; column < columnCount; column++)
             {
                 if (isBasic[column] || Math.Abs(tableau[row, column]) <= PivotTolerance) continue;
-                Pivot(tableau, basis, isBasic, row, column);
-                break;
+                if (pivotColumn < 0 || Math.Abs(tableau[row, column]) > Math.Abs(tableau[row, pivotColumn]))
+                    pivotColumn = column;
             }
+
+            if (pivotColumn < 0) continue;
+            tableau[row, width] = 0;
+            Pivot(tableau, basis, isBasic, row, pivotColumn);
         }
 
         var optimizedObjectives = new List<double[]>();
@@ -170,9 +178,10 @@ internal static class TwoPhaseSimplex
                 var coefficient = tableau[row, entering];
                 if (coefficient <= PivotTolerance) continue;
                 var ratio = Math.Max(0, tableau[row, rightColumn]) / coefficient;
-                if (ratio < minRatio - ReducedTolerance ||
-                    Math.Abs(ratio - minRatio) <= ReducedTolerance &&
-                    (leaving < 0 || basis[row] < basis[leaving]))
+                // Ties are relative: an absolute tolerance would merge distinct small ratios and leave a row infeasible.
+                var tie = leaving < 0 ? 0 : RatioTieTolerance * Math.Max(ratio, minRatio);
+                if (ratio < minRatio - tie ||
+                    Math.Abs(ratio - minRatio) <= tie && (leaving < 0 || basis[row] < basis[leaving]))
                 {
                     minRatio = ratio;
                     leaving = row;

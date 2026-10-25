@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using static UXAssist.Production.ProductionMath;
 
 namespace UXAssist.Production;
 
@@ -29,16 +30,16 @@ public sealed partial class ProductionPlanner
         var targets = new SortedDictionary<int, double>();
         foreach (var target in request.Targets)
         {
-            if (target == null || target.ItemId <= 0 || !ValidNonnegative(target.ItemsPerMinute))
+            if (target == null || target.ItemId <= 0 || !FiniteNonnegative(target.ItemsPerMinute))
                 return Fail(ProductionDiagnosticCode.InvalidRequest, "A target has an invalid item or rate.");
             AddFlow(targets, target.ItemId, target.ItemsPerMinute);
-            if (!ValidNonnegative(targets[target.ItemId]))
+            if (!FiniteNonnegative(targets[target.ItemId]))
                 return Fail(ProductionDiagnosticCode.InvalidRequest, "The combined target rate is too large.");
         }
 
         foreach (var surplus in request.KnownExternalSurplus)
         {
-            if (surplus.Key <= 0 || !ValidNonnegative(surplus.Value))
+            if (surplus.Key <= 0 || !FiniteNonnegative(surplus.Value))
                 return Fail(ProductionDiagnosticCode.InvalidRequest, "Known external surplus must be nonnegative.");
             if (!_catalog.Items.ContainsKey(surplus.Key))
                 return Fail(ProductionDiagnosticCode.UnknownItem, "An external-surplus item is unknown.", surplus.Key);
@@ -49,14 +50,14 @@ public sealed partial class ProductionPlanner
         if (!request.ProliferationEnabled && request.SprayDeliveredItems.Count > 0)
             return Fail(ProductionDiagnosticCode.InvalidRequest, "Finished-product spraying requires proliferation.");
 
-        var processes = new SortedDictionary<(int recipeId, int buildingId, ProliferationMode mode, int level),
-            ProductionProcess>();
+        var processes = new SortedDictionary<int, ProductionProcess>();
         var externalItems = new SortedSet<int>();
         var pending = new SortedSet<int>(targets.Keys);
         var visited = new HashSet<int>();
         var warnings = new List<ProductionDiagnostic>();
-        var hasSprayedInputs = false;
         var hasSprayedTargets = request.SprayDeliveredItems.Any(id => targets[id] > 0);
+        var explicitModes = request.ProliferationEnabled
+            ? ExplicitProliferationModes(request) : new Dictionary<int, ProliferationMode?>();
         ProductionItem proliferator = null;
         if (request.ProliferationEnabled)
         {
@@ -79,8 +80,7 @@ public sealed partial class ProductionPlanner
                 return Fail(ProductionDiagnosticCode.UnknownItem, "A required item is unknown.", itemId);
 
             var hasExplicitRecipe = request.RecipeByItem.TryGetValue(itemId, out var recipeId);
-            if (item.IsDarkFogMaterial || request.ExternalMaterials.Contains(itemId) ||
-                item.IsNatural && !hasExplicitRecipe)
+            if (IsExternal(request, item, hasExplicitRecipe))
             {
                 externalItems.Add(itemId);
                 continue;
@@ -92,12 +92,21 @@ public sealed partial class ProductionPlanner
             if (!recipe.Outputs.ContainsKey(itemId))
                 return Fail(ProductionDiagnosticCode.InvalidRequest, "The selected recipe does not produce the item.",
                     itemId, recipeId);
+            if (processes.ContainsKey(recipeId)) continue;
 
             request.OperatingParametersByRecipe.TryGetValue(recipeId, out var parameters);
             var mode = ProliferationMode.None;
             if (request.ProliferationEnabled)
-                mode = request.ProliferationModeByItem.TryGetValue(itemId, out var selectedMode)
-                    ? selectedMode : DefaultProliferationMode(recipe, parameters);
+            {
+                if (!explicitModes.TryGetValue(recipeId, out var explicitMode))
+                    mode = DefaultProliferationMode(recipe, parameters);
+                else if (explicitMode.HasValue)
+                    mode = explicitMode.Value;
+                else
+                    return Fail(ProductionDiagnosticCode.InvalidRequest,
+                        "The products of one recipe request different proliferation modes.", itemId, recipeId);
+            }
+
             var level = mode == ProliferationMode.None ? 0 : proliferator.ProliferationLevel;
             var buildingId = request.BuildingByRecipe.TryGetValue(recipeId, out var recipeBuildingId)
                 ? recipeBuildingId
@@ -122,14 +131,12 @@ public sealed partial class ProductionPlanner
                 warnings.Add(diagnostic);
             }
 
-            processes[(recipeId, buildingId, mode, level)] = process;
+            processes[recipeId] = process;
             foreach (var input in process.InputsPerCycle.Keys) pending.Add(input);
-            if (mode == ProliferationMode.None || process.SprayedInputsPerCycle <= 0) continue;
-            hasSprayedInputs = true;
-            pending.Add(proliferator.Id);
+            if (SpraysInputs(process)) pending.Add(proliferator.Id);
         }
 
-        var sprayDemand = hasSprayedInputs || hasSprayedTargets;
+        var sprayDemand = hasSprayedTargets || processes.Values.Any(SpraysInputs);
         var spraysPerBottle = 0.0;
         if (sprayDemand)
         {
@@ -185,9 +192,8 @@ public sealed partial class ProductionPlanner
             priorityProcesses[index] = 1;
             foreach (var input in process.InputsPerCycle) matrix[rowByItem[input.Key], index] -= input.Value;
             foreach (var output in process.OutputsPerCycle) matrix[rowByItem[output.Key], index] += output.Value;
-            if (process.ProliferationMode != ProliferationMode.None && process.SprayedInputsPerCycle > 0)
-                matrix[rowByItem[proliferator.Id], index] -=
-                    process.SprayedInputsPerCycle / spraysPerBottle;
+            if (SpraysInputs(process))
+                matrix[rowByItem[proliferator.Id], index] -= process.SprayedInputsPerCycle / spraysPerBottle;
         }
 
         for (var index = 0; index < importItems.Length; index++)
@@ -257,10 +263,40 @@ public sealed partial class ProductionPlanner
             reusableSprayItems, sprayCreditStart);
     }
 
+    // A recipe runs in one mode, so explicit choices for the products it is selected to make must agree;
+    // null marks a conflict, which is reported only if the recipe is used.
+    private Dictionary<int, ProliferationMode?> ExplicitProliferationModes(ProductionPlanRequest request)
+    {
+        var modes = new Dictionary<int, ProliferationMode?>();
+        foreach (var choice in request.ProliferationModeByItem)
+        {
+            if (!_catalog.Items.TryGetValue(choice.Key, out var item)) continue;
+            var hasExplicitRecipe = request.RecipeByItem.TryGetValue(item.Id, out var recipeId);
+            if (IsExternal(request, item, hasExplicitRecipe)) continue;
+            if (!hasExplicitRecipe) recipeId = item.DefaultRecipeId;
+            if (!_catalog.Recipes.TryGetValue(recipeId, out var recipe) || !recipe.Outputs.ContainsKey(item.Id))
+                continue;
+            if (!modes.TryGetValue(recipeId, out var previous)) modes[recipeId] = choice.Value;
+            else if (previous != choice.Value) modes[recipeId] = null;
+        }
+
+        return modes;
+    }
+
+    private static bool IsExternal(ProductionPlanRequest request, ProductionItem item, bool hasExplicitRecipe)
+    {
+        return item.IsDarkFogMaterial || request.ExternalMaterials.Contains(item.Id) ||
+               item.IsNatural && !hasExplicitRecipe;
+    }
+
+    private static bool SpraysInputs(ProductionProcess process)
+    {
+        return process.ProliferationMode != ProliferationMode.None && process.SprayedInputsPerCycle > 0;
+    }
+
     private static double SprayedInputAmount(ProductionProcess process, int itemId)
     {
-        if (process.ProliferationMode == ProliferationMode.None || process.SprayedInputsPerCycle <= 0 ||
-            !process.InputsPerCycle.TryGetValue(itemId, out var amount)) return 0;
+        if (!SpraysInputs(process) || !process.InputsPerCycle.TryGetValue(itemId, out var amount)) return 0;
         if (process.InputsPerCycle.Count == 1) return Math.Min(amount, process.SprayedInputsPerCycle);
         return process.SprayedInputsPerCycle == process.InputsPerCycle.Values.Sum() ? amount : 0;
     }
@@ -276,16 +312,6 @@ public sealed partial class ProductionPlanner
                 ? ProliferationMode.Speedup : ProliferationMode.None;
         if (recipe.Inputs.Count == 0) return ProliferationMode.None;
         return recipe.Productive ? ProliferationMode.ExtraProducts : ProliferationMode.Speedup;
-    }
-
-    private static bool ValidNonnegative(double value)
-    {
-        return value >= 0 && !double.IsNaN(value) && !double.IsInfinity(value);
-    }
-
-    private static void AddFlow(IDictionary<int, double> flows, int itemId, double amount)
-    {
-        flows[itemId] = (flows.TryGetValue(itemId, out var old) ? old : 0) + amount;
     }
 
     private static ProductionReport Fail(ProductionDiagnosticCode code, string message, int itemId = 0,

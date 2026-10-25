@@ -39,8 +39,10 @@ public static class ProductionCatalogReader
             var kind = ClassifyBuilding(prefab);
             if (category == ProductionRecipeCategory.None && kind == ProductionBuildingKind.Ordinary) continue;
             var speed = prefab.isLab ? prefab.labAssembleSpeed : prefab.assemblerSpeed;
+            // Charging power nodes draw idle power except while charging a mecha, which production power excludes.
+            var workEnergyPerTick = prefab.isPowerCharger ? prefab.idleEnergyPerTick : prefab.workEnergyPerTick;
             buildings.Add(new ProductionBuilding(item.ID, category, speed / 10000.0,
-                prefab.workEnergyPerTick * 60.0, prefab.idleEnergyPerTick * 60.0, kind,
+                workEnergyPerTick * 60.0, prefab.idleEnergyPerTick * 60.0, kind,
                 prefab.genEnergyPerTick * 60.0, prefab.exchangeEnergyPerTick * 60.0,
                 prefab.maxExcEnergy, prefab.emptyId, prefab.fullId,
                 prefab.windForcedPower ? RenewablePowerSource.Wind :
@@ -68,9 +70,12 @@ public static class ProductionCatalogReader
 
             recipes.Add(new ProductionRecipe(recipe.ID, MapCategory(recipe.Type), recipe.TimeSpend, recipe.productive,
                 PairFlows(recipe.Items, recipe.ItemCounts), PairFlows(recipe.Results, recipe.ResultCounts)));
+            // Follow native maincraft selection (lowest result index, then recipe order), but skip recipes such as
+            // Reforming Refine that consume their own product and so cannot start its production chain.
             for (var resultIndex = 0; resultIndex < recipe.Results.Length; resultIndex++)
             {
                 var productId = recipe.Results[resultIndex];
+                if (Array.IndexOf(recipe.Items, productId) >= 0) continue;
                 if (!defaultRecipes.TryGetValue(productId, out var old) || resultIndex < old.resultIndex)
                     defaultRecipes[productId] = (recipe.ID, resultIndex);
             }
@@ -82,8 +87,8 @@ public static class ProductionCatalogReader
         foreach (var item in itemProtos)
         {
             if (item == null) continue;
-            var defaultRecipeId = item.maincraft?.ID ??
-                                  (defaultRecipes.TryGetValue(item.ID, out var fallback) ? fallback.recipeId : 0);
+            var defaultRecipeId = defaultRecipes.TryGetValue(item.ID, out var defaultRecipe)
+                ? defaultRecipe.recipeId : 0;
             var isProliferator = proliferators.Contains(item.ID);
             items.Add(new ProductionItem(item.ID, defaultRecipeId,
                 naturalItems.Contains(item.ID) || !string.IsNullOrEmpty(item.MiningFrom),
@@ -192,7 +197,7 @@ public static class ProductionCatalogReader
                 ? ProductionBuildingKind.RenewableGenerator : ProductionBuildingKind.FuelGenerator;
         if (prefab.isStation || prefab.isDispenser || prefab.isBattleBase)
             return ProductionBuildingKind.Logistics;
-        if (prefab.isPowerConsumer && !prefab.isStation && !prefab.isDispenser)
+        if (prefab.isPowerConsumer || prefab.isPowerCharger)
             return ProductionBuildingKind.Auxiliary;
         return ProductionBuildingKind.Ordinary;
     }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using static UXAssist.Production.ProductionMath;
 
 namespace UXAssist.Production;
 
@@ -28,7 +29,7 @@ public sealed class RayReceiverAdapter : IProductionProcessAdapter
             return false;
         }
 
-        if (building.RatedGenerationWatts <= 0 || !Finite(building.RatedGenerationWatts) ||
+        if (!FinitePositive(building.RatedGenerationWatts) ||
             (recipe != null && (recipe.Category != ProductionRecipeCategory.PhotonStore ||
                                 recipe.Inputs.Count != 0 || recipe.Outputs.Count != 1 ||
                                 !recipe.Outputs.ContainsKey(building.PowerProductItemId))))
@@ -60,8 +61,7 @@ public sealed class RayReceiverAdapter : IProductionProcessAdapter
 
         if (recipe == null && selectedMode > 0) photonMode = true;
         if (photonMode && (building.PowerProductItemId <= 0 ||
-                           building.PowerProductEnergyJoules <= 0 ||
-                           !Finite(building.PowerProductEnergyJoules) ||
+                           !FinitePositive(building.PowerProductEnergyJoules) ||
                            !catalog.Items.ContainsKey(building.PowerProductItemId)))
         {
             diagnostic = new ProductionDiagnostic(ProductionDiagnosticCode.MissingOperatingParameter,
@@ -71,7 +71,7 @@ public sealed class RayReceiverAdapter : IProductionProcessAdapter
         }
 
         if (!operatingParameters.TryGetValue("LensItemId", out var lensId) ||
-            lensId < 0 || lensId > int.MaxValue || lensId != Math.Truncate(lensId))
+            lensId != 0 && !PositiveId(lensId))
         {
             diagnostic = new ProductionDiagnostic(ProductionDiagnosticCode.MissingOperatingParameter,
                 "Provide the receiver's lens item ID, or zero for no lens.", buildingItemId: building.ItemId);
@@ -81,7 +81,7 @@ public sealed class RayReceiverAdapter : IProductionProcessAdapter
         ProductionItem lens = null;
         if (lensId > 0 && (!catalog.Items.TryGetValue((int)lensId, out lens) ||
                            (lens.CatalystTypeMask & building.CatalystMask) == 0 ||
-                           lens.CatalystAbilityMultiplier <= 0 || !Finite(lens.CatalystAbilityMultiplier)))
+                           !FinitePositive(lens.CatalystAbilityMultiplier)))
         {
             diagnostic = new ProductionDiagnostic(ProductionDiagnosticCode.InvalidRequest,
                 "The selected item is not a compatible ray-receiver lens.",
@@ -111,7 +111,7 @@ public sealed class RayReceiverAdapter : IProductionProcessAdapter
                           (1 + speedBonus) * (photonMode ? 8 : 1);
         var cyclesPerMinute = photonMode
             ? energyWatts * 60 / building.PowerProductEnergyJoules : 1;
-        if (cyclesPerMinute <= 0 || !Finite(cyclesPerMinute) || !Finite(energyWatts))
+        if (!FinitePositive(cyclesPerMinute) || !Finite(energyWatts))
         {
             diagnostic = new ProductionDiagnostic(ProductionDiagnosticCode.InvalidRequest,
                 "The receiver's native output is outside the supported range.", buildingItemId: building.ItemId);
@@ -129,7 +129,7 @@ public sealed class RayReceiverAdapter : IProductionProcessAdapter
         if (!lossKnown)
             diagnostic = new ProductionDiagnostic(ProductionDiagnosticCode.MissingOperatingParameter,
                 "The Dyson-sphere power requirement needs the current solar energy loss technology setting.",
-                buildingItemId: building.ItemId);
+                recipeId: recipe?.Id ?? 0, buildingItemId: building.ItemId);
 
         var lensFlow = lens == null ? Array.Empty<KeyValuePair<int, double>>() :
             new[] { new KeyValuePair<int, double>(lens.Id, 0.1 / cyclesPerMinute) };
@@ -171,10 +171,5 @@ public sealed class RayReceiverAdapter : IProductionProcessAdapter
         process = new ProductionProcess(recipe.Id, 0, ProliferationMode.None, 0,
             Array.Empty<KeyValuePair<int, double>>(), recipe.Outputs, 0, 0, false);
         return true;
-    }
-
-    private static bool Finite(double value)
-    {
-        return !double.IsNaN(value) && !double.IsInfinity(value);
     }
 }

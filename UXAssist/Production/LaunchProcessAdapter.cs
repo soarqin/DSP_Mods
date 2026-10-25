@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using static UXAssist.Production.ProductionMath;
 
 namespace UXAssist.Production;
 
@@ -74,7 +75,7 @@ public sealed class LaunchProcessAdapter : IProductionProcessAdapter
         }
 
         var nativeStep = Math.Truncate(10000 * (1 + speedBonus) + 0.1) * (boosted ? 10 : 1);
-        if (nativeStep <= 0 || double.IsInfinity(nativeStep) || double.IsNaN(nativeStep))
+        if (!FinitePositive(nativeStep))
         {
             diagnostic = new ProductionDiagnostic(ProductionDiagnosticCode.InvalidRequest,
                 "The launcher's native speed is outside the supported range.", buildingItemId: building.ItemId);
@@ -84,8 +85,7 @@ public sealed class LaunchProcessAdapter : IProductionProcessAdapter
         var cycleTicks = Math.Ceiling(building.LaunchChargeTicks * 10000.0 / nativeStep) +
                          Math.Ceiling(building.LaunchCooldownTicks * 10000.0 / nativeStep);
         var launchesPerMinute = 3600.0 / cycleTicks;
-        if (launchesPerMinute <= 0 || double.IsInfinity(launchesPerMinute) ||
-            double.IsNaN(launchesPerMinute))
+        if (!FinitePositive(launchesPerMinute))
         {
             diagnostic = new ProductionDiagnostic(ProductionDiagnosticCode.InvalidRequest,
                 "The launcher cycle is outside the supported range.", buildingItemId: building.ItemId);

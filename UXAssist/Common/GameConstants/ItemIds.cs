@@ -106,21 +106,6 @@ public static class ItemIds
         SpaceWarper, DeuteronFuelRod
     ];
 
-    /// <summary>
-    /// All source items used to create 25 proliferators mk.III (not self-sprayed).
-    /// </summary>
-    public static readonly List<(int ItemId, float Count)> ProliferatorSources =
-    [
-        (OrganicCrystal, 60f),
-        (CriticalPhoton, 20f),
-        (Coal, 64f),
-        (FireIce, 16f),
-        (CircuitBoard, 32f),
-        (ProliferatorMkI, 64f),
-        (ProliferatorMkII, 40f),
-        (ProliferatorMkIII, 25f)
-    ];
-
     /* Dark Fog materials used by production calculations. */
     public static readonly int[] DarkFogItemIds =
     [

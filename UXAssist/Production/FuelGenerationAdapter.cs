@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using static UXAssist.Production.ProductionMath;
 
 namespace UXAssist.Production;
 
@@ -17,8 +18,7 @@ public sealed class FuelGenerationAdapter : IProductionProcessAdapter
         process = null;
         diagnostic = null;
         if (operatingParameters == null ||
-            !operatingParameters.TryGetValue("FuelItemId", out var fuelId) ||
-            fuelId <= 0 || fuelId > int.MaxValue || fuelId != Math.Truncate(fuelId) ||
+            !operatingParameters.TryGetValue("FuelItemId", out var fuelId) || !PositiveId(fuelId) ||
             !catalog.Items.TryGetValue((int)fuelId, out var fuel) ||
             fuel.HeatValueJoules <= 0 || (fuel.FuelTypeMask & building.FuelMask) == 0)
         {
@@ -37,8 +37,7 @@ public sealed class FuelGenerationAdapter : IProductionProcessAdapter
             return false;
         }
 
-        if (building.FuelUseWatts <= 0 || building.RatedGenerationWatts <= 0 ||
-            double.IsNaN(building.FuelUseWatts) || double.IsNaN(building.RatedGenerationWatts))
+        if (!FinitePositive(building.FuelUseWatts) || !FinitePositive(building.RatedGenerationWatts))
         {
             diagnostic = new ProductionDiagnostic(ProductionDiagnosticCode.UnsupportedProcess,
                 "The generator's fuel consumption or power rating is unavailable.",
@@ -73,8 +72,7 @@ public sealed class FuelGenerationAdapter : IProductionProcessAdapter
         var generation = building.RatedGenerationWatts * proliferationFactor * boostFactor;
         var burnedFuel = building.FuelUseWatts * (fuel.ProductiveFuel ? 1 : proliferationFactor) *
                          boostFactor * 60 / fuel.HeatValueJoules;
-        if (double.IsInfinity(generation) || double.IsInfinity(burnedFuel) || burnedFuel <= 0 ||
-            double.IsNaN(generation) || double.IsNaN(burnedFuel))
+        if (!Finite(generation) || !FinitePositive(burnedFuel))
         {
             diagnostic = new ProductionDiagnostic(ProductionDiagnosticCode.InvalidRequest,
                 "The selected fuel produces an invalid generation rate.", buildingItemId: building.ItemId);

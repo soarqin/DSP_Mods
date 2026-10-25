@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using static UXAssist.Production.ProductionMath;
 
 namespace UXAssist.Production;
 
@@ -52,7 +53,9 @@ public sealed class ProcessEvaluator
             return false;
         }
 
-        if (!IsOrdinary(recipe.Category))
+        // Recipe types unknown to the catalog, such as ones added by other mods, keep their material flows only
+        // while no building is selected.
+        if (!IsOrdinary(recipe.Category) && (recipe.Category != ProductionRecipeCategory.None || building != null))
         {
             diagnostic = new ProductionDiagnostic(ProductionDiagnosticCode.UnsupportedProcess,
                 "The recipe requires a special-process adapter.", recipeId: recipe.Id,
@@ -114,17 +117,6 @@ public sealed class ProcessEvaluator
 
     private static bool ValidFlows(IReadOnlyDictionary<int, double> flows)
     {
-        return flows.All(flow => flow.Key > 0 && flow.Value > 0 && !double.IsNaN(flow.Value) &&
-                                 !double.IsInfinity(flow.Value));
-    }
-
-    private static bool FinitePositive(double value)
-    {
-        return value > 0 && !double.IsNaN(value) && !double.IsInfinity(value);
-    }
-
-    private static bool FiniteNonnegative(double value)
-    {
-        return value >= 0 && !double.IsNaN(value) && !double.IsInfinity(value);
+        return flows.All(flow => flow.Key > 0 && FinitePositive(flow.Value));
     }
 }

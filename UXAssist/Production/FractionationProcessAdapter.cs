@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using static UXAssist.Production.ProductionMath;
 
 namespace UXAssist.Production;
 
@@ -74,10 +75,5 @@ public sealed class FractionationProcessAdapter : IProductionProcessAdapter
             new[] { new KeyValuePair<int, double>(output.Key, probability) },
             throughput, watts, building != null, throughput);
         return true;
-    }
-
-    private static bool FinitePositive(double value)
-    {
-        return value > 0 && !double.IsNaN(value) && !double.IsInfinity(value);
     }
 }

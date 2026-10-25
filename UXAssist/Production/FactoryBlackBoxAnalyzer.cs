@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using static UXAssist.Production.ProductionMath;
 
 namespace UXAssist.Production;
 
@@ -64,7 +65,6 @@ public sealed class FactoryBlackBoxAnalyzer
         var grossConsumption = new SortedDictionary<int, double>();
         var producers = new Dictionary<int, List<int>>();
         var consumers = new Dictionary<int, List<int>>();
-        var smallestProducer = new Dictionary<int, double>();
         var hasResearchMatrixSink = false;
         var uncertainDemandItems = new HashSet<int>();
         var selectedIds = new HashSet<int>();
@@ -137,8 +137,7 @@ public sealed class FactoryBlackBoxAnalyzer
                     diagnostics.Add(new ProductionDiagnostic(ProductionDiagnosticCode.MissingOperatingParameter,
                         "The selected logistics facility needs its configured charging power.",
                         buildingItemId: snapshot.BuildingItemId));
-                else if (chargePowerWatts < 0 || double.IsNaN(chargePowerWatts) ||
-                         double.IsInfinity(chargePowerWatts * snapshot.Count))
+                else if (!FiniteNonnegative(chargePowerWatts * snapshot.Count))
                     diagnostics.Add(new ProductionDiagnostic(ProductionDiagnosticCode.InvalidRequest,
                         "The selected logistics charging power must be finite and nonnegative.",
                         buildingItemId: snapshot.BuildingItemId));
@@ -147,9 +146,7 @@ public sealed class FactoryBlackBoxAnalyzer
 
                 if (logisticsWatts.HasValue) logisticsConsumptionWatts += logisticsWatts.Value;
                 else logisticsPowerComplete = false;
-                groups.Add(new ProductionGroupFlow(null, snapshot.Count, 0, snapshot.Count, snapshot.Count,
-                    logisticsWatts, logisticsWatts, Array.Empty<KeyValuePair<int, double>>(),
-                    Array.Empty<KeyValuePair<int, double>>()));
+                groups.Add(PowerOnlyGroup(snapshot.Count, logisticsWatts));
                 continue;
             }
 
@@ -163,9 +160,7 @@ public sealed class FactoryBlackBoxAnalyzer
                     var idleWatts = (building.Kind == ProductionBuildingKind.Auxiliary
                         ? building.WorkingPowerWatts : building.IdlePowerWatts) * snapshot.Count;
                     factoryConsumptionWatts += idleWatts;
-                    groups.Add(new ProductionGroupFlow(null, snapshot.Count, 0, snapshot.Count, snapshot.Count,
-                        idleWatts, idleWatts, Array.Empty<KeyValuePair<int, double>>(),
-                        Array.Empty<KeyValuePair<int, double>>()));
+                    groups.Add(PowerOnlyGroup(snapshot.Count, idleWatts));
                     continue;
                 }
             }
@@ -208,9 +203,7 @@ public sealed class FactoryBlackBoxAnalyzer
                 {
                     if (!IsResearchModeLab(building, snapshot)) totalPowerKnown = false;
                     factoryConsumptionWatts += knownWatts;
-                    groups.Add(new ProductionGroupFlow(null, snapshot.Count, 0, snapshot.Count, snapshot.Count,
-                        knownWatts, knownWatts, Array.Empty<KeyValuePair<int, double>>(),
-                        Array.Empty<KeyValuePair<int, double>>()));
+                    groups.Add(PowerOnlyGroup(snapshot.Count, knownWatts));
                 }
                 else
                 {
@@ -222,26 +215,20 @@ public sealed class FactoryBlackBoxAnalyzer
 
             if (diagnostic != null) diagnostics.Add(diagnostic);
             if (!process.PowerKnown) totalPowerKnown = false;
-            if (process.WorkingPowerWatts < 0 || double.IsNaN(process.WorkingPowerWatts) ||
-                double.IsInfinity(process.WorkingPowerWatts * snapshot.Count)) factoryPowerComplete = false;
+            if (!FiniteNonnegative(process.WorkingPowerWatts * snapshot.Count)) factoryPowerComplete = false;
             var cycleRate = process.CyclesPerBuildingPerMinute;
-            var output = Scale(process.OutputsPerCycle, cycleRate * snapshot.Count);
-            var input = Scale(process.InputsPerCycle, cycleRate * snapshot.Count);
+            var output = ScaleFlows(process.OutputsPerCycle, cycleRate * snapshot.Count);
+            var input = ScaleFlows(process.InputsPerCycle, cycleRate * snapshot.Count);
             var groupIndex = groups.Count;
             foreach (var flow in output)
             {
-                Add(grossProduction, flow.Key, flow.Value);
+                AddFlow(grossProduction, flow.Key, flow.Value);
                 AddGroup(producers, flow.Key, groupIndex);
-                var perBuildingNet = (process.OutputsPerCycle[flow.Key] -
-                    (process.InputsPerCycle.TryGetValue(flow.Key, out var consumed) ? consumed : 0)) * cycleRate;
-                if (perBuildingNet > 1e-9 &&
-                    (!smallestProducer.TryGetValue(flow.Key, out var previous) || perBuildingNet < previous))
-                    smallestProducer[flow.Key] = perBuildingNet;
             }
 
             foreach (var flow in input)
             {
-                Add(grossConsumption, flow.Key, flow.Value);
+                AddFlow(grossConsumption, flow.Key, flow.Value);
                 AddGroup(consumers, flow.Key, groupIndex);
             }
 
@@ -273,19 +260,13 @@ public sealed class FactoryBlackBoxAnalyzer
             var produced = grossProduction.TryGetValue(itemId, out var p) ? p : 0;
             var consumed = grossConsumption.TryGetValue(itemId, out var c) ? c : 0;
             var net = produced - consumed;
-            var threshold = smallestProducer.TryGetValue(itemId, out var single) ? single : 0;
             var classification = classifications[itemId];
-            var isFinalProduct = classification.IsFinalProduct;
             flows.Add(new ProductionItemFlow(itemId, produced, consumed, 0, 0, 0,
-                Math.Max(0, net), Math.Max(0, -net), isFinalProduct,
-                classification.IsIntermediate && !matrixSinkItems.Contains(itemId) &&
-                net > 1e-9 && threshold > 0 &&
-                net + 1e-9 >= threshold,
-                threshold, producers.TryGetValue(itemId, out var producing) ? producing : Array.Empty<int>(),
+                Math.Max(0, net), Math.Max(0, -net), classification.IsFinalProduct,
+                producers.TryGetValue(itemId, out var producing) ? producing : Array.Empty<int>(),
                 consumers.TryGetValue(itemId, out var usingItem) ? usingItem : Array.Empty<int>(),
                 classification.IntermediateShortage, classification.OverbuildSurplus,
-                classification.CoproductSurplus,
-                steadyStateBalance == null ? null : Math.Max(0, -steadyStateBalance[itemId]),
+                classification.CoproductSurplus, Math.Max(0, -steadyStateBalance[itemId]),
                 classification.IsResearchProduct));
         }
 
@@ -335,17 +316,13 @@ public sealed class FactoryBlackBoxAnalyzer
         watts = 0;
         if (IsResearchModeLab(building, snapshot))
         {
+            // Research-mode labs only receive extra products, and only when a proliferation level exists.
             var multiplier = 1.0;
-            if (mode != ProliferationMode.None)
-            {
-                if (mode != ProliferationMode.ExtraProducts) return false;
-                if (_catalog.MaximumProliferationLevel > 0 &&
-                    !_catalog.TryGetProliferation(_catalog.MaximumProliferationLevel,
-                        out _, out _, out multiplier)) return false;
-            }
-
+            if (mode != ProliferationMode.None &&
+                !_catalog.TryGetProliferation(_catalog.MaximumProliferationLevel, out _, out _, out multiplier))
+                return false;
             watts = building.WorkingPowerWatts * multiplier * snapshot.Count;
-            return watts > 0 && !double.IsNaN(watts) && !double.IsInfinity(watts);
+            return FinitePositive(watts);
         }
 
         if (diagnostic?.Code != ProductionDiagnosticCode.MissingOperatingParameter) return false;
@@ -354,10 +331,10 @@ public sealed class FactoryBlackBoxAnalyzer
 
         var speed = snapshot.OperatingParameters.TryGetValue("MachineSpeedFactor", out var capturedSpeed)
             ? capturedSpeed : 1;
-        if (speed <= 0 || double.IsNaN(speed) || double.IsInfinity(speed)) return false;
+        if (!FinitePositive(speed)) return false;
         var ratio = speed * speed;
         watts = (building.WorkingPowerWatts * ratio + building.IdlePowerWatts * (1 - ratio)) * snapshot.Count;
-        return watts >= 0 && !double.IsNaN(watts) && !double.IsInfinity(watts);
+        return FiniteNonnegative(watts);
     }
 
     private static bool IsResearchModeLab(ProductionBuilding building, ProductionBuildingSnapshot snapshot)
@@ -367,24 +344,9 @@ public sealed class FactoryBlackBoxAnalyzer
                snapshot.OperatingParameters.TryGetValue("ResearchMode", out var researchMode) && researchMode == 1;
     }
 
-    private static Dictionary<int, double> Scale(IReadOnlyDictionary<int, double> flows, double factor)
+    private static ProductionGroupFlow PowerOnlyGroup(int count, double? watts)
     {
-        return flows.ToDictionary(entry => entry.Key, entry => entry.Value * factor);
-    }
-
-    private static void Add(IDictionary<int, double> flows, int itemId, double count)
-    {
-        flows[itemId] = (flows.TryGetValue(itemId, out var previous) ? previous : 0) + count;
-    }
-
-    private static void AddGroup(IDictionary<int, List<int>> groups, int itemId, int index)
-    {
-        if (!groups.TryGetValue(itemId, out var indices))
-        {
-            indices = new List<int>();
-            groups[itemId] = indices;
-        }
-
-        indices.Add(index);
+        return new ProductionGroupFlow(null, count, 0, count, count, watts, watts,
+            Array.Empty<KeyValuePair<int, double>>(), Array.Empty<KeyValuePair<int, double>>());
     }
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using static UXAssist.Production.ProductionMath;
 
 namespace UXAssist.Production;
 
@@ -68,8 +69,7 @@ public sealed class AccumulatorExchangeAdapter : IProductionProcessAdapter
         }
         else if (operatingParameters == null ||
                  !operatingParameters.TryGetValue("Mode0", out var selectedMode) ||
-                 double.IsNaN(selectedMode) || double.IsInfinity(selectedMode) ||
-                 selectedMode != Math.Truncate(selectedMode) ||
+                 !Finite(selectedMode) || selectedMode != Math.Truncate(selectedMode) ||
                  selectedMode < -1 || selectedMode > 1)
         {
             diagnostic = new ProductionDiagnostic(ProductionDiagnosticCode.MissingOperatingParameter,
@@ -125,10 +125,5 @@ public sealed class AccumulatorExchangeAdapter : IProductionProcessAdapter
             preservedSpraysPerCycle: mode == ProliferationMode.None
                 ? Array.Empty<KeyValuePair<int, double>>() : outputs);
         return true;
-    }
-
-    private static bool FinitePositive(double value)
-    {
-        return value > 0 && !double.IsNaN(value) && !double.IsInfinity(value);
     }
 }
