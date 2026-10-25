@@ -6,6 +6,7 @@
 * 1.6.3 - Unreleased
   * `Sunlight at night`: Base lighting on the camera and the viewed surface instead of Icarus's facing direction, including planet view. Keep building, terrain, solar-panel, and belt lighting directions synchronized, recover when the active light or planet changes, and restore native lighting when sailing, disabling the feature, or using white rendering mode.
   * `Quick build Mining Machines`: Add a Factory-tab button that searches dense layouts at the nearest solid vein group using native collision shapes, including interleaving feet, joint placement of nearby miners, and a final pass to fill remaining compatible positions. `Allow restoring/burying veins` is off by default: uses only visible nodes and skips all restoration and burial calculations. When enabled, restores available buried nodes and may bury unused nodes to improve coverage. Optimizes summed vein coverage, requires at least 3 covered nodes per miner after any burial, and places the full ordinary miner layout regardless of stock, leaving ghosts awaiting missing materials. Accelerates layout searches with up to 4 background workers, capped at half the available logical processors. Writes replayable JSON snapshots during feature tuning and keeps the completion tip visible for about 8 seconds.
+  * `Blueprint descriptions`: Add an `Auto-fill description` button and a `Proliferation` checkbox above the description boxes in the blueprint browser, copy, and paste panels. The button replaces the main description with the blueprint's full-load material flows per minute on separate `Missing`, `Excess`, `Input`, `Output`, and `Research` lines, and writes factory and logistics power demand to a `Power` custom field. Inputs are limited to what downstream buildings can use, matrices made in a blueprint with a research-mode lab are listed under `Research`, and research-mode labs are budgeted at full working power. The checkbox defaults to on when the blueprint contains a Spray Coater. Unknown values are marked instead of shown as zero, other custom fields are preserved, and nothing is saved automatically.
 * 1.6.2
   * `Increase maximum power usage in Logistic Stations and Advanced Mining Machines`: Fix zero or corrupted mining speeds when adjusting an Advanced Mining Machine's speed slider with the option enabled.
   * `Tweak building buffers`: Restore the Ray Receiver Graviton Lens buffer setting on DSP 0.10.35.29104 and later, and correct the displayed native buffer value to 2.
@@ -18,7 +19,6 @@
   * `Belt signals for buy out dark fog items automatically`: Use the current in-game material names and retain the original exchange ratios.
   * `Initialize This Planet`: Fix an occasional array index error after initializing a planet with Holo Beacons.
   * `Planet vein utilization`: Restore the original vertical alignment of vein-group counts and keep resource names in their original positions.
-  * `Blueprint descriptions`: Add a row with an Auto-fill description button and a right-hand Proliferation checkbox above all description boxes in the browser, copy, and paste inspectors. Replace the main description with wrapping, nonempty Missing, Excess, Input, Output, and Research lines: group each warning category under one label and omit the per-minute suffix while keeping per-minute rates. Cap upstream inputs at sustainable downstream throughput even when unrelated parameters are unknown, without assuming unknown downstream demand is zero; keep independently known rated outputs and power. Budget every research-mode lab at full working power, and treat one selected lab as an outlet for all six matrix types made within the blueprint, regardless of the save's technology or research speed. Display positive net matrix output only under Research, after other buildings' known matrix use; keep unrelated final products under Output. Do not invent matrix consumption rates or imports, and do not flag the accepted output as excess. Keep Power as the only optional generated custom field, showing factory and logistics demand only when present and marking unknown demand separately. Report necessary coproducts and incomplete results, preserve other custom fields, and never save automatically. Fix false coproduct output in mixed production lines and at fractional building ratios.
 * 1.6.1
   * `Larger area for terraform`: Restore 11x11 through 30x30 foundation and Restore Terrain brushes after DSP 0.10.35.29104.
   * Fix the title-screen background turning black, even when the UXAssist window is closed.
@@ -441,6 +441,7 @@
 * 1.6.3 - Unreleased
   * `夜间日光灯`：按镜头和当前观察位置的地表方向计算光照，不再跟随机甲朝向，行星视图也适用。统一建筑、地表、太阳能板和传送带的光照方向，在光源或行星切换后恢复功能，并在航行、关闭功能或白模渲染时恢复原版光照。
   * `快速铺设采矿机`：在「工厂」页增加按钮，按游戏实际碰撞体在最近的固体矿脉搜索密集布局，支持脚部交错、邻近矿机联动调整及结束前补入剩余可用位置。「允许恢复/掩埋矿物」默认关闭：仅使用可见矿点，跳过所有恢复和掩埋计算；开启后，恢复可恢复的掩埋矿点，并允许掩埋未被使用的矿点来提高覆盖数。以各台矿机覆盖矿点数之和为目标，要求每台在掩埋后仍覆盖至少 3 个矿点，不受库存限制地生成完整布局，缺少采矿机的位置保留待建造虚影。使用最多 4 个后台线程加速布局搜索，线程数不超过可用逻辑线程数的一半。功能调试期间输出可离线重放的 JSON 数据，完成提示保留约 8 秒。
+  * `蓝图说明`：在蓝图浏览、复制和粘贴界面的说明框上方增加「自动填写说明」按钮和「增产」复选框。点击按钮会用蓝图满负荷运行时每分钟的物料流量替换原说明，按需分行列出「缺少」「多余」「输入」「输出」「研究」，并将工厂与物流耗电写入「耗电」自定义字段。输入量以下游建筑实际能消耗的量为限；蓝图含研究模式研究站时，蓝图内产出的矩阵列入「研究」行，研究模式研究站均按满负荷计入耗电。蓝图含喷涂机时，复选框默认勾选。无法计算的数值会单独标注而不显示为零，其他自定义字段保持不变，也不会自动保存蓝图。
 * 1.6.2
   * `提升物流塔和大型采矿机的最大功耗`：修复启用后调整大型采矿机开采速度时出现 0% 或异常速度的问题。
   * `调整建筑输入缓冲`：修复 DSP 0.10.35.29104 及后续版本中射线接收器透镜缓冲设置不生效的问题，并将显示的游戏原始值更正为 2。
@@ -453,7 +454,6 @@
   * `用于自动购买黑雾物品的传送带信号`：统一使用当前游戏中的材料名称，保留原有兑换比例。
   * `初始化本行星`：修复行星上存在全息信标时，初始化后可能出现数组越界报错的问题。
   * `宇宙视图行星/星系矿脉数量显示`：修复矿脉数量文字偏下和矿物名称向右偏移的问题。
-  * `蓝图说明`：在蓝图浏览、复制和粘贴界面的所有说明框上方增加「自动填写说明」按钮，并将「增产」复选框放在按钮右侧。直接用可换行内容替换原说明：按需依次显示「缺少：」「多余：」「输入：」「输出：」「研究：」，缺少或多余的物品共用一次行标签；标签不再显示「每分钟」，材料速率仍按每分钟计算。上游产量超过下游需求时，即使其他参数未知，也按已知下游的可持续产量估算输入；不把未知下游需求当作零。独立可确定的输出和耗电仍按额定值计算。所有研究模式研究站都按额定满负荷计入耗电；只要蓝图内有一座研究站，就假设它能接纳蓝图内产出的全部六种矩阵，不受存档科技或研究速度影响。扣除蓝图内其他建筑已知的矩阵消耗后，仅将净产量写入「研究」行；其他最终产物仍写入「输出」行。既不虚构研究站的矩阵消耗速率或外部需求，也不把被接纳的矩阵计为多余产量。仅在有耗电或耗电未知时生成「耗电」自定义字段，分别标注工厂与物流的有效类别。标出必要的联产盈余和数据不完整的结果；保留其他自定义字段，也不自动保存蓝图。修复混合生产线及非整数建筑配比下的副产物误报。
 * 1.6.1
   * `范围铺设地基的最大区域扩大`：适配 DSP 0.10.35.29104，恢复 11x11 至 30x30 的铺设地基与恢复地形范围。
   * 修复标题画面背景变黑的问题，包括关闭 UXAssist 窗口后背景仍不显示的情况。
