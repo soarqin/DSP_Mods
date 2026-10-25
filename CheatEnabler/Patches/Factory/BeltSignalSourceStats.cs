@@ -113,11 +113,27 @@ internal static class BeltSignalSourcePreset
             if (catalog.Items.ContainsKey(externalItemId)) request.ExternalMaterials.Add(externalItemId);
         }
 
+        // Keep the legacy preference for explicit recipes, which include the rare-resource alternatives. Explicit
+        // recipes that consume their own product, X-ray Cracking and Reforming Refine, never supply an item.
+        foreach (var recipe in catalog.Recipes.Values
+                     .Where(recipe => recipe.Explicit && !recipe.Outputs.Keys.Any(recipe.Inputs.ContainsKey))
+                     .OrderBy(recipe => recipe.Id))
+        {
+            foreach (var outputId in recipe.Outputs.Keys)
+            {
+                if (request.RecipeByItem.ContainsKey(outputId) || request.ExternalMaterials.Contains(outputId) ||
+                    !catalog.Items.TryGetValue(outputId, out var output) || output.IsNatural) continue;
+                request.RecipeByItem[outputId] = recipe.Id;
+            }
+        }
+
         if (!useProliferator) return request;
         if (sprayDeliveredItem) request.SprayDeliveredItems.Add(itemId);
         foreach (var item in catalog.Items.Values)
         {
-            if (!catalog.Recipes.TryGetValue(item.DefaultRecipeId, out var recipe) ||
+            var recipeId = request.RecipeByItem.TryGetValue(item.Id, out var selectedRecipeId)
+                ? selectedRecipeId : item.DefaultRecipeId;
+            if (!catalog.Recipes.TryGetValue(recipeId, out var recipe) ||
                 !recipe.Outputs.ContainsKey(item.Id) || recipe.Inputs.Count == 0) continue;
             request.ProliferationModeByItem[item.Id] = ItemIds.NoProliferationItemIds.Contains(item.Id)
                 ? ProliferationMode.None
