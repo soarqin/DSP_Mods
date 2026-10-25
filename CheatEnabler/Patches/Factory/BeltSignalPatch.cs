@@ -23,6 +23,7 @@ internal class BeltSignalGenerator : PatchImpl<BeltSignalGenerator>
     private static readonly Dictionary<(int itemId, bool proliferated, bool sprayed),
         IReadOnlyList<BeltSignalSourceRate>> SourceCache = [];
     private static readonly HashSet<(int itemId, bool proliferated, bool sprayed)> FailedSources = [];
+    private static readonly HashSet<BeltSignal> PendingSources = [];
 
     public static void Init()
     {
@@ -36,6 +37,13 @@ internal class BeltSignalGenerator : PatchImpl<BeltSignalGenerator>
         ProductionCatalogService.Changed -= OnProductionCatalogChanged;
     }
 
+    public static void OnUpdate()
+    {
+        if (PendingSources.Count == 0) return;
+        foreach (var beltSignal in PendingSources) TryApplySources(beltSignal, true);
+        PendingSources.Clear();
+    }
+
     private static void ResetState()
     {
         _initialized = false;
@@ -43,6 +51,7 @@ internal class BeltSignalGenerator : PatchImpl<BeltSignalGenerator>
         _portalFrom = null;
         _portalTo = null;
         _signalBeltsCapacity = 0;
+        PendingSources.Clear();
         ClearSourceCache();
     }
 
@@ -76,6 +85,7 @@ internal class BeltSignalGenerator : PatchImpl<BeltSignalGenerator>
         _initialized = false;
         _signalBelts = null;
         _signalBeltsCapacity = 0;
+        PendingSources.Clear();
         ClearSourceCache();
     }
 
@@ -302,8 +312,15 @@ internal class BeltSignalGenerator : PatchImpl<BeltSignalGenerator>
     private static void AddSourcesToBeltSignal(BeltSignal beltSignal)
     {
         beltSignal.SourceStats = null;
+        // Signals can change inside the logic tick, for example when drones finish a blueprint, so missing rates
+        // are planned in the next frame update and the tick only applies cached rates.
+        if (!TryApplySources(beltSignal, false)) PendingSources.Add(beltSignal);
+    }
+
+    private static bool TryApplySources(BeltSignal beltSignal, bool calculate)
+    {
         var itemId = beltSignal.SignalId;
-        if (itemId < 1000 || beltSignal.Stack == 0) return;
+        if (itemId < 1000 || beltSignal.Stack == 0) return true;
         var catalog = ProductionCatalogService.Current;
         if (!ReferenceEquals(_sourceCatalog, catalog))
         {
@@ -319,12 +336,13 @@ internal class BeltSignalGenerator : PatchImpl<BeltSignalGenerator>
         if (catalog == null)
         {
             LogSourceFailure(key, "Production data is not loaded.");
-            return;
+            return true;
         }
 
-        if (FailedSources.Contains(key)) return;
+        if (FailedSources.Contains(key)) return true;
         if (!SourceCache.TryGetValue(key, out var rates))
         {
+            if (!calculate) return false;
             try
             {
                 var request = BeltSignalSourcePreset.Create(catalog, itemId, proliferated, sprayed);
@@ -332,7 +350,7 @@ internal class BeltSignalGenerator : PatchImpl<BeltSignalGenerator>
                 if (!report.MaterialComplete)
                 {
                     LogSourceFailure(key, string.Join("; ", report.Diagnostics.Select(diagnostic => diagnostic.Message)));
-                    return;
+                    return true;
                 }
 
                 rates = BeltSignalSourceStats.FromReport(report, itemId);
@@ -340,13 +358,14 @@ internal class BeltSignalGenerator : PatchImpl<BeltSignalGenerator>
             catch (Exception exception)
             {
                 LogSourceFailure(key, exception.ToString());
-                return;
+                return true;
             }
 
             SourceCache[key] = rates;
         }
 
         if (rates.Count > 0) beltSignal.SourceStats = new BeltSignalSourceStats(rates);
+        return true;
     }
 
     private static void LogSourceFailure((int itemId, bool proliferated, bool sprayed) key, string reason)
