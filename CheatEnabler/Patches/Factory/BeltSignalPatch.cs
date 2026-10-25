@@ -427,13 +427,15 @@ internal class BeltSignalGenerator : PatchImpl<BeltSignalGenerator>
 
     [HarmonyPrefix]
     [HarmonyPatch(typeof(CargoTraffic), nameof(CargoTraffic.RemoveBeltComponent))]
-    public static void CargoTraffic_RemoveBeltComponent_Prefix(int id)
+    public static void CargoTraffic_RemoveBeltComponent_Prefix(CargoTraffic __instance, int id)
     {
         if (!_initialized) return;
-        var planet = GameMain.localPlanet;
-        if (planet == null) return;
-        RemoveSignalBeltPortalEnd(planet.factoryIndex, id);
-        RemoveSignalBelt(planet.factoryIndex, id);
+        // Belts also change on planets other than the local one, for example through Battlefield Analysis Base
+        // construction or Dark Fog attacks, so always use the factory that owns the belt.
+        var factory = __instance.factory;
+        if (factory == null) return;
+        RemoveSignalBeltPortalEnd(factory.index, id);
+        RemoveSignalBelt(factory.index, id);
     }
 
     [HarmonyPostfix]
@@ -441,9 +443,8 @@ internal class BeltSignalGenerator : PatchImpl<BeltSignalGenerator>
     public static void CargoTraffic_SetBeltSignalIcon_Postfix(CargoTraffic __instance, int signalId, int entityId)
     {
         if (!_initialized) return;
-        var planet = GameMain.localPlanet;
-        if (planet == null) return;
         var factory = __instance.factory;
+        if (factory == null) return;
         int number;
         var needAdd = false;
         switch (signalId)
@@ -460,7 +461,7 @@ internal class BeltSignalGenerator : PatchImpl<BeltSignalGenerator>
                 break;
             case >= 601 and <= 609:
                 number = Mathf.RoundToInt(factory.entitySignPool[entityId].count0);
-                var factoryIndex = planet.factoryIndex;
+                var factoryIndex = factory.index;
                 var beltId = factory.entityPool[entityId].beltId;
                 if (number > 0)
                     SetSignalBeltPortalTo(factoryIndex, beltId, number);
@@ -472,7 +473,7 @@ internal class BeltSignalGenerator : PatchImpl<BeltSignalGenerator>
         }
 
         {
-            var factoryIndex = planet.factoryIndex;
+            var factoryIndex = factory.index;
             var beltId = factory.entityPool[entityId].beltId;
             if (needAdd)
             {
@@ -492,9 +493,8 @@ internal class BeltSignalGenerator : PatchImpl<BeltSignalGenerator>
     public static void CargoTraffic_SetBeltSignalNumber_Postfix(CargoTraffic __instance, float number, int entityId)
     {
         if (!_initialized) return;
-        var planet = GameMain.localPlanet;
-        if (planet == null) return;
         var factory = __instance.factory;
+        if (factory == null) return;
         var entitySignPool = factory.entitySignPool;
         uint signalId;
         if (entitySignPool[entityId].iconType == 0U || (signalId = entitySignPool[entityId].iconId0) == 0U) return;
@@ -506,7 +506,7 @@ internal class BeltSignalGenerator : PatchImpl<BeltSignalGenerator>
             case >= 1000 and < 20000:
                 break;
             case >= 601 and <= 609:
-                var factoryIndex = planet.factoryIndex;
+                var factoryIndex = factory.index;
                 var beltId = factory.entityPool[entityId].beltId;
                 RemoveSignalBeltPortalEnd(factoryIndex, beltId);
                 SetSignalBeltPortalTo(factoryIndex, beltId, Mathf.RoundToInt(number));
@@ -516,7 +516,7 @@ internal class BeltSignalGenerator : PatchImpl<BeltSignalGenerator>
         }
 
         {
-            var factoryIndex = planet.factoryIndex;
+            var factoryIndex = factory.index;
             var beltId = factory.entityPool[entityId].beltId;
             var n = Mathf.RoundToInt(number);
             if (n == 0)
