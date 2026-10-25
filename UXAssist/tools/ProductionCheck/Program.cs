@@ -1086,6 +1086,28 @@ internal static class Program
             new[] { 1.0, 1.3, 1.7, 2.1, 2.5 });
         var updated = BeltSignalSourcePreset.Create(updatedCatalog, ItemIds.Steel, true, false);
         Equal(9999, updated.ProliferatorItemId, "updated game data selects a valid proliferator instead of a stale ID");
+
+        var alternativeCatalog = new ProductionCatalog(new[]
+            {
+                new ProductionItem(1, 0, true, false, 0, 0),
+                new ProductionItem(2, 301, false, false, 0, 0),
+                new ProductionItem(3, 303, false, false, 0, 0)
+            }, new[]
+            {
+                Recipe(301, new[] { (1, 2.0) }, new[] { (2, 1.0) }),
+                Recipe(302, new[] { (1, 1.0) }, new[] { (2, 1.0) }, explicitRecipe: true),
+                Recipe(303, new[] { (2, 1.0) }, new[] { (3, 1.0) }),
+                Recipe(304, new[] { (3, 2.0) }, new[] { (3, 3.0) }, explicitRecipe: true),
+                Recipe(305, new[] { (2, 1.0) }, new[] { (1, 5.0) }, explicitRecipe: true)
+            }, Array.Empty<ProductionBuilding>(), new[] { 0.0 }, new[] { 0.0 }, new[] { 1.0 });
+        var alternative = BeltSignalSourcePreset.Create(alternativeCatalog, 3, false, false);
+        Check(alternative.RecipeByItem.TryGetValue(2, out var alternativeRecipe) && alternativeRecipe == 302,
+            "belt statistics keep preferring explicit alternative recipes");
+        Check(!alternative.RecipeByItem.ContainsKey(3),
+            "an explicit recipe that consumes its own product never supplies the item");
+        Check(!alternative.RecipeByItem.ContainsKey(1), "natural items stay raw even when a recipe makes them");
+        Equal(1, new ProductionPlanner(alternativeCatalog).Calculate(alternative).ItemFlows[1].ExternalImports,
+            "the preferred recipe determines the raw input");
     }
 
     private static void RayReceiverPowerAndPhotons()
@@ -2385,11 +2407,11 @@ internal static class Program
 
     // Synthetic recipes last 3600 ticks, so a unit-speed building completes one cycle per minute.
     private static ProductionRecipe Recipe(int id, (int id, double count)[] input,
-        (int id, double count)[] output, bool productive = true)
+        (int id, double count)[] output, bool productive = true, bool explicitRecipe = false)
     {
         return new ProductionRecipe(id, ProductionRecipeCategory.Assemble, 3600, productive,
             input.Select(flow => new KeyValuePair<int, double>(flow.id, flow.count)),
-            output.Select(flow => new KeyValuePair<int, double>(flow.id, flow.count)));
+            output.Select(flow => new KeyValuePair<int, double>(flow.id, flow.count)), explicitRecipe);
     }
 
     private static void Check(bool condition, string message)

@@ -69,7 +69,8 @@ public static class ProductionCatalogReader
                 recipe.Results.Length != recipe.ResultCounts.Length) continue;
 
             recipes.Add(new ProductionRecipe(recipe.ID, MapCategory(recipe.Type), recipe.TimeSpend, recipe.productive,
-                PairFlows(recipe.Items, recipe.ItemCounts), PairFlows(recipe.Results, recipe.ResultCounts)));
+                PairFlows(recipe.Items, recipe.ItemCounts), PairFlows(recipe.Results, recipe.ResultCounts),
+                recipe.Explicit));
             // Follow native maincraft selection (lowest result index, then recipe order), but skip recipes such as
             // Reforming Refine that consume their own product and so cannot start its production chain.
             for (var resultIndex = 0; resultIndex < recipe.Results.Length; resultIndex++)

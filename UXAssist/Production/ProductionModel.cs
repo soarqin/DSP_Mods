@@ -180,16 +180,20 @@ public sealed class ProductionRecipe
     public ProductionRecipeCategory Category { get; }
     public int TimeTicks { get; }
     public bool Productive { get; }
+    // Native RecipeProto.Explicit, set for named recipes such as the rare-resource alternatives.
+    public bool Explicit { get; }
     public IReadOnlyDictionary<int, double> Inputs { get; }
     public IReadOnlyDictionary<int, double> Outputs { get; }
 
     public ProductionRecipe(int id, ProductionRecipeCategory category, int timeTicks, bool productive,
-        IEnumerable<KeyValuePair<int, double>> inputs, IEnumerable<KeyValuePair<int, double>> outputs)
+        IEnumerable<KeyValuePair<int, double>> inputs, IEnumerable<KeyValuePair<int, double>> outputs,
+        bool explicitRecipe = false)
     {
         Id = id;
         Category = category;
         TimeTicks = timeTicks;
         Productive = productive;
+        Explicit = explicitRecipe;
         Inputs = CopyFlows(inputs);
         Outputs = CopyFlows(outputs);
     }
