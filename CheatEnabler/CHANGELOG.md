@@ -4,7 +4,7 @@
 ## Changlog
 
 * 2.4.8 - Unreleased
-  * `Belt signal item generation`: Calculate raw-material, intermediate, and proliferator statistics from the game's current recipe data, counting by-products and consumption separately. If an item's recipe data is incomplete, only its upstream statistics pause, with the reason logged; item generation is unaffected.
+  * `Belt signal item generation`: Calculate raw-material, intermediate, and proliferator statistics from the game's current recipe data, counting by-products and consumption separately. If an item's recipe data is incomplete, only its upstream statistics pause, with the reason logged; item generation is unaffected. Fix signal belts built or destroyed on another planet, for example by Battlefield Analysis Base drones or Dark Fog attacks, affecting a belt on the current planet instead of their own; a destroyed belt could also keep generating items on a belt later built in its place.
 * 2.4.7
   * `Dev Shortcuts`: Work immediately when enabled after loading a save, and process each key press once per frame at accelerated game speeds.
   * Extend `Unlock Tech with Key-Modifiers` with a downgrade mode.
@@ -204,7 +204,7 @@
 ## 更新日志
 
 * 2.4.8 - Unreleased
-  * `传送带信号物品生成`：原料、中间产物和增产剂的统计改为按游戏当前配方数据计算，并分别计入副产物和消耗。某物品的配方数据不完整时，仅暂停该物品的上游统计并在日志中说明原因，不影响物品生成。
+  * `传送带信号物品生成`：原料、中间产物和增产剂的统计改为按游戏当前配方数据计算，并分别计入副产物和消耗。某物品的配方数据不完整时，仅暂停该物品的上游统计并在日志中说明原因，不影响物品生成。修复在其他星球上建造或被摧毁的信号传送带（例如由战场分析基站的无人机建造或被黑雾摧毁）错误影响当前星球上传送带的问题；被摧毁的传送带也可能让之后在原处新建的传送带继续生成物品。
 * 2.4.7
   * `开发模式快捷键`：修复载入存档后启用时不生效的问题；加速游戏时每次按键仍只执行一次。
   * `使用组合键点击解锁科技` 新增降级模式。
