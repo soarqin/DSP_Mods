@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using static UXAssist.Production.ProductionMath;
 
 namespace UXAssist.Production;
 
@@ -17,8 +18,7 @@ public sealed class RenewableGenerationAdapter : IProductionProcessAdapter
         process = null;
         diagnostic = null;
         if (building.RenewableSource == RenewablePowerSource.None ||
-            building.RatedGenerationWatts < 0 || double.IsNaN(building.RatedGenerationWatts) ||
-            double.IsInfinity(building.RatedGenerationWatts))
+            !FiniteNonnegative(building.RatedGenerationWatts))
         {
             diagnostic = new ProductionDiagnostic(ProductionDiagnosticCode.UnsupportedProcess,
                 "The generator has no renewable power rating.", buildingItemId: building.ItemId);

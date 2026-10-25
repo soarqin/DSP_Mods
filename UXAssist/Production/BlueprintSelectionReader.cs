@@ -35,13 +35,11 @@ public sealed class BlueprintSelectionCapture
 
 public static class BlueprintSelectionReader
 {
-    public static BlueprintSelectionCapture Capture(PlanetFactory factory, IEnumerable<int> selectedObjectIds)
-    {
-        return Capture(factory, selectedObjectIds, null);
-    }
+    // Native station parameters store charging power at this index, followed by other station settings.
+    private const int StationSettingsIndex = 320;
 
     public static BlueprintSelectionCapture Capture(PlanetFactory factory, IEnumerable<int> selectedObjectIds,
-        BlueprintSelectionContext context)
+        BlueprintSelectionContext context = null)
     {
         var catalog = ProductionCatalogService.Current;
         if (factory == null || catalog == null)
@@ -81,21 +79,18 @@ public static class BlueprintSelectionReader
             var operation = new Dictionary<string, double>();
             var speedFactor = GetLiveSpeed(factory, objectId, parameters.type, operation);
             AddSettings(parameters, operation);
+            var storedParameters = objectId < 0 ? factory.prebuildPool[-objectId].parameters : null;
             if (building.Kind == ProductionBuildingKind.Logistics)
             {
-                if (objectId > 0)
-                    CaptureLiveChargePower(factory, objectId, operation);
-                else
-                {
-                    ref var prebuild = ref factory.prebuildPool[-objectId];
-                    CaptureStoredChargePower(building, parameters, prebuild.parameters, operation);
-                }
+                if (objectId > 0) CaptureLiveChargePower(factory, objectId, operation);
+                else CaptureStoredChargePower(building, parameters, storedParameters, operation);
             }
             if (operation.ContainsKey("ResearchMode")) CaptureResearchSettings(factory, operation);
             switch (building.Kind)
             {
                 case ProductionBuildingKind.Miner:
                     CaptureMiningSettings(factory, objectId, building, operation);
+                    if (objectId < 0) CaptureStoredMinerSpeed(parameters, storedParameters, operation);
                     break;
                 case ProductionBuildingKind.Collector:
                     CaptureCollectionSettings(factory, operation);
@@ -177,6 +172,8 @@ public static class BlueprintSelectionReader
                 operation["ResearchMatrixSink"] = 1;
             if (building.Kind == ProductionBuildingKind.Logistics)
                 CaptureStoredChargePower(building, parameters, blueprint.parameters, operation);
+            else if (building.Kind == ProductionBuildingKind.Miner)
+                CaptureStoredMinerSpeed(parameters, blueprint.parameters, operation);
             ApplySupplied(context?.OperatingParametersByIndex, blueprint.index, operation);
             snapshots.Add(CreateSnapshot(catalog, building, 0, parameters, parameters.recipeId, null, operation,
                 diagnostics));
@@ -231,8 +228,9 @@ public static class BlueprintSelectionReader
         {
             case BuildingType.Station:
                 if (storedParameters != null &&
-                    storedParameters.Length >= BuildingParameters.kStationParamsLength && storedParameters[320] > 0)
-                    watts = storedParameters[320] * ProductionUnits.TicksPerSecond;
+                    storedParameters.Length >= BuildingParameters.kStationParamsLength &&
+                    storedParameters[StationSettingsIndex] > 0)
+                    watts = storedParameters[StationSettingsIndex] * ProductionUnits.TicksPerSecond;
                 break;
             case BuildingType.Dispenser:
                 if (storedParameters != null && storedParameters.Length >= BuildingParameters.kAddonParamsLength)
@@ -248,6 +246,17 @@ public static class BlueprintSelectionReader
         }
 
         operation["ChargePowerWatts"] = watts;
+    }
+
+    // Advanced Mining Machines store their speed with the station settings; native construction restores it.
+    private static void CaptureStoredMinerSpeed(BuildingParameters parameters, int[] storedParameters,
+        IDictionary<string, double> operation)
+    {
+        if (parameters.type == BuildingType.Station && storedParameters != null &&
+            storedParameters.Length >= BuildingParameters.kStationParamsLength &&
+            storedParameters[StationSettingsIndex] > 0 && storedParameters[StationSettingsIndex + 9] > 0)
+            operation["MachineSpeedFactor"] =
+                storedParameters[StationSettingsIndex + 9] / ProductionUnits.FixedPointScale;
     }
 
     private static ProductionBuildingSnapshot CreateSnapshot(ProductionCatalog catalog, ProductionBuilding building,

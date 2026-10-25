@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using CheatEnabler.Patches.Factory;
@@ -18,13 +19,17 @@ internal static class Program
         ExternalSurplusAndNaturalOverrides();
         ClosedLoopAndInfeasible();
         LargeRatesConserve();
+        SimplexMixedMagnitudes();
+        RecipeProliferationModes();
+        UnusedProcessWarnings();
         ProliferatorSupply();
         ProliferatorGradesAndFinishedSpraying();
-        BlackBoxBalancesAndThreshold();
+        BlackBoxBalancesAndOverbuild();
         BlackBoxMixedModesAndDeficits();
         BlueprintJointProduction();
         BlueprintSteadyStateInputs();
         BlueprintMixedProducersAndCycles();
+        SteadyStateLosslessCycle();
         BlueprintProliferationAndCompleteness();
         BlueprintDescriptionFormattingAndFields();
         LogisticsChargingPower();
@@ -245,6 +250,115 @@ internal static class Program
             Check(report.MaterialComplete && report.PowerComplete,
                 $"a plan scaled by {scale} conserves every ledger row");
         }
+    }
+
+    private static void SimplexMixedMagnitudes()
+    {
+        // Ratios 4.84e-7 and 4.76e-7 are distinct pivots, not a tie, even though they differ by less than 1e-8.
+        var coefficients = new double[,]
+        {
+            { -90000, 2.13e6, 0, 0, 420000, -2.77e6 },
+            { -5.6, 0, 0, -25.4, 0, 0 },
+            { 0, 0, -231, 0, -190, 23 },
+            { -1700, 0, 0, 0, 25000, -800 }
+        };
+        var rightHandSide = new[] { 1.37e6, -4.2, -126, 16300 };
+        var solution = TwoPhaseSimplex.Solve(coefficients, rightHandSide,
+            new[] { new double[] { 0, 1, 1, 0, 1, 0 }, new double[] { 1, 0, 3, 3, 1, 0 } }, 20000,
+            CancellationToken.None);
+        Check(solution.Status == LinearSolveStatus.Optimal, "a feasible mixed-magnitude system is solved");
+        for (var row = 0; row < rightHandSide.Length; row++)
+        {
+            var total = 0.0;
+            for (var column = 0; column < coefficients.GetLength(1); column++)
+                total += coefficients[row, column] * solution.Values[column];
+            Check(Math.Abs(total - rightHandSide[row]) <= 1e-9 * Math.Abs(rightHandSide[row]),
+                "close pivot ratios still satisfy every constraint");
+        }
+
+        // A residual accepted as zero in phase one must not be divided by a tiny pivot coefficient.
+        var nearlyFeasible = TwoPhaseSimplex.Solve(new double[,] { { 1, 1, 0 }, { -1e-9, 0, -1 } },
+            new[] { 1.0, 5e-9 }, new[] { new double[] { 1, 1, 1 } }, 1000, CancellationToken.None);
+        Check(nearlyFeasible.Status == LinearSolveStatus.Optimal &&
+              Math.Abs(nearlyFeasible.Values[0] + nearlyFeasible.Values[1] - 1) < 1e-9,
+            "driving out a near-zero artificial keeps the other constraints satisfied");
+    }
+
+    private static void RecipeProliferationModes()
+    {
+        var items = new[]
+        {
+            new ProductionItem(1, 0, true, false, 0, 0),
+            new ProductionItem(2, 101, false, false, 0, 0),
+            new ProductionItem(3, 101, false, false, 0, 0),
+            new ProductionItem(4, 102, false, false, 0, 0),
+            new ProductionItem(9, 0, true, false, 4, 60)
+        };
+        var catalog = new ProductionCatalog(items, new[]
+            {
+                Recipe(101, new[] { (1, 1.0) }, new[] { (2, 2.0), (3, 1.0) }),
+                Recipe(102, new[] { (3, 1.0) }, new[] { (4, 1.0) })
+            }, new[] { new ProductionBuilding(10, ProductionRecipeCategory.Assemble, 1, 1000, 100) },
+            new[] { 0.0, 0.25, 0.5, 0.75, 1.0 },
+            new[] { 0.0, 0.125, 0.2, 0.225, 0.25 },
+            new[] { 1.0, 1.3, 1.7, 2.1, 2.5 });
+        var request = Request((2, 10), (4, 1));
+        request.ProliferationEnabled = true;
+        request.ProliferatorItemId = 9;
+        request.ProliferationModeByItem[2] = ProliferationMode.Speedup;
+        var report = new ProductionPlanner(catalog).Calculate(request);
+        var joint = report.Groups.Where(group => group.Process?.RecipeId == 101).ToArray();
+        Check(report.MaterialComplete && joint.Length == 1 &&
+              joint[0].Process.ProliferationMode == ProliferationMode.Speedup,
+            "a recipe keeps one product's explicit mode when its other product is also needed");
+        Equal(5, joint[0].ExecutionsPerMinute, "speedup adds no extra products to the joint recipe");
+        Equal(5, report.ItemFlows[1].ExternalImports, "the explicit mode determines the raw input");
+
+        request.ProliferationModeByItem[3] = ProliferationMode.ExtraProducts;
+        var conflict = new ProductionPlanner(catalog).Calculate(request);
+        Check(conflict.Status == ProductionStatus.Failed &&
+              conflict.Diagnostics.Single().Code == ProductionDiagnosticCode.InvalidRequest,
+            "products of one recipe cannot request different proliferation modes");
+
+        var modded = new ProductionCatalog(
+            new[] { new ProductionItem(1, 0, true, false, 0, 0), new ProductionItem(2, 701, false, false, 0, 0) },
+            new[]
+            {
+                new ProductionRecipe(701, ProductionRecipeCategory.None, 3600, true,
+                    new[] { new KeyValuePair<int, double>(1, 2) }, new[] { new KeyValuePair<int, double>(2, 1) })
+            }, Array.Empty<ProductionBuilding>(), new[] { 0.0 }, new[] { 0.0 }, new[] { 1.0 });
+        var moddedReport = new ProductionPlanner(modded).Calculate(Request((2, 3)));
+        Check(moddedReport.MaterialComplete && !moddedReport.PowerComplete,
+            "a recipe type unknown to the catalog keeps its material flows without a building");
+        Equal(6, moddedReport.ItemFlows[1].ExternalImports, "unknown recipe types still balance their inputs");
+    }
+
+    private static void UnusedProcessWarnings()
+    {
+        var receiver = new ProductionBuilding(51, ProductionRecipeCategory.None, 1, 0, 0,
+            ProductionBuildingKind.RayReceiver, ratedGenerationWatts: 1000,
+            powerProductItemId: 456, powerProductEnergyJoules: 100000, catalystMask: 1);
+        var catalog = new ProductionCatalog(new[]
+            {
+                new ProductionItem(456, -456, false, false, 0, 0),
+                new ProductionItem(457, 900, false, false, 0, 0)
+            }, new[]
+            {
+                new ProductionRecipe(-456, ProductionRecipeCategory.PhotonStore, 1, false,
+                    Array.Empty<KeyValuePair<int, double>>(), new[] { new KeyValuePair<int, double>(456, 1) }),
+                Recipe(900, new[] { (456, 1.0) }, new[] { (457, 1.0) })
+            }, new[] { receiver, new ProductionBuilding(10, ProductionRecipeCategory.Assemble, 1, 1000, 100) },
+            new[] { 0.0 }, new[] { 0.0 }, new[] { 1.0 });
+        var request = Request((457, 10));
+        request.BuildingByRecipe[-456] = 51;
+        request.OperatingParametersByRecipe[-456] = new Dictionary<string, double>
+        {
+            ["Mode0"] = 456, ["LensItemId"] = 0
+        };
+        request.KnownExternalSurplus[456] = 10;
+        var report = new ProductionPlanner(catalog).Calculate(request);
+        Check(report.Status == ProductionStatus.Complete && report.Diagnostics.Count == 0,
+            "a warning from a receiver that does not run leaves the plan complete");
     }
 
     private static void ProliferatorSupply()
@@ -680,7 +794,7 @@ internal static class Program
             "a boosted star blueprint needs the sandbox boost state");
     }
 
-    private static void BlackBoxBalancesAndThreshold()
+    private static void BlackBoxBalancesAndOverbuild()
     {
         var items = new[]
         {
@@ -715,8 +829,6 @@ internal static class Program
         Equal(30, report.ItemFlows[2].Surplus, "fractional intermediate balance retained");
         Equal(0, report.ItemFlows[2].OverbuildSurplus.Value,
             "sub-building ratio headroom is not redundant whole-building capacity");
-        Equal(60, report.ItemFlows[2].SingleBuildingSurplusThreshold, "smallest actual producer threshold");
-        Check(!report.ItemFlows[2].IsExcessIntermediate, "sub-threshold surplus is normally balanced");
         Equal(2, report.ItemFlows[2].ProducerGroups.Count, "producer groups retained");
         Equal(1, report.ItemFlows[2].ConsumerGroups.Count, "consumer groups retained");
         Equal(3, report.ItemFlows[1].RequiredExternalSupply, "shortage is not silently suppressed");
@@ -730,7 +842,6 @@ internal static class Program
         Equal(60, atThreshold.ItemFlows[2].Surplus, "intermediate at threshold");
         Equal(60, atThreshold.ItemFlows[2].OverbuildSurplus.Value,
             "a removable whole building accounts for the true overbuild");
-        Check(atThreshold.ItemFlows[2].IsExcessIntermediate, "threshold reached qualifies as excess");
 
         request.Buildings.Add(new ProductionBuildingSnapshot(102, 10, 402, 1, ProliferationMode.None));
         var duplicate = analyzer.Analyze(request);
@@ -907,7 +1018,7 @@ internal static class Program
 
         var asymmetrical = new ProductionReport(ProductionStatus.Complete, true, true,
             new[] { new ProductionItemFlow(7, 0.25, 0.75, 0, 0, 0, 0, 0,
-                false, false, 0, Array.Empty<int>(), Array.Empty<int>()) },
+                false, Array.Empty<int>(), Array.Empty<int>()) },
             Array.Empty<ProductionGroupFlow>(), Array.Empty<ProductionDiagnostic>(), null);
         var independent = new BeltSignalSourceStats(BeltSignalSourceStats.FromReport(asymmetrical, 8));
         for (var insertion = 0; insertion < 4; insertion++)
@@ -1419,8 +1530,6 @@ internal static class Program
                   flow.CoproductSurplus == 0,
                 "matrices absorbed by research remain final products without excess warnings");
         }
-        Check(!withLab.ItemFlows[6001].IsExcessIntermediate,
-            "matrix production absorbed by research is not flagged as overbuild");
         Equal(3, withLab.ItemFlows[1].SteadyStateExternalSupply.Value,
             "six-matrix production retains its full raw input throughput");
         Equal(3, withLab.ItemFlows[2].SteadyStateExternalSupply.Value,
@@ -1752,6 +1861,32 @@ internal static class Program
         }
     }
 
+    private static void SteadyStateLosslessCycle()
+    {
+        // Charging and discharging pass a tiny leftover around a lossless cycle; the estimate must still finish.
+        var catalog = new ProductionCatalog(new[]
+            {
+                new ProductionItem(1, 0, true, false, 0, 0),
+                new ProductionItem(2, 0, false, false, 0, 0),
+                new ProductionItem(3, 0, false, false, 0, 0),
+                new ProductionItem(4, 0, false, false, 0, 0)
+            }, new[]
+            {
+                Recipe(701, new[] { (2, 1.0) }, new[] { (3, 1.0) }),
+                Recipe(702, new[] { (3, 1.0) }, new[] { (2, 1.0) }),
+                Recipe(703, new[] { (1, 1.0) }, new[] { (4, 1.0), (2, 1e-7) })
+            }, new[] { new ProductionBuilding(10, ProductionRecipeCategory.Assemble, 1, 1000, 100) },
+            new[] { 0.0 }, new[] { 0.0 }, new[] { 1.0 });
+        var request = new FactoryBlackBoxRequest();
+        request.Buildings.Add(new ProductionBuildingSnapshot(1, 10, 701, 10, ProliferationMode.None));
+        request.Buildings.Add(new ProductionBuildingSnapshot(2, 10, 702, 10, ProliferationMode.None));
+        request.Buildings.Add(new ProductionBuildingSnapshot(3, 10, 703, 1, ProliferationMode.None));
+        var watch = Stopwatch.StartNew();
+        var report = new FactoryBlackBoxAnalyzer(catalog).Analyze(request);
+        Check(watch.Elapsed.TotalSeconds < 10, "a lossless cycle cannot stall the steady-state estimate");
+        Equal(1, report.ItemFlows[1].SteadyStateExternalSupply.Value, "the cycle leaves the raw input unchanged");
+    }
+
     private static void BlueprintProliferationAndCompleteness()
     {
         var analyzer = new FactoryBlackBoxAnalyzer(BlueprintCatalog());
@@ -1891,11 +2026,11 @@ internal static class Program
             new[]
             {
                 new ProductionItemFlow(52, 2, 3, 0, 0, 0, 0, 1,
-                    false, false, 0, Array.Empty<int>(), Array.Empty<int>(), 1, 0, 0),
+                    false, Array.Empty<int>(), Array.Empty<int>(), 1, 0, 0),
                 new ProductionItemFlow(53, 1, 3, 0, 0, 0, 0, 2,
-                    false, false, 0, Array.Empty<int>(), Array.Empty<int>(), 2, 0, 0),
+                    false, Array.Empty<int>(), Array.Empty<int>(), 2, 0, 0),
                 new ProductionItemFlow(54, 3, 0, 0, 0, 0, 3, 0,
-                    false, true, 3, Array.Empty<int>(), Array.Empty<int>(), 0, 3, 0)
+                    false, Array.Empty<int>(), Array.Empty<int>(), 0, 3, 0)
             },
             Array.Empty<ProductionGroupFlow>(), Array.Empty<ProductionDiagnostic>(),
             new ProductionPower(0, 0, 0, 0, 0, 0, ProductionPowerScope.SelectedFacilities),
@@ -1917,6 +2052,14 @@ internal static class Program
             "gigawatt and megawatt display matches the native Chinese field example");
         Check(large.Input == "" && large.Output == "" && large.Description == "",
             "empty material categories add no description lines");
+        foreach (var (watts, expected) in new[] { (999.999, "1kW"), (999999.0, "1MW"), (999.994, "999.99W") })
+        {
+            var boundary = new ProductionReport(ProductionStatus.Complete, true, true,
+                Array.Empty<ProductionItemFlow>(), Array.Empty<ProductionGroupFlow>(),
+                Array.Empty<ProductionDiagnostic>(), null, new ProductionPowerBreakdown(watts, 0, true, true));
+            Check(BlueprintDescriptionFormatter.Format(boundary, TestItemTag, labels).Power == "工厂耗电 " + expected,
+                "the power unit is chosen after rounding");
+        }
 
         var logisticsRequest = new FactoryBlackBoxRequest();
         logisticsRequest.Buildings.Add(new ProductionBuildingSnapshot(1, 30, 0, 1, ProliferationMode.None,
@@ -1979,9 +2122,9 @@ internal static class Program
             new[]
             {
                 new ProductionItemFlow(42, 0.125, 0, 0, 0, 0, 0.125, 0,
-                    true, false, 0, Array.Empty<int>(), Array.Empty<int>()),
+                    true, Array.Empty<int>(), Array.Empty<int>()),
                 new ProductionItemFlow(43, 1.2, 0, 0, 0, 0, 1.2, 0,
-                    true, false, 0, Array.Empty<int>(), Array.Empty<int>())
+                    true, Array.Empty<int>(), Array.Empty<int>())
             }, Array.Empty<ProductionGroupFlow>(), Array.Empty<ProductionDiagnostic>(),
             new ProductionPower(0, 0, 0, 0, 0, 0, ProductionPowerScope.SelectedFacilities),
             new ProductionPowerBreakdown(0, 0, true, true));
@@ -1994,7 +2137,7 @@ internal static class Program
 
         var inputOnlyReport = new ProductionReport(ProductionStatus.Complete, true, true,
             new[] { new ProductionItemFlow(51, 0, 3, 0, 0, 0, 0, 3,
-                false, false, 0, Array.Empty<int>(), Array.Empty<int>()) },
+                false, Array.Empty<int>(), Array.Empty<int>()) },
             Array.Empty<ProductionGroupFlow>(), Array.Empty<ProductionDiagnostic>(),
             new ProductionPower(0, 0, 0, 0, 0, 0, ProductionPowerScope.SelectedFacilities),
             new ProductionPowerBreakdown(0, 0, true, true));
@@ -2004,7 +2147,7 @@ internal static class Program
 
         var longReport = new ProductionReport(ProductionStatus.Complete, true, true,
             Enumerable.Range(1000, 140).Select(itemId => new ProductionItemFlow(itemId, 1.2, 0, 0, 0, 0, 1.2, 0,
-                true, false, 0, Array.Empty<int>(), Array.Empty<int>())),
+                true, Array.Empty<int>(), Array.Empty<int>())),
             Array.Empty<ProductionGroupFlow>(), Array.Empty<ProductionDiagnostic>(),
             new ProductionPower(0, 0, 0, 0, 0, 0, ProductionPowerScope.SelectedFacilities),
             new ProductionPowerBreakdown(0, 0, true, true));
@@ -2017,28 +2160,28 @@ internal static class Program
 
     private static void TestNativeFields()
     {
-        var firstFields = TestBlueprintFields("2.5GW");
-        var result = BlueprintDescriptionFields.TryUpdate("Other:unchanged;", firstFields, 20,
+        var firstField = TestPowerField("2.5GW");
+        var result = BlueprintDescriptionFields.TryUpdate("Other:unchanged;", firstField, 20,
             EscapeNativeField, UnescapeNativeField, out var generated);
         Check(result == BlueprintFieldUpdateResult.Updated && generated == "Other:unchanged;Power:2.5GW;",
             "only the power field is appended while unrelated fields remain intact");
 
-        var escapedFields = TestBlueprintFields("2.5GW:250; " + (char)92 + "extra");
-        result = BlueprintDescriptionFields.TryUpdate("", escapedFields, 20,
+        var escapedField = TestPowerField("2.5GW:250; " + (char)92 + "extra");
+        result = BlueprintDescriptionFields.TryUpdate("", escapedField, 20,
             EscapeNativeField, UnescapeNativeField, out var escaped);
         var escapedPower = escaped.Split(';')[0];
         Check(result == BlueprintFieldUpdateResult.Updated &&
-              UnescapeNativeField(escapedPower.Substring(escapedPower.IndexOf(':') + 1)) == escapedFields[0].Value,
+              UnescapeNativeField(escapedPower.Substring(escapedPower.IndexOf(':') + 1)) == escapedField.Value,
             "native backslash, semicolon, and colon escaping still round-trips power fields");
 
         result = BlueprintDescriptionFields.TryUpdate(generated,
-            TestBlueprintFields("3GW"), 20,
+            TestPowerField("3GW"), 20,
             EscapeNativeField, UnescapeNativeField, out var repeated);
         Check(result == BlueprintFieldUpdateResult.Updated && repeated == "Other:unchanged;Power:3GW;",
             "repeated generation updates the power field without appending duplicates");
 
         result = BlueprintDescriptionFields.TryUpdate(
-            "Note:keep;Input (per minute):manual;Output (per minute):manual;Power:old;", firstFields, 20,
+            "Note:keep;Input (per minute):manual;Output (per minute):manual;Power:old;", firstField, 20,
             EscapeNativeField, UnescapeNativeField, out var preserved);
         Check(result == BlueprintFieldUpdateResult.Updated &&
               preserved == "Note:keep;Input (per minute):manual;Output (per minute):manual;Power:2.5GW;",
@@ -2046,64 +2189,61 @@ internal static class Program
 
         var partialExisting = "Unrelated:hand edited;Input:manual;";
         result = BlueprintDescriptionFields.TryUpdate(partialExisting,
-            TestBlueprintFields("100MW"), 20,
+            TestPowerField("100MW"), 20,
             EscapeNativeField, UnescapeNativeField, out var updated);
         Check(result == BlueprintFieldUpdateResult.Updated &&
               updated == "Unrelated:hand edited;Input:manual;Power:100MW;",
             "a custom input field remains unchanged when power is appended");
 
-        var chineseFields = new[]
-        {
-            new BlueprintDescriptionField("耗电", "新功率", "Power", "耗电")
-        };
+        var chineseField = new BlueprintDescriptionField("耗电", "新功率", "Power", "耗电");
         result = BlueprintDescriptionFields.TryUpdate("Power:old;输入:manual;Output (per minute):manual;",
-            chineseFields, 3, EscapeNativeField, UnescapeNativeField, out var translated);
+            chineseField, 3, EscapeNativeField, UnescapeNativeField, out var translated);
         Check(result == BlueprintFieldUpdateResult.Updated &&
               translated == "耗电:新功率;输入:manual;Output (per minute):manual;",
             "English and Chinese power titles match while other localized fields remain unchanged");
 
         var duplicateNames = "Power:old;耗电:old;Note:Power Input Output;输入（每分钟）:manual;Output:manual;";
         result = BlueprintDescriptionFields.TryUpdate(duplicateNames,
-            TestBlueprintFields("new"), 5, EscapeNativeField, UnescapeNativeField,
+            TestPowerField("new"), 5, EscapeNativeField, UnescapeNativeField,
             out var keptDuplicates);
         Check(result == BlueprintFieldUpdateResult.Updated &&
               keptDuplicates == "Power:new;Note:Power Input Output;输入（每分钟）:manual;Output:manual;",
             "duplicate power slots are merged without modifying other titled fields");
 
-        var noPowerFields = TestBlueprintFields(null);
+        var noPowerField = TestPowerField(null);
         result = BlueprintDescriptionFields.TryUpdate("Other:keep;Power:old;耗电:old;输入:manual;Output:manual;",
-            noPowerFields, 20, EscapeNativeField, UnescapeNativeField, out var removed);
+            noPowerField, 20, EscapeNativeField, UnescapeNativeField, out var removed);
         Check(result == BlueprintFieldUpdateResult.Updated && removed == "Other:keep;输入:manual;Output:manual;",
             "a blueprint without consumers removes only stale power fields");
-        result = BlueprintDescriptionFields.TryUpdate("", noPowerFields, 20,
+        result = BlueprintDescriptionFields.TryUpdate("", noPowerField, 20,
             EscapeNativeField, UnescapeNativeField, out var empty);
         Check(result == BlueprintFieldUpdateResult.Updated && empty == "",
             "empty power and material categories do not create any custom fields");
 
         var full = string.Concat(Enumerable.Range(0, 20).Select(index => "Custom" + index + ":keep;"));
-        result = BlueprintDescriptionFields.TryUpdate(full, firstFields, 20,
+        result = BlueprintDescriptionFields.TryUpdate(full, firstField, 20,
             EscapeNativeField, UnescapeNativeField, out var rejected);
         Check(result == BlueprintFieldUpdateResult.CapacityExceeded && rejected == full,
             "a missing power field at native capacity causes an all-or-nothing refusal");
-        result = BlueprintDescriptionFields.TryUpdate(full, noPowerFields, 20,
+        result = BlueprintDescriptionFields.TryUpdate(full, noPowerField, 20,
             EscapeNativeField, UnescapeNativeField, out updated);
         Check(result == BlueprintFieldUpdateResult.Updated && updated == full,
             "description-only generation needs no custom-field slot even at native capacity");
         var onePresent = "Power:old;" + string.Concat(Enumerable.Range(0, 19)
             .Select(index => "Custom" + index + ":keep;"));
-        result = BlueprintDescriptionFields.TryUpdate(onePresent, firstFields, 20,
+        result = BlueprintDescriptionFields.TryUpdate(onePresent, firstField, 20,
             EscapeNativeField, UnescapeNativeField, out updated);
         Check(result == BlueprintFieldUpdateResult.Updated &&
               updated == "Power:2.5GW;" + onePresent.Substring("Power:old;".Length),
             "existing power fields can be updated at the native field limit");
         var otherFieldsAtCapacity = "Input:manual;Output:manual;" + string.Concat(Enumerable.Range(0, 18)
             .Select(index => "Custom" + index + ":keep;"));
-        result = BlueprintDescriptionFields.TryUpdate(otherFieldsAtCapacity, firstFields, 20,
+        result = BlueprintDescriptionFields.TryUpdate(otherFieldsAtCapacity, firstField, 20,
             EscapeNativeField, UnescapeNativeField, out rejected);
         Check(result == BlueprintFieldUpdateResult.CapacityExceeded && rejected == otherFieldsAtCapacity,
             "other input and output fields cannot be removed to make room for power");
 
-        result = BlueprintDescriptionFields.TryUpdate("Unterminated:old", firstFields, 20,
+        result = BlueprintDescriptionFields.TryUpdate("Unterminated:old", firstField, 20,
             EscapeNativeField, UnescapeNativeField, out rejected);
         Check(result == BlueprintFieldUpdateResult.InvalidFields && rejected == "Unterminated:old",
             "invalid native serialization is rejected without changing existing text");
@@ -2111,16 +2251,16 @@ internal static class Program
         {
             Check(!BlueprintDescriptionFields.IsNativeFormatValid(malformed),
                 "malformed native fields are detected before the inspector collects pending edits");
-            result = BlueprintDescriptionFields.TryUpdate(malformed, firstFields, 20,
+            result = BlueprintDescriptionFields.TryUpdate(malformed, firstField, 20,
                 EscapeNativeField, UnescapeNativeField, out rejected);
             Check(result == BlueprintFieldUpdateResult.InvalidFields && rejected == malformed,
                 "malformed native fields cannot be partially replaced or silently discarded");
         }
     }
 
-    private static BlueprintDescriptionField[] TestBlueprintFields(string power)
+    private static BlueprintDescriptionField TestPowerField(string power)
     {
-        return new[] { new BlueprintDescriptionField("Power", power, "耗电") };
+        return new BlueprintDescriptionField("Power", power, "耗电");
     }
 
     private static string EscapeNativeField(string value)

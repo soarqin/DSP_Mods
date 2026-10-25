@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Text;
+using static UXAssist.Production.ProductionMath;
 
 namespace UXAssist.Production;
 
@@ -64,6 +64,7 @@ public sealed class BlueprintDescriptionText
 public static class BlueprintDescriptionFormatter
 {
     private const double Tolerance = 1e-9;
+    private static readonly string[] PowerUnits = { "W", "kW", "MW", "GW", "TW" };
 
     public static BlueprintDescriptionText Format(ProductionReport report, Func<int, string> itemTag,
         BlueprintDescriptionLabels labels)
@@ -153,18 +154,27 @@ public static class BlueprintDescriptionFormatter
     {
         if (!watts.HasValue) return labels.Unknown;
         var value = watts.Value;
-        if (value >= 1e12) return FormatNumber(value / 1e12) + "TW";
-        if (value >= 1e9) return FormatNumber(value / 1e9) + "GW";
-        if (value >= 1e6) return FormatNumber(value / 1e6) + "MW";
-        if (value >= 1e3) return FormatNumber(value / 1e3) + "kW";
-        return FormatNumber(value) + "W";
+        var unit = 0;
+        // Choose the unit after rounding so that 999.999 W displays as 1kW rather than 1000W.
+        while (unit < PowerUnits.Length - 1 && RoundForDisplay(value) >= 1000)
+        {
+            value /= 1000;
+            unit++;
+        }
+
+        return FormatNumber(value) + PowerUnits[unit];
+    }
+
+    private static double RoundForDisplay(double value)
+    {
+        return Math.Round(value, value < 1 ? 3 : 2, MidpointRounding.AwayFromZero);
     }
 
     private static string FormatNumber(double value)
     {
-        if (double.IsNaN(value) || double.IsInfinity(value) || value < 0)
+        if (!FiniteNonnegative(value))
             throw new InvalidOperationException("A blueprint report contains an invalid rate or power value.");
-        var rounded = Math.Round(value, value < 1 ? 3 : 2, MidpointRounding.AwayFromZero);
+        var rounded = RoundForDisplay(value);
         if (rounded > 0 || value == 0)
             return rounded.ToString(value < 1 ? "0.###" : "0.##", CultureInfo.InvariantCulture);
         var precise = value.ToString("0.######", CultureInfo.InvariantCulture);
@@ -215,74 +225,41 @@ public static class BlueprintDescriptionFields
         return true;
     }
 
-    public static BlueprintFieldUpdateResult TryUpdate(string existing, IReadOnlyList<BlueprintDescriptionField> fields,
+    // Updates the first matching field in place and drops other matches; a null value removes them all. A new field
+    // is appended only when it fits, so other fields are never removed to make room.
+    public static BlueprintFieldUpdateResult TryUpdate(string existing, BlueprintDescriptionField field,
         int maximumFields, Func<string, string> escape, Func<string, string> unescape, out string updated)
     {
         updated = existing;
-        if (fields == null || escape == null || unescape == null)
-            throw new ArgumentNullException(fields == null ? nameof(fields) : escape == null ? nameof(escape) : nameof(unescape));
+        if (field == null || escape == null || unescape == null)
+            throw new ArgumentNullException(field == null ? nameof(field) : escape == null ? nameof(escape) : nameof(unescape));
         if (maximumFields < 0 || !IsNativeFormatValid(existing))
             return BlueprintFieldUpdateResult.InvalidFields;
 
+        var generated = field.Value == null ? null : escape(field.Title) + ":" + escape(field.Value);
         var parts = (existing ?? "").Split(';');
-        var matches = new int[parts.Length];
-        var found = new bool[fields.Count];
-        var nativeCount = 0;
-        var removedCount = 0;
+        var entries = new List<string>();
+        var replaced = false;
         for (var index = 0; index < parts.Length - 1; index++)
         {
-            var delimiter = parts[index].IndexOf(':');
-            nativeCount++;
-            var name = unescape(parts[index].Substring(0, delimiter));
-            for (var fieldIndex = 0; fieldIndex < fields.Count; fieldIndex++)
+            if (!field.Matches(unescape(parts[index].Substring(0, parts[index].IndexOf(':')))))
             {
-                if (!fields[fieldIndex].Matches(name)) continue;
-                if (fields[fieldIndex].Value == null || found[fieldIndex])
-                {
-                    matches[index] = -1;
-                    removedCount++;
-                }
-                else
-                {
-                    matches[index] = fieldIndex + 1;
-                    found[fieldIndex] = true;
-                }
-                break;
+                entries.Add(parts[index]);
+            }
+            else if (generated != null && !replaced)
+            {
+                entries.Add(generated);
+                replaced = true;
             }
         }
 
-        var missingCount = 0;
-        for (var index = 0; index < fields.Count; index++)
-            if (!found[index] && fields[index].Value != null) missingCount++;
-        if (nativeCount - removedCount + missingCount > maximumFields)
-            return BlueprintFieldUpdateResult.CapacityExceeded;
-
-        var serialized = new StringBuilder();
-        for (var index = 0; index < parts.Length - 1; index++)
+        if (generated != null && !replaced)
         {
-            var match = matches[index];
-            if (match < 0) continue;
-            if (match > 0)
-            {
-                var field = fields[match - 1];
-                serialized.Append(escape(field.Title)).Append(':').Append(escape(field.Value));
-            }
-            else
-            {
-                serialized.Append(parts[index]);
-            }
-
-            serialized.Append(';');
+            if (entries.Count >= maximumFields) return BlueprintFieldUpdateResult.CapacityExceeded;
+            entries.Add(generated);
         }
 
-        for (var index = 0; index < fields.Count; index++)
-        {
-            if (!found[index] && fields[index].Value != null)
-                serialized.Append(escape(fields[index].Title)).Append(':').Append(escape(fields[index].Value))
-                    .Append(';');
-        }
-
-        updated = serialized.ToString();
+        updated = string.Concat(entries.Select(entry => entry + ";"));
         return BlueprintFieldUpdateResult.Updated;
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using static UXAssist.Production.ProductionMath;
 
 namespace UXAssist.Production;
 
@@ -55,8 +56,7 @@ public sealed class GasCollectionAdapter : IProductionProcessAdapter
         var outputs = new List<KeyValuePair<int, double>>();
         for (var index = 0; index < (int)gasCount; index++)
         {
-            if (!operatingParameters.TryGetValue($"GasItemId{index}", out var itemId) ||
-                itemId <= 0 || itemId > int.MaxValue || itemId != Math.Truncate(itemId) ||
+            if (!operatingParameters.TryGetValue($"GasItemId{index}", out var itemId) || !PositiveId(itemId) ||
                 !catalog.Items.ContainsKey((int)itemId) ||
                 !operatingParameters.TryGetValue($"GasSpeedPerSecond{index}", out var gasSpeed) ||
                 !FiniteNonnegative(gasSpeed))
@@ -84,15 +84,5 @@ public sealed class GasCollectionAdapter : IProductionProcessAdapter
             Array.Empty<KeyValuePair<int, double>>(), outputs,
             1, 0, true);
         return true;
-    }
-
-    private static bool FiniteNonnegative(double value)
-    {
-        return value >= 0 && !double.IsNaN(value) && !double.IsInfinity(value);
-    }
-
-    private static bool FinitePositive(double value)
-    {
-        return value > 0 && !double.IsNaN(value) && !double.IsInfinity(value);
     }
 }

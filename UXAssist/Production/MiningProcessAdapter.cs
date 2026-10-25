@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using static UXAssist.Production.ProductionMath;
 
 namespace UXAssist.Production;
 
@@ -25,7 +26,7 @@ public sealed class MiningProcessAdapter : IProductionProcessAdapter
 
         if (operatingParameters == null ||
             !operatingParameters.TryGetValue("ResourceItemId", out var outputId) ||
-            !ValidItemId(outputId) || !catalog.Items.ContainsKey((int)outputId) ||
+            !PositiveId(outputId) || !catalog.Items.ContainsKey((int)outputId) ||
             !operatingParameters.TryGetValue("MiningSpeedMultiplier", out var miningSpeed) ||
             !FinitePositive(miningSpeed))
         {
@@ -72,8 +73,7 @@ public sealed class MiningProcessAdapter : IProductionProcessAdapter
         var powerRatio = machineSpeed * machineSpeed;
         var workingWatts = building.WorkingPowerWatts * powerRatio +
                            building.IdlePowerWatts * (1 - powerRatio);
-        if (!FinitePositive(perMinute) || workingWatts < 0 ||
-            double.IsNaN(workingWatts) || double.IsInfinity(workingWatts))
+        if (!FinitePositive(perMinute) || !FiniteNonnegative(workingWatts))
         {
             diagnostic = new ProductionDiagnostic(ProductionDiagnosticCode.InvalidRequest,
                 "The mineral output rate or power demand is outside the supported range.",
@@ -86,15 +86,5 @@ public sealed class MiningProcessAdapter : IProductionProcessAdapter
             new[] { new KeyValuePair<int, double>((int)outputId, 1) },
             perMinute, workingWatts, true);
         return true;
-    }
-
-    private static bool ValidItemId(double value)
-    {
-        return value > 0 && value <= int.MaxValue && value == Math.Truncate(value);
-    }
-
-    private static bool FinitePositive(double value)
-    {
-        return value > 0 && !double.IsNaN(value) && !double.IsInfinity(value);
     }
 }

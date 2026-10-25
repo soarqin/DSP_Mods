@@ -77,8 +77,6 @@ public sealed class ProductionItemFlow
     public double? SteadyStateExternalSupply { get; }
     public bool IsFinalProduct { get; }
     public bool IsResearchProduct { get; }
-    public bool IsExcessIntermediate { get; }
-    public double SingleBuildingSurplusThreshold { get; }
     public double IntermediateShortage { get; }
     public double? OverbuildSurplus { get; }
     public double? CoproductSurplus { get; }
@@ -87,20 +85,9 @@ public sealed class ProductionItemFlow
 
     public ProductionItemFlow(int itemId, double grossProduction, double grossConsumption, double externalImports,
         double knownExternalSupply, double delivered, double surplus, double requiredExternalSupply,
-        bool isFinalProduct, bool isExcessIntermediate, double singleBuildingSurplusThreshold,
-        IEnumerable<int> producerGroups, IEnumerable<int> consumerGroups)
-        : this(itemId, grossProduction, grossConsumption, externalImports, knownExternalSupply, delivered, surplus,
-            requiredExternalSupply, isFinalProduct, isExcessIntermediate, singleBuildingSurplusThreshold,
-            producerGroups, consumerGroups, 0, null, null)
-    {
-    }
-
-    public ProductionItemFlow(int itemId, double grossProduction, double grossConsumption, double externalImports,
-        double knownExternalSupply, double delivered, double surplus, double requiredExternalSupply,
-        bool isFinalProduct, bool isExcessIntermediate, double singleBuildingSurplusThreshold,
-        IEnumerable<int> producerGroups, IEnumerable<int> consumerGroups, double intermediateShortage,
-        double? overbuildSurplus, double? coproductSurplus, double? steadyStateExternalSupply = null,
-        bool isResearchProduct = false)
+        bool isFinalProduct, IEnumerable<int> producerGroups, IEnumerable<int> consumerGroups,
+        double intermediateShortage = 0, double? overbuildSurplus = null, double? coproductSurplus = null,
+        double? steadyStateExternalSupply = null, bool isResearchProduct = false)
     {
         ItemId = itemId;
         GrossProduction = grossProduction;
@@ -113,8 +100,6 @@ public sealed class ProductionItemFlow
         SteadyStateExternalSupply = steadyStateExternalSupply;
         IsFinalProduct = isFinalProduct;
         IsResearchProduct = isResearchProduct;
-        IsExcessIntermediate = isExcessIntermediate;
-        SingleBuildingSurplusThreshold = singleBuildingSurplusThreshold;
         IntermediateShortage = intermediateShortage;
         OverbuildSurplus = overbuildSurplus;
         CoproductSurplus = coproductSurplus;
@@ -183,15 +168,8 @@ public sealed class ProductionReport
 
     public ProductionReport(ProductionStatus status, bool materialComplete, bool powerComplete,
         IEnumerable<ProductionItemFlow> itemFlows, IEnumerable<ProductionGroupFlow> groups,
-        IEnumerable<ProductionDiagnostic> diagnostics, ProductionPower power)
-        : this(status, materialComplete, powerComplete, itemFlows, groups, diagnostics, power, null)
-    {
-    }
-
-    public ProductionReport(ProductionStatus status, bool materialComplete, bool powerComplete,
-        IEnumerable<ProductionItemFlow> itemFlows, IEnumerable<ProductionGroupFlow> groups,
         IEnumerable<ProductionDiagnostic> diagnostics, ProductionPower power,
-        ProductionPowerBreakdown powerBreakdown)
+        ProductionPowerBreakdown powerBreakdown = null)
     {
         Status = status;
         MaterialComplete = materialComplete;

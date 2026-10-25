@@ -42,17 +42,15 @@ internal sealed class BlackBoxItemClassification
 {
     public bool IsFinalProduct { get; }
     public bool IsResearchProduct { get; }
-    public bool IsIntermediate { get; }
     public double IntermediateShortage { get; }
     public double? OverbuildSurplus { get; }
     public double? CoproductSurplus { get; }
 
-    public BlackBoxItemClassification(bool isFinalProduct, bool isResearchProduct, bool isIntermediate,
-        double intermediateShortage, double? overbuildSurplus, double? coproductSurplus)
+    public BlackBoxItemClassification(bool isFinalProduct, bool isResearchProduct, double intermediateShortage,
+        double? overbuildSurplus, double? coproductSurplus)
     {
         IsFinalProduct = isFinalProduct;
         IsResearchProduct = isResearchProduct;
-        IsIntermediate = isIntermediate;
         IntermediateShortage = intermediateShortage;
         OverbuildSurplus = overbuildSurplus;
         CoproductSurplus = coproductSurplus;
@@ -62,6 +60,7 @@ internal sealed class BlackBoxItemClassification
 internal static class BlackBoxMaterialClassifier
 {
     internal const double Tolerance = 1e-9;
+    private const int MaximumSteadyStatePasses = 10000;
 
     private sealed class ReductionGroup
     {
@@ -148,7 +147,7 @@ internal static class BlackBoxMaterialClassifier
                     overbuild = Math.Min(Math.Max(0, originalNet),
                         Math.Max(0, originalNet - remainingBalance[itemId]));
                     var necessaryJointProduction = groups.Sum(group => NecessaryJointProduction(group, itemId,
-                        originalBalance, remainingBalance, protectedItems, intermediateItems));
+                        originalBalance, remainingBalance, protectedItems));
                     var internalConsumption = groups.Sum(group =>
                         group.Source.NetPerBuilding.TryGetValue(itemId, out var amount) && amount < -Tolerance
                             ? -amount * (group.Count - group.Removed) : 0);
@@ -161,17 +160,17 @@ internal static class BlackBoxMaterialClassifier
             var isResearchProduct = finalKnown && researchMatrixSinks.Contains(itemId) && originalNet > Tolerance;
             classification[itemId] = new BlackBoxItemClassification(
                 finalKnown && finalItems.Contains(itemId) || isResearchProduct, isResearchProduct,
-                isIntermediate, isIntermediate ? Math.Max(0, -originalNet) : 0, overbuild, coproduct);
+                isIntermediate ? Math.Max(0, -originalNet) : 0, overbuild, coproduct);
         }
 
         steadyStateBalance = CalculateSteadyStateBalance(groups, originalBalance, remainingBalance,
-            protectedItems, intermediateItems);
+            protectedItems);
         return classification;
     }
 
     private static double NecessaryJointProduction(ReductionGroup group, int itemId,
         IReadOnlyDictionary<int, double> originalBalance, IReadOnlyDictionary<int, double> remainingBalance,
-        ISet<int> protectedItems, ISet<int> intermediateItems)
+        ISet<int> protectedItems)
     {
         var retained = group.Count - group.Removed;
         if (retained == 0 || !group.Source.HasJointProducts ||
@@ -182,10 +181,7 @@ internal static class BlackBoxMaterialClassifier
         foreach (var flow in group.Source.NetPerBuilding)
         {
             if (flow.Key == itemId || flow.Value <= Tolerance) continue;
-            double minimum;
-            if (protectedItems.Contains(flow.Key)) minimum = originalBalance[flow.Key];
-            else if (intermediateItems.Contains(flow.Key)) minimum = Math.Min(0, originalBalance[flow.Key]);
-            else continue;
+            var minimum = MinimumBalance(flow.Key, originalBalance, protectedItems);
             var available = Math.Floor((remainingBalance[flow.Key] - minimum + Tolerance) / flow.Value);
             removable = Math.Min(removable, Math.Max(0, available));
         }
@@ -195,14 +191,15 @@ internal static class BlackBoxMaterialClassifier
 
     private static IReadOnlyDictionary<int, double> CalculateSteadyStateBalance(
         IReadOnlyList<ReductionGroup> groups, IReadOnlyDictionary<int, double> originalBalance,
-        IReadOnlyDictionary<int, double> remainingBalance, ISet<int> protectedItems, ISet<int> intermediateItems)
+        IReadOnlyDictionary<int, double> remainingBalance, ISet<int> protectedItems)
     {
         var balance = remainingBalance.ToDictionary(entry => entry.Key, entry => entry.Value);
         var available = groups.ToDictionary(group => group, group => (double)(group.Count - group.Removed));
-        bool changed;
-        do
+        // A lossless cycle, such as charging and discharging accumulators, can pass a tiny leftover around
+        // indefinitely; stopping early only leaves the input estimate conservative.
+        for (var pass = 0; pass < MaximumSteadyStatePasses; pass++)
         {
-            changed = false;
+            var changed = false;
             foreach (var group in groups)
             {
                 if (!group.Source.NetPerBuilding.Values.Any(value => value > Tolerance)) continue;
@@ -210,10 +207,7 @@ internal static class BlackBoxMaterialClassifier
                 foreach (var flow in group.Source.NetPerBuilding)
                 {
                     if (flow.Value <= Tolerance) continue;
-                    double minimum;
-                    if (protectedItems.Contains(flow.Key)) minimum = originalBalance[flow.Key];
-                    else if (intermediateItems.Contains(flow.Key)) minimum = Math.Min(0, originalBalance[flow.Key]);
-                    else continue;
+                    var minimum = MinimumBalance(flow.Key, originalBalance, protectedItems);
                     reducible = Math.Min(reducible, Math.Max(0, (balance[flow.Key] - minimum) / flow.Value));
                 }
 
@@ -223,9 +217,19 @@ internal static class BlackBoxMaterialClassifier
                 available[group] -= reducible;
                 changed = true;
             }
-        } while (changed);
+
+            if (!changed) break;
+        }
 
         return balance;
+    }
+
+    // Every positive process output is a protected or intermediate item. Protected balances may not fall below
+    // their full-load value, and intermediates may not gain a new or larger shortage.
+    private static double MinimumBalance(int itemId, IReadOnlyDictionary<int, double> originalBalance,
+        ISet<int> protectedItems)
+    {
+        return protectedItems.Contains(itemId) ? originalBalance[itemId] : Math.Min(0, originalBalance[itemId]);
     }
 
     private static bool CanRemove(IReadOnlyDictionary<int, double> netPerBuilding,

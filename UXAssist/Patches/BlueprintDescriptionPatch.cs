@@ -25,25 +25,25 @@ public class BlueprintDescriptionPatch : PatchImpl<BlueprintDescriptionPatch>
         Inspectors.Clear();
     }
 
-    [HarmonyPostfix, HarmonyPatch(typeof(UIBlueprintInspector), "_OnCreate")]
+    [HarmonyPostfix, HarmonyPatch(typeof(UIBlueprintInspector), nameof(UIBlueprintInspector._OnCreate))]
     private static void OnCreate(UIBlueprintInspector __instance)
     {
         GetControls(__instance);
     }
 
-    [HarmonyPostfix, HarmonyPatch(typeof(UIBlueprintInspector), "_OnOpen")]
+    [HarmonyPostfix, HarmonyPatch(typeof(UIBlueprintInspector), nameof(UIBlueprintInspector._OnOpen))]
     private static void OnOpen(UIBlueprintInspector __instance)
     {
         GetControls(__instance)?.ResetSession();
     }
 
-    [HarmonyPostfix, HarmonyPatch(typeof(UIBlueprintInspector), "_OnClose")]
+    [HarmonyPostfix, HarmonyPatch(typeof(UIBlueprintInspector), nameof(UIBlueprintInspector._OnClose))]
     private static void OnClose(UIBlueprintInspector __instance)
     {
         if (Inspectors.TryGetValue(__instance, out var controls)) controls.ResetSession();
     }
 
-    [HarmonyPostfix, HarmonyPatch(typeof(UIBlueprintInspector), "_OnFree")]
+    [HarmonyPostfix, HarmonyPatch(typeof(UIBlueprintInspector), nameof(UIBlueprintInspector._OnFree))]
     private static void OnFree(UIBlueprintInspector __instance)
     {
         if (!Inspectors.TryGetValue(__instance, out var controls)) return;
@@ -51,7 +51,7 @@ public class BlueprintDescriptionPatch : PatchImpl<BlueprintDescriptionPatch>
         Inspectors.Remove(__instance);
     }
 
-    [HarmonyPostfix, HarmonyPatch(typeof(UIBlueprintInspector), "_OnDestroy")]
+    [HarmonyPostfix, HarmonyPatch(typeof(UIBlueprintInspector), nameof(UIBlueprintInspector._OnDestroy))]
     private static void OnDestroy(UIBlueprintInspector __instance)
     {
         OnFree(__instance);
@@ -287,13 +287,10 @@ public class BlueprintDescriptionPatch : PatchImpl<BlueprintDescriptionPatch>
                     return;
                 }
 
-                var fields = new[]
-                {
-                    new BlueprintDescriptionField(I18NKeys.BlueprintPower.Translate(),
-                        description.Power.Length > 0 ? description.Power : null,
-                        I18NKeys.BlueprintPowerEnglish, I18NKeys.BlueprintPowerChinese)
-                };
-                var result = BlueprintDescriptionFields.TryUpdate(blueprint.externalFields, fields,
+                var powerField = new BlueprintDescriptionField(I18NKeys.BlueprintPower.Translate(),
+                    description.Power.Length > 0 ? description.Power : null,
+                    I18NKeys.BlueprintPowerEnglish, I18NKeys.BlueprintPowerChinese);
+                var result = BlueprintDescriptionFields.TryUpdate(blueprint.externalFields, powerField,
                     UIBlueprintInspector.kMaxFieldCount,
                     value => BlueprintData.Validate(blueprint.ExternalFieldEscape(value)),
                     blueprint.ExternalFieldUnescape, out var updated);
