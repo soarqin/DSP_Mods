@@ -63,12 +63,12 @@ internal static class BeltSignalPatch
         // A belt selects one material, so its equivalent single-material rate is 30.
         private static readonly (int ItemId, int ExchangeRate, string NameKey, string IconPath)[] DarkFogBuyOutDefinitions =
         [
-            (ItemIds.DarkFogMemoryUnit, 20, I18NKeys.MemoryUnit, "assets/signal/dark-fog-matrix.png"),
-            (ItemIds.DarkFogEnergyFragment, 60, I18NKeys.EnergyFragment, "assets/signal/energy-shard.png"),
+            (ItemIds.DarkFogMatrix, 20, I18NKeys.MemoryUnit, "assets/signal/dark-fog-matrix.png"),
+            (ItemIds.DarkFogEnergyShard, 60, I18NKeys.EnergyFragment, "assets/signal/energy-shard.png"),
             (ItemIds.DarkFogSiliconNeuron, 30, I18NKeys.SiliconNeuron, "assets/signal/silicon-based-neuron.png"),
             (ItemIds.DarkFogNegentropySingularity, 30, I18NKeys.NegentropySingularity, "assets/signal/negentropy-singularity.png"),
-            (ItemIds.DarkFogMatterReassembler, 30, I18NKeys.MatterReassembler, "assets/signal/matter-recombinator.png"),
-            (ItemIds.DarkFogVirtualParticle, 10, I18NKeys.VirtualParticle, "assets/signal/core-element.png")
+            (ItemIds.DarkFogMatterRecombinator, 30, I18NKeys.MatterReassembler, "assets/signal/matter-recombinator.png"),
+            (ItemIds.DarkFogCoreElement, 10, I18NKeys.VirtualParticle, "assets/signal/core-element.png")
         ];
         public static readonly int[] DarkFogItemsInVoid = [0, 0, 0, 0, 0, 0];
         private static Dictionary<int, uint>[] _signalBelts = new Dictionary<int, uint>[64];
@@ -327,13 +327,14 @@ internal static class BeltSignalPatch
                     var consume = (byte)Math.Min(DarkFogItemsInVoid[itemIdx], 4);
                     if (consume < 4)
                     {
-                        var metaverseLong = propertySystem.GetItemAvaliableProperty(_clusterSeedKey, ItemIds.Metaverse);
+                        // Metaverse is the metadata of the Universe Matrix.
+                        var metaverseLong = propertySystem.GetItemAvaliableProperty(_clusterSeedKey, ItemIds.UniverseMatrix);
                         if (metaverseLong > 0L)
                         {
                             var metaverse = metaverseLong > 10 ? 10 : (int)metaverseLong;
-                            propertySystem.AddItemConsumption(_clusterSeedKey, ItemIds.Metaverse, metaverse);
+                            propertySystem.AddItemConsumption(_clusterSeedKey, ItemIds.UniverseMatrix, metaverse);
                             var mainPlayer = GameMain.mainPlayer;
-                            GameMain.history.AddPropertyItemConsumption(ItemIds.Metaverse, metaverse, true);
+                            GameMain.history.AddPropertyItemConsumption(ItemIds.UniverseMatrix, metaverse, true);
                             var count = definition.ExchangeRate * metaverse;
                             DarkFogItemsInVoid[itemIdx] += count;
                             consume = (byte)Math.Min(DarkFogItemsInVoid[itemIdx], 4);

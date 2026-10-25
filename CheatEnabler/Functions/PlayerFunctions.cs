@@ -81,10 +81,10 @@ public static class PlayerFunctions
         var propertySystem = DSPGame.propertySystem;
         if (propertySystem == null) return;
         PurgePropertySystem(propertySystem);
-        var itemCnt = new int[ItemIds.Metaverse - ItemIds.HydrogenFuelRod + 1];
-        foreach (var cons in propertySystem.propertyDatas.SelectMany(data => data.totalConsumption.Where(cons => cons.id is >= ItemIds.HydrogenFuelRod and <= ItemIds.Metaverse)))
+        var itemCnt = new int[ItemIds.UniverseMatrix - ItemIds.ElectromagneticMatrix + 1];
+        foreach (var cons in propertySystem.propertyDatas.SelectMany(data => data.totalConsumption.Where(cons => cons.id is >= ItemIds.ElectromagneticMatrix and <= ItemIds.UniverseMatrix)))
         {
-            itemCnt[cons.id - ItemIds.HydrogenFuelRod] += cons.count;
+            itemCnt[cons.id - ItemIds.ElectromagneticMatrix] += cons.count;
         }
 
         if (itemCnt.All(cnt => cnt == 0))
@@ -97,7 +97,7 @@ public static class PlayerFunctions
         {
             if (itemCnt[i] > 0)
             {
-                msg += $"\n  {LDB.items.Select(i + ItemIds.HydrogenFuelRod).propertyName} x{itemCnt[i]}";
+                msg += $"\n  {LDB.items.Select(i + ItemIds.ElectromagneticMatrix).propertyName} x{itemCnt[i]}";
             }
         }
         UIMessageBox.Show(Localization.RemoveAllMetadataConsumptionRecords.Translate(), msg, Localization.Cancel.Translate(), Localization.OK.Translate(), UIMessageBox.QUESTION, null, () =>
@@ -121,7 +121,7 @@ public static class PlayerFunctions
         var propertySystem = DSPGame.propertySystem;
         if (propertySystem == null) return;
         PurgePropertySystem(propertySystem);
-        var itemCnt = new int[ItemIds.Metaverse - ItemIds.HydrogenFuelRod + 1];
+        var itemCnt = new int[ItemIds.UniverseMatrix - ItemIds.ElectromagneticMatrix + 1];
         var seedKey = DSPGame.GameDesc.seedKey64;
         var clusterPropertyData = propertySystem.propertyDatas.FirstOrDefault(cpd => cpd.seedKey == seedKey);
         if (clusterPropertyData == null)
@@ -130,9 +130,9 @@ public static class PlayerFunctions
             return;
         }
         var currentGamePropertyData = GameMain.data.history.propertyData;
-        foreach (var cons in currentGamePropertyData.totalConsumption.Where(cons => cons.id is >= ItemIds.HydrogenFuelRod and <= ItemIds.Metaverse))
+        foreach (var cons in currentGamePropertyData.totalConsumption.Where(cons => cons.id is >= ItemIds.ElectromagneticMatrix and <= ItemIds.UniverseMatrix))
         {
-            itemCnt[cons.id - ItemIds.HydrogenFuelRod] += cons.count;
+            itemCnt[cons.id - ItemIds.ElectromagneticMatrix] += cons.count;
         }
 
         if (itemCnt.All(cnt => cnt == 0))
@@ -145,7 +145,7 @@ public static class PlayerFunctions
         {
             if (itemCnt[i] > 0)
             {
-                msg += $"\n  {LDB.items.Select(i + ItemIds.HydrogenFuelRod).propertyName} x{itemCnt[i]}";
+                msg += $"\n  {LDB.items.Select(i + ItemIds.ElectromagneticMatrix).propertyName} x{itemCnt[i]}";
             }
         }
         UIMessageBox.Show(Localization.RemoveMetadataConsumptionRecordInCurrentGame.Translate(), msg, Localization.Cancel.Translate(), Localization.OK.Translate(), UIMessageBox.QUESTION, null, () =>
@@ -154,8 +154,8 @@ public static class PlayerFunctions
             {
                 if (clusterPropertyData.totalConsumption[i].count == 0) continue;
                 var id = clusterPropertyData.totalConsumption[i].id;
-                if (id < ItemIds.HydrogenFuelRod || id > ItemIds.Metaverse) continue;
-                var currentGameCount = itemCnt[id - ItemIds.HydrogenFuelRod];
+                if (id < ItemIds.ElectromagneticMatrix || id > ItemIds.UniverseMatrix) continue;
+                var currentGameCount = itemCnt[id - ItemIds.ElectromagneticMatrix];
                 if (currentGameCount == 0) continue;
                 var totalCount = clusterPropertyData.totalConsumption[i].count;
                 clusterPropertyData.totalConsumption[i] = new IDCNT(id, totalCount > currentGameCount ? totalCount - currentGameCount : 0);

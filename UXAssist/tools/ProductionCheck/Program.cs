@@ -1037,35 +1037,35 @@ internal static class Program
         {
             new ProductionItem(ItemIds.Water, 0, true, false, 0, 0),
             new ProductionItem(ItemIds.ProliferatorMkIII, 201, false, false, 4, 75),
-            new ProductionItem(ItemIds.Steel, 202, false, false, 0, 0),
-            new ProductionItem(ItemIds.SpaceWarper, 203, false, false, 0, 0),
-            new ProductionItem(ItemIds.TitaniumGlass, 204, false, false, 0, 0)
+            new ProductionItem(ItemIds.TitaniumAlloy, 202, false, false, 0, 0),
+            new ProductionItem(ItemIds.CasimirCrystal, 203, false, false, 0, 0),
+            new ProductionItem(ItemIds.Prism, 204, false, false, 0, 0)
         };
         var recipes = new[]
         {
             Recipe(201, new[] { (ItemIds.Water, 1.0) },
                 new[] { (ItemIds.ProliferatorMkIII, 1.0) }),
-            Recipe(202, new[] { (ItemIds.Water, 1.0) }, new[] { (ItemIds.Steel, 1.0) }),
-            Recipe(203, new[] { (ItemIds.Water, 1.0) }, new[] { (ItemIds.SpaceWarper, 1.0) }),
-            Recipe(204, new[] { (ItemIds.Water, 1.0) }, new[] { (ItemIds.TitaniumGlass, 1.0) },
+            Recipe(202, new[] { (ItemIds.Water, 1.0) }, new[] { (ItemIds.TitaniumAlloy, 1.0) }),
+            Recipe(203, new[] { (ItemIds.Water, 1.0) }, new[] { (ItemIds.CasimirCrystal, 1.0) }),
+            Recipe(204, new[] { (ItemIds.Water, 1.0) }, new[] { (ItemIds.Prism, 1.0) },
                 productive: false)
         };
         var catalog = new ProductionCatalog(items, recipes, Array.Empty<ProductionBuilding>(),
             new[] { 0.0, 0.25, 0.5, 0.75, 1.0 },
             new[] { 0.0, 0.125, 0.2, 0.225, 0.25 },
             new[] { 1.0, 1.3, 1.7, 2.1, 2.5 });
-        var request = BeltSignalSourcePreset.Create(catalog, ItemIds.Steel, true, true);
+        var request = BeltSignalSourcePreset.Create(catalog, ItemIds.TitaniumAlloy, true, true);
         Check(request.ExternalMaterials.SetEquals(new[] { ItemIds.Water }),
             "only known natural belt source IDs become external materials");
         Equal(ItemIds.ProliferatorMkIII, request.ProliferatorItemId,
             "belt policy uses the available proliferator item");
-        Check(request.SelfSprayProliferator && request.SprayDeliveredItems.Contains(ItemIds.Steel),
+        Check(request.SelfSprayProliferator && request.SprayDeliveredItems.Contains(ItemIds.TitaniumAlloy),
             "self-spray and delivered-item spraying are request settings");
-        Check(request.ProliferationModeByItem[ItemIds.Steel] == ProliferationMode.ExtraProducts,
+        Check(request.ProliferationModeByItem[ItemIds.TitaniumAlloy] == ProliferationMode.ExtraProducts,
             "productive legacy extra-products choice maps to a native mode");
-        Check(request.ProliferationModeByItem[ItemIds.SpaceWarper] == ProliferationMode.None,
+        Check(request.ProliferationModeByItem[ItemIds.CasimirCrystal] == ProliferationMode.None,
             "legacy disabled item keeps its no-proliferation preset");
-        Check(request.ProliferationModeByItem[ItemIds.TitaniumGlass] == ProliferationMode.Speedup,
+        Check(request.ProliferationModeByItem[ItemIds.Prism] == ProliferationMode.Speedup,
             "unsupported extra-products choice falls back to native speedup");
         var report = new ProductionPlanner(catalog).Calculate(request);
         Check(report.MaterialComplete, "belt preset resolves the proliferator's recipe and raw materials");
@@ -1084,7 +1084,7 @@ internal static class Program
             Array.Empty<ProductionBuilding>(), new[] { 0.0, 0.25, 0.5, 0.75, 1.0 },
             new[] { 0.0, 0.125, 0.2, 0.225, 0.25 },
             new[] { 1.0, 1.3, 1.7, 2.1, 2.5 });
-        var updated = BeltSignalSourcePreset.Create(updatedCatalog, ItemIds.Steel, true, false);
+        var updated = BeltSignalSourcePreset.Create(updatedCatalog, ItemIds.TitaniumAlloy, true, false);
         Equal(9999, updated.ProliferatorItemId, "updated game data selects a valid proliferator instead of a stale ID");
 
         var alternativeCatalog = new ProductionCatalog(new[]
