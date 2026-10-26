@@ -88,14 +88,14 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         ControlPanelRemoteLogistics.Enable(ControlPanelRemoteLogisticsEnabled.Value);
         Enable(true);
         CargoTrafficPatch.Enable(true);
-        GameLogicProc.OnGameBegin += OnGameBegin_For_ImmBuild;
+        GameLogicProc.OnGameBegin += OnGameBeginOrGuideComplete;
         GameLogicProc.OnDataLoaded += OnDataLoaded;
     }
 
     public static void Uninit()
     {
         GameLogicProc.OnDataLoaded -= OnDataLoaded;
-        GameLogicProc.OnGameBegin -= OnGameBegin_For_ImmBuild;
+        GameLogicProc.OnGameBegin -= OnGameBeginOrGuideComplete;
         CargoTrafficPatch.Enable(false);
         Enable(false);
         ImmediateBuild.Enable(false);
@@ -152,7 +152,8 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         if (factory.prebuildCount <= 0) return;
         var imm = ImmediateEnabled.Value;
         var architect = ArchitectModeEnabled.Value;
-        if ((!imm && !architect) || GameMain.gameScenario == null) return;
+        if ((!imm && !architect) || GameMain.gameScenario == null ||
+            GameMain.data?.guideComplete != true) return;
         var prebuilds = factory.prebuildPool;
         if (imm)
         {
@@ -193,7 +194,9 @@ public class FactoryPatch : PatchImpl<FactoryPatch>
         }
     }
 
-    private static void OnGameBegin_For_ImmBuild()
+    [HarmonyPostfix]
+    [HarmonyPatch(typeof(GameData), nameof(GameData.EndStandardModeGuide))]
+    private static void OnGameBeginOrGuideComplete()
     {
         if (DSPGame.IsMenuDemo) return;
         var factory = GameMain.mainPlayer?.factory;

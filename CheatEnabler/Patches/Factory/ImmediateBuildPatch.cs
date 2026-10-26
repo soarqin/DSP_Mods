@@ -174,6 +174,7 @@ internal class ImmediateBuild : PatchImpl<ImmediateBuild>
     [HarmonyPatch(typeof(GameLogic), nameof(GameLogic.FactoryConstructionSystemGameTick))]
     private static void GameLogic_FactoryConstructionSystemGameTick_Prefix(GameLogic __instance)
     {
+        if (GameMain.data?.guideComplete != true || GameMain.gameScenario == null) return;
         var time = __instance.timei;
         if (time % 6 != 0) return;
         var planet = GameMain.localPlanet;

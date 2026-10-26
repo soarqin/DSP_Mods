@@ -26,6 +26,7 @@
   * Factory:
     * Finish build immediately
       * Completes pending buildings as soon as their required building items are available
+      * Starts after the opening cutscene has ended or been skipped
     * Architect mode
       * Unlimited use of buildings, Logistics Bots, Logistics Drones and Interstellar Logistics Vessels
       * Construction and inventory availability checks show at least 999 of each supported item.
@@ -129,6 +130,7 @@ The item icon selects the output; no hotkey is needed.
   * 工厂：
     * 建造秒完成
       * 所需建筑物品齐备后立即完成待建造建筑
+      * 开场动画播放结束或跳过后生效
     * 建筑师模式
       * 建筑、配送运输机、物流运输机和星际物流运输船可无限使用
       * 建造及库存可用数量检查中，每种受支持物品至少显示 999 个。
