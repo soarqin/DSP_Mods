@@ -200,6 +200,7 @@ public static class QuickMinerBuild
         private float _probeX = float.NaN, _probeZ = float.NaN;
         private bool _probeRestricted;
         private EVeinType _type;
+        private int _group;
         private float _minX, _maxX, _minZ, _maxZ;
 
         public bool IsCurrent => GameMain.isRunning && GameMain.mainPlayer == _player &&
@@ -386,6 +387,7 @@ public static class QuickMinerBuild
                 _type = vein.type;
             }
             if (group == 0) return false;
+            _group = group;
             _debug.veinGroup = group;
             var count = 0;
             for (var i = 1; i < _factory.veinCursor; i++)
@@ -608,7 +610,7 @@ public static class QuickMinerBuild
                 var node = _nodes[i];
                 if (!MinerComponent.IsTargetVeinInRange(node.Position, pose, _item.prefabDesc)) continue;
                 if (node.Type != _type) { _debug.rejections.mixedType++; return; }
-                _covered.Add(i);
+                if (node.Target) _covered.Add(i);
             }
             if (_covered.Count < MinerPlacementSolver.MinimumCoverage) { _debug.rejections.noCoverage++; return; }
             for (var i = 0; i < _buildBoxes.Length; i++)
@@ -806,7 +808,7 @@ public static class QuickMinerBuild
                     foreach (var node in _nodes)
                     {
                         ref var vein = ref _factory.veinPool[node.Id];
-                        if (vein.id == node.Id && vein.amount > 0 && vein.type == _type && vein.pos.magnitude >= _planet.realRadius - 40f &&
+                        if (node.Target && vein.id == node.Id && vein.amount > 0 && vein.type == _type && vein.pos.magnitude >= _planet.realRadius - 40f &&
                             MinerComponent.IsTargetVeinInRange(vein.pos, pose, _item.prefabDesc)) ids.Add(node.Id);
                     }
                     ref var prebuild = ref _factory.prebuildPool[entry.Prebuild];
@@ -887,10 +889,10 @@ public static class QuickMinerBuild
                 debug.coverObjectId = preview.coverObjId;
                 debug.nativeVeins = preview.parameters?.Take(preview.paramCount).ToArray() ?? [];
                 if (!valid || preview.condition != EBuildCondition.Ok || preview.coverObjId != 0) return false;
-                // Include every planned burial now, so a later miner cannot reduce this one
-                // below the minimum after its item has already been consumed.
-                debug.plannedVeins = _allowVeinReform
-                    ? debug.nativeVeins.Where(id => !plannedBurial.Contains(id)).ToArray() : debug.nativeVeins;
+                // Native selection includes nearby groups of the same type. Keep only this
+                // group and exclude all planned burials before enforcing the minimum.
+                debug.plannedVeins = debug.nativeVeins.Where(id => _factory.veinPool[id].groupIndex == _group &&
+                    (!_allowVeinReform || !plannedBurial.Contains(id))).ToArray();
                 if (debug.plannedVeins.Length < MinerPlacementSolver.MinimumCoverage)
                 { debug.outcome = "below-minimum-coverage"; return false; }
                 for (var i = 0; i < preview.paramCount; i++)

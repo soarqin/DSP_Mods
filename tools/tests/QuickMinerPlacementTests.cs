@@ -381,6 +381,15 @@ internal static class QuickMinerPlacementTests
         Check(snapshot.schema is 1 or 2 or 3 or 4, "Unsupported debug snapshot schema.");
         Check(snapshot.nodes != null && snapshot.candidates != null && snapshot.buildColliders != null && snapshot.minerColliders != null && snapshot.phases != null,
             "This snapshot contains summary data only and cannot be replayed. Run quick miner placement again with the updated build.");
+        if (snapshot.algorithm?.EndsWith("-target-group", StringComparison.Ordinal) == true)
+        {
+            var targetIds = snapshot.nodes.Where(node => node.target).Select(node => node.id).ToHashSet();
+            Check(snapshot.candidates.All(candidate => candidate.covered.All(index => snapshot.nodes[index].target)),
+                "Candidate coverage must exclude neighboring vein groups, including those of the same type.");
+            Check((snapshot.placements ?? []).All(placement =>
+                    (placement.plannedVeins ?? []).Concat(placement.finalVeins ?? []).All(targetIds.Contains)),
+                "Planned and final miner parameters must contain only nodes from the selected vein group.");
+        }
         Console.WriteLine($"Snapshot: outcome={snapshot.outcome}, nodes={snapshot.nodes.Length}, candidates={snapshot.candidates.Length}, placed={snapshot.placedCount}, actual coverage={snapshot.totalCoverage}");
         foreach (var failure in (snapshot.placements ?? []).Where(p => p.outcome != "placed").GroupBy(p => (p.outcome, p.nativeCondition)))
             Console.WriteLine($"Placement {failure.Key.outcome}: native={failure.Key.nativeCondition}, count={failure.Count()}");

@@ -15,7 +15,7 @@ internal static class MinerPlacementDebug
     internal sealed class Snapshot
     {
         public int schema = 4;
-        public string algorithm = "parallel-repack-v5-pose-exploration-min3-unlimited-stock";
+        public string algorithm = "parallel-repack-v5-pose-exploration-min3-unlimited-stock-target-group";
         public int minimumCoverage = MinerPlacementSolver.MinimumCoverage;
         public string version, gameVersion, startedUtc, outcome, error;
         public int planetId, veinType, veinGroup, initialStock, placedCount, totalCoverage, buriedCount;

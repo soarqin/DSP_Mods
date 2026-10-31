@@ -85,7 +85,7 @@
     * Quick build Orbital Collectors
       * Set a maximum number to build per operation; 0 builds as many as possible
     * Quick build Mining Machines
-      * Use the button on the Factory tab near Quick build Orbital Collectors. Places the full ordinary Mining Machine layout at the nearest solid vein group regardless of carried stock. Uses available miners from the inventory and hand; missing miners remain as ghosts awaiting materials. Every placed miner must retain at least 3 covered nodes after all planned burials; miners below that minimum are invalid.
+      * Use the button on the Factory tab near Quick build Orbital Collectors. Places the full ordinary Mining Machine layout at the nearest solid vein group regardless of carried stock. Mines only the selected group, even when another group of the same resource is nearby. Uses available miners from the inventory and hand; missing miners remain as ghosts awaiting materials. Every placed miner must retain at least 3 covered nodes in the selected group after all planned burials; miners below that minimum are invalid.
       * `Allow restoring/burying veins` is off by default. When disabled, uses only visible nodes and skips all restoration and burial calculations. Enable it to restore buried nodes unless obstructed by buildings or near Dark Fog Planetary Bases. Changes apply to the next calculation. Searches individual native collision shapes so the miner's feet can interleave where the game permits.
       * Uses multiple packing orders, exploration keyed by placement pose as well as candidate index, local position/rotation refinement, body-width neighbor candidates, and coordinated repacking of up to three nearby miners to seek a high sum of vein counts across all placed miners. A final pass fills remaining compatible candidates when they increase total coverage while preserving the three-node minimum. Shared nodes count once per miner; this bounded search does not guarantee a global optimum.
       * Reuses collision checks and runs independent layout searches on up to 4 background workers, capped at half the available logical processors. Systems with one logical processor keep the search on the main thread with a frame budget. Native terrain checks and placement stay on the main thread; worker scheduling preserves the same layout as sequential search.
@@ -288,7 +288,7 @@
     * 快速建造轨道采集器
       * 可设置单次建造数量上限；设为 0 时尽可能多地建造
     * 快速铺设采矿机
-      * 点击「工厂」页中轨道采集器按钮附近的按钮，在最近的固体矿脉生成完整的普通采矿机布局，数量不受库存限制。有采矿机时正常消耗背包和手持物品，不足的位置保留待建造虚影，等待补充材料。所有计划掩埋完成后，每台矿机仍须覆盖至少 3 个矿点；少于 3 个的视为无效，不予铺设。
+      * 点击「工厂」页中轨道采集器按钮附近的按钮，在最近的固体矿脉生成完整的普通采矿机布局，数量不受库存限制。仅开采选中的矿脉，即使附近有同种资源的其他矿脉也不会混入。有采矿机时正常消耗背包和手持物品，不足的位置保留待建造虚影，等待补充材料。所有计划掩埋完成后，每台矿机仍须覆盖选中矿脉的至少 3 个矿点；少于 3 个的视为无效，不予铺设。
       * 「允许恢复/掩埋矿物」默认关闭。关闭时仅使用可见矿点，跳过所有恢复和掩埋计算；开启后，先恢复未被建筑阻挡且不在黑雾行星基地附近的掩埋矿点。选项变更从下次计算生效。按原版独立碰撞体搜索布局，保留游戏允许的矿机脚部交叉空间。
       * 比较多种铺设顺序，同时按候选序号及位置朝向探索不同布局，细调位置和朝向，按机身宽度补充紧邻候选，并允许邻近的两三台矿机一起重新布局，尽量提高各台矿机覆盖矿点数之和。结束前再扫描全部候选，继续补入能提高总覆盖数、且不破坏每台至少覆盖 3 点要求的矿机。同一矿点被多台矿机覆盖时重复计数。计算有界，不保证全局最优。
       * 复用碰撞检查结果，使用最多 4 个后台线程并行搜索独立布局，线程数不超过可用逻辑线程数的一半。单逻辑线程系统继续在主线程按每帧预算计算。原生地形检查和实际铺设保留在主线程；并行调度与顺序搜索生成相同布局。
