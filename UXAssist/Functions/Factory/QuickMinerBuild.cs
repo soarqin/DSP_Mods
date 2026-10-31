@@ -2,11 +2,15 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+#if DEBUG
 using System.IO;
+#endif
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+#if DEBUG
 using BepInEx;
+#endif
 using BepInEx.Configuration;
 using UnityEngine;
 using UXAssist.Common;
@@ -99,12 +103,13 @@ public static class QuickMinerBuild
     private static void Fail(Exception exception)
     {
         UXAssist.Logger.LogError($"Quick miner placement failed: {exception}");
+#if DEBUG
         _job?.RecordFailure(exception);
+#endif
         Stop();
         UIRealtimeTip.Popup(I18NKeys.QuickMinerFailed.Translate());
     }
 
-    // Completion, failure and cancellation all finish the job, which records its debug data.
     private static void Stop()
     {
         var job = _job;
@@ -120,7 +125,9 @@ public static class QuickMinerBuild
 
     private static void ShowResult(string message)
     {
+#if DEBUG
         UXAssist.Logger.LogInfo($"Quick miner result: {message.Replace("\n", " | ")}");
+#endif
         UIRealtimeTip.Popup(message);
         foreach (var tip in UIRoot.instance.uiGame.generalTips.realtimeTips)
         {
@@ -160,7 +167,10 @@ public static class QuickMinerBuild
     private sealed class Node
     {
         public int Id;
-        public Vector3 Position, OriginalPosition;
+        public Vector3 Position;
+#if DEBUG
+        public Vector3 OriginalPosition;
+#endif
         public ColliderData Collider;
         public bool Target, Visible, CanBury;
         public EVeinType Type;
@@ -187,10 +197,12 @@ public static class QuickMinerBuild
         private readonly ColliderData _body;
         private readonly float _footprintRadius, _halfDiagonal;
         private readonly bool _capsule, _allowVeinReform;
+#if DEBUG
         private readonly MinerPlacementDebug.Snapshot _debug = new();
         private readonly List<MinerPlacementDebug.Phase> _phases = [];
         private readonly List<MinerPlacementDebug.Placement> _placements = [];
         private readonly Stopwatch _timer = Stopwatch.StartNew();
+#endif
         private readonly CancellationTokenSource _cancellation = new();
         private readonly int _workers = MinerPlacementSolver.WorkerCount;
         private IEnumerator _work;
@@ -232,6 +244,7 @@ public static class QuickMinerBuild
             // Native clearance checks measure from the encompassing build collider.
             _halfDiagonal = Mathf.Sqrt(desc.buildCollider.ext.x * desc.buildCollider.ext.x + desc.buildCollider.ext.z * desc.buildCollider.ext.z);
             _capsule = planet.id == planet.galaxy.birthPlanetId && GameMain.history.SpaceCapsuleExist();
+#if DEBUG
             _debug.version = PluginInfo.PLUGIN_VERSION;
             _debug.gameVersion = GameConfig.gameVersion.ToString();
             _debug.startedUtc = DateTime.UtcNow.ToString("O");
@@ -248,15 +261,18 @@ public static class QuickMinerBuild
             _debug.buildColliders = desc.buildColliders.Select(MinerPlacementDebug.Collider.Capture).ToArray();
             _debug.minerColliders = _nativeObstacles.Select(MinerPlacementDebug.Collider.Capture).ToArray();
             _debug.outcome = "cancelled";
+#endif
         }
 
         public bool Step() => (_work ??= Run()).MoveNext();
 
+#if DEBUG
         public void RecordFailure(Exception exception)
         {
             _debug.outcome = "failed";
             _debug.error = exception.ToString();
         }
+#endif
 
         public void Finish()
         {
@@ -272,15 +288,20 @@ public static class QuickMinerBuild
                 _cancellation.Dispose();
             }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
             (_work as IDisposable)?.Dispose();
+#if DEBUG
             var location = WriteDebug();
-            if (_result != null) ShowResult(_result + "\n" + location);
+            if (_result != null) _result += "\n" + location;
+#endif
+            if (_result != null) ShowResult(_result);
         }
 
         private IEnumerator Run()
         {
             if (!FindNodes())
             {
+#if DEBUG
                 _debug.outcome = "no-veins";
+#endif
                 _result = I18NKeys.QuickMinerNoVeins.Translate();
                 yield break;
             }
@@ -300,23 +321,43 @@ public static class QuickMinerBuild
                 }
             }
             var solver = new MinerPlacementSolver(_candidates, _nodes.Count, _allowVeinReform);
-            var work = Search(solver, "coarse", 10);
+#if DEBUG
+            var work = Search(solver, 10, "coarse");
+#else
+            var work = Search(solver, 10);
+#endif
             while (work.MoveNext()) yield return null;
             work = Expand(solver.Best, 0.35f, 3f);
             while (work.MoveNext()) yield return null;
-            work = Search(solver, "refine-position", 6);
+#if DEBUG
+            work = Search(solver, 6, "refine-position");
+#else
+            work = Search(solver, 6);
+#endif
             while (work.MoveNext()) yield return null;
             work = Expand(solver.Best, 0.12f, 1f);
             while (work.MoveNext()) yield return null;
-            work = Search(solver, "refine-angle", 4);
+#if DEBUG
+            work = Search(solver, 4, "refine-angle");
+#else
+            work = Search(solver, 4);
+#endif
             while (work.MoveNext()) yield return null;
+#if DEBUG
             _debug.outcome = "completed";
+#endif
             Commit(solver.Best);
         }
 
-        private IEnumerator Search(MinerPlacementSolver solver, string phase, int passes)
+#if DEBUG
+        private IEnumerator Search(MinerPlacementSolver solver, int passes, string phase)
+#else
+        private IEnumerator Search(MinerPlacementSolver solver, int passes)
+#endif
         {
+#if DEBUG
             var timer = Stopwatch.StartNew();
+#endif
             if (_workers > 0)
             {
                 _search = solver.SearchAsync(passes, _cancellation.Token, _workers);
@@ -329,14 +370,17 @@ public static class QuickMinerBuild
                 var work = solver.Search(passes);
                 while (work.MoveNext()) yield return null;
             }
+#if DEBUG
             _phases.Add(new MinerPlacementDebug.Phase
             {
                 name = phase, candidateCount = _candidates.Count, passes = passes, score = solver.BestScore,
                 searchMilliseconds = timer.ElapsedMilliseconds, elapsedMilliseconds = _timer.ElapsedMilliseconds,
                 selected = solver.Best.Select(candidate => _candidates.IndexOf(candidate)).ToArray()
             });
+#endif
         }
 
+#if DEBUG
         private string WriteDebug()
         {
             try
@@ -370,6 +414,7 @@ public static class QuickMinerBuild
                 return I18NKeys.QuickMinerDebugFailed.Translate();
             }
         }
+#endif
 
         private bool FindNodes()
         {
@@ -388,7 +433,9 @@ public static class QuickMinerBuild
             }
             if (group == 0) return false;
             _group = group;
+#if DEBUG
             _debug.veinGroup = group;
+#endif
             var count = 0;
             for (var i = 1; i < _factory.veinCursor; i++)
             {
@@ -440,11 +487,15 @@ public static class QuickMinerBuild
                 _nodes.Add(new Node
                 {
                     Id = i, Target = vein.groupIndex == group, Type = vein.type,
-                    Position = vein.pos, OriginalPosition = vein.pos, Collider = _physics.GetColliderData(vein.colliderId),
+                    Position = vein.pos, Collider = _physics.GetColliderData(vein.colliderId),
+#if DEBUG
+                    OriginalPosition = vein.pos,
+#endif
                     Visible = vein.pos.magnitude >= _planet.realRadius - 40f,
                     CanBury = _allowVeinReform && vein.groupIndex == group && vein.minerCount == 0 && !reserved.Contains(i)
                 });
             }
+#if DEBUG
             var existing = new List<MinerPlacementDebug.ExistingMiner>();
             for (var i = 1; i < _factory.entityCursor; i++)
             {
@@ -470,6 +521,7 @@ public static class QuickMinerBuild
                 });
             }
             _debug.existingMiners = existing.ToArray();
+#endif
             return _nodes.Count > 0;
         }
 
@@ -595,13 +647,26 @@ public static class QuickMinerBuild
 
         private void TryCandidate(float x, float z, float yaw)
         {
+#if DEBUG
             _debug.rejections.attempted++;
+#endif
             if (x != _probeX || z != _probeZ) Probe(x, z);
             var pos = _probe;
             if (!FactoryPatch.RemoveBuildRangeLimitEnabled.Value &&
                 (pos - _player.position).sqrMagnitude > _player.mecha.buildArea * _player.mecha.buildArea)
-            { _debug.rejections.range++; return; }
-            if (_probeRestricted) { _debug.rejections.clearance++; return; }
+            {
+#if DEBUG
+                _debug.rejections.range++;
+#endif
+                return;
+            }
+            if (_probeRestricted)
+            {
+#if DEBUG
+                _debug.rejections.clearance++;
+#endif
+                return;
+            }
             var rotation = Maths.SphericalRotation(pos, yaw);
             var pose = new Pose(pos, rotation);
             _covered.Clear();
@@ -609,10 +674,22 @@ public static class QuickMinerBuild
             {
                 var node = _nodes[i];
                 if (!MinerComponent.IsTargetVeinInRange(node.Position, pose, _item.prefabDesc)) continue;
-                if (node.Type != _type) { _debug.rejections.mixedType++; return; }
+                if (node.Type != _type)
+                {
+#if DEBUG
+                    _debug.rejections.mixedType++;
+#endif
+                    return;
+                }
                 if (node.Target) _covered.Add(i);
             }
-            if (_covered.Count < MinerPlacementSolver.MinimumCoverage) { _debug.rejections.noCoverage++; return; }
+            if (_covered.Count < MinerPlacementSolver.MinimumCoverage)
+            {
+#if DEBUG
+                _debug.rejections.noCoverage++;
+#endif
+                return;
+            }
             for (var i = 0; i < _buildBoxes.Length; i++)
                 _buildBoxes[i] = new Box(_item.prefabDesc.buildColliders[i].BindToObject(0, 0, EObjectType.None, pos, rotation));
             _buried?.Clear();
@@ -620,17 +697,41 @@ public static class QuickMinerBuild
             {
                 var node = _nodes[i];
                 if (!Hits(node.Collider)) continue;
-                if (!node.CanBury) { _debug.rejections.veinCollision++; return; }
+                if (!node.CanBury)
+                {
+#if DEBUG
+                    _debug.rejections.veinCollision++;
+#endif
+                    return;
+                }
                 _buried.Add(i);
             }
             if (_allowVeinReform)
             {
                 foreach (var index in _buried) _covered.Remove(index);
-                if (_covered.Count < MinerPlacementSolver.MinimumCoverage) { _debug.rejections.noCoverage++; return; }
+                if (_covered.Count < MinerPlacementSolver.MinimumCoverage)
+                {
+#if DEBUG
+                    _debug.rejections.noCoverage++;
+#endif
+                    return;
+                }
             }
             foreach (var obstacle in _nearObstacles)
-                if (Hits(obstacle)) { _debug.rejections.buildingCollision++; return; }
-            if (!HasGround(pos, rotation)) { _debug.rejections.ground++; return; }
+            {
+                if (!Hits(obstacle)) continue;
+#if DEBUG
+                _debug.rejections.buildingCollision++;
+#endif
+                return;
+            }
+            if (!HasGround(pos, rotation))
+            {
+#if DEBUG
+                _debug.rejections.ground++;
+#endif
+                return;
+            }
             for (var i = 0; i < _nativeObstacles.Length; i++)
                 _obstacleBoxes[i] = new Box(_nativeObstacles[i].BindToObject(0, 0, EObjectType.None, pos, rotation));
             _candidates.Add(new Candidate
@@ -717,17 +818,25 @@ public static class QuickMinerBuild
         {
             if (layout.Count == 0)
             {
+#if DEBUG
                 _debug.outcome = "no-placement";
+#endif
                 _result = I18NKeys.QuickMinerNoPlacement.Translate();
                 return;
             }
             if (!NodesUnchanged(layout))
             {
+#if DEBUG
                 _debug.outcome = "veins-changed";
+#endif
                 _result = I18NKeys.QuickMinerVeinsChanged.Translate();
                 return;
             }
+#if DEBUG
             var placed = new List<(Candidate Candidate, int Prebuild, MinerPlacementDebug.Placement Debug)>();
+#else
+            var placed = new List<(Candidate Candidate, int Prebuild)>();
+#endif
             var plannedBurial = _allowVeinReform
                 ? layout.SelectMany(candidate => candidate.Buried).Select(index => _nodes[index].Id).ToHashSet() : null;
             var hidden = _allowVeinReform ? new Dictionary<int, Vector3>() : null;
@@ -746,11 +855,13 @@ public static class QuickMinerBuild
                 validator.buildPreviews.Add(preview);
                 foreach (var candidate in layout)
                 {
+#if DEBUG
                     var debug = new MinerPlacementDebug.Placement
                     {
                         candidate = _candidates.IndexOf(candidate), outcome = "pending", nativeCondition = "not-checked", nativeVeins = [], plannedVeins = [], finalVeins = []
                     };
                     _placements.Add(debug);
+#endif
                     // No yield between burial, native validation, item consumption, and creation.
                     if (_allowVeinReform)
                     {
@@ -765,7 +876,11 @@ public static class QuickMinerBuild
                     }
                     // Validation needs current Unity colliders; GPU buffers are synced once at the end.
                     _physics.RefreshColliders();
-                    if (!Validate(validator, preview, candidate, plannedBurial, debug)) continue;
+#if DEBUG
+                    if (!Validate(validator, preview, candidate, plannedBurial, out var plannedVeins, debug)) continue;
+#else
+                    if (!Validate(validator, preview, candidate, plannedBurial, out var plannedVeins)) continue;
+#endif
                     var itemId = ItemIds.MiningMachine;
                     var count = 1;
                     if (_player.inhandItemId == itemId && _player.inhandItemCount > 0) _player.UseHandItems(1, out _);
@@ -778,14 +893,20 @@ public static class QuickMinerBuild
                         itemRequired = count == 1 ? 0 : 1,
                         filterId = _factory.veinPool[_nodes[candidate.Covered[0]].Id].productId
                     };
-                    prebuild.InitParametersArray(debug.plannedVeins.Length);
-                    Array.Copy(debug.plannedVeins, prebuild.parameters, debug.plannedVeins.Length);
+                    prebuild.InitParametersArray(plannedVeins.Length);
+                    Array.Copy(plannedVeins, prebuild.parameters, plannedVeins.Length);
                     var id = _factory.AddPrebuildDataWithComponents(prebuild);
+#if DEBUG
                     debug.prebuildId = id;
                     debug.itemRequired = prebuild.itemRequired;
                     debug.outcome = id > 0 ? "placed" : "prebuild-failed";
+#endif
                     if (id == 0 && count == 1) _player.TryAddItemToPackage(ItemIds.MiningMachine, 1, 0, true);
+#if DEBUG
                     if (id > 0) placed.Add((candidate, id, debug));
+#else
+                    if (id > 0) placed.Add((candidate, id));
+#endif
                 }
             }
             finally
@@ -814,15 +935,19 @@ public static class QuickMinerBuild
                     ref var prebuild = ref _factory.prebuildPool[entry.Prebuild];
                     prebuild.InitParametersArray(ids.Count);
                     if (ids.Count > 0) ids.CopyTo(prebuild.parameters);
+#if DEBUG
                     entry.Debug.finalVeins = ids.ToArray();
+#endif
                     coverage += ids.Count;
                 }
                 if (_allowVeinReform) RefreshVeins(buriedCount > 0 ? 1 : 0);
             }
+#if DEBUG
             _debug.placedCount = placed.Count;
             _debug.totalCoverage = coverage;
             _debug.buriedCount = buriedCount;
             if (placed.Count == 0) _debug.outcome = "no-placement";
+#endif
             _result = placed.Count == 0 ? I18NKeys.QuickMinerNoPlacement.Translate() :
                 string.Format(I18NKeys.QuickMinerResult.Translate(), placed.Count, coverage, buriedCount);
         }
@@ -848,9 +973,16 @@ public static class QuickMinerBuild
         }
 
         // CheckBuildConditions repeats the search's land-point tests, so ground needs no separate check.
-        private bool Validate(BuildTool_Click validator, BuildPreview preview, Candidate candidate, HashSet<int> plannedBurial, MinerPlacementDebug.Placement debug)
+#if DEBUG
+        private bool Validate(BuildTool_Click validator, BuildPreview preview, Candidate candidate, HashSet<int> plannedBurial, out int[] plannedVeins, MinerPlacementDebug.Placement debug)
+#else
+        private bool Validate(BuildTool_Click validator, BuildPreview preview, Candidate candidate, HashSet<int> plannedBurial, out int[] plannedVeins)
+#endif
         {
+            plannedVeins = [];
+#if DEBUG
             debug.outcome = "native-rejected";
+#endif
             preview.ResetAll();
             preview.item = _item;
             preview.desc = _item.prefabDesc;
@@ -885,16 +1017,26 @@ public static class QuickMinerBuild
                 }
                 Physics.SyncTransforms();
                 var valid = validator.CheckBuildConditions();
+#if DEBUG
                 debug.nativeCondition = preview.condition.ToString();
                 debug.coverObjectId = preview.coverObjId;
                 debug.nativeVeins = preview.parameters?.Take(preview.paramCount).ToArray() ?? [];
+#endif
                 if (!valid || preview.condition != EBuildCondition.Ok || preview.coverObjId != 0) return false;
                 // Native selection includes nearby groups of the same type. Keep only this
                 // group and exclude all planned burials before enforcing the minimum.
-                debug.plannedVeins = debug.nativeVeins.Where(id => _factory.veinPool[id].groupIndex == _group &&
-                    (!_allowVeinReform || !plannedBurial.Contains(id))).ToArray();
-                if (debug.plannedVeins.Length < MinerPlacementSolver.MinimumCoverage)
-                { debug.outcome = "below-minimum-coverage"; return false; }
+                plannedVeins = preview.parameters?.Take(preview.paramCount).Where(id => _factory.veinPool[id].groupIndex == _group &&
+                    (!_allowVeinReform || !plannedBurial.Contains(id))).ToArray() ?? [];
+#if DEBUG
+                debug.plannedVeins = plannedVeins;
+#endif
+                if (plannedVeins.Length < MinerPlacementSolver.MinimumCoverage)
+                {
+#if DEBUG
+                    debug.outcome = "below-minimum-coverage";
+#endif
+                    return false;
+                }
                 for (var i = 0; i < preview.paramCount; i++)
                 {
                     ref var vein = ref _factory.veinPool[preview.parameters[i]];

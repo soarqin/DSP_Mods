@@ -205,8 +205,10 @@ public static class I18NKeys
     public const string QuickMinerFailed = "Miner placement stopped; check the log before retrying";
     public const string QuickMinerVeinsChanged = "Veins changed during miner layout search";
     public const string QuickMinerResult = "Placed {0} Mining Machines, {1} total vein coverage, {2} buried nodes";
+#if DEBUG
     public const string QuickMinerDebugSaved = "Miner layout debug data: {0}";
     public const string QuickMinerDebugFailed = "Could not save miner layout debug data";
+#endif
     public const string MaximumCountToBuild = "Maximum count to build";
     public const string Max = "max";
     public const string StopEjectorsWhenAvailableNodesAreAllFilledUp = "Stop ejectors when available nodes are all filled up";
@@ -501,8 +503,10 @@ You can set 2 shortcut keys in Settings panel:
         I18N.Add(QuickMinerFailed, "Miner placement stopped. Check the UXAssist log before retrying.", "采矿机铺设已停止，请查看 UXAssist 日志后重试。");
         I18N.Add(QuickMinerVeinsChanged, "The veins changed during calculation. Click the button again to recalculate the layout.", "计算期间矿点状态已变化，请再次点击按钮重新计算布局。");
         I18N.Add(QuickMinerResult, "Placed {0} Mining Machines; total vein coverage: {1} (shared nodes counted per miner); buried nodes: {2}.", "已铺设 {0} 台采矿机，总覆盖 {1} 个矿点（各台分别计数），掩埋 {2} 个矿点。");
+#if DEBUG
         I18N.Add(QuickMinerDebugSaved, "Debug data: {0}", "调试数据：{0}");
         I18N.Add(QuickMinerDebugFailed, "Could not save debug data. Check the UXAssist log before retrying.", "调试数据保存失败，请查看 UXAssist 日志后重试。");
+#endif
         I18N.Add(MaximumCountToBuild, "Maximum count to build", "最大建造数量");
         I18N.Add(Max, "max", "最大");
         I18N.Add(StopEjectorsWhenAvailableNodesAreAllFilledUp, "Stop ejectors when available nodes are all filled up", "可用节点全部造完时停止弹射");

@@ -11,7 +11,8 @@
 
   <ItemGroup>
     <Compile Remove="tools/**/*.cs" />
-    <Reference Include="System.Runtime.Serialization" />
+    <Compile Remove="Functions/Factory/MinerPlacementDebug.cs" Condition="'$(Configuration)' != 'Debug'" />
+    <Reference Include="System.Runtime.Serialization" Condition="'$(Configuration)' == 'Debug'" />
     <PackageReference Include="DysonSphereProgram.Modding.CommonAPI" Version="1.*" />
     <PackageReference Include="DysonSphereProgram.Modding.DSPModSave" Version="1.*" />
   </ItemGroup>
