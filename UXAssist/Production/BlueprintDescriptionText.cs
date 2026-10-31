@@ -64,6 +64,7 @@ public sealed class BlueprintDescriptionText
 public static class BlueprintDescriptionFormatter
 {
     private const double Tolerance = 1e-9;
+    private static readonly string[] RateUnits = { "K", "M", "G" };
     private static readonly string[] PowerUnits = { "W", "kW", "MW", "GW", "TW" };
 
     public static BlueprintDescriptionText Format(ProductionReport report, Func<int, string> itemTag,
@@ -147,7 +148,21 @@ public static class BlueprintDescriptionFormatter
         var tag = itemTag(itemId);
         if (string.IsNullOrEmpty(tag))
             throw new InvalidOperationException("An item in the blueprint report has no native icon tag.");
-        return tag + " x" + FormatNumber(rate);
+        return tag + " x" + FormatRate(rate);
+    }
+
+    private static string FormatRate(double value)
+    {
+        var rounded = RoundForDisplay(value);
+        for (var unit = RateUnits.Length - 1; unit >= 0; unit--)
+        {
+            var scale = Math.Pow(1000, unit + 1);
+            // Keep the existing display precision; abbreviate only exact tenths of a unit.
+            if (rounded >= scale && rounded % (scale / 10) == 0)
+                return (rounded / scale).ToString("0.#", CultureInfo.InvariantCulture) + RateUnits[unit];
+        }
+
+        return FormatNumber(value);
     }
 
     private static string FormatPower(double? watts, BlueprintDescriptionLabels labels)

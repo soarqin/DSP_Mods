@@ -2157,6 +2157,42 @@ internal static class Program
               rounded.Description == "输出：" + rounded.Output,
             "no consumers means no power field and an output-only report has one line");
 
+        foreach (var (rate, expected) in new[]
+                 {
+                     (1000.0, "1K"), (1200.0, "1.2K"), (1200.0000000001, "1.2K"),
+                     (1000000.0, "1M"), (1200000.0, "1.2M"),
+                     (1000000000.0, "1G"), (1200000000.0, "1.2G"),
+                     (1234000.0, "1234K"), (1234500.0, "1234.5K"), (1230000000.0, "1230M"),
+                     (12345.0, "12345"), (1200.01, "1200.01"),
+                     (999999.0, "999999"), (999999.99, "999999.99"),
+                     (0.125, "0.125"), (0.00001, "0.00001"), (0.0000001, "1E-7")
+                 })
+        {
+            var materialReport = new ProductionReport(ProductionStatus.Complete, true, true,
+                new[]
+                {
+                    new ProductionItemFlow(61, 0, rate, 0, 0, 0, 0, rate,
+                        false, Array.Empty<int>(), Array.Empty<int>(), intermediateShortage: rate),
+                    new ProductionItemFlow(62, rate, 0, 0, 0, 0, rate, 0,
+                        false, Array.Empty<int>(), Array.Empty<int>(), overbuildSurplus: rate),
+                    new ProductionItemFlow(63, 0, rate, 0, 0, 0, 0, rate,
+                        false, Array.Empty<int>(), Array.Empty<int>()),
+                    new ProductionItemFlow(64, rate, 0, 0, 0, 0, rate, 0,
+                        true, Array.Empty<int>(), Array.Empty<int>()),
+                    new ProductionItemFlow(65, rate, 0, 0, 0, 0, rate, 0,
+                        true, Array.Empty<int>(), Array.Empty<int>(), isResearchProduct: true)
+                }, Array.Empty<ProductionGroupFlow>(), Array.Empty<ProductionDiagnostic>(),
+                new ProductionPower(0, 0, 0, 0, 0, 0, ProductionPowerScope.SelectedFacilities),
+                new ProductionPowerBreakdown(0, 0, true, true));
+            var materialText = BlueprintDescriptionFormatter.Format(materialReport, TestItemTag, labels);
+            Check(materialText.Warnings == "缺少：" + TestItemTag(61) + " x" + expected +
+                  "\n多余：" + TestItemTag(62) + " x" + expected &&
+                  materialText.Input == TestItemTag(63) + " x" + expected &&
+                  materialText.Output == TestItemTag(64) + " x" + expected &&
+                  materialText.Research == TestItemTag(65) + " x" + expected,
+                $"all material categories abbreviate {rate} without additional display rounding");
+        }
+
         var inputOnlyReport = new ProductionReport(ProductionStatus.Complete, true, true,
             new[] { new ProductionItemFlow(51, 0, 3, 0, 0, 0, 0, 3,
                 false, Array.Empty<int>(), Array.Empty<int>()) },
