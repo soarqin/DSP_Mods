@@ -159,7 +159,7 @@ public static class BlueprintDescriptionFormatter
             var scale = Math.Pow(1000, unit + 1);
             // Keep the existing display precision; abbreviate only exact tenths of a unit.
             if (rounded >= scale && rounded % (scale / 10) == 0)
-                return (rounded / scale).ToString("0.#", CultureInfo.InvariantCulture) + RateUnits[unit];
+                return (rounded / scale).ToString("#,##0.#", CultureInfo.InvariantCulture) + RateUnits[unit];
         }
 
         return FormatNumber(value);
@@ -191,7 +191,7 @@ public static class BlueprintDescriptionFormatter
             throw new InvalidOperationException("A blueprint report contains an invalid rate or power value.");
         var rounded = RoundForDisplay(value);
         if (rounded > 0 || value == 0)
-            return rounded.ToString(value < 1 ? "0.###" : "0.##", CultureInfo.InvariantCulture);
+            return rounded.ToString(value < 1 ? "0.###" : "#,##0.##", CultureInfo.InvariantCulture);
         var precise = value.ToString("0.######", CultureInfo.InvariantCulture);
         return precise != "0" ? precise : value.ToString("0.###E+0", CultureInfo.InvariantCulture);
     }

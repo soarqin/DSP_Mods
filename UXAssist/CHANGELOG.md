@@ -3,10 +3,15 @@
 
 ## Changlog
 
-* 1.6.3 - Unreleased
-  * `Sunlight at night`: Base lighting on the camera and the viewed surface instead of Icarus's facing direction, including planet view. Keep building, terrain, solar-panel, and belt lighting directions synchronized, recover when the active light or planet changes, and restore native lighting when sailing, disabling the feature, or using white rendering mode.
-  * `Quick build Mining Machines`: Add a Factory-tab button that searches dense layouts at the nearest solid vein group using native collision shapes, including interleaving feet, joint placement of nearby miners, and a final pass to fill remaining compatible positions. Mines only the selected group, even when another group of the same resource is nearby. `Allow restoring/burying veins` is off by default: uses only visible nodes and skips all restoration and burial calculations. When enabled, restores available buried nodes and may bury unused nodes to improve coverage. Optimizes summed vein coverage, requires at least 3 covered nodes in the selected group per miner after any burial, and places the full ordinary miner layout regardless of stock, leaving ghosts awaiting missing materials. Accelerates layout searches with up to 4 background workers, capped at half the available logical processors. Writes replayable JSON snapshots during feature tuning and keeps the completion tip visible for about 8 seconds.
-  * `Blueprint descriptions`: Add an `Auto-fill description` button and a `Proliferation` checkbox above the description boxes in the blueprint browser, copy, and paste panels. The button replaces the main description with the blueprint's full-load material flows per minute on separate `Missing`, `Excess`, `Input`, `Output`, and `Research` lines, and writes factory and logistics power demand to a `Power` custom field. Inputs are limited to what downstream buildings can use, matrices made in a blueprint with a research-mode lab are listed under `Research`, and research-mode labs are budgeted at full working power. Large material rates use the largest exact K/M/G suffix with at most one decimal place, falling back to ordinary numbers when necessary to preserve display precision. The checkbox defaults to on when the blueprint contains a Spray Coater. Unknown values are marked instead of shown as zero, other custom fields are preserved, and nothing is saved automatically.
+* 1.6.3
+  * `Quick build Mining Machines`:
+    * Add a Factory-tab button to arrange ordinary Mining Machines densely around the nearest solid vein group. Each miner covers at least 3 nodes from that group, without including nearby groups. Layouts are not limited by stock; missing miners remain as ghosts awaiting materials. Placement respects construction range and does not include belts or power facilities. Click again to cancel a search.
+    * `Allow restoring/burying veins` is off by default, using only visible nodes without restoring or burying any. Enable it to restore unobstructed nodes away from Dark Fog Planetary Bases and allow unused nodes to be buried for better coverage. Nodes used by existing miners or miner ghosts are protected.
+  * `Blueprint descriptions`:
+    * Add `Auto-fill description` to the blueprint browser, copy, and paste panels. It replaces the main description with full-load material flows per minute, separating shortages, surpluses, inputs, outputs, and research use, and adds factory and logistics power demand to a `Power` custom field.
+    * A `Proliferation` checkbox controls whether calculations include proliferation, defaulting to on when the blueprint contains a Spray Coater. Large rates use K/M/G where display precision is preserved, and numbers with four or more integer digits use comma thousands separators, including before suffixes; unknown values are marked separately. Other custom fields are preserved, and the blueprint still needs to be saved manually.
+  * `Sunlight at night`: Lighting now follows the camera, including planet view, and stays consistent across buildings, terrain, solar panels, and belts. Restore lighting correctly after switching planets, and return to native lighting when sailing, disabling the feature, or using white rendering mode.
+  * `Protect veins from exhaustion`: Fix the option failing to take effect in 1.6.2, restoring protection of configured vein reserves and minimum oil rates, along with the corresponding mining statistics.
 * 1.6.2
   * `Increase maximum power usage in Logistic Stations and Advanced Mining Machines`: Fix zero or corrupted mining speeds when adjusting an Advanced Mining Machine's speed slider with the option enabled.
   * `Tweak building buffers`: Restore the Ray Receiver Graviton Lens buffer setting on DSP 0.10.35.29104 and later, and correct the displayed native buffer value to 2.
@@ -438,10 +443,15 @@
 
 ## 更新日志
 
-* 1.6.3 - Unreleased
-  * `夜间日光灯`：按镜头和当前观察位置的地表方向计算光照，不再跟随机甲朝向，行星视图也适用。统一建筑、地表、太阳能板和传送带的光照方向，在光源或行星切换后恢复功能，并在航行、关闭功能或白模渲染时恢复原版光照。
-  * `快速铺设采矿机`：在「工厂」页增加按钮，按游戏实际碰撞体在最近的固体矿脉搜索密集布局，支持脚部交错、邻近矿机联动调整及结束前补入剩余可用位置。仅开采选中的矿脉，不混入附近同种资源的其他矿脉。「允许恢复/掩埋矿物」默认关闭：仅使用可见矿点，跳过所有恢复和掩埋计算；开启后，恢复可恢复的掩埋矿点，并允许掩埋未被使用的矿点来提高覆盖数。以各台矿机覆盖矿点数之和为目标，要求每台在掩埋后仍覆盖选中矿脉的至少 3 个矿点，不受库存限制地生成完整布局，缺少采矿机的位置保留待建造虚影。使用最多 4 个后台线程加速布局搜索，线程数不超过可用逻辑线程数的一半。功能调试期间输出可离线重放的 JSON 数据，完成提示保留约 8 秒。
-  * `蓝图说明`：在蓝图浏览、复制和粘贴界面的说明框上方增加「自动填写说明」按钮和「增产」复选框。点击按钮会用蓝图满负荷运行时每分钟的物料流量替换原说明，按需分行列出「缺少」「多余」「输入」「输出」「研究」，并将工厂与物流耗电写入「耗电」自定义字段。输入量以下游建筑实际能消耗的量为限；蓝图含研究模式研究站时，蓝图内产出的矩阵列入「研究」行，研究模式研究站均按满负荷计入耗电。较大的物料流量使用能精确表示的最大 K/M/G 单位，小数最多一位；无法保留显示精度时，保留普通数字。蓝图含喷涂机时，复选框默认勾选。无法计算的数值会单独标注而不显示为零，其他自定义字段保持不变，也不会自动保存蓝图。
+* 1.6.3
+  * `快速铺设采矿机`：
+    * 在「工厂」页增加按钮，自动在最近的固体矿脉周围密集铺设普通采矿机。每台至少覆盖选中矿脉的 3 个矿点，不混入附近其他矿脉。布局数量不受库存限制，采矿机不足的位置保留待建造虚影。遵守建造范围，不自动铺设传送带和电力设施。计算期间再次点击可取消。
+    * 「允许恢复/掩埋矿物」默认关闭，仅使用可见矿点，不恢复或掩埋矿点。开启后可恢复未被建筑阻挡、且远离黑雾行星基地的矿点，并允许掩埋未使用的矿点来提高覆盖数；已有矿机和待建造矿机使用的矿点会受到保护。
+  * `蓝图说明`：
+    * 在蓝图浏览、复制和粘贴界面增加「自动填写说明」按钮，用满负荷运行时每分钟的物料流量替换原说明，分别列出「缺少」「多余」「输入」「输出」「研究」，并将工厂与物流耗电写入「耗电」自定义字段。
+    * 可用「增产」复选框选择是否计入增产效果，蓝图含喷涂机时默认勾选。较大的流量在保留显示精度的前提下使用 K/M/G 单位；整数部分达到四位的数字用逗号每三位分隔，带单位时也适用。无法计算的数值单独标注。保留其他自定义字段，填写后仍需手动保存蓝图。
+  * `夜间日光灯`：光照改为随镜头变化，行星视图也适用；建筑、地表、太阳能板和传送带的光照方向保持一致。切换行星后正确恢复光照，航行、关闭功能或进入白模渲染时恢复原版光照。
+  * `保护矿脉不会枯竭`：修复 1.6.2 中开启后仍不生效的问题，恢复设定的矿脉剩余量、油井最低流速保护及相应开采统计。
 * 1.6.2
   * `提升物流塔和大型采矿机的最大功耗`：修复启用后调整大型采矿机开采速度时出现 0% 或异常速度的问题。
   * `调整建筑输入缓冲`：修复 DSP 0.10.35.29104 及后续版本中射线接收器透镜缓冲设置不生效的问题，并将显示的游戏原始值更正为 2。

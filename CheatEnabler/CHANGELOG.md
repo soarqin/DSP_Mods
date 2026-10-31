@@ -3,9 +3,11 @@
 
 ## Changlog
 
-* 2.4.8 - Unreleased
-  * `Finish build immediately`: Defer construction until the opening cutscene ends or is skipped to avoid possible errors when starting a new game.
-  * `Belt signal item generation`: Calculate raw-material, intermediate, and proliferator statistics from the game's current recipe data, counting by-products and consumption separately. If an item's recipe data is incomplete, only its upstream statistics pause, with the reason logged; item generation is unaffected. Fix signal belts built or destroyed on another planet, for example by Battlefield Analysis Base drones or Dark Fog attacks, affecting a belt on the current planet instead of their own; a destroyed belt could also keep generating items on a belt later built in its place.
+* 2.4.8
+  * `Finish build immediately`: Fix possible errors when starting a new game. Construction begins after the opening cutscene ends or is skipped.
+  * `Belt signal item generation`:
+    * Improve raw-material, intermediate, by-product and proliferator statistics using current recipes, with production and consumption counted separately. Incomplete recipe data only pauses the affected upstream statistics; item generation continues.
+    * Fix signal belts built or destroyed on other planets, such as by Battlefield Analysis Base drones or Dark Fog attacks, affecting belts on the current planet. Destroyed signal belts no longer cause replacement belts to keep generating items.
 * 2.4.7
   * `Dev Shortcuts`: Work immediately when enabled after loading a save, and process each key press once per frame at accelerated game speeds.
   * Extend `Unlock Tech with Key-Modifiers` with a downgrade mode.
@@ -204,9 +206,11 @@
 
 ## 更新日志
 
-* 2.4.8 - Unreleased
-  * `建造秒完成`：延后到开场动画播放结束或跳过后再处理建造，避免开始新游戏时可能报错。
-  * `传送带信号物品生成`：原料、中间产物和增产剂的统计改为按游戏当前配方数据计算，并分别计入副产物和消耗。某物品的配方数据不完整时，仅暂停该物品的上游统计并在日志中说明原因，不影响物品生成。修复在其他星球上建造或被摧毁的信号传送带（例如由战场分析基站的无人机建造或被黑雾摧毁）错误影响当前星球上传送带的问题；被摧毁的传送带也可能让之后在原处新建的传送带继续生成物品。
+* 2.4.8
+  * `建造秒完成`：修复开始新游戏时可能报错的问题。建造会在开场动画播放结束或跳过后开始。
+  * `传送带信号物品生成`：
+    * 按当前配方完善原料、中间产物、副产物和增产剂的统计，分别记录生产和消耗。配方数据不完整时，仅暂停受影响物品的上游统计，物品仍会正常生成。
+    * 修复其他星球上的信号传送带在建造或被摧毁时，错误影响当前星球上传送带的问题，例如战场分析基站无人机建造或黑雾摧毁传送带。被摧毁的信号传送带也不会再让之后替换它的传送带继续生成物品。
 * 2.4.7
   * `开发模式快捷键`：修复载入存档后启用时不生效的问题；加速游戏时每次按键仍只执行一次。
   * `使用组合键点击解锁科技` 新增降级模式。

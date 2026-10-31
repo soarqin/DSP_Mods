@@ -2074,7 +2074,11 @@ internal static class Program
             "gigawatt and megawatt display matches the native Chinese field example");
         Check(large.Input == "" && large.Output == "" && large.Description == "",
             "empty material categories add no description lines");
-        foreach (var (watts, expected) in new[] { (999.999, "1kW"), (999999.0, "1MW"), (999.994, "999.99W") })
+        foreach (var (watts, expected) in new[]
+                 {
+                     (999.999, "1kW"), (999999.0, "1MW"), (999.994, "999.99W"),
+                     (1234567890000000.0, "1,234.57TW")
+                 })
         {
             var boundary = new ProductionReport(ProductionStatus.Complete, true, true,
                 Array.Empty<ProductionItemFlow>(), Array.Empty<ProductionGroupFlow>(),
@@ -2162,9 +2166,11 @@ internal static class Program
                      (1000.0, "1K"), (1200.0, "1.2K"), (1200.0000000001, "1.2K"),
                      (1000000.0, "1M"), (1200000.0, "1.2M"),
                      (1000000000.0, "1G"), (1200000000.0, "1.2G"),
-                     (1234000.0, "1234K"), (1234500.0, "1234.5K"), (1230000000.0, "1230M"),
-                     (12345.0, "12345"), (1200.01, "1200.01"),
-                     (999999.0, "999999"), (999999.99, "999999.99"),
+                     (1234000.0, "1,234K"), (1234500.0, "1,234.5K"), (1230000000.0, "1,230M"),
+                     (12345.0, "12,345"), (1200.01, "1,200.01"),
+                     (999.99, "999.99"), (1000.01, "1,000.01"),
+                     (999999.0, "999,999"), (999999.99, "999,999.99"),
+                     (1234567890123.0, "1,234,567,890,123"), (1234000000000.0, "1,234G"),
                      (0.125, "0.125"), (0.00001, "0.00001"), (0.0000001, "1E-7")
                  })
         {

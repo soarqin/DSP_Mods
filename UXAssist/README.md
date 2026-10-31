@@ -18,7 +18,8 @@
   * Fix a bug that warning popup on `Veins Utilization` upgraded to level 8000+
   * Sort blueprint structures before saving, to reduce generated blueprint data size a little
   * Add an `Auto-fill description` button and a `Proliferation` checkbox to the blueprint browser, copy, and paste panels, to fill the description with the blueprint's material flows per minute and its power demand
-    * Large material rates use the largest exact `K`/`M`/`G` suffix with at most one decimal place; rates that cannot be shortened without losing display precision keep their ordinary format
+    * Replaces the main description with full-load material flows and writes power demand to a `Power` custom field, preserving other custom fields. Proliferation defaults to on when the blueprint contains a Spray Coater. Save the blueprint manually to keep the changes.
+    * Large material rates use the largest exact `K`/`M`/`G` suffix with at most one decimal place; rates that cannot be shortened without losing display precision keep their ordinary format. Numbers with four or more integer digits use comma thousands separators, including before suffixes (for example, `12,345` and `1,234.5K`).
   * Increase maximum count of Metadata Instantiations to 20000 (from 2000)
   * Increase capacity of player order queue to 128 (from 16)
   * Enable `Hide UI` (`F11` by default) in Star Map view, hiding UI and other scene elements
@@ -222,7 +223,8 @@
   * 修复了`矿物利用`升级到8000级以上时弹出警告的bug
   * 保存蓝图前对建筑进行排序，以减少生成的蓝图数据大小
   * 在蓝图浏览、复制和粘贴界面增加「自动填写说明」按钮和「增产」复选框，用蓝图每分钟的物料流量和耗电自动填写说明
-    * 较大的物料流量使用能精确表示的最大 `K`/`M`/`G` 单位，小数最多一位；无法在保留显示精度的前提下缩写时，保留普通数字格式
+    * 用满负荷运行时的物料流量替换原说明，将耗电写入「耗电」自定义字段，保留其他自定义字段。蓝图含喷涂机时默认勾选增产。填写后需手动保存蓝图。
+    * 较大的物料流量使用能精确表示的最大 `K`/`M`/`G` 单位，小数最多一位；无法在保留显示精度的前提下缩写时，保留普通数字格式。整数部分达到四位的数字用逗号每三位分隔，带单位时也适用，例如 `12,345` 和 `1,234.5K`。
   * 将元数据提取的最大数量增加到20000(原来为2000)
   * 将玩家指令队列的容量增加到128(原来为16)
   * 在星图视图中启用 `隐藏 UI` 功能（默认按键为 `F11`），同时隐藏 UI 和场景中的其他元素
