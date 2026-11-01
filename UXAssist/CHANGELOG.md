@@ -8,7 +8,8 @@
     * Add a Factory-tab button to arrange ordinary Mining Machines densely around the nearest solid vein group. Each miner covers at least 3 nodes from that group, without including nearby groups. Layouts are not limited by stock; missing miners remain as ghosts awaiting materials. Placement respects construction range and does not include belts or power facilities. Click again to cancel a search.
     * `Allow restoring/burying veins` is off by default, using only visible nodes without restoring or burying any. Enable it to restore unobstructed nodes away from Dark Fog Planetary Bases and allow unused nodes to be buried for better coverage. Nodes used by existing miners or miner ghosts are protected.
   * `Blueprint descriptions`:
-    * Add `Auto-fill description` to the blueprint browser, copy, and paste panels. It replaces the main description with full-load material flows per minute, separating shortages, surpluses, inputs, outputs, and research use, and adds factory and logistics power demand to a `Power` custom field.
+    * Add an `Auto-fill` entry to the native description header in the blueprint browser, copy, and paste inspectors. It opens generation options without moving native fields or covering the file list. Generation replaces the main description with material flows per minute, separating shortages, surpluses, inputs, outputs, and research use, and adds factory and logistics power demand to a `Power` custom field.
+    * Choose `Final-product output` (the default on opening the inspector) to retain rated final outputs and show intermediate shortages and excess, or `Lowest intermediate throughput` to scale the final-product mix to the bottleneck using recipe ratios. Complete, balanceable chains have no internal shortages in the latter mode; unused intermediate capacity appears as excess. External inputs use the selected basis; power still covers every selected building at full load. If a balanced basis cannot be determined, the original description is kept.
     * A `Proliferation` checkbox controls whether calculations include proliferation, defaulting to on when the blueprint contains a Spray Coater. Large rates use K/M/G where display precision is preserved, and numbers with four or more integer digits use comma thousands separators, including before suffixes; unknown values are marked separately. Other custom fields are preserved, and the blueprint still needs to be saved manually.
   * `Sunlight at night`: Lighting now follows the camera, including planet view, and stays consistent across buildings, terrain, solar panels, and belts. Restore lighting correctly after switching planets, and return to native lighting when sailing, disabling the feature, or using white rendering mode.
   * `Protect veins from exhaustion`: Fix the option failing to take effect in 1.6.2, restoring protection of configured vein reserves and minimum oil rates, along with the corresponding mining statistics.
@@ -448,7 +449,8 @@
     * 在「工厂」页增加按钮，自动在最近的固体矿脉周围密集铺设普通采矿机。每台至少覆盖选中矿脉的 3 个矿点，不混入附近其他矿脉。布局数量不受库存限制，采矿机不足的位置保留待建造虚影。遵守建造范围，不自动铺设传送带和电力设施。计算期间再次点击可取消。
     * 「允许恢复/掩埋矿物」默认关闭，仅使用可见矿点，不恢复或掩埋矿点。开启后可恢复未被建筑阻挡、且远离黑雾行星基地的矿点，并允许掩埋未使用的矿点来提高覆盖数；已有矿机和待建造矿机使用的矿点会受到保护。
   * `蓝图说明`：
-    * 在蓝图浏览、复制和粘贴界面增加「自动填写说明」按钮，用满负荷运行时每分钟的物料流量替换原说明，分别列出「缺少」「多余」「输入」「输出」「研究」，并将工厂与物流耗电写入「耗电」自定义字段。
+    * 在蓝图浏览、复制和粘贴检查面板的说明标题行增加「自动填写」入口，点击展开生成选项，不移动原生字段或遮挡文件列表。生成时用每分钟的物料流量替换原说明，分别列出「缺少」「多余」「输入」「输出」「研究」，并将工厂与物流耗电写入「耗电」自定义字段。
+    * 可选择「最终产物产量」（每次打开检查面板时的默认值），保留最终产物的额定产量并显示中间产物的缺口和余量；也可选择「最低产量中间产物」，按配方比例换算瓶颈，等比例缩放各最终产物。后一种模式下，数据完整且可平衡的生产链没有内部缺口，未使用的中间产能列为「多余」。外部输入采用所选基准，耗电仍按所选全部建筑满载估算。无法确定平衡基准时保留原说明。
     * 可用「增产」复选框选择是否计入增产效果，蓝图含喷涂机时默认勾选。较大的流量在保留显示精度的前提下使用 K/M/G 单位；整数部分达到四位的数字用逗号每三位分隔，带单位时也适用。无法计算的数值单独标注。保留其他自定义字段，填写后仍需手动保存蓝图。
   * `夜间日光灯`：光照改为随镜头变化，行星视图也适用；建筑、地表、太阳能板和传送带的光照方向保持一致。切换行星后正确恢复光照，航行、关闭功能或进入白模渲染时恢复原版光照。
   * `保护矿脉不会枯竭`：修复 1.6.2 中开启后仍不生效的问题，恢复设定的矿脉剩余量、油井最低流速保护及相应开采统计。

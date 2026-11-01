@@ -17,8 +17,10 @@
   * Strict hotkey dectection for build menu, thus building hotkeys(0~9, F1~F10, X, U) are not triggered while holding Ctrl/Alt/Shift.
   * Fix a bug that warning popup on `Veins Utilization` upgraded to level 8000+
   * Sort blueprint structures before saving, to reduce generated blueprint data size a little
-  * Add an `Auto-fill description` button and a `Proliferation` checkbox to the blueprint browser, copy, and paste panels, to fill the description with the blueprint's material flows per minute and its power demand
-    * Replaces the main description with full-load material flows and writes power demand to a `Power` custom field, preserving other custom fields. Proliferation defaults to on when the blueprint contains a Spray Coater. Save the blueprint manually to keep the changes.
+  * Add an `Auto-fill` entry to the description header in the blueprint browser, copy, and paste inspectors. Click it to open generation options without moving or resizing native fields or covering the file list
+    * `Production basis` defaults to `Final-product output` each time the inspector opens, retaining rated final outputs and showing intermediate shortages and excess. Choose `Lowest intermediate throughput` to scale the final-product mix together to the bottleneck, using recipe ratios and shared intermediate demand. Complete, balanceable chains then have no internal shortages; unused intermediate capacity appears as excess. External inputs and final outputs use the same basis.
+    * `Proliferation` defaults to on when the blueprint contains a Spray Coater; it can be changed manually. Power demand still estimates all selected buildings at full load in either production basis.
+    * Replaces the main description with material flows per minute and writes power demand to a `Power` custom field, preserving other custom fields. If the bottleneck basis cannot be determined, the existing description is kept; check missing building settings and chain outputs, or select `Final-product output`. Save the blueprint manually to keep generated changes.
     * Large material rates use the largest exact `K`/`M`/`G` suffix with at most one decimal place; rates that cannot be shortened without losing display precision keep their ordinary format. Numbers with four or more integer digits use comma thousands separators, including before suffixes (for example, `12,345` and `1,234.5K`).
   * Increase maximum count of Metadata Instantiations to 20000 (from 2000)
   * Increase capacity of player order queue to 128 (from 16)
@@ -222,8 +224,10 @@
   * 更严格的建造菜单热键检测，因此在按住Ctrl/Alt/Shift时不再会触发建造热键(0~9, F1~F10, X, U)
   * 修复了`矿物利用`升级到8000级以上时弹出警告的bug
   * 保存蓝图前对建筑进行排序，以减少生成的蓝图数据大小
-  * 在蓝图浏览、复制和粘贴界面增加「自动填写说明」按钮和「增产」复选框，用蓝图每分钟的物料流量和耗电自动填写说明
-    * 用满负荷运行时的物料流量替换原说明，将耗电写入「耗电」自定义字段，保留其他自定义字段。蓝图含喷涂机时默认勾选增产。填写后需手动保存蓝图。
+  * 在蓝图浏览、复制和粘贴检查面板的说明标题行增加「自动填写」入口，点击展开生成选项，不移动或缩放原生字段，也不遮挡文件列表
+    * 每次打开检查面板时，「产量基准」默认为「最终产物产量」，保留最终产物的额定产量，并显示中间产物的缺口和余量。选择「最低产量中间产物」后，按配方比例和共享中间物料的需求换算瓶颈，等比例缩放各最终产物。数据完整且可平衡的生产链没有内部缺口，未使用的中间产能列为「多余」；外部输入和最终输出采用同一基准。
+    * 蓝图含喷涂机时默认勾选「增产」，也可手动修改。两种产量基准均按所选全部建筑满载估算耗电。
+    * 用每分钟的物料流量替换原说明，将耗电写入「耗电」自定义字段，保留其他自定义字段。无法确定瓶颈基准时保留原说明；可检查缺失的建筑参数和生产链输出，或改选「最终产物产量」。填写后需手动保存蓝图。
     * 较大的物料流量使用能精确表示的最大 `K`/`M`/`G` 单位，小数最多一位；无法在保留显示精度的前提下缩写时，保留普通数字格式。整数部分达到四位的数字用逗号每三位分隔，带单位时也适用，例如 `12,345` 和 `1,234.5K`。
   * 将元数据提取的最大数量增加到20000(原来为2000)
   * 将玩家指令队列的容量增加到128(原来为16)

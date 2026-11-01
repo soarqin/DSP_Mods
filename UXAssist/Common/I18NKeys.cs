@@ -6,7 +6,14 @@ public static class I18NKeys
 {
     public const string Unknown = "Unknown";
     public const string BlueprintAutoFillDescription = "UXAssist Blueprint Auto-fill description";
+    public const string BlueprintDescriptionOptions = "UXAssist Blueprint Description Options";
+    public const string BlueprintDescriptionOptionsTip = "UXAssist Blueprint Description Options Tip";
     public const string BlueprintProliferation = "UXAssist Blueprint Proliferation";
+    public const string BlueprintProductionBasis = "UXAssist Blueprint Production Basis";
+    public const string BlueprintFinalProducts = "UXAssist Blueprint Final Products";
+    public const string BlueprintBottleneckIntermediate = "UXAssist Blueprint Bottleneck Intermediate";
+    public const string BlueprintProductionBasisTip = "UXAssist Blueprint Production Basis Tip";
+    public const string BlueprintBasisUnavailable = "Cannot determine a balanced intermediate throughput. Check building settings and production-chain outputs, or use final-product output.";
     public const string BlueprintPower = "UXAssist Blueprint Power";
     public const string BlueprintPowerEnglish = "Power";
     public const string BlueprintPowerChinese = "耗电";
@@ -237,7 +244,19 @@ public static class I18NKeys
     {
         I18N.Add(Unknown, "Unknown", "未知");
         I18N.Add(BlueprintAutoFillDescription, "Auto-fill description", "自动填写说明");
+        I18N.Add(BlueprintDescriptionOptions, "Auto-fill…", "自动填写…");
+        I18N.Add(BlueprintDescriptionOptionsTip,
+            "Choose production basis and proliferation, then fill the blueprint description.",
+            "选择产量基准和增产后，自动填写蓝图说明。");
         I18N.Add(BlueprintProliferation, "Proliferation", "增产");
+        I18N.Add(BlueprintProductionBasis, "Production basis", "产量基准");
+        I18N.Add(BlueprintFinalProducts, "Final-product output", "最终产物产量");
+        I18N.Add(BlueprintBottleneckIntermediate, "Lowest intermediate throughput", "最低产量中间产物");
+        I18N.Add(BlueprintProductionBasisTip,
+            "Final-product output (default): keep rated final outputs and show intermediate shortages and excess.\nLowest intermediate throughput: convert capacities through recipe ratios and scale all final outputs together to the bottleneck; complete, balanceable chains have no internal shortages. Excess shows unused intermediate capacity. Power still sizes all selected buildings at full load.\nUnknown settings or an unresolved output prevent balanced generation; the existing description is kept.",
+            "最终产物产量（默认）：保留最终产物的额定产量，显示中间产物的缺口和余量。\n最低产量中间产物：按配方比例换算产能，以瓶颈等比例缩放各最终产物；数据完整且可平衡时没有内部缺口，「多余」表示未使用的中间产能。耗电仍按所选全部建筑满载估算。\n缺少参数或无法确定输出时，不生成平衡说明，保留原说明。");
+        I18N.Add(BlueprintBasisUnavailable, BlueprintBasisUnavailable,
+            "无法确定可平衡的中间产物产量，原说明已保留。请检查建筑参数和生产链输出，或改用最终产物产量基准。");
         I18N.Add(BlueprintPower, BlueprintPowerEnglish, BlueprintPowerChinese);
         I18N.Add(BlueprintInputLine, "Input: ", "输入：");
         I18N.Add(BlueprintOutputLine, "Output: ", "输出：");
