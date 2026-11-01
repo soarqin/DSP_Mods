@@ -31,6 +31,7 @@ internal static class Program
         BlueprintMixedProducersAndCycles();
         SteadyStateLosslessCycle();
         BlueprintProliferationAndCompleteness();
+        BlueprintProductionBases();
         BlueprintDescriptionFormattingAndFields();
         LogisticsChargingPower();
         FractionationFlow();
@@ -2018,6 +2019,206 @@ internal static class Program
             "missing fractionator throughput leaves its known input demand unmodeled");
         Equal(3, incompleteDownstream.ItemFlows[1].SteadyStateExternalSupply.Value,
             "an unresolved but known downstream input prevents underestimating its upstream supply");
+    }
+
+    private static void BlueprintProductionBases()
+    {
+        var analyzer = new FactoryBlackBoxAnalyzer(BlueprintCatalog());
+        var request = BlueprintRequest(1);
+        var rated = analyzer.Analyze(request);
+        Equal(60, rated.ItemFlows[2].IntermediateShortage,
+            "default final-product basis retains the selected downstream shortage");
+        request.ProductionBasis = BlueprintProductionBasis.BottleneckIntermediate;
+        var balanced = analyzer.Analyze(request);
+        Check(balanced.MaterialComplete && !balanced.Diagnostics.Any(), "bottleneck coproduct chain is complete");
+        Equal(0.5, balanced.ItemFlows[4].NetFlow, "limiting A capacity halves final output");
+        Equal(1, balanced.ItemFlows[1].SteadyStateExternalSupply.Value, "raw input uses the same feasible basis");
+        Equal(45, balanced.ItemFlows[3].CoproductSurplus.Value, "joint output retains its unavoidable B45 surplus");
+        Equal(0, balanced.ItemFlows[2].IntermediateShortage, "bottleneck mode solves rather than hides missing A");
+        Equal(60, balanced.ItemFlows[2].GrossConsumption, "downstream consumption is actually reduced");
+        Equal(rated.Power.ConsumptionWatts, balanced.Power.ConsumptionWatts,
+            "power still sizes all selected facilities at rated load");
+        Equal(rated.Groups[1].ExecutionsPerMinute, balanced.Groups[1].ExecutionsPerMinute,
+            "selected group capacities stay available separately from basis material flows");
+        var labels = new BlueprintDescriptionLabels("Factory power", "Logistics power", "Missing: ",
+            "Excess: ", "Unknown", "(known portion)", "Input: ", "Output: ", "Research: ");
+        var balancedText = BlueprintDescriptionFormatter.Format(balanced, TestItemTag, labels);
+        Check(!balancedText.Warnings.Contains("Missing:"), "a solved bottleneck does not format an internal shortage");
+        Check(balancedText.Input == TestItemTag(1) + " x1", "formatted input uses normalized raw demand");
+        Check(balancedText.Output == TestItemTag(3) + " x45, " + TestItemTag(4) + " x0.5",
+            "formatted output uses the same normalized final and coproduct rates");
+
+        var ratioCatalog = BasisCatalog(new[]
+        {
+            Recipe(801, new[] { (1, 1.0) }, new[] { (2, 0.5) }),
+            Recipe(802, new[] { (1, 1.0) }, new[] { (3, 100.0) }),
+            Recipe(803, new[] { (2, 1.0), (3, 100.0) }, new[] { (4, 10.0) })
+        });
+        var ratioRequest = BasisRequest(801, 802, 803);
+        var ratio = new FactoryBlackBoxAnalyzer(ratioCatalog).Analyze(ratioRequest);
+        Equal(5, ratio.ItemFlows[4].NetFlow, "different intermediate units are converted through recipe ratios");
+        Equal(50, ratio.ItemFlows[3].GrossConsumption, "large-count ingredient uses normalized demand");
+        Equal(50, ratio.ItemFlows[3].OverbuildSurplus.Value, "unused intermediate capacity is excess");
+        Equal(1.5, ratio.ItemFlows[1].SteadyStateExternalSupply.Value, "external inputs share the selected basis");
+        Check(ratio.ItemFlows.Values.All(flow => flow.IntermediateShortage == 0),
+            "ratio-scaled complete chain has no internal missing material");
+        var ratioReverse = BasisRequest(803, 802, 801);
+        var reversed = new FactoryBlackBoxAnalyzer(ratioCatalog).Analyze(ratioReverse);
+        foreach (var flow in ratio.ItemFlows.Values)
+        {
+            Equal(flow.GrossProduction, reversed.ItemFlows[flow.ItemId].GrossProduction,
+                "bottleneck production is independent of selection order");
+            Equal(flow.GrossConsumption, reversed.ItemFlows[flow.ItemId].GrossConsumption,
+                "bottleneck consumption is independent of selection order");
+        }
+        var unevenCatalog = BasisCatalog(new[]
+        {
+            Recipe(804, new[] { (1, 1.0) }, new[] { (2, 0.5) }),
+            Recipe(805, new[] { (2, 1e8) }, new[] { (4, 1e8) })
+        });
+        var uneven = new FactoryBlackBoxAnalyzer(unevenCatalog).Analyze(BasisRequest(804, 805));
+        Check(!uneven.Diagnostics.Any(), "a small common fraction can still represent meaningful known throughput");
+        Equal(0.5, uneven.ItemFlows[4].NetFlow, "large capacity ratios do not become a false zero-throughput failure");
+
+        var sharedCatalog = BasisCatalog(new[]
+        {
+            Recipe(811, new[] { (1, 1.0) }, new[] { (2, 3.0) }),
+            Recipe(812, new[] { (2, 2.0) }, new[] { (3, 3.0) }),
+            Recipe(813, new[] { (2, 3.0) }, new[] { (4, 4.0) })
+        });
+        var shared = new FactoryBlackBoxAnalyzer(sharedCatalog).Analyze(BasisRequest(811, 812, 813));
+        Equal(1.8, shared.ItemFlows[3].NetFlow, "shared material scales the first final branch by 3/5");
+        Equal(2.4, shared.ItemFlows[4].NetFlow, "shared material scales the second final branch by 3/5");
+        Equal(3, shared.ItemFlows[2].GrossConsumption, "shared demand sums both branches");
+        Equal(1, shared.ItemFlows[1].RequiredExternalSupply, "shared branches use one common raw-input ledger");
+        Equal(1, shared.ItemFlows[1].SteadyStateExternalSupply.Value,
+            "steady-state supply matches the normalized shared-branch ledger");
+        foreach (var report in new[] { balanced, ratio, shared })
+            foreach (var flow in report.ItemFlows.Values.Where(flow => flow.ProducerGroups.Count > 0 &&
+                         flow.ConsumerGroups.Count > 0))
+                Check(flow.NetFlow >= -1e-7 * Math.Max(1, Math.Max(flow.GrossProduction, flow.GrossConsumption)),
+                    "normalized gross ledgers conserve internal material within relative tolerance");
+
+        var knownMaterialsRequest = BlueprintRequest(1);
+        knownMaterialsRequest.ProductionBasis = BlueprintProductionBasis.BottleneckIntermediate;
+        knownMaterialsRequest.Buildings.Add(new ProductionBuildingSnapshot(3, 30, 0, 1, ProliferationMode.None));
+        var unknownPower = analyzer.Analyze(knownMaterialsRequest);
+        Check(unknownPower.MaterialComplete && !unknownPower.PowerComplete && !unknownPower.Diagnostics.Any(
+                diagnostic => diagnostic.Code == ProductionDiagnosticCode.BlueprintBasisUnavailable),
+            "unknown logistics power does not discard independently known bottleneck materials");
+        Equal(0.5, unknownPower.ItemFlows[4].NetFlow, "known material throughput survives unknown power");
+        var powerOnlyRequest = new FactoryBlackBoxRequest
+            { ProductionBasis = BlueprintProductionBasis.BottleneckIntermediate };
+        powerOnlyRequest.Buildings.Add(new ProductionBuildingSnapshot(1, 31, 0, 1, ProliferationMode.None));
+        powerOnlyRequest.Buildings.Add(new ProductionBuildingSnapshot(2, 30, 0, 1, ProliferationMode.None,
+            operatingParameters: new Dictionary<string, double> { ["ChargePowerWatts"] = 500 }));
+        var powerOnly = analyzer.Analyze(powerOnlyRequest);
+        Check(powerOnly.MaterialComplete && powerOnly.PowerComplete && !powerOnly.Diagnostics.Any(),
+            "known power-only blueprints have an empty material ledger that needs no basis reduction");
+        Check(powerOnly.ItemFlows.Count == 0, "power-only blueprints do not fabricate material rates");
+        var powerOnlyText = BlueprintDescriptionFormatter.Format(powerOnly, TestItemTag, labels);
+        Check(powerOnlyText.Description.Length == 0 && powerOnlyText.Power == "Factory power 900W | Logistics power 500W",
+            "power-only generation keeps its useful power field under the bottleneck option");
+        powerOnlyRequest.ProductionBasis = BlueprintProductionBasis.FinalProducts;
+        Equal(analyzer.Analyze(powerOnlyRequest).Power.ConsumptionWatts, powerOnly.Power.ConsumptionWatts,
+            "power-only layouts have the same selected capacity under either material basis");
+
+        var cycleCatalog = BasisCatalog(new[]
+        {
+            Recipe(821, new[] { (1, 1.0) }, new[] { (2, 0.5) }),
+            Recipe(822, new[] { (2, 2.0) }, new[] { (3, 1.0) }),
+            Recipe(823, new[] { (3, 1.0) }, new[] { (2, 1.0), (4, 1.0) })
+        });
+        var cycle = new FactoryBlackBoxAnalyzer(cycleCatalog).Analyze(BasisRequest(821, 822, 823));
+        Equal(0.5, cycle.ItemFlows[4].NetFlow, "returned intermediate participates in the bottleneck solve");
+        Equal(0, cycle.ItemFlows[2].NetFlow, "cyclic first material conserves at normalized throughput");
+        Equal(0, cycle.ItemFlows[3].NetFlow, "cyclic second material conserves at normalized throughput");
+        Check(cycle.ItemFlows.Values.All(flow => flow.IntermediateShortage == 0),
+            "a feasible cycle has no internal missing material");
+
+        var single = new FactoryBlackBoxAnalyzer(ratioCatalog).Analyze(BasisRequest(801));
+        Equal(0.5, single.ItemFlows[2].NetFlow, "no-intermediate selection keeps final capacity");
+        Equal(1, single.ItemFlows[1].SteadyStateExternalSupply.Value, "no-intermediate raw input remains known");
+        var subset = new FactoryBlackBoxAnalyzer(ratioCatalog).Analyze(BasisRequest(803));
+        Equal(10, subset.ItemFlows[4].NetFlow, "a blueprint subset treats absent upstream stages as external");
+        Equal(100, subset.ItemFlows[3].SteadyStateExternalSupply.Value,
+            "an absent producer remains a real external input");
+        var unknownRequest = BasisRequest(801, 803, 9999);
+        var unknown = new FactoryBlackBoxAnalyzer(ratioCatalog).Analyze(unknownRequest);
+        Check(!unknown.MaterialComplete && unknown.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == ProductionDiagnosticCode.BlueprintBasisUnavailable),
+            "unknown production prevents claiming a complete bottleneck balance");
+        Equal(0.5, unknown.ItemFlows[2].IntermediateShortage,
+            "unavailable basis preserves the original known shortage");
+        var closed = new FactoryBlackBoxAnalyzer(BlueprintCatalog()).Analyze(BasisRequest(621, 622));
+        Check(closed.Diagnostics.Any(diagnostic => diagnostic.Code == ProductionDiagnosticCode.BlueprintBasisUnavailable),
+            "a pure closed loop has no final output from which to choose a common basis");
+        var infeasibleCatalog = BasisCatalog(new[]
+        {
+            Recipe(831, new[] { (2, 1.0) }, new[] { (3, 1.0), (4, 1.0) }),
+            Recipe(832, new[] { (3, 1.0) }, new[] { (2, 0.5) })
+        });
+        var infeasible = new FactoryBlackBoxAnalyzer(infeasibleCatalog).Analyze(BasisRequest(831, 832));
+        Check(infeasible.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == ProductionDiagnosticCode.BlueprintBasisUnavailable),
+            "zero feasible final throughput cannot masquerade as a balanced zero-output description");
+        Equal(1, infeasible.ItemFlows[4].NetFlow, "infeasible basis keeps the original known final rate");
+
+        var sinkCatalog = BasisCatalog(new[]
+        {
+            Recipe(841, new[] { (1, 1.0) }, new[] { (2, 0.5) }),
+            Recipe(842, new[] { (2, 1.0) }, Array.Empty<(int, double)>())
+        });
+        var sink = new FactoryBlackBoxAnalyzer(sinkCatalog).Analyze(BasisRequest(841, 842));
+        Check(!sink.Diagnostics.Any(), "a consuming terminal process supplies a non-item final target");
+        Equal(0.5, sink.ItemFlows[2].GrossConsumption,
+            "a non-item terminal consumer follows the bottleneck instead of silently idling");
+
+        var researchCatalog = new ProductionCatalog(ratioCatalog.Items.Values, ratioCatalog.Recipes.Values,
+            ratioCatalog.Buildings.Values, new[] { 0.0 }, new[] { 0.0 }, new[] { 1.0 },
+            researchMatrixItemIds: new[] { 2 });
+        var researchRequest = BasisRequest(801, 803);
+        researchRequest.Buildings.Add(new ProductionBuildingSnapshot(9, 11, 0, 1, ProliferationMode.None,
+            operatingParameters: new Dictionary<string, double>
+                { ["ResearchMode"] = 1, ["ResearchMatrixSink"] = 1 }));
+        var research = new FactoryBlackBoxAnalyzer(researchCatalog).Analyze(researchRequest);
+        Equal(5, research.ItemFlows[4].NetFlow, "known matrix consumption still constrains the final product");
+        Equal(0, research.ItemFlows[2].NetFlow, "matrix outlet does not fabricate extra matrix consumption");
+        Check(!research.ItemFlows[2].IsResearchProduct, "no positive matrix net means no research output");
+        var matrixOnlyRequest = BasisRequest(801);
+        matrixOnlyRequest.Buildings.Add(researchRequest.Buildings.Last());
+        var matrixOnly = new FactoryBlackBoxAnalyzer(researchCatalog).Analyze(matrixOnlyRequest);
+        Equal(0.5, matrixOnly.ItemFlows[2].NetFlow, "research outlet preserves produced matrices as a final target");
+        Check(matrixOnly.ItemFlows[2].IsResearchProduct, "positive matrix net remains a research product");
+        var researchConsumedRequest = BasisRequest(801, 803);
+        researchConsumedRequest.Buildings[0] = new ProductionBuildingSnapshot(1, 10, 801, 3,
+            ProliferationMode.None);
+        researchConsumedRequest.Buildings.Add(researchRequest.Buildings.Last());
+        var researchConsumed = new FactoryBlackBoxAnalyzer(researchCatalog).Analyze(researchConsumedRequest);
+        Equal(0.5, researchConsumed.ItemFlows[2].NetFlow,
+            "positive research matrix output subtracts real downstream matrix use");
+        Check(researchConsumed.ItemFlows[2].IsResearchProduct,
+            "matrix outlets preserve the positive net target alongside an ordinary final product");
+    }
+
+    private static ProductionCatalog BasisCatalog(IEnumerable<ProductionRecipe> recipes)
+    {
+        return new ProductionCatalog(Enumerable.Range(1, 4)
+                .Select(id => new ProductionItem(id, 0, id == 1, false, 0, 0)), recipes,
+            new[]
+            {
+                new ProductionBuilding(10, ProductionRecipeCategory.Assemble, 1, 1000, 100),
+                new ProductionBuilding(11, ProductionRecipeCategory.Research, 1, 2000, 200)
+            }, new[] { 0.0 }, new[] { 0.0 }, new[] { 1.0 });
+    }
+
+    private static FactoryBlackBoxRequest BasisRequest(params int[] recipes)
+    {
+        var request = new FactoryBlackBoxRequest { ProductionBasis = BlueprintProductionBasis.BottleneckIntermediate };
+        for (var index = 0; index < recipes.Length; index++)
+            request.Buildings.Add(new ProductionBuildingSnapshot(index + 1, 10, recipes[index], 1,
+                ProliferationMode.None));
+        return request;
     }
 
     private static void BlueprintDescriptionFormattingAndFields()

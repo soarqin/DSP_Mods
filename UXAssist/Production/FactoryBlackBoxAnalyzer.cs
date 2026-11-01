@@ -31,11 +31,18 @@ public sealed class ProductionBuildingSnapshot
     }
 }
 
+public enum BlueprintProductionBasis
+{
+    FinalProducts,
+    BottleneckIntermediate
+}
+
 public sealed class FactoryBlackBoxRequest
 {
     public List<ProductionBuildingSnapshot> Buildings { get; } = new List<ProductionBuildingSnapshot>();
     public List<ProductionDiagnostic> CaptureDiagnostics { get; } = new List<ProductionDiagnostic>();
     public bool ProliferationEnabled { get; set; }
+    public BlueprintProductionBasis ProductionBasis { get; set; }
 }
 
 public sealed class FactoryBlackBoxAnalyzer
@@ -250,8 +257,27 @@ public sealed class FactoryBlackBoxAnalyzer
 
         var matrixSinkItems = hasResearchMatrixSink
             ? new HashSet<int>(_catalog.ResearchMatrixItemIds) : new HashSet<int>();
-        var classifications = BlackBoxMaterialClassifier.Classify(processGroups, grossProduction, grossConsumption,
-            materialComplete, uncertainDemandItems, unknownDemand, matrixSinkItems, out var steadyStateBalance);
+        IReadOnlyDictionary<int, BlackBoxItemClassification> classifications = null;
+        IReadOnlyDictionary<int, double> steadyStateBalance = null;
+        if (request.ProductionBasis == BlueprintProductionBasis.BottleneckIntermediate)
+        {
+            if (!materialComplete || !BlueprintBottleneckBalance.TryCalculate(processGroups,
+                    grossProduction, grossConsumption, matrixSinkItems,
+                    out var balancedProduction, out var balancedConsumption, out var balancedClassifications,
+                    out var balancedNet))
+                diagnostics.Add(new ProductionDiagnostic(ProductionDiagnosticCode.BlueprintBasisUnavailable,
+                    "A complete material selection with a feasible final output is required for the bottleneck basis."));
+            else
+            {
+                grossProduction = balancedProduction;
+                grossConsumption = balancedConsumption;
+                classifications = balancedClassifications;
+                steadyStateBalance = balancedNet;
+            }
+        }
+        if (classifications == null)
+            classifications = BlackBoxMaterialClassifier.Classify(processGroups, grossProduction, grossConsumption,
+                materialComplete, uncertainDemandItems, unknownDemand, matrixSinkItems, out steadyStateBalance);
         var flows = new List<ProductionItemFlow>();
         var allItems = new SortedSet<int>(grossProduction.Keys);
         allItems.UnionWith(grossConsumption.Keys);

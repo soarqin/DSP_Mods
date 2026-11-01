@@ -102,38 +102,81 @@ public class BlueprintDescriptionPatch : PatchImpl<BlueprintDescriptionPatch>
 
     private sealed class InspectorControls
     {
-        private const float Left = 22f;
+        private const float Left = 12f;
         private const float ControlsGap = 12f;
 
         private readonly UIBlueprintInspector _inspector;
-        private readonly float _controlsHeight;
+        private RectTransform _panel;
+        private UIButton _entry;
+        private Text _entryText;
         private UIButton _button;
         private Text _buttonText;
+        private UIButton _cancelButton;
+        private Text _cancelText;
         private MyCheckBox _checkbox;
+        private MyCornerComboBox _basisCombo;
+        private Text _basisLabel;
+        private UIButton _basisHelp;
         private BlueprintData _currentBlueprint;
         private bool _manualProliferation;
-        private bool _layoutApplied;
 
         public InspectorControls(UIBlueprintInspector inspector)
         {
             _inspector = inspector;
             try
             {
-                _button = LayoutHelper.AddButton(Left, 0, inspector.group1,
+                // The native description has a 22px title row above its editable text.
+                _entry = LayoutHelper.AddButton(0, 0, inspector.descGroupTrans,
+                    I18NKeys.BlueprintDescriptionOptions, 13, "blueprint-description-options", ToggleOptions);
+                _entryText = _entry.transform.Find("button-text").GetComponent<Text>();
+                _entry.tips = inspector.tipButton2.tips;
+                _entry.tips.topLevel = true;
+                Util.NormalizeRectWithTopRight(_entry, 0, 0, inspector.descGroupTrans);
+
+                // Reuse the native background, including its blur material, only while options are open.
+                var source = UIRoot.instance.uiGame.inserterWindow.transform.Find("panel-bg").GetComponent<Image>();
+                _panel = UnityEngine.Object.Instantiate(source, inspector.rectTrans).rectTransform;
+                _panel.gameObject.name = "uxassist-blueprint-description-options";
+                for (var i = _panel.childCount - 1; i >= 0; i--)
+                {
+                    var child = _panel.GetChild(i).gameObject;
+                    child.SetActive(false);
+                    UnityEngine.Object.Destroy(child);
+                }
+                _panel.anchorMin = new Vector2(0, 1);
+                _panel.anchorMax = Vector2.one;
+                _panel.pivot = new Vector2(0, 1);
+                _panel.anchoredPosition = new Vector2(Left, -Left);
+                _panel.sizeDelta = new Vector2(-Left * 2, 152);
+                _button = LayoutHelper.AddButton(Left, 12, _panel,
                     I18NKeys.BlueprintAutoFillDescription, 15, "blueprint-auto-fill-description", Generate);
                 _buttonText = _button.transform.Find("button-text").GetComponent<Text>();
-                _checkbox = MyCheckBox.CreateCheckBox(Left, 0, inspector.group1, false,
+                _cancelButton = LayoutHelper.AddButton(0, 0, _panel,
+                    I18NKeys.Cancel, 14, "blueprint-description-cancel", CloseOptions);
+                _cancelText = _cancelButton.transform.Find("button-text").GetComponent<Text>();
+                Util.NormalizeRectWithTopRight(_cancelButton, Left, 14, _panel);
+                _checkbox = MyCheckBox.CreateCheckBox(Left, 52, _panel, false,
                     I18NKeys.BlueprintProliferation.Translate(), 15).WithSmallerBox(22f);
                 _checkbox.gameObject.name = "blueprint-proliferation";
                 _checkbox.OnChecked += OnProliferationChecked;
+                _basisLabel = LayoutHelper.AddText(Left, 80, _panel, I18NKeys.BlueprintProductionBasis, 14);
+                _basisCombo = MyCornerComboBox.CreateComboBox(Left, 108, _panel).WithFontSize(14)
+                    .WithItems(I18NKeys.BlueprintFinalProducts, I18NKeys.BlueprintBottleneckIntermediate)
+                    .WithIndex(0);
+                var combo = _basisCombo.GetComponent<UIComboBox>();
+                combo.CanInput = false;
+                combo.autoWidth = false;
+                var comboRect = (RectTransform)_basisCombo.transform;
+                comboRect.anchorMax = Vector2.one;
+                comboRect.sizeDelta = new Vector2(-Left * 2, 28);
+                _basisHelp = LayoutHelper.AddTipsButton(Left, 80, _panel,
+                    I18NKeys.BlueprintProductionBasis.Translate(), I18NKeys.BlueprintProductionBasisTip.Translate(), "");
                 UpdateLabels();
-                _controlsHeight = Math.Max(_button.transform.GetComponent<RectTransform>().rect.height,
-                    _checkbox.rectTrans.rect.height) + 10f;
+                _panel.gameObject.SetActive(false);
             }
             catch
             {
-                if (_button) UnityEngine.Object.Destroy(_button.gameObject);
-                if (_checkbox) UnityEngine.Object.Destroy(_checkbox.gameObject);
+                Destroy();
                 throw;
             }
         }
@@ -142,65 +185,72 @@ public class BlueprintDescriptionPatch : PatchImpl<BlueprintDescriptionPatch>
         {
             _currentBlueprint = null;
             _manualProliferation = false;
+            _basisCombo.SetIndex(0);
             if (_inspector.blueprint != null) SyncDefault();
             else _checkbox.Checked = false;
+            CloseOptions();
+            _entry.gameObject.SetActive(_inspector.blueprint != null);
         }
 
         public void Refresh()
         {
             SyncDefault();
-            if (!_layoutApplied)
-                _inspector.group1.anchoredPosition += new Vector2(0, -_controlsHeight);
-            PositionControls();
-            _inspector.group2.anchoredPosition += new Vector2(0, -_controlsHeight);
-            _inspector.group3.anchoredPosition += new Vector2(0, -_controlsHeight);
-            _inspector.group4.anchoredPosition += new Vector2(0, -_controlsHeight);
-            _inspector.contentTrans.sizeDelta += new Vector2(0, _controlsHeight);
-            _layoutApplied = true;
+            _entry.gameObject.SetActive(_inspector.blueprint != null);
         }
+
+        private void ToggleOptions()
+        {
+            _panel.SetAsLastSibling();
+            _panel.gameObject.SetActive(!_panel.gameObject.activeSelf);
+        }
+
+        private void CloseOptions() => _panel.gameObject.SetActive(false);
 
         public void UpdateLabels()
         {
+            _entryText.text = I18NKeys.BlueprintDescriptionOptions.Translate();
+            ((RectTransform)_entry.transform).sizeDelta =
+                new Vector2(Util.GetPreferredWidth(_entryText) + 16, 20);
+            _entry.tips.tipTitle = I18NKeys.BlueprintAutoFillDescription.Translate();
+            _entry.tips.tipText = I18NKeys.BlueprintDescriptionOptionsTip.Translate();
+            _entry.UpdateTip();
             _buttonText.text = I18NKeys.BlueprintAutoFillDescription.Translate();
+            _cancelText.text = I18NKeys.Cancel.Translate();
+            ((RectTransform)_cancelButton.transform).sizeDelta =
+                new Vector2(Util.GetPreferredWidth(_cancelText) + 20, 24);
             _checkbox.SetLabelText(I18NKeys.BlueprintProliferation.Translate());
+            _basisLabel.text = I18NKeys.BlueprintProductionBasis.Translate();
+            var combo = _basisCombo.GetComponent<UIComboBox>();
+            var index = combo.itemIndex;
+            _basisCombo.SetItems(I18NKeys.BlueprintFinalProducts, I18NKeys.BlueprintBottleneckIntermediate);
+            _basisCombo.SetIndex(index);
+            _basisHelp.tips.tipTitle = I18NKeys.BlueprintProductionBasis.Translate();
+            _basisHelp.tips.tipText = I18NKeys.BlueprintProductionBasisTip.Translate();
+            _basisHelp.UpdateTip();
             var width = Math.Max(160f, Util.GetPreferredWidth(_buttonText) + 26f);
             _button.transform.GetComponent<RectTransform>().sizeDelta =
                 new Vector2(width, _button.transform.GetComponent<RectTransform>().sizeDelta.y);
-            if (_layoutApplied) PositionControls();
+            var labelWidth = Util.GetPreferredWidth(_basisLabel);
+            _basisLabel.rectTransform.sizeDelta = new Vector2(labelWidth, _basisLabel.rectTransform.sizeDelta.y);
+            Util.NormalizeRectWithTopLeft(_basisHelp, Left + labelWidth + ControlsGap, 80, _panel);
         }
 
         public void Destroy()
         {
-            if (_layoutApplied && _inspector)
+            if (_entry)
             {
-                _inspector.group1.anchoredPosition += new Vector2(0, _controlsHeight);
-                _inspector.group2.anchoredPosition += new Vector2(0, _controlsHeight);
-                _inspector.group3.anchoredPosition += new Vector2(0, _controlsHeight);
-                _inspector.group4.anchoredPosition += new Vector2(0, _controlsHeight);
-                _inspector.contentTrans.sizeDelta += new Vector2(0, -_controlsHeight);
-                _layoutApplied = false;
+                _entry.button.onClick.RemoveListener(ToggleOptions);
+                UnityEngine.Object.Destroy(_entry.gameObject);
             }
-
             if (_button)
-            {
                 _button.button.onClick.RemoveListener(Generate);
-                UnityEngine.Object.Destroy(_button.gameObject);
-            }
-
+            if (_cancelButton)
+                _cancelButton.button.onClick.RemoveListener(CloseOptions);
             if (_checkbox)
-            {
                 _checkbox.OnChecked -= OnProliferationChecked;
-                UnityEngine.Object.Destroy(_checkbox.gameObject);
-            }
-        }
-
-        private void PositionControls()
-        {
-            var buttonRect = _button.transform.GetComponent<RectTransform>();
-            var top = 4f - _controlsHeight;
-            Util.NormalizeRectWithTopLeft(_button, Left, top, _inspector.group1);
-            Util.NormalizeRectWithTopLeft(_checkbox, Left + buttonRect.rect.width + ControlsGap,
-                top + (buttonRect.rect.height - _checkbox.rectTrans.rect.height) / 2f, _inspector.group1);
+            if (!_panel) return;
+            _panel.gameObject.SetActive(false);
+            UnityEngine.Object.Destroy(_panel.gameObject);
         }
 
         private void SyncDefault()
@@ -208,6 +258,7 @@ public class BlueprintDescriptionPatch : PatchImpl<BlueprintDescriptionPatch>
             var blueprint = _inspector.blueprint;
             if (!ReferenceEquals(blueprint, _currentBlueprint))
             {
+                CloseOptions();
                 _currentBlueprint = blueprint;
                 _manualProliferation = false;
             }
@@ -266,7 +317,14 @@ public class BlueprintDescriptionPatch : PatchImpl<BlueprintDescriptionPatch>
                     return;
                 }
 
-                var report = new FactoryBlackBoxAnalyzer(catalog).Analyze(capture.CreateRequest(_checkbox.Checked));
+                var request = capture.CreateRequest(_checkbox.Checked);
+                request.ProductionBasis = (BlueprintProductionBasis)_basisCombo.GetComponent<UIComboBox>().itemIndex;
+                var report = new FactoryBlackBoxAnalyzer(catalog).Analyze(request);
+                if (report.Diagnostics.Any(diagnostic => diagnostic.Code == ProductionDiagnosticCode.BlueprintBasisUnavailable))
+                {
+                    UIRealtimeTip.Popup(I18NKeys.BlueprintBasisUnavailable.Translate());
+                    return;
+                }
                 if (report.Status == ProductionStatus.Failed || report.Status == ProductionStatus.DataNotReady)
                 {
                     UIRealtimeTip.Popup((report.Status == ProductionStatus.DataNotReady
@@ -320,6 +378,7 @@ public class BlueprintDescriptionPatch : PatchImpl<BlueprintDescriptionPatch>
                     throw;
                 }
 
+                CloseOptions();
                 if (!report.MaterialComplete || !report.PowerBreakdown.FactoryComplete ||
                     !report.PowerBreakdown.LogisticsComplete)
                     UIRealtimeTip.Popup(I18NKeys.BlueprintPartial.Translate());

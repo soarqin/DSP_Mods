@@ -116,7 +116,8 @@ public enum ProductionDiagnosticCode
     Unbounded,
     IterationLimit,
     Cancelled,
-    ConservationFailure
+    ConservationFailure,
+    BlueprintBasisUnavailable
 }
 
 public sealed class ProductionDiagnostic
