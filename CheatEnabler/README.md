@@ -75,7 +75,8 @@
         * Keep the highest-production shells and remove the others
         * Duplicate the highest-production shells with a configurable shell count
   * Mecha/Combat:
-    * Mecha and Drones/Fleets invicible
+    * Mecha and Drones/Fleets invincible
+      * Protects mecha HP and energy shields, ground combat drones, and space fleets, including when enabled during combat.
     * Buildings invicible
     * Enable warp without space warpers
     * Teleport to outer space
@@ -180,6 +181,7 @@ The item icon selects the output; no hotkey is needed.
         * 从发电量最高的壳复制戴森壳，可设置壳面数量
   * 机甲/战斗：
     * 机甲和战斗无人机无敌
+      * 保护机甲耐久度和能量护盾、地面战斗无人机和太空编队，战斗中开启同样生效。
     * 建筑无敌
     * 无需空间翘曲器即可曲速飞行
     * 传送到外太空
