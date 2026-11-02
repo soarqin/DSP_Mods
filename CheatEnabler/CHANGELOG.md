@@ -4,6 +4,7 @@
 ## Changlog
 
 * 2.4.8
+  * `Mecha and Drones/Fleets invincible`: Fix mecha HP and energy shield protection failing when enabled after taking damage, and restore protection for space fleets.
   * `Finish build immediately`: Fix possible errors when starting a new game. Construction begins after the opening cutscene ends or is skipped.
   * `Belt signal item generation`:
     * Improve raw-material, intermediate, by-product and proliferator statistics using current recipes, with production and consumption counted separately. Incomplete recipe data only pauses the affected upstream statistics; item generation continues.
@@ -207,6 +208,7 @@
 ## 更新日志
 
 * 2.4.8
+  * `机甲和战斗无人机无敌`：修复受伤后启用时机甲耐久度和能量护盾保护可能失效的问题，并恢复太空编队的无敌保护。
   * `建造秒完成`：修复开始新游戏时可能报错的问题。建造会在开场动画播放结束或跳过后开始。
   * `传送带信号物品生成`：
     * 按当前配方完善原料、中间产物、副产物和增产剂的统计，分别记录生产和消耗。配方数据不完整时，仅暂停受影响物品的上游统计，物品仍会正常生成。
