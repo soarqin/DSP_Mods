@@ -3,6 +3,8 @@
 
 ## Changlog
 
+* 1.6.4
+  * `Hide battle-related techs in Peace mode`: Fix an array index error when opening the tech tree after switching from a Peace-mode save to a Combat-mode save in the same game process, including when disabling the option after loading another Peace-mode save.
 * 1.6.3
   * `Quick build Mining Machines`:
     * Add a Factory-tab button to arrange ordinary Mining Machines densely around the nearest solid vein group. Each miner covers at least 3 nodes from that group, without including nearby groups. Layouts are not limited by stock; missing miners remain as ghosts awaiting materials. Placement respects construction range and does not include belts or power facilities. Click again to cancel a search.
@@ -443,6 +445,8 @@
 
 ## 更新日志
 
+* 1.6.4
+  * `在和平模式下隐藏战斗相关科技`：修复在同一次游戏运行中从和平模式存档切换到战斗模式存档后打开科技树时的数组越界，以及再次加载和平模式存档后关闭选项时的同类问题。
 * 1.6.3
   * `快速铺设采矿机`：
     * 在「工厂」页增加按钮，自动在最近的固体矿脉周围密集铺设普通采矿机。每台至少覆盖选中矿脉的 3 个矿点，不混入附近其他矿脉。布局数量不受库存限制，采矿机不足的位置保留待建造虚影。遵守建造范围，不自动铺设传送带和电力设施。计算期间再次点击可取消。

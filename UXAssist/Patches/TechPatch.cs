@@ -222,11 +222,22 @@ public static class TechPatch
             foreach (var item in nodes)
             {
                 var node = item.Value;
+                var postTechArray = node.techProto.postTechArray;
+                // A new session can initialize nodes while the peace-mode graph is still filtered.
+                var arrowCount = node.arrows.Length;
+                if (arrowCount < postTechArray.Length)
+                {
+                    System.Array.Resize(ref node.arrows, postTechArray.Length);
+                    for (var i = arrowCount; i < postTechArray.Length; i++)
+                    {
+                        node.arrows[i] = UnityEngine.Object.Instantiate(node.arrowPrefab, node.arrowPrefab.parent);
+                        node.arrows[i].SetAsFirstSibling();
+                    }
+                }
                 foreach (var arrow in node.arrows)
                 {
                     arrow.gameObject.SetActive(false);
                 }
-                var postTechArray = node.techProto.postTechArray;
                 var active = postTechArray.Length > 0;
                 node.connGroup.gameObject.SetActive(active);
                 node.connImages = active ? node.connGroup.GetComponentsInChildren<Image>(true) : [];

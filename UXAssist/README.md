@@ -169,6 +169,7 @@
     * Buy out techs with their prerequisites
       * This enables batch buying out techs with their prerequisites. Buy-out buttons are shown for locked techs/upgrades.
     * Hide battle-related techs in Peace mode
+      * Battle-related techs and their connections return when disabling the option or loading a Combat-mode save; switching saves does not require restarting the game.
     * Unlock all techs with metadata
       * Use the config-panel button to confirm the metadata cost and buy out eligible techs in a batch; unlimited upgrade chains are excluded.
   * Combat
@@ -374,6 +375,7 @@
     * 买断科技也同时买断所有前置科技
       * 可批量买断科技及其前置科技，未解锁的科技和升级会显示买断按钮。
     * 在和平模式下隐藏战斗相关科技
+      * 关闭选项或加载战斗模式存档后恢复相关科技及连线，切换存档无需重启游戏。
     * 使用元数据解锁所有科技
       * 在配置面板点击按钮并确认元数据消耗，批量买断符合条件的科技；不包含无限升级科技链。
   * 战斗
