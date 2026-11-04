@@ -70,6 +70,12 @@ public class BlueprintDescriptionPatch : PatchImpl<BlueprintDescriptionPatch>
         }
     }
 
+    [HarmonyPostfix, HarmonyPatch(typeof(UIBlueprintInspector), nameof(UIBlueprintInspector._OnUpdate))]
+    private static void OnUpdate(UIBlueprintInspector __instance)
+    {
+        if (Inspectors.TryGetValue(__instance, out var controls)) controls.HandleInput();
+    }
+
     [HarmonyPostfix, HarmonyPatch(typeof(UIBlueprintInspector), nameof(UIBlueprintInspector.OnLanguageChanged))]
     private static void OnLanguageChanged(UIBlueprintInspector __instance)
     {
@@ -103,7 +109,7 @@ public class BlueprintDescriptionPatch : PatchImpl<BlueprintDescriptionPatch>
     private sealed class InspectorControls
     {
         private const float Left = 12f;
-        private const float ControlsGap = 12f;
+        private const float ControlsGap = 10f;
 
         private readonly UIBlueprintInspector _inspector;
         private RectTransform _panel;
@@ -111,8 +117,12 @@ public class BlueprintDescriptionPatch : PatchImpl<BlueprintDescriptionPatch>
         private Text _entryText;
         private UIButton _button;
         private Text _buttonText;
-        private UIButton _cancelButton;
-        private Text _cancelText;
+        private UIButton _closeButton;
+        private Text _title;
+        private readonly Vector3[] _corners = new Vector3[4];
+        private readonly Canvas _canvas;
+        private readonly RectTransform _viewport;
+        private bool _optionsOpen;
         private MyCheckBox _checkbox;
         private MyCornerComboBox _basisCombo;
         private Text _basisLabel;
@@ -123,6 +133,8 @@ public class BlueprintDescriptionPatch : PatchImpl<BlueprintDescriptionPatch>
         public InspectorControls(UIBlueprintInspector inspector)
         {
             _inspector = inspector;
+            _canvas = inspector.rectTrans.GetComponentInParent<Canvas>().rootCanvas;
+            _viewport = inspector.descGroupTrans.GetComponentInParent<ScrollRect>()?.viewport;
             try
             {
                 // The native description has a 22px title row above its editable text.
@@ -143,24 +155,28 @@ public class BlueprintDescriptionPatch : PatchImpl<BlueprintDescriptionPatch>
                     child.SetActive(false);
                     UnityEngine.Object.Destroy(child);
                 }
-                _panel.anchorMin = new Vector2(0, 1);
-                _panel.anchorMax = Vector2.one;
+                _panel.anchorMin = _panel.anchorMax = new Vector2(0, 1);
                 _panel.pivot = new Vector2(0, 1);
-                _panel.anchoredPosition = new Vector2(Left, -Left);
-                _panel.sizeDelta = new Vector2(-Left * 2, 152);
-                _button = LayoutHelper.AddButton(Left, 12, _panel,
-                    I18NKeys.BlueprintAutoFillDescription, 15, "blueprint-auto-fill-description", Generate);
+                _panel.GetComponent<Image>().raycastTarget = true;
+                _title = LayoutHelper.AddText(Left, 10, _panel, I18NKeys.BlueprintAutoFillDescription, 16);
+                _title.color = _entryText.color;
+                var closeSource = UIRoot.instance.uiGame.inserterWindow.transform
+                    .Find("panel-bg/btn-box/close-wnd-btn").GetComponent<UIButton>();
+                _closeButton = UnityEngine.Object.Instantiate(closeSource, _panel);
+                Util.ResetButton(_closeButton);
+                // The source's persistent callback closes the original inserter window.
+                _closeButton.button.onClick = new Button.ButtonClickedEvent();
+                _closeButton.button.onClick.AddListener(CloseOptions);
+                Util.NormalizeRectWithTopRight(_closeButton, 0, 0, _panel);
+                _button = LayoutHelper.AddButton(0, 0, _panel,
+                    I18NKeys.BlueprintGenerateDescription, 15, "blueprint-auto-fill-description", Generate);
                 _buttonText = _button.transform.Find("button-text").GetComponent<Text>();
-                _cancelButton = LayoutHelper.AddButton(0, 0, _panel,
-                    I18NKeys.Cancel, 14, "blueprint-description-cancel", CloseOptions);
-                _cancelText = _cancelButton.transform.Find("button-text").GetComponent<Text>();
-                Util.NormalizeRectWithTopRight(_cancelButton, Left, 14, _panel);
-                _checkbox = MyCheckBox.CreateCheckBox(Left, 52, _panel, false,
-                    I18NKeys.BlueprintProliferation.Translate(), 15).WithSmallerBox(22f);
+                _checkbox = MyCheckBox.CreateCheckBox(Left, 42, _panel, false,
+                    I18NKeys.BlueprintProliferation.Translate(), 15).WithSmallerBox(20f);
                 _checkbox.gameObject.name = "blueprint-proliferation";
                 _checkbox.OnChecked += OnProliferationChecked;
-                _basisLabel = LayoutHelper.AddText(Left, 80, _panel, I18NKeys.BlueprintProductionBasis, 14);
-                _basisCombo = MyCornerComboBox.CreateComboBox(Left, 108, _panel).WithFontSize(14);
+                _basisLabel = LayoutHelper.AddText(Left, 68, _panel, I18NKeys.BlueprintProductionBasis, 14);
+                _basisCombo = MyCornerComboBox.CreateComboBox(0, 68, _panel).WithFontSize(14);
                 // The star-panel localizer would replace the stretched width on every enable or language change.
                 var localizer = _basisCombo.GetComponent<Localizer>();
                 if (localizer)
@@ -171,15 +187,11 @@ public class BlueprintDescriptionPatch : PatchImpl<BlueprintDescriptionPatch>
                 var combo = _basisCombo.GetComponent<UIComboBox>();
                 combo.CanInput = false;
                 combo.autoWidth = false;
-                var comboRect = (RectTransform)_basisCombo.transform;
-                comboRect.anchorMax = Vector2.one;
-                comboRect.sizeDelta = new Vector2(-Left * 2, 28);
+                combo.ItemHeight = 24;
                 Util.NormalizeRectWithMargin(_basisCombo.transform.Find("Main Button"), 0, 0, 0, 0);
                 combo.m_Text.alignment = TextAnchor.MiddleLeft;
                 combo.m_ListItemRes.GetComponentInChildren<Text>().alignment = TextAnchor.MiddleLeft;
-                _basisCombo.SetItems(I18NKeys.BlueprintFinalProducts, I18NKeys.BlueprintBottleneckIntermediate);
-                _basisCombo.SetIndex(0);
-                _basisHelp = LayoutHelper.AddTipsButton(Left, 80, _panel,
+                _basisHelp = LayoutHelper.AddTipsButton(Left, 68, _panel,
                     I18NKeys.BlueprintProductionBasis.Translate(), I18NKeys.BlueprintProductionBasisTip.Translate(), "");
                 UpdateLabels();
                 _panel.gameObject.SetActive(false);
@@ -210,11 +222,107 @@ public class BlueprintDescriptionPatch : PatchImpl<BlueprintDescriptionPatch>
 
         private void ToggleOptions()
         {
+            if (_optionsOpen)
+            {
+                CloseOptions();
+                return;
+            }
+            _optionsOpen = true;
             _panel.SetAsLastSibling();
-            _panel.gameObject.SetActive(!_panel.gameObject.activeSelf);
+            _panel.gameObject.SetActive(true);
+            PositionOptions();
+            if (_optionsOpen) Canvas.willRenderCanvases += PositionOptions;
         }
 
-        private void CloseOptions() => _panel.gameObject.SetActive(false);
+        private void CloseOptions()
+        {
+            Canvas.willRenderCanvases -= PositionOptions;
+            _optionsOpen = false;
+            if (_panel) _panel.gameObject.SetActive(false);
+        }
+
+        public void HandleInput()
+        {
+            if (!_optionsOpen) return;
+            var combo = _basisCombo.GetComponent<UIComboBox>();
+            if (VFInput.escape)
+            {
+                if (combo.isDroppedDown)
+                {
+                    combo.isDroppedDown = false;
+                    combo.m_DropDownList.gameObject.SetActive(false);
+                }
+                else CloseOptions();
+                VFInput.UseEscape();
+                return;
+            }
+            if (!Input.GetMouseButtonDown(0) && !Input.GetMouseButtonDown(1) && !Input.GetMouseButtonDown(2)) return;
+            var mouse = (Vector2)Input.mousePosition;
+            if (RectTransformUtility.RectangleContainsScreenPoint(_panel, mouse, _canvas.worldCamera) ||
+                RectTransformUtility.RectangleContainsScreenPoint((RectTransform)_entry.transform, mouse, _canvas.worldCamera) ||
+                combo.isDroppedDown && RectTransformUtility.RectangleContainsScreenPoint(combo.m_DropDownList, mouse, _canvas.worldCamera))
+                return;
+            CloseOptions();
+        }
+
+        private Rect BoundsInPopupParent(RectTransform rect)
+        {
+            rect.GetWorldCorners(_corners);
+            var min = new Vector2(float.PositiveInfinity, float.PositiveInfinity);
+            var max = new Vector2(float.NegativeInfinity, float.NegativeInfinity);
+            foreach (var corner in _corners)
+            {
+                var point = _panel.parent.InverseTransformPoint(corner);
+                min = Vector2.Min(min, point);
+                max = Vector2.Max(max, point);
+            }
+            return Rect.MinMaxRect(min.x, min.y, max.x, max.y);
+        }
+
+        private void PositionOptions()
+        {
+            if (!_optionsOpen) return;
+            if (!_entry || !_entry.gameObject.activeInHierarchy)
+            {
+                CloseOptions();
+                return;
+            }
+            var anchor = BoundsInPopupParent((RectTransform)_entry.transform);
+            var screen = BoundsInPopupParent((RectTransform)_canvas.transform);
+            if (!anchor.Overlaps(screen) || _viewport && !anchor.Overlaps(BoundsInPopupParent(_viewport)))
+            {
+                CloseOptions();
+                return;
+            }
+            var combo = _basisCombo.GetComponent<UIComboBox>();
+            var extra = combo.isDroppedDown ? combo.DropDownCount * combo.ItemHeight + 2 * combo.ItemPadding + 2 : 0;
+            var footerTop = 112 + extra;
+            _panel.sizeDelta = new Vector2(_panel.sizeDelta.x, footerTop + 30 + Left);
+            Util.NormalizeRectWithTopRight(_button, Left, footerTop, _panel);
+            if (!TryGetPopupPosition(anchor, screen, _panel.sizeDelta, out var position))
+            {
+                CloseOptions();
+                return;
+            }
+            var parent = (RectTransform)_panel.parent;
+            _panel.anchoredPosition = position - new Vector2(parent.rect.xMin, parent.rect.yMax);
+        }
+
+        private static bool TryGetPopupPosition(Rect anchor, Rect screen, Vector2 size, out Vector2 position)
+        {
+            const float gap = 6;
+            const float margin = 8;
+            position = default;
+            if (size.x > screen.width - margin * 2 || size.y > screen.height - margin * 2) return false;
+            var left = Math.Max(screen.xMin + margin,
+                Math.Min(anchor.xMax - size.x, screen.xMax - margin - size.x));
+            var top = anchor.yMin - gap;
+            if (top - size.y < screen.yMin + margin)
+                top = anchor.yMax + gap + size.y;
+            top = Math.Min(screen.yMax - margin, Math.Max(screen.yMin + margin + size.y, top));
+            position = new Vector2(left, top);
+            return true;
+        }
 
         public void UpdateLabels()
         {
@@ -224,29 +332,43 @@ public class BlueprintDescriptionPatch : PatchImpl<BlueprintDescriptionPatch>
             _entry.tips.tipTitle = I18NKeys.BlueprintAutoFillDescription.Translate();
             _entry.tips.tipText = I18NKeys.BlueprintDescriptionOptionsTip.Translate();
             _entry.UpdateTip();
-            _buttonText.text = I18NKeys.BlueprintAutoFillDescription.Translate();
-            _cancelText.text = I18NKeys.Cancel.Translate();
-            ((RectTransform)_cancelButton.transform).sizeDelta =
-                new Vector2(Util.GetPreferredWidth(_cancelText) + 20, 24);
+            _title.text = I18NKeys.BlueprintAutoFillDescription.Translate();
+            _buttonText.text = I18NKeys.BlueprintGenerateDescription.Translate();
             _checkbox.SetLabelText(I18NKeys.BlueprintProliferation.Translate());
             _basisLabel.text = I18NKeys.BlueprintProductionBasis.Translate();
             var combo = _basisCombo.GetComponent<UIComboBox>();
-            var index = combo.itemIndex;
+            var index = Math.Max(0, combo.itemIndex);
             _basisCombo.SetItems(I18NKeys.BlueprintFinalProducts, I18NKeys.BlueprintBottleneckIntermediate);
-            _basisCombo.SetIndex(index);
             _basisHelp.tips.tipTitle = I18NKeys.BlueprintProductionBasis.Translate();
             _basisHelp.tips.tipText = I18NKeys.BlueprintProductionBasisTip.Translate();
             _basisHelp.UpdateTip();
-            var width = Math.Max(160f, Util.GetPreferredWidth(_buttonText) + 26f);
-            _button.transform.GetComponent<RectTransform>().sizeDelta =
-                new Vector2(width, _button.transform.GetComponent<RectTransform>().sizeDelta.y);
+            var width = Math.Max(90f, Util.GetPreferredWidth(_buttonText) + 20f);
+            ((RectTransform)_button.transform).sizeDelta = new Vector2(width, 30);
             var labelWidth = Util.GetPreferredWidth(_basisLabel);
-            _basisLabel.rectTransform.sizeDelta = new Vector2(labelWidth, _basisLabel.rectTransform.sizeDelta.y);
-            Util.NormalizeRectWithTopLeft(_basisHelp, Left + labelWidth + ControlsGap, 80, _panel);
+            _basisLabel.rectTransform.sizeDelta = new Vector2(labelWidth, 28);
+            var helpRect = (RectTransform)_basisHelp.transform;
+            Util.NormalizeRectWithTopLeft(_basisHelp, Left + labelWidth + ControlsGap,
+                68 + (28 - helpRect.rect.height) / 2, _panel);
+            var comboLeft = Left + labelWidth + ControlsGap + helpRect.rect.width + ControlsGap;
+            var comboWidth = 180f;
+            foreach (var key in new[] { I18NKeys.BlueprintFinalProducts, I18NKeys.BlueprintBottleneckIntermediate })
+            {
+                combo.m_Text.text = key.Translate();
+                comboWidth = Math.Max(comboWidth, Util.GetPreferredWidth(combo.m_Text) + 40);
+            }
+            _basisCombo.SetIndex(index);
+            Util.NormalizeRectWithTopLeft(_basisCombo, comboLeft, 68, _panel);
+            _basisCombo.SetSize(comboWidth, 28);
+            var popupWidth = Math.Max(320, Math.Max(comboLeft + comboWidth + Left,
+                Util.GetPreferredWidth(_title) + Left * 2 + 50));
+            _panel.sizeDelta = new Vector2(popupWidth, _panel.sizeDelta.y);
+            _title.rectTransform.sizeDelta = new Vector2(popupWidth - Left * 2 - 50, 24);
+            PositionOptions();
         }
 
         public void Destroy()
         {
+            CloseOptions();
             if (_entry)
             {
                 _entry.button.onClick.RemoveListener(ToggleOptions);
@@ -254,8 +376,8 @@ public class BlueprintDescriptionPatch : PatchImpl<BlueprintDescriptionPatch>
             }
             if (_button)
                 _button.button.onClick.RemoveListener(Generate);
-            if (_cancelButton)
-                _cancelButton.button.onClick.RemoveListener(CloseOptions);
+            if (_closeButton)
+                _closeButton.button.onClick.RemoveListener(CloseOptions);
             if (_checkbox)
                 _checkbox.OnChecked -= OnProliferationChecked;
             if (!_panel) return;
