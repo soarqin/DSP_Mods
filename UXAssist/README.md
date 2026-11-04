@@ -17,7 +17,8 @@
   * Strict hotkey dectection for build menu, thus building hotkeys(0~9, F1~F10, X, U) are not triggered while holding Ctrl/Alt/Shift.
   * Fix a bug that warning popup on `Veins Utilization` upgraded to level 8000+
   * Sort blueprint structures before saving, to reduce generated blueprint data size a little
-  * Add an `Auto-fill` entry to the description header in the blueprint browser, copy, and paste inspectors. Click it to open generation options without moving or resizing native fields or covering the file list
+  * Add an `Auto-fill` entry to the description header in the blueprint browser, copy, and paste inspectors. Click it to open options beside the entry without moving or resizing native fields; the popup follows the entry while scrolling and adjusts its position at screen edges
+    * The popup has an `Auto-fill description` title, a native X close button, proliferation and production-basis options, and one `Generate` button at the bottom. Opening the dropdown expands the background and moves the action below its rows. Close with the X, an outside click, or Esc; when the dropdown is open, Esc closes it first. Successful generation closes the popup.
     * `Production basis` defaults to `Final-product output` each time the inspector opens, retaining rated final outputs and showing intermediate shortages and excess. Choose `Lowest intermediate throughput` to scale the final-product mix together to the bottleneck, using recipe ratios and shared intermediate demand. Complete, balanceable chains then have no internal shortages; unused intermediate capacity appears as excess. External inputs and final outputs use the same basis.
     * `Proliferation` defaults to on when the blueprint contains a Spray Coater; it can be changed manually. Power demand still estimates all selected buildings at full load in either production basis.
     * Replaces the main description with material flows per minute and writes power demand to a `Power` custom field, preserving other custom fields. If the bottleneck basis cannot be determined, the existing description is kept; check missing building settings and chain outputs, or select `Final-product output`. Save the blueprint manually to keep generated changes.
@@ -225,7 +226,8 @@
   * 更严格的建造菜单热键检测，因此在按住Ctrl/Alt/Shift时不再会触发建造热键(0~9, F1~F10, X, U)
   * 修复了`矿物利用`升级到8000级以上时弹出警告的bug
   * 保存蓝图前对建筑进行排序，以减少生成的蓝图数据大小
-  * 在蓝图浏览、复制和粘贴检查面板的说明标题行增加「自动填写」入口，点击展开生成选项，不移动或缩放原生字段，也不遮挡文件列表
+  * 在蓝图浏览、复制和粘贴检查面板的说明标题行增加「自动填写」入口，点击后在入口旁打开生成选项，不移动或缩放原生字段；滚动时弹出面板跟随入口，并在屏幕边缘调整位置
+    * 面板包含「自动填写说明」标题、原生叉号关闭按钮、增产和产量基准选项，以及底部单个「生成说明」按钮。展开下拉列表时，背景增高，操作按钮移至列表下方。可通过叉号、点击外部或 Esc 关闭；下拉列表展开时，Esc 先收起列表。生成成功后关闭面板。
     * 每次打开检查面板时，「产量基准」默认为「最终产物产量」，保留最终产物的额定产量，并显示中间产物的缺口和余量。选择「最低产量中间产物」后，按配方比例和共享中间物料的需求换算瓶颈，等比例缩放各最终产物。数据完整且可平衡的生产链没有内部缺口，未使用的中间产能列为「多余」；外部输入和最终输出采用同一基准。
     * 蓝图含喷涂机时默认勾选「增产」，也可手动修改。两种产量基准均按所选全部建筑满载估算耗电。
     * 用每分钟的物料流量替换原说明，将耗电写入「耗电」自定义字段，保留其他自定义字段。无法确定瓶颈基准时保留原说明；可检查缺失的建筑参数和生产链输出，或改选「最终产物产量」。填写后需手动保存蓝图。
