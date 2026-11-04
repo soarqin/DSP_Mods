@@ -28,6 +28,31 @@ The native `descGroupTrans` in all three inspectors contains a description label
 
 Decompiled methods and extracted rectangle data are development artifacts under `UXAssist/obj/native-inspector/`. Reinspect the installed original assembly and assets after a game update; the publicized compile-time references omit method bodies.
 
+## Options layout correction on 2026-11-04
+
+The reported screenshot shows the production-basis selector displaced to the right and its expanded list wider than the options panel. The correction applies to this selector in the existing on-demand options.
+
+The selector is cloned from `UIRoot.instance.uiGame.starDetail.displayCombo`. Its root inherits a `Localizer` with `wParamKey = "恒星信息面板组合框宽度"`, `sizeApplyTrans = null`, and `def_w = 0`. Original `Localizer.OnEnable()` subscribes to language changes and immediately calls `Refresh()`; `OnLanguageChange()` also calls `Refresh()`. With no separate size target, `Refresh()` writes the translated positive width to the combo root's `sizeDelta.x`. The blueprint selector uses horizontal stretch with an intended width delta of `-24`, so this source-specific width assignment expands the root beyond its parent. Reopening the options re-enables the inherited component, explaining why an initial size assignment alone does not hold.
+
+The original DLL and `level0` hashes and the installed version above were rechecked on 2026-11-04. The native locale parameter is 200 in `Locale/1033/parameters.txt` and 90 in `Locale/2052/parameters.txt`, both at line 28. With the original 392- and 394-pixel inspector variants, the inherited assignment produces combo widths of 568/570 in English or 458/460 in Simplified Chinese. The corrected stretched root is 344/346 pixels wide, and the main button, list, content, row template, and selection share its horizontal bounds.
+
+The original combo also has a right-anchored, right-pivoted main button with its own fixed width and right-aligned selected and item-template text. The correction disables and removes only the owned clone root's `Localizer` before setting its geometry, disables `autoWidth` before setting items or index, stretches the main button to its owned root, and left-aligns the selected and template text. Source dropdown, content, template, and selection rectangles already use horizontal stretch with zero width delta and are retained. Original `UIComboBox.SetState()` adjusts list and content heights and row positions, preserving their width deltas; it does not repair a source-specific root width.
+
+The popup remains 152 pixels high, with a 28-pixel selector starting 108 pixels below its top. Native dropdown placement adds a 2-pixel gap and uses two 18-pixel rows with 4 pixels of total padding. The expanded list therefore reaches 178 pixels below the popup top, extending 26 pixels below the background as a native dropdown overlay. Check this overlay in-game at the target UI scale.
+
+The persistent task evidence bundle `2026-11-04-UXAssist-BlueprintDescriptionLayout` retains `reported-layout.png`, the native combo and background JSON captures, focused `Localizer` and `UIComboBox` decompilations, `inspect_native_layout.py`, `reproduce_geometry.py`, and `geometry-lifecycle-replay.json`. Rectangle calculations or schematic previews derived from these files are evidence of geometry, not screenshots of a repaired running game.
+
+Recorded checks for this correction:
+
+| Check | Result |
+| --- | --- |
+| Normal Release build, using the command below | Passed with 0 warnings and 0 errors. |
+| `ProductionCheck` | 569 checks passed. |
+| Original-asset geometry replay | 64 analytical combinations passed: inspector widths 392/394, English/Simplified Chinese, first opening/two reopenings/language change, and scales 0.75/1/1.25/1.5. |
+| Focused UI code review and `git diff --check` | Passed. |
+
+The geometry replay calculates rectangle bounds from captured assets and the original `Localizer` rules. It does not execute Unity enable or language-change events, measure font rendering or preferred text width, or test mouse interaction. The evidence bundle's `test-build/UXAssist.dll` has SHA-256 `3645ebfe03fb5ed7bc50459f25e0e6557d903db852624d640eafbd588e735ef5`.
+
 ## Managed production checks
 
 Run the production checks and normal UXAssist build from the repository root:
@@ -44,7 +69,7 @@ The production-basis cases check an undersupplied chain, recipe-ratio conversion
 
 No in-game, Unity event-loop, or third-party mod integration test has been performed for this change. Repeat these checks at the target profile's resolutions and UI scales, with each installed blueprint UI mod. The header entry avoids native layout writes but another mod may use the same extension space.
 
-1. Open all three inspectors in English and Simplified Chinese. Confirm the header entry is readable without covering the title or editable description. Open and close its options, generate, and close the inspector. The options must not remain over the file grid or survive an inspector close.
+1. Open all three inspectors in English and Simplified Chinese. Confirm the header entry is readable without covering the title or editable description. Open, close, and reopen its options, and switch languages while they are open. The production-basis selector and both dropdown rows must retain matching widths inside the inspector, with readable left-aligned labels. Generate and close the inspector; options must not remain over the file grid or survive an inspector close.
 2. Scroll the native description and custom fields and expand native foundation, fill-only, and reform settings. All native fields must retain their positions and sizes, and scrolling must reach every field.
 3. Reopen each inspector and repeatedly refresh or change the blueprint selection. Confirm there is one entry, options are initially closed, the production basis resets to final-product output on opening, Spray Coaters set the automatic proliferation default, and a manual checkbox choice survives content refreshes in the current session.
 4. Generate both production bases for an unbalanced chain. Final-product output should retain rated final capacity and show the missing intermediate; lowest intermediate throughput should reduce the common final-output mix, use correspondingly reduced external inputs, and show no internal shortage when the chain is complete and balanceable. Power should remain the same full-load estimate. Check necessary coproduct output separately from unused intermediate capacity.

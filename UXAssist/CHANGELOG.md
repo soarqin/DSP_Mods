@@ -4,6 +4,7 @@
 ## Changlog
 
 * 1.6.4
+  * `Blueprint descriptions`: Fix the misplaced production-basis selector and incorrectly sized dropdown when opening Auto-fill options or changing the language.
   * `Hide battle-related techs in Peace mode`: Fix an array index error when opening the tech tree after switching from a Peace-mode save to a Combat-mode save in the same game process, including when disabling the option after loading another Peace-mode save.
 * 1.6.3
   * `Quick build Mining Machines`:
@@ -447,6 +448,7 @@
 ## 更新日志
 
 * 1.6.4
+  * `蓝图说明`：修复打开自动填写说明选项或切换语言时，「产量基准」选择框错位、下拉列表宽度异常的问题。
   * `在和平模式下隐藏战斗相关科技`：修复在同一次游戏运行中从和平模式存档切换到战斗模式存档后打开科技树时的数组越界，以及再次加载和平模式存档后关闭选项时的同类问题。
 * 1.6.3
   * `快速铺设采矿机`：
