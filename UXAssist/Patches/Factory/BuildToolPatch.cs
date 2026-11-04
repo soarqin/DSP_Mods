@@ -79,8 +79,6 @@ internal static class BuildToolPatch
 
     internal class OffGridBuilding : PatchImpl<OffGridBuilding>
     {
-        // private const float SteppedRotationDegrees = 15f;
-
         private static bool _initialized;
 
         private static void SetupRichTextSupport()
@@ -292,62 +290,6 @@ internal static class BuildToolPatch
             return matcher.InstructionEnumeration();
         }
 
-        /*
-        public static IEnumerable<CodeInstruction> PatchToPerformSteppedRotate(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
-        {
-            var matcher = new CodeMatcher(instructions, generator);
-
-            MatchIgnoreGridAndCheckIfRotatable(matcher, out var ifBlockEntryLabel, out var elseBlockEntryLabel);
-
-            if (matcher.IsInvalid)
-                return instructions;
-
-            while (!matcher.Labels.Contains(elseBlockEntryLabel.Value))
-                matcher.Advance(1);
-
-            Label? ifBlockExitLabel = null;
-
-            matcher.MatchBack(false, new CodeMatch(ci => ci.Branches(out ifBlockExitLabel)));
-
-            if (matcher.IsInvalid)
-                return instructions;
-
-            while (!matcher.Labels.Contains(ifBlockEntryLabel.Value))
-                matcher.Advance(-1);
-
-            var instructionToClone = matcher.Instruction.Clone();
-            var overwriteWith = CodeInstruction.LoadField(typeof(VFInput), nameof(VFInput.control));
-
-            matcher.SetAndAdvance(overwriteWith.opcode, overwriteWith.operand);
-            matcher.Insert(instructionToClone);
-            matcher.CreateLabel(out var existingEntryLabel);
-            matcher.InsertAndAdvance(
-                new CodeInstruction(OpCodes.Brfalse, existingEntryLabel),
-                new CodeInstruction(OpCodes.Ldarg_0),
-                CodeInstruction.Call(typeof(OffGridBuilding), nameof(RotateStepped)),
-                new CodeInstruction(OpCodes.Br, ifBlockExitLabel)
-            );
-
-            return matcher.InstructionEnumeration();
-        }
-
-        public static void RotateStepped(BuildTool_Click instance)
-        {
-            if (VFInput._rotate.onDown)
-            {
-                instance.yaw += SteppedRotationDegrees;
-                instance.yaw = Mathf.Repeat(instance.yaw, 360f);
-                instance.yaw = Mathf.Round(instance.yaw / SteppedRotationDegrees) * SteppedRotationDegrees;
-            }
-
-            if (VFInput._counterRotate.onDown)
-            {
-                instance.yaw -= SteppedRotationDegrees;
-                instance.yaw = Mathf.Repeat(instance.yaw, 360f);
-                instance.yaw = Mathf.Round(instance.yaw / SteppedRotationDegrees) * SteppedRotationDegrees;
-            }
-        }
-        */
     }
 
     internal class TreatStackingAsSingle : PatchImpl<TreatStackingAsSingle>

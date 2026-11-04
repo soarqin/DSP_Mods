@@ -410,7 +410,7 @@ namespace CheatEnabler.Patches.Tech
                     // a downgrade can walk thousands of levels and must not flood the log.
                     if (UnknownFuncsWarned.Add(func))
                     {
-                        TechLog.Warn($"revert: no inverse known for tech function {func} (value={value}, level={level}); " +
+                        CheatEnabler.Logger.LogWarning($"[TechTweaks] revert: no inverse known for tech function {func} (value={value}, level={level}); " +
                                    "the field was left untouched. A game update may have added a new function.");
                     }
 
@@ -429,7 +429,7 @@ namespace CheatEnabler.Patches.Tech
             ModeConfig freeMode = Configs.freeMode;
             if (freeMode == null)
             {
-                TechLog.Warn($"recompute of tech function {func} skipped: Configs.freeMode is not available");
+                CheatEnabler.Logger.LogWarning($"[TechTweaks] recompute of tech function {func} skipped: Configs.freeMode is not available");
                 return;
             }
 
@@ -819,7 +819,7 @@ namespace CheatEnabler.Patches.Tech
             if (Configs.freeMode == null || history.gameData == null || player?.mecha == null ||
                 player.package?.grids == null || player.deliveryPackage?.grids == null)
             {
-                TechLog.Warn("downgrade skipped: game data is not ready");
+                CheatEnabler.Logger.LogWarning("[TechTweaks] downgrade skipped: game data is not ready");
                 return false;
             }
 
@@ -836,7 +836,7 @@ namespace CheatEnabler.Patches.Tech
                     int func = proto.UnlockFunctions[j];
                     if (!(func is >= 1 and <= 45 or >= 61 and <= 86 or 99))
                     {
-                        TechLog.Warn($"downgrade skipped: unsupported tech function {func} in tech {proto.ID}");
+                        CheatEnabler.Logger.LogWarning($"[TechTweaks] downgrade skipped: unsupported tech function {func} in tech {proto.ID}");
                         UIRealtimeTip.Popup(Localization.TechDowngradeUnsupportedFunction.Translate());
                         return false;
                     }

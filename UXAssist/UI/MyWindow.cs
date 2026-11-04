@@ -559,15 +559,6 @@ public abstract class MyWindowManager
         win._Destroy();
     }
 
-    /*
-    public static void SetRect(ManualBehaviour win, RectTransform rect)
-    {
-        var rectTransform = win.GetComponent<RectTransform>();
-        //rectTransform.position =
-        //rectTransform.sizeDelta = rect;
-    }
-    */
-
     public class Patch : PatchImpl<Patch>
     {
         protected override void OnEnable()
@@ -586,14 +577,6 @@ public abstract class MyWindowManager
             Initialized = true;
         }
 
-        /*
-        //_Create -> _Init
-        [HarmonyPostfix, HarmonyPatch(typeof(UIGame), nameof(UIGame._OnCreate))]
-        public static void UIGame__OnCreate_Postfix()
-        {
-        }
-        */
-
         [HarmonyPostfix, HarmonyPatch(typeof(UIRoot), nameof(UIRoot._OnDestroy))]
         public static void UIRoot__OnDestroy_Postfix()
         {
@@ -611,17 +594,6 @@ public abstract class MyWindowManager
         {
             InitAllWindows();
         }
-
-        /*
-        [HarmonyPostfix, HarmonyPatch(typeof(UIGame), nameof(UIGame._OnFree))]
-        public static void UIGame__OnFree_Postfix()
-        {
-            foreach (var win in Windows)
-            {
-                win._Free();
-            }
-        }
-        */
 
         [HarmonyPostfix, HarmonyPatch(typeof(UIRoot), nameof(UIRoot._OnUpdate))]
         public static void UIRoot__OnUpdate_Postfix()

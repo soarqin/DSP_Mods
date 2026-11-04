@@ -20,7 +20,7 @@ internal static class TechDowngrade
     {
         if (!TryGetLastAppliedLevel(history, techProto, out int lastApplied) || steps <= 0) return;
 
-        int target = steps == TechKeyCombo.LevelToMax
+        int target = steps == int.MaxValue
             ? techProto.Level - 1
             : System.Math.Max(techProto.Level - 1, lastApplied - steps);
         Targets.Clear();

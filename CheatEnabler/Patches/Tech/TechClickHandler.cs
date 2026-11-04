@@ -17,7 +17,7 @@ internal static class TechClickHandler
         }
         catch (Exception e)
         {
-            TechLog.Warn($"click handling failed: {e}");
+            CheatEnabler.Logger.LogWarning($"[TechTweaks] click handling failed: {e}");
         }
     }
 
@@ -40,7 +40,7 @@ internal static class TechClickHandler
             return;
         }
 
-        if (!TechKeyCombo.TryDecode(out int steps))
+        if (!TryDecodeModifiers(out int steps))
         {
             return;
         }
@@ -53,5 +53,33 @@ internal static class TechClickHandler
         {
             TechUnlock.Run(history, techProto, steps);
         }
+    }
+
+    private static bool TryDecodeModifiers(out int steps)
+    {
+        steps = 0;
+
+        if (VFInput.shift)
+        {
+            if (VFInput.alt) return false;
+            steps = VFInput.control ? 100 : 1;
+            return true;
+        }
+
+        if (VFInput.control)
+        {
+            if (VFInput.alt) return false;
+            steps = 10;
+            return true;
+        }
+
+        if (VFInput.alt)
+        {
+            // Alt applies or reverts every level available to this click.
+            steps = int.MaxValue;
+            return true;
+        }
+
+        return false;
     }
 }

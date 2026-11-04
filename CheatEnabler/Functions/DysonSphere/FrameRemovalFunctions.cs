@@ -3,13 +3,11 @@ using HarmonyLib;
 using UnityEngine;
 using UXAssist.Common;
 using UXAssist.Common.GameConstants;
-using UXAssist.Common.ModFeatures;
 using UXAssist.Common.Utils;
 using CheatEnabler;
 
 namespace CheatEnabler.Functions.DysonSphere;
 
-[ModFeature("FrameRemovalFunctions")]
 public static class FrameRemovalFunctions
 {
     public static void RemoveAllFrames()

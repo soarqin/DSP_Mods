@@ -3,13 +3,11 @@ using System.Linq;
 using HarmonyLib;
 using UnityEngine;
 using UXAssist.Common;
-using UXAssist.Common.ModFeatures;
 using UXAssist.Common.Utils;
 using CheatEnabler;
 
 namespace CheatEnabler.Functions.DysonSphere;
 
-[ModFeature("ShellCompletionFunctions")]
 public static class ShellCompletionFunctions
 {
     public static void CompleteShellsInstantly()

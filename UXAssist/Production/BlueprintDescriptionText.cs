@@ -88,7 +88,8 @@ public static class BlueprintDescriptionFormatter
         var input = new List<string>();
         var output = new SortedDictionary<int, double>();
         var research = new SortedDictionary<int, double>();
-        foreach (var flow in report.ItemFlows.Values.OrderBy(flow => flow.ItemId))
+        var orderedFlows = report.ItemFlows.Values.OrderBy(flow => flow.ItemId).ToArray();
+        foreach (var flow in orderedFlows)
         {
             var shortage = Math.Min(flow.IntermediateShortage,
                 flow.SteadyStateExternalSupply ?? flow.RequiredExternalSupply);
@@ -98,14 +99,14 @@ public static class BlueprintDescriptionFormatter
 
         if (report.MaterialComplete)
         {
-            foreach (var flow in report.ItemFlows.Values.OrderBy(flow => flow.ItemId))
+            foreach (var flow in orderedFlows)
             {
                 if (flow.OverbuildSurplus.GetValueOrDefault() > Tolerance)
                     excess.Add(FormatItem(flow.ItemId, flow.OverbuildSurplus.Value, itemTag));
             }
         }
 
-        foreach (var flow in report.ItemFlows.Values.OrderBy(flow => flow.ItemId))
+        foreach (var flow in orderedFlows)
         {
             var requiredSupply = flow.SteadyStateExternalSupply ?? flow.RequiredExternalSupply;
             if (requiredSupply > Tolerance && flow.IntermediateShortage <= Tolerance)

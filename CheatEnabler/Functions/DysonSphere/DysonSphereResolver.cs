@@ -1,12 +1,10 @@
 ﻿using System;
 using UnityEngine;
 using UXAssist.Common;
-using UXAssist.Common.ModFeatures;
 using CheatEnabler;
 
 namespace CheatEnabler.Functions.DysonSphere;
 
-[ModFeature("DysonSphereResolver")]
 public static class DysonSphereResolver
 {
     public static (global::DysonSphere sphere, StarData star)? ResolveCurrent()

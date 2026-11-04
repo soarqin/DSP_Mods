@@ -96,37 +96,19 @@ public static class UIConfigWindow
 
     private class AutoConfigDispenserChargePowerMapper() : MyWindow.RangeValueMapper<int>(3, 30)
     {
-        public override string FormatValue(string format, int value)
-        {
-            var sb = new StringBuilder("         ");
-            StringBuilderUtility.WriteKMG(sb, 8, value * 300000L, false);
-            sb.Append('W');
-            return sb.ToString().Trim();
-        }
+        public override string FormatValue(string format, int value) => FormatPower(value * 300000L);
     }
 
     private class AutoConfigBattleBaseChargePowerMapper() : MyWindow.RangeValueMapper<int>(4, 40)
     {
 
-        public override string FormatValue(string format, int value)
-        {
-            var sb = new StringBuilder("         ");
-            StringBuilderUtility.WriteKMG(sb, 8, value * 300000L, false);
-            sb.Append('W');
-            return sb.ToString().Trim();
-        }
+        public override string FormatValue(string format, int value) => FormatPower(value * 300000L);
     }
 
     private class AutoConfigPLSChargePowerMapper() : MyWindow.RangeValueMapper<int>(2, 20)
     {
 
-        public override string FormatValue(string format, int value)
-        {
-            var sb = new StringBuilder("         ");
-            StringBuilderUtility.WriteKMG(sb, 8, value * 3000000L, false);
-            sb.Append('W');
-            return sb.ToString().Trim();
-        }
+        public override string FormatValue(string format, int value) => FormatPower(value * 3000000L);
     }
 
     private class AutoConfigCarrierMinDeliverMapper() : MyWindow.RangeValueMapper<int>(0, 10)
@@ -147,13 +129,7 @@ public static class UIConfigWindow
 
     private class AutoConfigILSChargePowerMapper() : MyWindow.RangeValueMapper<int>(2, 20)
     {
-        public override string FormatValue(string format, int value)
-        {
-            var sb = new StringBuilder("         ");
-            StringBuilderUtility.WriteKMG(sb, 8, value * 15000000L, false);
-            sb.Append('W');
-            return sb.ToString().Trim();
-        }
+        public override string FormatValue(string format, int value) => FormatPower(value * 15000000L);
     }
 
     private class AutoConfigILSMaxTripShipMapper() : MyWindow.RangeValueMapper<int>(1, 41)
@@ -192,6 +168,14 @@ public static class UIConfigWindow
         }
     }
 
+    private static string FormatPower(long watts)
+    {
+        var sb = new StringBuilder("         ");
+        StringBuilderUtility.WriteKMG(sb, 8, watts, false);
+        sb.Append('W');
+        return sb.ToString().Trim();
+    }
+
     private static void CreateUI(MyConfigWindow wnd, RectTransform trans)
     {
         UnityEngine.UI.Text txt;
@@ -203,14 +187,6 @@ public static class UIConfigWindow
         wnd.AddCheckBox(x, y, tab1, GamePatch.EnableWindowResizeEnabled, I18NKeys.EnableGameWindowResize);
         y += 36f;
         wnd.AddCheckBox(x, y, tab1, GamePatch.LoadLastWindowRectEnabled, I18NKeys.RemeberWindowPositionAndSizeOnLastExit);
-        /*
-        y += 30f;
-        wnd.AddCheckBox(x, y, tab1, GamePatch.AutoSaveOptEnabled, "Better auto-save mechanism");
-        x = 200f;
-        y += 6f;
-        wnd.AddTipsButton2(x, y, tab1, "Better auto-save mechanism", "Better auto-save mechanism tips", "auto-save-opt-tips");
-        x = 0f;
-        */
         y += 36f;
         wnd.AddCheckBox(x, y, tab1, GamePatch.ConvertSavesFromPeaceEnabled, I18NKeys.ConvertOldSavesToCombatModeOnLoading);
         MyCheckBox checkBoxForMeasureTextWidth;

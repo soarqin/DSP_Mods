@@ -106,11 +106,6 @@ public class UIPatch : PatchImpl<UIPatch>
             }
         }
 
-        private static Vector2 GetAdjustedSizeDelta(Vector2 origSizeDelta)
-        {
-            return new Vector2(origSizeDelta.x + 40f, origSizeDelta.y);
-        }
-
         protected override void OnDisable()
         {
             if (planetVeinCount != null)
