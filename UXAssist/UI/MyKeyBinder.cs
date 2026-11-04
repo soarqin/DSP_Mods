@@ -32,8 +32,6 @@ public class MyKeyBinder : MonoBehaviour
 
     [SerializeField] public UIButton setNoneKeyUIButton;
 
-    private bool _nextNotOn;
-
     protected void OnDestroy()
     {
         OnFree?.Invoke();
@@ -223,11 +221,6 @@ public class MyKeyBinder : MonoBehaviour
     {
         inputUIButton.highlighted = true;
 
-        if (!_nextNotOn) return;
-        _nextNotOn = false;
-        inputUIButton.highlighted = false;
-        setTheKeyToggle.isOn = false;
-        waitingText.gameObject.SetActive(false);
     }
 
     public void OnSetDefaultKeyClick(int data)

@@ -89,10 +89,6 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
             "Profile-based option");
         GamePatch.DefaultProfileName = Config.Bind("Game", "DefaultProfileName", "Default",
             "Default profile name, used when profile-based save folder is enabled. Use original game save folder if matched");
-        /*
-        GamePatch.AutoSaveOptEnabled = Config.Bind("Game", "AutoSaveOpt", false,
-            "Better auto-save mechanism");
-        */
         GamePatch.ConvertSavesFromPeaceEnabled = Config.Bind("Game", "ConvertSavesFromPeace", false,
             "Convert saves from Peace mode to Combat mode on save loading");
         GamePatch.GameUpsFactor = _dummyConfig.Bind("Game", "GameUpsFactor", 1.0,

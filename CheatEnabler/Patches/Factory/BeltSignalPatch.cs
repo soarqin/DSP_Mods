@@ -16,7 +16,6 @@ internal class BeltSignalGenerator : PatchImpl<BeltSignalGenerator>
     private static Dictionary<int, BeltSignal>[] _signalBelts;
     private static Dictionary<long, int> _portalFrom;
     private static Dictionary<int, HashSet<long>> _portalTo;
-    private static int _signalBeltsCapacity;
     private static bool _initialized;
     private static ProductionCatalog _sourceCatalog;
     private static ProductionItem _preferredProliferator;
@@ -50,7 +49,6 @@ internal class BeltSignalGenerator : PatchImpl<BeltSignalGenerator>
         _signalBelts = null;
         _portalFrom = null;
         _portalTo = null;
-        _signalBeltsCapacity = 0;
         PendingSources.Clear();
         ClearSourceCache();
     }
@@ -84,7 +82,6 @@ internal class BeltSignalGenerator : PatchImpl<BeltSignalGenerator>
         GameLogicProc.OnGameBegin -= OnGameBegin;
         _initialized = false;
         _signalBelts = null;
-        _signalBeltsCapacity = 0;
         PendingSources.Clear();
         ClearSourceCache();
     }
@@ -181,7 +178,6 @@ internal class BeltSignalGenerator : PatchImpl<BeltSignalGenerator>
     {
         if (DSPGame.IsMenuDemo) return;
         _signalBelts = new Dictionary<int, BeltSignal>[64];
-        _signalBeltsCapacity = 64;
         _portalFrom = [];
         _portalTo = [];
 
@@ -225,13 +221,12 @@ internal class BeltSignalGenerator : PatchImpl<BeltSignalGenerator>
     {
         Dictionary<int, BeltSignal> obj;
         if (index < 0) return null;
-        if (index >= _signalBeltsCapacity)
+        if (index >= _signalBelts.Length)
         {
-            var newCapacity = _signalBeltsCapacity * 2;
+            var newCapacity = _signalBelts.Length * 2;
             var newSignalBelts = new Dictionary<int, BeltSignal>[newCapacity];
-            Array.Copy(_signalBelts, newSignalBelts, _signalBeltsCapacity);
+            Array.Copy(_signalBelts, newSignalBelts, _signalBelts.Length);
             _signalBelts = newSignalBelts;
-            _signalBeltsCapacity = newCapacity;
         }
         else
         {
@@ -246,7 +241,7 @@ internal class BeltSignalGenerator : PatchImpl<BeltSignalGenerator>
 
     private static Dictionary<int, BeltSignal> GetSignalBelts(int index)
     {
-        return index >= 0 && index < _signalBeltsCapacity ? _signalBelts[index] : null;
+        return index >= 0 && _signalBelts != null && index < _signalBelts.Length ? _signalBelts[index] : null;
     }
 
     private static void SetSignalBelt(int factory, int beltId, int signalId, int number)

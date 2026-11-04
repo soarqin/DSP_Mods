@@ -7,12 +7,10 @@ using static CheatEnabler.Functions.DysonSphere.GeometryHelpers;
 using UnityEngine;
 using UXAssist.Common;
 using UXAssist.Common.GameConstants;
-using UXAssist.Common.ModFeatures;
 using CheatEnabler;
 
 namespace CheatEnabler.Functions.DysonSphere;
 
-[ModFeature("IllegalShellFunctions")]
 public static class IllegalShellFunctions
 {
     private static void EnsureDysonShellMaps()
@@ -41,7 +39,7 @@ public static class IllegalShellFunctions
         layer.shellCursor = 1;
     }
 
-    private static void FinalizeDysonSphereChanges(global::DysonSphere sphere, DysonSphereLayer layer, bool notify = false, bool resetRenderMasks = false)
+    private static void FinalizeDysonSphereChanges(global::DysonSphere sphere, bool notify = false, bool resetRenderMasks = false)
     {
         if (sphere == null) return;
         sphere.CheckAutoNodes();
@@ -140,7 +138,7 @@ public static class IllegalShellFunctions
             node.RecalcSpReq();
             node.RecalcCpReq();
         }
-        FinalizeDysonSphereChanges(dysonSphere, layer, true, true);
+        FinalizeDysonSphereChanges(dysonSphere, true, true);
     }
 
     public static void KeepMaxProductionShells()
@@ -245,7 +243,7 @@ public static class IllegalShellFunctions
                 node.RecalcCpReq();
             }
         }
-        FinalizeDysonSphereChanges(dysonSphere, null);
+        FinalizeDysonSphereChanges(dysonSphere);
     }
 
     public static void CreateIllegalDysonShellQuickly(int triangleCount)
@@ -317,7 +315,7 @@ public static class IllegalShellFunctions
                 node.RecalcSpReq();
                 node.RecalcCpReq();
             }
-            FinalizeDysonSphereChanges(dysonSphere, layer, true);
+            FinalizeDysonSphereChanges(dysonSphere, true);
             return;
         }
     }
@@ -433,7 +431,7 @@ public static class IllegalShellFunctions
 
         var shellsChanged = CreateIllegalDysonShellWithMaxOutputForLayer(layer);
 
-        FinalizeDysonSphereChanges(dysonSphere, layer, shellsChanged, true);
+        FinalizeDysonSphereChanges(dysonSphere, shellsChanged, true);
     }
 
     public static void CreateIllegalDysonShellWithMaxOutputForAllLayers()
@@ -449,7 +447,7 @@ public static class IllegalShellFunctions
             shellsChanged = CreateIllegalDysonShellWithMaxOutputForLayer(layer) || shellsChanged;
         }
 
-        FinalizeDysonSphereChanges(dysonSphere, dysonSphere.layersSorted.FirstOrDefault(l => l != null), shellsChanged, true);
+        FinalizeDysonSphereChanges(dysonSphere, shellsChanged, true);
     }
 
     public static void CreateIllegalDysonShellsSpecially()
@@ -477,8 +475,6 @@ public static class IllegalShellFunctions
 
         for (var idx = 1; idx <= 2; idx++)
         {
-            Dictionary<(int, int), int> availableFrames = [];
-            HashSet<int> unusedFrameIds = [];
             var layer = dysonSphere.layersIdBased[idx];
             if (layer != null)
             {
@@ -571,6 +567,6 @@ public static class IllegalShellFunctions
             }
         }
 
-        FinalizeDysonSphereChanges(dysonSphere, dysonSphere.layersIdBased[2], shellsChanged, true);
+        FinalizeDysonSphereChanges(dysonSphere, shellsChanged, true);
     }
 }

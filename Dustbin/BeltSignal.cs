@@ -28,31 +28,14 @@ public static class BeltSignal
         }
     }
 
-    private static byte[] LoadEmbeddedResource(string path, Assembly assembly = null)
+    private static Sprite LoadDustbinSprite()
     {
-        if (assembly == null)
-        {
-            assembly = Assembly.GetCallingAssembly();
-        }
-        var info = assembly.GetName();
-        var name = info.Name;
-        using var stream = assembly.GetManifestResourceStream($"{name}.{path.Replace('/', '.')}")!;
+        using var stream = Assembly.GetExecutingAssembly()
+            .GetManifestResourceStream("Dustbin.assets.icon.signal-410.png")!;
         var buffer = new byte[stream.Length];
         _ = stream.Read(buffer, 0, buffer.Length);
-        return buffer;
-    }
-
-    private static Texture2D LoadEmbeddedTexture(string path, Assembly assembly = null)
-    {
-        var fileData = LoadEmbeddedResource(path, assembly);
         var tex = new Texture2D(2, 2);
-        tex.LoadImage(fileData);
-        return tex;
-    }
-
-    private static Sprite LoadEmbeddedSprite(string path, Assembly assembly = null)
-    {
-        var tex = LoadEmbeddedTexture(path, assembly);
+        tex.LoadImage(buffer);
         return Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
     }
 
@@ -61,7 +44,6 @@ public static class BeltSignal
     private static void VFPreload_InvokeOnLoadWorkEnded_Postfix()
     {
         if (_initialized) return;
-        var assembly = Assembly.GetExecutingAssembly();
         var signals = LDB._signals;
         var index = signals.dataArray.Length;
         var p = new SignalProto
@@ -70,7 +52,7 @@ public static class BeltSignal
             Name = "DUSTBIN",
             GridIndex = 3110,
             IconPath = "Assets/signal-410.png",
-            _iconSprite = LoadEmbeddedSprite("assets/icon/signal-410.png", assembly),
+            _iconSprite = LoadDustbinSprite(),
             SID = ""
         };
         p.name = p.Name.Translate();

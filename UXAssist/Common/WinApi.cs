@@ -80,12 +80,6 @@ public static class WinApi
 
     #endregion
 
-    #region Errors
-
-    private const int ERROR_INSUFFICIENT_BUFFER = 122;
-
-    #endregion
-
     #region Structs
 
     [StructLayout(LayoutKind.Sequential)]

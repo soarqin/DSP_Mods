@@ -10,7 +10,6 @@ public static class UIFunctions
     public static void Init()
     {
         MenuButtonUI.Init();
-        StarmapFilterUI.Init();
         MilkyWayUI.Init();
 
         UXAssist.RegisterExporter(ExportClusterUploadResults);
@@ -19,32 +18,22 @@ public static class UIFunctions
 
     public static void Start()
     {
-        MenuButtonUI.Start();
-        StarmapFilterUI.Start();
-        MilkyWayUI.Start();
     }
 
     public static void Uninit()
     {
-        MenuButtonUI.Uninit();
-        StarmapFilterUI.Uninit();
         MilkyWayUI.Uninit();
     }
 
     public static void OnInputUpdate()
     {
         MenuButtonUI.OnInputUpdate();
-        StarmapFilterUI.OnInputUpdate();
-        MilkyWayUI.OnInputUpdate();
     }
 
     public static void OnUpdate()
     {
-        MenuButtonUI.OnUpdate();
         AutoCruiseUI.OnUpdate();
         AutoConstructUI.OnUpdate();
-        StarmapFilterUI.OnUpdate();
-        MilkyWayUI.OnUpdate();
     }
 
     public static void InitMenuButtons()

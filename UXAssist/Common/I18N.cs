@@ -133,21 +133,6 @@ public static class I18N
         ApplyIndexers();
     }
 
-    /// <summary>
-    /// Returns the localized text for the given key in the currently active language,
-    /// falling back to the key itself when no entry is registered.
-    /// </summary>
-    /// <param name="key">The lookup key.</param>
-    /// <returns>The localized text, or <paramref name="key"/> if no entry exists.</returns>
-    internal static string Translate(string key)
-    {
-        if (!Entries.TryGetValue(key, out var loc)) return key;
-        var languageIndex = Localization.currentLanguageIndex;
-        if (languageIndex >= 0 && languageIndex < Localization.Languages.Length && Localization.Languages[languageIndex].lcId == 2052)
-            return loc.Zh;
-        return loc.En;
-    }
-
     [HarmonyPostfix, HarmonyPriority(Priority.Last), HarmonyPatch(typeof(Localization), nameof(Localization.LoadSettings))]
     private static void Localization_LoadSettings_Postfix()
     {

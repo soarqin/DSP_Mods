@@ -8,11 +8,6 @@ namespace UXAssist.Patches.Factory;
 
 internal static class BuildingBufferPatch
 {
-    public static void Enable(bool enable)
-    {
-        TweakBuildingBuffer.Enable(enable);
-    }
-
     internal class TweakBuildingBuffer : PatchImpl<TweakBuildingBuffer>
     {
         public static void RefreshAssemblerBufferMultipliers()

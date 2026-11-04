@@ -10,11 +10,6 @@ namespace UXAssist.Patches.Factory;
 [ModFeature("VeinProtection")]
 internal static partial class VeinProtectionPatch
 {
-    public static void Enable(bool enable)
-    {
-        ProtectVeinsFromExhaustion.Enable(enable);
-    }
-
     public static void InitConfig()
     {
         ProtectVeinsFromExhaustion.InitConfig();

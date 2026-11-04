@@ -17,7 +17,7 @@ internal static class TechUnlock
     {
         // Mirrors the built-in maxLevel argument: "to MAX" passes the default, the other combinations
         // pass -(steps) so the loop advances exactly `steps` levels.
-        int maxLevel = steps == TechKeyCombo.LevelToMax ? 10000 : -steps;
+        int maxLevel = steps == int.MaxValue ? 10000 : -steps;
 
         UnlockTechRecursive(history, techProto, maxLevel);
 

@@ -12,8 +12,6 @@ namespace CheatEnabler;
 
 public static class UIConfigWindow
 {
-    private static RectTransform _windowTrans;
-
     private static UIButton _resignGameBtn;
     private static UIButton _clearBanBtn;
 
@@ -76,13 +74,12 @@ public static class UIConfigWindow
 
     private static void CreateUI(MyConfigWindow wnd, RectTransform trans)
     {
-        _windowTrans = trans;
         // General tab
         var x = 0f;
         var y = 10f;
         wnd.AddSplitter(trans, 10f);
         wnd.AddTabGroup(trans, "Cheat Enabler", "tab-group-cheatenabler");
-        var tab1 = wnd.AddTab(_windowTrans, "General");
+        var tab1 = wnd.AddTab(trans, "General");
         var cb = wnd.AddCheckBox(x, y, tab1, GamePatch.DevShortcutsEnabled, "Enable Dev Shortcuts");
         x += cb.Width + 5f;
         y += 6f;
@@ -107,7 +104,7 @@ public static class UIConfigWindow
         y = 10f;
         _resignGameBtn = wnd.AddButton(x, y, 300f, tab1, "Assign gamesave to current account", 16, "resign-game-btn", () => { GameMain.data.account = AccountData.me; });
 
-        var tab2 = wnd.AddTab(_windowTrans, "Factory");
+        var tab2 = wnd.AddTab(trans, "Factory");
         x = 0f;
         y = 10f;
         wnd.AddCheckBox(x, y, tab2, FactoryPatch.ImmediateEnabled, "Finish build immediately");
@@ -170,7 +167,7 @@ public static class UIConfigWindow
         wnd.AddText2(x + 32f, y, tab2, "Boost fuel power 2", 13);
 
         // Planet Tab
-        var tab3 = wnd.AddTab(_windowTrans, "Planet");
+        var tab3 = wnd.AddTab(trans, "Planet");
         x = 0f;
         y = 10f;
         wnd.AddCheckBox(x, y, tab3, ResourcePatch.InfiniteResourceEnabled, "Infinite Natural Resources");
@@ -207,7 +204,7 @@ public static class UIConfigWindow
             GameMain.localPlanet.factory.PlanetReformRevert();
         });
 
-        var tab4 = wnd.AddTab(_windowTrans, "Dyson Sphere");
+        var tab4 = wnd.AddTab(trans, "Dyson Sphere");
         x = 0f;
         y = 10f;
         wnd.AddCheckBox(x, y, tab4, DysonSpherePatch.SkipBulletEnabled, "Skip bullet period");
@@ -299,7 +296,7 @@ public static class UIConfigWindow
             }
         }
 
-        var tab5 = wnd.AddTab(_windowTrans, "Mecha/Combat");
+        var tab5 = wnd.AddTab(trans, "Mecha/Combat");
         x = 0f;
         y = 10f;
         wnd.AddCheckBox(x, y, tab5, CombatPatch.MechaInvincibleEnabled, "Mecha and Drones/Fleets invicible");
@@ -315,11 +312,6 @@ public static class UIConfigWindow
     }
 
     private static void UpdateUI()
-    {
-        UpdateButtons();
-    }
-
-    private static void UpdateButtons()
     {
         if (_resignGameBtn == null || _clearBanBtn == null) return;
         var data = GameMain.data;

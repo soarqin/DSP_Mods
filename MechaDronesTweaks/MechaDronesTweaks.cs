@@ -9,9 +9,11 @@ using UnityEngine;
 namespace MechaDronesTweaks;
 
 [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
-[BepInDependency(FastDronesRemover.FastDronesGuid, BepInDependency.DependencyFlags.SoftDependency)]
+[BepInDependency(FastDronesGuid, BepInDependency.DependencyFlags.SoftDependency)]
 public class MechaDronesTweaksPlugin : BaseUnityPlugin
 {
+    private const string FastDronesGuid = "com.dkoppstein.plugin.DSP.FastDrones";
+
     public new static readonly BepInEx.Logging.ManualLogSource Logger =
         BepInEx.Logging.Logger.CreateLogSource(PluginInfo.PLUGIN_NAME);
 
@@ -22,8 +24,13 @@ public class MechaDronesTweaksPlugin : BaseUnityPlugin
         /* Remove FastDrones MOD if loaded */
         try
         {
-            if (FastDronesRemover.Run(_harmony))
+            if (BepInEx.Bootstrap.Chainloader.PluginInfos.TryGetValue(FastDronesGuid, out var pluginInfo) &&
+                pluginInfo.Metadata.Version.ToString() == "0.0.5")
             {
+                var assembly = pluginInfo.Instance.GetType().Assembly;
+                var classType = assembly.GetType("com.dkoppstein.plugin.DSP.FastDrones.FastDronesPlugin");
+                _harmony.Patch(AccessTools.Method(classType, "Start"),
+                    new HarmonyMethod(AccessTools.Method(typeof(MechaDronesTweaksPlugin), nameof(PatchFastDronesStart))));
                 Logger.LogInfo("Unpatch FastDrones - OK");
             }
         }
@@ -32,6 +39,8 @@ public class MechaDronesTweaksPlugin : BaseUnityPlugin
             Logger.LogWarning($"Failed to unpatch FastDrones: {e}");
         }
     }
+
+    private static bool PatchFastDronesStart() => false;
 
     public void Awake()
     {
@@ -50,10 +59,6 @@ public class MechaDronesTweaksPlugin : BaseUnityPlugin
             MechaDronesTweaks.SpeedMultiplier,
             new ConfigDescription("Speed multiplier for mecha drones, working only when UseFixedSpeed is disabled",
                 new AcceptableValueRange<float>(1f, 10f))).Value;
-        MechaDronesTweaks.EnergyMultiplier = Config.Bind("MechaDrones", "EnergyMultiplier",
-            MechaDronesTweaks.EnergyMultiplier,
-            new ConfigDescription("Energy consumption multiplier for mecha drones",
-                new AcceptableValueRange<float>(0f, 1f))).Value;
         MechaDronesTweaks.EnergyMultiplier = Config.Bind("MechaDrones", "EnergyMultiplier",
             MechaDronesTweaks.EnergyMultiplier,
             new ConfigDescription("Energy consumption multiplier for mecha drones",

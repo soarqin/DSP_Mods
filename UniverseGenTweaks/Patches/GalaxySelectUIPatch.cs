@@ -12,10 +12,6 @@ namespace UniverseGenTweaks;
 [ModFeature("UniverseGenGalaxySelectUI", Order = 10)]
 public static class GalaxySelectUIPatch
 {
-    private static Text _minDistTitle;
-    private static Text _minStepTitle;
-    private static Text _maxStepTitle;
-    private static Text _flattenTitle;
     private static Slider _minDistSlider;
     private static Slider _minStepSlider;
     private static Slider _maxStepSlider;
@@ -62,28 +58,28 @@ public static class GalaxySelectUIPatch
         {
             __instance.starCountSlider.maxValue = MoreSettings.MaxStarCount.Value;
 
-            CreateSliderWithText(__instance.starCountSlider, out _minDistTitle, out _minDistSlider, out _minDistText, out var minDistLocalizer);
-            CreateSliderWithText(__instance.starCountSlider, out _minStepTitle, out _minStepSlider, out _minStepText, out var minStepLocalizer);
-            CreateSliderWithText(__instance.starCountSlider, out _maxStepTitle, out _maxStepSlider, out _maxStepText, out var maxStepLocalizer);
-            CreateSliderWithText(__instance.starCountSlider, out _flattenTitle, out _flattenSlider, out _flattenText, out var flattenLocalizer);
+            CreateSliderWithText(__instance.starCountSlider, out var minDistTitle, out _minDistSlider, out _minDistText, out var minDistLocalizer);
+            CreateSliderWithText(__instance.starCountSlider, out var minStepTitle, out _minStepSlider, out _minStepText, out var minStepLocalizer);
+            CreateSliderWithText(__instance.starCountSlider, out var maxStepTitle, out _maxStepSlider, out _maxStepText, out var maxStepLocalizer);
+            CreateSliderWithText(__instance.starCountSlider, out var flattenTitle, out _flattenSlider, out _flattenText, out var flattenLocalizer);
             minDistLocalizer.stringKey = Localization.StarDistanceMin;
-            _minDistTitle.text = Localization.StarDistanceMin.Translate();
+            minDistTitle.text = Localization.StarDistanceMin.Translate();
             minStepLocalizer.stringKey = Localization.StepDistanceMin;
-            _minStepTitle.text = Localization.StepDistanceMin.Translate();
+            minStepTitle.text = Localization.StepDistanceMin.Translate();
             maxStepLocalizer.stringKey = Localization.StepDistanceMax;
-            _maxStepTitle.text = Localization.StepDistanceMax.Translate();
+            maxStepTitle.text = Localization.StepDistanceMax.Translate();
             flattenLocalizer.stringKey = Localization.Flatness;
-            _flattenTitle.text = Localization.Flatness.Translate();
+            flattenTitle.text = Localization.Flatness.Translate();
 
-            _minDistTitle.name = "min-dist";
-            _minStepTitle.name = "min-step";
-            _maxStepTitle.name = "max-step";
-            _flattenTitle.name = "flatten";
+            minDistTitle.name = "min-dist";
+            minStepTitle.name = "min-step";
+            maxStepTitle.name = "max-step";
+            flattenTitle.name = "flatten";
 
-            TransformDeltaY(_minDistTitle.transform, UniverseGenConstants.SliderRowSpacing);
-            TransformDeltaY(_minStepTitle.transform, UniverseGenConstants.SliderRowSpacing * 2);
-            TransformDeltaY(_maxStepTitle.transform, UniverseGenConstants.SliderRowSpacing * 3);
-            TransformDeltaY(_flattenTitle.transform, UniverseGenConstants.SliderRowSpacing * 4);
+            TransformDeltaY(minDistTitle.transform, UniverseGenConstants.SliderRowSpacing);
+            TransformDeltaY(minStepTitle.transform, UniverseGenConstants.SliderRowSpacing * 2);
+            TransformDeltaY(maxStepTitle.transform, UniverseGenConstants.SliderRowSpacing * 3);
+            TransformDeltaY(flattenTitle.transform, UniverseGenConstants.SliderRowSpacing * 4);
             TransformDeltaY(__instance.darkFogToggle.transform.parent, UniverseGenConstants.SliderRowSpacing * 4);
             TransformDeltaY(__instance.resourceMultiplierSlider.transform.parent, UniverseGenConstants.SliderRowSpacing * 4);
             TransformDeltaY(__instance.sandboxToggle.transform.parent, UniverseGenConstants.SliderRowSpacing * 4);
@@ -113,10 +109,7 @@ public static class GalaxySelectUIPatch
         [HarmonyPatch(typeof(UIGalaxySelect), nameof(UIGalaxySelect._OnUnregEvent))]
         private static void UIGalaxySelect__OnUnregEvent_Postfix()
         {
-            _minDistSlider.onValueChanged.RemoveAllListeners();
-            _minStepSlider.onValueChanged.RemoveAllListeners();
-            _maxStepSlider.onValueChanged.RemoveAllListeners();
-            _flattenSlider.onValueChanged.RemoveAllListeners();
+            RemoveAllListeners();
         }
     }
 

@@ -119,8 +119,7 @@ public static class ProductionCatalogReader
         }
 
         return new ProductionCatalog(items, recipes, buildings,
-            (double[])Cargo.accTableMilli.Clone(), (double[])Cargo.incTableMilli.Clone(),
-            (double[])Cargo.powerTableRatio.Clone(), technologies, matrixIds);
+            Cargo.accTableMilli, Cargo.incTableMilli, Cargo.powerTableRatio, technologies, matrixIds);
     }
 
     private static void AddSpecialRecipes(IEnumerable<ItemProto> itemProtos,
