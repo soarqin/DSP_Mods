@@ -21,17 +21,6 @@ function New-OpCts {
     [Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds($TimeoutSec))
 }
 
-function Get-ConnSocket {
-    param($Conn)
-    if ($null -eq $Conn) { return $null }
-    if ($Conn -is [hashtable]) {
-        if ($Conn.ContainsKey('Ws')) { return $Conn['Ws'] }
-        return $null
-    }
-    if ($Conn.PSObject.Properties.Name -contains 'Ws') { return $Conn.Ws }
-    return $null
-}
-
 function Connect-Api {
     param([string] $Uri)
     $ws = [Net.WebSockets.ClientWebSocket]::new()
@@ -49,7 +38,8 @@ function Connect-Api {
 
 function Close-Api {
     param($Conn)
-    $ws = Get-ConnSocket $Conn
+    if ($null -eq $Conn) { return }
+    $ws = $Conn.Ws
     if ($null -eq $ws) { return }
     $cts = New-OpCts
     try {
@@ -64,7 +54,7 @@ function Close-Api {
 
 function Send-Text {
     param($Conn, [string] $Text, [bool] $End = $true)
-    $ws = Get-ConnSocket $Conn
+    $ws = $Conn.Ws
     $bytes = $utf8.GetBytes($Text)
     $seg = [ArraySegment[byte]]::new($bytes)
     $cts = New-OpCts
@@ -75,7 +65,7 @@ function Send-Text {
 
 function Receive-Message {
     param($Conn)
-    $ws = Get-ConnSocket $Conn
+    $ws = $Conn.Ws
     $buffer = [byte[]]::new(65536)
     $ms = [IO.MemoryStream]::new()
     $cts = New-OpCts
@@ -183,7 +173,7 @@ try {
 
     $cts = New-OpCts
     try {
-        $null = (Get-ConnSocket $conn).SendAsync(
+        $null = $conn.Ws.SendAsync(
             [ArraySegment[byte]]::new([byte[]](1, 2, 3)),
             [Net.WebSockets.WebSocketMessageType]::Binary,
             $true,

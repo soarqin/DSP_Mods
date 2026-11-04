@@ -639,7 +639,7 @@ internal static class RealtimeLogisticsInfoPanel
                 || rectPoint.x is < -4096f or > 4096f
                 || rectPoint.y is < -4096f or > 4096f
                 || Phys.RayCastSphere(localPosition, vec / magnitude, magnitude, Vector3.zero, realRadius, out _)
-                || storageArray.Select(x => x.itemId).All(x => x == 0))
+                || storageArray.All(storage => storage.itemId == 0))
             {
                 stationTip.gameObject.SetActive(false);
                 continue;

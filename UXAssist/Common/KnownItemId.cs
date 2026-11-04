@@ -2,8 +2,8 @@ namespace UXAssist.Common;
 
 public enum KnownItemId : int
 {
-    Drone = 5001,
-    Ship = 5002,
-    Bot = 5003,
-    Warper = 1210,
+    Drone = GameConstants.ItemIds.LogisticsDrone,
+    Ship = GameConstants.ItemIds.LogisticsVessel,
+    Bot = GameConstants.ItemIds.LogisticsBot,
+    Warper = GameConstants.ItemIds.SpaceWarper,
 }

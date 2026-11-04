@@ -35,10 +35,6 @@ internal static class MilkyWayUI
         GameLogicProc.OnGameEnd += ResetState;
     }
 
-    public static void Start()
-    {
-    }
-
     public static void Uninit()
     {
         GameLogicProc.OnGameEnd -= ResetState;
@@ -48,14 +44,6 @@ internal static class MilkyWayUI
     {
         ClearClusterUploadResults();
         _topTenPlayerData = null;
-    }
-
-    public static void OnInputUpdate()
-    {
-    }
-
-    public static void OnUpdate()
-    {
     }
 
     public static void AddClusterUploadResult(int result, float requestTime)

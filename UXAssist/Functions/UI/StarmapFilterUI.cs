@@ -58,26 +58,6 @@ internal static class StarmapFilterUI
         {1000, 23},
     };
 
-    public static void Init()
-    {
-                                                                    }
-
-    public static void Start()
-    {
-    }
-
-    public static void Uninit()
-    {
-    }
-
-    public static void OnInputUpdate()
-    {
-    }
-
-    public static void OnUpdate()
-    {
-    }
-
     public static void InitStarmapButtons()
     {
         var uiRoot = UIRoot.instance;

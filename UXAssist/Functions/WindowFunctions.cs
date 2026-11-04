@@ -46,19 +46,6 @@ public static class WindowFunctions
         process.PriorityClass = (ProcessPriorityClass)ProrityFlags[ProcessPriority.Value];
     }
 
-    private static string GetPriorityName(int priority)
-    {
-        return priority switch
-        {
-            WinApi.HIGH_PRIORITY_CLASS => I18NKeys.High.Translate(),
-            WinApi.ABOVE_NORMAL_PRIORITY_CLASS => I18NKeys.AboveNormal.Translate(),
-            WinApi.NORMAL_PRIORITY_CLASS => I18NKeys.Normal.Translate(),
-            WinApi.BELOW_NORMAL_PRIORITY_CLASS => I18NKeys.BelowNormal.Translate(),
-            WinApi.IDLE_PRIORITY_CLASS => I18NKeys.Idle.Translate(),
-            _ => I18NKeys.Unknown.Translate()
-        };
-    }
-
     public static void SetWindowTitle()
     {
         // Get profile name from command line arguments, and set window title accordingly

@@ -7,8 +7,6 @@ namespace UniverseGenTweaks;
 
 public static class UIConfigWindow
 {
-    private static RectTransform _windowTrans;
-
     public static void Init()
     {
         MyConfigWindow.OnUICreated += CreateUI;
@@ -16,13 +14,12 @@ public static class UIConfigWindow
 
     private static void CreateUI(MyConfigWindow wnd, RectTransform trans)
     {
-        _windowTrans = trans;
         // General tab
         var x = 0f;
         var y = 10f;
         wnd.AddSplitter(trans, 10f);
         wnd.AddTabGroup(trans, Localization.UniverseGen, "tab-group-galaxygen");
-        var tab1 = wnd.AddTab(_windowTrans, "General");
+        var tab1 = wnd.AddTab(trans, "General");
         MyCheckBox.CreateCheckBox(x, y, tab1, MoreSettings.Enabled, Localization.EnableMoreSettingsOnUniverseGen);
         x += 20f;
         y += 26f;
@@ -70,7 +67,7 @@ public static class UIConfigWindow
             EpicDifficulty.OilMultiplier.Value = val;
             sl2.SetLabelText(val.ToString(sl2.labelFormat));
         };
-        var tab2 = wnd.AddTab(_windowTrans, Localization.BirthStar);
+        var tab2 = wnd.AddTab(trans, Localization.BirthStar);
         x = 0f;
         y = 10f;
         MyCheckBox.CreateCheckBox(x, y, tab2, BirthPlanetPatch.SitiVeinsOnBirthPlanet, Localization.SiliconTitaniumOnBirthPlanet);

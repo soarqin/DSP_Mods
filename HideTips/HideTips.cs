@@ -20,9 +20,6 @@ public class HideTips : BaseUnityPlugin
     private static bool _noResearchCompletionPopups = true;
     private static bool _noResearchCompletionTips;
     private static bool _skipPrologue = true;
-    // private static bool _hideMenuDemo;
-
-    private static Harmony _patch;
 
     private void Awake()
     {
@@ -34,21 +31,8 @@ public class HideTips : BaseUnityPlugin
         _noResearchCompletionPopups = Config.Bind("General", "NoResearchCompletionPopups", _noResearchCompletionPopups, "Disable Research Completion Popup Windows").Value;
         _noResearchCompletionTips = Config.Bind("General", "NoResearchCompletionTips", _noResearchCompletionTips, "Disable Research Completion Tips").Value;
         _skipPrologue = Config.Bind("General", "SkipPrologue", _skipPrologue, "Skip prologue for new game").Value;
-        // _hideMenuDemo = Config.Bind("General", "HideMenuDemo", _hideMenuDemo, "Disable title screen demo scene loading").Value;
         if (!_cfgEnabled) return;
         Harmony.CreateAndPatchAll(typeof(HideTips));
-        /*
-        if (_hideMenuDemo)
-        {
-            _patch = Harmony.CreateAndPatchAll(typeof(HideMenuDemo));
-        }
-        */
-    }
-
-    private void OnDestroy()
-    {
-        _patch?.UnpatchSelf();
-        _patch = null;
     }
 
     [HarmonyPrefix]
@@ -146,74 +130,3 @@ public class HideTips : BaseUnityPlugin
         return false;
     }
 }
-
-/*
-[HarmonyPatch]
-class HideMenuDemo
-{
-    [HarmonyPriority(Priority.First), HarmonyPrefix]
-    [HarmonyPatch(typeof(DSPGame), nameof(DSPGame.StartDemoGame), typeof(int))]
-    private static bool DSPGame_StartDemoGame_Prefix()
-    {
-        if (DSPGame.Game != null)
-        {
-            DSPGame.EndGame();
-        }
-
-        DSPGame.IsMenuDemo = true;
-        DSPGame.CreateGameMainObject();
-        DSPGame.Game.isMenuDemo = true;
-        DSPGame.Game.CreateIconSet();
-        GameMain.data = new GameData();
-        GameMain.data.mainPlayer = Player.Create(GameMain.data, 1);
-        GameMain.data.galaxy = new GalaxyData
-        {
-            starCount = 0
-        };
-
-        if (GameMain.universeSimulator != null)
-        {
-            UnityEngine.Object.Destroy(GameMain.universeSimulator.gameObject);
-        }
-        GameMain.universeSimulator = UnityEngine.Object.Instantiate(Configs.builtin.universeSimulatorPrefab);
-        GameMain.universeSimulator.spaceAudio = new GameObject("Space Audio")
-        {
-            transform =
-            {
-                parent = GameMain.universeSimulator.transform
-            }
-        }.AddComponent<SpaceAudio>();
-        GameMain.Begin();
-        return false;
-    }
-
-    [HarmonyPriority(Priority.First), HarmonyPrefix]
-    [HarmonyPatch(typeof(VFPreload), nameof(VFPreload.IsMenuDemoLoaded))]
-    private static bool VFPreload_IsMenuDemoLoaded_Prefix(ref bool __result)
-    {
-        __result = true;
-        return false;
-    }
-
-    [HarmonyPriority(Priority.First), HarmonyPrefix]
-    [HarmonyPatch(typeof(DSPGame), nameof(DSPGame.LateUpdate))]
-    [HarmonyPatch(typeof(GameMain), nameof(GameMain.LateUpdate))]
-    [HarmonyPatch(typeof(GameMain), nameof(GameMain.FixedUpdate))]
-    [HarmonyPatch(typeof(GameMain), nameof(GameMain.Update))]
-    [HarmonyPatch(typeof(GameCamera), nameof(GameCamera.LateUpdate))]
-    private static bool DSPGame_LateUpdate_Prefix()
-    {
-        return !DSPGame.IsMenuDemo;
-    }
-
-    [HarmonyPriority(Priority.First), HarmonyPrefix]
-    [HarmonyPatch(typeof(GameMain), nameof(GameMain.Begin))]
-    private static bool GameMain_Begin_Prefix()
-    {
-        if (!DSPGame.IsMenuDemo) return true;
-        DSPGame.Game._loading = false;
-        DSPGame.Game._running = true;
-        return false;
-    }
-}
-*/

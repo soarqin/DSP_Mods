@@ -1,9 +1,7 @@
 using System.IO;
-using UXAssist.Common.ModFeatures;
 
 namespace UniverseGenTweaks;
 
-[ModFeature("UniverseGenSave", Order = 13)]
 public static class GalaxyGenSave
 {
     public static void Export(BinaryWriter w)

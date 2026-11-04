@@ -27,24 +27,12 @@ internal static class MenuButtonUI
                         I18N.OnInitialized += RecreateConfigWindow;
     }
 
-    public static void Start()
-    {
-    }
-
-    public static void Uninit()
-    {
-    }
-
     public static void OnInputUpdate()
     {
         if (_toggleKey.keyValue)
         {
             ToggleConfigWindow();
         }
-    }
-
-    public static void OnUpdate()
-    {
     }
 
     public static void ToggleConfigWindow()

@@ -10,15 +10,6 @@ namespace UXAssist.Patches.Factory;
 
 internal static class ArchitectModePatch
 {
-    public static void Enable(bool enable)
-    {
-        UnlimitInteractive.Enable(enable);
-        RemoveSomeConditionBuild.Enable(enable);
-        RemoveBuildRangeLimit.Enable(enable);
-        LargerAreaForUpgradeAndDismantle.Enable(enable);
-        LargerAreaForTerraform.Enable(enable);
-    }
-
     internal class UnlimitInteractive : PatchImpl<UnlimitInteractive>
     {
         // Harmony transpiler: PlayerAction_Inspect_GetObjectSelectDistance_Transpiler

@@ -2,11 +2,9 @@
 using System.Linq;
 using UXAssist.Common;
 using UXAssist.Common.GameConstants;
-using UXAssist.Common.ModFeatures;
 
 namespace CheatEnabler.Functions;
 
-[ModFeature("PlayerFunctions")]
 public static class PlayerFunctions
 {
     public static void Init()

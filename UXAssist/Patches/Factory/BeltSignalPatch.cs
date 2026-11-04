@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using HarmonyLib;
 using UXAssist.Common;
@@ -14,11 +13,6 @@ namespace UXAssist.Patches.Factory;
 [ModFeature("BeltSignalsForBuyOut")]
 internal static class BeltSignalPatch
 {
-    public static void Enable(bool enable)
-    {
-        BeltSignalsForBuyOut.Enable(enable);
-    }
-
     public static void InitPersist()
     {
         BeltSignalsForBuyOut.InitPersist();
@@ -123,23 +117,6 @@ internal static class BeltSignalPatch
             }
 
             _loaded = true;
-        }
-
-        private static void RemoveBeltSignalProtos()
-        {
-            if (!_initialized || !_loaded) return;
-            var signals = LDB._signals;
-            if (signals.dataIndices.TryGetValue(301, out var index))
-            {
-                signals.dataArray = [.. signals.dataArray.Take(index), .. signals.dataArray.Skip(index + 6)];
-                for (var id = 301; id <= 306; id++)
-                    signals.dataIndices.Remove(id);
-                var len = signals.dataArray.Length;
-                for (; index < len; index++)
-                    signals.dataIndices[signals.dataArray[index].ID] = index;
-            }
-
-            _loaded = false;
         }
 
         private static void InitSignalBelts()

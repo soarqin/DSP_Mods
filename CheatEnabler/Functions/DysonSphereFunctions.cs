@@ -1,11 +1,9 @@
 ﻿using BepInEx.Configuration;
 using CheatEnabler.Functions.DysonSphere;
 using UXAssist.Common;
-using UXAssist.Common.ModFeatures;
 
 namespace CheatEnabler.Functions;
 
-[ModFeature("CheatDysonSphere", Order = 20)]
 public static class DysonSphereFunctions
 {
     public const int MinShellsCountForFunctions = 1;
