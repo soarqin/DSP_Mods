@@ -160,15 +160,25 @@ public class BlueprintDescriptionPatch : PatchImpl<BlueprintDescriptionPatch>
                 _checkbox.gameObject.name = "blueprint-proliferation";
                 _checkbox.OnChecked += OnProliferationChecked;
                 _basisLabel = LayoutHelper.AddText(Left, 80, _panel, I18NKeys.BlueprintProductionBasis, 14);
-                _basisCombo = MyCornerComboBox.CreateComboBox(Left, 108, _panel).WithFontSize(14)
-                    .WithItems(I18NKeys.BlueprintFinalProducts, I18NKeys.BlueprintBottleneckIntermediate)
-                    .WithIndex(0);
+                _basisCombo = MyCornerComboBox.CreateComboBox(Left, 108, _panel).WithFontSize(14);
+                // The star-panel localizer would replace the stretched width on every enable or language change.
+                var localizer = _basisCombo.GetComponent<Localizer>();
+                if (localizer)
+                {
+                    localizer.enabled = false;
+                    UnityEngine.Object.Destroy(localizer);
+                }
                 var combo = _basisCombo.GetComponent<UIComboBox>();
                 combo.CanInput = false;
                 combo.autoWidth = false;
                 var comboRect = (RectTransform)_basisCombo.transform;
                 comboRect.anchorMax = Vector2.one;
                 comboRect.sizeDelta = new Vector2(-Left * 2, 28);
+                Util.NormalizeRectWithMargin(_basisCombo.transform.Find("Main Button"), 0, 0, 0, 0);
+                combo.m_Text.alignment = TextAnchor.MiddleLeft;
+                combo.m_ListItemRes.GetComponentInChildren<Text>().alignment = TextAnchor.MiddleLeft;
+                _basisCombo.SetItems(I18NKeys.BlueprintFinalProducts, I18NKeys.BlueprintBottleneckIntermediate);
+                _basisCombo.SetIndex(0);
                 _basisHelp = LayoutHelper.AddTipsButton(Left, 80, _panel,
                     I18NKeys.BlueprintProductionBasis.Translate(), I18NKeys.BlueprintProductionBasisTip.Translate(), "");
                 UpdateLabels();
