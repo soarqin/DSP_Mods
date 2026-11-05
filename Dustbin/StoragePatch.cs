@@ -3,7 +3,6 @@ using System.IO;
 using System.Reflection.Emit;
 using HarmonyLib;
 using NebulaAPI;
-using UnityEngine;
 
 namespace Dustbin;
 
@@ -106,7 +105,7 @@ public static class StoragePatch
     [HarmonyPatch(typeof(UIStorageWindow), nameof(UIStorageWindow._OnCreate))]
     private static void UIStorageWindow__OnCreate_Postfix(UIStorageWindow __instance)
     {
-        _storageDustbinCheckBox = UI.MyCheckBox.CreateCheckBox(false, __instance.transform, 50f, 50f, Localization.CurrentLanguageLCID == Localization.LCID_ZHCN ? "垃圾桶" : "Dustbin");
+        _storageDustbinCheckBox = UI.MyCheckBox.CreateCheckBox(false, __instance.transform, 220f, 26f, Localization.CurrentLanguageLCID == Localization.LCID_ZHCN ? "垃圾桶" : "Dustbin");
         var window = __instance;
         _storageDustbinCheckBox.OnChecked += () =>
         {
@@ -134,10 +133,6 @@ public static class StoragePatch
         var storagePool = __instance.factoryStorage.storagePool;
         if (storagePool[storageId].id != storageId) return;
         _storageDustbinCheckBox.Checked = storagePool[storageId].IsDustbin;
-        if (__instance.transform is RectTransform rectTrans)
-        {
-            _storageDustbinCheckBox.rectTrans.anchoredPosition3D = new Vector3(190, 57 - rectTrans.sizeDelta.y, 0);
-        }
     }
 
     /* Adopt fix from starfi5h's NebulaCompatiblilityAssist */
@@ -145,8 +140,8 @@ public static class StoragePatch
     [HarmonyPatch(typeof(UIStorageGrid), nameof(UIStorageGrid.OnStorageSizeChanged))]
     private static void UIStorageGrid_OnStorageSizeChanged_Postfix()
     {
-        // Due to storage window is empty when open in client, the size will change after receiving data from host
-        _lastStorageId = 0; // Refresh UI to reposition button on client side
+        // Storage data arrives asynchronously on multiplayer clients.
+        _lastStorageId = 0; // Refresh checkbox state on the client
     }
 
 
