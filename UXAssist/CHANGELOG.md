@@ -4,7 +4,7 @@
 ## Changlog
 
 * 1.6.4
-  * `Blueprint descriptions`: Open generation options next to the `Auto-fill` entry and keep them attached while scrolling, with placement adjusted at screen edges. Use a titled panel with a native close button, compact options, and one `Generate` action at the bottom. The production-basis dropdown has correctly sized rows and expands the panel above the action. Close with the X, an outside click, or Esc; Esc first closes an expanded dropdown. Preserve the native inspector layout and fix selector sizing when reopening options or changing language.
+  * `Blueprint descriptions`: Keep `Auto-fill` beside the description title while reserving space for the native icon button. Generation options follow the entry while scrolling and adjust at screen edges; text stays inside the visible panel, the proliferation label remains visible, and rows and buttons fit the localized text. The panel uses a native X, one footer `Generate` action, and an expanding dropdown area. Close with the X, an outside click, or Esc; Esc first closes an expanded list. Preserve the native inspector layout.
   * `Hide battle-related techs in Peace mode`: Fix an array index error when opening the tech tree after switching from a Peace-mode save to a Combat-mode save in the same game process, including when disabling the option after loading another Peace-mode save.
 * 1.6.3
   * `Quick build Mining Machines`:
@@ -448,7 +448,7 @@
 ## 更新日志
 
 * 1.6.4
-  * `蓝图说明`：生成选项在「自动填写」入口旁打开，滚动时跟随入口，并根据屏幕边缘调整位置。面板包含标题、原生关闭按钮、紧凑排列的选项和底部单个「生成说明」按钮；产量基准下拉列表使用正确的行尺寸，展开时面板增高，操作按钮随之下移。可通过叉号、点击外部或 Esc 关闭；下拉列表展开时，Esc 先收起列表。保留原生检查面板布局，并修复重新打开选项或切换语言时的选择框尺寸问题。
+  * `蓝图说明`：「自动填写」入口紧接说明标题，并为原生图标按钮保留空间。生成选项滚动时跟随入口，在屏幕边缘调整位置；文字保留在面板可见背景内，增产标签保持可见，行高和按钮尺寸适应本地化文字。面板使用原生叉号、底部单个「生成说明」按钮和可随下拉列表展开的区域。可通过叉号、点击外部或 Esc 关闭；下拉列表展开时，Esc 先收起列表。保留原生检查面板布局。
   * `在和平模式下隐藏战斗相关科技`：修复在同一次游戏运行中从和平模式存档切换到战斗模式存档后打开科技树时的数组越界，以及再次加载和平模式存档后关闭选项时的同类问题。
 * 1.6.3
   * `快速铺设采矿机`：
