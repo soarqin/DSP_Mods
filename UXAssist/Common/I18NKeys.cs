@@ -6,6 +6,7 @@ public static class I18NKeys
 {
     public const string Unknown = "Unknown";
     public const string BlueprintAutoFillDescription = "UXAssist Blueprint Auto-fill description";
+    public const string BlueprintGenerateDescription = "UXAssist Blueprint Generate Description";
     public const string BlueprintDescriptionOptions = "UXAssist Blueprint Description Options";
     public const string BlueprintDescriptionOptionsTip = "UXAssist Blueprint Description Options Tip";
     public const string BlueprintProliferation = "UXAssist Blueprint Proliferation";
@@ -244,6 +245,7 @@ public static class I18NKeys
     {
         I18N.Add(Unknown, "Unknown", "未知");
         I18N.Add(BlueprintAutoFillDescription, "Auto-fill description", "自动填写说明");
+        I18N.Add(BlueprintGenerateDescription, "Generate", "生成说明");
         I18N.Add(BlueprintDescriptionOptions, "Auto-fill…", "自动填写…");
         I18N.Add(BlueprintDescriptionOptionsTip,
             "Choose production basis and proliferation, then fill the blueprint description.",
