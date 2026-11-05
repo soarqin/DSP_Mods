@@ -4,6 +4,7 @@
 ## Changlog
 
 * 2.4.8
+  * Require UXAssist 1.6.3 or later for the shared production API. Older versions are rejected before initialization instead of failing while loading belt-signal features.
   * `Mecha and Drones/Fleets invincible`: Fix mecha HP and energy shield protection failing when enabled after taking damage, and restore protection for space fleets.
   * `Finish build immediately`: Fix possible errors when starting a new game. Construction begins after the opening cutscene ends or is skipped.
   * `Belt signal item generation`:
@@ -208,6 +209,7 @@
 ## 更新日志
 
 * 2.4.8
+  * 需要 UXAssist 1.6.3 或更高版本提供共享生产计算 API。旧版本会在初始化前被拒绝加载，避免加载传送带信号功能时出错。
   * `机甲和战斗无人机无敌`：修复受伤后启用时机甲耐久度和能量护盾保护可能失效的问题，并恢复太空编队的无敌保护。
   * `建造秒完成`：修复开始新游戏时可能报错的问题。建造会在开场动画播放结束或跳过后开始。
   * `传送带信号物品生成`：
