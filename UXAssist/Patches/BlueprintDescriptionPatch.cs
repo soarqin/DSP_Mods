@@ -109,7 +109,7 @@ public class BlueprintDescriptionPatch : PatchImpl<BlueprintDescriptionPatch>
     private sealed class InspectorControls
     {
         private const float Left = 12f;
-        private const float ControlsGap = 10f;
+        private const float ControlsGap = 6f;
 
         private readonly UIBlueprintInspector _inspector;
         private RectTransform _panel;
@@ -126,7 +126,7 @@ public class BlueprintDescriptionPatch : PatchImpl<BlueprintDescriptionPatch>
         private readonly RectTransform _descriptionIcon;
         private bool _optionsOpen;
         private MyCheckBox _checkbox;
-        private MyCornerComboBox _basisCombo;
+        private UIComboBox _basisCombo;
         private Text _basisLabel;
         private UIButton _basisHelp;
         private BlueprintData _currentBlueprint;
@@ -148,13 +148,13 @@ public class BlueprintDescriptionPatch : PatchImpl<BlueprintDescriptionPatch>
                 _entry.tips = inspector.tipButton2.tips;
                 _entry.tips.topLevel = true;
                 _entryText.resizeTextForBestFit = false;
-                _entryText.alignment = TextAnchor.MiddleCenter;
-                Util.NormalizeRectWithMargin(_entryText, 1, 8, 1, 8);
+                Util.NormalizeRectWithMargin(_entryText, 0, 8, 0, 8);
 
                 // Reuse the native background, including its blur material, only while options are open.
                 var source = UIRoot.instance.uiGame.inserterWindow.transform.Find("panel-bg").GetComponent<Image>();
                 _panel = UnityEngine.Object.Instantiate(source, inspector.rectTrans).rectTransform;
                 _panel.gameObject.name = "uxassist-blueprint-description-options";
+                _panel.gameObject.SetActive(false);
                 for (var i = _panel.childCount - 1; i >= 0; i--)
                 {
                     var child = _panel.GetChild(i).gameObject;
@@ -188,29 +188,50 @@ public class BlueprintDescriptionPatch : PatchImpl<BlueprintDescriptionPatch>
                 _checkbox.gameObject.name = "blueprint-proliferation";
                 _checkbox.OnChecked += OnProliferationChecked;
                 _basisLabel = LayoutHelper.AddText(Left, 68, _panel, I18NKeys.BlueprintProductionBasis, 14);
-                _basisCombo = MyCornerComboBox.CreateComboBox(0, 68, _panel).WithFontSize(14);
-                // The star-panel localizer would replace the stretched width on every enable or language change.
-                var localizer = _basisCombo.GetComponent<Localizer>();
-                if (localizer)
+                _basisCombo = UnityEngine.Object.Instantiate(UIRoot.instance.optionWindow.resolutionComp, _panel);
+                _basisCombo.gameObject.name = "blueprint-production-basis";
+                _basisCombo.gameObject.SetActive(true);
+                foreach (var button in _basisCombo.GetComponentsInChildren<UIButton>(true)) Util.ResetButton(button);
+                var combo = _basisCombo;
+                // Runtime resolution rows are cloned as children, but their private tracking list is not serialized.
+                for (var i = combo.m_DropDownContent.childCount - 1; i >= 0; i--)
                 {
-                    localizer.enabled = false;
-                    UnityEngine.Object.Destroy(localizer);
+                    var button = combo.m_DropDownContent.GetChild(i).GetComponent<Button>();
+                    if (!button || button == combo.m_ListItemRes) continue;
+                    button.gameObject.SetActive(false);
+                    UnityEngine.Object.Destroy(button.gameObject);
                 }
-                var combo = _basisCombo.GetComponent<UIComboBox>();
+                combo.ItemButtons.Clear();
+                combo.Items.Clear();
+                combo.onSubmit = new UIComboBox.SubmitEvent();
+                combo.onItemIndexChange = new UIComboBox.ChangeEvent();
                 combo.CanInput = false;
                 combo.autoWidth = false;
+                combo.parentSibling = false;
+                combo.itemIndex = -1;
+                combo.isDroppedDown = false;
+                combo.m_DropDownContent.anchoredPosition = Vector2.zero;
+                combo.m_DropDownList.gameObject.SetActive(false);
+                combo.m_EmptyItemRes.gameObject.SetActive(false);
+                combo.m_SelectionBG.gameObject.SetActive(false);
+                combo.m_Scrollbar.gameObject.SetActive(false);
                 Util.NormalizeRectWithMargin(_basisCombo.transform.Find("Main Button"), 0, 0, 0, 0);
                 combo.m_Text.alignment = TextAnchor.MiddleLeft;
+                combo.m_Text.fontSize = 14;
                 combo.m_Text.resizeTextForBestFit = false;
-                Util.NormalizeRectWithMargin(combo.m_Text, 2, 8, 2, 24);
+                combo.m_Text.horizontalOverflow = HorizontalWrapMode.Overflow;
+                combo.m_Text.verticalOverflow = VerticalWrapMode.Overflow;
+                Util.NormalizeRectWithMargin(combo.m_Text, 2, 8, 2, 30);
                 var itemText = combo.m_ListItemRes.GetComponentInChildren<Text>();
                 itemText.alignment = TextAnchor.MiddleLeft;
+                itemText.fontSize = 14;
                 itemText.resizeTextForBestFit = false;
+                itemText.horizontalOverflow = HorizontalWrapMode.Overflow;
+                itemText.verticalOverflow = VerticalWrapMode.Overflow;
                 Util.NormalizeRectWithMargin(itemText, 2, 8, 2, 8);
                 _basisHelp = LayoutHelper.AddTipsButton(Left, 68, _panel,
                     I18NKeys.BlueprintProductionBasis.Translate(), I18NKeys.BlueprintProductionBasisTip.Translate(), "");
                 UpdateLabels();
-                _panel.gameObject.SetActive(false);
             }
             catch
             {
@@ -223,7 +244,7 @@ public class BlueprintDescriptionPatch : PatchImpl<BlueprintDescriptionPatch>
         {
             _currentBlueprint = null;
             _manualProliferation = false;
-            _basisCombo.SetIndex(0);
+            _basisCombo.itemIndex = 0;
             if (_inspector.blueprint != null) SyncDefault();
             else _checkbox.Checked = false;
             CloseOptions();
@@ -261,7 +282,7 @@ public class BlueprintDescriptionPatch : PatchImpl<BlueprintDescriptionPatch>
         {
             PositionEntry();
             if (!_optionsOpen) return;
-            var combo = _basisCombo.GetComponent<UIComboBox>();
+            var combo = _basisCombo;
             if (VFInput.escape)
             {
                 if (combo.isDroppedDown)
@@ -327,16 +348,6 @@ public class BlueprintDescriptionPatch : PatchImpl<BlueprintDescriptionPatch>
                 CloseOptions();
                 return;
             }
-            var combo = _basisCombo.GetComponent<UIComboBox>();
-            var extra = combo.isDroppedDown ? combo.DropDownCount * combo.ItemHeight + 2 * combo.ItemPadding + 2 : 0;
-            var comboRect = (RectTransform)_basisCombo.transform;
-            var footerTop = -comboRect.anchoredPosition.y + comboRect.rect.height + 16 + extra;
-            var image = _panel.GetComponent<Image>();
-            var padding = UnityEngine.Sprites.DataUtility.GetPadding(image.sprite) / image.pixelsPerUnit;
-            var right = Mathf.Ceil(padding.z) + Left;
-            var bottom = Mathf.Ceil(padding.y) + Left;
-            _panel.sizeDelta = new Vector2(_panel.sizeDelta.x, footerTop + ((RectTransform)_button.transform).rect.height + bottom);
-            Util.NormalizeRectWithTopRight(_button, right, footerTop, _panel);
             if (!TryGetPopupPosition(anchor, screen, _panel.sizeDelta, out var position))
             {
                 CloseOptions();
@@ -364,6 +375,11 @@ public class BlueprintDescriptionPatch : PatchImpl<BlueprintDescriptionPatch>
 
         public void UpdateLabels()
         {
+            _entryText.font = _descriptionLabel.font;
+            _entryText.fontSize = _descriptionLabel.fontSize;
+            _entryText.fontStyle = _descriptionLabel.fontStyle;
+            _entryText.lineSpacing = _descriptionLabel.lineSpacing;
+            _entryText.alignment = _descriptionLabel.alignment;
             _entryText.text = I18NKeys.BlueprintDescriptionOptions.Translate();
             ((RectTransform)_entry.transform).sizeDelta =
                 new Vector2(Util.GetPreferredWidth(_entryText) + 20, 22);
@@ -374,9 +390,10 @@ public class BlueprintDescriptionPatch : PatchImpl<BlueprintDescriptionPatch>
             _buttonText.text = I18NKeys.BlueprintGenerateDescription.Translate();
             _checkbox.SetLabelText(I18NKeys.BlueprintProliferation.Translate());
             _basisLabel.text = I18NKeys.BlueprintProductionBasis.Translate();
-            var combo = _basisCombo.GetComponent<UIComboBox>();
+            var combo = _basisCombo;
             var index = Math.Max(0, combo.itemIndex);
-            _basisCombo.SetItems(I18NKeys.BlueprintFinalProducts, I18NKeys.BlueprintBottleneckIntermediate);
+            combo.Items = [I18NKeys.BlueprintFinalProducts.Translate(), I18NKeys.BlueprintBottleneckIntermediate.Translate()];
+            combo.DropDownCount = combo.Items.Count;
             _basisHelp.tips.tipTitle = I18NKeys.BlueprintProductionBasis.Translate();
             _basisHelp.tips.tipText = I18NKeys.BlueprintProductionBasisTip.Translate();
             _basisHelp.UpdateTip();
@@ -385,9 +402,10 @@ public class BlueprintDescriptionPatch : PatchImpl<BlueprintDescriptionPatch>
             var padding = UnityEngine.Sprites.DataUtility.GetPadding(image.sprite) / image.pixelsPerUnit;
             var left = Mathf.Ceil(padding.x) + Left;
             var right = Mathf.Ceil(padding.z) + Left;
-            var top = Mathf.Ceil(padding.w) + 10;
+            var top = Mathf.Ceil(padding.w) + 18;
             var titleHeight = Math.Max(30, Mathf.Ceil(_title.preferredHeight) + 4);
-            Util.NormalizeRectWithTopLeft(_title, left, top, _panel);
+            var titleLeft = left + 12;
+            Util.NormalizeRectWithTopLeft(_title, titleLeft, top, _panel);
             Util.NormalizeRectWithTopRight(_closeButton, right, top, _panel);
             var rowTop = top + titleHeight + 8;
             var labelHeight = Math.Max(26, Mathf.Ceil(_checkbox.labelText.preferredHeight) + 4);
@@ -395,21 +413,21 @@ public class BlueprintDescriptionPatch : PatchImpl<BlueprintDescriptionPatch>
             var checkLabel = _checkbox.labelText.rectTransform;
             checkLabel.anchorMin = checkLabel.anchorMax = new Vector2(0, 0.5f);
             checkLabel.pivot = new Vector2(0, 0.5f);
-            checkLabel.anchoredPosition = new Vector2(28, 0);
+            checkLabel.anchoredPosition = new Vector2(24, 0);
             checkLabel.sizeDelta = new Vector2(Util.GetPreferredWidth(_checkbox.labelText) + 4, labelHeight);
             rowTop += labelHeight + 8;
             var labelWidth = Util.GetPreferredWidth(_basisLabel);
             var itemText = combo.m_ListItemRes.GetComponentInChildren<Text>();
             var comboWidth = 180f;
             var textHeight = 0f;
-            foreach (var key in new[] { I18NKeys.BlueprintFinalProducts, I18NKeys.BlueprintBottleneckIntermediate })
+            foreach (var item in combo.Items)
             {
-                combo.m_Text.text = key.Translate();
-                itemText.text = key.Translate();
-                comboWidth = Math.Max(comboWidth, Util.GetPreferredWidth(combo.m_Text) + 40);
+                combo.m_Text.text = item;
+                itemText.text = item;
+                comboWidth = Math.Max(comboWidth, Util.GetPreferredWidth(combo.m_Text) + 42);
                 textHeight = Math.Max(textHeight, Math.Max(combo.m_Text.preferredHeight, itemText.preferredHeight));
             }
-            _basisCombo.SetIndex(index);
+            combo.itemIndex = index;
             combo.ItemHeight = (int)Math.Max(24, Mathf.Ceil(textHeight) + 4);
             var rowHeight = Math.Max(28, Math.Max(Mathf.Ceil(_basisLabel.preferredHeight), Mathf.Ceil(textHeight)) + 4);
             Util.NormalizeRectWithTopLeft(_basisLabel, left, rowTop, _panel);
@@ -419,14 +437,18 @@ public class BlueprintDescriptionPatch : PatchImpl<BlueprintDescriptionPatch>
                 rowTop + (rowHeight - helpRect.rect.height) / 2, _panel);
             var comboLeft = left + labelWidth + ControlsGap + helpRect.rect.width + ControlsGap;
             Util.NormalizeRectWithTopLeft(_basisCombo, comboLeft, rowTop, _panel);
-            _basisCombo.SetSize(comboWidth, rowHeight);
+            var comboRect = (RectTransform)_basisCombo.transform;
+            comboRect.sizeDelta = new Vector2(comboWidth, rowHeight);
             var width = Math.Max(90f, Util.GetPreferredWidth(_buttonText) + 20);
             ((RectTransform)_button.transform).sizeDelta = new Vector2(width,
                 Math.Max(30, Mathf.Ceil(_buttonText.preferredHeight) + 8));
             var popupWidth = Math.Max(320, Math.Max(comboLeft + comboWidth + right,
-                Util.GetPreferredWidth(_title) + left + right + 50));
-            _panel.sizeDelta = new Vector2(popupWidth, _panel.sizeDelta.y);
-            _title.rectTransform.sizeDelta = new Vector2(popupWidth - left - right - 50, titleHeight);
+                Util.GetPreferredWidth(_title) + titleLeft + right + 50));
+            var footerTop = rowTop + rowHeight + 16;
+            var bottom = Mathf.Ceil(padding.y) + Left;
+            _panel.sizeDelta = new Vector2(popupWidth, footerTop + ((RectTransform)_button.transform).rect.height + bottom);
+            Util.NormalizeRectWithTopRight(_button, right, footerTop, _panel);
+            _title.rectTransform.sizeDelta = new Vector2(popupWidth - titleLeft - right - 50, titleHeight);
             PositionEntry();
             PositionOptions();
         }
@@ -515,7 +537,7 @@ public class BlueprintDescriptionPatch : PatchImpl<BlueprintDescriptionPatch>
                 }
 
                 var request = capture.CreateRequest(_checkbox.Checked);
-                request.ProductionBasis = (BlueprintProductionBasis)_basisCombo.GetComponent<UIComboBox>().itemIndex;
+                request.ProductionBasis = (BlueprintProductionBasis)_basisCombo.itemIndex;
                 var report = new FactoryBlackBoxAnalyzer(catalog).Analyze(request);
                 if (report.Diagnostics.Any(diagnostic => diagnostic.Code == ProductionDiagnosticCode.BlueprintBasisUnavailable))
                 {
