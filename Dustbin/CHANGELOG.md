@@ -4,7 +4,7 @@
 ## Changelog
 
 * 1.5.0
-  * `Storage dustbin`: Destroy splitter input to a storage placed above it, including stacked and proliferated cargo. Enabling dustbin mode also clears cached full-storage state.
+  * `Storage dustbin`: Destroy splitter input to a storage placed above it, including stacked and proliferated cargo. Enabling dustbin mode also clears cached full-storage state. Move the checkbox to the title bar to prevent overlap with the English automation input label.
   * `Tank dustbin`: Fix single tanks blocking liquid input after receiving their first stack, both with and without dustbin mode.
   * `Belt signal dustbin`: Restore item disposal and startup compatibility with the current game simulation loop after DSP 0.10.33/0.10.34 updates.
 
@@ -49,7 +49,7 @@
 ## 更新日志
 
 * 1.5.0
-  * `储物仓垃圾桶`：销毁四向分流器送入上方储物仓的物品，包括堆叠和喷涂增产剂的物品；启用垃圾桶时清除已满状态缓存。
+  * `储物仓垃圾桶`：销毁四向分流器送入上方储物仓的物品，包括堆叠和喷涂增产剂的物品；启用垃圾桶时清除已满状态缓存。将复选框移至标题栏，避免与英文自动化输入说明重叠。
   * `储液罐垃圾桶`：修复单层储液罐装入第一批液体后停止输入的问题，普通储存和垃圾桶模式均可正常工作。
   * `传送带信号垃圾桶`：适配当前游戏的模拟循环，修复 DSP 0.10.33/0.10.34 更新后的启动报错和物品无法销毁问题。
 
