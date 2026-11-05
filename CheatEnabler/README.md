@@ -93,6 +93,7 @@ The item icon selects the output; no hotkey is needed.
 
 ## Notes
 
+* Requires UXAssist 1.6.3 or later. When upgrading manually, replace the old UXAssist DLL and remove duplicate copies from the BepInEx plugins folder.
 * Please upgrade `BepInEx` 5.4.21 or later if using with [BlueprintTweaks](https://dsp.thunderstore.io/package/kremnev8/BlueprintTweaks/) to avoid possible conflicts.
   * You can download [BepInEx here](https://github.com/bepinex/bepinex/releases/latest)(choose x64 edition).
   * If using with r2modman, you can upgrade `BepInEx` by clicking `Settings` -> `Browse profile folder`, then extract downloaded zip to the folder and overwrite existing files.
@@ -198,6 +199,7 @@ The item icon selects the output; no hotkey is needed.
 
 ## 注意事项
 
+* 需要 UXAssist 1.6.3 或更高版本。手动升级时，请替换旧的 UXAssist DLL，并删除 BepInEx 插件目录中的重复副本。
 * 如果和[BlueprintTweaks](https://dsp.thunderstore.io/package/kremnev8/BlueprintTweaks/)一起使用，请升级`BepInEx`到5.4.21或更高版本，以避免可能的冲突
   * 你可以在[这里](https://github.com/bepinex/bepinex/releases/latest)（选择x64版本）下载`BepInEx`
   * 如果使用r2modman，你可以点击`Settings` -> `Browse profile folder`，然后将下载的zip解压到该文件夹并覆盖现有文件

@@ -10,7 +10,7 @@ using UXAssist.Common.ModFeatures;
 namespace CheatEnabler;
 
 [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
-[BepInDependency(UXAssist.PluginInfo.PLUGIN_GUID)]
+[BepInDependency(UXAssist.PluginInfo.PLUGIN_GUID, "1.6.3")]
 public class CheatEnabler : BaseUnityPlugin
 {
     public new static readonly BepInEx.Logging.ManualLogSource Logger =
