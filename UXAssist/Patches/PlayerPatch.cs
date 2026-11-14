@@ -654,6 +654,14 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
                 return default;
 
             VectorLF3 baseDir = toTarget.normalized;
+
+            // The mecha can be inside several path radii at once: a moon close to its gas giant puts a mecha
+            // on the moon inside both, and the giant comes first in the list. Leaving only the first one
+            // sends a mecha that takes off from the moon's giant-facing side back into the ground, because
+            // "away from the giant" points down there. Leave all of them together, each weighted by how deep
+            // the mecha is inside it, so the body right below dominates.
+            VectorLF3 inward = default;
+            bool insideObstacle = false;
             foreach (Obstacle obstacle in obstacles)
             {
                 double pathRadius = GetReachablePathRadius(obstacle);
@@ -662,10 +670,24 @@ public class PlayerPatch : PatchImpl<PlayerPatch>
 
                 VectorLF3 toObstacle = obstacle.Position - playerPos;
                 double obstacleDistance = toObstacle.magnitude;
-                if (obstacleDistance < pathRadius)
-                    return ComputeEscapeDirection(currentDirection, toObstacle, baseDir);
+                if (obstacleDistance >= pathRadius)
+                    continue;
+
+                inward += SafeNorm(toObstacle, baseDir) * (pathRadius - obstacleDistance);
+                insideObstacle = true;
+            }
+
+            if (insideObstacle)
+                return ComputeEscapeDirection(currentDirection, inward, baseDir);
+
+            foreach (Obstacle obstacle in obstacles)
+            {
+                double pathRadius = GetReachablePathRadius(obstacle);
+                if (pathRadius <= 0.0)
+                    continue;
+
                 if (IsSegmentBlocked(playerPos, _targetUniversePosition, obstacle.Position, pathRadius))
-                    return ComputeTangentDirection(currentDirection, toObstacle, pathRadius, baseDir);
+                    return ComputeTangentDirection(currentDirection, obstacle.Position - playerPos, pathRadius, baseDir);
             }
 
             return baseDir;
