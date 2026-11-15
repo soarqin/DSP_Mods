@@ -4,6 +4,7 @@
 ## Changlog
 
 * 1.6.4
+  * `Reverse conveyor belt`: Enable it on the Factory tab and press `Alt+R` over a built belt to reverse it without opening its panel. The shortcut can be changed in the system options.
   * `Hide battle-related techs in Peace mode`: Fix an array index error when opening the tech tree after switching from a Peace-mode save to a Combat-mode save in the same game process, including when disabling the option after loading another Peace-mode save.
   * `Auto-cruise`: Fix the mecha diving back into the ground right after taking off from a moon that is close to its gas giant.
 * 1.6.3
@@ -448,6 +449,7 @@
 ## 更新日志
 
 * 1.6.4
+  * `反转传送带`：在「工厂」页启用后，将鼠标移到已建成的传送带上，按 `Alt+R` 直接反转，无需打开面板；可在系统选项中修改快捷键。
   * `在和平模式下隐藏战斗相关科技`：修复在同一次游戏运行中从和平模式存档切换到战斗模式存档后打开科技树时的数组越界，以及再次加载和平模式存档后关闭选项时的同类问题。
   * `自动巡航`：修复从紧邻气态巨星的卫星上起飞后，机甲又扎回地面的问题。
 * 1.6.3

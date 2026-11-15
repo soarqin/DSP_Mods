@@ -60,6 +60,9 @@
     * Cut conveyor belt
       * Press shortcut key to cut conveyor belt under cursor.
       * The default shortcut key is Alt+X, you can set it in system options panel.
+    * Reverse conveyor belt
+      * Enable it on the Factory tab, hover over a built belt, and press `Alt+R` to reverse it without opening its panel.
+      * Change the shortcut in the system options. Reversal follows the native button's scope and limits.
     * Treat stack items as single in monitor components
     * Quick build and dismantle stacking labs/storages/tanks
     * Fast fill in to and take out from tanks
@@ -268,6 +271,9 @@
     * 切割传送带
       * 按快捷键切割光标位置的传送带
       * 默认快捷键是Alt+X，可以在系统选项面板中设置
+    * 反转传送带
+      * 在「工厂」页启用后，将鼠标移到已建成的传送带上，按 `Alt+R` 直接反转，无需打开面板。
+      * 可在系统选项中修改快捷键，反转范围和限制与原版按钮一致。
     * 在流速计中将堆叠物品视为单个物品
     * 快速建造和拆除堆叠研究站/储物仓/储液罐
     * 储液罐快速注入和抽取液体
