@@ -39,6 +39,7 @@ public static class FactoryPatch
     public static ConfigEntry<bool> TankFastFillInAndTakeOutEnabled;
     public static ConfigEntry<int> TankFastFillInAndTakeOutMultiplier;
     public static ConfigEntry<bool> CutConveyorBeltEnabled;
+    public static ConfigEntry<bool> ReverseConveyorBeltEnabled;
     public static ConfigEntry<bool> TweakBuildingBufferEnabled;
     public static ConfigEntry<int> AssemblerBufferTimeMultiplier;
     public static ConfigEntry<int> AssemblerBufferMininumMultiplier;
@@ -56,6 +57,7 @@ public static class FactoryPatch
     internal static PressKeyBind _doNotRenderEntitiesKey;
     internal static PressKeyBind _offgridfForPathsKey;
     internal static PressKeyBind _cutConveyorBeltKey;
+    internal static PressKeyBind _reverseConveyorBeltKey;
     internal static PressKeyBind _dismantleBlueprintSelectionKey;
     internal static PressKeyBind _selectAllBuildingsInBlueprintCopyKey;
 
@@ -84,6 +86,14 @@ public static class FactoryPatch
             key = new CombineKey((int)KeyCode.X, CombineKey.ALT_COMB, ECombineKeyAction.OnceClick, false),
             conflictGroup = KeyBindConflict.MOVEMENT | KeyBindConflict.FLYING | KeyBindConflict.SAILING | KeyBindConflict.BUILD_MODE_1 | KeyBindConflict.KEYBOARD_KEYBIND,
             name = "CutConveyorBelt",
+            canOverride = true
+        }
+        );
+        _reverseConveyorBeltKey = KeyBindings.RegisterKeyBinding(new BuiltinKey
+        {
+            key = new CombineKey((int)KeyCode.R, CombineKey.ALT_COMB, ECombineKeyAction.OnceClick, false),
+            conflictGroup = KeyBindConflict.MOVEMENT | KeyBindConflict.FLYING | KeyBindConflict.SAILING | KeyBindConflict.BUILD_MODE_1 | KeyBindConflict.KEYBOARD_KEYBIND,
+            name = "ReverseConveyorBelt",
             canOverride = true
         }
         );
@@ -214,6 +224,13 @@ public static class FactoryPatch
                 var cargoTraffic = raycast.planet.factory.cargoTraffic;
                 Functions.FactoryFunctions.CutConveyorBelt(cargoTraffic, beltId);
             }
+        }
+        if (ReverseConveyorBeltEnabled.Value && _reverseConveyorBeltKey.keyValue
+            && GameMain.isRunning && !GameMain.isPaused && !VFInput.onGUI)
+        {
+            var raycast = GameMain.mainPlayer?.controller?.cmd.raycast;
+            if (raycast != null && raycast.castEntity.id > 0 && raycast.castEntity.beltId > 0)
+                Functions.FactoryFunctions.ReverseConveyorBelt(raycast.planet?.factory, raycast.castEntity.beltId);
         }
         if (ShortcutKeysForBlueprintCopyEnabled.Value)
         {

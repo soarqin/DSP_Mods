@@ -149,6 +149,8 @@ public class UXAssist : BaseUnityPlugin, IModCanSave
         FactoryPatch.TankFastFillInAndTakeOutMultiplier = Config.Bind("Factory", "TankFastFillInAndTakeOutMultiplier", 1000, "Speed multiplier for fast filling in to and takeing out from tanks");
         FactoryPatch.CutConveyorBeltEnabled = Config.Bind("Factory", "CutConveyorBeltShortcut", false,
             "Cut conveyor belt (with shortcut key)");
+        FactoryPatch.ReverseConveyorBeltEnabled = Config.Bind("Factory", "ReverseConveyorBeltShortcut", false,
+            "Reverse conveyor belt (with shortcut key)");
         FactoryPatch.TweakBuildingBufferEnabled = Config.Bind("Factory", "TweakBuildingBuffer", false,
             "Tweak buffer count for assemblers and power generators");
         FactoryPatch.AssemblerBufferTimeMultiplier = Config.Bind("Factory", "AssemblerBufferTimeMultiplier", 4, new ConfigDescription("Assembler buffer time multiplier in seconds", new AcceptableValueRange<int>(2, 10)));

@@ -245,6 +245,8 @@ public static class UIConfigWindow
         y += 36f;
         wnd.AddCheckBox(x, y, tab2, FactoryConfigProvider.CutConveyorBeltEnabled, I18NKeys.CutConveyorBeltWithShortcutKey);
         y += 36f;
+        wnd.AddCheckBox(x, y, tab2, FactoryConfigProvider.ReverseConveyorBeltEnabled, I18NKeys.ReverseConveyorBeltWithShortcutKey);
+        y += 36f;
         checkBoxForMeasureTextWidth = wnd.AddCheckBox(x, y, tab2, FactoryConfigProvider.TreatStackingAsSingleEnabled, I18NKeys.TreatStackItemsAsSingleInMonitorComponents);
         y += 36f;
         wnd.AddCheckBox(x, y, tab2, FactoryConfigProvider.QuickBuildAndDismantleLabsEnabled, I18NKeys.QuickBuildAndDismantleStackingLabs);

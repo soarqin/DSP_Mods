@@ -60,6 +60,7 @@ public static class I18NKeys
     public const string KEYToggleDoNotRenderEntities = "KEYToggleDoNotRenderEntities";
     public const string KEYOffgridForPaths = "KEYOffgridForPaths";
     public const string KEYCutConveyorBelt = "KEYCutConveyorBelt";
+    public const string KEYReverseConveyorBelt = "KEYReverseConveyorBelt";
     public const string KEYDismantleBlueprintSelection = "KEYDismantleBlueprintSelection";
     public const string KEYSelectAllBuildingsInBlueprintCopy = "KEYSelectAllBuildingsInBlueprintCopy";
     public const string KEYUPSSpeedDown = "KEYUPSSpeedDown";
@@ -111,6 +112,7 @@ public static class I18NKeys
     public const string FastFillInToAndTakeOutFromTanks = "Fast fill in to and take out from tanks";
     public const string SpeedRatio = "Speed Ratio";
     public const string CutConveyorBeltWithShortcutKey = "Cut conveyor belt (with shortcut key)";
+    public const string ReverseConveyorBeltWithShortcutKey = "Reverse conveyor belt (with shortcut key)";
     public const string ProtectVeinsFromExhaustion = "Protect veins from exhaustion";
     public const string ProtectVeinsFromExhaustionTips = "Protect veins from exhaustion tips";
     public const string DoNotRenderFactoryEntities = "Do not render factory entities";
@@ -301,6 +303,7 @@ public static class I18NKeys
         I18N.Add(KEYToggleDoNotRenderEntities, "[UXA] Toggle Do Not Render Factory Entities", "[UXA] 切换不渲染工厂建筑实体");
         I18N.Add(KEYOffgridForPaths, "[UXA] Build belts offgrid", "[UXA] 脱离网格建造传送带");
         I18N.Add(KEYCutConveyorBelt, "[UXA] Cut conveyor belt", "[UXA] 切割传送带");
+        I18N.Add(KEYReverseConveyorBelt, "[UXA] Reverse conveyor belt", "[UXA] 反转传送带");
         I18N.Add(KEYDismantleBlueprintSelection, "[UXA] Dismantle blueprint selected buildings", "[UXA] 拆除蓝图选中的建筑");
         I18N.Add(KEYSelectAllBuildingsInBlueprintCopy, "[UXA] Select all buildings in Blueprint Copy Mode", "[UXA] 蓝图复制时选择所有建筑");
         I18N.Add(KEYUPSSpeedDown, "[UXA] Decrease logical frame rate", "[UXA] 降低逻辑帧率");
@@ -370,6 +373,7 @@ Hold Ctrl/Shift/Alt to change the count rapidly.
         I18N.Add(FastFillInToAndTakeOutFromTanks, "Fast fill in to and take out from tanks", "储液罐快速注入和抽取液体");
         I18N.Add(SpeedRatio, "Speed Ratio", "速度倍率");
         I18N.Add(CutConveyorBeltWithShortcutKey, "Cut conveyor belt (with shortcut key)", "切割传送带(使用快捷键)");
+        I18N.Add(ReverseConveyorBeltWithShortcutKey, "Reverse conveyor belt (with shortcut key)", "反转传送带(使用快捷键)");
         I18N.Add(ProtectVeinsFromExhaustion, "Protect veins from exhaustion", "保护矿脉不会耗尽");
         I18N.Add(ProtectVeinsFromExhaustionTips, """
 By default, the vein amount is protected at 100, and oil speed is protected at 1.0/s, you can set them yourself in config file.

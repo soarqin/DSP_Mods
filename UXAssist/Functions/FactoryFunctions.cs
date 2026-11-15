@@ -24,6 +24,43 @@ public static class FactoryFunctions
         cargoTraffic.AlterBeltConnections(beltId, 0, i0, i1, i2);
     }
 
+    public static void ReverseConveyorBelt(PlanetFactory factory, int beltId)
+    {
+        var traffic = factory?.cargoTraffic;
+        var player = GameMain.mainPlayer;
+        var window = UIRoot.instance?.uiGame?.beltWindow;
+        if (traffic == null || player == null || window == null || beltId <= 0 || beltId >= traffic.beltPool.Length) return;
+
+        ref var belt = ref traffic.beltPool[beltId];
+        if (belt.id != beltId) return;
+        var path = traffic.GetCargoPath(belt.segPathId);
+        // Match the native reverse button's limit of 2 to 1023 belts in one path.
+        const int maxBeltCount = 1023;
+        if (path == null || path.belts.Count < 2 || path.belts.Count > maxBeltCount) return;
+
+        var oldFactory = window.factory;
+        var oldTraffic = window.traffic;
+        var oldPlayer = window.player;
+        var oldBeltId = window._beltId;
+        try
+        {
+            window.factory = factory;
+            window.traffic = traffic;
+            window.player = player;
+            // The beltId setter refreshes the visible inspector, so bind the backing field directly.
+            window._beltId = beltId;
+            // Nebula intercepts this native entry point to synchronize reversals.
+            window.OnReverseButtonClick(0);
+        }
+        finally
+        {
+            window._beltId = oldBeltId;
+            window.factory = oldFactory;
+            window.traffic = oldTraffic;
+            window.player = oldPlayer;
+        }
+    }
+
     public static bool ObjectIsBeltOrInserter(PlanetFactory factory, int objId)
     {
         if (objId == 0) return false;

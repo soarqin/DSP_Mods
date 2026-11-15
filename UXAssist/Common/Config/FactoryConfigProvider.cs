@@ -26,6 +26,7 @@ public static class FactoryConfigProvider
     public static ConfigEntry<bool> TankFastFillInAndTakeOutEnabled => FactoryPatch.TankFastFillInAndTakeOutEnabled;
     public static ConfigEntry<int> TankFastFillInAndTakeOutMultiplier => FactoryPatch.TankFastFillInAndTakeOutMultiplier;
     public static ConfigEntry<bool> CutConveyorBeltEnabled => FactoryPatch.CutConveyorBeltEnabled;
+    public static ConfigEntry<bool> ReverseConveyorBeltEnabled => FactoryPatch.ReverseConveyorBeltEnabled;
     public static ConfigEntry<bool> TweakBuildingBufferEnabled => FactoryPatch.TweakBuildingBufferEnabled;
     public static ConfigEntry<int> AssemblerBufferTimeMultiplier => FactoryPatch.AssemblerBufferTimeMultiplier;
     public static ConfigEntry<int> AssemblerBufferMininumMultiplier => FactoryPatch.AssemblerBufferMininumMultiplier;
