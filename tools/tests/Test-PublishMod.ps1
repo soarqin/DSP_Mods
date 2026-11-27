@@ -72,7 +72,27 @@ function New-PublishFixture {
     [IO.File]::WriteAllText((Join-Path $script:fixturePackage 'manifest.json'), '{"name":"ManifestPackage","version_number":"1.2.2"}')
     [IO.File]::WriteAllText((Join-Path $script:fixtureDir 'README.md'), '# Fixture')
     [IO.File]::Copy((Join-Path $repoRoot 'UXAssist\package\icon.png'), (Join-Path $script:fixturePackage 'icon.png'))
-    [IO.File]::WriteAllText((Join-Path $script:fixtureDir 'CHANGELOG.md'), '<details><summary>English</summary>' + "`n* 1.2.3`n</details><details><summary>Second language</summary>`n* 1.2.3`n</details>")
+    [IO.File]::WriteAllText((Join-Path $script:fixtureDir 'CHANGELOG.md'), @'
+# Changelog
+
+<details>
+<summary>English</summary>
+
+## [Unreleased]
+
+## [1.2.3] - 2026-01-01
+
+</details>
+
+<details>
+<summary>Second language</summary>
+
+## [Unreleased]
+
+## [1.2.3] - 2026-01-01
+
+</details>
+'@)
     $script:calls = New-Object 'System.Collections.Generic.List[string]'
     $script:requests = New-Object 'System.Collections.Generic.List[string]'
     $script:profileRequests = New-Object 'System.Collections.Generic.List[string]'
@@ -255,7 +275,7 @@ try {
         Assert-Check (-not $script:published) 'An invalid ZIP was published.'
     }
     New-PublishFixture
-    [IO.File]::WriteAllText((Join-Path $script:fixtureDir 'CHANGELOG.md'), "<details>`n* 1.2.3`n</details><details>`n* 1.2.2`n</details>")
+    [IO.File]::WriteAllText((Join-Path $script:fixtureDir 'CHANGELOG.md'), "<details>`n## [Unreleased]`n`n## [1.2.3] - 2026-01-01`n</details><details>`n## [Unreleased]`n`n## [1.2.2] - 2025-12-01`n</details>")
     Assert-CheckThrows { Invoke-ModPublish $script:fixtureRoot Fixture -DryRun } '*every language*'
     New-PublishFixture
     $smallIcon = New-Object Drawing.Bitmap(128, 128)

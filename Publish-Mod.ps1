@@ -206,7 +206,7 @@ function Assert-PublishChangelog {
     $sections = @([regex]::Matches($Text, '(?is)<details\b[^>]*>(.*?)</details>') | ForEach-Object { $_.Groups[1].Value })
     if ($sections.Count -eq 0) { $sections = @($Text) }
     foreach ($section in $sections) {
-        $latest = [regex]::Match($section, '(?m)^\s*(?:[*-]\s+|#{1,6}\s+)(\d+\.\d+\.\d+)(?=\s|$)')
+        $latest = [regex]::Match($section, '(?m)^##[ \t]+\[(\d+\.\d+\.\d+)\][ \t]+-[ \t]+\d{4}-\d{2}-\d{2}(?=\s|$)')
         if (-not $latest.Success -or $latest.Groups[1].Value -cne $Version) {
             throw "The latest changelog entry in every language must match project version $Version. Update the release notes before publishing."
         }
