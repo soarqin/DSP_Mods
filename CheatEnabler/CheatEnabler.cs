@@ -25,7 +25,7 @@ public class CheatEnabler : BaseUnityPlugin
             "disable all abnormal checks");
         TechTweaksPatch.Enabled = Config.Bind("General", "UnlockTech", false,
             "Upgrade clicked tech by holding key modifiers (Shift/Alt/Ctrl), and downgrade it by holding the " +
-            "same modifiers while downgrade mode is on (toggle it with Caps Lock)");
+            "same modifiers while downgrade mode is on (toggle it with Caps Lock in the tech tree)");
         FactoryPatch.ImmediateEnabled = Config.Bind("Build", "ImmediateBuild", false,
             "Build immediately");
         FactoryPatch.ArchitectModeEnabled = Config.Bind("Build", "Architect", false,

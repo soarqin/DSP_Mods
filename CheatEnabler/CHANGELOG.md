@@ -14,6 +14,7 @@ This changelog follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Fixed
 
 - `Mecha and Drones/Fleets invincible`: Fix mecha HP and energy shield protection failing when enabled after taking damage, and restore protection for space fleets.
+- `Caps Lock` only toggles tech downgrade mode while the tech tree is open.
 
 ## [2.4.8] - 2026-10-31
 
@@ -546,6 +547,7 @@ This changelog follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### 修复
 
 - `机甲和战斗无人机无敌`：修复受伤后启用时机甲耐久度和能量护盾保护可能失效的问题，并恢复太空编队的无敌保护。
+- 仅在科技树打开时，`Caps Lock` 才能切换科技降级模式。
 
 ## [2.4.8] - 2026-10-31
 

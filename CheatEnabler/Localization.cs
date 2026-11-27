@@ -48,7 +48,7 @@ Click a tech on the tree while holding:
 
 Note: all direct prerequisites will be unlocked as well.
 
-Press Caps Lock to toggle Tech Downgrade Mode: the key-modifiers above then decrease tech levels and revert the corresponding upgrade values.
+Press Caps Lock while the tech tree is open to toggle Tech Downgrade Mode. The key-modifiers above then decrease tech levels and revert the corresponding upgrade values.
   Shift: Tech level - 1
   Ctrl: Tech level - 10
   Ctrl + Shift: Tech level - 100
@@ -185,7 +185,7 @@ Click a tech on the tree while holding:
 
 Note: all direct prerequisites will be unlocked as well.
 
-Press Caps Lock to toggle Tech Downgrade Mode: the key-modifiers above then decrease tech levels and revert the corresponding upgrade values.
+Press Caps Lock while the tech tree is open to toggle Tech Downgrade Mode. The key-modifiers above then decrease tech levels and revert the corresponding upgrade values.
   Shift: Tech level - 1
   Ctrl: Tech level - 10
   Ctrl + Shift: Tech level - 100
@@ -202,7 +202,7 @@ The features above come from the mod: CheatEnabler
 
 注意：所有直接前置科技也会被解锁。
 
-按 Caps Lock 开启/关闭科技降级模式：开启后上述组合键变为降低科技等级，并回退对应升级数值。
+打开科技树后，按 Caps Lock 切换科技降级模式。开启后，上述组合键会降低科技等级并回退对应升级数值。
   Shift：科技等级 -1
   Ctrl：科技等级 -10
   Ctrl + Shift：科技等级 -100

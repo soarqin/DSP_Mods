@@ -20,8 +20,10 @@ internal static class DowngradeMode
     /// <summary>Per-frame <c>Caps Lock</c> poll; driven by the mod feature registry input hook.</summary>
     public static void Update()
     {
+        var uiGame = UIRoot.instance?.uiGame;
         if (TechTweaksPatch.Enabled == null || !TechTweaksPatch.Enabled.Value ||
-            TechTweaksPatch.Impl.GetHarmony() == null || DSPGame.IsMenuDemo || !GameMain.isRunning)
+            TechTweaksPatch.Impl.GetHarmony() == null || DSPGame.IsMenuDemo || !GameMain.isRunning ||
+            uiGame?.techTree?.active != true || uiGame.hideAllUI0 || uiGame.hideAllUI1)
         {
             return;
         }
@@ -32,7 +34,7 @@ internal static class DowngradeMode
         }
     }
 
-    public static void Toggle()
+    private static void Toggle()
     {
         IsOn = !IsOn;
 
