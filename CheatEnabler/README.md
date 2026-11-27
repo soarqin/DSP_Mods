@@ -15,7 +15,7 @@
     * Disable Abnormal Checks
     * Quickly upgrade/downgrade tech with key-modifiers (click the tech tree while holding Ctrl/Alt/Shift)
       * Hold `Shift` / `Ctrl` / `Ctrl+Shift` to change the level by 1 / 10 / 100; `Alt` upgrades to the maximum or returns the tech to locked in downgrade mode.
-      * `Caps Lock` toggles session downgrade mode, shown by a realtime tip and a critical warning banner. Leaving the game or disabling this feature resets the mode.
+      * While the tech tree is open, press `Caps Lock` to toggle session downgrade mode. A realtime tip and a critical warning banner show the current mode. Leaving the game or disabling this feature resets the mode.
       * Upgrading unlocks required prerequisites. Downgrading reverts the corresponding bonuses and removes dependent upgrade levels and research progress when their prerequisites become unavailable.
       * A downgrade is refused if capacity reductions would hide inventory or delivery contents, pending deliveries or equipped/deployed fleets, or if too few construction drones are idle. Empty affected slots, recall and empty affected fleets, or wait for drones to return before retrying.
       * The `?` button in the tech tree shows the full key reference.
@@ -121,7 +121,7 @@ The item icon selects the output; no hotkey is needed.
     * 屏蔽异常检测
     * 使用组合键快速升降级科技（按住 Ctrl/Alt/Shift 点击科技树）
       * 按住 `Shift` / `Ctrl` / `Ctrl+Shift` 可改变 1 / 10 / 100 级；`Alt` 升到最大等级，降级模式下则回退到未解锁。
-      * `Caps Lock` 切换本次游戏中的降级模式，并通过实时弹窗和严重警告横幅提示。离开游戏或关闭此功能后，降级模式重置。
+      * 打开科技树后，按 `Caps Lock` 切换本次游戏中的降级模式。实时弹窗和严重警告横幅会提示当前模式。离开游戏或关闭此功能后，降级模式重置。
       * 升级时解锁所需前置科技；降级时回退对应升级效果，前置条件失效的后继科技也会失去已应用等级和研究进度。
       * 缩容会隐藏机舱或物流清单中的物品、未完成的配送、有战斗机或尚未召回的编队，或空闲建设无人机数量不足时，会拒绝整次降级。清空相关格子、召回并清空相关编队，或等待建设无人机返回后再重试。
       * 科技树界面的 `?` 按钮显示完整组合键说明。
