@@ -14,7 +14,7 @@ This changelog follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
-- Move the blueprint description’s `Auto-fill` entry to the description header in the browser, copy, and paste inspectors. It opens the generation options without moving the existing fields or covering the file list.
+- Align `Auto-fill` with the description title in the blueprint browser, copy, and paste inspectors, leaving room for the native icon. The generation popup follows the entry while scrolling and adjusts at screen edges, with the existing fields in place and the file list visible. The standard rectangular `Production basis` dropdown opens over the footer while the popup and `Generate` button stay in place. Close the popup with the X, a click outside, or Esc. Esc closes an open dropdown first.
 
 ### Fixed
 
@@ -982,7 +982,7 @@ This changelog follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### 变更
 
-- 将蓝图浏览、复制和粘贴面板的「自动填写」移至说明标题行。打开生成选项时，现有字段保持原位，文件列表也不会被遮挡。
+- 将蓝图浏览、复制和粘贴面板的「自动填写」与说明标题对齐，为原生图标留出空间。生成选项面板随入口滚动，在屏幕边缘调整位置，现有字段保持原位，文件列表仍可见。「产量基准」使用原生矩形下拉框，列表展开时覆盖底部操作区，面板尺寸和「生成说明」按钮的位置保持不变。点击叉号、点击面板外部或按 Esc 可关闭面板。下拉列表展开时，Esc 先收起列表。
 
 ### 修复
 
