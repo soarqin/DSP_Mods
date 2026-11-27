@@ -219,24 +219,10 @@ internal class BeltSignalGenerator : PatchImpl<BeltSignalGenerator>
 
     private static Dictionary<int, BeltSignal> GetOrCreateSignalBelts(int index)
     {
-        Dictionary<int, BeltSignal> obj;
         if (index < 0) return null;
         if (index >= _signalBelts.Length)
-        {
-            var newCapacity = _signalBelts.Length * 2;
-            var newSignalBelts = new Dictionary<int, BeltSignal>[newCapacity];
-            Array.Copy(_signalBelts, newSignalBelts, _signalBelts.Length);
-            _signalBelts = newSignalBelts;
-        }
-        else
-        {
-            obj = _signalBelts[index];
-            if (obj != null) return obj;
-        }
-
-        obj = [];
-        _signalBelts[index] = obj;
-        return obj;
+            Array.Resize(ref _signalBelts, Math.Max(index + 1, _signalBelts.Length * 2));
+        return _signalBelts[index] ??= [];
     }
 
     private static Dictionary<int, BeltSignal> GetSignalBelts(int index)

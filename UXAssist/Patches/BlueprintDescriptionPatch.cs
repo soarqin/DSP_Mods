@@ -206,6 +206,8 @@ public class BlueprintDescriptionPatch : PatchImpl<BlueprintDescriptionPatch>
                 combo.onSubmit = new UIComboBox.SubmitEvent();
                 combo.onItemIndexChange = new UIComboBox.ChangeEvent();
                 combo.CanInput = false;
+                // The clone can start on its first opening, after ResetSession sets the default.
+                combo.InitItemIndexSelf = false;
                 combo.autoWidth = false;
                 combo.parentSibling = false;
                 combo.itemIndex = -1;

@@ -176,7 +176,7 @@ public static class TechPatch
 
         private static void TryPatchProto(bool on)
         {
-            if (DSPGame.IsMenuDemo || on == _protoPatched) return;
+            if (on == _protoPatched || on && DSPGame.IsMenuDemo) return;
             var techs = LDB.techs;
             if (techs?.dataArray == null || techs.dataArray.Length == 0) return;
             if (on)
@@ -217,8 +217,10 @@ public static class TechPatch
                 _protoPatched = false;
             }
             LDB.techs.Signature = ProtoSignature_0_10_30_3100.CalculateSignature(LDB.techs);
-            var nodes = UIRoot.instance.uiGame.techTree.nodes;
+            var techTree = UIRoot.instance?.uiGame?.techTree;
             var history = GameMain.history;
+            if (DSPGame.IsMenuDemo || techTree == null || history == null) return;
+            var nodes = techTree.nodes;
             foreach (var item in nodes)
             {
                 var node = item.Value;
@@ -267,8 +269,7 @@ public static class TechPatch
                     }
                 }
             }
-            var techTree = UIRoot.instance?.uiGame?.techTree;
-            if (techTree != null && techTree.isActiveAndEnabled)
+            if (techTree.isActiveAndEnabled)
                 techTree.OnPageChanged();
         }
     }

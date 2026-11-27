@@ -7,6 +7,8 @@ This changelog follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.6.4] - 2026-11-27
+
 ### Added
 
 - `Reverse conveyor belt`: Enable it on the Factory tab and press `Alt+R` over a built belt to reverse it without opening its panel. The shortcut can be changed in the system options.
@@ -18,7 +20,7 @@ This changelog follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
-- `Hide battle-related techs in Peace mode`: Fix an array index error when opening the tech tree after switching from a Peace-mode save to a Combat-mode save in the same game process, including when disabling the option after loading another Peace-mode save.
+- `Hide battle-related techs in Peace mode`: Restore tech-tree arrows when switching from a Peace-mode save to a Combat-mode save or disabling the option in another Peace-mode save. Disabling it at the title screen also restores battle-related techs for the next game.
 - `Auto-cruise`: Fix the mecha diving back into the ground right after taking off from a moon that is close to its gas giant.
 - Quick build Mining Machines now checks final vein coverage before placing miners so each miner still covers at least three veins from the selected group after planned burials.
 
@@ -975,6 +977,8 @@ This changelog follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.6.4] - 2026-11-27
+
 ### 新增
 
 - `反转传送带`：在「工厂」页启用后，将鼠标移到已建成的传送带上，按 `Alt+R` 直接反转，无需打开面板；可在系统选项中修改快捷键。
@@ -986,7 +990,7 @@ This changelog follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### 修复
 
-- `在和平模式下隐藏战斗相关科技`：修复在同一次游戏运行中从和平模式存档切换到战斗模式存档后打开科技树时的数组越界，以及再次加载和平模式存档后关闭选项时的同类问题。
+- `在和平模式下隐藏战斗相关科技`：从和平模式存档切换到战斗模式存档，或在另一个和平模式存档中关闭选项时，恢复科技树连线并修复数组越界。在标题画面关闭选项后，下次进入游戏也会恢复战斗相关科技。
 - `自动巡航`：修复从紧邻气态巨星的卫星上起飞后，机甲又扎回地面的问题。
 - 批量建造采矿机时，在放置前检查最终覆盖范围，确保按计划掩埋后，每台采矿机仍覆盖所选矿脉组中的至少 3 个矿点。
 
@@ -1936,7 +1940,7 @@ This changelog follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 </details>
 
-[Unreleased]: https://github.com/soarqin/DSP_Mods/compare/3580e96...master
+[1.6.4]: https://thunderstore.io/c/dyson-sphere-program/p/soarqin/UXAssist/v/1.6.4/
 [1.6.3]: https://thunderstore.io/c/dyson-sphere-program/p/soarqin/UXAssist/v/1.6.3/
 [1.6.2]: https://thunderstore.io/c/dyson-sphere-program/p/soarqin/UXAssist/v/1.6.2/
 [1.6.1]: https://thunderstore.io/c/dyson-sphere-program/p/soarqin/UXAssist/v/1.6.1/

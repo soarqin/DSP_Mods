@@ -7,6 +7,8 @@ This changelog follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [2.4.9] - 2026-11-27
+
 ### Changed
 
 - CheatEnabler now requires UXAssist 1.6.3 or later to load.
@@ -15,6 +17,7 @@ This changelog follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - `Mecha and Drones/Fleets invincible`: Fix mecha HP and energy shield protection failing when enabled after taking damage, and restore protection for space fleets.
 - `Caps Lock` only toggles tech downgrade mode while the tech tree is open.
+- `Belt signal item generation`: Fix an array index error when planet factories are numerous and only a distant entry in the factory list has a signal belt.
 
 ## [2.4.8] - 2026-10-31
 
@@ -540,6 +543,8 @@ This changelog follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [2.4.9] - 2026-11-27
+
 ### 变更
 
 - CheatEnabler 现在需要 UXAssist 1.6.3 或更高版本才能加载。
@@ -548,6 +553,7 @@ This changelog follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - `机甲和战斗无人机无敌`：修复受伤后启用时机甲耐久度和能量护盾保护可能失效的问题，并恢复太空编队的无敌保护。
 - 仅在科技树打开时，`Caps Lock` 才能切换科技降级模式。
+- `传送带信号物品生成`：修复工厂较多、信号传送带仅出现在工厂列表靠后位置时的数组越界。
 
 ## [2.4.8] - 2026-10-31
 
@@ -1066,7 +1072,7 @@ This changelog follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 </details>
 
-[Unreleased]: https://github.com/soarqin/DSP_Mods/compare/3580e96...master
+[2.4.9]: https://thunderstore.io/c/dyson-sphere-program/p/soarqin/CheatEnabler/v/2.4.9/
 [2.4.8]: https://thunderstore.io/c/dyson-sphere-program/p/soarqin/CheatEnabler/v/2.4.8/
 [2.4.7]: https://thunderstore.io/c/dyson-sphere-program/p/soarqin/CheatEnabler/v/2.4.7/
 [2.4.6]: https://thunderstore.io/c/dyson-sphere-program/p/soarqin/CheatEnabler/v/2.4.6/
